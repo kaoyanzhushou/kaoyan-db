@@ -1947,6 +1947,17 @@ body.dark .compare-table th{background:#334155}
       </div>
       
       <div class="atlas-nav-section">
+        <h4>🎯 考研重点</h4>
+        <div class="atlas-nav-list">
+          <div class="atlas-nav-item" onclick="filterAtlasByExamFreq('★★★')" style="color:#dc2626;font-weight:700">🔥 高频考点 ★★★</div>
+          <div class="atlas-nav-item" onclick="filterAtlasByExamFreq('★★')" style="color:#f59e0b;font-weight:600">📌 中频考点 ★★</div>
+          <div class="atlas-nav-item" onclick="showMuscleTable()">📋 肌肉起止点速查表</div>
+          <div class="atlas-nav-item" onclick="showMovementAnalysis()">🏃 体育动作解剖分析</div>
+          <div class="atlas-nav-item" onclick="startAtlasQuiz()">✍️ 考点自测模式</div>
+        </div>
+      </div>
+      
+      <div class="atlas-nav-section">
         <h4>⭐ 我的收藏</h4>
         <div class="atlas-nav-list" id="atlasFavList">
           <div class="atlas-nav-item" onclick="showFavorites()">查看收藏结构</div>
@@ -25148,16 +25159,16 @@ const ATLAS_DATA = {
       structures: [
         {id:'skull', name:'颅骨', system:'skeletal', desc:'由23块骨组成（脑颅骨8块+面颅骨15块），保护脑和感觉器官。',
          origin:'-', insertion:'-', action:'保护脑、支持面部结构', nerve:'-', blood:'颈内动脉、椎动脉',
-         sports:'头部运动时颈椎承受较大负荷，拳击、足球头球等运动需注意颅脑损伤防护。'},
+         sports:'头部运动时颈椎承受较大负荷，拳击、足球头球等运动需注意颅脑损伤防护。', examFreq:'★'},
         {id:'brain', name:'脑', system:'nervous', desc:'包括大脑、小脑、间脑、脑干（中脑、脑桥、延髓）。',
          origin:'-', insertion:'-', action:'调节全身生理活动、运动控制、感觉整合', nerve:'-', blood:'颈内动脉、椎动脉',
-         sports:'运动皮层控制随意运动，小脑协调运动平衡，脑干调节呼吸心跳等基本生命活动。'},
+         sports:'运动皮层控制随意运动，小脑协调运动平衡，脑干调节呼吸心跳等基本生命活动。', examFreq:'★'},
         {id:'facial_muscles', name:'面肌（表情肌）', system:'muscular', desc:'包括枕额肌、眼轮匝肌、口轮匝肌、颊肌等，位于面部皮下。',
          origin:'颅骨或筋膜', insertion:'皮肤', action:'产生面部表情、开闭眼口', nerve:'面神经（VII）', blood:'面动脉、颞浅动脉',
-         sports:'表情肌在运动中参与情绪表达，与运动表现关系不大。'},
+         sports:'表情肌在运动中参与情绪表达，与运动表现关系不大。', examFreq:'★'},
         {id:'temporomandibular', name:'颞下颌关节', system:'articular', desc:'由下颌头与颞骨下颌窝和关节结节组成，是头部唯一可动关节。',
          origin:'-', insertion:'-', action:'下颌骨上提、下降、前伸、后退、侧方运动', nerve:'三叉神经下颌支', blood:'颞浅动脉、上颌动脉',
-         sports:'咀嚼肌（咬肌、颞肌）在咬紧牙关时发力，某些运动（如举重）中会不自觉咬紧牙关。'},
+         sports:'咀嚼肌（咬肌、颞肌）在咬紧牙关时发力，某些运动（如举重）中会不自觉咬紧牙关。', examFreq:'★★'},
       ]
     },
     neck: {
@@ -25166,16 +25177,16 @@ const ATLAS_DATA = {
       structures: [
         {id:'cervical_spine', name:'颈椎', system:'skeletal', desc:'7块颈椎（C1-C7），C1寰椎、C2枢椎、C7隆椎。椎体小，有横突孔。',
          origin:'-', insertion:'-', action:'支持头部、保护脊髓、允许头部运动', nerve:'颈神经（C1-C8）', blood:'椎动脉、颈升动脉',
-         sports:'颈椎在运动中承受较大负荷，尤其是格斗、足球、体操等项目。颈部肌肉力量训练可预防颈椎损伤。'},
+         sports:'颈椎在运动中承受较大负荷，尤其是格斗、足球、体操等项目。颈部肌肉力量训练可预防颈椎损伤。', examFreq:'★★'},
         {id:'sternocleidomastoid', name:'胸锁乳突肌', system:'muscular', desc:'位于颈部两侧，起自胸骨柄和锁骨内侧端，止于颞骨乳突。',
          origin:'胸骨柄、锁骨内侧1/3', insertion:'颞骨乳突', action:'一侧收缩使头向同侧屈、脸转向对侧；两侧收缩使头后仰', nerve:'副神经（XI）、颈丛（C2-C3）', blood:'枕动脉、耳后动脉',
-         sports:'胸锁乳突肌是颈部重要的运动肌，在头部转动和后仰时发力。颈部扭伤（落枕）常累及此肌。'},
+         sports:'胸锁乳突肌是颈部重要的运动肌，在头部转动和后仰时发力。颈部扭伤（落枕）常累及此肌。', examFreq:'★★★'},
         {id:'trapezius_upper', name:'斜方肌（上部）', system:'muscular', desc:'起自上项线、枕外隆凸、项韧带，止于锁骨外侧1/3和肩峰。',
          origin:'枕外隆凸、上项线、项韧带、C7-T12棘突', insertion:'锁骨外侧1/3、肩峰、肩胛冈', action:'上部：上提肩胛骨、使肩胛骨上回旋；中部：内收肩胛骨；下部：下降肩胛骨', nerve:'副神经（XI）、颈丛（C3-C4）', blood:'颈横动脉、肩胛背动脉',
-         sports:'斜方肌上部在耸肩、抬头时发力，是游泳、举重、体操等项目的重要肌肉。久坐和低头学习易导致斜方肌紧张。'},
+         sports:'斜方肌上部在耸肩、抬头时发力，是游泳、举重、体操等项目的重要肌肉。久坐和低头学习易导致斜方肌紧张。', examFreq:'★★★'},
         {id:'cervical_fascia', name:'颈筋膜', system:'skeletal', desc:'分为浅筋膜和深筋膜，深筋膜又分为浅层、中层、深层。',
          origin:'-', insertion:'-', action:'包绕颈部肌肉和器官，形成筋膜鞘和筋膜间隙', nerve:'-', blood:'-',
-         sports:'颈筋膜在颈部运动中起分隔和保护作用，筋膜粘连可能导致颈部活动受限。'},
+         sports:'颈筋膜在颈部运动中起分隔和保护作用，筋膜粘连可能导致颈部活动受限。', examFreq:'★'},
       ]
     },
     trunk: {
@@ -25184,37 +25195,37 @@ const ATLAS_DATA = {
       structures: [
         {id:'thoracic_spine', name:'胸椎', system:'skeletal', desc:'12块胸椎（T1-T12），椎体心形，有肋凹，棘突长斜向后下。',
          origin:'-', insertion:'-', action:'支持躯干、保护脊髓和胸腔器官、参与胸廓构成', nerve:'胸神经（T1-T12）', blood:'肋间后动脉、胸主动脉',
-         sports:'胸椎活动度较小，但在脊柱屈伸、旋转中起重要作用。高尔夫、网球等转体运动对胸椎灵活性要求较高。'},
+         sports:'胸椎活动度较小，但在脊柱屈伸、旋转中起重要作用。高尔夫、网球等转体运动对胸椎灵活性要求较高。', examFreq:'★★'},
         {id:'lumbar_spine', name:'腰椎', system:'skeletal', desc:'5块腰椎（L1-L5），椎体最大，棘突宽短呈板状水平后伸。',
          origin:'-', insertion:'-', action:'支持体重、保护脊髓、允许腰部屈伸和侧屈', nerve:'腰神经（L1-L5）', blood:'腰动脉',
-         sports:'腰椎是运动中受力最大的部位，尤其是举重、篮球、体操等项目。腰椎间盘突出是常见运动损伤，核心肌群训练可保护腰椎。'},
+         sports:'腰椎是运动中受力最大的部位，尤其是举重、篮球、体操等项目。腰椎间盘突出是常见运动损伤，核心肌群训练可保护腰椎。', examFreq:'★★★'},
         {id:'sternum', name:'胸骨', system:'skeletal', desc:'分为胸骨柄、胸骨体、剑突三部分。胸骨角平对第2肋，是重要体表标志。',
          origin:'-', insertion:'-', action:'参与胸廓构成、保护胸腔器官、为肌肉提供附着点', nerve:'-', blood:'胸廓内动脉',
-         sports:'胸骨是胸肌和腹肌的重要附着点，在推、举等动作中受力。拳击等运动中胸骨可能受到直接撞击。'},
+         sports:'胸骨是胸肌和腹肌的重要附着点，在推、举等动作中受力。拳击等运动中胸骨可能受到直接撞击。', examFreq:'★★'},
         {id:'ribs', name:'肋骨', system:'skeletal', desc:'12对肋骨，1-7真肋、8-10假肋、11-12浮肋。肋骨体扁而弯曲。',
          origin:'胸椎', insertion:'胸骨（真肋）或上位肋软骨（假肋）', action:'参与胸廓构成、保护胸腔器官、参与呼吸运动', nerve:'肋间神经', blood:'肋间后动脉、胸廓内动脉',
-         sports:'肋骨在呼吸运动中起重要作用，运动时呼吸加深加快，肋骨活动度增大。对抗性运动中肋骨骨折较常见。'},
+         sports:'肋骨在呼吸运动中起重要作用，运动时呼吸加深加快，肋骨活动度增大。对抗性运动中肋骨骨折较常见。', examFreq:'★★'},
         {id:'pectoralis_major', name:'胸大肌', system:'muscular', desc:'位于胸前壁浅层，呈扇形。分为锁骨部、胸肋部、腹部。',
          origin:'锁骨内侧1/2、胸骨、第1-6肋软骨、腹外斜肌腱膜', insertion:'肱骨大结节嵴', action:'肩关节内收、旋内、前屈（锁骨部）；上肢固定时上提躯干', nerve:'胸内、外侧神经（C5-T1）', blood:'胸肩峰动脉、胸廓内动脉',
-         sports:'胸大肌是推类动作（卧推、俯卧撑、游泳划水）的主要发力肌，是健身训练的重点肌肉。'},
+         sports:'胸大肌是推类动作（卧推、俯卧撑、游泳划水）的主要发力肌，是健身训练的重点肌肉。', examFreq:'★★★'},
         {id:'latissimus_dorsi', name:'背阔肌', system:'muscular', desc:'位于背下部和胸侧部，是全身最大的扁肌，呈三角形。',
          origin:'T7-L5棘突、骶正中嵴、髂嵴后部、下位3-4肋', insertion:'肱骨小结节嵴', action:'肩关节后伸、内收、旋内；上肢固定时上提躯干（引体向上）', nerve:'胸背神经（C6-C8）', blood:'胸背动脉、肋间后动脉',
-         sports:'背阔肌是拉类动作（引体向上、划船、游泳自由泳划水）的主要发力肌，与胸大肌互为拮抗肌。'},
+         sports:'背阔肌是拉类动作（引体向上、划船、游泳自由泳划水）的主要发力肌，与胸大肌互为拮抗肌。', examFreq:'★★★'},
         {id:'rectus_abdominis', name:'腹直肌', system:'muscular', desc:'位于腹前壁正中线两侧，被腹直肌鞘包绕，有3-4条腱划。',
          origin:'耻骨联合、耻骨嵴', insertion:'胸骨剑突、第5-7肋软骨', action:'脊柱前屈、增加腹压、维持腹压、协助呼气', nerve:'肋间神经（T5-T12）、髂腹下神经', blood:'腹壁上、下动脉',
-         sports:'腹直肌是核心肌群的重要组成，在卷腹、仰卧起坐、各种运动的躯干稳定中发力。"六块腹肌"即腹直肌。'},
+         sports:'腹直肌是核心肌群的重要组成，在卷腹、仰卧起坐、各种运动的躯干稳定中发力。"六块腹肌"即腹直肌。', examFreq:'★★★'},
         {id:'erector_spinae', name:'竖脊肌', system:'muscular', desc:'位于脊柱两侧，是背肌中最长最大的肌，分为髂肋肌、最长肌、棘肌。',
          origin:'骶骨背面、髂嵴后部、腰椎棘突', insertion:'肋骨、胸椎和颈椎横突、颞骨乳突', action:'两侧收缩使脊柱后伸、头后仰；一侧收缩使脊柱侧屈', nerve:'脊神经后支', blood:'腰动脉、肋间后动脉',
-         sports:'竖脊肌在弯腰起身、负重挺身、硬拉等动作中发力，是维持躯干直立的重要肌肉。久坐和弯腰学习易导致竖脊肌疲劳。'},
+         sports:'竖脊肌在弯腰起身、负重挺身、硬拉等动作中发力，是维持躯干直立的重要肌肉。久坐和弯腰学习易导致竖脊肌疲劳。', examFreq:'★★★'},
         {id:'diaphragm', name:'膈', system:'muscular', desc:'位于胸腹腔之间，呈穹窿状的扁肌。是主要的呼吸肌。',
          origin:'胸廓下口周缘（胸骨部、肋部、腰部）', insertion:'中心腱', action:'收缩时穹窿下降，胸腔容积增大，吸气；舒张时穹窿上升，呼气', nerve:'膈神经（C3-C5）', blood:'心包膈动脉、肌膈动脉、膈下动脉',
-         sports:'膈是运动呼吸的核心肌肉，有氧运动时膈的活动度显著增大。"C3-C5保呼吸"，膈神经损伤会导致呼吸困难。'},
+         sports:'膈是运动呼吸的核心肌肉，有氧运动时膈的活动度显著增大。"C3-C5保呼吸"，膈神经损伤会导致呼吸困难。', examFreq:'★★★'},
         {id:'heart', name:'心', system:'circulatory', desc:'位于胸腔中纵隔内，2/3在正中线左侧，1/3在右侧。大小约本人拳头。',
          origin:'-', insertion:'-', action:'泵血，推动血液循环', nerve:'交感神经、副交感神经（迷走神经）', blood:'左、右冠状动脉',
-         sports:'运动时心率加快、心输出量增加，心肌收缩力增强。长期有氧运动可使心肌肥大（运动性心脏），心功能增强。'},
+         sports:'运动时心率加快、心输出量增加，心肌收缩力增强。长期有氧运动可使心肌肥大（运动性心脏），心功能增强。', examFreq:'★★'},
         {id:'lungs', name:'肺', system:'respiratory', desc:'位于胸腔内，左右各一。左肺2叶，右肺3叶。肺尖高出锁骨内侧1/3上方2-3cm。',
          origin:'-', insertion:'-', action:'气体交换，吸入O₂排出CO₂', nerve:'迷走神经、交感神经', blood:'肺动脉、支气管动脉',
-         sports:'运动时肺通气量显著增大，从安静时6-8L/min增加到极限运动时120-150L/min。长期有氧运动可提高肺活量和肺通气效率。'},
+         sports:'运动时肺通气量显著增大，从安静时6-8L/min增加到极限运动时120-150L/min。长期有氧运动可提高肺活量和肺通气效率。', examFreq:'★★'},
       ]
     },
     upper: {
@@ -25223,31 +25234,31 @@ const ATLAS_DATA = {
       structures: [
         {id:'scapula', name:'肩胛骨', system:'skeletal', desc:'位于胸廓后外侧，三角形扁骨。有肩胛冈、肩峰、喙突、关节盂等结构。',
          origin:'-', insertion:'-', action:'连接锁骨和肱骨，为上肢肌肉提供广泛附着点，参与肩关节运动', nerve:'肩胛上神经、肩胛背神经', blood:'肩胛上动脉、肩胛背动脉、旋肩胛动脉',
-         sports:'肩胛骨的稳定性对肩关节功能至关重要，翼状肩胛（前锯肌麻痹）会影响上肢推力。游泳、体操等项目对肩胛骨控制要求高。'},
+         sports:'肩胛骨的稳定性对肩关节功能至关重要，翼状肩胛（前锯肌麻痹）会影响上肢推力。游泳、体操等项目对肩胛骨控制要求高。', examFreq:'★★★'},
         {id:'humerus', name:'肱骨', system:'skeletal', desc:'位于上臂，是上肢最长最粗的长骨。分一体两端，上端有肱骨头、大结节、小结节。',
          origin:'-', insertion:'-', action:'支持上臂、为肌肉提供附着点、参与肩关节和肘关节构成', nerve:'腋神经、桡神经、尺神经、正中神经、肌皮神经', blood:'肱动脉、旋肱前/后动脉',
-         sports:'肱骨是上肢运动的杠杆，在投掷、击球、举重等动作中承受较大负荷。肱骨外科颈骨折、肱骨干骨折是常见损伤。'},
+         sports:'肱骨是上肢运动的杠杆，在投掷、击球、举重等动作中承受较大负荷。肱骨外科颈骨折、肱骨干骨折是常见损伤。', examFreq:'★★'},
         {id:'radius_ulna', name:'桡骨和尺骨', system:'skeletal', desc:'位于前臂，尺骨在内侧（小指侧），桡骨在外侧（拇指侧）。桡骨上端小下端大，尺骨相反。',
          origin:'-', insertion:'-', action:'支持前臂、参与肘关节和桡腕关节构成、允许前臂旋前旋后', nerve:'桡神经、尺神经、正中神经', blood:'桡动脉、尺动脉、骨间前/后动脉',
-         sports:'桡骨远端骨折（Colles骨折）是最常见的骨折之一，多因跌倒手撑地引起。前臂旋前旋后在羽毛球、乒乓球等运动中至关重要。'},
+         sports:'桡骨远端骨折（Colles骨折）是最常见的骨折之一，多因跌倒手撑地引起。前臂旋前旋后在羽毛球、乒乓球等运动中至关重要。', examFreq:'★★'},
         {id:'deltoid', name:'三角肌', system:'muscular', desc:'位于肩部，呈三角形。分为前部、中部、后部。是肩部最粗壮的肌肉。',
          origin:'锁骨外侧1/3、肩峰、肩胛冈', insertion:'肱骨三角肌粗隆', action:'前部：肩关节前屈、旋内；中部：肩关节外展；后部：肩关节后伸、旋外', nerve:'腋神经（C5-C6）', blood:'旋肱前/后动脉',
-         sports:'三角肌是肩关节外展的主要肌肉，在推举、侧平举、游泳自由泳移臂等动作中发力。三角肌发达是健身训练的重要标志。'},
+         sports:'三角肌是肩关节外展的主要肌肉，在推举、侧平举、游泳自由泳移臂等动作中发力。三角肌发达是健身训练的重要标志。', examFreq:'★★★'},
         {id:'biceps_brachii', name:'肱二头肌', system:'muscular', desc:'位于上臂前侧，有长、短两个头。长头起自肩胛骨关节盂上方，短头起自喙突。',
          origin:'长头：肩胛骨关节盂上方；短头：肩胛骨喙突', insertion:'桡骨粗隆、前臂深筋膜（肱二头肌腱膜）', action:'屈肘关节、前臂旋后、协助屈肩关节', nerve:'肌皮神经（C5-C6）', blood:'肱动脉',
-         sports:'肱二头肌是屈肘和前臂旋后的主要肌肉，在引体向上、划船、哑铃弯举等动作中发力。"展示肌肉"时主要展示肱二头肌。'},
+         sports:'肱二头肌是屈肘和前臂旋后的主要肌肉，在引体向上、划船、哑铃弯举等动作中发力。"展示肌肉"时主要展示肱二头肌。', examFreq:'★★★'},
         {id:'triceps_brachii', name:'肱三头肌', system:'muscular', desc:'位于上臂后侧，有长头、外侧头、内侧头三个头。是上臂最强大的伸肌。',
          origin:'长头：肩胛骨关节盂下方；外侧头：肱骨后面桡神经沟外上方；内侧头：肱骨后面桡神经沟内下方', insertion:'尺骨鹰嘴', action:'伸肘关节、长头协助肩关节后伸和内收', nerve:'桡神经（C6-C8）', blood:'肱深动脉',
-         sports:'肱三头肌是伸肘的主要肌肉，在卧推、俯卧撑、投掷、拳击直拳等动作中发力。与肱二头肌互为拮抗肌。'},
+         sports:'肱三头肌是伸肘的主要肌肉，在卧推、俯卧撑、投掷、拳击直拳等动作中发力。与肱二头肌互为拮抗肌。', examFreq:'★★★'},
         {id:'shoulder_joint', name:'肩关节', system:'articular', desc:'由肱骨头与肩胛骨关节盂构成，是全身最灵活的关节。属球窝关节。',
          origin:'-', insertion:'-', action:'肩关节前屈、后伸、内收、外展、旋内、旋外、环转', nerve:'腋神经、肩胛上神经', blood:'旋肱前/后动脉、肩胛上动脉',
-         sports:'肩关节灵活性高但稳定性差，是运动损伤好发部位。肩袖损伤、肩关节脱位、肩周炎常见于游泳、棒球、网球等过顶运动。'},
+         sports:'肩关节灵活性高但稳定性差，是运动损伤好发部位。肩袖损伤、肩关节脱位、肩周炎常见于游泳、棒球、网球等过顶运动。', examFreq:'★★★'},
         {id:'elbow_joint', name:'肘关节', system:'articular', desc:'由肱骨下端、桡骨上端、尺骨上端构成，包括肱尺关节、肱桡关节、桡尺近侧关节。',
          origin:'-', insertion:'-', action:'屈、伸肘关节；前臂旋前、旋后', nerve:'肌皮神经、桡神经、尺神经、正中神经', blood:'肘关节网（肱动脉、桡动脉、尺动脉分支）',
-         sports:'肘关节在投掷、击球、举重等动作中承受较大负荷。网球肘（肱骨外上髁炎）、高尔夫球肘（肱骨内上髁炎）是常见运动损伤。'},
+         sports:'肘关节在投掷、击球、举重等动作中承受较大负荷。网球肘（肱骨外上髁炎）、高尔夫球肘（肱骨内上髁炎）是常见运动损伤。', examFreq:'★★★'},
         {id:'wrist_joint', name:'桡腕关节（腕关节）', system:'articular', desc:'由桡骨腕关节面和尺骨头下方的关节盘与手舟骨、月骨、三角骨构成。',
          origin:'-', insertion:'-', action:'腕关节前屈、后伸、内收、外展、环转', nerve:'正中神经、尺神经、桡神经', blood:'桡动脉、尺动脉、骨间前动脉',
-         sports:'腕关节在体操、举重、拳击、羽毛球等运动中承受较大负荷。腕管综合征、TFCC损伤是常见问题。'},
+         sports:'腕关节在体操、举重、拳击、羽毛球等运动中承受较大负荷。腕管综合征、TFCC损伤是常见问题。', examFreq:'★★'},
       ]
     },
     lower: {
@@ -25256,37 +25267,37 @@ const ATLAS_DATA = {
       structures: [
         {id:'pelvis', name:'骨盆', system:'skeletal', desc:'由左右髋骨、骶骨、尾骨构成。髋骨由髂骨、坐骨、耻骨融合而成。',
          origin:'-', insertion:'-', action:'支持体重、保护盆腔器官、连接躯干和下肢、为肌肉提供附着点', nerve:'骶神经、尾神经', blood:'髂内动脉、髂外动脉',
-         sports:'骨盆是躯干和下肢的力传导枢纽，在跑、跳、举重等动作中承受巨大负荷。骨盆前倾/后倾会影响体态和运动表现。'},
+         sports:'骨盆是躯干和下肢的力传导枢纽，在跑、跳、举重等动作中承受巨大负荷。骨盆前倾/后倾会影响体态和运动表现。', examFreq:'★★★'},
         {id:'femur', name:'股骨', system:'skeletal', desc:'位于大腿，是人体最长最结实的长骨。长度约为身高的1/4。上端有股骨头、股骨颈、大转子、小转子。',
          origin:'-', insertion:'-', action:'支持体重、为肌肉提供附着点、参与髋关节和膝关节构成', nerve:'股神经、坐骨神经、闭孔神经', blood:'股动脉、旋股内/外侧动脉、穿动脉',
-         sports:'股骨是下肢运动的主要杠杆，在跑、跳、举重等动作中承受巨大负荷。股骨颈骨折多见于老年人，股骨干骨折多由强大暴力引起。'},
+         sports:'股骨是下肢运动的主要杠杆，在跑、跳、举重等动作中承受巨大负荷。股骨颈骨折多见于老年人，股骨干骨折多由强大暴力引起。', examFreq:'★★'},
         {id:'tibia_fibula', name:'胫骨和腓骨', system:'skeletal', desc:'位于小腿，胫骨在内侧（粗大），腓骨在外侧（细小）。胫骨上端有内侧髁、外侧髁、胫骨粗隆。',
          origin:'-', insertion:'-', action:'支持体重、参与膝关节和踝关节构成、为肌肉提供附着点', nerve:'胫神经、腓总神经', blood:'胫前动脉、胫后动脉、腓动脉',
-         sports:'胫骨是小腿主要承重骨，在跑、跳等动作中承受巨大冲击。胫骨疲劳性骨膜炎（"小腿骨膜炎"）常见于跑跳过多的运动员。'},
+         sports:'胫骨是小腿主要承重骨，在跑、跳等动作中承受巨大冲击。胫骨疲劳性骨膜炎（"小腿骨膜炎"）常见于跑跳过多的运动员。', examFreq:'★★'},
         {id:'quadriceps', name:'股四头肌', system:'muscular', desc:'位于大腿前侧，是人体最强大的肌肉。由股直肌、股内侧肌、股外侧肌、股中间肌组成。',
          origin:'股直肌：髂前下棘；股内侧/外侧/中间肌：股骨体', insertion:'胫骨粗隆（经髌韧带）', action:'伸膝关节、股直肌协助屈髋关节', nerve:'股神经（L2-L4）', blood:'股动脉、旋股外侧动脉',
-         sports:'股四头肌是伸膝的主要肌肉，在跑、跳、上下楼、深蹲、起跳等动作中发力。股四头肌力量是膝关节稳定性的关键，运动损伤后康复重点。'},
+         sports:'股四头肌是伸膝的主要肌肉，在跑、跳、上下楼、深蹲、起跳等动作中发力。股四头肌力量是膝关节稳定性的关键，运动损伤后康复重点。', examFreq:'★★★'},
         {id:'hamstrings', name:'股后肌群（腘绳肌）', system:'muscular', desc:'位于大腿后侧，包括股二头肌、半腱肌、半膜肌。是大腿后侧的主要肌群。',
          origin:'股二头肌长头/半腱肌/半膜肌：坐骨结节；股二头肌短头：股骨粗线', insertion:'股二头肌：腓骨头；半腱肌：胫骨上端内侧面；半膜肌：胫骨内侧髁', action:'屈膝关节、伸髋关节；半腱/半膜肌使小腿旋内，股二头肌使小腿旋外', nerve:'坐骨神经（L4-S3）', blood:'股深动脉穿支、腘动脉',
-         sports:'腘绳肌是跑跳运动中最易拉伤的肌肉之一，尤其是短跑、足球、篮球等需要突然加速或变向的项目。与股四头肌互为拮抗肌，力量不平衡是拉伤的重要原因。'},
+         sports:'腘绳肌是跑跳运动中最易拉伤的肌肉之一，尤其是短跑、足球、篮球等需要突然加速或变向的项目。与股四头肌互为拮抗肌，力量不平衡是拉伤的重要原因。', examFreq:'★★★'},
         {id:'gluteus_maximus', name:'臀大肌', system:'muscular', desc:'位于臀部浅层，是人体最粗壮的肌肉。呈四边形，几乎占据整个臀部。',
          origin:'髂骨翼外面、骶骨和尾骨后面、骶结节韧带', insertion:'髂胫束、股骨臀肌粗隆', action:'髋关节后伸、旋外；下肢固定时伸直躯干、防止躯干前倾', nerve:'臀下神经（L5-S2）', blood:'臀上动脉、臀下动脉',
-         sports:'臀大肌是伸髋的主要肌肉，在跑、跳、深蹲、硬拉、登山等动作中发力。臀大肌力量不足会导致骨盆前倾和膝关节代偿。"翘臀"训练主要练臀大肌。'},
+         sports:'臀大肌是伸髋的主要肌肉，在跑、跳、深蹲、硬拉、登山等动作中发力。臀大肌力量不足会导致骨盆前倾和膝关节代偿。"翘臀"训练主要练臀大肌。', examFreq:'★★★'},
         {id:'hip_joint', name:'髋关节', system:'articular', desc:'由股骨头与髋臼构成，是典型的球窝关节。关节囊厚而坚韧，稳定性强。',
          origin:'-', insertion:'-', action:'髋关节前屈、后伸、内收、外展、旋内、旋外、环转', nerve:'股神经、闭孔神经、坐骨神经、臀上/下神经', blood:'旋股内/外侧动脉、闭孔动脉、臀上/下动脉',
-         sports:'髋关节稳定性强但灵活性不如肩关节，在跑、跳、举重等动作中承受巨大负荷。髋关节脱位、股骨头坏死、髋部滑囊炎是常见问题。'},
+         sports:'髋关节稳定性强但灵活性不如肩关节，在跑、跳、举重等动作中承受巨大负荷。髋关节脱位、股骨头坏死、髋部滑囊炎是常见问题。', examFreq:'★★★'},
         {id:'knee_joint', name:'膝关节', system:'articular', desc:'由股骨下端、胫骨上端、髌骨构成，是人体最大最复杂的关节。关节囊内有半月板和交叉韧带。',
          origin:'-', insertion:'-', action:'屈、伸膝关节；半屈位时可轻度旋内、旋外', nerve:'股神经、闭孔神经、胫神经、腓总神经', blood:'膝动脉网（腘动脉分支）',
-         sports:'膝关节是运动损伤最常见的关节，前交叉韧带（ACL）撕裂、半月板损伤、髌骨软化症、侧副韧带损伤常见于足球、篮球、滑雪等运动。膝关节稳定性对运动表现至关重要。'},
+         sports:'膝关节是运动损伤最常见的关节，前交叉韧带（ACL）撕裂、半月板损伤、髌骨软化症、侧副韧带损伤常见于足球、篮球、滑雪等运动。膝关节稳定性对运动表现至关重要。', examFreq:'★★★'},
         {id:'ankle_joint', name:'踝关节（距小腿关节）', system:'articular', desc:'由胫、腓骨下端的关节面与距骨滑车构成。关节囊前后薄而松弛，两侧有韧带加强。',
          origin:'-', insertion:'-', action:'踝关节背屈（勾脚）、跖屈（绷脚）', nerve:'胫神经、腓深神经', blood:'胫前动脉、胫后动脉、腓动脉',
-         sports:'踝关节扭伤（崴脚）是最常见的运动损伤，多因足内翻引起外侧副韧带损伤，常见于篮球、足球、跑步等运动。踝关节稳定性和本体感觉训练是预防关键。'},
+         sports:'踝关节扭伤（崴脚）是最常见的运动损伤，多因足内翻引起外侧副韧带损伤，常见于篮球、足球、跑步等运动。踝关节稳定性和本体感觉训练是预防关键。', examFreq:'★★★'},
         {id:'gastrocnemius', name:'腓肠肌', system:'muscular', desc:'位于小腿后侧浅层，有内侧头和外侧头两个头，形成"小腿肚"。',
          origin:'内侧头：股骨内侧髁；外侧头：股骨外侧髁', insertion:'跟骨结节（经跟腱）', action:'踝关节跖屈（绷脚）、协助屈膝关节', nerve:'胫神经（S1-S2）', blood:'腘动脉、胫后动脉',
-         sports:'腓肠肌是踝关节跖屈的主要肌肉，在跑、跳、踮脚、游泳打腿等动作中发力。跟腱是人体最粗壮的肌腱，跟腱断裂是严重运动损伤。'},
+         sports:'腓肠肌是踝关节跖屈的主要肌肉，在跑、跳、踮脚、游泳打腿等动作中发力。跟腱是人体最粗壮的肌腱，跟腱断裂是严重运动损伤。', examFreq:'★★★'},
         {id:'tibialis_anterior', name:'胫骨前肌', system:'muscular', desc:'位于小腿前外侧，起自胫骨外侧面，止于内侧楔骨和第1跖骨底。',
          origin:'胫骨外侧面、小腿深筋膜、腓骨', insertion:'内侧楔骨内侧面、第1跖骨底', action:'踝关节背屈（勾脚）、足内翻', nerve:'腓深神经（L4-L5）', blood:'胫前动脉',
-         sports:'胫骨前肌在跑步、走路的摆动相中控制足背屈，防止足尖拖地。胫骨前肌疲劳或力量不足会导致"足下垂"和跑步步态异常。'},
+         sports:'胫骨前肌在跑步、走路的摆动相中控制足背屈，防止足尖拖地。胫骨前肌疲劳或力量不足会导致"足下垂"和跑步步态异常。', examFreq:'★★★'},
       ]
     }
   },
@@ -25444,7 +25455,7 @@ function showStructureDetail(id){
   html += `<span class="atlas-tag region">📍 ${regionName}</span>`;
   html += `</div>`;
   html += `<div class="atlas-detail-section">`;
-  html += `<h4>📖 概述</h4><p>${found.desc}</p>`;
+  html += `<h4>📖 概述 ${found.examFreq ? '<span style="color:' + (found.examFreq==='★★★'?'#dc2626':found.examFreq==='★★'?'#f59e0b':'#94a3b8') + ';font-size:16px;margin-left:8px">' + found.examFreq + ' 考研考频</span>' : ''}</h4><p>${found.desc}</p>`;
   html += `</div>`;
   
   if(found.origin !== '-' || found.insertion !== '-'){
@@ -25769,6 +25780,355 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   }, 500);
 });
+
+
+// ==================== 考研优化功能 ====================
+
+// 按考研频率筛选
+function filterAtlasByExamFreq(freq){
+  const panel = document.getElementById('atlasDetailPanel');
+  let results = [];
+  Object.entries(ATLAS_DATA.regions).forEach(([region, data]) => {
+    data.structures.forEach(s => {
+      if(s.examFreq === freq){
+        results.push({...s, region: data.name});
+      }
+    });
+  });
+  
+  const freqLabel = freq === '★★★' ? '高频考点' : '中频考点';
+  const freqColor = freq === '★★★' ? '#dc2626' : '#f59e0b';
+  
+  let html = `<h3 style="color:${freqColor}">${freq} ${freqLabel}</h3>`;
+  html += `<div class="atlas-meta"><span class="atlas-tag system">共 ${results.length} 个${freqLabel}</span></div>`;
+  html += `<p style="color:#64748b;font-size:13px;margin-bottom:16px">以下为运动解剖学考研${freqLabel}，建议重点掌握起止点、功能、神经支配及运动损伤相关内容。</p>`;
+  
+  results.forEach(s => {
+    html += `<div class="atlas-detail-section" style="border-left:3px solid ${freqColor};padding-left:12px;cursor:pointer" onclick="showStructureDetail('${s.id}')">`;
+    html += `<h4>${getSystemIcon(s.system)} ${s.name} <span style="color:${freqColor};font-size:14px">${s.examFreq}</span> <span class="atlas-tag region" style="font-size:10px">📍 ${s.region}</span></h4>`;
+    html += `<p style="font-size:12px;color:#64748b;margin:0">${s.desc.substring(0,100)}...</p>`;
+    if(s.origin !== '-') html += `<p style="font-size:11px;color:#92400e;margin:4px 0 0"><strong>起点：</strong>${s.origin.substring(0,50)}...</p>`;
+    if(s.action !== '-') html += `<p style="font-size:11px;color:#1e40af;margin:2px 0 0"><strong>功能：</strong>${s.action.substring(0,60)}...</p>`;
+    html += `</div>`;
+  });
+  
+  panel.innerHTML = html;
+}
+
+// 肌肉起止点速查表
+function showMuscleTable(){
+  const panel = document.getElementById('atlasDetailPanel');
+  let muscles = [];
+  Object.values(ATLAS_DATA.regions).forEach(region => {
+    region.structures.forEach(s => {
+      if(s.system === 'muscular' && s.origin !== '-'){
+        muscles.push({...s, region: region.name});
+      }
+    });
+  });
+  
+  let html = '<h3>📋 肌肉起止点·功能·神经支配速查表</h3>';
+  html += '<div class="atlas-meta">';
+  html += '<span class="atlas-tag system">运动解剖学考研核心</span>';
+  html += `<span class="atlas-tag region">共 ${muscles.length} 块重点肌肉</span>`;
+  html += '</div>';
+  html += '<p style="color:#dc2626;font-size:13px;margin-bottom:16px;font-weight:600">⚠️ 此表为考研必考内容，建议熟记每块肌肉的起点、止点、功能和神经支配！</p>';
+  
+  // 按部位分组
+  const regions = {};
+  muscles.forEach(m => {
+    if(!regions[m.region]) regions[m.region] = [];
+    regions[m.region].push(m);
+  });
+  
+  Object.entries(regions).forEach(([region, list]) => {
+    html += `<h4 style="color:#7c3aed;margin-top:20px;margin-bottom:8px">📍 ${region}（${list.length}块）</h4>`;
+    html += '<div style="overflow-x:auto">';
+    html += '<table class="atlas-muscle-table">';
+    html += '<thead><tr><th style="width:18%">肌肉名称</th><th style="width:25%">起点</th><th style="width:25%">止点</th><th style="width:22%">功能</th><th style="width:10%">神经</th><th style="width:8%">考频</th></tr></thead>';
+    html += '<tbody>';
+    list.forEach(m => {
+      const freqColor = m.examFreq === '★★★' ? '#dc2626' : m.examFreq === '★★' ? '#f59e0b' : '#94a3b8';
+      html += '<tr style="cursor:pointer" onclick="showStructureDetail('' + m.id + '')">';
+      html += `<td style="font-weight:600;color:#1e293b">${m.name}</td>`;
+      html += `<td style="font-size:11px">${m.origin}</td>`;
+      html += `<td style="font-size:11px">${m.insertion}</td>`;
+      html += `<td style="font-size:11px">${m.action}</td>`;
+      html += `<td style="font-size:11px">${m.nerve}</td>`;
+      html += `<td style="color:${freqColor};font-weight:700;text-align:center">${m.examFreq||'★'}</td>`;
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+  });
+  
+  // 记忆口诀
+  html += '<div style="margin-top:24px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;padding:16px;border-left:4px solid #f59e0b">';
+  html += '<h5 style="color:#92400e;margin:0 0 8px">💡 考研记忆口诀</h5>';
+  html += '<ul style="margin:0;padding-left:18px;color:#78350f;font-size:12px;line-height:2">';
+  html += '<li><strong>胸大肌</strong>：锁胸肋止大结节，内收旋内又前屈</li>';
+  html += '<li><strong>背阔肌</strong>：胸腰筋膜髂后上，内收旋内后伸强</li>';
+  html += '<li><strong>股四头肌</strong>：股直股内外中间，共同止于胫骨粗隆，伸膝有力又屈髋</li>';
+  html += '<li><strong>腘绳肌</strong>：股二头半腱膜，坐骨结节是起点，屈膝伸髋又旋腿</li>';
+  html += '<li><strong>三角肌</strong>：锁肩峰肩胛冈，止在三角肌粗隆，外展主力前屈后伸</li>';
+  html += '<li><strong>肱二头肌</strong>：长短两头肩胛起，桡骨粗隆是止点，屈肘旋后又屈肩</li>';
+  html += '</ul></div>';
+  
+  panel.innerHTML = html;
+}
+
+// 体育动作解剖分析
+function showMovementAnalysis(){
+  const panel = document.getElementById('atlasDetailPanel');
+  
+  const movements = [
+    {
+      name: '🏋️ 深蹲（Squat）',
+      joints: '髋关节、膝关节、踝关节',
+      prime: '股四头肌（伸膝）、臀大肌（伸髋）、竖脊肌（躯干稳定）',
+      assist: '腘绳肌、大收肌、胫骨前肌、腹直肌',
+      analysis: '下蹲阶段：髋屈、膝屈、踝背屈，股四头肌和臀大肌离心收缩控制下落；起立时：髋伸、膝伸、踝跖屈，股四头肌和臀大肌向心收缩发力。核心肌群维持躯干稳定。',
+      injury: '膝关节压力大，注意膝盖不超过脚尖、腰背挺直；髌骨软化、半月板损伤风险。',
+      freq: '★★★'
+    },
+    {
+      name: '💪 卧推（Bench Press）',
+      joints: '肩关节、肘关节、胸锁关节',
+      prime: '胸大肌（肩关节水平内收）、肱三头肌（伸肘）、三角肌前部（肩前屈）',
+      assist: '前锯肌、喙肱肌、胸小肌、腹直肌（稳定）',
+      analysis: '下放阶段：肩关节水平外展、肘关节屈，胸大肌和肱三头肌离心收缩；上推阶段：肩关节水平内收、肘关节伸，胸大肌和肱三头肌向心收缩。肩胛骨保持后缩下沉。',
+      injury: '肩关节压力大，注意控制下放速度、避免肘部过度外展；肩袖损伤、胸大肌撕裂风险。',
+      freq: '★★★'
+    },
+    {
+      name: '🧗 引体向上（Pull-up）',
+      joints: '肩关节、肘关节、肩胛胸壁关节',
+      prime: '背阔肌（肩关节后伸/内收）、肱二头肌（屈肘）、大圆肌',
+      assist: '斜方肌下部、菱形肌、肱肌、胸大肌（下部）、核心肌群',
+      analysis: '上拉阶段：肩关节后伸内收、肘关节屈，背阔肌和肱二头肌向心收缩；肩胛骨下回旋后缩。下降阶段：离心收缩控制下落。',
+      injury: '注意避免借力摆动、全程控制；肱二头肌肌腱炎、肩袖损伤风险。',
+      freq: '★★★'
+    },
+    {
+      name: '🏃 跑步（Running）',
+      joints: '髋、膝、踝、脊柱、肩、肘',
+      prime: '臀大肌、股四头肌、腘绳肌、腓肠肌、胫骨前肌（下肢）；三角肌、肱二头肌、肱三头肌（上肢摆臂）',
+      assist: '核心肌群、足内在肌、前臂肌群',
+      analysis: '支撑期：足跟着地→全脚掌着地→足跟离地→足趾离地，踝从背屈到跖屈，膝从屈到伸再到屈，髋从屈到伸。摆动期：下肢在空中向前摆动。上肢对侧摆臂维持平衡。',
+      injury: '跑步膝（髌股关节疼痛）、胫骨疲劳性骨膜炎、跟腱炎、足底筋膜炎、应力性骨折。',
+      freq: '★★★'
+    },
+    {
+      name: '🏀 纵跳（Vertical Jump）',
+      joints: '髋、膝、踝（下肢三关节伸展）',
+      prime: '臀大肌、股四头肌、腓肠肌（三关节伸展发力）',
+      assist: '腘绳肌、竖脊肌、核心肌群、上肢摆臂助力',
+      analysis: '下蹲预备：髋膝踝屈曲，肌肉拉长（拉长-缩短周期）。起跳：三关节快速伸展（髋伸→膝伸→踝跖屈），肌肉超等长收缩发力。摆臂增加向上动量。落地：屈膝屈髋缓冲，肌肉离心收缩吸收冲击。',
+      injury: '落地缓冲不足易导致膝关节、踝关节损伤；跟腱炎、髌骨软化、ACL损伤风险。',
+      freq: '★★'
+    },
+    {
+      name: '🎾 投掷（Throwing）',
+      joints: '肩、肘、腕、躯干旋转、髋',
+      prime: '背阔肌、胸大肌、三角肌、肱三头肌、腹斜肌、臀肌',
+      assist: '前锯肌、菱形肌、前臂旋内肌、核心旋转肌群',
+      analysis: '准备阶段：躯干扭转、肩外展外旋，肌肉拉长。加速阶段：躯干快速旋转→肩内收内旋→肘伸→腕屈，动量从下肢→躯干→上肢→手逐级传递（鞭打动作）。随挥阶段：减速缓冲。',
+      injury: '肩袖损伤（投掷肩）、肘关节内侧副韧带损伤（投手肘）、腰背扭伤。',
+      freq: '★★'
+    }
+  ];
+  
+  let html = '<h3>🏃 体育动作解剖学分析</h3>';
+  html += '<div class="atlas-meta">';
+  html += '<span class="atlas-tag system">运动解剖学考研重点题型</span>';
+  html += `<span class="atlas-tag region">共 ${movements.length} 个经典动作</span>`;
+  html += '</div>';
+  html += '<p style="color:#dc2626;font-size:13px;margin-bottom:16px;font-weight:600">⚠️ 体育动作分析是运动解剖学考研必考大题，需掌握：参与关节、原动肌、动作分析（向心/离心）、易损伤部位。</p>';
+  
+  movements.forEach(m => {
+    const freqColor = m.freq === '★★★' ? '#dc2626' : '#f59e0b';
+    html += '<div class="atlas-detail-section" style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:16px;border-left:4px solid #7c3aed">';
+    html += `<h4 style="color:#1e293b;margin-bottom:8px">${m.name} <span style="color:${freqColor};font-size:14px">${m.freq}</span></h4>`;
+    html += `<p style="margin-bottom:6px"><strong style="color:#7c3aed">🔗 参与关节：</strong>${m.joints}</p>`;
+    html += `<p style="margin-bottom:6px"><strong style="color:#dc2626">⚡ 原动肌：</strong>${m.prime}</p>`;
+    html += `<p style="margin-bottom:6px"><strong style="color:#059669">🤝 辅助肌：</strong>${m.assist}</p>`;
+    html += `<p style="margin-bottom:6px"><strong style="color:#2563eb">📐 动作分析：</strong>${m.analysis}</p>`;
+    html += `<p style="margin-bottom:0"><strong style="color:#ea580c">🩹 易损伤：</strong>${m.injury}</p>`;
+    html += '</div>';
+  });
+  
+  // 答题模板
+  html += '<div style="margin-top:20px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);border-radius:12px;padding:16px;border-left:4px solid #2563eb">';
+  html += '<h5 style="color:#1e40af;margin:0 0 8px">📝 考研答题模板（体育动作分析）</h5>';
+  html += '<ol style="margin:0;padding-left:18px;color:#1e3a8a;font-size:12px;line-height:2">';
+  html += '<li><strong>动作描述</strong>：简述动作全过程（准备→发力→结束）</li>';
+  html += '<li><strong>参与关节</strong>：列出主要参与关节及运动形式（屈/伸/收/展/旋）</li>';
+  html += '<li><strong>原动肌分析</strong>：指出各阶段原动肌名称及收缩形式（向心/离心/等长）</li>';
+  html += '<li><strong>辅助肌与固定肌</strong>：列出辅助完成动作和稳定关节的肌肉</li>';
+  html += '<li><strong>力学分析</strong>：分析杠杆类型、力矩、力的传递（鞭打/蹬伸）</li>';
+  html += '<li><strong>损伤预防</strong>：指出易损伤部位及预防措施</li>';
+  html += '</ol></div>';
+  
+  panel.innerHTML = html;
+}
+
+// 考点自测模式
+let atlasQuizState = {active:false, current:0, score:0, total:0, questions:[], answered:false};
+
+function startAtlasQuiz(){
+  const panel = document.getElementById('atlasDetailPanel');
+  
+  // 生成题目（肌肉起止点/功能/神经）
+  const questions = [];
+  Object.values(ATLAS_DATA.regions).forEach(region => {
+    region.structures.forEach(s => {
+      if(s.system === 'muscular' && s.origin !== '-'){
+        // 起点题
+        questions.push({type:'起点', muscle:s.name, answer:s.origin, options:generateOptions(s.origin, 'origin'), id:s.id});
+        // 止点题
+        questions.push({type:'止点', muscle:s.name, answer:s.insertion, options:generateOptions(s.insertion, 'insertion'), id:s.id});
+        // 功能题
+        questions.push({type:'功能', muscle:s.name, answer:s.action, options:generateOptions(s.action, 'action'), id:s.id});
+      }
+    });
+  });
+  
+  // 随机打乱取20题
+  questions.sort(() => Math.random() - 0.5);
+  atlasQuizState.questions = questions.slice(0, 20);
+  atlasQuizState.current = 0;
+  atlasQuizState.score = 0;
+  atlasQuizState.total = 20;
+  atlasQuizState.active = true;
+  atlasQuizState.answered = false;
+  
+  renderAtlasQuiz();
+}
+
+function generateOptions(correct, type){
+  const allOrigins = [];
+  const allActions = [];
+  Object.values(ATLAS_DATA.regions).forEach(region => {
+    region.structures.forEach(s => {
+      if(s.system === 'muscular'){
+        if(s.origin !== '-') allOrigins.push(s.origin);
+        if(s.insertion !== '-') allOrigins.push(s.insertion);
+        if(s.action !== '-') allActions.push(s.action);
+      }
+    });
+  });
+  const pool = type === 'action' ? allActions : allOrigins;
+  const wrong = pool.filter(a => a !== correct).sort(() => Math.random() - 0.5).slice(0, 3);
+  const options = [correct, ...wrong].sort(() => Math.random() - 0.5);
+  return options;
+}
+
+function renderAtlasQuiz(){
+  const panel = document.getElementById('atlasDetailPanel');
+  const q = atlasQuizState.questions[atlasQuizState.current];
+  
+  let html = '<h3>✍️ 解剖考点自测</h3>';
+  html += '<div class="atlas-meta">';
+  html += `<span class="atlas-tag system">第 ${atlasQuizState.current+1}/${atlasQuizState.total} 题</span>`;
+  html += `<span class="atlas-tag region">得分: ${atlasQuizState.score}</span>`;
+  html += '</div>';
+  
+  // 进度条
+  const progress = ((atlasQuizState.current) / atlasQuizState.total) * 100;
+  html += `<div style="height:6px;background:#e2e8f0;border-radius:3px;margin-bottom:20px;overflow:hidden"><div style="height:100%;width:${progress}%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:3px;transition:width 0.3s"></div></div>`;
+  
+  html += `<div style="background:#f8fafc;border-radius:12px;padding:20px;margin-bottom:16px">`;
+  html += `<p style="font-size:12px;color:#7c3aed;font-weight:600;margin-bottom:8px">【${q.type}题】</p>`;
+  html += `<h4 style="color:#1e293b;margin-bottom:16px">${q.muscle}的${q.type}是？</h4>`;
+  
+  q.options.forEach((opt, idx) => {
+    const letter = ['A','B','C','D'][idx];
+    html += `<div id="quiz-opt-${idx}" onclick="answerAtlasQuiz(${idx})" style="padding:12px 16px;border:2px solid #e2e8f0;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;font-size:13px;color:#334155" onmouseover="this.style.borderColor='#7c3aed';this.style.background='#f5f3ff'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">`;
+    html += `<strong style="color:#7c3aed;margin-right:8px">${letter}.</strong>${opt}`;
+    html += '</div>';
+  });
+  
+  html += '</div>';
+  
+  if(atlasQuizState.answered){
+    const correctIdx = q.options.indexOf(q.answer);
+    html += `<div id="quiz-feedback" style="padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:13px">`;
+    if(atlasQuizState.lastCorrect){
+      html += '<div style="color:#059669;font-weight:600">✅ 回答正确！</div>';
+    }else{
+      html += `<div style="color:#dc2626;font-weight:600">❌ 回答错误</div>`;
+      html += `<div style="color:#334155;margin-top:4px">正确答案：${q.answer}</div>`;
+    }
+    html += '</div>';
+    html += `<button onclick="nextAtlasQuiz()" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">${atlasQuizState.current < atlasQuizState.total-1 ? '下一题 →' : '查看结果 🏆'}</button>`;
+  }
+  
+  panel.innerHTML = html;
+}
+
+function answerAtlasQuiz(idx){
+  if(atlasQuizState.answered) return;
+  atlasQuizState.answered = true;
+  
+  const q = atlasQuizState.questions[atlasQuizState.current];
+  const correct = q.options[idx] === q.answer;
+  atlasQuizState.lastCorrect = correct;
+  if(correct) atlasQuizState.score++;
+  
+  // 高亮选项
+  const correctIdx = q.options.indexOf(q.answer);
+  for(let i = 0; i < 4; i++){
+    const el = document.getElementById('quiz-opt-' + i);
+    if(el){
+      el.style.pointerEvents = 'none';
+      if(i === correctIdx){
+        el.style.borderColor = '#059669';
+        el.style.background = '#d1fae5';
+      }else if(i === idx && !correct){
+        el.style.borderColor = '#dc2626';
+        el.style.background = '#fee2e2';
+      }
+    }
+  }
+  
+  renderAtlasQuiz();
+}
+
+function nextAtlasQuiz(){
+  if(atlasQuizState.current < atlasQuizState.total - 1){
+    atlasQuizState.current++;
+    atlasQuizState.answered = false;
+    renderAtlasQuiz();
+  }else{
+    // 显示结果
+    const panel = document.getElementById('atlasDetailPanel');
+    const pct = Math.round((atlasQuizState.score / atlasQuizState.total) * 100);
+    let grade, color, msg;
+    if(pct >= 90){grade='🏆 优秀';color='#059669';msg='解剖学基础扎实，继续保持！';}
+    else if(pct >= 75){grade='👍 良好';color='#2563eb';msg='掌握较好，注意查漏补缺。';}
+    else if(pct >= 60){grade='📚 及格';color='#f59e0b';msg='基本掌握，需加强重点肌肉记忆。';}
+    else{grade='💪 需努力';color='#dc2626';msg='基础薄弱，建议系统复习肌肉起止点。';}
+    
+    let html = '<h3>📊 自测结果</h3>';
+    html += `<div style="text-align:center;padding:30px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:16px;margin-bottom:20px">`;
+    html += `<div style="font-size:48px;font-weight:bold;color:${color};margin-bottom:8px">${atlasQuizState.score}/${atlasQuizState.total}</div>`;
+    html += `<div style="font-size:24px;color:${color};font-weight:600;margin-bottom:8px">${pct}分 · ${grade}</div>`;
+    html += `<div style="color:#64748b;font-size:14px">${msg}</div>`;
+    html += '</div>';
+    
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">';
+    html += `<div style="background:#d1fae5;border-radius:12px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:bold;color:#059669">${atlasQuizState.score}</div><div style="font-size:12px;color:#065f46">答对</div></div>`;
+    html += `<div style="background:#fee2e2;border-radius:12px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:bold;color:#dc2626">${atlasQuizState.total-atlasQuizState.score}</div><div style="font-size:12px;color:#991b1b">答错</div></div>`;
+    html += '</div>';
+    
+    html += '<div style="display:flex;gap:12px">';
+    html += '<button onclick="startAtlasQuiz()" style="flex:1;padding:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">🔄 再测一次</button>';
+    html += '<button onclick="renderAtlasOverview()" style="flex:1;padding:12px;background:#f1f5f9;color:#475569;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">📖 返回图谱</button>';
+    html += '</div>';
+    
+    panel.innerHTML = html;
+    atlasQuizState.active = false;
+  }
+}
 
 </script>
 
