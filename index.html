@@ -1321,6 +1321,108 @@ body.dark .compare-table th{background:#334155}
 }
 .admin-empty{text-align:center;padding:40px;color:#94a3b8;font-size:14px}
 
+
+/* ===== Gamification System ===== */
+.xp-bar-container{
+  background:#e2e8f0;border-radius:10px;height:8px;overflow:hidden;margin:4px 0;
+}
+.xp-bar-fill{
+  background:linear-gradient(90deg,#f59e0b,#f97316);height:100%;border-radius:10px;
+  transition:width 0.5s ease;
+}
+.level-badge{
+  display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#f59e0b,#f97316);
+  color:#fff;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;
+}
+.streak-badge{
+  display:inline-flex;align-items:center;gap:2px;background:linear-gradient(135deg,#ef4444,#f97316);
+  color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;
+}
+.achievement-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0;
+}
+.achievement-card{
+  background:#f8fafc;border-radius:12px;padding:16px;text-align:center;
+  border:2px solid #e2e8f0;transition:all 0.3s;position:relative;overflow:hidden;
+}
+.achievement-card.unlocked{
+  background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:#f59e0b;
+  box-shadow:0 4px 12px rgba(245,158,11,0.2);
+}
+.achievement-card .icon{font-size:32px;margin-bottom:8px;filter:grayscale(100%);opacity:0.4}
+.achievement-card.unlocked .icon{filter:none;opacity:1}
+.achievement-card .name{font-size:12px;font-weight:700;color:#334155;margin-bottom:4px}
+.achievement-card .desc{font-size:10px;color:#64748b;line-height:1.4}
+.achievement-card.unlocked .name{color:#92400e}
+.achievement-popup{
+  position:fixed;top:80px;right:20px;background:linear-gradient(135deg,#fef3c7,#fde68a);
+  border:2px solid #f59e0b;border-radius:16px;padding:20px;z-index:8000;
+  box-shadow:0 10px 40px rgba(245,158,11,0.3);animation:achievementSlide 0.5s ease;
+  max-width:280px;
+}
+@keyframes achievementSlide{
+  from{transform:translateX(400px);opacity:0}
+  to{transform:translateX(0);opacity:1}
+}
+.achievement-popup .title{font-size:11px;color:#92400e;font-weight:700;margin-bottom:8px}
+.achievement-popup .icon{font-size:40px;margin-bottom:8px}
+.achievement-popup .name{font-size:16px;font-weight:700;color:#78350f;margin-bottom:4px}
+.achievement-popup .desc{font-size:12px;color:#92400e}
+.achievement-popup .close{position:absolute;top:8px;right:12px;cursor:pointer;color:#92400e;font-size:16px}
+
+/* Flashcard Rating Buttons */
+.flashcard-rating{
+  display:flex;gap:8px;margin-top:16px;justify-content:center;
+}
+.rating-btn{
+  flex:1;padding:12px 8px;border:none;border-radius:10px;cursor:pointer;
+  font-size:13px;font-weight:700;transition:all 0.2s;color:#fff;
+}
+.rating-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+.rating-btn.again{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.rating-btn.hard{background:linear-gradient(135deg,#f97316,#ea580c)}
+.rating-btn.good{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.rating-btn.easy{background:linear-gradient(135deg,#3b82f6,#2563eb)}
+.rating-btn .interval{display:block;font-size:10px;font-weight:400;opacity:0.9;margin-top:2px}
+
+/* Focus Stats */
+.focus-stats-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0;
+}
+.focus-stat{
+  background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:12px;padding:16px;
+  text-align:center;border-left:4px solid #0ea5e9;
+}
+.focus-stat .value{font-size:24px;font-weight:700;color:#0369a1}
+.focus-stat .label{font-size:11px;color:#64748b;margin-top:4px}
+
+/* Daily Goal */
+.daily-goal-card{
+  background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:12px;padding:16px;
+  border-left:4px solid #22c55e;margin:12px 0;
+}
+.goal-progress-ring{
+  width:60px;height:60px;border-radius:50%;background:conic-gradient(#22c55e var(--progress),#e2e8f0 0);
+  display:flex;align-items:center;justify-content:center;position:relative;
+}
+.goal-progress-ring::before{
+  content:'';position:absolute;width:48px;height:48px;background:#fff;border-radius:50%;
+}
+.goal-progress-ring span{position:relative;font-size:12px;font-weight:700;color:#16a34a;z-index:1}
+
+/* Learning Heatmap */
+.heatmap-container{
+  display:flex;gap:3px;flex-wrap:wrap;margin:12px 0;
+}
+.heatmap-cell{
+  width:14px;height:14px;border-radius:3px;background:#f1f5f9;
+}
+.heatmap-cell.level1{background:#bbf7d0}
+.heatmap-cell.level2{background:#86efac}
+.heatmap-cell.level3{background:#4ade80}
+.heatmap-cell.level4{background:#22c55e}
+.heatmap-cell.level5{background:#16a34a}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -1413,6 +1515,10 @@ body.dark .compare-table th{background:#334155}
   <h1 id="pageTitle">总览仪表盘</h1>
   <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
     <div style="position:relative">
+      <div id="topbarGamify" style="display:flex;align-items:center;gap:8px;margin-right:8px">
+        <span class="level-badge" id="topbarLevel" style="display:none">⭐ Lv.1</span>
+        <span class="streak-badge" id="topbarStreak" style="display:none">🔥 0天</span>
+      </div>
       <div class="user-info" id="userInfo" onclick="toggleUserDropdown()" style="display:none">
         <div class="avatar" id="userAvatar">U</div>
         <span id="userName">用户</span>
@@ -1435,6 +1541,7 @@ body.dark .compare-table th{background:#334155}
 <div class="tab-content active" id="tab-dashboard">
   <div class="phase-banner" id="phaseBanner"></div>
   <div class="stats-row" id="statsRow"></div>
+    <div id="gamifySection" style="margin-top:20px"></div>
   
   <!-- 全局搜索 -->
   <div class="card" style="margin-bottom:16px">
@@ -1946,15 +2053,23 @@ body.dark .compare-table th{background:#334155}
       </div>
       <div class="flashcard-controls">
         <button class="btn btn-outline" onclick="prevFlashcard()">⬅️ 上一张</button>
-        <button class="btn btn-outline" onclick="markFlashcard(false)">❌ 未掌握</button>
-        <button class="btn" onclick="markFlashcard(true)" style="background:#16a34a">✅ 已掌握</button>
+        <div class="flashcard-rating" id="flashcardRating" style="display:none">
+          <button class="rating-btn again" onclick="rateFlashcardSRS(0)">忘记<span class="interval">1分钟</span></button>
+          <button class="rating-btn hard" onclick="rateFlashcardSRS(1)">困难<span class="interval">1天</span></button>
+          <button class="rating-btn good" onclick="rateFlashcardSRS(2)">一般<span class="interval">3天</span></button>
+          <button class="rating-btn easy" onclick="rateFlashcardSRS(3)">简单<span class="interval">7天</span></button>
+        </div>
+        <div id="flashcardSimpleBtns" style="display:flex;gap:8px;justify-content:center">
+          <button class="btn btn-outline" onclick="markFlashcard(false)">❌ 未掌握</button>
+          <button class="btn" onclick="markFlashcard(true)" style="background:#16a34a">✅ 已掌握</button>
+        </div>
         <button class="btn btn-outline" onclick="nextFlashcard()">下一张 ➡️</button>
       </div>
       <div class="flashcard-nav">
         <span class="flashcard-progress" id="fcProgress"></span>
         <button class="btn btn-outline" onclick="shuffleFlashcards()">🔀 打乱顺序</button>
         <button class="btn btn-outline" onclick="toggleUnknownOnly()">🎯 只看未掌握</button>
-      </div>
+      </div><div id="fcGamifyStats" style="text-align:center;margin:8px 0"></div>
       <div class="flashcard-stats">
         <span>✅ 已掌握: <b id="fcKnown">0</b></span>
         <span>❌ 未掌握: <b id="fcUnknown">0</b></span>
@@ -2040,6 +2155,7 @@ body.dark .compare-table th{background:#334155}
         <div style="margin-top:16px;font-size:13px;color:var(--text2)">
           今日完成番茄钟：<b id="pomodoroCount" style="color:var(--primary)">0</b> 个
         </div>
+        <div id="focusStatsContainer" style="margin-top:12px"></div>
       </div>
     </div>
 
@@ -16906,6 +17022,12 @@ function renderDashboard(){
     <div class="stat-card"><div class="val" style="color:var(--purple)">${phase.name.slice(0,2)}</div><div class="lbl">当前备考阶段</div></div>
   `;
   
+  // 游戏化面板
+  const gamifySection = document.getElementById('gamifySection');
+  if(gamifySection && typeof renderGamifyDashboard === 'function'){
+    gamifySection.innerHTML = renderGamifyDashboard() + renderDailyGoal() + '<div style="margin-top:20px"><h4 style="margin:0 0 12px;font-size:14px;color:#334155">📅 近60天学习热力图</h4>' + renderHeatmap(60) + '</div>';
+  }
+  
   // Today's date
   const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
   document.getElementById('todayDate').textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
@@ -19572,6 +19694,18 @@ function renderFlashcard(){
 
 function flipFlashcard(){
   document.getElementById('flashcard').classList.toggle('flipped');
+  const isFlipped = document.getElementById('flashcard').classList.contains('flipped');
+  const rating = document.getElementById('flashcardRating');
+  const simpleBtns = document.getElementById('flashcardSimpleBtns');
+  if(rating && simpleBtns){
+    if(isFlipped){
+      rating.style.display = 'flex';
+      simpleBtns.style.display = 'none';
+    }else{
+      rating.style.display = 'none';
+      simpleBtns.style.display = 'flex';
+    }
+  }
 }
 
 function nextFlashcard(){
@@ -19611,6 +19745,8 @@ function updateFcStats(){
   document.getElementById('fcUnknown').textContent = unknown;
   document.getElementById('fcRate').textContent = total>0 ? Math.round(marked/total*100) + '%' : '0%';
 }
+  // 更新游戏化统计
+  if(typeof updateGamifyFlashcardStats === 'function') updateGamifyFlashcardStats();
 
 function shuffleFlashcards(){
   for(let i=fcState.cards.length-1;i>0;i--){
@@ -19626,6 +19762,21 @@ function resetFlashcards(){
   document.getElementById('flashcardPlay').style.display = 'none';
   initFlashcardSetup();
 }
+
+
+function rateFlashcardSRS(rating){
+  const card = currentFlashcards[flashcardIndex];
+  if(!card) return;
+  const cardId = card.word || `card_${flashcardIndex}`;
+  if(typeof rateFlashcard === 'function') rateFlashcard(cardId, rating);
+  appState.flashcardKnown[card.word] = rating >= 2;
+  saveState();
+  nextFlashcard();
+  updateFlashcardStats();
+}
+
+
+
 
 // ==================== MEMORIZATION ASSISTANT ====================
 const EBBINGHAUS_INTERVALS = [1, 2, 4, 7, 15]; // days
@@ -20825,6 +20976,7 @@ function startPomodoro(){
       pomodoro.running = false;
       if(pomodoro.mode === 'work'){
         pomodoro.count++;
+      if(typeof recordFocusSession === 'function') recordFocusSession(pomodoro.workDuration || 25, 'memorize');;
         if(!appState.pomodoroCount) appState.pomodoroCount = 0;
         appState.pomodoroCount++;
         // Record study day
@@ -22794,8 +22946,22 @@ function updateUserUI(){
     userInfo.style.display = 'flex';
     document.getElementById('userName').textContent = user.username;
     document.getElementById('userAvatar').textContent = user.username.charAt(0).toUpperCase();
+    // 更新游戏化显示
+    const data = getGamifyData();
+    const levelBadge = document.getElementById('topbarLevel');
+    const streakBadge = document.getElementById('topbarStreak');
+    const topbarGamify = document.getElementById('topbarGamify');
+    if(levelBadge && streakBadge && topbarGamify){
+      topbarGamify.style.display = 'flex';
+      levelBadge.style.display = 'inline-flex';
+      streakBadge.style.display = 'inline-flex';
+      levelBadge.textContent = '⭐ Lv.' + data.level;
+      streakBadge.textContent = '🔥 ' + data.streak + '天';
+    }
   } else {
     userInfo.style.display = 'none';
+    const topbarGamify = document.getElementById('topbarGamify');
+    if(topbarGamify) topbarGamify.style.display = 'none';
   }
 }
 
@@ -23414,6 +23580,432 @@ openAdminPanel = function(){
   originalOpenAdminPanel();
   renderAdminInvites();
 };
+
+
+// ==================== GAMIFICATION & ENHANCED LEARNING SYSTEM ====================
+const GAMIFY_KEY = 'kaoyan_gamify_data';
+const FOCUS_KEY = 'kaoyan_focus_data';
+const FLASHCARD_SRS_KEY = 'kaoyan_flashcard_srs';
+
+// 成就定义
+const ACHIEVEMENTS = [
+  {id:'first_login', icon:'🎉', name:'初来乍到', desc:'首次登录系统'},
+  {id:'streak_3', icon:'🔥', name:'三日连胜', desc:'连续学习3天'},
+  {id:'streak_7', icon:'⚡', name:'一周达人', desc:'连续学习7天'},
+  {id:'streak_30', icon:'👑', name:'月度王者', desc:'连续学习30天'},
+  {id:'vocab_100', icon:'📖', name:'词汇新手', desc:'掌握100个单词'},
+  {id:'vocab_1000', icon:'📚', name:'词汇达人', desc:'掌握1000个单词'},
+  {id:'vocab_3000', icon:'🏆', name:'词汇大师', desc:'掌握3000个单词'},
+  {id:'flashcard_50', icon:'🃏', name:'闪卡学徒', desc:'完成50张闪卡'},
+  {id:'flashcard_500', icon:'🎴', name:'闪卡高手', desc:'完成500张闪卡'},
+  {id:'quiz_100', icon:'✏️', name:'刷题新手', desc:'完成100道题目'},
+  {id:'quiz_1000', icon:'📝', name:'刷题达人', desc:'完成1000道题目'},
+  {id:'focus_10', icon:'🍅', name:'番茄新手', desc:'完成10个番茄钟'},
+  {id:'focus_100', icon:'⏰', name:'专注大师', desc:'完成100个番茄钟'},
+  {id:'level_5', icon:'⭐', name:'五级学者', desc:'达到5级'},
+  {id:'level_10', icon:'🌟', name:'十级学霸', desc:'达到10级'},
+  {id:'all_subjects', icon:'🎯', name:'全能选手', desc:'四个科目都学习过'},
+];
+
+function getGamifyData(){
+  try{
+    const data = JSON.parse(localStorage.getItem(GAMIFY_KEY)) || {};
+    return {
+      xp: data.xp || 0,
+      level: data.level || 1,
+      streak: data.streak || 0,
+      lastStudyDate: data.lastStudyDate || null,
+      totalStudyMinutes: data.totalStudyMinutes || 0,
+      flashcardsReviewed: data.flashcardsReviewed || 0,
+      quizzesCompleted: data.quizzesCompleted || 0,
+      focusSessions: data.focusSessions || 0,
+      vocabMastered: data.vocabMastered || 0,
+      achievements: data.achievements || [],
+      subjectsStudied: data.subjectsStudied || [],
+      dailyStats: data.dailyStats || {}
+    };
+  }catch(e){
+    return {xp:0,level:1,streak:0,lastStudyDate:null,totalStudyMinutes:0,
+      flashcardsReviewed:0,quizzesCompleted:0,focusSessions:0,vocabMastered:0,
+      achievements:[],subjectsStudied:[],dailyStats:{}};
+  }
+}
+
+function saveGamifyData(data){
+  localStorage.setItem(GAMIFY_KEY, JSON.stringify(data));
+}
+
+function xpForLevel(level){
+  return Math.floor(100 * Math.pow(1.5, level - 1));
+}
+
+function addXP(amount, reason){
+  const data = getGamifyData();
+  data.xp += amount;
+  let leveledUp = false;
+  while(data.xp >= xpForLevel(data.level)){
+    data.xp -= xpForLevel(data.level);
+    data.level++;
+    leveledUp = true;
+  }
+  // 记录每日统计
+  const today = new Date().toISOString().slice(0,10);
+  if(!data.dailyStats[today]) data.dailyStats[today] = {xp:0, minutes:0, flashcards:0, quizzes:0};
+  data.dailyStats[today].xp += amount;
+  saveGamifyData(data);
+  checkAchievements();
+  if(leveledUp){
+    showAchievementPopup('⭐', '等级提升！', `恭喜达到 ${data.level} 级！`);
+  }
+  return data;
+}
+
+function recordStudyActivity(type, amount, subject){
+  const data = getGamifyData();
+  const today = new Date().toISOString().slice(0,10);
+  
+  // 更新连胜
+  if(data.lastStudyDate !== today){
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+    if(data.lastStudyDate === yesterday){
+      data.streak++;
+    }else if(data.lastStudyDate !== today){
+      data.streak = 1;
+    }
+    data.lastStudyDate = today;
+  }
+  
+  // 记录活动
+  if(type === 'flashcard') data.flashcardsReviewed += amount;
+  if(type === 'quiz') data.quizzesCompleted += amount;
+  if(type === 'focus') data.focusSessions += amount;
+  if(type === 'minutes') data.totalStudyMinutes += amount;
+  
+  // 记录科目
+  if(subject && !data.subjectsStudied.includes(subject)){
+    data.subjectsStudied.push(subject);
+  }
+  
+  // 每日统计
+  if(!data.dailyStats[today]) data.dailyStats[today] = {xp:0, minutes:0, flashcards:0, quizzes:0};
+  if(type === 'flashcard') data.dailyStats[today].flashcards += amount;
+  if(type === 'quiz') data.dailyStats[today].quizzes += amount;
+  if(type === 'minutes') data.dailyStats[today].minutes += amount;
+  
+  saveGamifyData(data);
+  checkAchievements();
+}
+
+function checkAchievements(){
+  const data = getGamifyData();
+  const newAchievements = [];
+  
+  const checks = {
+    'first_login': true,
+    'streak_3': data.streak >= 3,
+    'streak_7': data.streak >= 7,
+    'streak_30': data.streak >= 30,
+    'vocab_100': data.vocabMastered >= 100,
+    'vocab_1000': data.vocabMastered >= 1000,
+    'vocab_3000': data.vocabMastered >= 3000,
+    'flashcard_50': data.flashcardsReviewed >= 50,
+    'flashcard_500': data.flashcardsReviewed >= 500,
+    'quiz_100': data.quizzesCompleted >= 100,
+    'quiz_1000': data.quizzesCompleted >= 1000,
+    'focus_10': data.focusSessions >= 10,
+    'focus_100': data.focusSessions >= 100,
+    'level_5': data.level >= 5,
+    'level_10': data.level >= 10,
+    'all_subjects': data.subjectsStudied.length >= 4,
+  };
+  
+  for(const [id, unlocked] of Object.entries(checks)){
+    if(unlocked && !data.achievements.includes(id)){
+      data.achievements.push(id);
+      const ach = ACHIEVEMENTS.find(a => a.id === id);
+      if(ach) newAchievements.push(ach);
+    }
+  }
+  
+  if(newAchievements.length > 0){
+    saveGamifyData(data);
+    newAchievements.forEach((ach, i) => {
+      setTimeout(() => showAchievementPopup(ach.icon, ach.name, ach.desc), i * 1500);
+    });
+  }
+}
+
+function showAchievementPopup(icon, name, desc){
+  const popup = document.createElement('div');
+  popup.className = 'achievement-popup';
+  popup.innerHTML = `
+    <span class="close" onclick="this.parentElement.remove()">✕</span>
+    <div class="title">🏆 成就解锁</div>
+    <div class="icon">${icon}</div>
+    <div class="name">${name}</div>
+    <div class="desc">${desc}</div>
+  `;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 5000);
+}
+
+function renderGamifyDashboard(){
+  const data = getGamifyData();
+  const xpNeeded = xpForLevel(data.level);
+  const xpPercent = Math.min(100, (data.xp / xpNeeded) * 100);
+  
+  let html = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+      <div class="level-badge">⭐ Lv.${data.level}</div>
+      <div class="streak-badge">🔥 ${data.streak}天连胜</div>
+      <div style="flex:1;min-width:200px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:2px">
+          <span>经验值</span><span>${data.xp} / ${xpNeeded} XP</span>
+        </div>
+        <div class="xp-bar-container"><div class="xp-bar-fill" style="width:${xpPercent}%"></div></div>
+      </div>
+    </div>
+  `;
+  
+  // 成就网格
+  html += '<div style="margin-top:20px"><h4 style="margin:0 0 12px;font-size:14px;color:#334155">🏆 成就墙 (' + data.achievements.length + '/' + ACHIEVEMENTS.length + ')</h4>';
+  html += '<div class="achievement-grid">';
+  ACHIEVEMENTS.forEach(ach => {
+    const unlocked = data.achievements.includes(ach.id);
+    html += `<div class="achievement-card ${unlocked ? 'unlocked' : ''}">
+      <div class="icon">${ach.icon}</div>
+      <div class="name">${ach.name}</div>
+      <div class="desc">${ach.desc}</div>
+    </div>`;
+  });
+  html += '</div></div>';
+  
+  return html;
+}
+
+// ==================== FLASHCARD SRS (Spaced Repetition) ====================
+function getFlashcardSRS(){
+  try{ return JSON.parse(localStorage.getItem(FLASHCARD_SRS_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveFlashcardSRS(data){
+  localStorage.setItem(FLASHCARD_SRS_KEY, JSON.stringify(data));
+}
+
+function rateFlashcard(cardId, rating){
+  // rating: 0=again, 1=hard, 2=good, 3=easy
+  const srs = getFlashcardSRS();
+  const card = srs[cardId] || {interval:0, repetitions:0, easeFactor:2.5, nextReview:null, lastReview:null};
+  
+  const now = Date.now();
+  card.lastReview = now;
+  
+  if(rating === 0){ // Again
+    card.repetitions = 0;
+    card.interval = 1; // 1分钟
+    card.easeFactor = Math.max(1.3, card.easeFactor - 0.2);
+  }else{
+    card.repetitions++;
+    if(card.repetitions === 1){
+      card.interval = rating === 1 ? 1 : (rating === 2 ? 1 : 2); // 天
+    }else if(card.repetitions === 2){
+      card.interval = rating === 1 ? 3 : (rating === 2 ? 6 : 10);
+    }else{
+      card.interval = Math.round(card.interval * card.easeFactor * (rating === 1 ? 0.8 : (rating === 3 ? 1.3 : 1)));
+    }
+    if(rating === 1) card.easeFactor = Math.max(1.3, card.easeFactor - 0.15);
+    if(rating === 3) card.easeFactor = Math.min(2.8, card.easeFactor + 0.15);
+  }
+  
+  card.nextReview = now + (card.interval * (card.repetitions <= 1 && rating === 0 ? 60000 : 86400000));
+  srs[cardId] = card;
+  saveFlashcardSRS(srs);
+  
+  // 记录活动和XP
+  recordStudyActivity('flashcard', 1, 'english');
+  addXP(rating === 0 ? 2 : (rating === 1 ? 5 : (rating === 2 ? 10 : 15)), 'flashcard');
+  
+  return card;
+}
+
+function getDueFlashcards(allCards){
+  const srs = getFlashcardSRS();
+  const now = Date.now();
+  const due = [];
+  const newCards = [];
+  
+  allCards.forEach((card, index) => {
+    const cardId = card.id || `card_${index}`;
+    const srsData = srs[cardId];
+    if(!srsData){
+      newCards.push({...card, _id:cardId, _isNew:true});
+    }else if(!srsData.nextReview || srsData.nextReview <= now){
+      due.push({...card, _id:cardId, _isNew:false, _srs:srsData});
+    }
+  });
+  
+  return {due:due, newCards:newCards};
+}
+
+// ==================== FOCUS / POMODORO ENHANCED ====================
+function getFocusData(){
+  try{ return JSON.parse(localStorage.getItem(FOCUS_KEY)) || {sessions:[], todayMinutes:0, totalMinutes:0}; }
+  catch(e){ return {sessions:[], todayMinutes:0, totalMinutes:0}; }
+}
+function saveFocusData(data){
+  localStorage.setItem(FOCUS_KEY, JSON.stringify(data));
+}
+
+function recordFocusSession(minutes, subject){
+  const data = getFocusData();
+  const today = new Date().toISOString().slice(0,10);
+  data.sessions.push({date:new Date().toISOString(), minutes:minutes, subject:subject});
+  if(data.sessions.length > 500) data.sessions = data.sessions.slice(-500);
+  data.totalMinutes += minutes;
+  if(!data.dailyMinutes) data.dailyMinutes = {};
+  data.dailyMinutes[today] = (data.dailyMinutes[today] || 0) + minutes;
+  saveFocusData(data);
+  recordStudyActivity('focus', 1, subject);
+  recordStudyActivity('minutes', minutes, subject);
+  addXP(minutes * 2, 'focus');
+}
+
+function renderFocusStats(){
+  const data = getFocusData();
+  const today = new Date().toISOString().slice(0,10);
+  const todayMin = data.dailyMinutes?.[today] || 0;
+  const weekMin = Object.entries(data.dailyMinutes || {})
+    .filter(([d]) => {
+      const date = new Date(d);
+      return date >= new Date(Date.now() - 7*86400000);
+    }).reduce((sum, [,m]) => sum + m, 0);
+  
+  return `
+    <div class="focus-stats-grid">
+      <div class="focus-stat">
+        <div class="value">${todayMin}</div>
+        <div class="label">今日专注(分钟)</div>
+      </div>
+      <div class="focus-stat" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-left-color:#f59e0b">
+        <div class="value" style="color:#92400e">${weekMin}</div>
+        <div class="label">本周专注(分钟)</div>
+      </div>
+      <div class="focus-stat" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-left-color:#22c55e">
+        <div class="value" style="color:#16a34a">${data.totalMinutes}</div>
+        <div class="label">累计专注(分钟)</div>
+      </div>
+    </div>
+  `;
+}
+
+// ==================== DAILY GOAL ====================
+const DAILY_GOAL_KEY = 'kaoyan_daily_goal';
+function getDailyGoal(){
+  try{ return JSON.parse(localStorage.getItem(DAILY_GOAL_KEY)) || {flashcards:20, quizzes:10, focusMinutes:60, vocab:15}; }
+  catch(e){ return {flashcards:20, quizzes:10, focusMinutes:60, vocab:15}; }
+}
+function saveDailyGoal(goal){
+  localStorage.setItem(DAILY_GOAL_KEY, JSON.stringify(goal));
+}
+
+function getDailyProgress(){
+  const goal = getDailyGoal();
+  const data = getGamifyData();
+  const focus = getFocusData();
+  const today = new Date().toISOString().slice(0,10);
+  const todayStats = data.dailyStats[today] || {xp:0, minutes:0, flashcards:0, quizzes:0};
+  const todayFocus = focus.dailyMinutes?.[today] || 0;
+  
+  return {
+    flashcards: {done: todayStats.flashcards || 0, goal: goal.flashcards},
+    quizzes: {done: todayStats.quizzes || 0, goal: goal.quizzes},
+    focus: {done: todayFocus, goal: goal.focusMinutes},
+    overall: Math.min(100, Math.round(((todayStats.flashcards/goal.flashcards) + (todayStats.quizzes/goal.quizzes) + (todayFocus/goal.focusMinutes)) / 3 * 100))
+  };
+}
+
+function renderDailyGoal(){
+  const progress = getDailyProgress();
+  const goal = getDailyGoal();
+  
+  let html = '<div class="daily-goal-card">';
+  html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">';
+  html += `<div class="goal-progress-ring" style="--progress:${progress.overall}%"><span>${progress.overall}%</span></div>`;
+  html += '<div><div style="font-size:14px;font-weight:700;color:#166534">🎯 今日学习目标</div>';
+  html += '<div style="font-size:11px;color:#64748b;margin-top:2px">完成所有目标获得额外50 XP</div></div></div>';
+  
+  const items = [
+    {label:'📖 闪卡', done:progress.flashcards.done, goal:progress.flashcards.goal},
+    {label:'✏️ 刷题', done:progress.quizzes.done, goal:progress.quizzes.goal},
+    {label:'🍅 专注', done:progress.focus.done + '分钟', goal:progress.focus.goal + '分钟'},
+  ];
+  
+  items.forEach(item => {
+    const percent = Math.min(100, (parseInt(item.done) / parseInt(item.goal)) * 100);
+    html += `<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#374151;margin-bottom:2px">
+        <span>${item.label}</span><span>${item.done} / ${item.goal}</span>
+      </div>
+      <div class="xp-bar-container" style="height:6px"><div class="xp-bar-fill" style="width:${percent}%;background:linear-gradient(90deg,#22c55e,#16a34a)"></div></div>
+    </div>`;
+  });
+  
+  html += '</div>';
+  return html;
+}
+
+// ==================== LEARNING HEATMAP ====================
+function renderHeatmap(days){
+  const data = getGamifyData();
+  const focus = getFocusData();
+  let html = '<div class="heatmap-container">';
+  
+  for(let i = days - 1; i >= 0; i--){
+    const date = new Date(Date.now() - i * 86400000);
+    const dateStr = date.toISOString().slice(0,10);
+    const xp = data.dailyStats?.[dateStr]?.xp || 0;
+    const minutes = focus.dailyMinutes?.[dateStr] || 0;
+    const activity = xp + minutes * 2;
+    let level = 0;
+    if(activity > 0) level = 1;
+    if(activity > 50) level = 2;
+    if(activity > 150) level = 3;
+    if(activity > 300) level = 4;
+    if(activity > 500) level = 5;
+    html += `<div class="heatmap-cell level${level}" title="${dateStr}: ${activity}活动值"></div>`;
+  }
+  
+  html += '</div>';
+  html += '<div style="display:flex;align-items:center;gap:6px;font-size:10px;color:#94a3b8;margin-top:4px">';
+  html += '<span>少</span>';
+  for(let i = 0; i <= 5; i++){
+    html += `<div class="heatmap-cell level${i}" style="width:10px;height:10px"></div>`;
+  }
+  html += '<span>多</span></div>';
+  return html;
+}
+
+// 初始化：首次登录成就
+setTimeout(() => {
+  const user = getCurrentUser();
+  if(user){
+    const data = getGamifyData();
+    if(!data.achievements.includes('first_login')){
+      data.achievements.push('first_login');
+      saveGamifyData(data);
+      showAchievementPopup('🎉', '初来乍到', '首次登录系统');
+    }
+  }
+}, 2000);
+
+
+function renderFocusStatsContainer(){
+  const container = document.getElementById('focusStatsContainer');
+  if(container && typeof renderFocusStats === 'function'){
+    container.innerHTML = renderFocusStats();
+  }
+}
+setTimeout(renderFocusStatsContainer, 1500);
 
 </script>
 
