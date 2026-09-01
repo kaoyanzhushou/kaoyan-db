@@ -1368,9 +1368,13 @@ body.dark .compare-table th{background:#334155}
         <label>确认密码</label>
         <input type="password" id="regPassword2" placeholder="再次输入密码" onkeypress="if(event.key==='Enter')doRegister()">
       </div>
+      <div class="login-form-group">
+        <label>🎫 邀请码</label>
+        <input type="text" id="regInviteCode" placeholder="请输入管理员提供的邀请码" onkeypress="if(event.key==='Enter')doRegister()" style="text-transform:uppercase;letter-spacing:2px">
+      </div>
       <button class="login-btn" onclick="doRegister()">注 册</button>
     </div>
-    <p class="login-hint">首次使用请先注册账号<br>数据保存在本地浏览器，无需联网</p>
+    <p class="login-hint">🎫 注册需邀请码，请联系管理员获取<br>数据保存在本地浏览器，无需联网</p>
   </div>
 </div>
 
@@ -22675,6 +22679,7 @@ function doRegister(){
   const username = document.getElementById('regUsername').value.trim();
   const password = document.getElementById('regPassword').value;
   const password2 = document.getElementById('regPassword2').value;
+  const inviteCode = document.getElementById('regInviteCode').value.trim();
   
   if(!username || username.length < 3 || username.length > 20){
     showLoginError('用户名需3-20个字符');
@@ -22689,26 +22694,38 @@ function doRegister(){
     return;
   }
   
+  // 验证邀请码
+  const inviteResult = validateInviteCode(inviteCode);
+  if(!inviteResult.valid){
+    showLoginError('🎫 ' + inviteResult.msg);
+    return;
+  }
+  
   const users = getUsers();
   if(users[username]){
     showLoginError('该用户名已被注册');
     return;
   }
   
+  // 使用邀请码
+  useInviteCode(inviteCode, username);
+  
   // 简单加密（base64）
   users[username] = {
     password: btoa(password),
     registerTime: new Date().toISOString(),
+    invitedBy: inviteResult.invite.createdBy,
+    inviteCodeUsed: inviteCode.toUpperCase(),
     studyData: {}
   };
   saveUsers(users);
   
-  showLoginSuccess('注册成功！请登录');
+  showLoginSuccess('✅ 注册成功！邀请码已核销，请登录');
   setTimeout(()=>{
     switchLoginTab('login');
     document.getElementById('loginUsername').value = username;
     document.getElementById('loginPassword').focus();
-  }, 1000);
+  }, 1200);
 }
 
 function doLogin(){
@@ -23172,6 +23189,232 @@ doLogin = function(){
 // 初始化默认管理员
 initDefaultAdmin();
 
+
+// ==================== INVITE CODE SYSTEM ====================
+const INVITE_CODES_KEY = 'kaoyan_invite_codes';
+
+function getInviteCodes(){
+  try{ return JSON.parse(localStorage.getItem(INVITE_CODES_KEY)) || []; }
+  catch(e){ return []; }
+}
+function saveInviteCodes(codes){
+  localStorage.setItem(INVITE_CODES_KEY, JSON.stringify(codes));
+}
+
+function generateInviteCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for(let i = 0; i < 8; i++){
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+function validateInviteCode(code){
+  if(!code) return {valid:false, msg:'请输入邀请码'};
+  code = code.toUpperCase().trim();
+  const codes = getInviteCodes();
+  const invite = codes.find(c => c.code === code);
+  
+  if(!invite) return {valid:false, msg:'邀请码不存在'};
+  if(invite.status === 'used') return {valid:false, msg:'该邀请码已被使用'};
+  
+  // 检查过期
+  if(invite.expiryDays > 0){
+    const createdAt = new Date(invite.createdAt).getTime();
+    const expiryTime = createdAt + (invite.expiryDays * 24 * 60 * 60 * 1000);
+    if(Date.now() > expiryTime){
+      return {valid:false, msg:'该邀请码已过期'};
+    }
+  }
+  
+  return {valid:true, invite:invite};
+}
+
+function useInviteCode(code, username){
+  code = code.toUpperCase().trim();
+  const codes = getInviteCodes();
+  const index = codes.findIndex(c => c.code === code);
+  if(index >= 0){
+    codes[index].status = 'used';
+    codes[index].usedBy = username;
+    codes[index].usedAt = new Date().toISOString();
+    saveInviteCodes(codes);
+    return true;
+  }
+  return false;
+}
+
+function adminGenerateInvites(){
+  const count = parseInt(document.getElementById('inviteBatchCount').value) || 1;
+  const expiryDays = parseInt(document.getElementById('inviteExpiry').value);
+  const codes = getInviteCodes();
+  const currentUser = getCurrentUser();
+  
+  let newCodes = [];
+  for(let i = 0; i < count; i++){
+    let code;
+    do{
+      code = generateInviteCode();
+    }while(codes.find(c => c.code === code));
+    
+    const invite = {
+      code: code,
+      status: 'unused',
+      createdBy: currentUser?.username || 'admin',
+      createdAt: new Date().toISOString(),
+      expiryDays: expiryDays,
+      usedBy: null,
+      usedAt: null
+    };
+    codes.push(invite);
+    newCodes.push(code);
+  }
+  
+  saveInviteCodes(codes);
+  addAdminLog(`生成${count}个邀请码: ${newCodes.join(', ')}`);
+  
+  // 显示生成的邀请码
+  const msg = `✅ 成功生成 ${count} 个邀请码：\n\n${newCodes.map((c,i) => `${i+1}. ${c}`).join('\n')}\n\n请将邀请码提供给需要注册的用户。`;
+  alert(msg);
+  
+  renderAdminInvites();
+}
+
+function renderAdminInvites(){
+  const codes = getInviteCodes();
+  const unused = codes.filter(c => c.status === 'unused');
+  const used = codes.filter(c => c.status === 'used');
+  
+  document.getElementById('statUnusedInvites').textContent = unused.length;
+  document.getElementById('statUsedInvites').textContent = used.length;
+  document.getElementById('statTotalInvites').textContent = codes.length;
+  
+  // 按创建时间倒序
+  codes.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  
+  let html = '<table class="admin-table"><thead><tr><th>邀请码</th><th>状态</th><th>生成者</th><th>生成时间</th><th>有效期</th><th>使用者</th><th>使用时间</th><th>操作</th></tr></thead><tbody>';
+  
+  if(codes.length === 0){
+    html += '<tr><td colspan="8"><div class="admin-empty">暂无邀请码，点击上方"生成邀请码"按钮创建</div></td></tr>';
+  }
+  
+  codes.forEach(invite => {
+    const isExpired = invite.expiryDays > 0 && 
+      (Date.now() > new Date(invite.createdAt).getTime() + invite.expiryDays * 24 * 60 * 60 * 1000);
+    
+    let statusBadge, statusText;
+    if(invite.status === 'used'){
+      statusBadge = 'admin'; statusText = '已使用';
+    }else if(isExpired){
+      statusBadge = 'user'; statusText = '已过期';
+    }else{
+      statusBadge = 'admin'; statusText = '未使用';
+    }
+    
+    const expiryText = invite.expiryDays === 0 ? '永久' : `${invite.expiryDays}天`;
+    const createdTime = new Date(invite.createdAt).toLocaleString();
+    const usedTime = invite.usedAt ? new Date(invite.usedAt).toLocaleString() : '-';
+    
+    html += `<tr>
+      <td><strong style="font-family:monospace;letter-spacing:2px;color:#2563eb">${invite.code}</strong></td>
+      <td><span class="admin-badge ${statusBadge}">${statusText}</span></td>
+      <td>${invite.createdBy || '-'}</td>
+      <td>${createdTime}</td>
+      <td>${expiryText}</td>
+      <td>${invite.usedBy || '-'}</td>
+      <td>${usedTime}</td>
+      <td>
+        ${invite.status === 'unused' ? `<button class="admin-action-btn" style="background:#dbeafe;color:#1e40af" onclick="adminCopyInvite('${invite.code}')">复制</button>` : ''}
+        ${invite.status === 'unused' ? `<button class="admin-action-btn delete" onclick="adminDeleteInvite('${invite.code}')">删除</button>` : ''}
+      </td>
+    </tr>`;
+  });
+  
+  html += '</tbody></table>';
+  document.getElementById('adminInviteList').innerHTML = html;
+}
+
+function adminCopyInvite(code){
+  navigator.clipboard.writeText(code).then(() => {
+    alert(`✅ 邀请码 ${code} 已复制到剪贴板`);
+  }).catch(() => {
+    // 降级方案
+    const textarea = document.createElement('textarea');
+    textarea.value = code;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    alert(`✅ 邀请码 ${code} 已复制到剪贴板`);
+  });
+}
+
+function adminCopyUnusedInvites(){
+  const codes = getInviteCodes().filter(c => c.status === 'unused');
+  if(codes.length === 0){
+    alert('没有未使用的邀请码');
+    return;
+  }
+  const text = codes.map(c => c.code).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    alert(`✅ 已复制 ${codes.length} 个未使用邀请码到剪贴板`);
+  }).catch(() => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    alert(`✅ 已复制 ${codes.length} 个未使用邀请码到剪贴板`);
+  });
+}
+
+function adminDeleteInvite(code){
+  if(!confirm(`确定要删除邀请码 ${code} 吗？`)) return;
+  let codes = getInviteCodes();
+  codes = codes.filter(c => c.code !== code);
+  saveInviteCodes(codes);
+  addAdminLog(`删除邀请码: ${code}`);
+  renderAdminInvites();
+}
+
+function adminClearExpiredInvites(){
+  const codes = getInviteCodes();
+  const before = codes.length;
+  const validCodes = codes.filter(c => {
+    if(c.status === 'used') return true; // 保留已使用的记录
+    if(c.expiryDays === 0) return true; // 永久有效
+    const expiryTime = new Date(c.createdAt).getTime() + c.expiryDays * 24 * 60 * 60 * 1000;
+    return Date.now() <= expiryTime;
+  });
+  saveInviteCodes(validCodes);
+  const removed = before - validCodes.length;
+  addAdminLog(`清理过期邀请码: 移除${removed}个`);
+  alert(`✅ 已清理 ${removed} 个过期邀请码`);
+  renderAdminInvites();
+}
+
+// 修改switchAdminTab支持invites
+const originalSwitchAdminTab = switchAdminTab;
+switchAdminTab = function(tab){
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('adminTabUsers').style.display = tab==='users' ? 'block' : 'none';
+  document.getElementById('adminTabStats').style.display = tab==='stats' ? 'block' : 'none';
+  document.getElementById('adminTabSettings').style.display = tab==='settings' ? 'block' : 'none';
+  document.getElementById('adminTabInvites').style.display = tab==='invites' ? 'block' : 'none';
+  document.getElementById('adminTabLogs').style.display = tab==='logs' ? 'block' : 'none';
+  if(tab === 'invites') renderAdminInvites();
+};
+
+// 修改openAdminPanel以加载邀请码
+const originalOpenAdminPanel = openAdminPanel;
+openAdminPanel = function(){
+  originalOpenAdminPanel();
+  renderAdminInvites();
+};
+
 </script>
 
 <!-- Admin Panel -->
@@ -23185,6 +23428,7 @@ initDefaultAdmin();
       <div class="admin-tab active" onclick="switchAdminTab('users')">👥 用户管理</div>
       <div class="admin-tab" onclick="switchAdminTab('stats')">📊 数据统计</div>
       <div class="admin-tab" onclick="switchAdminTab('settings')">🔧 系统设置</div>
+      <div class="admin-tab" onclick="switchAdminTab('invites')">🎫 邀请码管理</div>
       <div class="admin-tab" onclick="switchAdminTab('logs')">📋 操作日志</div>
     </div>
     <div class="admin-body">
@@ -23261,6 +23505,43 @@ initDefaultAdmin();
           <div><strong>默认管理员：</strong>admin / admin123456</div>
           <div><strong>考试时间：</strong>2026年12月19日</div>
         </div>
+      </div>
+      <!-- 邀请码管理 -->
+      <div id="adminTabInvites" style="display:none">
+        <h3 class="admin-section-title">邀请码管理</h3>
+        <div class="admin-stats-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="admin-stat-card">
+            <div class="label">未使用邀请码</div>
+            <div class="value" id="statUnusedInvites" style="color:#22c55e">0</div>
+          </div>
+          <div class="admin-stat-card" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-left-color:#f59e0b">
+            <div class="label">已使用邀请码</div>
+            <div class="value" id="statUsedInvites" style="color:#d97706">0</div>
+          </div>
+          <div class="admin-stat-card" style="background:linear-gradient(135deg,#fee2e2,#fecaca);border-left-color:#ef4444">
+            <div class="label">邀请码总数</div>
+            <div class="value" id="statTotalInvites" style="color:#dc2626">0</div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group" style="flex:0 0 120px">
+            <label>生成数量</label>
+            <input type="number" id="inviteBatchCount" value="1" min="1" max="50">
+          </div>
+          <div class="admin-form-group" style="flex:0 0 160px">
+            <label>有效期（天）</label>
+            <select id="inviteExpiry">
+              <option value="7">7天</option>
+              <option value="30" selected>30天</option>
+              <option value="90">90天</option>
+              <option value="0">永久有效</option>
+            </select>
+          </div>
+          <button class="admin-btn-primary" onclick="adminGenerateInvites()">🎫 生成邀请码</button>
+          <button class="admin-btn-secondary" onclick="adminCopyUnusedInvites()">📋 复制未使用</button>
+          <button class="admin-action-btn delete" onclick="adminClearExpiredInvites()">🗑️ 清理过期</button>
+        </div>
+        <div id="adminInviteList"></div>
       </div>
       <!-- 操作日志 -->
       <div id="adminTabLogs" style="display:none">
