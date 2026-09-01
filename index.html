@@ -108,12 +108,20 @@ body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;backgroun
 .search-result .sr-title{font-size:14px;font-weight:600;color:var(--primary);cursor:pointer}
 .search-result .sr-snippet{font-size:13px;color:var(--text2);margin-top:4px}
 /* Mobile */
+
+/* Nav Group */
+.nav-group{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;padding:14px 20px 6px;font-weight:600;border-top:1px solid #334155;margin-top:8px}
+.nav-group:first-of-type{border-top:none;margin-top:0}
+.nav-item{padding:9px 20px;font-size:13px}
+.nav-item .icon{font-size:15px}
 @media(max-width:768px){
+  .nav-group{display:none}
   .sidebar{width:60px}
   .sidebar h2,.nav-item span{display:none}
   .main{margin-left:60px;padding:16px}
   .dash-grid,.stats-row{grid-template-columns:1fr}
 }
+
 /* Print */
 @media print{.sidebar,.topbar,.search-box{display:none}.main{margin-left:0}}
 /* ===== Dark Mode ===== */
@@ -1144,22 +1152,28 @@ body.dark .compare-table th{background:#334155}
 <!-- Sidebar -->
 <nav class="sidebar">
   <h2>2027考研资料库<span>上海体育大学 · 运动康复</span></h2>
-  <div class="nav-item active" data-tab="dashboard"><span class="icon">📊</span><span>总览仪表盘</span></div>
+  <div class="nav-group">📊 总览</div>
+  <div class="nav-item active" data-tab="dashboard"><span class="icon">📊</span><span>仪表盘</span></div>
+
+  <div class="nav-group">📚 学科知识</div>
   <div class="nav-item" data-tab="english"><span class="icon">📖</span><span>英语（一）</span></div>
   <div class="nav-item" data-tab="politics"><span class="icon">📕</span><span>政治</span></div>
   <div class="nav-item" data-tab="physio"><span class="icon">🫀</span><span>运动生理学</span></div>
   <div class="nav-item" data-tab="anatomy"><span class="icon">🦴</span><span>运动解剖学</span></div>
+
+  <div class="nav-group">🛠️ 学习工具</div>
   <div class="nav-item" data-tab="plan"><span class="icon">📅</span><span>备考规划</span></div>
   <div class="nav-item" data-tab="progress"><span class="icon">✅</span><span>学习进度</span></div>
   <div class="nav-item" data-tab="quiz"><span class="icon">📝</span><span>刷题模考</span></div>
-  <div class="nav-item" data-tab="english-pro" onclick="switchTab('english-pro')">
-      <span class="nav-icon">✍️</span>
-      <span>英语高分</span>
-    </div>
-    <div class="nav-item" data-tab="flashcard"><span class="icon">🎴</span><span>闪卡记忆</span></div>
+
+  <div class="nav-group">🧠 记忆工具</div>
+  <div class="nav-item" data-tab="flashcard"><span class="icon">🎴</span><span>闪卡记忆</span></div>
   <div class="nav-item" data-tab="memorize"><span class="icon">🧠</span><span>背诵助手</span></div>
   <div class="nav-item" data-tab="ai-assistant"><span class="icon">🤖</span><span>AI学习助手</span></div>
-  <div class="nav-item" data-tab="pro-course"><span class="icon">🎯</span><span>专业课高效学习</span></div>
+
+  <div class="nav-group">🚀 专项提升</div>
+  <div class="nav-item" data-tab="english-pro" onclick="switchTab('english-pro')"><span class="icon">✍️</span><span>英语高分</span></div>
+  <div class="nav-item" data-tab="pro-course"><span class="icon">🎯</span><span>专业课提升</span></div>
 </nav>
 
 <!-- Main -->
@@ -18228,7 +18242,7 @@ function switchTab(tabName){
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   document.getElementById('tab-'+tabName).classList.add('active');
   
-  const titles = {dashboard:'总览仪表盘','english-pro':'英语高分突破',english:'英语（一）知识点',politics:'政治知识点',physio:'运动生理学知识点',anatomy:'运动解剖学知识点',plan:'备考规划',progress:'学习进度',quiz:'刷题模考',flashcard:'闪卡记忆',memorize:'背诵助手','pro-course':'专业课高效学习','ai-assistant':'AI学习助手'};
+  const titles = {dashboard:'仪表盘','english-pro':'英语高分突破',english:'英语（一）知识点',politics:'政治知识点',physio:'运动生理学知识点',anatomy:'运动解剖学知识点',plan:'备考规划',progress:'学习进度',quiz:'刷题模考',flashcard:'闪卡记忆',memorize:'背诵助手','pro-course':'专业课高效学习','ai-assistant':'AI学习助手'};
   document.getElementById('pageTitle').textContent = titles[tabName] || '考研资料库';
   
   if(tabName === 'dashboard') renderDashboard();
