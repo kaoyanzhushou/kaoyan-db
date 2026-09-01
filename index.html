@@ -23061,10 +23061,14 @@ function updateUserUI(){
       levelBadge.textContent = '⭐ Lv.' + data.level;
       streakBadge.textContent = '🔥 ' + data.streak + '天';
     }
+    // 更新管理员菜单（关键修复）
+    if(typeof updateAdminMenu === 'function') updateAdminMenu();
   } else {
     userInfo.style.display = 'none';
     const topbarGamify = document.getElementById('topbarGamify');
     if(topbarGamify) topbarGamify.style.display = 'none';
+    // 隐藏管理员菜单
+    if(typeof updateAdminMenu === 'function') updateAdminMenu();
   }
 }
 
@@ -23130,6 +23134,8 @@ function initLoginSystem(){
     // 已登录，解锁内容
     unlockContent();
     updateUserUI();
+    // 确保管理员菜单显示（延迟执行，确保DOM已渲染）
+    setTimeout(() => { if(typeof updateAdminMenu === 'function') updateAdminMenu(); }, 100);
   } else {
     // 未登录，显示登录界面
     lockContent();
@@ -23166,15 +23172,27 @@ function initDefaultAdmin(){
 function isAdmin(){
   const user = getCurrentUser();
   if(!user) return false;
+  // admin用户名默认为管理员（兼容旧数据）
+  if(user.username === 'admin') return true;
   const users = getUsers();
   return users[user.username] && users[user.username].role === 'admin';
 }
 
 function updateAdminMenu(){
   const menuItem = document.getElementById('adminMenuItem');
-  if(menuItem){
-    menuItem.style.display = isAdmin() ? 'block' : 'none';
+  if(!menuItem) return;
+  const user = getCurrentUser();
+  if(!user){
+    menuItem.style.display = 'none';
+    return;
   }
+  const users = getUsers();
+  const userData = users[user.username];
+  const isAdminUser = userData && (userData.role === 'admin' || user.username === 'admin');
+  menuItem.style.display = isAdminUser ? 'block' : 'none';
+  // 同时确保目标设置菜单项显示
+  const targetItem = document.querySelector('[onclick="openTargetModal()"]');
+  if(targetItem) targetItem.style.display = user ? 'block' : 'none';
 }
 
 function openAdminPanel(){
