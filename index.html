@@ -1503,6 +1503,26 @@ body.dark .compare-table th{background:#334155}
   border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
 }
 
+
+/* ===== Inspirational Quote Scroller ===== */
+.quote-scroller{
+  display:block;font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px;
+  height:16px;overflow:hidden;position:relative;
+}
+.quote-scroller .quote-item{
+  position:absolute;top:0;left:0;right:0;opacity:0;transform:translateY(10px);
+  transition:all 0.6s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.quote-scroller .quote-item.active{
+  opacity:1;transform:translateY(0);
+}
+.quote-scroller .quote-item.exit{
+  opacity:0;transform:translateY(-10px);
+}
+.sidebar h2{
+  line-height:1.3;
+}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -1564,7 +1584,7 @@ body.dark .compare-table th{background:#334155}
 <div class="app">
 <!-- Sidebar -->
 <nav class="sidebar">
-  <h2>2027考研资料库<span>上海体育大学 · 运动康复</span></h2>
+  <h2>2027考研资料库<div class="quote-scroller" id="quoteScroller"></div></h2>
   <div class="nav-group">📊 总览</div>
   <div class="nav-item active" data-tab="dashboard"><span class="icon">📊</span><span>仪表盘</span></div>
 
@@ -24180,6 +24200,122 @@ document.addEventListener('click', function(e){
     closeTargetModal();
   }
 });
+
+
+// ==================== INSPIRATIONAL QUOTE SCROLLER ====================
+const INSPIRATIONAL_QUOTES = [
+  "星光不问赶路人，时光不负有心人",
+  "每一个不曾起舞的日子，都是对生命的辜负",
+  "你现在的努力，是在为未来铺路",
+  "考研这条路，注定孤独，但终点值得",
+  "熬得住出彩，熬不住出局",
+  "今天多学一点，明天多一份底气",
+  "梦想还是要有的，万一实现了呢",
+  "不要让未来的你，讨厌现在的自己",
+  "你背不下来的书，总有人能背下来",
+  "你拖到明天的事，总有人今天努力做完",
+  "那么不好意思，你想去的学校也只能别人去了",
+  "你想过的人生也只能别人过了",
+  "乾坤未定，你我皆是黑马",
+  "愿你合上笔盖的那一刻，有战士收刀入鞘的骄傲",
+  "考研不是人生的全部，但它能让你看到更大的世界",
+  "此刻打盹，你将做梦；此刻学习，你将圆梦",
+  "幸福或许不排名次，但成功必排名次",
+  "请享受无法回避的痛苦",
+  "现在流的口水，将成为明天的眼泪",
+  "一天过完，不会再来",
+  "即使现在，对手也在不停地翻动书页",
+  "没有艰辛，便无所获",
+  "谁也不能随随便便成功，它来自彻底的自我管理和毅力",
+  "狗一样地学，绅士一样地玩",
+  "投资未来的人，是忠于现实的人",
+  "受教育程度代表收入",
+  "今天不走，明天要跑",
+  "学习这件事，不是缺乏时间，而是缺乏努力",
+  "只有比别人更早、更勤奋地努力，才能尝到成功的滋味",
+  "我荒废的今日，正是昨日殒身之人祈求的明日",
+  "觉得为时已晚的时候，恰恰是最早的时候",
+  "勿将今日之事拖到明日",
+  "学习时的苦痛是暂时的，未学到的痛苦是终生的",
+  "幸福或许不排名次，但成功必排名次",
+  "人生就像一杯茶，不会苦一辈子，但总会苦一阵子",
+  "你要悄悄拔尖，然后惊艳所有人",
+  "半山腰总是最挤的，你得去山顶看看",
+  "那些看似不起波澜的日复一日，会突然在某一天让人看到坚持的意义",
+  "你要忍，忍到春暖花开；你要走，走到灯火通明",
+  "你要看过世界辽阔，再评判是好是坏",
+  "你要铆足劲变好，再站在不敢想象的人身边",
+  "你要变成想象中的样子，这件事，一步都不能让",
+  "纵有疾风起，人生不言弃",
+  "前路浩浩荡荡，万事尽可期待",
+  "愿你以渺小启程，以伟大结束",
+  "所谓的光辉岁月，并不是后来闪耀的日子，而是无人问津时，你对梦想的偏执",
+  "你必须非常努力，才能看起来毫不费力",
+  "生活明朗，万物可爱，人间值得，未来可期",
+  "我们各自努力，最高处见",
+  "愿你所有的努力都不白费，所想的都能如愿，所做的都能实现",
+  "别慌，月亮也正在大海某处迷茫",
+  "但行好事，莫问前程",
+  "心之所向，素履以往",
+  "生如逆旅，一苇以航",
+  "凡是过往，皆为序章",
+  "所有的惊艳，都来自长久的努力",
+  "所有的幸运，都源自不懈的坚持",
+  "你要相信，你生命里遇到的每个人每件事，都有它的价值和意义",
+  "有些人教会你爱，有些事教会你成长",
+  "哪怕只是浅浅地在你心头印上一道痕迹，也是弥足珍贵的经历",
+  "因为你终会发现，每一个出现在你生命里的人，都不是偶然",
+  "有的是来欣赏你的，有的是来心疼你的，有的是来利用你的，有的是来修炼你的",
+  "但无论如何，你都要感恩每一个人，因为他们最终成全了你，完善了你",
+  "让你学会了感恩，学会了坚强，学会了珍惜，学会了思考，学会了分辨",
+  "有时候，总觉得让你难过的事情，是你成长的契机",
+  "所以，不要害怕难过，不要害怕挫折，不要害怕失败",
+  "因为这些都是你人生中最宝贵的财富",
+  "加油，考研人！你一定可以的！"
+];
+
+let currentQuoteIndex = 0;
+
+function initQuoteScroller(){
+  const scroller = document.getElementById('quoteScroller');
+  if(!scroller) return;
+  
+  // 创建所有quote元素
+  INSPIRATIONAL_QUOTES.forEach((quote, index) => {
+    const item = document.createElement('div');
+    item.className = 'quote-item' + (index === 0 ? ' active' : '');
+    item.textContent = '💪 ' + quote;
+    scroller.appendChild(item);
+  });
+  
+  // 开始滚动
+  setInterval(rotateQuote, 5000);
+}
+
+function rotateQuote(){
+  const scroller = document.getElementById('quoteScroller');
+  if(!scroller) return;
+  
+  const items = scroller.querySelectorAll('.quote-item');
+  const current = items[currentQuoteIndex];
+  currentQuoteIndex = (currentQuoteIndex + 1) % items.length;
+  const next = items[currentQuoteIndex];
+  
+  current.classList.remove('active');
+  current.classList.add('exit');
+  
+  setTimeout(() => {
+    current.classList.remove('exit');
+    next.classList.add('active');
+  }, 300);
+}
+
+// 页面加载后初始化
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', initQuoteScroller);
+}else{
+  initQuoteScroller();
+}
 
 </script>
 
