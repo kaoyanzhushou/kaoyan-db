@@ -1423,6 +1423,86 @@ body.dark .compare-table th{background:#334155}
 .heatmap-cell.level4{background:#22c55e}
 .heatmap-cell.level5{background:#16a34a}
 
+
+/* ===== Target Settings ===== */
+.target-banner{
+  background:linear-gradient(135deg,#1e3a5f,#2d5a87);color:#fff;border-radius:12px;
+  padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;
+  flex-wrap:wrap;position:relative;overflow:hidden;
+}
+.target-banner::before{
+  content:'';position:absolute;top:-50%;right:-10%;width:200px;height:200px;
+  background:radial-gradient(circle,rgba(255,255,255,0.1) 0%,transparent 70%);
+}
+.target-school{
+  font-size:20px;font-weight:800;letter-spacing:1px;
+}
+.target-major{
+  font-size:14px;opacity:0.9;margin-top:2px;
+}
+.target-scores{
+  display:flex;gap:16px;margin-left:auto;flex-wrap:wrap;
+}
+.target-score-item{
+  text-align:center;
+}
+.target-score-item .score-val{
+  font-size:18px;font-weight:700;color:#fbbf24;
+}
+.target-score-item .score-label{
+  font-size:10px;opacity:0.7;margin-top:2px;
+}
+.target-edit-btn{
+  background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
+  color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;
+  transition:all 0.2s;
+}
+.target-edit-btn:hover{background:rgba(255,255,255,0.25)}
+.target-modal{
+  position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);
+  z-index:9500;display:none;align-items:center;justify-content:center;
+}
+.target-modal.show{display:flex}
+.target-modal-card{
+  background:#fff;border-radius:16px;padding:28px;width:480px;max-width:90vw;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+}
+.target-modal-card h3{
+  margin:0 0 20px;font-size:18px;color:#1e293b;display:flex;align-items:center;gap:8px;
+}
+.target-form-row{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;
+}
+.target-form-group{margin-bottom:14px}
+.target-form-group label{
+  display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;
+}
+.target-form-group input,.target-form-group select{
+  width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;
+  font-size:13px;outline:none;box-sizing:border-box;
+}
+.target-form-group input:focus{border-color:#2563eb}
+.target-modal-actions{
+  display:flex;gap:10px;justify-content:flex-end;margin-top:20px;
+}
+.target-save-btn{
+  padding:10px 24px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;
+  border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+}
+.target-cancel-btn{
+  padding:10px 20px;background:#f1f5f9;color:#334155;border:none;border-radius:8px;
+  font-size:13px;font-weight:600;cursor:pointer;
+}
+.target-placeholder{
+  background:linear-gradient(135deg,#f1f5f9,#e2e8f0);border-radius:12px;
+  padding:20px;text-align:center;margin-bottom:16px;border:2px dashed #cbd5e1;
+}
+.target-placeholder p{margin:0 0 12px;color:#64748b;font-size:14px}
+.target-placeholder button{
+  padding:8px 20px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;
+  border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -1526,6 +1606,7 @@ body.dark .compare-table th{background:#334155}
       </div>
       <div class="user-dropdown" id="userDropdown">
         <div class="user-dropdown-item" id="adminMenuItem" onclick="openAdminPanel()" style="display:none;color:#d97706">⚙️ 管理后台</div>
+        <div class="user-dropdown-item" onclick="openTargetModal()">🎯 目标设置</div>
         <div class="user-dropdown-item" onclick="showUserProfile()">👤 个人中心</div>
         <div class="user-dropdown-item" onclick="changePassword()">🔑 修改密码</div>
         <div class="user-dropdown-item logout" onclick="doLogout()">🚪 退出登录</div>
@@ -1539,7 +1620,8 @@ body.dark .compare-table th{background:#334155}
 
 <!-- Dashboard -->
 <div class="tab-content active" id="tab-dashboard">
-  <div class="phase-banner" id="phaseBanner"></div>
+  <div id="targetBannerContainer"></div>
+    <div class="phase-banner" id="phaseBanner"></div>
   <div class="stats-row" id="statsRow"></div>
     <div id="gamifySection" style="margin-top:20px"></div>
   
@@ -16994,6 +17076,7 @@ function renderCountdown(){
 }
 
 function renderDashboard(){
+  if(typeof renderTargetBanner === 'function') renderTargetBanner();
   const phase = getCurrentPhase();
   const now = new Date();
   const totalDays = Math.ceil((EXAM_DATE - new Date('2026-09-01')) / (1000*60*60*24));
@@ -24007,6 +24090,97 @@ function renderFocusStatsContainer(){
 }
 setTimeout(renderFocusStatsContainer, 1500);
 
+
+// ==================== TARGET SETTINGS ====================
+const TARGET_KEY = 'kaoyan_target_settings';
+
+function getTargetSettings(){
+  try{
+    const data = JSON.parse(localStorage.getItem(TARGET_KEY));
+    return data || {school:'', major:'', politics:'', english:'', pro1:'', pro2:'', total:''};
+  }catch(e){
+    return {school:'', major:'', politics:'', english:'', pro1:'', pro2:'', total:''};
+  }
+}
+
+function saveTargetSettingsData(data){
+  localStorage.setItem(TARGET_KEY, JSON.stringify(data));
+}
+
+function openTargetModal(){
+  const settings = getTargetSettings();
+  document.getElementById('targetSchool').value = settings.school || '';
+  document.getElementById('targetMajor').value = settings.major || '';
+  document.getElementById('targetPolitics').value = settings.politics || '';
+  document.getElementById('targetEnglish').value = settings.english || '';
+  document.getElementById('targetPro1').value = settings.pro1 || '';
+  document.getElementById('targetPro2').value = settings.pro2 || '';
+  document.getElementById('targetTotal').value = settings.total || '';
+  document.getElementById('targetModal').classList.add('show');
+  document.getElementById('userDropdown').classList.remove('show');
+}
+
+function closeTargetModal(){
+  document.getElementById('targetModal').classList.remove('show');
+}
+
+function saveTargetSettings(){
+  const data = {
+    school: document.getElementById('targetSchool').value.trim(),
+    major: document.getElementById('targetMajor').value.trim(),
+    politics: document.getElementById('targetPolitics').value,
+    english: document.getElementById('targetEnglish').value,
+    pro1: document.getElementById('targetPro1').value,
+    pro2: document.getElementById('targetPro2').value,
+    total: document.getElementById('targetTotal').value
+  };
+  saveTargetSettingsData(data);
+  closeTargetModal();
+  // 刷新仪表盘显示
+  if(typeof renderTargetBanner === 'function') renderTargetBanner();
+  if(typeof addXP === 'function') addXP(20, '设置目标');
+}
+
+function renderTargetBanner(){
+  const settings = getTargetSettings();
+  const container = document.getElementById('targetBannerContainer');
+  if(!container) return;
+  
+  if(!settings.school && !settings.major){
+    container.innerHTML = `
+      <div class="target-placeholder">
+        <p>🎯 还没有设置考研目标，设置目标让备考更有方向！</p>
+        <button onclick="openTargetModal()">立即设置目标</button>
+      </div>`;
+    return;
+  }
+  
+  let scoresHtml = '';
+  if(settings.politics) scoresHtml += `<div class="target-score-item"><div class="score-val">${settings.politics}</div><div class="score-label">政治</div></div>`;
+  if(settings.english) scoresHtml += `<div class="target-score-item"><div class="score-val">${settings.english}</div><div class="score-label">英语</div></div>`;
+  if(settings.pro1) scoresHtml += `<div class="target-score-item"><div class="score-val">${settings.pro1}</div><div class="score-label">专业课一</div></div>`;
+  if(settings.pro2) scoresHtml += `<div class="target-score-item"><div class="score-val">${settings.pro2}</div><div class="score-label">专业课二</div></div>`;
+  if(settings.total) scoresHtml += `<div class="target-score-item"><div class="score-val" style="color:#fbbf24;font-size:22px">${settings.total}</div><div class="score-label">总分目标</div></div>`;
+  
+  container.innerHTML = `
+    <div class="target-banner">
+      <div>
+        <div class="target-school">🏫 ${settings.school || '未设置院校'}</div>
+        <div class="target-major">📚 ${settings.major || '未设置专业'}</div>
+      </div>
+      <div class="target-scores">${scoresHtml}</div>
+      <button class="target-edit-btn" onclick="openTargetModal()">✏️ 修改</button>
+    </div>`;
+}
+
+// 点击模态框外部关闭
+document.addEventListener('click', function(e){
+  const modal = document.getElementById('targetModal');
+  if(modal && e.target === modal){
+    closeTargetModal();
+  }
+});
+
 </script>
 
 <!-- Admin Panel -->
@@ -24143,6 +24317,51 @@ setTimeout(renderFocusStatsContainer, 1500);
         </div>
         <div class="admin-log" id="adminLogContent">暂无日志记录</div>
       </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Target Settings Modal -->
+<div class="target-modal" id="targetModal">
+  <div class="target-modal-card">
+    <h3>🎯 设置考研目标</h3>
+    <div class="target-form-group">
+      <label>目标院校</label>
+      <input type="text" id="targetSchool" placeholder="例如：上海体育大学、北京体育大学...">
+    </div>
+    <div class="target-form-group">
+      <label>目标专业</label>
+      <input type="text" id="targetMajor" placeholder="例如：运动康复、运动人体科学...">
+    </div>
+    <div class="target-form-row">
+      <div class="target-form-group">
+        <label>政治目标分</label>
+        <input type="number" id="targetPolitics" placeholder="70" min="0" max="100">
+      </div>
+      <div class="target-form-group">
+        <label>英语目标分</label>
+        <input type="number" id="targetEnglish" placeholder="60" min="0" max="100">
+      </div>
+    </div>
+    <div class="target-form-row">
+      <div class="target-form-group">
+        <label>专业课一目标分</label>
+        <input type="number" id="targetPro1" placeholder="230" min="0" max="300">
+      </div>
+      <div class="target-form-group">
+        <label>专业课二目标分</label>
+        <input type="number" id="targetPro2" placeholder="230" min="0" max="300">
+      </div>
+    </div>
+    <div class="target-form-group">
+      <label>总分目标</label>
+      <input type="number" id="targetTotal" placeholder="380" min="0" max="500">
+    </div>
+    <div class="target-modal-actions">
+      <button class="target-cancel-btn" onclick="closeTargetModal()">取消</button>
+      <button class="target-save-btn" onclick="saveTargetSettings()">💾 保存目标</button>
     </div>
   </div>
 </div>
