@@ -19518,25 +19518,91 @@ function askAIQuick(q){
       {name:'英语', tab:'english', data:englishData}
     ];
     
+    // 辅助函数：移除HTML标签（不插空格，避免分割关键词）
+    function stripTags(html){ return html.replace(/<[^>]+>/g,''); }
+    // 辅助函数：移除所有空格用于模糊匹配
+    function noSpace(s){ return s.replace(/\s+/g,''); }
+    
     const qLower = q.toLowerCase();
+    const qNoSpace = noSpace(qLower);
+    // 多关键词支持：空格分隔的词分别匹配
+    const keywords = qLower.split(/\s+/).filter(k=>k.length>=2);
+    
     for(const subj of allData){
       for(const item of subj.data){
-        const titleMatch = item.title.toLowerCase().includes(qLower);
-        const contentText = item.content.replace(/<[^>]+>/g,' ').toLowerCase();
-        const contentMatch = contentText.includes(qLower);
+        // 收集该章节所有可搜索文本（主内容+补充数据）
+        let searchableText = item.title + ' ' + stripTags(item.content);
         
-        if(titleMatch || contentMatch){
-          const plainContent = item.content.replace(/<[^>]+>/g,' ');
-          const idx = plainContent.toLowerCase().indexOf(qLower);
+        // 搜索补充数据：pdfNotes
+        if(typeof pdfNotes !== 'undefined' && pdfNotes[item.id]){
+          const note = pdfNotes[item.id];
+          if(note.defs) note.defs.forEach(d=>{ searchableText += ' ' + d.n + ' ' + d.d; });
+          if(note.data) note.data.forEach(r=>{ searchableText += ' ' + r.join(' '); });
+          if(note.mnemonic) note.mnemonic.forEach(m=>{ searchableText += ' ' + m; });
+          if(note.qa) note.qa.forEach(q=>{ searchableText += ' ' + q; });
+        }
+        // 搜索补充数据：detailedQA（提高笔记详细真题）
+        if(typeof detailedQA !== 'undefined' && detailedQA[item.id]){
+          detailedQA[item.id].forEach(d=>{ searchableText += ' ' + stripTags(d); });
+        }
+        // 搜索补充数据：detailedAnatomy（解剖笔记详细知识点）
+        if(typeof detailedAnatomy !== 'undefined' && detailedAnatomy[item.id]){
+          detailedAnatomy[item.id].forEach(d=>{ searchableText += ' ' + stripTags(d); });
+        }
+        // 搜索补充数据：enhancedData（高频考点/名词解释/简答题）
+        if(typeof enhancedData !== 'undefined' && enhancedData[item.id]){
+          const enh = enhancedData[item.id];
+          if(enh.highfreq) enh.highfreq.forEach(h=>{ searchableText += ' ' + h; });
+          if(enh.terms) enh.terms.forEach(t=>{ searchableText += ' ' + t.name + ' ' + t.def; });
+          if(enh.questions) enh.questions.forEach(q=>{ searchableText += ' ' + q; });
+          if(enh.tips) enh.tips.forEach(t=>{ searchableText += ' ' + t; });
+        }
+        
+        const textLower = searchableText.toLowerCase();
+        const textNoSpace = noSpace(textLower);
+        
+        // 匹配策略：1.完整匹配 2.去空格模糊匹配 3.多关键词任意匹配
+        let matched = false;
+        let matchType = '';
+        
+        if(textLower.includes(qLower)){
+          matched = true; matchType = '完整匹配';
+        } else if(qNoSpace.length >= 3 && textNoSpace.includes(qNoSpace)){
+          matched = true; matchType = '模糊匹配';
+        } else if(keywords.length >= 2){
+          // 多关键词：至少匹配2个才算
+          let matchCount = 0;
+          keywords.forEach(k=>{ if(textLower.includes(k)) matchCount++; });
+          if(matchCount >= 2){ matched = true; matchType = '多关键词匹配('+matchCount+'/'+keywords.length+')'; }
+        }
+        
+        if(matched){
+          // 提取相关片段（优先在去空格文本中找位置）
           let snippet = '';
+          let idx = textLower.indexOf(qLower);
+          if(idx < 0) idx = textLower.search(new RegExp(keywords[0], 'i'));
           if(idx >= 0){
-            const start = Math.max(0, idx - 50);
-            const end = Math.min(plainContent.length, idx + q.length + 100);
-            snippet = plainContent.substring(start, end);
-            snippet = snippet.replace(new RegExp(q, 'gi'), m => '<mark>'+m+'</mark>');
+            const start = Math.max(0, idx - 60);
+            const end = Math.min(searchableText.length, idx + q.length + 120);
+            snippet = searchableText.substring(start, end);
+            // 高亮所有关键词
+            keywords.forEach(k=>{
+              snippet = snippet.replace(new RegExp(k, 'gi'), m=>'<mark>'+m+'</mark>');
+            });
+            if(start > 0) snippet = '...' + snippet;
+            if(end < searchableText.length) snippet = snippet + '...';
           } else {
-            snippet = plainContent.substring(0, 150) + '...';
+            snippet = searchableText.substring(0, 180) + '...';
           }
+          
+          // 计算相关度分数
+          let score = 0;
+          if(item.title.toLowerCase().includes(qLower)) score += 3;
+          if(matchType === '完整匹配') score += 2;
+          if(matchType === '模糊匹配') score += 1;
+          if(matchType.startsWith('多关键词')) score += 1;
+          // 在内容前部出现加分
+          if(idx >= 0 && idx < searchableText.length * 0.3) score += 1;
           
           results.push({
             source: subj.name,
@@ -19544,7 +19610,8 @@ function askAIQuick(q){
             id: item.id,
             title: item.title.replace(/<[^>]+>/g,''),
             snippet: snippet,
-            score: (titleMatch ? 2 : 0) + (contentMatch ? 1 : 0)
+            matchType: matchType,
+            score: score
           });
         }
       }
@@ -19558,9 +19625,13 @@ function askAIQuick(q){
       return;
     }
     
-    const topResults = results.slice(0, 8);
-    box.innerHTML = '<p style="font-size:13px;color:#6b7280;margin-bottom:12px">找到 <b style="color:#667eea">'+results.length+'</b> 个相关知识点，点击卡片可直接跳转：</p>' +
-      topResults.map(r => '<div class="ai-answer-item" style="cursor:pointer;transition:all 0.2s" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#f8f7ff\'" onclick="navigateToKnowledge(\''+r.tab+'\',\''+r.id+'\')"><div class="source">📚 '+r.source+' · '+r.title+' <span style="color:#667eea;font-size:11px;margin-left:8px">👉 点击跳转</span></div><div class="content">...'+r.snippet+'...</div></div>').join('');
+    const topResults = results.slice(0, 10);
+    if(results.length === 0){
+      box.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280"><p style="font-size:16px;margin-bottom:8px">😔 未找到相关知识点</p><p style="font-size:13px">建议：①换用更简短的核心术语（如"氧解离"而非"氧解离曲线是什么"）②尝试关键词的一部分③检查是否有错别字</p></div>';
+      return;
+    }
+    box.innerHTML = '<p style="font-size:13px;color:#6b7280;margin-bottom:12px">找到 <b style="color:#667eea">'+results.length+'</b> 个相关知识点，显示前'+topResults.length+'个，点击卡片可直接跳转：</p>' +
+      topResults.map(r => '<div class="ai-answer-item" style="cursor:pointer;transition:all 0.2s" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#f8f7ff\'" onclick="navigateToKnowledge(\''+r.tab+'\',\''+r.id+'\')"><div class="source">📚 '+r.source+' · '+r.title+' <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:3px;font-size:10px;margin-left:6px">'+r.matchType+'</span> <span style="color:#667eea;font-size:11px;margin-left:8px">👉 点击跳转</span></div><div class="content">'+r.snippet+'</div></div>').join('');
   }, 300);
 }
 
