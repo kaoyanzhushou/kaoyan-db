@@ -1139,6 +1139,95 @@ body.dark .compare-table th{background:#334155}
 
 .ai-answer-item:hover { border-left-color: #667eea !important; transform: translateX(4px); }
 
+
+/* ===== Login System ===== */
+.login-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);
+  z-index:9999;display:flex;align-items:center;justify-content:center;
+  transition:opacity 0.3s;
+}
+.login-overlay.hidden{opacity:0;pointer-events:none}
+.login-card{
+  background:#fff;border-radius:20px;padding:40px;width:400px;max-width:90vw;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+}
+.login-card h2{
+  text-align:center;color:#1e293b;margin:0 0 8px;font-size:24px;
+}
+.login-card .subtitle{
+  text-align:center;color:#64748b;font-size:13px;margin-bottom:28px;
+}
+.login-tabs{
+  display:flex;margin-bottom:24px;background:#f1f5f9;border-radius:10px;padding:4px;
+}
+.login-tab{
+  flex:1;text-align:center;padding:10px;border-radius:8px;cursor:pointer;
+  font-size:14px;font-weight:600;color:#64748b;transition:all 0.2s;
+}
+.login-tab.active{background:#fff;color:#2563eb;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.login-form-group{margin-bottom:18px}
+.login-form-group label{
+  display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;
+}
+.login-form-group input{
+  width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:10px;
+  font-size:14px;outline:none;transition:border-color 0.2s;box-sizing:border-box;
+}
+.login-form-group input:focus{border-color:#2563eb}
+.login-btn{
+  width:100%;padding:13px;background:linear-gradient(135deg,#2563eb,#7c3aed);
+  color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;
+  cursor:pointer;transition:all 0.2s;margin-top:8px;
+}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,0.3)}
+.login-error{
+  background:#fef2f2;color:#dc2626;padding:10px 14px;border-radius:8px;
+  font-size:13px;margin-bottom:16px;display:none;
+}
+.login-error.show{display:block}
+.login-success{
+  background:#f0fdf4;color:#16a34a;padding:10px 14px;border-radius:8px;
+  font-size:13px;margin-bottom:16px;display:none;
+}
+.login-success.show{display:block}
+.login-hint{
+  text-align:center;font-size:12px;color:#94a3b8;margin-top:20px;line-height:1.6;
+}
+.user-info{
+  display:flex;align-items:center;gap:8px;padding:6px 12px;
+  background:#f1f5f9;border-radius:20px;font-size:13px;cursor:pointer;
+}
+.user-info .avatar{
+  width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+}
+.user-dropdown{
+  position:absolute;top:100%;right:0;background:#fff;border-radius:12px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.15);padding:8px;min-width:160px;
+  display:none;z-index:100;
+}
+.user-dropdown.show{display:block}
+.user-dropdown-item{
+  padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;
+  color:#374151;transition:background 0.2s;
+}
+.user-dropdown-item:hover{background:#f1f5f9}
+.user-dropdown-item.logout{color:#dc2626}
+.content-locked{
+  filter:blur(8px);pointer-events:none;user-select:none;
+}
+.lock-banner{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(255,255,255,0.95);padding:30px 40px;border-radius:16px;
+  text-align:center;z-index:500;box-shadow:0 10px 40px rgba(0,0,0,0.2);
+  display:none;
+}
+.lock-banner.show{display:block}
+.lock-banner .icon{font-size:48px;margin-bottom:12px}
+.lock-banner h3{margin:0 0 8px;color:#1e293b}
+.lock-banner p{margin:0;color:#64748b;font-size:14px}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -1148,6 +1237,51 @@ body.dark .compare-table th{background:#334155}
 </script>
 </head>
 <body>
+
+<!-- Login Overlay -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <h2>🎓 考研资料库</h2>
+    <p class="subtitle">登录后解锁全部学习内容</p>
+    <div class="login-tabs">
+      <div class="login-tab active" id="tabLogin" onclick="switchLoginTab('login')">登录</div>
+      <div class="login-tab" id="tabRegister" onclick="switchLoginTab('register')">注册</div>
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-success" id="loginSuccess"></div>
+    <!-- Login Form -->
+    <div id="loginForm">
+      <div class="login-form-group">
+        <label>用户名</label>
+        <input type="text" id="loginUsername" placeholder="请输入用户名" onkeypress="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="login-form-group">
+        <label>密码</label>
+        <input type="password" id="loginPassword" placeholder="请输入密码" onkeypress="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="login-btn" onclick="doLogin()">登 录</button>
+    </div>
+    <!-- Register Form -->
+    <div id="registerForm" style="display:none">
+      <div class="login-form-group">
+        <label>用户名</label>
+        <input type="text" id="regUsername" placeholder="3-20个字符" onkeypress="if(event.key==='Enter')doRegister()">
+      </div>
+      <div class="login-form-group">
+        <label>密码</label>
+        <input type="password" id="regPassword" placeholder="至少6个字符" onkeypress="if(event.key==='Enter')doRegister()">
+      </div>
+      <div class="login-form-group">
+        <label>确认密码</label>
+        <input type="password" id="regPassword2" placeholder="再次输入密码" onkeypress="if(event.key==='Enter')doRegister()">
+      </div>
+      <button class="login-btn" onclick="doRegister()">注 册</button>
+    </div>
+    <p class="login-hint">首次使用请先注册账号<br>数据保存在本地浏览器，无需联网</p>
+  </div>
+</div>
+
+
 <div class="app">
 <!-- Sidebar -->
 <nav class="sidebar">
@@ -1181,6 +1315,18 @@ body.dark .compare-table th{background:#334155}
 <div class="topbar">
   <h1 id="pageTitle">总览仪表盘</h1>
   <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div style="position:relative">
+      <div class="user-info" id="userInfo" onclick="toggleUserDropdown()" style="display:none">
+        <div class="avatar" id="userAvatar">U</div>
+        <span id="userName">用户</span>
+        <span style="font-size:10px;color:#94a3b8">▼</span>
+      </div>
+      <div class="user-dropdown" id="userDropdown">
+        <div class="user-dropdown-item" onclick="showUserProfile()">👤 个人中心</div>
+        <div class="user-dropdown-item" onclick="changePassword()">🔑 修改密码</div>
+        <div class="user-dropdown-item logout" onclick="doLogout()">🚪 退出登录</div>
+      </div>
+    </div>
     <div class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="切换深色/浅色模式">🌙</div>
     <div class="search-box"><input type="text" id="searchInput" placeholder="搜索知识点..."></div>
     <div class="countdown" id="countdown"></div>
@@ -22382,6 +22528,241 @@ function generateAIAdvice(){
 document.addEventListener('DOMContentLoaded', function(){
   setTimeout(generateAIAdvice, 500);
 });
+
+
+// ==================== LOGIN SYSTEM ====================
+const USERS_KEY = 'kaoyan_users';
+const CURRENT_USER_KEY = 'kaoyan_current_user';
+
+function getUsers(){
+  try{ return JSON.parse(localStorage.getItem(USERS_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveUsers(users){
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+function getCurrentUser(){
+  try{ return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)); }
+  catch(e){ return null; }
+}
+function setCurrentUser(user){
+  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+}
+function clearCurrentUser(){
+  localStorage.removeItem(CURRENT_USER_KEY);
+}
+
+function switchLoginTab(tab){
+  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+  document.getElementById('loginForm').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab==='register' ? 'block' : 'none';
+  hideLoginMessages();
+}
+
+function showLoginError(msg){
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('loginSuccess').classList.remove('show');
+}
+function showLoginSuccess(msg){
+  const el = document.getElementById('loginSuccess');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('loginError').classList.remove('show');
+}
+function hideLoginMessages(){
+  document.getElementById('loginError').classList.remove('show');
+  document.getElementById('loginSuccess').classList.remove('show');
+}
+
+function doRegister(){
+  const username = document.getElementById('regUsername').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const password2 = document.getElementById('regPassword2').value;
+  
+  if(!username || username.length < 3 || username.length > 20){
+    showLoginError('用户名需3-20个字符');
+    return;
+  }
+  if(!password || password.length < 6){
+    showLoginError('密码至少6个字符');
+    return;
+  }
+  if(password !== password2){
+    showLoginError('两次输入的密码不一致');
+    return;
+  }
+  
+  const users = getUsers();
+  if(users[username]){
+    showLoginError('该用户名已被注册');
+    return;
+  }
+  
+  // 简单加密（base64）
+  users[username] = {
+    password: btoa(password),
+    registerTime: new Date().toISOString(),
+    studyData: {}
+  };
+  saveUsers(users);
+  
+  showLoginSuccess('注册成功！请登录');
+  setTimeout(()=>{
+    switchLoginTab('login');
+    document.getElementById('loginUsername').value = username;
+    document.getElementById('loginPassword').focus();
+  }, 1000);
+}
+
+function doLogin(){
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  
+  if(!username || !password){
+    showLoginError('请输入用户名和密码');
+    return;
+  }
+  
+  const users = getUsers();
+  const user = users[username];
+  
+  if(!user){
+    showLoginError('用户不存在，请先注册');
+    return;
+  }
+  
+  if(user.password !== btoa(password)){
+    showLoginError('密码错误');
+    return;
+  }
+  
+  // 登录成功
+  setCurrentUser({username: username, loginTime: new Date().toISOString()});
+  showLoginSuccess('登录成功！正在进入...');
+  
+  setTimeout(()=>{
+    unlockContent();
+    updateUserUI();
+  }, 800);
+}
+
+function doLogout(){
+  if(!confirm('确定要退出登录吗？')) return;
+  clearCurrentUser();
+  document.getElementById('userDropdown').classList.remove('show');
+  lockContent();
+  showLoginScreen();
+}
+
+function unlockContent(){
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.querySelector('.app').style.filter = '';
+  document.querySelector('.app').style.pointerEvents = '';
+}
+
+function lockContent(){
+  document.querySelector('.app').style.filter = 'blur(8px)';
+  document.querySelector('.app').style.pointerEvents = 'none';
+}
+
+function showLoginScreen(){
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('loginUsername').value = '';
+  document.getElementById('loginPassword').value = '';
+  switchLoginTab('login');
+  hideLoginMessages();
+}
+
+function updateUserUI(){
+  const user = getCurrentUser();
+  const userInfo = document.getElementById('userInfo');
+  if(user){
+    userInfo.style.display = 'flex';
+    document.getElementById('userName').textContent = user.username;
+    document.getElementById('userAvatar').textContent = user.username.charAt(0).toUpperCase();
+  } else {
+    userInfo.style.display = 'none';
+  }
+}
+
+function toggleUserDropdown(){
+  document.getElementById('userDropdown').classList.toggle('show');
+}
+
+// 点击其他地方关闭下拉菜单
+document.addEventListener('click', function(e){
+  const dropdown = document.getElementById('userDropdown');
+  const userInfo = document.getElementById('userInfo');
+  if(dropdown && !dropdown.contains(e.target) && !userInfo.contains(e.target)){
+    dropdown.classList.remove('show');
+  }
+});
+
+function showUserProfile(){
+  const user = getCurrentUser();
+  if(!user) return;
+  const users = getUsers();
+  const userData = users[user.username];
+  const regDate = new Date(userData.registerTime).toLocaleDateString();
+  const loginDate = new Date(user.loginTime).toLocaleString();
+  alert(`👤 个人中心\n\n用户名：${user.username}\n注册时间：${regDate}\n本次登录：${loginDate}\n\n学习数据保存在本地浏览器中`);
+  document.getElementById('userDropdown').classList.remove('show');
+}
+
+function changePassword(){
+  const user = getCurrentUser();
+  if(!user) return;
+  
+  const oldPwd = prompt('请输入原密码：');
+  if(!oldPwd) return;
+  
+  const users = getUsers();
+  if(users[user.username].password !== btoa(oldPwd)){
+    alert('原密码错误');
+    return;
+  }
+  
+  const newPwd = prompt('请输入新密码（至少6个字符）：');
+  if(!newPwd || newPwd.length < 6){
+    alert('新密码至少6个字符');
+    return;
+  }
+  
+  const confirmPwd = prompt('请再次输入新密码：');
+  if(newPwd !== confirmPwd){
+    alert('两次输入的密码不一致');
+    return;
+  }
+  
+  users[user.username].password = btoa(newPwd);
+  saveUsers(users);
+  alert('密码修改成功！');
+  document.getElementById('userDropdown').classList.remove('show');
+}
+
+// 初始化登录状态
+function initLoginSystem(){
+  const user = getCurrentUser();
+  if(user){
+    // 已登录，解锁内容
+    unlockContent();
+    updateUserUI();
+  } else {
+    // 未登录，显示登录界面
+    lockContent();
+    showLoginScreen();
+  }
+}
+
+// 页面加载时初始化
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', initLoginSystem);
+} else {
+  initLoginSystem();
+}
 
 </script>
 </body>
