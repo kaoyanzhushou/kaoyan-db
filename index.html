@@ -21652,6 +21652,7 @@ function switchTab(tabName){
   if(tabName === 'english-pro') switchEpTab('writing');
   if(tabName === 'memorize') renderMemorizePage();
   if(tabName === 'pro-course') initProQuizSetup();
+  if(tabName === 'atlas') initAtlas();
   
   window.scrollTo(0,0);
 }
@@ -25076,6 +25077,94 @@ function setAtlasLayer(layer){
     if(layer === 'skeletal') p.classList.add('bone');
     if(layer === 'muscular') p.classList.add('muscle');
   });
+}
+
+
+// ==================== ATLAS INIT ====================
+let atlasInitialized = false;
+function initAtlas(){
+  if(!atlasInitialized){
+    atlasInitialized = true;
+  }
+  renderAtlasOverview();
+}
+
+function renderAtlasOverview(){
+  const panel = document.getElementById('atlasDetailPanel');
+  if(!panel) return;
+  
+  // 统计数据
+  let totalStructures = 0;
+  let systemCounts = {};
+  Object.values(ATLAS_DATA.regions).forEach(region => {
+    region.structures.forEach(s => {
+      totalStructures++;
+      systemCounts[s.system] = (systemCounts[s.system] || 0) + 1;
+    });
+  });
+  
+  let html = '<div class="atlas-overview">';
+  html += '<h3 style="margin-bottom:8px">🔬 人体解剖学图谱</h3>';
+  html += '<p style="color:#64748b;margin-bottom:20px;font-size:13px">交互式解剖图谱，专为运动解剖学与运动康复专业优化。点击人体图部位或左侧导航查看详情。</p>';
+  
+  // 统计卡片
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">';
+  html += `<div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:14px;border-radius:10px;text-align:center"><div style="font-size:24px;font-weight:bold">${totalStructures}</div><div style="font-size:11px;opacity:0.9">解剖结构</div></div>`;
+  html += `<div style="background:linear-gradient(135deg,#f093fb,#f5576c);color:white;padding:14px;border-radius:10px;text-align:center"><div style="font-size:24px;font-weight:bold">5</div><div style="font-size:11px;opacity:0.9">身体部位</div></div>`;
+  html += `<div style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:white;padding:14px;border-radius:10px;text-align:center"><div style="font-size:24px;font-weight:bold">5</div><div style="font-size:11px;opacity:0.9">运动专题</div></div>`;
+  html += '</div>';
+  
+  // 按部位快速浏览
+  html += '<h4 style="margin-bottom:12px;color:#1e293b">📍 按部位快速浏览</h4>';
+  html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px">';
+  const regionIcons = {head:'🧠', neck:'🦒', trunk:'🫀', upper:'💪', lower:'🦵'};
+  Object.entries(ATLAS_DATA.regions).forEach(([key, region]) => {
+    html += `<div onclick="filterAtlasByRegion('${key}')" style="cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 8px;text-align:center;transition:all 0.2s" onmouseover="this.style.background='#eff6ff';this.style.borderColor='#3b82f6'" onmouseout="this.style.background='#f8fafc';this.style.borderColor='#e2e8f0'">`;
+    html += `<div style="font-size:24px;margin-bottom:4px">${regionIcons[key]||'📍'}</div>`;
+    html += `<div style="font-size:12px;font-weight:600;color:#1e293b">${region.name}</div>`;
+    html += `<div style="font-size:10px;color:#94a3b8">${region.structures.length}个结构</div>`;
+    html += '</div>';
+  });
+  html += '</div>';
+  
+  // 按系统分布
+  html += '<h4 style="margin-bottom:12px;color:#1e293b">📊 系统分布</h4>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px">';
+  const sysNames = {skeletal:'骨骼', muscular:'肌肉', articular:'关节', nervous:'神经', circulatory:'循环', respiratory:'呼吸'};
+  const sysColors = {skeletal:'#f59e0b', muscular:'#ef4444', articular:'#8b5cf6', nervous:'#3b82f6', circulatory:'#ec4899', respiratory:'#06b6d4'};
+  Object.entries(systemCounts).forEach(([sys, count]) => {
+    const color = sysColors[sys] || '#64748b';
+    html += `<span onclick="filterAtlasBySystem('${sys}')" style="cursor:pointer;background:${color}15;color:${color};border:1px solid ${color}30;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500">${sysNames[sys]||sys} ${count}</span>`;
+  });
+  html += '</div>';
+  
+  // 运动专题
+  html += '<h4 style="margin-bottom:12px;color:#1e293b">🏃 运动解剖专题</h4>';
+  html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:20px">';
+  const topicIcons = {muscle_function:'⚡', joint_movement:'🔄', sports_injury:'🩹', rehab:'💊', kinesiology:'📐'};
+  Object.entries(ATLAS_DATA.sportsTopics).forEach(([key, topic]) => {
+    html += `<div onclick="showSportsTopic('${key}')" style="cursor:pointer;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;border-radius:10px;padding:12px;transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">`;
+    html += `<div style="font-size:16px;margin-bottom:4px">${topicIcons[key]||'📚'}</div>`;
+    html += `<div style="font-size:12px;font-weight:600;color:#92400e">${topic.title.replace(/^[^\s]+\s/, '')}</div>`;
+    html += '</div>';
+  });
+  html += '</div>';
+  
+  // 使用提示
+  html += '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:14px">';
+  html += '<h5 style="color:#0369a1;margin-bottom:8px">💡 使用指南</h5>';
+  html += '<ul style="margin:0;padding-left:18px;color:#0369a1;font-size:12px;line-height:1.8">';
+  html += '<li>点击左侧人体图上的<strong>部位</strong>，查看该区域所有解剖结构</li>';
+  html += '<li>从左侧导航选择<strong>系统</strong>或<strong>部位</strong>筛选浏览</li>';
+  html += '<li>每个结构包含：概述、起止点、功能、神经支配、血供、<strong>运动解剖学意义</strong></li>';
+  html += '<li>使用顶部按钮切换<strong>前/后视图</strong>和<strong>轮廓/骨骼/肌肉层</strong></li>';
+  html += '<li>点击⭐<strong>收藏</strong>按钮保存重点结构，随时复习</li>';
+  html += '</ul>';
+  html += '</div>';
+  
+  html += '</div>';
+  
+  panel.innerHTML = html;
 }
 
 </script>
