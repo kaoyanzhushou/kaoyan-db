@@ -1540,7 +1540,20 @@ body.dark .compare-table th{background:#334155}
   min-height:500px;border:2px solid #e2e8f0;
 }
 .atlas-svg{
-  max-height:480px;width:auto;cursor:pointer;
+  max-height:680px;width:auto;cursor:pointer;background:#fff;border-radius:12px;
+}
+.atlas-svg .body-part:hover{
+  filter:brightness(1.15) drop-shadow(0 0 4px rgba(124,58,237,0.5));
+}
+.atlas-svg .body-part.active{
+  filter:brightness(1.2) drop-shadow(0 0 6px rgba(124,58,237,0.8));
+}
+.atlas-labels text{
+  font-family:'Microsoft YaHei',sans-serif;
+}
+.atlas-body-viewer{
+  min-height:720px !important;
+  padding:10px !important;
 }
 .atlas-svg .body-part{
   fill:#cbd5e1;stroke:#94a3b8;stroke-width:1;transition:all 0.2s;cursor:pointer;
@@ -1932,71 +1945,446 @@ body.dark .compare-table th{background:#334155}
           <button class="atlas-view-btn active" onclick="setAtlasView('anterior')">前面观</button>
           <button class="atlas-view-btn" onclick="setAtlasView('posterior')">后面观</button>
         </div>
-        <svg class="atlas-svg" id="atlasSvg" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg">
-          <!-- 人体轮廓 - 前面观 -->
-          <g id="atlasAnterior">
-            <!-- 头部 -->
-            <ellipse class="body-part" data-region="head" data-name="头颅" cx="150" cy="50" rx="35" ry="40" onclick="selectBodyPart('head','头颅')"/>
-            <!-- 颈部 -->
-            <rect class="body-part" data-region="neck" data-name="颈部" x="135" y="85" width="30" height="25" rx="5" onclick="selectBodyPart('neck','颈部')"/>
-            <!-- 躯干 - 胸 -->
-            <path class="body-part" data-region="trunk" data-name="胸部" d="M100 110 Q150 100 200 110 L205 180 Q150 190 95 180 Z" onclick="selectBodyPart('trunk','胸部')"/>
-            <!-- 躯干 - 腹 -->
-            <path class="body-part" data-region="trunk" data-name="腹部" d="M95 180 Q150 190 205 180 L200 260 Q150 270 100 260 Z" onclick="selectBodyPart('trunk','腹部')"/>
-            <!-- 左肩 -->
-            <ellipse class="body-part" data-region="upper" data-name="左肩" cx="85" cy="120" rx="20" ry="15" onclick="selectBodyPart('upper','左肩')"/>
-            <!-- 左上臂 -->
-            <rect class="body-part" data-region="upper" data-name="左上臂" x="65" y="130" width="22" height="70" rx="10" onclick="selectBodyPart('upper','左上臂')"/>
-            <!-- 左前臂 -->
-            <rect class="body-part" data-region="upper" data-name="左前臂" x="65" y="200" width="20" height="65" rx="8" onclick="selectBodyPart('upper','左前臂')"/>
-            <!-- 左手 -->
-            <ellipse class="body-part" data-region="upper" data-name="左手" cx="75" cy="275" rx="14" ry="18" onclick="selectBodyPart('upper','左手')"/>
-            <!-- 右肩 -->
-            <ellipse class="body-part" data-region="upper" data-name="右肩" cx="215" cy="120" rx="20" ry="15" onclick="selectBodyPart('upper','右肩')"/>
-            <!-- 右上臂 -->
-            <rect class="body-part" data-region="upper" data-name="右上臂" x="213" y="130" width="22" height="70" rx="10" onclick="selectBodyPart('upper','右上臂')"/>
-            <!-- 右前臂 -->
-            <rect class="body-part" data-region="upper" data-name="右前臂" x="215" y="200" width="20" height="65" rx="8" onclick="selectBodyPart('upper','右前臂')"/>
-            <!-- 右手 -->
-            <ellipse class="body-part" data-region="upper" data-name="右手" cx="225" cy="275" rx="14" ry="18" onclick="selectBodyPart('upper','右手')"/>
-            <!-- 骨盆 -->
-            <path class="body-part" data-region="trunk" data-name="骨盆" d="M100 260 Q150 255 200 260 L195 290 Q150 300 105 290 Z" onclick="selectBodyPart('trunk','骨盆')"/>
-            <!-- 左大腿 -->
-            <rect class="body-part" data-region="lower" data-name="左大腿" x="110" y="290" width="30" height="90" rx="12" onclick="selectBodyPart('lower','左大腿')"/>
-            <!-- 左小腿 -->
-            <rect class="body-part" data-region="lower" data-name="左小腿" x="112" y="380" width="26" height="80" rx="10" onclick="selectBodyPart('lower','左小腿')"/>
-            <!-- 左脚 -->
-            <ellipse class="body-part" data-region="lower" data-name="左脚" cx="125" cy="475" rx="18" ry="12" onclick="selectBodyPart('lower','左脚')"/>
-            <!-- 右大腿 -->
-            <rect class="body-part" data-region="lower" data-name="右大腿" x="160" y="290" width="30" height="90" rx="12" onclick="selectBodyPart('lower','右大腿')"/>
-            <!-- 右小腿 -->
-            <rect class="body-part" data-region="lower" data-name="右小腿" x="162" y="380" width="26" height="80" rx="10" onclick="selectBodyPart('lower','右小腿')"/>
-            <!-- 右脚 -->
-            <ellipse class="body-part" data-region="lower" data-name="右脚" cx="175" cy="475" rx="18" ry="12" onclick="selectBodyPart('lower','右脚')"/>
-          </g>
-          <!-- 人体轮廓 - 后面观 -->
-          <g id="atlasPosterior" style="display:none">
-            <ellipse class="body-part" data-region="head" data-name="头颅（后）" cx="150" cy="50" rx="35" ry="40" onclick="selectBodyPart('head','头颅')"/>
-            <rect class="body-part" data-region="neck" data-name="颈部（后）" x="135" y="85" width="30" height="25" rx="5" onclick="selectBodyPart('neck','颈部')"/>
-            <path class="body-part" data-region="trunk" data-name="背部" d="M100 110 Q150 100 200 110 L205 200 Q150 210 95 200 Z" onclick="selectBodyPart('trunk','背部')"/>
-            <path class="body-part" data-region="trunk" data-name="腰背部" d="M95 200 Q150 210 205 200 L200 260 Q150 270 100 260 Z" onclick="selectBodyPart('trunk','腰背部')"/>
-            <ellipse class="body-part" data-region="upper" data-name="左肩（后）" cx="85" cy="120" rx="20" ry="15" onclick="selectBodyPart('upper','左肩')"/>
-            <rect class="body-part" data-region="upper" data-name="左上臂（后）" x="65" y="130" width="22" height="70" rx="10" onclick="selectBodyPart('upper','左上臂')"/>
-            <rect class="body-part" data-region="upper" data-name="左前臂（后）" x="65" y="200" width="20" height="65" rx="8" onclick="selectBodyPart('upper','左前臂')"/>
-            <ellipse class="body-part" data-region="upper" data-name="左手（后）" cx="75" cy="275" rx="14" ry="18" onclick="selectBodyPart('upper','左手')"/>
-            <ellipse class="body-part" data-region="upper" data-name="右肩（后）" cx="215" cy="120" rx="20" ry="15" onclick="selectBodyPart('upper','右肩')"/>
-            <rect class="body-part" data-region="upper" data-name="右上臂（后）" x="213" y="130" width="22" height="70" rx="10" onclick="selectBodyPart('upper','右上臂')"/>
-            <rect class="body-part" data-region="upper" data-name="右前臂（后）" x="215" y="200" width="20" height="65" rx="8" onclick="selectBodyPart('upper','右前臂')"/>
-            <ellipse class="body-part" data-region="upper" data-name="右手（后）" cx="225" cy="275" rx="14" ry="18" onclick="selectBodyPart('upper','右手')"/>
-            <path class="body-part" data-region="trunk" data-name="骨盆（后）" d="M100 260 Q150 255 200 260 L195 290 Q150 300 105 290 Z" onclick="selectBodyPart('trunk','骨盆')"/>
-            <rect class="body-part" data-region="lower" data-name="左大腿（后）" x="110" y="290" width="30" height="90" rx="12" onclick="selectBodyPart('lower','左大腿')"/>
-            <rect class="body-part" data-region="lower" data-name="左小腿（后）" x="112" y="380" width="26" height="80" rx="10" onclick="selectBodyPart('lower','左小腿')"/>
-            <ellipse class="body-part" data-region="lower" data-name="左脚（后）" cx="125" cy="475" rx="18" ry="12" onclick="selectBodyPart('lower','左脚')"/>
-            <rect class="body-part" data-region="lower" data-name="右大腿（后）" x="160" y="290" width="30" height="90" rx="12" onclick="selectBodyPart('lower','右大腿')"/>
-            <rect class="body-part" data-region="lower" data-name="右小腿（后）" x="162" y="380" width="26" height="80" rx="10" onclick="selectBodyPart('lower','右小腿')"/>
-            <ellipse class="body-part" data-region="lower" data-name="右脚（后）" cx="175" cy="475" rx="18" ry="12" onclick="selectBodyPart('lower','右脚')"/>
-          </g>
-        </svg>
+        <svg class="atlas-svg" id="atlasSvg" viewBox="0 0 520 780" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="boneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fef3c7;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#fde68a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fcd34d;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="boneGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fde68a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+    <filter id="boneShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#92400e" flood-opacity="0.3"/>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  
+  <!-- 标注线和标签 -->
+  <g class="atlas-labels" style="font-family:sans-serif;font-size:11px;fill:#475569">
+    <!-- 左侧标注 -->
+    <line x1="80" y1="55" x2="175" y2="55" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="20" y="59" text-anchor="start">头盖骨</text>
+    <line x1="80" y1="80" x2="180" y2="80" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="20" y="84" text-anchor="start">眼眶</text>
+    <line x1="80" y1="105" x2="185" y2="105" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="20" y="109" text-anchor="start">下颌骨</text>
+    <line x1="60" y1="145" x2="195" y2="145" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="10" y="149" text-anchor="start">颈椎(7节)</text>
+    <line x1="60" y1="185" x2="200" y2="185" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="10" y="189" text-anchor="start">锁骨</text>
+    <line x1="60" y1="215" x2="205" y2="215" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="10" y="219" text-anchor="start">肩胛骨</text>
+    <line x1="50" y1="260" x2="215" y2="260" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="10" y="264" text-anchor="start">肋骨(12对)</text>
+    <line x1="50" y1="310" x2="220" y2="310" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="10" y="314" text-anchor="start">胸骨</text>
+    <line x1="60" y1="355" x2="225" y2="355" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="10" y="359" text-anchor="start">肱骨</text>
+    <line x1="60" y1="420" x2="230" y2="420" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="10" y="424" text-anchor="start">尺骨·桡骨</text>
+    <line x1="60" y1="480" x2="235" y2="480" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="10" y="484" text-anchor="start">腕骨·掌骨</text>
+    <line x1="50" y1="530" x2="240" y2="530" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="10" y="534" text-anchor="start">指骨</text>
+    
+    <!-- 右侧标注 -->
+    <line x1="340" y1="105" x2="440" y2="105" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="109" text-anchor="start">下颌关节</text>
+    <line x1="340" y1="185" x2="440" y2="185" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="189" text-anchor="start">肩峰·喙突</text>
+    <line x1="340" y1="220" x2="440" y2="220" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="224" text-anchor="start">肩关节</text>
+    <line x1="340" y1="270" x2="440" y2="270" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="274" text-anchor="start">胸椎(12节)</text>
+    <line x1="340" y1="340" x2="440" y2="340" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="344" text-anchor="start">肘关节</text>
+    <line x1="340" y1="400" x2="440" y2="400" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="404" text-anchor="start">腰椎(5节)</text>
+    <line x1="340" y1="450" x2="440" y2="450" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="454" text-anchor="start">髂骨·髋骨</text>
+    <line x1="340" y1="490" x2="440" y2="490" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="494" text-anchor="start">髋关节</text>
+    <line x1="340" y1="560" x2="440" y2="560" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="564" text-anchor="start">股骨</text>
+    <line x1="340" y1="620" x2="440" y2="620" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="624" text-anchor="start">髌骨·膝关节</text>
+    <line x1="340" y1="670" x2="440" y2="670" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="674" text-anchor="start">胫骨·腓骨</text>
+    <line x1="340" y1="730" x2="440" y2="730" stroke="#94a3b8" stroke-width="0.8"/>
+    <text x="445" y="734" text-anchor="start">跗骨·跖骨·趾骨</text>
+  </g>
+  
+  <!-- 人体骨骼 - 前面观 -->
+  <g id="atlasAnterior" filter="url(#boneShadow)">
+    
+    <!-- 头骨 -->
+    <g class="body-part" data-region="head" data-name="头骨" onclick="selectBodyPart('head','头骨')" style="cursor:pointer">
+      <!-- 颅骨 -->
+      <ellipse cx="260" cy="65" rx="38" ry="42" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1.2"/>
+      <!-- 眼眶 -->
+      <ellipse cx="247" cy="62" rx="7" ry="9" fill="#1e293b" opacity="0.7"/>
+      <ellipse cx="273" cy="62" rx="7" ry="9" fill="#1e293b" opacity="0.7"/>
+      <!-- 鼻腔 -->
+      <path d="M257 75 L260 85 L263 75 Z" fill="#1e293b" opacity="0.5"/>
+      <!-- 上颌 -->
+      <path d="M245 88 Q260 95 275 88 L272 95 Q260 100 248 95 Z" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 下颌 -->
+      <path d="M247 96 Q260 108 273 96 L270 104 Q260 110 250 104 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+      <!-- 牙齿线 -->
+      <line x1="250" y1="93" x2="270" y2="93" stroke="#92400e" stroke-width="0.5"/>
+    </g>
+    
+    <!-- 颈椎 -->
+    <g class="body-part" data-region="neck" data-name="颈椎" onclick="selectBodyPart('neck','颈椎')" style="cursor:pointer">
+      <rect x="252" y="112" width="16" height="8" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="122" width="16" height="8" rx="2" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="132" width="16" height="8" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="142" width="16" height="8" rx="2" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="152" width="16" height="8" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="162" width="16" height="8" rx="2" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="172" width="16" height="8" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    
+    <!-- 锁骨 -->
+    <g class="body-part" data-region="upper" data-name="锁骨" onclick="selectBodyPart('upper','锁骨')" style="cursor:pointer">
+      <path d="M210 178 Q235 172 260 178 Q285 172 310 178" fill="none" stroke="url(#boneGradDark)" stroke-width="6" stroke-linecap="round"/>
+    </g>
+    
+    <!-- 肩胛骨 -->
+    <g class="body-part" data-region="upper" data-name="肩胛骨" onclick="selectBodyPart('upper','肩胛骨')" style="cursor:pointer">
+      <path d="M205 185 L195 230 L215 225 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8" opacity="0.8"/>
+      <path d="M315 185 L325 230 L305 225 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8" opacity="0.8"/>
+    </g>
+    
+    <!-- 胸骨 -->
+    <g class="body-part" data-region="trunk" data-name="胸骨" onclick="selectBodyPart('trunk','胸骨')" style="cursor:pointer">
+      <!-- 胸骨柄 -->
+      <path d="M248 180 L272 180 L270 200 L250 200 Z" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 胸骨体 -->
+      <rect x="251" y="200" width="18" height="80" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 剑突 -->
+      <path d="M255 280 L265 280 L260 295 Z" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    
+    <!-- 肋骨 -->
+    <g class="body-part" data-region="trunk" data-name="肋骨" onclick="selectBodyPart('trunk','肋骨')" style="cursor:pointer">
+      <!-- 左侧肋骨 -->
+      <path d="M252 188 Q220 195 205 220" fill="none" stroke="url(#boneGrad)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M252 198 Q215 210 198 240" fill="none" stroke="url(#boneGradDark)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M252 208 Q212 225 195 258" fill="none" stroke="url(#boneGrad)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M252 218 Q210 240 193 275" fill="none" stroke="url(#boneGradDark)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M252 228 Q210 255 195 290" fill="none" stroke="url(#boneGrad)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M252 238 Q212 268 200 300" fill="none" stroke="url(#boneGradDark)" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M252 248 Q215 278 208 308" fill="none" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <!-- 右侧肋骨 -->
+      <path d="M268 188 Q300 195 315 220" fill="none" stroke="url(#boneGrad)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M268 198 Q305 210 322 240" fill="none" stroke="url(#boneGradDark)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M268 208 Q308 225 325 258" fill="none" stroke="url(#boneGrad)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M268 218 Q310 240 327 275" fill="none" stroke="url(#boneGradDark)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M268 228 Q310 255 325 290" fill="none" stroke="url(#boneGrad)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M268 238 Q308 268 320 300" fill="none" stroke="url(#boneGradDark)" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M268 248 Q305 278 312 308" fill="none" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <!-- 肋软骨连接 -->
+      <path d="M205 220 Q210 250 251 260" fill="none" stroke="#a78bfa" stroke-width="2" opacity="0.5"/>
+      <path d="M315 220 Q310 250 269 260" fill="none" stroke="#a78bfa" stroke-width="2" opacity="0.5"/>
+    </g>
+    
+    <!-- 胸椎 -->
+    <g class="body-part" data-region="trunk" data-name="胸椎" onclick="selectBodyPart('trunk','胸椎')" style="cursor:pointer">
+      <rect x="254" y="185" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="195" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="205" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="215" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="225" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="235" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="245" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="255" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="265" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="275" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="285" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="295" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+    </g>
+    
+    <!-- 腰椎 -->
+    <g class="body-part" data-region="trunk" data-name="腰椎" onclick="selectBodyPart('trunk','腰椎')" style="cursor:pointer">
+      <rect x="251" y="305" width="18" height="10" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="251" y="318" width="18" height="10" rx="2" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="251" y="331" width="18" height="10" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="251" y="344" width="18" height="10" rx="2" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="251" y="357" width="18" height="10" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    
+    <!-- 骶骨 -->
+    <g class="body-part" data-region="trunk" data-name="骶骨" onclick="selectBodyPart('trunk','骶骨')" style="cursor:pointer">
+      <path d="M250 370 L270 370 L275 400 L245 400 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <line x1="253" y1="378" x2="267" y2="378" stroke="#d97706" stroke-width="0.5"/>
+      <line x1="254" y1="388" x2="266" y2="388" stroke="#d97706" stroke-width="0.5"/>
+    </g>
+    
+    <!-- 骨盆 -->
+    <g class="body-part" data-region="lower" data-name="骨盆" onclick="selectBodyPart('lower','骨盆')" style="cursor:pointer">
+      <!-- 左髋骨 -->
+      <path d="M248 375 Q215 380 200 410 Q195 440 215 460 Q235 450 248 430 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+      <!-- 右髋骨 -->
+      <path d="M272 375 Q305 380 320 410 Q325 440 305 460 Q285 450 272 430 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+      <!-- 髋臼 -->
+      <circle cx="218" cy="425" r="10" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="1"/>
+      <circle cx="302" cy="425" r="10" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="1"/>
+      <!-- 耻骨联合 -->
+      <rect x="256" y="445" width="8" height="12" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    
+    <!-- 左肱骨 -->
+    <g class="body-part" data-region="upper" data-name="左肱骨" onclick="selectBodyPart('upper','左肱骨')" style="cursor:pointer">
+      <!-- 肱骨头 -->
+      <circle cx="210" cy="190" r="10" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 肱骨干 -->
+      <path d="M205 198 L198 280 L210 282 L217 200 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 肱骨内外髁 -->
+      <ellipse cx="204" cy="288" rx="12" ry="8" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    
+    <!-- 右肱骨 -->
+    <g class="body-part" data-region="upper" data-name="右肱骨" onclick="selectBodyPart('upper','右肱骨')" style="cursor:pointer">
+      <circle cx="310" cy="190" r="10" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <path d="M315 198 L322 280 L310 282 L303 200 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <ellipse cx="316" cy="288" rx="12" ry="8" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    
+    <!-- 左前臂（尺骨+桡骨） -->
+    <g class="body-part" data-region="upper" data-name="左前臂" onclick="selectBodyPart('upper','左前臂')" style="cursor:pointer">
+      <!-- 尺骨 -->
+      <path d="M198 292 L192 380 L200 382 L206 294 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 桡骨 -->
+      <path d="M210 294 L214 380 L206 382 L202 296 Z" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 尺骨鹰嘴 -->
+      <ellipse cx="202" cy="292" rx="8" ry="5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <!-- 桡骨茎突 -->
+      <circle cx="210" cy="385" r="4" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+    </g>
+    
+    <!-- 右前臂 -->
+    <g class="body-part" data-region="upper" data-name="右前臂" onclick="selectBodyPart('upper','右前臂')" style="cursor:pointer">
+      <path d="M322 292 L328 380 L320 382 L314 294 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <path d="M310 294 L306 380 L314 382 L318 296 Z" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <ellipse cx="318" cy="292" rx="8" ry="5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <circle cx="310" cy="385" r="4" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+    </g>
+    
+    <!-- 左手 -->
+    <g class="body-part" data-region="upper" data-name="左手" onclick="selectBodyPart('upper','左手')" style="cursor:pointer">
+      <!-- 腕骨 -->
+      <ellipse cx="203" cy="392" rx="12" ry="6" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <!-- 掌骨 -->
+      <line x1="193" y1="398" x2="190" y2="420" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="199" y1="398" x2="198" y2="425" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="205" y1="398" x2="206" y2="425" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="211" y1="398" x2="214" y2="420" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <!-- 指骨 -->
+      <line x1="190" y1="420" x2="188" y2="432" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="198" y1="425" x2="197" y2="440" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="206" y1="425" x2="207" y2="440" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="214" y1="420" x2="216" y2="432" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    
+    <!-- 右手 -->
+    <g class="body-part" data-region="upper" data-name="右手" onclick="selectBodyPart('upper','右手')" style="cursor:pointer">
+      <ellipse cx="317" cy="392" rx="12" ry="6" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <line x1="307" y1="398" x2="304" y2="420" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="313" y1="398" x2="312" y2="425" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="319" y1="398" x2="320" y2="425" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="325" y1="398" x2="328" y2="420" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="304" y1="420" x2="302" y2="432" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="312" y1="425" x2="311" y2="440" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="320" y1="425" x2="321" y2="440" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="328" y1="420" x2="330" y2="432" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    
+    <!-- 左股骨 -->
+    <g class="body-part" data-region="lower" data-name="左股骨" onclick="selectBodyPart('lower','左股骨')" style="cursor:pointer">
+      <!-- 股骨头 -->
+      <circle cx="225" cy="425" r="9" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 股骨颈 -->
+      <line x1="232" y1="428" x2="240" y2="440" stroke="url(#boneGradDark)" stroke-width="6" stroke-linecap="round"/>
+      <!-- 股骨干 -->
+      <path d="M238 440 L230 560 L244 562 L250 442 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+      <!-- 股骨内外髁 -->
+      <ellipse cx="237" cy="568" rx="14" ry="9" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    
+    <!-- 右股骨 -->
+    <g class="body-part" data-region="lower" data-name="右股骨" onclick="selectBodyPart('lower','右股骨')" style="cursor:pointer">
+      <circle cx="295" cy="425" r="9" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <line x1="288" y1="428" x2="280" y2="440" stroke="url(#boneGradDark)" stroke-width="6" stroke-linecap="round"/>
+      <path d="M282 440 L290 560 L276 562 L270 442 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+      <ellipse cx="283" cy="568" rx="14" ry="9" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    
+    <!-- 髌骨 -->
+    <g class="body-part" data-region="lower" data-name="髌骨" onclick="selectBodyPart('lower','髌骨')" style="cursor:pointer">
+      <ellipse cx="237" cy="575" rx="7" ry="9" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <ellipse cx="283" cy="575" rx="7" ry="9" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    
+    <!-- 左小腿（胫骨+腓骨） -->
+    <g class="body-part" data-region="lower" data-name="左小腿" onclick="selectBodyPart('lower','左小腿')" style="cursor:pointer">
+      <!-- 胫骨 -->
+      <path d="M230 580 L226 690 L240 692 L244 582 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+      <!-- 胫骨粗隆 -->
+      <ellipse cx="237" cy="585" rx="6" ry="4" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <!-- 腓骨 -->
+      <path d="M248 582 L250 690 L244 692 L242 584 Z" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 内踝 -->
+      <circle cx="228" cy="695" r="5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <!-- 外踝 -->
+      <circle cx="248" cy="697" r="4" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+    </g>
+    
+    <!-- 右小腿 -->
+    <g class="body-part" data-region="lower" data-name="右小腿" onclick="selectBodyPart('lower','右小腿')" style="cursor:pointer">
+      <path d="M290 580 L294 690 L280 692 L276 582 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+      <ellipse cx="283" cy="585" rx="6" ry="4" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <path d="M272 582 L270 690 L276 692 L278 584 Z" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <circle cx="292" cy="695" r="5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <circle cx="272" cy="697" r="4" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+    </g>
+    
+    <!-- 左足 -->
+    <g class="body-part" data-region="lower" data-name="左足" onclick="selectBodyPart('lower','左足')" style="cursor:pointer">
+      <!-- 跗骨 -->
+      <ellipse cx="234" cy="705" rx="14" ry="8" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 跟骨 -->
+      <ellipse cx="222" cy="710" rx="8" ry="6" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <!-- 跖骨 -->
+      <line x1="228" y1="710" x2="224" y2="730" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="234" y1="712" x2="233" y2="735" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="240" y1="710" x2="242" y2="730" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <!-- 趾骨 -->
+      <line x1="224" y1="730" x2="222" y2="740" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="233" y1="735" x2="232" y2="748" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="242" y1="730" x2="244" y2="740" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    
+    <!-- 右足 -->
+    <g class="body-part" data-region="lower" data-name="右足" onclick="selectBodyPart('lower','右足')" style="cursor:pointer">
+      <ellipse cx="286" cy="705" rx="14" ry="8" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <ellipse cx="298" cy="710" rx="8" ry="6" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <line x1="292" y1="710" x2="296" y2="730" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="286" y1="712" x2="287" y2="735" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="280" y1="710" x2="278" y2="730" stroke="url(#boneGrad)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="296" y1="730" x2="298" y2="740" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="287" y1="735" x2="288" y2="748" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="278" y1="730" x2="276" y2="740" stroke="url(#boneGradDark)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    
+  </g>
+  
+  <!-- 后面观（简化） -->
+  <g id="atlasPosterior" style="display:none" filter="url(#boneShadow)">
+    <!-- 头骨后面 -->
+    <ellipse cx="260" cy="65" rx="38" ry="42" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1.2"/>
+    <!-- 枕外隆凸 -->
+    <circle cx="260" cy="85" r="3" fill="#d97706"/>
+    <!-- 颈椎 -->
+    <g class="body-part" data-region="neck" data-name="颈椎" onclick="selectBodyPart('neck','颈椎')" style="cursor:pointer">
+      <rect x="252" y="112" width="16" height="8" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="122" width="16" height="8" rx="2" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="132" width="16" height="8" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="142" width="16" height="8" rx="2" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="152" width="16" height="8" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="162" width="16" height="8" rx="2" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="252" y="172" width="16" height="8" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    <!-- 肩胛骨（后面观更明显） -->
+    <g class="body-part" data-region="upper" data-name="肩胛骨" onclick="selectBodyPart('upper','肩胛骨')" style="cursor:pointer">
+      <path d="M200 185 L185 250 L215 245 L220 190 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <path d="M320 185 L335 250 L305 245 L300 190 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 肩胛冈 -->
+      <line x1="195" y1="215" x2="218" y2="210" stroke="#d97706" stroke-width="2"/>
+      <line x1="325" y1="215" x2="302" y2="210" stroke="#d97706" stroke-width="2"/>
+    </g>
+    <!-- 脊柱（后面观） -->
+    <g class="body-part" data-region="trunk" data-name="脊柱" onclick="selectBodyPart('trunk','脊柱')" style="cursor:pointer">
+      <rect x="254" y="185" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="195" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="205" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="215" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="225" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="235" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="245" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="255" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="265" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="275" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="285" width="12" height="7" rx="1.5" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="254" y="295" width="12" height="7" rx="1.5" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.6"/>
+      <rect x="251" y="305" width="18" height="10" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="251" y="318" width="18" height="10" rx="2" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="251" y="331" width="18" height="10" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="251" y="344" width="18" height="10" rx="2" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <rect x="251" y="357" width="18" height="10" rx="2" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <!-- 棘突 -->
+      <line x1="260" y1="188" x2="260" y2="370" stroke="#d97706" stroke-width="1" stroke-dasharray="3,2"/>
+    </g>
+    <!-- 肋骨后面 -->
+    <g class="body-part" data-region="trunk" data-name="肋骨" onclick="selectBodyPart('trunk','肋骨')" style="cursor:pointer">
+      <path d="M252 190 Q225 200 210 230" fill="none" stroke="url(#boneGrad)" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M252 205 Q220 220 205 255" fill="none" stroke="url(#boneGradDark)" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M252 220 Q218 240 203 275" fill="none" stroke="url(#boneGrad)" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M252 235 Q218 258 208 295" fill="none" stroke="url(#boneGradDark)" stroke-width="3" stroke-linecap="round"/>
+      <path d="M268 190 Q295 200 310 230" fill="none" stroke="url(#boneGrad)" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M268 205 Q300 220 315 255" fill="none" stroke="url(#boneGradDark)" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M268 220 Q302 240 317 275" fill="none" stroke="url(#boneGrad)" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M268 235 Q302 258 312 295" fill="none" stroke="url(#boneGradDark)" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <!-- 骨盆后面 -->
+    <g class="body-part" data-region="lower" data-name="骨盆" onclick="selectBodyPart('lower','骨盆')" style="cursor:pointer">
+      <path d="M248 375 Q215 380 200 410 Q195 440 215 460 Q235 450 248 430 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+      <path d="M272 375 Q305 380 320 410 Q325 440 305 460 Q285 450 272 430 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+      <!-- 髂后上棘 -->
+      <circle cx="215" cy="385" r="3" fill="#d97706"/>
+      <circle cx="305" cy="385" r="3" fill="#d97706"/>
+    </g>
+    <!-- 四肢骨后面（简化） -->
+    <g class="body-part" data-region="upper" data-name="左肱骨" onclick="selectBodyPart('upper','左肱骨')" style="cursor:pointer">
+      <circle cx="210" cy="190" r="10" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <path d="M205 198 L198 280 L210 282 L217 200 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    <g class="body-part" data-region="upper" data-name="右肱骨" onclick="selectBodyPart('upper','右肱骨')" style="cursor:pointer">
+      <circle cx="310" cy="190" r="10" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+      <path d="M315 198 L322 280 L310 282 L303 200 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    <g class="body-part" data-region="upper" data-name="左前臂" onclick="selectBodyPart('upper','左前臂')" style="cursor:pointer">
+      <path d="M198 292 L192 380 L200 382 L206 294 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <path d="M210 294 L214 380 L206 382 L202 296 Z" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    <g class="body-part" data-region="upper" data-name="右前臂" onclick="selectBodyPart('upper','右前臂')" style="cursor:pointer">
+      <path d="M322 292 L328 380 L320 382 L314 294 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="0.8"/>
+      <path d="M310 294 L306 380 L314 382 L318 296 Z" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    <g class="body-part" data-region="lower" data-name="左股骨" onclick="selectBodyPart('lower','左股骨')" style="cursor:pointer">
+      <path d="M238 440 L230 560 L244 562 L250 442 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+    </g>
+    <g class="body-part" data-region="lower" data-name="右股骨" onclick="selectBodyPart('lower','右股骨')" style="cursor:pointer">
+      <path d="M282 440 L290 560 L276 562 L270 442 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+    </g>
+    <g class="body-part" data-region="lower" data-name="左小腿" onclick="selectBodyPart('lower','左小腿')" style="cursor:pointer">
+      <path d="M230 580 L226 690 L240 692 L244 582 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+      <path d="M248 582 L250 690 L244 692 L242 584 Z" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+    <g class="body-part" data-region="lower" data-name="右小腿" onclick="selectBodyPart('lower','右小腿')" style="cursor:pointer">
+      <path d="M290 580 L294 690 L280 692 L276 582 Z" fill="url(#boneGrad)" stroke="#d97706" stroke-width="1"/>
+      <path d="M272 582 L270 690 L276 692 L278 584 Z" fill="url(#boneGradDark)" stroke="#d97706" stroke-width="0.8"/>
+    </g>
+  </g>
+  
+  <!-- 标题 -->
+  <text x="260" y="25" text-anchor="middle" style="font-family:sans-serif;font-size:14px;font-weight:bold;fill:#7c3aed">人体骨骼 · 前面观</text>
+</svg>
       </div>
       
       <!-- 详情面板 -->
