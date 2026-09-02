@@ -270,7 +270,6 @@ window.onerror = function(msg, url, line, col, error) {
         loading.innerHTML = '<div class="loading-content"><div class="loading-icon">⚠️</div><h1>页面加载出错</h1><p style="margin-bottom:8px;color:#ef4444;">' + msg + '</p><p style="font-size:12px;color:#9ca3af;margin-bottom:16px;">第' + line + '行</p><button onclick="location.reload()" style="padding:10px 24px;background:#667eea;color:white;border:none;border-radius:8px;cursor:pointer;">🔄 重新加载</button></div>';
         loading.style.display = 'flex';
     }
-    console.error('Global error:', msg, url, line, col, error);
     return false;
 };
 </script>
@@ -295,10 +294,10 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 </script>
 <script>
 // 考研资料库 - 全栈版前端逻辑
-const SUPABASE_URL = 'https://ifeslngcdledzgwltcbl.supabase.co';
+const SUPABASE_URL = 'https://ifeslngcdledzgwltcbl.sb.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_8PV65BZfwPABIMYw8zJMSg_y0q6pQrL';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: true, autoRefreshToken: true }
 });
 
@@ -371,7 +370,7 @@ async function init() {
                 updateLoading('加载用户信息...', 60);
                 
                 // 后台验证session有效性（不阻塞UI）
-                supabase.auth.getSession().then(({ data }) => {
+                sb.auth.getSession().then(({ data }) => {
                     if (data.session) {
                         currentUser = data.session.user;
                         document.getElementById('userName').textContent = currentUser.user_metadata?.username || currentUser.email;
@@ -398,7 +397,7 @@ async function init() {
         setTimeout(() => resolve(null), 5000);
     });
     
-    const sessionPromise = supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+    const sessionPromise = sb.auth.getSession().catch(() => ({ data: { session: null } }));
     
     const result = await Promise.race([sessionPromise, timeoutPromise]);
     const session = result?.data?.session;
@@ -467,10 +466,10 @@ async function handleLogin() {
     
     if (!email || !password) { showToast('请输入邮箱和密码'); return; }
     
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await sb.auth.signInWithPassword({ email, password });
     if (error) { showToast('登录失败: ' + error.message); return; }
     
-    currentUser = (await supabase.auth.getSession()).data.session.user;
+    currentUser = (await sb.auth.getSession()).data.session.user;
     await loadUserProfile();
     showMainApp();
     showToast('登录成功！');
@@ -495,7 +494,7 @@ async function handleRegister() {
     if (codeError || !codeData) { showToast('邀请码无效或已使用'); return; }
     
     // 注册
-    const { error } = await supabase.auth.signUp({
+    const { error } = await sb.auth.signUp({
         email, password,
         options: { data: { username, role: 'user' } }
     });
@@ -503,14 +502,14 @@ async function handleRegister() {
     if (error) { showToast('注册失败: ' + error.message); return; }
     
     // 标记邀请码已使用
-    await supabase.from('invite_codes').update({ is_used: true, used_by: email, used_at: new Date().toISOString() }).eq('id', codeData.id);
+    await sb.from('invite_codes').update({ is_used: true, used_by: email, used_at: new Date().toISOString() }).eq('id', codeData.id);
     
     showToast('注册成功！请登录');
     switchLoginTab('login');
 }
 
 async function handleLogout() {
-    await supabase.auth.signOut();
+    await sb.auth.signOut();
     currentUser = null;
     showLoginPage();
     showToast('已退出登录');
@@ -520,7 +519,7 @@ async function loadUserProfile() {
     if (!currentUser || !currentUser.id) return;
     try {
         const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
-        const request = supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+        const request = sb.from('profiles').select('*').eq('id', currentUser.id).single();
         const { data } = await Promise.race([request, timeout]);
         if (data && data.role === 'admin') {
             const adminItem = document.getElementById('adminMenuItem');
@@ -625,11 +624,11 @@ async function loadDashboard() {
     (async () => {
         try {
             const results = await Promise.allSettled([
-                supabase.from('chapters').select('*', { count: 'exact', head: true }),
-                supabase.from('vocab_words').select('*', { count: 'exact', head: true }),
-                supabase.from('reading_passages').select('*', { count: 'exact', head: true }),
-                supabase.from('flashcards').select('*', { count: 'exact', head: true }),
-                supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(3)
+                sb.from('chapters').select('*', { count: 'exact', head: true }),
+                sb.from('vocab_words').select('*', { count: 'exact', head: true }),
+                sb.from('reading_passages').select('*', { count: 'exact', head: true }),
+                sb.from('flashcards').select('*', { count: 'exact', head: true }),
+                sb.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(3)
             ]);
             
             const newStats = {
@@ -703,7 +702,7 @@ async function loadKnowledge() {
     if (!chapters) {
         try {
             const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
-            const request = supabase.from('chapters').select('id, title').eq('subject_id', currentSubject).order('sort_order');
+            const request = sb.from('chapters').select('id, title').eq('subject_id', currentSubject).order('sort_order');
             const result = await Promise.race([request, timeout]);
             chapters = result.data || [];
             setCache(cacheKey, chapters);
@@ -748,7 +747,7 @@ async function loadChapter(id, element) {
     if (!chapter) {
         try {
             const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
-            const request = supabase.from('chapters').select('*').eq('id', id).single();
+            const request = sb.from('chapters').select('*').eq('id', id).single();
             const result = await Promise.race([request, timeout]);
             chapter = result.data;
             if (chapter) setCache(cacheKey, chapter);
@@ -781,7 +780,7 @@ async function loadVocab() {
 }
 
 async function searchVocab(query) {
-    let request = supabase.from('vocab_words').select('*').limit(100);
+    let request = sb.from('vocab_words').select('*').limit(100);
     if (query) {
         request = request.ilike('word', `%${query}%`);
     }
@@ -801,7 +800,7 @@ async function searchVocab(query) {
 // ============================================
 async function loadReading() {
     const content = document.getElementById('appContent');
-    const { data: years } = await supabase.from('reading_passages').select('year').order('year', { ascending: false });
+    const { data: years } = await sb.from('reading_passages').select('year').order('year', { ascending: false });
     const uniqueYears = [...new Set(years?.map(y => y.year) || [])];
     
     content.innerHTML = `
@@ -826,7 +825,7 @@ async function selectYear(year, element) {
         element.classList.add('active');
     }
     
-    const { data: passages } = await supabase.from('reading_passages').select('id, title, passage_number').eq('year', year).order('passage_number');
+    const { data: passages } = await sb.from('reading_passages').select('id, title, passage_number').eq('year', year).order('passage_number');
     
     document.getElementById('passageList').innerHTML = passages?.map((p, i) => 
         `<button class="year-btn ${i===0?'active':''}" onclick="loadPassage('${p.id}', this)">Text ${p.passage_number}</button>`
@@ -842,8 +841,8 @@ async function loadPassage(id, element) {
     }
     
     const [{ data: passage }, { data: questions }] = await Promise.all([
-        supabase.from('reading_passages').select('*').eq('id', id).single(),
-        supabase.from('reading_questions').select('*').eq('passage_id', id).order('sort_order')
+        sb.from('reading_passages').select('*').eq('id', id).single(),
+        sb.from('reading_questions').select('*').eq('passage_id', id).order('sort_order')
     ]);
     
     document.getElementById('passageContent').innerHTML = `
@@ -886,7 +885,7 @@ function checkAnswer(element, selected, correct) {
 // ============================================
 async function loadFlashcards() {
     const content = document.getElementById('appContent');
-    const { data: flashcards } = await supabase.from('flashcards').select('*').limit(500);
+    const { data: flashcards } = await sb.from('flashcards').select('*').limit(500);
     allFlashcards = flashcards || [];
     flashcardIndex = 0;
     
@@ -948,7 +947,7 @@ function rateFlashcard(rating) {
 // ============================================
 async function loadAtlas() {
     const content = document.getElementById('appContent');
-    const { data: systems } = await supabase.from('anatomy_systems').select('*');
+    const { data: systems } = await sb.from('anatomy_systems').select('*');
     
     content.innerHTML = `
         <div class="card">
@@ -967,7 +966,7 @@ async function loadAtlas() {
 }
 
 async function loadAtlasSystem(key) {
-    const { data: system } = await supabase.from('anatomy_systems').select('*').eq('system_key', key).single();
+    const { data: system } = await sb.from('anatomy_systems').select('*').eq('system_key', key).single();
     
     document.getElementById('atlasDetail').innerHTML = `
         <div class="card">
@@ -984,7 +983,7 @@ async function loadAtlasSystem(key) {
 // ============================================
 async function loadPhysiology() {
     const content = document.getElementById('appContent');
-    const { data: concepts } = await supabase.from('physiology_concepts').select('*');
+    const { data: concepts } = await sb.from('physiology_concepts').select('*');
     
     content.innerHTML = `
         <div class="card">
@@ -1003,7 +1002,7 @@ async function loadPhysiology() {
 }
 
 async function loadPhysioConcept(key) {
-    const { data: concept } = await supabase.from('physiology_concepts').select('*').eq('concept_key', key).single();
+    const { data: concept } = await sb.from('physiology_concepts').select('*').eq('concept_key', key).single();
     
     document.getElementById('physioDetail').innerHTML = `
         <div class="card">
@@ -1039,9 +1038,9 @@ async function handleGlobalSearch(event) {
     if (!query) return;
     
     // 搜索词汇
-    const { data: vocabResults } = await supabase.from('vocab_words').select('*').ilike('word', `%${query}%`).limit(10);
+    const { data: vocabResults } = await sb.from('vocab_words').select('*').ilike('word', `%${query}%`).limit(10);
     // 搜索章节
-    const { data: chapterResults } = await supabase.from('chapters').select('id, title, subject_id').ilike('title', `%${query}%`).limit(10);
+    const { data: chapterResults } = await sb.from('chapters').select('id, title, subject_id').ilike('title', `%${query}%`).limit(10);
     
     const content = document.getElementById('appContent');
     content.innerHTML = `
@@ -1078,7 +1077,7 @@ function switchAdminTab(tab) {
 }
 
 async function loadInviteCodes() {
-    const { data: codes } = await supabase.from('invite_codes').select('*').order('created_at', { ascending: false });
+    const { data: codes } = await sb.from('invite_codes').select('*').order('created_at', { ascending: false });
     const unused = codes?.filter(c => !c.is_used).length || 0;
     const used = codes?.filter(c => c.is_used).length || 0;
     
@@ -1128,7 +1127,7 @@ async function batchGenerateInviteCodes(count) {
     for (let i = 0; i < count; i++) {
         codes.push({ code: Math.random().toString(36).substring(2, 10).toUpperCase(), created_by: currentUser.id });
     }
-    const { error } = await supabase.from('invite_codes').insert(codes);
+    const { error } = await sb.from('invite_codes').insert(codes);
     if (error) { showToast('生成失败: ' + error.message); return; }
     
     lastBatchCodes = codes.map(c => c.code);
@@ -1151,7 +1150,7 @@ function copyBatchCodes() {
 
 async function deleteInviteCode(id) {
     if (!confirm('确定删除这个邀请码吗？')) return;
-    const { error } = await supabase.from('invite_codes').delete().eq('id', id);
+    const { error } = await sb.from('invite_codes').delete().eq('id', id);
     if (error) { showToast('删除失败: ' + error.message); return; }
     showToast('邀请码已删除');
     loadInviteCodes();
@@ -1159,14 +1158,14 @@ async function deleteInviteCode(id) {
 
 async function generateInviteCode() {
     const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-    const { error } = await supabase.from('invite_codes').insert([{ code, created_by: currentUser.id }]);
+    const { error } = await sb.from('invite_codes').insert([{ code, created_by: currentUser.id }]);
     if (error) { showToast('生成失败: ' + error.message); return; }
     showToast('邀请码已生成: ' + code);
     loadInviteCodes();
 }
 
 async function loadAdminUsers() {
-    const { data: users } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+    const { data: users } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
     const adminCount = users?.filter(u => u.role === 'admin').length || 0;
     
     document.getElementById('adminContent').innerHTML = `
@@ -1205,7 +1204,7 @@ async function loadAdminUsers() {
 async function toggleUserRole(userId, newRole) {
     const roleText = newRole === 'admin' ? '管理员' : '普通用户';
     if (!confirm(`确定将该用户${newRole === 'admin' ? '提升' : '降级'}为${roleText}吗？`)) return;
-    const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+    const { error } = await sb.from('profiles').update({ role: newRole }).eq('id', userId);
     if (error) { showToast('操作失败: ' + error.message); return; }
     showToast(`已${newRole === 'admin' ? '提升' : '降级'}为${roleText}`);
     loadAdminUsers();
@@ -1214,7 +1213,7 @@ async function toggleUserRole(userId, newRole) {
 async function deleteUser(userId) {
     if (!confirm('确定删除该用户吗？此操作不可恢复！')) return;
     // 删除profiles记录
-    const { error: profileError } = await supabase.from('profiles').delete().eq('id', userId);
+    const { error: profileError } = await sb.from('profiles').delete().eq('id', userId);
     if (profileError) { showToast('删除失败: ' + profileError.message); return; }
     showToast('用户已删除');
     loadAdminUsers();
@@ -1224,7 +1223,7 @@ async function deleteUser(userId) {
 // 管理员 - 公告管理
 // ============================================
 async function loadAdminAnnouncements() {
-    const { data: announcements } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
+    const { data: announcements } = await sb.from('announcements').select('*').order('created_at', { ascending: false });
     
     document.getElementById('adminContent').innerHTML = `
         <div style="margin-bottom: 16px;">
@@ -1279,7 +1278,7 @@ async function submitAnnouncement() {
     const content = document.getElementById('annContent').value;
     if (!title || !content) { showToast('请填写标题和内容'); return; }
     
-    const { error } = await supabase.from('announcements').insert([{ title, content, created_by: currentUser.id }]);
+    const { error } = await sb.from('announcements').insert([{ title, content, created_by: currentUser.id }]);
     if (error) { showToast('发布失败: ' + error.message); return; }
     showToast('公告发布成功！');
     hideAnnouncementForm();
@@ -1287,7 +1286,7 @@ async function submitAnnouncement() {
 }
 
 async function toggleAnnouncement(id, isActive) {
-    const { error } = await supabase.from('announcements').update({ is_active: isActive }).eq('id', id);
+    const { error } = await sb.from('announcements').update({ is_active: isActive }).eq('id', id);
     if (error) { showToast('操作失败: ' + error.message); return; }
     showToast(isActive ? '公告已显示' : '公告已隐藏');
     loadAdminAnnouncements();
@@ -1295,7 +1294,7 @@ async function toggleAnnouncement(id, isActive) {
 
 async function deleteAnnouncement(id) {
     if (!confirm('确定删除这个公告吗？')) return;
-    const { error } = await supabase.from('announcements').delete().eq('id', id);
+    const { error } = await sb.from('announcements').delete().eq('id', id);
     if (error) { showToast('删除失败: ' + error.message); return; }
     showToast('公告已删除');
     loadAdminAnnouncements();
@@ -1306,10 +1305,10 @@ async function deleteAnnouncement(id) {
 // ============================================
 async function loadAdminContent() {
     const [{ count: chapters }, { count: vocab }, { count: passages }, { count: flashcards }] = await Promise.all([
-        supabase.from('chapters').select('*', { count: 'exact', head: true }),
-        supabase.from('vocab_words').select('*', { count: 'exact', head: true }),
-        supabase.from('reading_passages').select('*', { count: 'exact', head: true }),
-        supabase.from('flashcards').select('*', { count: 'exact', head: true })
+        sb.from('chapters').select('*', { count: 'exact', head: true }),
+        sb.from('vocab_words').select('*', { count: 'exact', head: true }),
+        sb.from('reading_passages').select('*', { count: 'exact', head: true }),
+        sb.from('flashcards').select('*', { count: 'exact', head: true })
     ]);
     
     document.getElementById('adminContent').innerHTML = `
@@ -1338,7 +1337,7 @@ async function loadContentEditor(type) {
     const editor = document.getElementById('contentEditor');
     
     if (type === 'chapters') {
-        const { data: chapters } = await supabase.from('chapters').select('id, title, subject_id, sort_order').order('subject_id').order('sort_order');
+        const { data: chapters } = await sb.from('chapters').select('id, title, subject_id, sort_order').order('subject_id').order('sort_order');
         const subjectNames = { 1: '英语', 2: '政治', 3: '运动生理学', 4: '运动解剖学' };
         
         editor.innerHTML = `
@@ -1383,7 +1382,7 @@ async function loadContentEditor(type) {
             </div>
         `;
     } else if (type === 'flashcards') {
-        const { data: flashcards } = await supabase.from('flashcards').select('*').limit(50).order('id');
+        const { data: flashcards } = await sb.from('flashcards').select('*').limit(50).order('id');
         editor.innerHTML = `
             <div class="card">
                 <div class="card-title">🃏 闪卡管理 (显示前50张)</div>
@@ -1415,7 +1414,7 @@ async function addChapter() {
     if (!title) { showToast('请输入章节标题'); return; }
     
     const id = `${subjectId === 2 ? 'pol' : subjectId === 3 ? 'phy' : 'ana'}-${Date.now()}`;
-    const { error } = await supabase.from('chapters').insert([{ id, subject_id: subjectId, chapter_key: id, title, content: '<p>待编辑内容...</p>', sort_order: 999 }]);
+    const { error } = await sb.from('chapters').insert([{ id, subject_id: subjectId, chapter_key: id, title, content: '<p>待编辑内容...</p>', sort_order: 999 }]);
     if (error) { showToast('添加失败: ' + error.message); return; }
     showToast('章节添加成功！');
     document.getElementById('chTitle').value = '';
@@ -1424,7 +1423,7 @@ async function addChapter() {
 
 async function deleteChapter(id) {
     if (!confirm('确定删除这个章节吗？')) return;
-    const { error } = await supabase.from('chapters').delete().eq('id', id);
+    const { error } = await sb.from('chapters').delete().eq('id', id);
     if (error) { showToast('删除失败: ' + error.message); return; }
     showToast('章节已删除');
     loadContentEditor('chapters');
@@ -1436,7 +1435,7 @@ async function addVocab() {
     const category = document.getElementById('newCategory').value;
     if (!word || !meaning) { showToast('请输入单词和释义'); return; }
     
-    const { error } = await supabase.from('vocab_words').insert([{ word, meaning, category }]);
+    const { error } = await sb.from('vocab_words').insert([{ word, meaning, category }]);
     if (error) { showToast('添加失败: ' + error.message); return; }
     showToast('词汇添加成功！');
     document.getElementById('newWord').value = '';
@@ -1448,7 +1447,7 @@ async function addFlashcard() {
     const back = document.getElementById('fcBack').value;
     if (!front || !back) { showToast('请输入正面和背面内容'); return; }
     
-    const { error } = await supabase.from('flashcards').insert([{ subject_id: 2, category: '自定义', front, back, explanation: '' }]);
+    const { error } = await sb.from('flashcards').insert([{ subject_id: 2, category: '自定义', front, back, explanation: '' }]);
     if (error) { showToast('添加失败: ' + error.message); return; }
     showToast('闪卡添加成功！');
     document.getElementById('fcFront').value = '';
@@ -1458,7 +1457,7 @@ async function addFlashcard() {
 
 async function deleteFlashcard(id) {
     if (!confirm('确定删除这张闪卡吗？')) return;
-    const { error } = await supabase.from('flashcards').delete().eq('id', id);
+    const { error } = await sb.from('flashcards').delete().eq('id', id);
     if (error) { showToast('删除失败: ' + error.message); return; }
     showToast('闪卡已删除');
     loadContentEditor('flashcards');
@@ -1469,11 +1468,11 @@ async function deleteFlashcard(id) {
 // ============================================
 async function loadAdminStats() {
     const [{ count: chapters }, { count: vocab }, { count: passages }, { count: flashcards }, { count: users }] = await Promise.all([
-        supabase.from('chapters').select('*', { count: 'exact', head: true }),
-        supabase.from('vocab_words').select('*', { count: 'exact', head: true }),
-        supabase.from('reading_passages').select('*', { count: 'exact', head: true }),
-        supabase.from('flashcards').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('*', { count: 'exact', head: true })
+        sb.from('chapters').select('*', { count: 'exact', head: true }),
+        sb.from('vocab_words').select('*', { count: 'exact', head: true }),
+        sb.from('reading_passages').select('*', { count: 'exact', head: true }),
+        sb.from('flashcards').select('*', { count: 'exact', head: true }),
+        sb.from('profiles').select('*', { count: 'exact', head: true })
     ]);
     
     document.getElementById('adminContent').innerHTML = `
