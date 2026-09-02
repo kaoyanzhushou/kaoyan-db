@@ -24469,6 +24469,11 @@ function showAllPdfAnswers(){
 
 // ==================== INITIALIZATION ====================
 function init(){
+  // 确保默认管理员账号存在
+  try {
+    if(typeof initDefaultAdmin === 'function') initDefaultAdmin();
+  } catch(e) { console.warn('initDefaultAdmin error in init:', e); }
+  
   // Dark mode
   initDarkMode();
   
@@ -24510,7 +24515,19 @@ function init(){
 }
 
 // Run on load
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function(){
+  try {
+    init();
+  } catch(e) {
+    console.error('init error:', e);
+    // 即使init出错，也要绑定tab导航事件，确保页面可用
+    document.querySelectorAll('.nav-item').forEach(item=>{
+      item.addEventListener('click', ()=>{
+        try { switchTab(item.dataset.tab); } catch(e2){ console.error('switchTab error:', e2); }
+      });
+    });
+  }
+});
 
 // ==================== AI学习助手 ====================
 function askAI(){
@@ -25021,8 +25038,10 @@ function changePassword(){
 
 // 初始化登录状态
 function initLoginSystem(){
-  // 确保默认管理员账号存在
-  if(typeof initDefaultAdmin === 'function') initDefaultAdmin();
+  // 确保默认管理员账号存在（用try-catch保护，不影响其他功能）
+  try {
+    if(typeof initDefaultAdmin === 'function') initDefaultAdmin();
+  } catch(e) { console.warn('initDefaultAdmin error:', e); }
   
   const user = getCurrentUser();
   if(user){
