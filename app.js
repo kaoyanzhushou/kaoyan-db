@@ -2,7 +2,9 @@
 const SUPABASE_URL = 'https://ifeslngcdledzgwltcbl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_8PV65BZfwPABIMYw8zJMSg_y0q6pQrL';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true }
+});
 
 let currentUser = null;
 let currentTab = 'dashboard';
@@ -11,18 +13,84 @@ let currentChapter = null;
 let flashcardIndex = 0;
 let flashcardFlipped = false;
 let allFlashcards = [];
+let dataCache = {};
 
 // ============================================
-// 初始化
+// 数据缓存工具
+// ============================================
+function getCache(key, maxAge = 5 * 60 * 1000) {
+    try {
+        const cached = localStorage.getItem('cache_' + key);
+        if (!cached) return null;
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp > maxAge) return null;
+        return data;
+    } catch (e) { return null; }
+}
+
+function setCache(key, data) {
+    try {
+        localStorage.setItem('cache_' + key, JSON.stringify({ data, timestamp: Date.now() }));
+    } catch (e) {}
+}
+
+async function fetchWithCache(table, queryFn, cacheKey, maxAge = 5 * 60 * 1000) {
+    const cached = getCache(cacheKey, maxAge);
+    if (cached) return cached;
+    try {
+        const result = await queryFn();
+        if (result.data) setCache(cacheKey, result.data);
+        return result.data;
+    } catch (e) {
+        console.error('Fetch error:', e);
+        return cached || [];
+    }
+}
+
+// ============================================
+// 初始化（带超时处理）
 // ============================================
 async function init() {
-    updateLoading('检查登录状态...', 20);
+    updateLoading('正在连接服务器...', 10);
     
-    // 检查登录状态
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-        currentUser = session.user;
-        await loadUserProfile();
+    // 超时处理：8秒后强制进入登录页
+    const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => resolve('timeout'), 8000);
+    });
+    
+    const sessionPromise = (async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            return session;
+        } catch (e) {
+            console.error('Session error:', e);
+            return null;
+        }
+    })();
+    
+    updateLoading('检查登录状态...', 30);
+    
+    const result = await Promise.race([sessionPromise, timeoutPromise]);
+    
+    if (result === 'timeout') {
+        console.warn('连接超时，使用离线模式');
+        updateLoading('连接较慢，正在重试...', 50);
+        // 再等一次
+        const retryResult = await Promise.race([sessionPromise, new Promise(r => setTimeout(() => r('timeout2'), 5000))]);
+        if (retryResult === 'timeout2') {
+            showLoginPage();
+            showLoadingError();
+            return;
+        }
+    }
+    
+    updateLoading('加载用户信息...', 70);
+    
+    if (result && result !== 'timeout' && result !== 'timeout2') {
+        currentUser = result.user;
+        try {
+            await loadUserProfile();
+        } catch (e) { console.error('Profile load error:', e); }
         showMainApp();
     } else {
         showLoginPage();
@@ -31,12 +99,28 @@ async function init() {
     updateLoading('加载完成', 100);
     setTimeout(() => {
         document.getElementById('loadingScreen').style.display = 'none';
-    }, 500);
+    }, 300);
+}
+
+function showLoadingError() {
+    const loadingScreen = document.getElementById('loadingScreen');
+    loadingScreen.innerHTML = `
+        <div class="loading-content">
+            <div class="loading-icon">⚠️</div>
+            <h1>连接较慢</h1>
+            <p style="margin-bottom: 16px;">服务器响应超时，请检查网络后重试</p>
+            <button onclick="location.reload()" style="padding: 10px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">🔄 重新加载</button>
+            <p style="margin-top: 16px; font-size: 12px; color: #9ca3af;">提示：Supabase服务器在国外，国内访问可能较慢</p>
+        </div>
+    `;
+    loadingScreen.style.display = 'flex';
 }
 
 function updateLoading(text, progress) {
-    document.getElementById('loadingText').textContent = text;
-    document.getElementById('loadingProgress').style.width = progress + '%';
+    const loadingText = document.getElementById('loadingText');
+    const loadingProgress = document.getElementById('loadingProgress');
+    if (loadingText) loadingText.textContent = text;
+    if (loadingProgress) loadingProgress.style.width = progress + '%';
 }
 
 // ============================================
@@ -149,24 +233,20 @@ function switchTab(tab) {
 async function loadDashboard() {
     const content = document.getElementById('appContent');
     
-    // 获取统计数据和公告
-    const [{ count: chapterCount }, { count: vocabCount }, { count: passageCount }, { count: flashcardCount }, { data: announcements }] = await Promise.all([
-        supabase.from('chapters').select('*', { count: 'exact', head: true }),
-        supabase.from('vocab_words').select('*', { count: 'exact', head: true }),
-        supabase.from('reading_passages').select('*', { count: 'exact', head: true }),
-        supabase.from('flashcards').select('*', { count: 'exact', head: true }),
-        supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(3)
-    ]);
-    
-    // 倒计时
+    // 倒计时（本地计算，不依赖网络）
     const examDate = new Date('2026-12-19');
     const now = new Date();
     const daysLeft = Math.ceil((examDate - now) / (1000 * 60 * 60 * 24));
     
+    // 先显示缓存数据或默认值
+    const cachedStats = getCache('dashboard_stats', 2 * 60 * 1000);
+    const stats = cachedStats || { chapters: 164, vocab: 5716, passages: 64, flashcards: 477 };
+    const cachedAnnouncements = getCache('announcements', 10 * 60 * 1000) || [];
+    
     content.innerHTML = `
-        ${announcements?.length ? `
+        ${cachedAnnouncements?.length ? `
         <div style="margin-bottom: 16px;">
-            ${announcements.map(a => `
+            ${cachedAnnouncements.map(a => `
                 <div class="card" style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b; margin-bottom: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
@@ -184,10 +264,10 @@ async function loadDashboard() {
         </div>
         
         <div class="grid-4" style="margin-bottom: 16px;">
-            <div class="stat-card"><div class="stat-icon">📖</div><div class="stat-value">${chapterCount || 0}</div><div class="stat-label">知识章节</div></div>
-            <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-value">${vocabCount || 0}</div><div class="stat-label">英语词汇</div></div>
-            <div class="stat-card"><div class="stat-icon">📄</div><div class="stat-value">${passageCount || 0}</div><div class="stat-label">真题阅读</div></div>
-            <div class="stat-card"><div class="stat-icon">🃏</div><div class="stat-value">${flashcardCount || 0}</div><div class="stat-label">记忆闪卡</div></div>
+            <div class="stat-card"><div class="stat-icon">📖</div><div class="stat-value" id="statChapters">${stats.chapters || '...'}</div><div class="stat-label">知识章节</div></div>
+            <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-value" id="statVocab">${stats.vocab || '...'}</div><div class="stat-label">英语词汇</div></div>
+            <div class="stat-card"><div class="stat-icon">📄</div><div class="stat-value" id="statPassages">${stats.passages || '...'}</div><div class="stat-label">真题阅读</div></div>
+            <div class="stat-card"><div class="stat-icon">🃏</div><div class="stat-value" id="statFlashcards">${stats.flashcards || '...'}</div><div class="stat-label">记忆闪卡</div></div>
         </div>
         
         <div class="card">
@@ -216,6 +296,40 @@ async function loadDashboard() {
             </div>
         </div>
     `;
+    
+    // 后台刷新数据
+    (async () => {
+        try {
+            const results = await Promise.allSettled([
+                supabase.from('chapters').select('*', { count: 'exact', head: true }),
+                supabase.from('vocab_words').select('*', { count: 'exact', head: true }),
+                supabase.from('reading_passages').select('*', { count: 'exact', head: true }),
+                supabase.from('flashcards').select('*', { count: 'exact', head: true }),
+                supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(3)
+            ]);
+            
+            const newStats = {
+                chapters: results[0].status === 'fulfilled' ? results[0].value.count : stats.chapters,
+                vocab: results[1].status === 'fulfilled' ? results[1].value.count : stats.vocab,
+                passages: results[2].status === 'fulfilled' ? results[2].value.count : stats.passages,
+                flashcards: results[3].status === 'fulfilled' ? results[3].value.count : stats.flashcards
+            };
+            setCache('dashboard_stats', newStats);
+            
+            // 更新DOM
+            const el1 = document.getElementById('statChapters'); if (el1) el1.textContent = newStats.chapters;
+            const el2 = document.getElementById('statVocab'); if (el2) el2.textContent = newStats.vocab;
+            const el3 = document.getElementById('statPassages'); if (el3) el3.textContent = newStats.passages;
+            const el4 = document.getElementById('statFlashcards'); if (el4) el4.textContent = newStats.flashcards;
+            
+            // 更新公告
+            if (results[4].status === 'fulfilled' && results[4].value.data) {
+                setCache('announcements', results[4].value.data);
+            }
+        } catch (e) {
+            console.error('Dashboard refresh error:', e);
+        }
+    })();
 }
 
 function selectSubject(id) {
