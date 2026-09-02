@@ -2104,6 +2104,17 @@ body.dark .compare-table th{background:#334155}
 .qtype-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:#f8fafc;border-radius:10px;font-size:12px}
 .qtype-legend span{display:inline-flex;align-items:center;gap:4px}
 .qtype-legend .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+/* 汉堡菜单按钮（响应式） */
+.hamburger-btn{display:none;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1;z-index:201}
+.hamburger-btn:hover{background:rgba(255,255,255,0.1)}
+@media(max-width:768px){
+  .hamburger-btn{display:block}
+  .sidebar{transform:translateX(-100%);transition:transform .3s ease;display:block !important;z-index:200}
+  .sidebar.show{transform:translateX(0)}
+  .sidebar-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:150}
+  .sidebar-overlay.show{display:block}
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -2190,10 +2201,13 @@ body.dark .compare-table th{background:#334155}
   <div class="nav-item" data-tab="reading" onclick="switchTab('reading')"><span class="icon">📖</span><span>阅读提升</span></div>
   <div class="nav-item" data-tab="pro-course"><span class="icon">🎯</span><span>专业课提升</span></div>
 </nav>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
 
 <!-- Main -->
 <div class="main">
 <div class="topbar">
+  <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="菜单">☰</button>
   <h1 id="pageTitle">总览仪表盘</h1>
   <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
     <div style="position:relative">
@@ -18104,6 +18118,16 @@ const phases = [
 ];
 
 // Daily task template - rotates based on date
+
+function toggleSidebar(){
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if(sidebar && overlay){
+    sidebar.classList.toggle('show');
+    overlay.classList.toggle('show');
+  }
+}
+
 function getTodayTasks(){
   const today = new Date();
   const dateStr = today.toISOString().split('T')[0];
@@ -23071,6 +23095,12 @@ function switchTab(tabName){
   if(tabName === 'atlas') initAtlas();
   
   window.scrollTo(0,0);
+  if(window.innerWidth <= 768){
+    const sb = document.querySelector('.sidebar');
+    const ov = document.getElementById('sidebarOverlay');
+    if(sb) sb.classList.remove('show');
+    if(ov) ov.classList.remove('show');
+  }
 }
 
 // ==================== SEARCH ====================
