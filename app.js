@@ -149,12 +149,13 @@ function switchTab(tab) {
 async function loadDashboard() {
     const content = document.getElementById('appContent');
     
-    // 获取统计数据
-    const [{ count: chapterCount }, { count: vocabCount }, { count: passageCount }, { count: flashcardCount }] = await Promise.all([
+    // 获取统计数据和公告
+    const [{ count: chapterCount }, { count: vocabCount }, { count: passageCount }, { count: flashcardCount }, { data: announcements }] = await Promise.all([
         supabase.from('chapters').select('*', { count: 'exact', head: true }),
         supabase.from('vocab_words').select('*', { count: 'exact', head: true }),
         supabase.from('reading_passages').select('*', { count: 'exact', head: true }),
-        supabase.from('flashcards').select('*', { count: 'exact', head: true })
+        supabase.from('flashcards').select('*', { count: 'exact', head: true }),
+        supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(3)
     ]);
     
     // 倒计时
@@ -163,6 +164,20 @@ async function loadDashboard() {
     const daysLeft = Math.ceil((examDate - now) / (1000 * 60 * 60 * 24));
     
     content.innerHTML = `
+        ${announcements?.length ? `
+        <div style="margin-bottom: 16px;">
+            ${announcements.map(a => `
+                <div class="card" style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <strong style="color: #92400e;">📢 ${a.title}</strong>
+                            <p style="margin: 4px 0 0; color: #78350f; font-size: 14px;">${a.content}</p>
+                        </div>
+                        <span style="font-size: 11px; color: #92400e; opacity: 0.7;">${a.created_at ? new Date(a.created_at).toLocaleDateString() : ''}</span>
+                    </div>
+                </div>
+            `).join('')}
+        </div>` : ''}
         <div class="card" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
             <h2 style="font-size: 24px; margin-bottom: 8px;">距离2026年考研还有 ${daysLeft} 天</h2>
             <p style="opacity: 0.9;">考试时间：2026年12月19日</p>
@@ -570,15 +585,31 @@ function switchAdminTab(tab) {
     
     if (tab === 'invite') loadInviteCodes();
     else if (tab === 'users') loadAdminUsers();
+    else if (tab === 'announcements') loadAdminAnnouncements();
+    else if (tab === 'content') loadAdminContent();
     else if (tab === 'stats') loadAdminStats();
 }
 
 async function loadInviteCodes() {
     const { data: codes } = await supabase.from('invite_codes').select('*').order('created_at', { ascending: false });
+    const unused = codes?.filter(c => !c.is_used).length || 0;
+    const used = codes?.filter(c => c.is_used).length || 0;
     
     document.getElementById('adminContent').innerHTML = `
-        <div style="margin-bottom: 16px;">
-            <button class="btn btn-primary" style="width: auto;" onclick="generateInviteCode()">生成邀请码</button>
+        <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center;">
+            <button class="btn btn-primary" style="width: auto;" onclick="generateInviteCode()">➕ 生成1个</button>
+            <button class="btn btn-secondary" style="width: auto;" onclick="batchGenerateInviteCodes(10)">📦 批量生成10个</button>
+            <button class="btn btn-secondary" style="width: auto;" onclick="batchGenerateInviteCodes(50)">📦 批量生成50个</button>
+            <span style="margin-left: auto; color: #6b7280; font-size: 14px;">
+                未使用: <strong style="color: #10b981;">${unused}</strong> | 已使用: <strong style="color: #ef4444;">${used}</strong> | 总计: <strong>${codes?.length || 0}</strong>
+            </span>
+        </div>
+        <div id="batchResult" style="display: none; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <strong>✅ 批量生成成功！</strong>
+                <button class="btn btn-secondary" style="width: auto; padding: 4px 12px; font-size: 12px;" onclick="copyBatchCodes()">📋 复制全部</button>
+            </div>
+            <div id="batchCodes" style="font-family: monospace; font-size: 13px; line-height: 1.8;"></div>
         </div>
         <table style="width: 100%; border-collapse: collapse;">
             <thead><tr style="border-bottom: 2px solid #e5e7eb;">
@@ -586,17 +617,57 @@ async function loadInviteCodes() {
                 <th style="text-align: left; padding: 8px;">状态</th>
                 <th style="text-align: left; padding: 8px;">使用者</th>
                 <th style="text-align: left; padding: 8px;">创建时间</th>
+                <th style="text-align: left; padding: 8px;">操作</th>
             </tr></thead>
             <tbody>
                 ${codes?.map(c => `<tr style="border-bottom: 1px solid #f3f4f6;">
-                    <td style="padding: 8px; font-family: monospace;">${c.code}</td>
-                    <td style="padding: 8px;"><span style="color: ${c.is_used ? '#ef4444' : '#10b981'};">${c.is_used ? '已使用' : '未使用'}</span></td>
+                    <td style="padding: 8px; font-family: monospace; font-weight: bold;">${c.code}</td>
+                    <td style="padding: 8px;"><span style="color: ${c.is_used ? '#ef4444' : '#10b981'}; font-weight: 500;">${c.is_used ? '已使用' : '未使用'}</span></td>
                     <td style="padding: 8px;">${c.used_by || '-'}</td>
-                    <td style="padding: 8px; font-size: 12px; color: #6b7280;">${c.created_at ? new Date(c.created_at).toLocaleDateString() : '-'}</td>
-                </tr>`).join('') || '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #9ca3af;">暂无邀请码</td></tr>'}
+                    <td style="padding: 8px; font-size: 12px; color: #6b7280;">${c.created_at ? new Date(c.created_at).toLocaleString() : '-'}</td>
+                    <td style="padding: 8px;">
+                        ${!c.is_used ? `<button class="btn btn-danger" style="width: auto; padding: 4px 10px; font-size: 12px;" onclick="deleteInviteCode('${c.id}')">删除</button>` : '-'}
+                    </td>
+                </tr>`).join('') || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #9ca3af;">暂无邀请码</td></tr>'}
             </tbody>
         </table>
     `;
+}
+
+let lastBatchCodes = [];
+
+async function batchGenerateInviteCodes(count) {
+    const codes = [];
+    for (let i = 0; i < count; i++) {
+        codes.push({ code: Math.random().toString(36).substring(2, 10).toUpperCase(), created_by: currentUser.id });
+    }
+    const { error } = await supabase.from('invite_codes').insert(codes);
+    if (error) { showToast('生成失败: ' + error.message); return; }
+    
+    lastBatchCodes = codes.map(c => c.code);
+    showToast(`成功生成 ${count} 个邀请码！`);
+    loadInviteCodes();
+    
+    setTimeout(() => {
+        const batchDiv = document.getElementById('batchResult');
+        if (batchDiv) {
+            batchDiv.style.display = 'block';
+            document.getElementById('batchCodes').innerHTML = lastBatchCodes.map(c => `<span style="display: inline-block; background: white; padding: 2px 8px; margin: 2px; border-radius: 4px; border: 1px solid #d1d5db;">${c}</span>`).join('');
+        }
+    }, 100);
+}
+
+function copyBatchCodes() {
+    navigator.clipboard.writeText(lastBatchCodes.join('\n'));
+    showToast('已复制到剪贴板！');
+}
+
+async function deleteInviteCode(id) {
+    if (!confirm('确定删除这个邀请码吗？')) return;
+    const { error } = await supabase.from('invite_codes').delete().eq('id', id);
+    if (error) { showToast('删除失败: ' + error.message); return; }
+    showToast('邀请码已删除');
+    loadInviteCodes();
 }
 
 async function generateInviteCode() {
@@ -609,28 +680,306 @@ async function generateInviteCode() {
 
 async function loadAdminUsers() {
     const { data: users } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+    const adminCount = users?.filter(u => u.role === 'admin').length || 0;
     
     document.getElementById('adminContent').innerHTML = `
+        <div style="margin-bottom: 16px; color: #6b7280; font-size: 14px;">
+            总用户: <strong>${users?.length || 0}</strong> | 管理员: <strong style="color: #667eea;">${adminCount}</strong> | 普通用户: <strong>${(users?.length || 0) - adminCount}</strong>
+        </div>
         <table style="width: 100%; border-collapse: collapse;">
             <thead><tr style="border-bottom: 2px solid #e5e7eb;">
                 <th style="text-align: left; padding: 8px;">用户名</th>
                 <th style="text-align: left; padding: 8px;">邮箱</th>
                 <th style="text-align: left; padding: 8px;">角色</th>
                 <th style="text-align: left; padding: 8px;">注册时间</th>
+                <th style="text-align: left; padding: 8px;">操作</th>
             </tr></thead>
             <tbody>
                 ${users?.map(u => `<tr style="border-bottom: 1px solid #f3f4f6;">
-                    <td style="padding: 8px;">${u.username || '-'}</td>
-                    <td style="padding: 8px;">${u.email || '-'}</td>
-                    <td style="padding: 8px;"><span style="color: ${u.role === 'admin' ? '#667eea' : '#6b7280'};">${u.role || 'user'}</span></td>
+                    <td style="padding: 8px; font-weight: 500;">${u.username || '-'}</td>
+                    <td style="padding: 8px; font-size: 13px;">${u.email || '-'}</td>
+                    <td style="padding: 8px;"><span style="padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; background: ${u.role === 'admin' ? '#ede9fe' : '#f3f4f6'}; color: ${u.role === 'admin' ? '#667eea' : '#6b7280'};">${u.role === 'admin' ? '管理员' : '普通用户'}</span></td>
                     <td style="padding: 8px; font-size: 12px; color: #6b7280;">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</td>
-                </tr>`).join('') || '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #9ca3af;">暂无用户</td></tr>'}
+                    <td style="padding: 8px;">
+                        <div style="display: flex; gap: 6px;">
+                            ${u.role === 'admin' 
+                                ? `<button class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 12px;" onclick="toggleUserRole('${u.id}', 'user')">降级为用户</button>`
+                                : `<button class="btn btn-primary" style="width: auto; padding: 4px 10px; font-size: 12px;" onclick="toggleUserRole('${u.id}', 'admin')">提升为管理员</button>`
+                            }
+                            ${u.id !== currentUser.id ? `<button class="btn btn-danger" style="width: auto; padding: 4px 10px; font-size: 12px;" onclick="deleteUser('${u.id}')">删除</button>` : ''}
+                        </div>
+                    </td>
+                </tr>`).join('') || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #9ca3af;">暂无用户</td></tr>'}
             </tbody>
         </table>
     `;
 }
 
-async function loadAdminStats() {
+async function toggleUserRole(userId, newRole) {
+    const roleText = newRole === 'admin' ? '管理员' : '普通用户';
+    if (!confirm(`确定将该用户${newRole === 'admin' ? '提升' : '降级'}为${roleText}吗？`)) return;
+    const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+    if (error) { showToast('操作失败: ' + error.message); return; }
+    showToast(`已${newRole === 'admin' ? '提升' : '降级'}为${roleText}`);
+    loadAdminUsers();
+}
+
+async function deleteUser(userId) {
+    if (!confirm('确定删除该用户吗？此操作不可恢复！')) return;
+    // 删除profiles记录
+    const { error: profileError } = await supabase.from('profiles').delete().eq('id', userId);
+    if (profileError) { showToast('删除失败: ' + profileError.message); return; }
+    showToast('用户已删除');
+    loadAdminUsers();
+}
+
+// ============================================
+// 管理员 - 公告管理
+// ============================================
+async function loadAdminAnnouncements() {
+    const { data: announcements } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
+    
+    document.getElementById('adminContent').innerHTML = `
+        <div style="margin-bottom: 16px;">
+            <button class="btn btn-primary" style="width: auto;" onclick="showAnnouncementForm()">📢 发布新公告</button>
+        </div>
+        <div id="announcementForm" style="display: none; background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <input type="text" id="annTitle" placeholder="公告标题" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d1d5db; border-radius: 6px;">
+            <textarea id="annContent" placeholder="公告内容" rows="4" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d1d5db; border-radius: 6px; resize: vertical;"></textarea>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary" style="width: auto;" onclick="submitAnnouncement()">发布</button>
+                <button class="btn btn-secondary" style="width: auto;" onclick="hideAnnouncementForm()">取消</button>
+            </div>
+        </div>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead><tr style="border-bottom: 2px solid #e5e7eb;">
+                <th style="text-align: left; padding: 8px;">标题</th>
+                <th style="text-align: left; padding: 8px;">内容</th>
+                <th style="text-align: left; padding: 8px;">状态</th>
+                <th style="text-align: left; padding: 8px;">发布时间</th>
+                <th style="text-align: left; padding: 8px;">操作</th>
+            </tr></thead>
+            <tbody>
+                ${announcements?.map(a => `<tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 8px; font-weight: 500;">${a.title}</td>
+                    <td style="padding: 8px; font-size: 13px; color: #6b7280; max-width: 300px;">${(a.content || '').substring(0, 50)}${a.content?.length > 50 ? '...' : ''}</td>
+                    <td style="padding: 8px;"><span style="padding: 2px 8px; border-radius: 4px; font-size: 12px; background: ${a.is_active ? '#dcfce7' : '#fef2f2'}; color: ${a.is_active ? '#16a34a' : '#dc2626'};">${a.is_active ? '显示中' : '已隐藏'}</span></td>
+                    <td style="padding: 8px; font-size: 12px; color: #6b7280;">${a.created_at ? new Date(a.created_at).toLocaleDateString() : '-'}</td>
+                    <td style="padding: 8px;">
+                        <div style="display: flex; gap: 6px;">
+                            <button class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 12px;" onclick="toggleAnnouncement('${a.id}', ${!a.is_active})">${a.is_active ? '隐藏' : '显示'}</button>
+                            <button class="btn btn-danger" style="width: auto; padding: 4px 10px; font-size: 12px;" onclick="deleteAnnouncement('${a.id}')">删除</button>
+                        </div>
+                    </td>
+                </tr>`).join('') || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #9ca3af;">暂无公告</td></tr>'}
+            </tbody>
+        </table>
+    `;
+}
+
+function showAnnouncementForm() {
+    document.getElementById('announcementForm').style.display = 'block';
+}
+
+function hideAnnouncementForm() {
+    document.getElementById('announcementForm').style.display = 'none';
+    document.getElementById('annTitle').value = '';
+    document.getElementById('annContent').value = '';
+}
+
+async function submitAnnouncement() {
+    const title = document.getElementById('annTitle').value;
+    const content = document.getElementById('annContent').value;
+    if (!title || !content) { showToast('请填写标题和内容'); return; }
+    
+    const { error } = await supabase.from('announcements').insert([{ title, content, created_by: currentUser.id }]);
+    if (error) { showToast('发布失败: ' + error.message); return; }
+    showToast('公告发布成功！');
+    hideAnnouncementForm();
+    loadAdminAnnouncements();
+}
+
+async function toggleAnnouncement(id, isActive) {
+    const { error } = await supabase.from('announcements').update({ is_active: isActive }).eq('id', id);
+    if (error) { showToast('操作失败: ' + error.message); return; }
+    showToast(isActive ? '公告已显示' : '公告已隐藏');
+    loadAdminAnnouncements();
+}
+
+async function deleteAnnouncement(id) {
+    if (!confirm('确定删除这个公告吗？')) return;
+    const { error } = await supabase.from('announcements').delete().eq('id', id);
+    if (error) { showToast('删除失败: ' + error.message); return; }
+    showToast('公告已删除');
+    loadAdminAnnouncements();
+}
+
+// ============================================
+// 管理员 - 内容管理
+// ============================================
+async function loadAdminContent() {
+    const [{ count: chapters }, { count: vocab }, { count: passages }, { count: flashcards }] = await Promise.all([
+        supabase.from('chapters').select('*', { count: 'exact', head: true }),
+        supabase.from('vocab_words').select('*', { count: 'exact', head: true }),
+        supabase.from('reading_passages').select('*', { count: 'exact', head: true }),
+        supabase.from('flashcards').select('*', { count: 'exact', head: true })
+    ]);
+    
+    document.getElementById('adminContent').innerHTML = `
+        <div class="grid-4" style="margin-bottom: 20px;">
+            <div class="stat-card" onclick="loadContentEditor('chapters')" style="cursor: pointer;">
+                <div class="stat-icon">📖</div><div class="stat-value">${chapters || 0}</div><div class="stat-label">知识章节</div>
+            </div>
+            <div class="stat-card" onclick="loadContentEditor('vocab')" style="cursor: pointer;">
+                <div class="stat-icon">📝</div><div class="stat-value">${vocab || 0}</div><div class="stat-label">英语词汇</div>
+            </div>
+            <div class="stat-card" onclick="loadContentEditor('passages')" style="cursor: pointer;">
+                <div class="stat-icon">📄</div><div class="stat-value">${passages || 0}</div><div class="stat-label">真题阅读</div>
+            </div>
+            <div class="stat-card" onclick="loadContentEditor('flashcards')" style="cursor: pointer;">
+                <div class="stat-icon">🃏</div><div class="stat-value">${flashcards || 0}</div><div class="stat-label">记忆闪卡</div>
+            </div>
+        </div>
+        <div class="card" style="background: #fef3c7; border-left: 4px solid #f59e0b;">
+            <p style="margin: 0; color: #92400e;"><strong>💡 提示：</strong>点击上方卡片进入对应内容的编辑器，可以添加、编辑、删除数据。修改后所有用户立即可见。</p>
+        </div>
+        <div id="contentEditor" style="margin-top: 20px;"></div>
+    `;
+}
+
+async function loadContentEditor(type) {
+    const editor = document.getElementById('contentEditor');
+    
+    if (type === 'chapters') {
+        const { data: chapters } = await supabase.from('chapters').select('id, title, subject_id, sort_order').order('subject_id').order('sort_order');
+        const subjectNames = { 1: '英语', 2: '政治', 3: '运动生理学', 4: '运动解剖学' };
+        
+        editor.innerHTML = `
+            <div class="card">
+                <div class="card-title">📖 章节管理</div>
+                <div style="margin-bottom: 12px;">
+                    <button class="btn btn-primary" style="width: auto;" onclick="showChapterForm()">➕ 添加章节</button>
+                </div>
+                <div id="chapterForm" style="display: none; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <select id="chSubject" style="padding: 8px; margin-right: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                        <option value="2">政治</option>
+                        <option value="3">运动生理学</option>
+                        <option value="4">运动解剖学</option>
+                    </select>
+                    <input type="text" id="chTitle" placeholder="章节标题" style="padding: 8px; margin-right: 8px; border: 1px solid #d1d5db; border-radius: 6px; width: 200px;">
+                    <button class="btn btn-primary" style="width: auto;" onclick="addChapter()">添加</button>
+                    <button class="btn btn-secondary" style="width: auto;" onclick="document.getElementById('chapterForm').style.display='none'">取消</button>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${chapters?.map(c => `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #f3f4f6;">
+                        <div><span style="font-size: 11px; color: #9ca3af; margin-right: 8px;">[${subjectNames[c.subject_id] || c.subject_id}]</span>${c.title}</div>
+                        <button class="btn btn-danger" style="width: auto; padding: 2px 8px; font-size: 11px;" onclick="deleteChapter('${c.id}')">删除</button>
+                    </div>`).join('') || '<p style="color:#9ca3af">暂无章节</p>'}
+                </div>
+            </div>
+        `;
+    } else if (type === 'vocab') {
+        editor.innerHTML = `
+            <div class="card">
+                <div class="card-title">📝 词汇管理</div>
+                <div style="margin-bottom: 12px;">
+                    <input type="text" id="newWord" placeholder="单词" style="padding: 8px; margin-right: 8px; border: 1px solid #d1d5db; border-radius: 6px; width: 120px;">
+                    <input type="text" id="newMeaning" placeholder="释义" style="padding: 8px; margin-right: 8px; border: 1px solid #d1d5db; border-radius: 6px; width: 200px;">
+                    <select id="newCategory" style="padding: 8px; margin-right: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                        <option value="必考词">必考词</option>
+                        <option value="基础词">基础词</option>
+                        <option value="超纲词">超纲词</option>
+                    </select>
+                    <button class="btn btn-primary" style="width: auto;" onclick="addVocab()">添加</button>
+                </div>
+                <p style="color: #6b7280; font-size: 13px;">词汇量较大，删除请在搜索后操作。当前支持添加新词汇。</p>
+            </div>
+        `;
+    } else if (type === 'flashcards') {
+        const { data: flashcards } = await supabase.from('flashcards').select('*').limit(50).order('id');
+        editor.innerHTML = `
+            <div class="card">
+                <div class="card-title">🃏 闪卡管理 (显示前50张)</div>
+                <div style="margin-bottom: 12px;">
+                    <input type="text" id="fcFront" placeholder="正面（问题）" style="padding: 8px; margin-right: 8px; border: 1px solid #d1d5db; border-radius: 6px; width: 200px;">
+                    <input type="text" id="fcBack" placeholder="背面（答案）" style="padding: 8px; margin-right: 8px; border: 1px solid #d1d5db; border-radius: 6px; width: 200px;">
+                    <button class="btn btn-primary" style="width: auto;" onclick="addFlashcard()">添加</button>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${flashcards?.map(f => `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #f3f4f6;">
+                        <div style="flex: 1;"><strong>${f.front}</strong><br><span style="color: #6b7280; font-size: 13px;">${f.back}</span></div>
+                        <button class="btn btn-danger" style="width: auto; padding: 2px 8px; font-size: 11px;" onclick="deleteFlashcard(${f.id})">删除</button>
+                    </div>`).join('') || '<p style="color:#9ca3af">暂无闪卡</p>'}
+                </div>
+            </div>
+        `;
+    } else {
+        editor.innerHTML = '<div class="card"><p style="color:#9ca3af;">该内容类型管理功能开发中...</p></div>';
+    }
+}
+
+function showChapterForm() {
+    document.getElementById('chapterForm').style.display = 'block';
+}
+
+async function addChapter() {
+    const subjectId = parseInt(document.getElementById('chSubject').value);
+    const title = document.getElementById('chTitle').value;
+    if (!title) { showToast('请输入章节标题'); return; }
+    
+    const id = `${subjectId === 2 ? 'pol' : subjectId === 3 ? 'phy' : 'ana'}-${Date.now()}`;
+    const { error } = await supabase.from('chapters').insert([{ id, subject_id: subjectId, chapter_key: id, title, content: '<p>待编辑内容...</p>', sort_order: 999 }]);
+    if (error) { showToast('添加失败: ' + error.message); return; }
+    showToast('章节添加成功！');
+    document.getElementById('chTitle').value = '';
+    loadContentEditor('chapters');
+}
+
+async function deleteChapter(id) {
+    if (!confirm('确定删除这个章节吗？')) return;
+    const { error } = await supabase.from('chapters').delete().eq('id', id);
+    if (error) { showToast('删除失败: ' + error.message); return; }
+    showToast('章节已删除');
+    loadContentEditor('chapters');
+}
+
+async function addVocab() {
+    const word = document.getElementById('newWord').value;
+    const meaning = document.getElementById('newMeaning').value;
+    const category = document.getElementById('newCategory').value;
+    if (!word || !meaning) { showToast('请输入单词和释义'); return; }
+    
+    const { error } = await supabase.from('vocab_words').insert([{ word, meaning, category }]);
+    if (error) { showToast('添加失败: ' + error.message); return; }
+    showToast('词汇添加成功！');
+    document.getElementById('newWord').value = '';
+    document.getElementById('newMeaning').value = '';
+}
+
+async function addFlashcard() {
+    const front = document.getElementById('fcFront').value;
+    const back = document.getElementById('fcBack').value;
+    if (!front || !back) { showToast('请输入正面和背面内容'); return; }
+    
+    const { error } = await supabase.from('flashcards').insert([{ subject_id: 2, category: '自定义', front, back, explanation: '' }]);
+    if (error) { showToast('添加失败: ' + error.message); return; }
+    showToast('闪卡添加成功！');
+    document.getElementById('fcFront').value = '';
+    document.getElementById('fcBack').value = '';
+    loadContentEditor('flashcards');
+}
+
+async function deleteFlashcard(id) {
+    if (!confirm('确定删除这张闪卡吗？')) return;
+    const { error } = await supabase.from('flashcards').delete().eq('id', id);
+    if (error) { showToast('删除失败: ' + error.message); return; }
+    showToast('闪卡已删除');
+    loadContentEditor('flashcards');
+}
+
+// ============================================
+// 管理员 - 数据统计
+// ============================================
     const [{ count: chapters }, { count: vocab }, { count: passages }, { count: flashcards }, { count: users }] = await Promise.all([
         supabase.from('chapters').select('*', { count: 'exact', head: true }),
         supabase.from('vocab_words').select('*', { count: 'exact', head: true }),
