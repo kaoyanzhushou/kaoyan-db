@@ -48,58 +48,78 @@ async function fetchWithCache(table, queryFn, cacheKey, maxAge = 5 * 60 * 1000) 
 }
 
 // ============================================
-// 初始化（带超时处理）
+// 初始化（极速模式：本地缓存优先）
 // ============================================
 async function init() {
-    updateLoading('正在连接服务器...', 10);
+    updateLoading('正在加载...', 10);
     
-    // 超时处理：8秒后强制进入登录页
-    const timeoutPromise = new Promise((resolve) => {
-        setTimeout(() => resolve('timeout'), 8000);
-    });
-    
-    const sessionPromise = (async () => {
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            return session;
-        } catch (e) {
-            console.error('Session error:', e);
-            return null;
-        }
-    })();
+    // 极速模式：检查localStorage中是否有supabase session缓存
+    // supabase-js会把session存在 localStorage 的 sb-<project-ref>-auth-token 中
+    const projectRef = SUPABASE_URL.split('//')[1].split('.')[0];
+    const sessionKey = `sb-${projectRef}-auth-token`;
+    const cachedSession = localStorage.getItem(sessionKey);
     
     updateLoading('检查登录状态...', 30);
     
-    const result = await Promise.race([sessionPromise, timeoutPromise]);
-    
-    if (result === 'timeout') {
-        console.warn('连接超时，使用离线模式');
-        updateLoading('连接较慢，正在重试...', 50);
-        // 再等一次
-        const retryResult = await Promise.race([sessionPromise, new Promise(r => setTimeout(() => r('timeout2'), 5000))]);
-        if (retryResult === 'timeout2') {
-            showLoginPage();
-            showLoadingError();
-            return;
+    if (cachedSession) {
+        // 有本地缓存，直接进入主应用（后台再验证）
+        try {
+            const sessionData = JSON.parse(cachedSession);
+            if (sessionData && sessionData.access_token) {
+                currentUser = {
+                    id: sessionData.user?.id,
+                    email: sessionData.user?.email,
+                    user_metadata: sessionData.user?.user_metadata || {}
+                };
+                
+                updateLoading('加载用户信息...', 60);
+                
+                // 后台验证session有效性（不阻塞UI）
+                supabase.auth.getSession().then(({ data }) => {
+                    if (data.session) {
+                        currentUser = data.session.user;
+                        document.getElementById('userName').textContent = currentUser.user_metadata?.username || currentUser.email;
+                    }
+                }).catch(() => {});
+                
+                // 加载用户profile（后台，不阻塞）
+                loadUserProfile().catch(() => {});
+                
+                showMainApp();
+                updateLoading('加载完成', 100);
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                }, 200);
+                return;
+            }
+        } catch (e) {
+            console.error('Parse cached session error:', e);
         }
     }
     
-    updateLoading('加载用户信息...', 70);
+    // 没有本地缓存，检查session（带超时）
+    const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => resolve(null), 5000);
+    });
     
-    if (result && result !== 'timeout' && result !== 'timeout2') {
-        currentUser = result.user;
-        try {
-            await loadUserProfile();
-        } catch (e) { console.error('Profile load error:', e); }
+    const sessionPromise = supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+    
+    const result = await Promise.race([sessionPromise, timeoutPromise]);
+    const session = result?.data?.session;
+    
+    updateLoading('加载完成', 80);
+    
+    if (session) {
+        currentUser = session.user;
+        try { await loadUserProfile(); } catch (e) {}
         showMainApp();
     } else {
         showLoginPage();
     }
     
-    updateLoading('加载完成', 100);
     setTimeout(() => {
         document.getElementById('loadingScreen').style.display = 'none';
-    }, 300);
+    }, 200);
 }
 
 function showLoadingError() {
@@ -201,9 +221,17 @@ async function handleLogout() {
 }
 
 async function loadUserProfile() {
-    const { data } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
-    if (data && data.role === 'admin') {
-        document.getElementById('adminMenuItem').style.display = 'block';
+    if (!currentUser || !currentUser.id) return;
+    try {
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
+        const request = supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+        const { data } = await Promise.race([request, timeout]);
+        if (data && data.role === 'admin') {
+            const adminItem = document.getElementById('adminMenuItem');
+            if (adminItem) adminItem.style.display = 'block';
+        }
+    } catch (e) {
+        console.error('Load profile error:', e.message);
     }
 }
 
@@ -359,18 +387,46 @@ async function loadKnowledge() {
         return;
     }
     
-    const { data: chapters } = await supabase.from('chapters').select('id, title').eq('subject_id', currentSubject).order('sort_order');
+    // 先显示加载状态
+    content.innerHTML = `
+        <div style="display: flex; gap: 16px;">
+            <div class="card" style="width: 280px; flex-shrink: 0;">
+                <div class="card-title">章节列表</div>
+                <p style="color:#9ca3af; padding:20px; text-align:center;">⏳ 加载中...</p>
+            </div>
+            <div class="card" style="flex: 1;">
+                <p style="color:#9ca3af; padding:40px; text-align:center;">⏳ 正在加载章节内容...</p>
+            </div>
+        </div>
+    `;
+    
+    // 使用缓存优先
+    const cacheKey = `chapters_${currentSubject}`;
+    let chapters = getCache(cacheKey, 10 * 60 * 1000);
+    
+    if (!chapters) {
+        try {
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
+            const request = supabase.from('chapters').select('id, title').eq('subject_id', currentSubject).order('sort_order');
+            const result = await Promise.race([request, timeout]);
+            chapters = result.data || [];
+            setCache(cacheKey, chapters);
+        } catch (e) {
+            console.error('Load chapters error:', e);
+            chapters = [];
+        }
+    }
     
     content.innerHTML = `
         <div style="display: flex; gap: 16px;">
             <div class="card" style="width: 280px; flex-shrink: 0;">
                 <div class="card-title">章节列表 (${chapters?.length || 0})</div>
                 <div class="chapter-list" id="chapterList">
-                    ${chapters?.map((ch, i) => `<div class="chapter-item ${i===0?'active':''}" onclick="loadChapter('${ch.id}', this)">${ch.title}</div>`).join('') || '<p style="color:#9ca3af">暂无章节</p>'}
+                    ${chapters?.map((ch, i) => `<div class="chapter-item ${i===0?'active':''}" onclick="loadChapter('${ch.id}', this)">${ch.title}</div>`).join('') || '<p style="color:#9ca3af; padding:20px; text-align:center;">暂无章节<br><small>网络可能较慢，请刷新重试</small></p>'}
                 </div>
             </div>
             <div class="card" style="flex: 1;" id="chapterContent">
-                <p style="color:#9ca3af">选择左侧章节查看内容</p>
+                <p style="color:#9ca3af; padding:40px; text-align:center;">选择左侧章节查看内容</p>
             </div>
         </div>
     `;
@@ -384,12 +440,33 @@ async function loadChapter(id, element) {
     document.querySelectorAll('.chapter-item').forEach(item => item.classList.remove('active'));
     if (element) element.classList.add('active');
     
-    const { data: chapter } = await supabase.from('chapters').select('*').eq('id', id).single();
+    const chapterContent = document.getElementById('chapterContent');
+    if (chapterContent) {
+        chapterContent.innerHTML = '<p style="color:#9ca3af; padding:40px; text-align:center;">⏳ 加载中...</p>';
+    }
     
-    document.getElementById('chapterContent').innerHTML = `
-        <h2 style="margin-bottom: 16px; font-size: 20px;">${chapter?.title || ''}</h2>
-        <div class="chapter-content">${chapter?.content || '<p>暂无内容</p>'}</div>
-    `;
+    // 缓存优先
+    const cacheKey = `chapter_${id}`;
+    let chapter = getCache(cacheKey, 30 * 60 * 1000);
+    
+    if (!chapter) {
+        try {
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
+            const request = supabase.from('chapters').select('*').eq('id', id).single();
+            const result = await Promise.race([request, timeout]);
+            chapter = result.data;
+            if (chapter) setCache(cacheKey, chapter);
+        } catch (e) {
+            console.error('Load chapter error:', e);
+        }
+    }
+    
+    if (chapterContent) {
+        chapterContent.innerHTML = `
+            <h2 style="margin-bottom: 16px; font-size: 20px;">${chapter?.title || '加载失败'}</h2>
+            <div class="chapter-content">${chapter?.content || '<p style="color:#9ca3af;">内容加载失败，请检查网络后刷新重试</p>'}</div>
+        `;
+    }
 }
 
 // ============================================
