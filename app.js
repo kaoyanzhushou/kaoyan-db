@@ -1171,6 +1171,7 @@ async function deleteFlashcard(id) {
 // ============================================
 // 管理员 - 数据统计
 // ============================================
+async function loadAdminStats() {
     const [{ count: chapters }, { count: vocab }, { count: passages }, { count: flashcards }, { count: users }] = await Promise.all([
         supabase.from('chapters').select('*', { count: 'exact', head: true }),
         supabase.from('vocab_words').select('*', { count: 'exact', head: true }),
