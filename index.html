@@ -2349,13 +2349,10 @@ img { max-width: 100%; height: auto; }
 <div class="tab-content" id="tab-physio-atlas">
   <div class="page-header">
     <h2>📊 生理学图谱</h2>
-    <p>交互式生理学机制可视化 + 系统章节知识点，参考王瑞元《运动生理学》考研大纲</p>
+    <p>交互式生理学机制可视化图表，点击标注查看详细解释</p>
   </div>
-
-  <!-- 可视化图谱区 -->
   <div class="atlas-container">
     <div class="atlas-sidebar" id="physioAtlasSidebar">
-      <div style="font-size:12px;font-weight:700;color:#ea580c;margin-bottom:8px;padding:0 4px">🎨 交互可视化</div>
       <div class="atlas-region active" onclick="showPhysioDiagram('action-potential')">⚡ 动作电位</div>
       <div class="atlas-region" onclick="showPhysioDiagram('muscle-contraction')">💪 肌肉收缩</div>
       <div class="atlas-region" onclick="showPhysioDiagram('energy-systems')">🔥 能量代谢</div>
@@ -2364,32 +2361,717 @@ img { max-width: 100%; height: auto; }
       <div class="atlas-region" onclick="showPhysioDiagram('oxygen-curve')">🫁 氧解离曲线</div>
       <div class="atlas-region" onclick="showPhysioDiagram('heart-conduction')">💓 心脏传导</div>
     </div>
-    <div class="atlas-main">
-      <div id="physioDiagramTitle" style="font-size:18px;font-weight:700;color:#ea580c;margin-bottom:12px"></div>
-      <div id="physioDiagramSVG" style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:16px;overflow-x:auto"></div>
-      <div id="physioDiagramDesc" style="background:#fff7ed;border-left:4px solid #f97316;border-radius:8px;padding:14px 18px;font-size:14px;line-height:1.8;color:#7c2d12"></div>
-    </div>
-  </div>
+    
+</div>
 
-  <!-- 系统章节知识点区 -->
-  <div style="margin-top:32px">
-    <div style="background:linear-gradient(135deg,#ea580c 0%,#f97316 100%);border-radius:12px;padding:20px 24px;margin-bottom:20px;color:#fff">
-      <h3 style="margin:0 0 6px;font-size:18px;font-weight:700">📚 运动生理学系统章节</h3>
-      <p style="margin:0;font-size:13px;opacity:0.9">按王瑞元《运动生理学》12章系统整理，每点含核心概念、生理机制、运动实践、考研考点</p>
-    </div>
 
-    <!-- 章节导航按钮 -->
-    <div id="physioChapterNav" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px"></div>
+  <div id="atlasSystemButtons" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px">
 
-    <!-- 章节知识点展示区 -->
-    <div id="physioChapterContent" style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);min-height:300px">
-      <div style="text-align:center;color:#94a3b8;padding:40px 20px">
-        <div style="font-size:36px;margin-bottom:12px">📖</div>
-        <p style="font-size:14px">点击上方章节按钮，查看该章详细知识点</p>
+</div>
+
+
+<div id="atlasSystemNav" style="background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);border-radius:12px;padding:18px 22px;margin:24px 0 16px;color:#fff">
+  <h3 style="margin:0 0 4px;font-size:17px;font-weight:700">📚 系统解剖学详解</h3>
+  <p style="margin:0;font-size:12px;opacity:0.9">按人体系统分类，点击下方按钮查看各系统组成、结构功能与考研高频考点</p>
+</div>
+<div style="margin-top:24px;padding:16px;background:#f0f9ff;border-radius:10px;border:1px solid #bae6fd">
+      <div style="font-weight:700;color:#0369a1;margin-bottom:10px;font-size:14px">📚 系统解剖学快速导航</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button onclick="showAnatomySystem('nervous')" style="padding:8px 14px;background:#7c3aed;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">🧠 神经系统</button>
+        <button onclick="showAnatomySystem('circulatory')" style="padding:8px 14px;background:#dc2626;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">❤️ 循环系统</button>
+        <button onclick="showAnatomySystem('respiratory')" style="padding:8px 14px;background:#0891b2;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">🫁 呼吸系统</button>
+        <button onclick="showAnatomySystem('digestive')" style="padding:8px 14px;background:#d97706;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">🍽️ 消化系统</button>
+        <button onclick="showAnatomySystem('urinary')" style="padding:8px 14px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">💧 泌尿系统</button>
+        <button onclick="showAnatomySystem('endocrine')" style="padding:8px 14px;background:#db2777;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">🧬 内分泌系统</button>
+        <button onclick="showAnatomySystem('sensory')" style="padding:8px 14px;background:#059669;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">👁️ 感觉器</button>
       </div>
     </div>
+
+      <div id="physioDiagramTitle" style="font-size:18px;font-weight:700;color:#ea580c;margin-bottom:12px"></div>
+      <div id="physioDiagramSVG" style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:16px;overflow-x:auto"></div>
+      <div id="physioDiagramDesc" style="background:#fff7ed;border-left:4px solid #f97316;border-radius:8px;padding:14px 18px;font-size:14px;line-height:1.8;color:#374151"></div>
+
+<style>
+.physio-cards-section{margin-top:32px;padding-top:24px;border-top:2px dashed #fed7aa}
+.physio-cards-section h3{color:#ea580c;font-size:20px;font-weight:700;margin:0 0 6px}
+.physio-cards-section .section-sub{color:#94a3b8;font-size:13px;margin-bottom:20px}
+.chapter-group{margin-bottom:28px}
+.chapter-group .chapter-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:#c2410c;margin-bottom:12px;padding:8px 14px;background:linear-gradient(90deg,#fff7ed,transparent);border-radius:8px;border-left:4px solid #f97316}
+.chapter-group .chapter-title .ch-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#ea580c;color:#fff;border-radius:50%;font-size:13px;font-weight:700}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.quick-card{background:#fff;border-radius:12px;border:1px solid #fed7aa;box-shadow:0 2px 8px rgba(234,88,12,.06);overflow:hidden;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column}
+.quick-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(234,88,12,.12)}
+.quick-card .card-svg{background:linear-gradient(135deg,#fff7ed,#ffedd5);padding:12px;display:flex;align-items:center;justify-content:center;min-height:120px}
+.quick-card .card-svg svg{max-width:100%;height:auto}
+.quick-card .card-body{padding:14px 16px;flex:1;display:flex;flex-direction:column}
+.quick-card .card-mechanism{font-size:13px;font-weight:600;color:#9a3412;margin-bottom:10px;line-height:1.6;padding-bottom:8px;border-bottom:1px dashed #fed7aa}
+.quick-card .card-points{list-style:none;margin:0 0 12px;padding:0;font-size:12.5px;color:#475569;line-height:1.7;flex:1}
+.quick-card .card-points li{padding:2px 0 2px 18px;position:relative}
+.quick-card .card-points li::before{content:'▸';position:absolute;left:0;color:#f97316;font-weight:700}
+.quick-card .card-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .2s;text-decoration:none;width:100%;box-sizing:border-box}
+.quick-card .card-btn:hover{opacity:.9}
+@media(max-width:640px){.cards-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="physio-cards-section" id="physioQuickCards">
+<h3>📋 12章核心图解速查卡</h3>
+<p class="section-sub">基于王瑞元《运动生理学》第六版，每章核心机制图解，点击按钮跳转详细知识点</p>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">1</span>绪论</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="10" width="120" height="40" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="70" y="34" text-anchor="middle" font-size="12" font-weight="700" fill="#92400e">新陈代谢</text>
+        <rect x="150" y="10" width="120" height="40" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="210" y="34" text-anchor="middle" font-size="12" font-weight="700" fill="#1e40af">兴奋性</text>
+        <rect x="10" y="60" width="120" height="40" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="70" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="#166534">应激性</text>
+        <rect x="150" y="60" width="120" height="40" rx="8" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+        <text x="210" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="#9d174d">适应性</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 生命活动的四大基本特征是新陈代谢、兴奋性、应激性和适应性，其中新陈代谢是最基本的特征。</div>
+    <ul class="card-points"><li>新陈代谢=同化+异化，是生命最基本特征</li><li>兴奋性：可兴奋组织产生动作电位的能力</li><li>阈值与兴奋性成反比</li><li>适应性：长期形成与环境相适应的反应模式</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph1','physio')">📖 查看详细知识点</button>
   </div>
 </div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <circle cx="50" cy="55" r="28" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+        <text x="50" y="52" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">神经调节</text>
+        <text x="50" y="66" text-anchor="middle" font-size="9" fill="#92400e">快/精确/短暂</text>
+        <circle cx="140" cy="55" r="28" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+        <text x="140" y="52" text-anchor="middle" font-size="11" font-weight="700" fill="#1e40af">体液调节</text>
+        <text x="140" y="66" text-anchor="middle" font-size="9" fill="#1e40af">慢/广泛/持久</text>
+        <circle cx="230" cy="55" r="28" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+        <text x="230" y="52" text-anchor="middle" font-size="11" font-weight="700" fill="#166534">自身调节</text>
+        <text x="230" y="66" text-anchor="middle" font-size="9" fill="#166534">范围小/幅度低</text>
+        <line x1="78" y1="55" x2="112" y2="55" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="168" y1="55" x2="202" y2="55" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+        <defs><marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#94a3b8"/></marker></defs>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 人体功能通过神经、体液和自身调节三种方式维持稳态，其中神经调节是最主要的调节方式。</div>
+    <ul class="card-points"><li>神经调节：反射弧实现，快速精确</li><li>体液调节：激素经血液运输，缓慢持久</li><li>自身调节：组织细胞自身对刺激的适应性反应</li><li>负反馈是维持稳态的主要机制</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph1','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">2</span>细胞的基本功能</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <line x1="140" y1="5" x2="140" y2="105" stroke="#64748b" stroke-width="3" stroke-dasharray="6,3"/>
+        <text x="70" y="20" text-anchor="middle" font-size="10" fill="#475569">膜外(高浓度)</text>
+        <text x="210" y="20" text-anchor="middle" font-size="10" fill="#475569">膜内(低浓度)</text>
+        <circle cx="70" cy="45" r="10" fill="#fbbf24"/>
+        <circle cx="70" cy="70" r="10" fill="#fbbf24"/>
+        <circle cx="210" cy="45" r="6" fill="#fcd34d" opacity=".5"/>
+        <path d="M80,50 Q110,30 130,50" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#a1)"/>
+        <text x="105" y="28" text-anchor="middle" font-size="9" fill="#b45309">被动转运</text>
+        <rect x="196" y="62" width="28" height="16" rx="4" fill="#3b82f6"/>
+        <path d="M196,70 L170,70" stroke="#3b82f6" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="180" y="95" text-anchor="middle" font-size="9" fill="#1e40af">主动转运(需ATP)</text>
+        <defs><marker id="a1" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L6,2.5 L0,5" fill="#f59e0b"/></marker>
+        <marker id="a2" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L6,2.5 L0,5" fill="#3b82f6"/></marker></defs>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 物质跨膜转运分为被动转运（顺浓度差、不耗能）和主动转运（逆浓度差、需ATP供能）两大类。</div>
+    <ul class="card-points"><li>单纯扩散：O₂/CO₂等脂溶性物质顺浓度差</li><li>易化扩散：载体/通道介导，如葡萄糖入红细胞</li><li>主动转运：Na⁺-K⁺泵（3Na⁺出/2K⁺入）</li><li>入胞/出胞：大分子物质转运方式</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph2','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <line x1="20" y1="90" x2="260" y2="90" stroke="#94a3b8" stroke-width="1"/>
+        <line x1="20" y1="10" x2="20" y2="100" stroke="#94a3b8" stroke-width="1"/>
+        <text x="10" y="94" font-size="8" fill="#94a3b8">-70</text>
+        <text x="10" y="20" font-size="8" fill="#94a3b8">+30</text>
+        <path d="M20,75 L60,75 L75,20 L90,75 L110,85 L130,75" fill="none" stroke="#ea580c" stroke-width="2.5"/>
+        <text x="67" y="15" text-anchor="middle" font-size="9" font-weight="700" fill="#ea580c">Na⁺内流</text>
+        <text x="100" y="65" text-anchor="middle" font-size="9" font-weight="700" fill="#3b82f6">K⁺外流</text>
+        <line x1="60" y1="75" x2="60" y2="90" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="60" y="100" text-anchor="middle" font-size="8" fill="#f59e0b">阈电位</text>
+        <text x="175" y="50" font-size="11" font-weight="700" fill="#475569">全或无 · 不衰减</text>
+        <text x="175" y="68" font-size="10" fill="#64748b">有不应期</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 动作电位是可兴奋细胞受刺激后产生的快速可逆电位变化，由Na⁺内流去极化和K⁺外流复极化构成。</div>
+    <ul class="card-points"><li>静息电位：K⁺外流形成，约-70mV</li><li>去极化：Na⁺通道开放，Na⁺快速内流</li><li>复极化：K⁺通道开放，K⁺外流</li><li>全或无现象：刺激达阈值即产生最大幅度</li><li>不应期保证单向传导和脉冲式发放</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph2','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="30" width="50" height="50" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="35" y="58" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">第一信使</text>
+        <line x1="60" y1="55" x2="90" y2="55" stroke="#3b82f6" stroke-width="2" marker-end="url(#s1)"/>
+        <rect x="90" y="25" width="30" height="60" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="105" y="58" text-anchor="middle" font-size="9" font-weight="700" fill="#92400e">膜受体</text>
+        <line x1="120" y1="55" x2="150" y2="55" stroke="#f59e0b" stroke-width="2" marker-end="url(#s1)"/>
+        <rect x="150" y="30" width="50" height="50" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="175" y="52" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">G蛋白</text>
+        <text x="175" y="66" text-anchor="middle" font-size="9" fill="#166534">效应器酶</text>
+        <line x1="200" y1="55" x2="230" y2="55" stroke="#22c55e" stroke-width="2" marker-end="url(#s1)"/>
+        <rect x="230" y="30" width="45" height="50" rx="8" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+        <text x="252" y="52" text-anchor="middle" font-size="10" font-weight="700" fill="#9d174d">第二信使</text>
+        <text x="252" y="66" text-anchor="middle" font-size="8" fill="#9d174d">cAMP/IP₃/Ca²⁺</text>
+        <defs><marker id="s1" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L6,2.5 L0,5" fill="#64748b"/></marker></defs>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 跨膜信号转导通过膜受体将胞外信号转换为胞内信号，第二信使（cAMP、IP₃、Ca²⁺）起关键放大作用。</div>
+    <ul class="card-points"><li>离子通道受体：直接改变离子通透性</li><li>G蛋白耦联受体：通过第二信使传递信号</li><li>酶联受体：自身具有酶活性</li><li>第二信使：cAMP、cGMP、IP₃、DG、Ca²⁺</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph2','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">3</span>骨骼肌收缩</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <line x1="20" y1="55" x2="260" y2="55" stroke="#94a3b8" stroke-width="1"/>
+        <line x1="50" y1="35" x2="50" y2="75" stroke="#7c3aed" stroke-width="2.5"/>
+        <text x="50" y="30" text-anchor="middle" font-size="9" font-weight="700" fill="#7c3aed">Z线</text>
+        <line x1="230" y1="35" x2="230" y2="75" stroke="#7c3aed" stroke-width="2.5"/>
+        <text x="230" y="30" text-anchor="middle" font-size="9" font-weight="700" fill="#7c3aed">Z线</text>
+        <rect x="90" y="42" width="100" height="26" fill="#fca5a5" opacity=".6" rx="2"/>
+        <text x="140" y="59" text-anchor="middle" font-size="9" font-weight="700" fill="#991b1b">A带(粗丝)</text>
+        <rect x="50" y="48" width="40" height="14" fill="#93c5fd" opacity=".5" rx="2"/>
+        <rect x="190" y="48" width="40" height="14" fill="#93c5fd" opacity=".5" rx="2"/>
+        <text x="70" y="80" text-anchor="middle" font-size="8" fill="#1e40af">I带</text>
+        <text x="210" y="80" text-anchor="middle" font-size="8" fill="#1e40af">I带</text>
+        <text x="140" y="95" text-anchor="middle" font-size="10" font-weight="700" fill="#475569">肌节=1/2I+A+1/2I</text>
+        <path d="M60,100 Q140,108 220,100" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text x="140" y="108" text-anchor="middle" font-size="8" fill="#ea580c">收缩时I带/H带变窄，A带不变</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 肌丝滑行学说认为肌肉收缩时肌丝本身长度不变，细肌丝向粗肌丝之间滑行使肌节缩短。</div>
+    <ul class="card-points"><li>肌节是肌肉收缩的基本单位</li><li>粗丝=肌球蛋白，细丝=肌动蛋白+原肌球蛋白+肌钙蛋白</li><li>收缩时I带和H带变窄，A带长度不变</li><li>横桥周期：结合→摆动→解离→复位</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph3','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="15" width="60" height="30" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="40" y="34" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">动作电位</text>
+        <line x1="70" y1="30" x2="95" y2="30" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#e1)"/>
+        <rect x="95" y="15" width="55" height="30" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="122" y="34" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">T管传导</text>
+        <line x1="150" y1="30" x2="175" y2="30" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#e1)"/>
+        <rect x="175" y="15" width="55" height="30" rx="6" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="202" y="34" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">终池释Ca²⁺</text>
+        <line x1="230" y1="30" x2="255" y2="30" stroke="#22c55e" stroke-width="1.5" marker-end="url(#e1)"/>
+        <rect x="10" y="65" width="60" height="30" rx="6" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+        <text x="40" y="84" text-anchor="middle" font-size="10" font-weight="700" fill="#9d174d">肌丝滑行</text>
+        <line x1="70" y1="80" x2="95" y2="80" stroke="#ec4899" stroke-width="1.5" marker-end="url(#e1)"/>
+        <rect x="95" y="65" width="55" height="30" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="122" y="84" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">肌肉收缩</text>
+        <line x1="150" y1="80" x2="175" y2="80" stroke="#ef4444" stroke-width="1.5" marker-end="url(#e1)"/>
+        <rect x="175" y="65" width="80" height="30" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+        <text x="215" y="84" text-anchor="middle" font-size="10" font-weight="700" fill="#3730a3">钙泵回收Ca²⁺(舒张)</text>
+        <text x="140" y="108" text-anchor="middle" font-size="10" font-weight="700" fill="#ea580c">关键结构：三联管 | 关键离子：Ca²⁺</text>
+        <defs><marker id="e1" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L6,2.5 L0,5" fill="#64748b"/></marker></defs>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 兴奋-收缩耦联是将肌细胞膜电兴奋与肌丝滑行机械收缩联系起来的中介过程，三联管和Ca²⁺是关键。</div>
+    <ul class="card-points"><li>动作电位沿横管(T管)传入肌细胞深部</li><li>三联管处终池释放Ca²⁺入胞质</li><li>Ca²⁺与肌钙蛋白结合，暴露横桥结合位点</li><li>舒张时钙泵(SERCA)将Ca²⁺泵回终池</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph3','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">4</span>血液</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <circle cx="80" cy="55" r="42" fill="#fecaca" stroke="#ef4444" stroke-width="2"/>
+        <path d="M80,13 A42,42 0 0,1 118,78 L80,78 Z" fill="#fef3c7" stroke="#f59e0b" stroke-width="1"/>
+        <text x="70" y="45" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">血浆55%</text>
+        <text x="95" y="80" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">血细胞45%</text>
+        <line x1="140" y1="25" x2="170" y2="25" stroke="#ef4444" stroke-width="3"/>
+        <text x="178" y="29" font-size="10" fill="#475569">红细胞：运输O₂/CO₂</text>
+        <line x1="140" y1="50" x2="170" y2="50" stroke="#f59e0b" stroke-width="3"/>
+        <text x="178" y="54" font-size="10" fill="#475569">白细胞：免疫防御</text>
+        <line x1="140" y1="75" x2="170" y2="75" stroke="#8b5cf6" stroke-width="3"/>
+        <text x="178" y="79" font-size="10" fill="#475569">血小板：止血凝血</text>
+        <text x="140" y="100" font-size="9" fill="#64748b">血量=体重7%-8% | 男性Hct 40-50%</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 血液由血浆（55%）和血细胞（45%）组成，具有运输、防御、缓冲和调节体温等重要功能。</div>
+    <ul class="card-points"><li>血浆含白蛋白、球蛋白、纤维蛋白原等</li><li>红细胞比容：男40-50%，女37-48%</li><li>血清与血浆区别：血清不含纤维蛋白原</li><li>正常血量约占体重7%-8%</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph4','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="10" width="70" height="25" rx="5" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="45" y="27" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">凝血酶原激活物</text>
+        <line x1="80" y1="22" x2="100" y2="22" stroke="#ef4444" stroke-width="1.5" marker-end="url(#b1)"/>
+        <rect x="100" y="10" width="55" height="25" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="127" y="27" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">凝血酶形成</text>
+        <line x1="155" y1="22" x2="175" y2="22" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#b1)"/>
+        <rect x="175" y="10" width="60" height="25" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="205" y="27" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">纤维蛋白形成</text>
+        <rect x="10" y="55" width="55" height="40" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="37" y="72" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">A型</text>
+        <text x="37" y="86" text-anchor="middle" font-size="8" fill="#1e40af">A抗原/抗B</text>
+        <rect x="75" y="55" width="55" height="40" rx="6" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+        <text x="102" y="72" text-anchor="middle" font-size="10" font-weight="700" fill="#9d174d">B型</text>
+        <text x="102" y="86" text-anchor="middle" font-size="8" fill="#9d174d">B抗原/抗A</text>
+        <rect x="140" y="55" width="55" height="40" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="167" y="72" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">AB型</text>
+        <text x="167" y="86" text-anchor="middle" font-size="8" fill="#92400e">A+B抗原</text>
+        <rect x="205" y="55" width="55" height="40" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+        <text x="232" y="72" text-anchor="middle" font-size="10" font-weight="700" fill="#3730a3">O型</text>
+        <text x="232" y="86" text-anchor="middle" font-size="8" fill="#3730a3">无抗原/抗A抗B</text>
+        <defs><marker id="b1" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L6,2.5 L0,5" fill="#64748b"/></marker></defs>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 血液凝固分三步：凝血酶原激活物形成→凝血酶形成→纤维蛋白形成；ABO血型由红细胞膜抗原决定。</div>
+    <ul class="card-points"><li>内源性凝血：全部凝血因子来自血液</li><li>外源性凝血：组织因子(TF)启动</li><li>AB型=万能受血者，O型=万能供血者</li><li>Rh阴性者第二次接受Rh阳性血发生溶血</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph4','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">5</span>血液循环</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <path d="M20,80 L40,80 L50,30 L80,30 L90,50 L120,50 L130,80 L260,80" fill="none" stroke="#ea580c" stroke-width="2"/>
+        <text x="35" y="95" text-anchor="middle" font-size="8" fill="#475569">等容收缩</text>
+        <text x="65" y="25" text-anchor="middle" font-size="8" fill="#475569">射血期</text>
+        <text x="105" y="45" text-anchor="middle" font-size="8" fill="#475569">等容舒张</text>
+        <text x="180" y="95" text-anchor="middle" font-size="8" fill="#475569">充盈期</text>
+        <line x1="20" y1="80" x2="260" y2="80" stroke="#cbd5e1" stroke-width="1"/>
+        <rect x="170" y="15" width="80" height="30" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="210" y="28" text-anchor="middle" font-size="9" font-weight="700" fill="#991b1b">CO=SV×HR</text>
+        <text x="210" y="40" text-anchor="middle" font-size="8" fill="#991b1b">≈5L/min(安静)</text>
+        <text x="140" y="65" font-size="9" fill="#64748b">心率75次/分→周期0.8s</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 心动周期中心脏通过等容收缩→射血→等容舒张→充盈四个阶段完成泵血，心输出量=每搏输出量×心率。</div>
+    <ul class="card-points"><li>等容收缩：房室瓣和半月瓣均关闭</li><li>快速射血：室内压>动脉压，半月瓣开放</li><li>等容舒张：两瓣均关闭，室内压急降</li><li>快速充盈：房室瓣开放，血液回心</li><li>影响心输出量：前负荷/后负荷/心肌收缩力/心率</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph5','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <line x1="20" y1="95" x2="260" y2="95" stroke="#cbd5e1" stroke-width="1"/>
+        <path d="M20,70 L45,20 L55,25 L70,55 L130,55 L160,70 L200,70" fill="none" stroke="#ea580c" stroke-width="2.5"/>
+        <text x="32" y="15" font-size="9" font-weight="700" fill="#dc2626">0期</text>
+        <text x="52" y="18" font-size="8" fill="#dc2626">Na⁺内流</text>
+        <text x="62" y="48" font-size="9" font-weight="700" fill="#f59e0b">1期</text>
+        <text x="85" y="50" font-size="9" font-weight="700" fill="#16a34a">2期平台</text>
+        <text x="95" y="68" font-size="8" fill="#16a34a">Ca²⁺内流=K⁺外流</text>
+        <text x="165" y="65" font-size="9" font-weight="700" fill="#3b82f6">3期</text>
+        <text x="175" y="82" font-size="8" fill="#3b82f6">K⁺外流</text>
+        <text x="215" y="65" font-size="9" font-weight="700" fill="#8b5cf6">4期</text>
+        <text x="215" y="82" font-size="8" fill="#8b5cf6">静息/自律</text>
+        <text x="140" y="108" text-anchor="middle" font-size="10" font-weight="700" fill="#475569">2期平台期是心室肌AP特征</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 心室肌动作电位分5期，2期平台期（Ca²⁺内流与K⁺外流平衡）是其特征，决定有效不应期特别长。</div>
+    <ul class="card-points"><li>0期去极化：Na⁺快速内流</li><li>1期快速复极：K⁺外流</li><li>2期平台期：Ca²⁺内流与K⁺外流平衡</li><li>3期快速复极：K⁺外流</li><li>有效不应期长→心肌不发生强直收缩</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph5','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="20" width="100" height="35" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="60" y="35" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">收缩压 100-120</text>
+        <text x="60" y="48" text-anchor="middle" font-size="9" fill="#991b1b">心室收缩时最高值</text>
+        <rect x="130" y="20" width="100" height="35" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="180" y="35" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">舒张压 60-80</text>
+        <text x="180" y="48" text-anchor="middle" font-size="9" fill="#1e40af">心室舒张时最低值</text>
+        <rect x="10" y="70" width="220" height="30" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="120" y="82" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">颈动脉窦压力感受性反射(减压反射)</text>
+        <text x="120" y="94" text-anchor="middle" font-size="9" fill="#92400e">血压↑→窦神经传入↑→心迷走↑/心交感↓→血压↓</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 动脉血压受心输出量和外周阻力等因素影响，颈动脉窦压力感受性反射是维持血压稳定的重要负反馈机制。</div>
+    <ul class="card-points"><li>影响因素：搏出量/心率/外周阻力/大动脉弹性</li><li>脉压=收缩压-舒张压，正常30-40mmHg</li><li>减压反射：血压升高时反射性降压</li><li>交感神经→心跳加快血压升高</li><li>运动时：心输出量增加，血流重新分配</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph5','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">6</span>呼吸</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <ellipse cx="70" cy="55" rx="35" ry="40" fill="#bfdbfe" stroke="#3b82f6" stroke-width="2"/>
+        <text x="70" y="50" text-anchor="middle" font-size="11" font-weight="700" fill="#1e40af">肺</text>
+        <text x="70" y="65" text-anchor="middle" font-size="9" fill="#1e40af">肺泡</text>
+        <path d="M130,30 Q160,55 130,80" fill="none" stroke="#ea580c" stroke-width="2.5"/>
+        <text x="165" y="45" font-size="9" font-weight="700" fill="#ea580c">吸气</text>
+        <text x="165" y="58" font-size="8" fill="#ea580c">膈肌下降</text>
+        <path d="M130,80 Q100,55 130,30" fill="none" stroke="#22c55e" stroke-width="2.5"/>
+        <text x="165" y="75" font-size="9" font-weight="700" fill="#16a34a">呼气</text>
+        <text x="165" y="88" font-size="8" fill="#16a34a">弹性回缩</text>
+        <rect x="200" y="25" width="65" height="25" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="232" y="41" text-anchor="middle" font-size="9" font-weight="700" fill="#92400e">直接动力</text>
+        <rect x="200" y="60" width="65" height="25" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="232" y="76" text-anchor="middle" font-size="9" font-weight="700" fill="#166534">原动力</text>
+        <text x="200" y="100" font-size="8" fill="#64748b">肺内压-大气压之差 | 呼吸肌收缩</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 肺通气是气体经呼吸道进出肺的过程，直接动力是肺内压与大气压之差，原动力是呼吸肌收缩。</div>
+    <ul class="card-points"><li>吸气：膈肌/肋间外肌收缩→胸廓扩大→肺内压<大气压</li><li>呼气：平静时被动弹性回缩，用力时呼吸肌收缩</li><li>胸膜腔负压维持肺扩张，促进静脉回流</li><li>肺泡表面活性物质降低表面张力</li><li>肺泡通气量=(潮气量-无效腔)×呼吸频率</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph6','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <line x1="30" y1="90" x2="260" y2="90" stroke="#cbd5e1" stroke-width="1"/>
+        <line x1="30" y1="15" x2="30" y2="90" stroke="#cbd5e1" stroke-width="1"/>
+        <path d="M30,85 Q70,82 100,65 Q130,45 160,30 Q190,20 250,18" fill="none" stroke="#ea580c" stroke-width="2.5"/>
+        <text x="145" y="105" text-anchor="middle" font-size="9" fill="#64748b">PO₂ (mmHg)</text>
+        <text x="15" y="50" font-size="8" fill="#64748b" transform="rotate(-90,15,50)">Hb氧饱和度</text>
+        <line x1="100" y1="65" x2="100" y2="90" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="100" y="100" text-anchor="middle" font-size="8" fill="#f59e0b">40</text>
+        <line x1="190" y1="20" x2="190" y2="90" stroke="#22c55e" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="190" y="100" text-anchor="middle" font-size="8" fill="#16a34a">100</text>
+        <text x="65" y="78" font-size="8" fill="#dc2626">下段(储备)</text>
+        <text x="130" y="55" font-size="8" fill="#f59e0b">中段(释O₂)</text>
+        <text x="215" y="30" font-size="8" fill="#16a34a">上段(摄O₂)</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 氧解离曲线呈S形，描述PO₂与Hb氧饱和度关系，上段平坦保证摄氧、中段陡保证释氧、下段最陡代表储备。</div>
+    <ul class="card-points"><li>上段(60-100mmHg)平坦：高原仍能充分摄氧</li><li>中段(40-60mmHg)陡：安静时组织供氧</li><li>下段(15-40mmHg)最陡：运动时O₂储备</li><li>波尔效应：pH↓/PCO₂↑→曲线右移→释O₂↑</li><li>CO与Hb亲和力是O₂的250倍</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph6','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">7</span>能量代谢</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="15" width="75" height="50" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="47" y="32" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">磷酸原系统</text>
+        <text x="47" y="46" text-anchor="middle" font-size="8" fill="#991b1b">ATP-CP | <10s</text>
+        <text x="47" y="58" text-anchor="middle" font-size="8" fill="#991b1b">功率最大</text>
+        <rect x="95" y="15" width="75" height="50" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="132" y="32" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">糖酵解系统</text>
+        <text x="132" y="46" text-anchor="middle" font-size="8" fill="#92400e">30s-2min</text>
+        <text x="132" y="58" text-anchor="middle" font-size="8" fill="#92400e">产生乳酸</text>
+        <rect x="180" y="15" width="75" height="50" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="217" y="32" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">有氧氧化</text>
+        <text x="217" y="46" text-anchor="middle" font-size="8" fill="#166534">>2min | 需O₂</text>
+        <text x="217" y="58" text-anchor="middle" font-size="8" fill="#166534">续航最久</text>
+        <line x1="20" y1="85" x2="250" y2="85" stroke="#cbd5e1" stroke-width="1"/>
+        <text x="20" y="100" font-size="8" fill="#ef4444">短跑/跳跃</text>
+        <text x="100" y="100" font-size="8" fill="#f59e0b">400/800m</text>
+        <text x="190" y="100" font-size="8" fill="#16a34a">马拉松/自行车</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 运动时三大能量系统按强度和时间协同供能：磷酸原（极短极限）、糖酵解（短时间大强度）、有氧氧化（长时间耐力）。</div>
+    <ul class="card-points"><li>ATP是唯一直接利用的能量物质</li><li>磷酸原系统：CP→ADP→ATP，恢复快(3min)</li><li>糖酵解：糖原→乳酸，净产2ATP</li><li>有氧氧化：1葡萄糖→30-32ATP</li><li>连续统一体：任何运动三系统均参与</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph7','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="30" y="10" width="60" height="90" rx="30" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+        <rect x="40" y="40" width="40" height="55" rx="20" fill="#fca5a5"/>
+        <circle cx="60" cy="30" r="12" fill="#fca5a5" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="60" y="34" text-anchor="middle" font-size="9" font-weight="700" fill="#991b1b">37℃</text>
+        <rect x="120" y="20" width="65" height="30" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="152" y="33" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">产热</text>
+        <text x="152" y="45" text-anchor="middle" font-size="8" fill="#991b1b">肝脏/骨骼肌</text>
+        <rect x="200" y="20" width="65" height="30" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="232" y="33" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">散热</text>
+        <text x="232" y="45" text-anchor="middle" font-size="8" fill="#1e40af">皮肤(辐射/蒸发)</text>
+        <rect x="120" y="65" width="145" height="30" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+        <text x="192" y="78" text-anchor="middle" font-size="10" font-weight="700" fill="#3730a3">下丘脑调定点学说</text>
+        <text x="192" y="90" text-anchor="middle" font-size="8" fill="#3730a3">PO/AH区设定37℃，偏离则调节产热/散热</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 体温调节以下丘脑为基本中枢，通过调定点学说平衡产热与散热，皮肤是最主要的散热器官。</div>
+    <ul class="card-points"><li>产热器官：安静时肝脏，运动时骨骼肌</li><li>散热方式：辐射/传导/对流/蒸发</li><li>环境温度>体温时蒸发是唯一散热方式</li><li>基本中枢：下丘脑视前区(PO/AH)</li><li>运动时体温升高，热习服可提高耐热能力</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph7','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">8</span>肾脏泌尿</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <circle cx="50" cy="40" r="22" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+        <circle cx="50" cy="40" r="12" fill="#fca5a5"/>
+        <text x="50" y="44" text-anchor="middle" font-size="9" font-weight="700" fill="#991b1b">肾小球</text>
+        <path d="M72,40 Q90,40 90,60 Q90,80 70,80 Q50,80 50,65" fill="none" stroke="#3b82f6" stroke-width="2"/>
+        <rect x="85" y="55" width="50" height="22" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="110" y="69" text-anchor="middle" font-size="9" font-weight="700" fill="#1e40af">肾小管</text>
+        <path d="M135,66 Q160,66 160,50 Q160,35 180,35" fill="none" stroke="#3b82f6" stroke-width="2"/>
+        <rect x="175" y="25" width="55" height="22" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="202" y="39" text-anchor="middle" font-size="9" font-weight="700" fill="#166534">集合管</text>
+        <path d="M202,47 L202,70" stroke="#22c55e" stroke-width="2"/>
+        <rect x="175" y="70" width="55" height="22" rx="5" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+        <text x="202" y="84" text-anchor="middle" font-size="9" font-weight="700" fill="#9d174d">终尿</text>
+        <text x="50" y="105" text-anchor="middle" font-size="9" fill="#64748b">①滤过 ②重吸收 ③分泌</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 尿生成包括肾小球滤过、肾小管和集合管重吸收、肾小管和集合管分泌三个基本过程。</div>
+    <ul class="card-points"><li>肾小球滤过：生成原尿，除蛋白质外血浆成分</li><li>有效滤过压=毛细血管血压-(胶体渗透压+囊内压)</li><li>重吸收：近端小管重吸收大部分葡萄糖/氨基酸/水</li><li>分泌：H⁺/K⁺/NH₃等分泌入小管液</li><li>正常尿量1000-2000ml/天</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph8','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="15" width="110" height="40" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="65" y="32" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">肾小球毛细血管血压</text>
+        <text x="65" y="46" text-anchor="middle" font-size="9" fill="#991b1b">动力 ≈45mmHg</text>
+        <rect x="140" y="15" width="110" height="40" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="195" y="32" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">血浆胶体渗透压+囊内压</text>
+        <text x="195" y="46" text-anchor="middle" font-size="9" fill="#1e40af">阻力 ≈35mmHg</text>
+        <line x1="120" y1="35" x2="140" y2="35" stroke="#64748b" stroke-width="1.5"/>
+        <rect x="60" y="70" width="140" height="30" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="130" y="83" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">有效滤过压 ≈10mmHg</text>
+        <text x="130" y="95" text-anchor="middle" font-size="9" fill="#92400e">ADH促进水重吸收 | 醛固酮保Na⁺排K⁺</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 肾小球有效滤过压是滤过动力，ADH和醛固酮分别通过调节水和Na⁺重吸收维持水盐平衡。</div>
+    <ul class="card-points"><li>有效滤过压=肾小球血压-(胶体渗透压+囊内压)</li><li>肾小球滤过率(GFR)：约125ml/min</li><li>ADH：提高远曲小管/集合管对水通透性</li><li>醛固酮：保Na⁺排K⁺，维持血容量</li><li>大量饮清水→水利尿(ADH分泌减少)</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph8','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">9</span>内分泌</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="10" width="120" height="45" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="70" y="28" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">细胞膜受体机制</text>
+        <text x="70" y="43" text-anchor="middle" font-size="9" fill="#1e40af">含氮激素(肽类/胺类)→第二信使</text>
+        <rect x="150" y="10" width="110" height="45" rx="8" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+        <text x="205" y="28" text-anchor="middle" font-size="10" font-weight="700" fill="#9d174d">细胞内受体机制</text>
+        <text x="205" y="43" text-anchor="middle" font-size="9" fill="#9d174d">类固醇激素→基因表达</text>
+        <rect x="10" y="70" width="250" height="30" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="135" y="83" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">激素特点：信使作用 · 特异性 · 高效能 · 协同/拮抗/允许</text>
+        <text x="135" y="95" text-anchor="middle" font-size="9" fill="#92400e">微量即产生显著效应，经血液运输作用于靶细胞</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 激素通过细胞膜受体（含氮激素，第二信使）或细胞内受体（类固醇激素，调节基因表达）发挥作用。</div>
+    <ul class="card-points"><li>含氮激素：膜受体→cAMP/IP₃/Ca²⁺第二信使</li><li>类固醇激素：胞内受体→DNA转录→蛋白质合成</li><li>特异性：只作用于有受体的靶细胞</li><li>高效能：微量即产生显著生理效应</li><li>允许作用：某激素为另一激素发挥作用创造条件</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph9','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="5" y="10" width="55" height="35" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+        <text x="32" y="25" text-anchor="middle" font-size="9" font-weight="700" fill="#3730a3">垂体</text>
+        <text x="32" y="38" text-anchor="middle" font-size="7" fill="#3730a3">GH/TSH/ACTH</text>
+        <rect x="68" y="10" width="55" height="35" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="95" y="25" text-anchor="middle" font-size="9" font-weight="700" fill="#92400e">甲状腺</text>
+        <text x="95" y="38" text-anchor="middle" font-size="7" fill="#92400e">T₃/T₄ 促代谢</text>
+        <rect x="131" y="10" width="55" height="35" rx="6" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+        <text x="158" y="25" text-anchor="middle" font-size="9" font-weight="700" fill="#9d174d">胰岛</text>
+        <text x="158" y="38" text-anchor="middle" font-size="7" fill="#9d174d">胰岛素(降糖)</text>
+        <rect x="194" y="10" width="55" height="35" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="221" y="25" text-anchor="middle" font-size="9" font-weight="700" fill="#991b1b">肾上腺</text>
+        <text x="221" y="38" text-anchor="middle" font-size="7" fill="#991b1b">皮质醇/Adr</text>
+        <rect x="5" y="60" width="244" height="35" rx="6" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="127" y="75" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">应激反应：ACTH↑→糖皮质激素↑ | 应急反应：交感-肾上腺髓质↑</text>
+        <text x="127" y="88" text-anchor="middle" font-size="9" fill="#166534">胰岛素是体内唯一降低血糖的激素</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 垂体是最重要的内分泌腺，甲状腺激素促进代谢和生长发育，胰岛素是体内唯一降低血糖的激素。</div>
+    <ul class="card-points"><li>生长激素：促进骨和肌肉生长，幼年缺乏→侏儒</li><li>甲状腺激素：促代谢/促生长发育/提高神经兴奋性</li><li>胰岛素：唯一降糖激素，促进葡萄糖摄取利用</li><li>糖皮质激素：升血糖/抗炎/抗毒/抑制免疫</li><li>应激vs应急：应激=ACTH-皮质醇，应急=交感-髓质</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph9','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">10</span>感觉器官</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="10" width="110" height="25" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="65" y="27" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">适宜刺激</text>
+        <rect x="130" y="10" width="110" height="25" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="185" y="27" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">换能作用</text>
+        <rect x="10" y="45" width="110" height="25" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="65" y="62" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">编码功能</text>
+        <rect x="130" y="45" width="110" height="25" rx="5" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+        <text x="185" y="62" text-anchor="middle" font-size="10" font-weight="700" fill="#9d174d">适应现象</text>
+        <rect x="10" y="80" width="230" height="22" rx="5" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="125" y="95" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">刺激能量→感受器电位→动作电位(神经冲动)</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 感受器具有适宜刺激、换能作用、编码功能和适应现象四大生理特征，将刺激能量转换为神经冲动。</div>
+    <ul class="card-points"><li>适宜刺激：每种感受器最敏感的刺激形式</li><li>换能作用：刺激能量→感受器电位→AP</li><li>编码功能：刺激性质/强度/部位信息编码</li><li>适应现象：持续刺激时传入冲动频率下降</li><li>快适应(触觉) vs 慢适应(肌梭/颈动脉窦)</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph10','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <circle cx="60" cy="50" r="30" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+        <circle cx="60" cy="50" r="12" fill="#1e293b"/>
+        <circle cx="56" cy="46" r="4" fill="#fff" opacity=".5"/>
+        <text x="60" y="95" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">视锥(明视/色觉)</text>
+        <text x="60" y="107" text-anchor="middle" font-size="9" fill="#92400e">视杆(暗视/无色觉)</text>
+        <ellipse cx="180" cy="50" rx="25" ry="30" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+        <path d="M165,35 Q180,25 195,35" fill="none" stroke="#1e40af" stroke-width="1.5"/>
+        <text x="180" y="55" text-anchor="middle" font-size="9" font-weight="700" fill="#1e40af">耳蜗</text>
+        <text x="180" y="95" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">螺旋器(Corti器)</text>
+        <text x="180" y="107" text-anchor="middle" font-size="9" fill="#1e40af">声波→淋巴振动→毛细胞</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 视觉依靠视网膜视锥细胞（明视觉和色觉）和视杆细胞（暗视觉），听觉依靠耳蜗螺旋器将声波转换为神经冲动。</div>
+    <ul class="card-points"><li>视锥细胞：中央凹密集，司明视觉和色觉</li><li>视杆细胞：周边分布，司暗视觉，无色觉</li><li>中央凹是感光最敏锐部位(只有视锥)</li><li>耳蜗螺旋器是听觉感受器</li><li>声波经外耳道→鼓膜→听骨链→卵圆窗→淋巴</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph10','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">11</span>神经系统</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="35" width="70" height="30" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="45" y="53" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">突触前膜</text>
+        <circle cx="55" cy="50" r="4" fill="#f59e0b"/>
+        <circle cx="65" cy="45" r="4" fill="#f59e0b"/>
+        <circle cx="65" cy="55" r="4" fill="#f59e0b"/>
+        <rect x="95" y="35" width="15" height="30" fill="#fef3c7" stroke="#f59e0b" stroke-width="1"/>
+        <text x="102" y="80" text-anchor="middle" font-size="8" fill="#92400e">间隙</text>
+        <rect x="125" y="35" width="70" height="30" rx="6" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="160" y="53" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">突触后膜</text>
+        <line x1="80" y1="50" x2="95" y2="50" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <line x1="110" y1="50" x2="125" y2="50" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <text x="102" y="25" text-anchor="middle" font-size="9" font-weight="700" fill="#ea580c">递质释放</text>
+        <rect x="210" y="25" width="55" height="50" rx="6" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+        <text x="237" y="42" text-anchor="middle" font-size="9" font-weight="700" fill="#9d174d">特征</text>
+        <text x="237" y="55" text-anchor="middle" font-size="7" fill="#9d174d">单向/延搁</text>
+        <text x="237" y="65" text-anchor="middle" font-size="7" fill="#9d174d">总和/易疲劳</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 化学性突触传递通过突触前膜释放递质、经突触间隙扩散、作用于突触后膜受体实现，具有单向传递和突触延搁。</div>
+    <ul class="card-points"><li>突触=前膜+间隙+后膜三部分</li><li>递质：Ach/去甲肾上腺素/多巴胺/谷氨酸/GABA</li><li>特征：单向传递/突触延搁/总和/易疲劳</li><li>兴奋性递质→Na⁺内流→EPSP</li><li>抑制性递质→Cl⁻内流→IPSP</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph11','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="20" width="50" height="25" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="35" y="36" text-anchor="middle" font-size="9" font-weight="700" fill="#92400e">肌梭(长度)</text>
+        <line x1="60" y1="32" x2="85" y2="32" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#r1)"/>
+        <rect x="85" y="20" width="45" height="25" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="107" y="36" text-anchor="middle" font-size="9" font-weight="700" fill="#1e40af">脊髓中枢</text>
+        <line x1="130" y1="32" x2="155" y2="32" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#r1)"/>
+        <rect x="155" y="20" width="50" height="25" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="180" y="36" text-anchor="middle" font-size="9" font-weight="700" fill="#166534">同一肌肉</text>
+        <rect x="10" y="65" width="110" height="30" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="65" y="78" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">腱反射：快速牵拉/单突触</text>
+        <text x="65" y="90" text-anchor="middle" font-size="8" fill="#991b1b">如膝跳反射，快肌纤维</text>
+        <rect x="130" y="65" width="110" height="30" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+        <text x="185" y="78" text-anchor="middle" font-size="10" font-weight="700" fill="#3730a3">肌紧张：缓慢持续/多突触</text>
+        <text x="185" y="90" text-anchor="middle" font-size="8" fill="#3730a3">维持姿势最基本反射</text>
+        <defs><marker id="r1" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L6,2.5 L0,5" fill="#64748b"/></marker></defs>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 牵张反射是骨骼肌受牵拉时反射性收缩，感受器为肌梭，分为腱反射（快速单突触）和肌紧张（缓慢多突触）。</div>
+    <ul class="card-points"><li>感受器：肌梭（感受肌肉长度变化）</li><li>腱反射：快速牵拉肌腱，单突触，如膝跳反射</li><li>肌紧张：缓慢持续牵拉，维持姿势最基本反射</li><li>效应器：受牵拉的同一肌肉</li><li>腱器官感受张力，抑制牵张反射（反牵张）</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph11','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="10" width="110" height="40" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="65" y="27" text-anchor="middle" font-size="11" font-weight="700" fill="#991b1b">交感神经</text>
+        <text x="65" y="41" text-anchor="middle" font-size="9" fill="#991b1b">应急反应 · 动员潜力</text>
+        <rect x="140" y="10" width="110" height="40" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="195" y="27" text-anchor="middle" font-size="11" font-weight="700" fill="#166534">副交感神经</text>
+        <text x="195" y="41" text-anchor="middle" font-size="9" fill="#166534">休整恢复 · 保存能量</text>
+        <rect x="10" y="65" width="240" height="35" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="130" y="80" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">交感：心跳快/血压高/支气管扩张/瞳孔大/胃肠抑制</text>
+        <text x="130" y="93" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">副交感：心跳慢/血压低/支气管收缩/瞳孔小/胃肠增强</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 自主神经系统分交感（应急动员）和副交感（休整恢复），两者拮抗统一维持内脏功能稳态。</div>
+    <ul class="card-points"><li>交感中枢：脊髓胸腰段(T1-L3)</li><li>副交感中枢：脑干副交感核+骶髓2-4节</li><li>交感节前短节后长，副交感节前长节后短</li><li>交感分布广泛，副交感较局限</li><li>递质：交感节后多为去甲肾上腺素，副交感为Ach</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph11','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+<div class="chapter-group">
+<div class="chapter-title"><span class="ch-num">12</span>身体素质</div>
+<div class="cards-grid">
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="10" y="15" width="70" height="35" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="45" y="30" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">最大力量</text>
+        <text x="45" y="43" text-anchor="middle" font-size="8" fill="#991b1b">对抗最大阻力</text>
+        <rect x="90" y="15" width="70" height="35" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="125" y="30" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">快速力量</text>
+        <text x="125" y="43" text-anchor="middle" font-size="8" fill="#92400e">爆发力=力×速度</text>
+        <rect x="170" y="15" width="70" height="35" rx="6" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="205" y="30" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">力量耐力</text>
+        <text x="205" y="43" text-anchor="middle" font-size="8" fill="#166534">长时间抗疲劳</text>
+        <rect x="10" y="65" width="230" height="30" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="125" y="78" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">生理学基础：肌纤维类型/肌肉横截面积/神经调节/能量供应</text>
+        <text x="125" y="91" text-anchor="middle" font-size="9" fill="#1e40af">Ⅰ型(慢缩红肌)耐力好 | Ⅱ型(快缩白肌)力量速度好</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 力量素质分最大力量、快速力量（爆发力）和力量耐力，取决于肌纤维类型、肌肉横截面积和神经调节能力。</div>
+    <ul class="card-points"><li>最大力量：肌肉收缩克服最大阻力的能力</li><li>爆发力=力量×速度，超等长训练有效</li><li>力量耐力：长时间对抗阻力的能力</li><li>Ⅰ型肌纤维(慢缩)：耐力好，Ⅱ型(快缩)：力量大</li><li>力量训练→肌纤维增粗(肥大)，非数量增加</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph12','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <line x1="25" y1="85" x2="250" y2="85" stroke="#cbd5e1" stroke-width="1"/>
+        <path d="M25,80 Q80,75 120,55 Q160,35 200,25 Q230,20 250,18" fill="none" stroke="#ea580c" stroke-width="2"/>
+        <text x="140" y="100" text-anchor="middle" font-size="9" fill="#64748b">运动强度→</text>
+        <line x1="155" y1="40" x2="155" y2="85" stroke="#22c55e" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="155" y="95" text-anchor="middle" font-size="8" fill="#16a34a">乳酸阈</text>
+        <rect x="30" y="10" width="95" height="25" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="77" y="26" text-anchor="middle" font-size="9" font-weight="700" fill="#1e40af">VO₂max(中央机制)</text>
+        <rect x="140" y="10" width="95" height="25" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="187" y="26" text-anchor="middle" font-size="9" font-weight="700" fill="#166534">乳酸阈(外周机制)</text>
+        <text x="77" y="55" text-anchor="middle" font-size="8" fill="#1e40af">心输出量</text>
+        <text x="187" y="55" text-anchor="middle" font-size="8" fill="#166534">肌肉利用氧</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 有氧耐力由最大摄氧量（VO₂max，中央机制）和乳酸阈（外周机制）共同决定，是耐力项目的核心素质。</div>
+    <ul class="card-points"><li>VO₂max：最大摄氧量，反映心肺泵血能力</li><li>乳酸阈：血乳酸急剧上升的拐点，反映肌肉用氧</li><li>VO₂max中央机制=心输出量，外周=肌肉利用氧</li><li>耐力训练→VO₂max↑/乳酸阈↑/慢肌纤维比例↑</li><li>男性VO₂max约45-55，耐力运动员70-85 ml/kg/min</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph12','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+<div class="quick-card">
+  <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
+        <rect x="5" y="15" width="75" height="40" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="42" y="32" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">速度素质</text>
+        <text x="42" y="46" text-anchor="middle" font-size="8" fill="#991b1b">反应时/动作速度</text>
+        <rect x="90" y="15" width="75" height="40" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="127" y="32" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">柔韧素质</text>
+        <text x="127" y="46" text-anchor="middle" font-size="8" fill="#92400e">关节活动幅度</text>
+        <rect x="175" y="15" width="75" height="40" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="212" y="32" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">灵敏素质</text>
+        <text x="212" y="46" text-anchor="middle" font-size="8" fill="#166534">快速变换动作</text>
+        <rect x="5" y="70" width="245" height="28" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+        <text x="127" y="83" text-anchor="middle" font-size="9" font-weight="700" fill="#3730a3">速度=神经反应+肌纤维类型(Ⅱ型) | 柔韧=关节结构+软组织伸展性 | 灵敏=多素质综合</text>
+        <text x="127" y="95" text-anchor="middle" font-size="8" fill="#3730a3">反应时=感受器兴奋+传入+中枢延搁+传出+效应器</text>
+        </svg></div>
+  <div class="card-body">
+    <div class="card-mechanism">💡 速度、柔韧和灵敏是重要身体素质，分别取决于神经反应速度、关节活动范围和多种素质的综合协调。</div>
+    <ul class="card-points"><li>速度素质：反应速度+动作速度+位移速度</li><li>反应时包括感受器→传入→中枢→传出→效应器</li><li>柔韧素质：关节结构+周围软组织伸展性+神经调节</li><li>灵敏素质：神经过程灵活性+力量/速度/柔韧综合</li><li>发展敏感期：速度10-13岁，柔韧儿童期最佳</li></ul>
+    <button class="card-btn" onclick="jumpToKnowledge('ph12','physio')">📖 查看详细知识点</button>
+  </div>
+</div>
+</div></div>
+</div>
+    </div>
+
+
+<!-- Physiology -->
 <div class="tab-content" id="tab-physio">
   <div class="card" style="background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff">
     <h3 style="color:#fff">运动生理学备考总览</h3>
@@ -3374,28 +4056,6 @@ img { max-width: 100%; height: auto; }
       
       <!-- 搜索结果 -->
       <div id="atlasSearchResults" style="display:none"></div>
-
-      <!-- 系统解剖学详解模块 -->
-      <div id="atlasSystemNav" style="background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);border-radius:12px;padding:20px 24px;margin:28px 0 16px;color:#fff">
-        <h3 style="margin:0 0 6px;font-size:18px;font-weight:700">📚 系统解剖学详解</h3>
-        <p style="margin:0;font-size:13px;opacity:0.9">按人体系统分类，点击下方按钮查看各系统组成、结构功能与考研高频考点</p>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px">
-        <button onclick="showAnatomySystem('nervous')" style="padding:10px 18px;background:#8b5cf6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;box-shadow:0 2px 6px rgba(139,92,246,0.3)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(139,92,246,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 6px rgba(139,92,246,0.3)'">🧠 神经系统</button>
-        <button onclick="showAnatomySystem('circulatory')" style="padding:10px 18px;background:#ef4444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;box-shadow:0 2px 6px rgba(239,68,68,0.3)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(239,68,68,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 6px rgba(239,68,68,0.3)'">❤️ 循环系统</button>
-        <button onclick="showAnatomySystem('respiratory')" style="padding:10px 18px;background:#06b6d4;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;box-shadow:0 2px 6px rgba(6,182,212,0.3)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(6,182,212,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 6px rgba(6,182,212,0.3)'">🫁 呼吸系统</button>
-        <button onclick="showAnatomySystem('digestive')" style="padding:10px 18px;background:#f59e0b;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;box-shadow:0 2px 6px rgba(245,158,11,0.3)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(245,158,11,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 6px rgba(245,158,11,0.3)'">🍽️ 消化系统</button>
-        <button onclick="showAnatomySystem('urinary')" style="padding:10px 18px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;box-shadow:0 2px 6px rgba(59,130,246,0.3)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(59,130,246,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 6px rgba(59,130,246,0.3)'">💧 泌尿系统</button>
-        <button onclick="showAnatomySystem('endocrine')" style="padding:10px 18px;background:#ec4899;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;box-shadow:0 2px 6px rgba(236,72,153,0.3)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(236,72,153,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 6px rgba(236,72,153,0.3)'">🧬 内分泌系统</button>
-        <button onclick="showAnatomySystem('sensory')" style="padding:10px 18px;background:#10b981;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;box-shadow:0 2px 6px rgba(16,185,129,0.3)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(16,185,129,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 6px rgba(16,185,129,0.3)'">👁️ 感觉器</button>
-      </div>
-      <div id="anatomySystemDetail" style="background:#f8fafc;border-radius:12px;padding:20px;min-height:200px;border:1px solid #e2e8f0">
-        <div style="text-align:center;color:#94a3b8;padding:30px 20px">
-          <div style="font-size:32px;margin-bottom:10px">👆</div>
-          <p style="font-size:14px">点击上方系统按钮，查看该系统详细解剖知识与考研考点</p>
-        </div>
-      </div>
-
     </div>
 
 
@@ -27205,511 +27865,10 @@ const PHYSIO_ANNOTATIONS = {
   'hc-purkinje': {title:'浦肯野纤维（Purkinje fibers）', text:'左右束支的末梢分支，交织成网分布于心内膜下，与普通心室肌细胞相连。传导速度最快（可达4m/s），能将兴奋迅速传遍整个心室。自律性最低（约25次/分），是三级起搏点。'}
 };
 
-
-// ==================== 生理学章节知识点 ====================
-const PHYSIO_CHAPTERS = [
-  {
-    id: 'ch1',
-    title: '第一章 绪论',
-    icon: '📖',
-    topics: [
-      {
-        name: '内环境与稳态',
-        concept: `内环境是细胞外液（血浆、组织液、淋巴液等），是细胞直接生活的环境。稳态是内环境理化性质保持相对稳定的状态。`,
-        mechanism: `稳态通过神经调节、体液调节和自身调节维持。细胞代谢消耗O₂和营养物质，产生CO₂和代谢废物，内环境通过循环、呼吸、泌尿等系统不断更新，保持动态平衡。稳态不是固定不变，而是在一定范围内波动。`,
-        sports: `运动时肌肉代谢增强，产生大量CO₂、乳酸和热量，内环境理化性质（pH、温度、渗透压）发生较大变化。机体通过加强呼吸、循环、泌尿等功能活动维持稳态。长期运动训练可提高机体维持稳态的能力，表现为更大的生理功能储备。`,
-        exam: `内环境的概念和组成；稳态的概念及生理意义；稳态的调节机制（神经/体液/自身调节）；运动对稳态的影响。`
-      },
-      {
-        name: '生理功能的调节',
-        concept: `人体生理功能的调节方式包括神经调节、体液调节和自身调节三种。神经调节是最主要的调节方式。`,
-        mechanism: `神经调节通过反射弧实现，特点是迅速、精确、短暂。体液调节通过激素等化学物质经血液循环作用于靶器官，特点是缓慢、广泛、持久。自身调节是组织细胞不依赖神经和体液，自身对刺激产生的适应性反应，特点是范围小、幅度低。`,
-        sports: `运动开始时，神经调节迅速动员心肺功能（心率加快、呼吸加深）；运动中体液调节（肾上腺素、去甲肾上腺素）持续维持心血管和代谢适应；长期训练后，心肌自身调节能力增强（Frank-Starling机制）。`,
-        exam: `三种调节方式的特点比较；反射弧的组成；神经调节与体液调节的区别与联系；负反馈和正反馈的概念及举例。`
-      },
-      {
-        name: '反馈控制系统',
-        concept: `反馈是指受控部分的信息返回控制部分，调整控制部分的活动。分为负反馈和正反馈。`,
-        mechanism: `负反馈：受控部分的活动反过来抑制控制部分的活动，使系统趋于稳定，是维持稳态的主要机制（如体温调节、血压调节）。正反馈：受控部分的活动反过来加强控制部分的活动，使系统远离稳态，促使某一生理过程迅速完成（如血液凝固、排尿反射、分娩）。`,
-        sports: `运动中血压升高通过颈动脉窦和主动脉弓压力感受器反射（负反馈）使心率减慢、血管舒张，防止血压过高。运动后乳酸堆积通过化学感受性反射（负反馈）刺激呼吸加深加快，排出CO₂。`,
-        exam: `负反馈的概念、意义及举例；正反馈的概念、意义及举例；前馈的概念；负反馈在维持稳态中的作用。`
-      }
-    ]
-  },
-  {
-    id: 'ch2',
-    title: '第二章 细胞的基本功能',
-    icon: '🔬',
-    topics: [
-      {
-        name: '细胞膜的物质转运',
-        concept: `细胞膜是具有选择透过性的生物膜，物质转运方式包括被动转运（单纯扩散、易化扩散）和主动转运（原发性主动转运、继发性主动转运），以及出胞和入胞。`,
-        mechanism: `单纯扩散：脂溶性物质（O₂、CO₂）顺浓度梯度直接穿过膜脂质双层，不耗能。易化扩散：非脂溶性物质在膜蛋白帮助下顺浓度梯度转运，不耗能，分为经通道易化扩散（离子）和经载体易化扩散（葡萄糖、氨基酸）。主动转运：逆浓度梯度转运，需消耗能量，钠钾泵（Na⁺-K⁺-ATP酶）是最重要的原发性主动转运，每分解1分子ATP将3个Na⁺移出、2个K⁺移入。`,
-        sports: `运动时肌细胞膜上的Na⁺-K⁺泵活动增强，维持膜内外离子梯度，保证动作电位持续产生。葡萄糖通过载体易化扩散进入肌细胞，运动时胰岛素敏感性增加，葡萄糖转运体（GLUT4）向膜转位增多，促进葡萄糖摄取。`,
-        exam: `各种转运方式的特点和比较；钠钾泵的作用和生理意义；经通道和经载体易化扩散的区别；继发性主动转运的概念和举例。`
-      },
-      {
-        name: '静息电位',
-        concept: `静息电位是细胞未受刺激时存在于膜内外的电位差，表现为内负外正。神经细胞约-70mV，骨骼肌细胞约-90mV。`,
-        mechanism: `静息电位的产生机制：①细胞膜内外离子分布不均（细胞内K⁺浓度高，细胞外Na⁺浓度高）；②静息时膜对K⁺通透性最大，K⁺顺浓度梯度外流，形成内负外正的电位差；③当K⁺外流的化学驱动力与电场力平衡时，达到K⁺平衡电位，即静息电位。钠钾泵的生电作用也参与静息电位的维持。`,
-        sports: `运动训练可影响静息电位。长期耐力训练使肌细胞内K⁺浓度增加，静息电位绝对值增大，细胞兴奋性提高。剧烈运动时，细胞外K⁺浓度升高（K⁺外流增多），可导致静息电位绝对值减小（去极化），影响肌肉收缩功能，是运动性疲劳的机制之一。`,
-        exam: `静息电位的概念和数值；静息电位的产生机制（K⁺平衡电位）；影响静息电位的因素；钠钾泵在静息电位维持中的作用。`
-      },
-      {
-        name: '动作电位',
-        concept: `动作电位是可兴奋细胞受到有效刺激时，在静息电位基础上产生的快速、可逆、可传播的电位变化。包括去极化、反极化（超射）、复极化和后电位。`,
-        mechanism: `产生机制：①去极化：刺激使膜去极化达到阈电位（约-55mV），电压门控Na⁺通道大量开放，Na⁺快速内流，膜电位迅速上升；②反极化：膜电位超过0mV变为正电位（约+30mV），Na⁺内流达到电化学平衡；③复极化：Na⁺通道失活，电压门控K⁺通道开放，K⁺快速外流，膜电位恢复；④后电位：复极化后出现的微小电位波动，由K⁺持续外流和钠泵活动引起。动作电位具有「全或无」特性、不衰减传导和脉冲式发放的特点。`,
-        sports: `动作电位是肌肉收缩的前提。运动时运动神经元发放高频动作电位，通过神经-肌肉接头传递到肌纤维，引起肌肉收缩。不同强度运动募集不同数量的运动单位（大小原则）。长期训练可提高神经传导速度和运动单位同步放电能力，增强肌肉力量。`,
-        exam: `动作电位的概念和分期；动作电位的产生机制（Na⁺内流/K⁺外流）；阈电位的概念；动作电位的「全或无」特性；局部兴奋与动作电位的区别；动作电位的传导方式（局部电流/跳跃式传导）。`
-      },
-      {
-        name: '兴奋-收缩耦联',
-        concept: `兴奋-收缩耦联是指肌膜的电兴奋与肌丝滑行之间的中介过程，是连接动作电位和肌肉收缩的关键环节。`,
-        mechanism: `过程：①动作电位沿肌膜和横管（T管）传播到肌细胞深部；②横管膜去极化激活L型钙通道（二氢吡啶受体），通过构象变化直接连接并激活终池膜上的雷诺丁受体（RyR），使终池内Ca²⁺大量释放到胞质；③胞质Ca²⁺浓度升高，Ca²⁺与肌钙蛋白C结合，使原肌球蛋白移位，暴露肌动蛋白上的横桥结合位点；④横桥与肌动蛋白结合，肌丝滑行，肌肉收缩；⑤胞质Ca²⁺被肌质网膜上的钙泵（SERCA）主动回收，Ca²⁺浓度降低，肌肉舒张。`,
-        sports: `兴奋-收缩耦联是运动性疲劳的重要位点。长时间高强度运动后，横管膜L型钙通道功能下降、雷诺丁受体泄漏增加、肌质网钙泵回收能力下降，导致胞质Ca²⁺调控异常，肌肉收缩力下降。力量训练可增加肌质网密度和钙泵数量，提高兴奋-收缩耦联效率。`,
-        exam: `兴奋-收缩耦联的概念和结构基础（横管、终池、三联管）；兴奋-收缩耦联的过程和Ca²⁺的作用；肌肉舒张的机制；影响兴奋-收缩耦联的因素。`
-      },
-      {
-        name: '肌肉收缩的滑行学说',
-        concept: `滑行学说认为肌肉收缩是由于肌动蛋白细丝向肌球蛋白粗丝之间滑行，导致肌节缩短，而肌丝本身长度不变。`,
-        mechanism: `肌节是肌肉收缩和舒张的基本单位，由Z线、I带（仅细丝）、A带（粗丝全长）、H带（仅粗丝）组成。横桥循环：①横桥与肌动蛋白结合（ADP+Pi结合状态）；②横桥摆动（power stroke），拖动细丝向M线滑行，释放ADP和Pi；③ATP结合到横桥，横桥与肌动蛋白解离；④ATP水解为ADP+Pi，横桥复位，准备下一次循环。每个横桥循环消耗1分子ATP，使肌节缩短约1%。`,
-        sports: `不同运动类型影响横桥循环速率。快肌（Ⅱ型）横桥ATP酶活性高，循环速率快，收缩速度快但易疲劳；慢肌（Ⅰ型）横桥ATP酶活性低，收缩速度慢但抗疲劳。力量训练可增加肌纤维横截面积（肌原纤维增生），增加横桥数量，提高最大力量。耐力训练增加线粒体和毛细血管密度，提高ATP持续供应能力。`,
-        exam: `滑行学说的基本内容；肌节的结构（Z线/I带/A带/H带/M线）；横桥循环的四个步骤；ATP在肌肉收缩中的作用；快肌和慢肌的结构和功能差异。`
-      }
-    ]
-  },
-  {
-    id: 'ch3',
-    title: '第三章 血液',
-    icon: '🩸',
-    topics: [
-      {
-        name: '血液的组成与功能',
-        concept: `血液由血浆（55%）和血细胞（45%）组成。血细胞包括红细胞、白细胞和血小板。血浆包括水（91%）、蛋白质（7%）和其他溶质（2%）。`,
-        mechanism: `血液的功能：①运输功能（O₂、CO₂、营养物质、代谢废物、激素）；②防御和保护功能（白细胞、抗体、补体）；③止血功能（血小板、凝血因子）；④调节功能（体温调节、酸碱平衡、渗透压维持）。血浆蛋白包括白蛋白（维持胶体渗透压）、球蛋白（免疫）、纤维蛋白原（凝血）。`,
-        sports: `长期耐力训练可引起「运动员血液」改变：血容量增加（血浆容量增加更明显），血红蛋白总量增加但浓度可能降低（相对性贫血，是正常适应）。红细胞变形能力增强，血液流变学改善。运动时白细胞计数一过性升高（主要是中性粒细胞），是应激反应。`,
-        exam: `血液的组成和各部分比例；血浆蛋白的种类和功能；血液的生理功能；血细胞比容的概念；「运动员血液」的特点。`
-      },
-      {
-        name: '红细胞与血红蛋白',
-        concept: `红细胞是血液中数量最多的血细胞，主要功能是运输O₂和CO₂，依靠血红蛋白实现。我国成年男性Hb 120-160g/L，女性110-150g/L。`,
-        mechanism: `红细胞无核、双凹圆盘形，表面积大，利于气体交换。血红蛋白由珠蛋白和亚铁血红素组成，每个Hb分子含4个Fe²⁺，可结合4分子O₂。红细胞生成需要铁、蛋白质、维生素B₁₂和叶酸。生成调节主要受促红细胞生成素（EPO，肾脏产生）调节。红细胞寿命约120天。`,
-        sports: `血红蛋白含量直接影响最大摄氧量和有氧运动能力。耐力训练可增加Hb总量和红细胞数量。高原训练通过低氧刺激EPO分泌，促进红细胞生成，提高运氧能力。运动性贫血：大强度训练后Hb降低，可能与红细胞破坏增加、铁丢失、血液稀释有关。补铁是耐力运动员重要的营养策略。`,
-        exam: `红细胞的形态和功能；血红蛋白的结构和功能；红细胞生成的条件和调节（EPO）；运动对红细胞和血红蛋白的影响；运动性贫血的原因和防治。`
-      },
-      {
-        name: '血液凝固与纤溶',
-        concept: `血液凝固是血液由流动的液体状态变为不能流动的凝胶状态的过程，是一系列凝血因子相继酶解激活的级联反应。`,
-        mechanism: `凝血过程分为三个阶段：①凝血酶原激活物形成（内源性途径：因子Ⅻ启动；外源性途径：因子Ⅲ启动）；②凝血酶原（因子Ⅱ）在凝血酶原激活物作用下转变为凝血酶（因子Ⅱa）；③纤维蛋白原（因子Ⅰ）在凝血酶作用下转变为纤维蛋白，形成血凝块。抗凝系统包括抗凝血酶Ⅲ、蛋白C系统、组织因子途径抑制物。纤维蛋白溶解系统（纤溶）分解纤维蛋白，保持血管通畅。`,
-        sports: `运动可影响凝血和纤溶系统。急性运动后血小板计数增加、凝血因子活性增强，血液呈高凝状态；同时纤溶系统也被激活，两者维持动态平衡。长期规律运动可改善凝血-纤溶平衡，降低血栓形成风险。运动损伤时局部凝血机制启动，起到止血作用。`,
-        exam: `凝血的基本过程（三个阶段）；内源性和外源性凝血途径的区别；主要凝血因子（Ⅰ、Ⅱ、Ⅲ、Ⅳ）；抗凝系统的组成；纤溶系统的作用；运动对凝血功能的影响。`
-      },
-      {
-        name: '血型与输血',
-        concept: `血型是红细胞膜上特异性抗原的类型。最重要的是ABO血型系统和Rh血型系统。`,
-        mechanism: `ABO血型根据红细胞膜上A、B抗原分为A型（A抗原）、B型（B抗原）、AB型（A+B抗原）、O型（无A无B抗原）。血清中存在天然抗体：A型含抗B，B型含抗A，AB型无抗体，O型含抗A+抗B。输血原则：同型输血，交叉配血试验。Rh血型根据D抗原分为Rh阳性和Rh阴性，Rh阴性者血清中无天然抗体，需经致敏后才产生抗D抗体。`,
-        sports: `运动员了解自身血型对运动损伤急救有重要意义。大量运动出汗可导致血液浓缩，需及时补液。运动中发生严重外伤出血时，止血和输血是急救关键。运动员应避免在比赛前进行不必要的抽血检查，以免影响运动能力。`,
-        exam: `ABO血型的分型依据；输血原则和交叉配血；Rh血型的特点；血型鉴定的原理；O型血是「万能供血者」的局限性。`
-      }
-    ]
-  },
-  {
-    id: 'ch4',
-    title: '第四章 血液循环',
-    icon: '❤️',
-    topics: [
-      {
-        name: '心脏的泵血功能',
-        concept: `心脏通过节律性收缩和舒张推动血液在血管中循环流动。心动周期包括收缩期和舒张期，正常成人安静时心率60-100次/分。`,
-        mechanism: `心室泵血过程（以左心室为例）：①等容收缩期：心室开始收缩，室内压升高，房室瓣关闭，半月瓣尚未开放，心室容积不变；②快速射血期：室内压超过主动脉压，半月瓣开放，血液快速射入主动脉；③减慢射血期：射血速度减慢；④等容舒张期：心室开始舒张，室内压下降，半月瓣关闭，房室瓣尚未开放，容积不变；⑤快速充盈期：室内压低于房内压，房室瓣开放，血液快速流入心室；⑥减慢充盈期（心房收缩期）：心房收缩，将剩余血液挤入心室。每搏输出量（安静时约70ml）×心率=每分输出量（安静时约5L/min）。`,
-        sports: `运动时心输出量增加（可达20-35L/min），通过心率加快和每搏输出量增加实现。耐力训练使安静心率降低（运动性心动徐缓），每搏输出量增大，心脏泵血效率提高。最大心率=220-年龄。运动时心率与运动强度呈正相关，可作为监测运动强度的指标。`,
-        exam: `心动周期的概念；心室泵血过程（各期特点）；每搏输出量和每分输出量的概念；心指数的概念；影响心输出量的因素（前负荷/后负荷/心肌收缩力/心率）；运动对心脏泵血功能的影响。`
-      },
-      {
-        name: '心肌的生物电现象',
-        concept: `心肌细胞分为工作细胞（心房肌、心室肌）和自律细胞（窦房结、浦肯野纤维）。心室肌细胞动作电位分为0、1、2、3、4五个时期。`,
-        mechanism: `心室肌动作电位：①0期（去极化）：Na⁺快速内流，膜电位从-90mV升至+30mV；②1期（快速复极初期）：K⁺外流，膜电位降至0mV左右；③2期（平台期）：Ca²⁺内流与K⁺外流平衡，膜电位保持在0mV左右，持续100-150ms，是心肌动作电位的主要特征；④3期（快速复极末期）：Ca²⁺通道失活，K⁺外流增加，膜电位恢复至-90mV；⑤4期（静息期）：钠泵和Na⁺-Ca²⁺交换恢复离子分布。窦房结P细胞动作电位无明显1期和2期，0期由Ca²⁺内流引起，4期自动去极化是自律性的基础。`,
-        sports: `心肌动作电位时程长（有效不应期长），使心肌不会发生强直收缩，保证心脏交替收缩和舒张。运动时交感神经兴奋，窦房结4期自动去极化速度加快，心率增加。长期训练可使心肌细胞动作电位时程适当延长，心肌收缩力增强。`,
-        exam: `心室肌细胞动作电位的分期及离子基础；平台期的特点和意义；窦房结P细胞动作电位的特点；心肌有效不应期长的生理意义；心肌与骨骼肌动作电位的区别。`
-      },
-      {
-        name: '心脏传导系统与心电图',
-        concept: `心脏传导系统由特殊分化的心肌细胞构成，包括窦房结、结间束、房室结、房室束（His束）、左右束支和浦肯野纤维。`,
-        mechanism: `兴奋传导顺序：窦房结（正常起搏点，自律性最高约100次/分）→结间束→房室结（传导延搁约0.1s，保证心房收缩后心室再收缩）→房室束→左右束支→浦肯野纤维（传导速度最快）→心室肌。心电图（ECG）记录心脏电活动：P波（心房去极化）、QRS波群（心室去极化）、T波（心室复极化）、PR间期（房室传导时间）、QT间期（心室去极化到复极化时间）、ST段（心室平台期）。`,
-        sports: `运动心电图是评估运动员心脏功能和筛查心血管疾病的重要手段。运动中监测心电图可发现心律失常和心肌缺血。长期耐力训练可出现窦性心动过缓、PR间期延长等「运动员心脏」心电图改变，通常是良性适应。运动后即刻心率恢复速度是评估心血管功能和预后的重要指标。`,
-        exam: `心脏传导系统的组成和传导顺序；窦房结作为正常起搏点的原因；房室延搁的生理意义；心电图各波和间期的意义；自律性高低比较（窦房结>房室结>浦肯野）。`
-      },
-      {
-        name: '血管生理与血压',
-        concept: `血压是血管内血液对单位面积血管壁的侧压力。通常指动脉血压，我国健康青年人安静时收缩压100-120mmHg，舒张压60-80mmHg。`,
-        mechanism: `动脉血压形成的条件：①心血管系统有足够的血液充盈（前提）；②心脏射血（动力）；③外周阻力（小动脉和微动脉）；④大动脉管壁弹性（缓冲血压波动）。收缩压是心室收缩时动脉血压的最高值，舒张压是心室舒张时的最低值，脉压=收缩压-舒张压。影响血压的因素：每搏输出量（主要影响收缩压）、心率（主要影响舒张压）、外周阻力（主要影响舒张压）、大动脉弹性、循环血量。`,
-        sports: `运动时收缩压升高（与运动强度正相关），舒张压变化不大或轻度下降。长期有氧运动可降低安静血压（降压效果类似药物），是防治高血压的非药物手段。力量训练时憋气（Valsalva动作）可导致血压急剧升高，心血管疾病患者应避免。运动后低血压（运动后数小时血压低于平时）是正常现象。`,
-        exam: `动脉血压的概念和正常值；血压形成的条件；收缩压和舒张压的概念；影响动脉血压的因素；压力感受性反射（降压反射）的过程和意义；运动对血压的影响。`
-      },
-      {
-        name: '心血管活动的调节',
-        concept: `心血管活动受神经调节和体液调节，维持血压稳定和各器官血流量分配。`,
-        mechanism: `神经调节：①心脏受交感神经（心率加快、收缩力增强）和迷走神经（心率减慢）双重支配；②血管受交感缩血管神经支配。压力感受性反射（降压反射）：血压升高→颈动脉窦/主动脉弓压力感受器→传入神经→延髓心血管中枢→心迷走紧张增强、心交感紧张减弱→心率减慢、血管舒张→血压下降。体液调节：肾上腺素和去甲肾上腺素（强心、缩血管）、肾素-血管紧张素-醛固酮系统（升血压、保水保钠）、血管升压素（抗利尿激素，缩血管）。`,
-        sports: `运动开始时，大脑皮层运动区直接兴奋心血管中枢，同时肌肉本体感受器反射和化学感受性反射参与，使心率加快、血压升高。运动中交感神经兴奋，肾上腺素分泌增加，血液重新分配（骨骼肌和心脏血流量增加，内脏和皮肤血流量减少）。长期训练使迷走神经张力增强，安静心率降低。`,
-        exam: `心脏的神经支配及作用；压力感受性反射的过程和生理意义；肾上腺素和去甲肾上腺素对心血管的作用；肾素-血管紧张素系统的作用；运动时心血管活动的调节机制。`
-      }
-    ]
-  },
-  {
-    id: 'ch5',
-    title: '第五章 呼吸',
-    icon: '🫁',
-    topics: [
-      {
-        name: '肺通气',
-        concept: `肺通气是肺与外界环境之间的气体交换过程。肺通气的动力是呼吸肌收缩引起的胸廓扩大和缩小（呼吸运动），阻力包括弹性阻力和非弹性阻力。`,
-        mechanism: `吸气：膈肌和肋间外肌收缩→胸廓扩大→肺扩张→肺内压低于大气压→气体入肺。呼气：平静呼气时呼吸肌舒张，胸廓和肺弹性回缩，肺内压高于大气压，气体出肺；用力呼气时肋间内肌和腹肌收缩。肺内压在吸气末和呼气末等于大气压。胸膜腔内压为负压（平静呼气末约-5cmH₂O，吸气末约-10cmH₂O），维持肺扩张状态。肺容积指标：潮气量（约500ml）、补吸气量、补呼气量、残气量。肺容量：深吸气量、功能残气量、肺活量、肺总量。每分通气量=潮气量×呼吸频率（安静时约6-8L/min）。肺泡通气量=（潮气量-无效腔气量）×呼吸频率，是真正有效的通气量。`,
-        sports: `运动时呼吸加深加快，每分通气量可增至100-150L/min。最大通气量是评价肺通气功能的重要指标。耐力训练可提高呼吸肌耐力和最大通气量。运动时潮气量增加比呼吸频率增加更有效（减少无效腔影响）。憋气可反射性引起肌张力增加，但长时间憋气影响静脉回流和肺通气。`,
-        exam: `肺通气的动力和阻力；胸膜腔负压的形成和意义；肺容积和肺容量各指标的概念；肺泡通气量的计算和意义；每分通气量与肺泡通气量的区别；运动时肺通气的变化。`
-      },
-      {
-        name: '肺换气与组织换气',
-        concept: `肺换气是肺泡与肺毛细血管血液之间的气体交换，组织换气是组织细胞与组织毛细血管血液之间的气体交换。两者均通过气体扩散实现。`,
-        mechanism: `气体扩散的动力是气体分压差。O₂从肺泡（PO₂约104mmHg）扩散入血（PO₂约40mmHg），CO₂从血（PCO₂约46mmHg）扩散入肺泡（PCO₂约40mmHg）。影响肺换气的因素：①气体分压差（正比）；②呼吸膜面积（正比）和厚度（反比）；③通气/血流比值（正常约0.84，比值增大表示肺泡无效腔增大，比值减小表示功能性动-静脉短路）；④气体溶解度和分子量（CO₂扩散速率约为O₂的20倍）。组织换气中，O₂从血液扩散入组织细胞，CO₂从组织细胞扩散入血。`,
-        sports: `运动时肺换气效率提高：①呼吸膜面积增加（更多毛细血管开放）；②通气/血流比值优化；③组织换气增强（肌肉PO₂降低，O₂分压差增大）。长期耐力训练使肺弥散功能增强，肌肉毛细血管密度增加，组织换气效率提高。高原低氧环境下，肺换气的O₂分压差减小，是限制运动能力的重要因素。`,
-        exam: `肺换气的原理和动力；影响肺换气的因素；通气/血流比值的概念和意义；呼吸膜的结构；组织换气的过程；O₂和CO₂扩散速率的比较。`
-      },
-      {
-        name: '气体在血液中的运输',
-        concept: `O₂和CO₂在血液中以物理溶解和化学结合两种形式运输，化学结合是主要形式。`,
-        mechanism: `O₂运输：①物理溶解（约1.5%）；②化学结合（约98.5%）：与血红蛋白（Hb）结合形成氧合血红蛋白（HbO₂）。Hb与O₂结合是可逆的、疏松的、不需要酶的氧合反应。1分子Hb可结合4分子O₂。血氧饱和度=（Hb氧含量/Hb氧容量）×100%。CO₂运输：①物理溶解（约5%）；②化学结合（约95%）：碳酸氢盐形式（约88%，在红细胞内碳酸酐酶作用下CO₂+H₂O→H₂CO₃→HCO₃⁻+H⁺）和氨基甲酸血红蛋白形式（约7%，与Hb的氨基结合）。氧解离曲线呈S形，上段平坦（肺摄氧）、中段陡（组织供氧）、下段最陡（氧储备）。波尔效应：PCO₂升高、pH降低、温度升高使氧解离曲线右移，Hb与O₂亲和力降低，O₂释放增多。`,
-        sports: `运动时肌肉PCO₂升高、pH降低、温度升高，通过波尔效应使氧解离曲线右移，促进O₂向肌肉释放。运动中CO₂生成增加，碳酸氢盐缓冲系统发挥重要作用。长期训练使红细胞2,3-DPG含量增加，氧解离曲线右移，有利于组织供氧。最大摄氧量（VO₂max）是评价有氧运动能力的金标准，受心肺功能和肌肉利用氧能力共同限制。`,
-        exam: `O₂和CO₂的运输形式；Hb与O₂结合的特点；氧解离曲线的形态和各段意义；影响氧解离曲线的因素（波尔效应）；CO₂以碳酸氢盐形式运输的过程；运动对气体运输的影响。`
-      },
-      {
-        name: '呼吸运动的调节',
-        concept: `呼吸运动受中枢神经系统自动节律性控制，同时受神经反射和化学因素调节，以适应机体代谢需要。`,
-        mechanism: `呼吸中枢：延髓是基本呼吸中枢（产生基本节律），脑桥上部有呼吸调整中枢（限制吸气、促使吸气转呼气）。呼吸节律的产生机制：前包钦格复合体（pre-Bötzinger complex）是呼吸节律起源。反射调节：①肺牵张反射（黑-伯反射）：肺扩张→牵张感受器→迷走神经→吸气切断→吸气转呼气，防止吸气过深；②呼吸肌本体感受性反射；③防御性反射（咳嗽、喷嚏）。化学感受性调节：①外周化学感受器（颈动脉体、主动脉体）：感受PO₂降低、PCO₂升高、H⁺浓度升高；②中枢化学感受器（延髓腹外侧）：感受脑脊液中H⁺浓度（CO₂透过血脑屏障形成H⁺）。CO₂是调节呼吸最重要的生理性化学因素，一定浓度的CO₂是维持呼吸中枢兴奋的必要条件。`,
-        sports: `运动时呼吸增强的机制：①大脑皮层运动区直接驱动呼吸中枢；②肌肉本体感受器反射；③化学因素（PCO₂、H⁺、K⁺、乳酸）；④体温升高。运动时CO₂排出量与O₂摄取量的比值（呼吸商RQ）可反映能量代谢底物类型：糖RQ=1.0，脂肪RQ=0.71。运动后过量氧耗（EPOC）用于恢复ATP-CP、乳酸清除、体温恢复等。`,
-        exam: `呼吸中枢的部位和功能；肺牵张反射的过程和意义；化学感受性反射（中枢/外周化学感受器）；CO₂、O₂、H⁺对呼吸的调节作用；运动时呼吸增强的机制；呼吸商的概念和意义。`
-      }
-    ]
-  },
-  {
-    id: 'ch6',
-    title: '第六章 消化与吸收',
-    icon: '🍽️',
-    topics: [
-      {
-        name: '消化概述',
-        concept: `消化是食物在消化道内被分解为可吸收的小分子物质的过程，分为机械性消化和化学性消化。吸收是消化后的营养物质通过消化道黏膜进入血液和淋巴的过程。`,
-        mechanism: `消化道平滑肌的一般特性：①兴奋性较低、收缩缓慢；②具有自动节律性；③具有紧张性；④富有伸展性；⑤对电刺激不敏感，对化学、温度和机械牵张刺激敏感。胃肠神经支配：①内在神经系统（壁内神经丛：肌间神经丛、黏膜下神经丛），可独立完成局部反射；②外来神经（交感神经抑制消化，副交感神经促进消化）。胃肠激素：促胃液素（促进胃酸分泌）、促胰液素（促进胰液中水和HCO₃⁻分泌）、缩胆囊素（促进胰酶分泌和胆囊收缩）。`,
-        sports: `运动对消化功能的影响：①剧烈运动时血液重新分配，胃肠道血流量减少，消化功能减弱；②运动可促进胃肠蠕动，预防便秘；③饭后立即剧烈运动可引起腹痛（胃肠缺血、牵拉），建议饭后1-2小时再运动。运动员需注意合理营养，保证碳水化合物、蛋白质和脂肪的适量摄入。`,
-        exam: `消化和吸收的概念；机械性消化和化学性消化的区别；消化道平滑肌的特性；胃肠神经支配（交感/副交感/内在神经）；主要胃肠激素的作用；运动对消化功能的影响。`
-      },
-      {
-        name: '胃内消化',
-        concept: `胃具有暂时储存食物和进行初步消化的功能。胃液由胃腺分泌，含盐酸、胃蛋白酶原、黏液和内因子。`,
-        mechanism: `盐酸（胃酸）的作用：①激活胃蛋白酶原并提供酸性环境；②使蛋白质变性；③杀菌；④促进胰液、胆汁和小肠液分泌；⑤促进铁和钙吸收。胃蛋白酶原在盐酸作用下激活为胃蛋白酶，将蛋白质分解为䏡和胨。黏液-碳酸氢盐屏障保护胃黏膜免受胃酸和胃蛋白酶的侵蚀。内因子（壁细胞分泌）与维生素B₁₂结合，促进其在回肠吸收。胃的运动：容受性舒张（容纳食物）、紧张性收缩、蠕动（推进食物）。胃排空：食物由胃排入十二指肠，混合食物完全排空需4-6小时，糖类排空最快，蛋白质次之，脂肪最慢。`,
-        sports: `运动员赛前饮食应选择低脂肪、低纤维、易消化的高碳水化合物食物，以加快胃排空，避免运动中胃部不适。运动中补充运动饮料（含6-8%碳水化合物和电解质）可快速提供能量且胃排空较快。大量饮水可稀释胃液、影响消化。长期过度训练可能导致胃肠功能紊乱。`,
-        exam: `胃液的成分和作用；盐酸的生理作用；黏液-碳酸氢盐屏障的意义；内因子的作用；胃的运动形式；胃排空的概念和影响因素；三大营养物质胃排空速度比较。`
-      },
-      {
-        name: '小肠内消化与吸收',
-        concept: `小肠是消化和吸收的主要部位。胰液、胆汁和小肠液在小肠内完成对三大营养物质的化学性消化。`,
-        mechanism: `胰液是最重要的消化液：①胰淀粉酶（分解淀粉为麦芽糖）；②胰脂肪酶（分解脂肪为脂肪酸和甘油一酯，需胆盐乳化）；③胰蛋白酶和糜蛋白酶（分解蛋白质为多肽和氨基酸，以酶原形式分泌，肠激酶激活胰蛋白酶原）。胆汁的作用：①乳化脂肪（胆盐）；②促进脂肪消化产物吸收；③促进脂溶性维生素（A、D、E、K）吸收；④中和胃酸。小肠的运动：分节运动（环形肌交替收缩，促进消化和吸收）、蠕动、蠕动冲。吸收的主要部位在小肠，原因：①吸收面积大（环形皱襞、绒毛、微绒毛，总面积约200m²）；②食物在小肠内停留时间长（3-8小时）；③食物已被消化为可吸收的小分子；④绒毛内有丰富的毛细血管和毛细淋巴管。糖以单糖形式吸收（继发性主动转运），蛋白质以氨基酸形式吸收，脂肪以脂肪酸和甘油一酯形式吸收（淋巴途径为主）。`,
-        sports: `小肠吸收功能直接影响运动员营养状况和运动能力。耐力运动中碳水化合物的补充和吸收是维持血糖和延缓疲劳的关键。运动后30分钟内是营养吸收的「窗口期」，此时补充碳水化合物和蛋白质有利于肌糖原恢复和肌肉合成。长期训练可改善肠道微循环和吸收功能。`,
-        exam: `胰液的成分和作用（为什么是最重要的消化液）；胆汁的成分和作用；小肠的运动形式；小肠作为吸收主要部位的原因；三大营养物质的吸收形式和途径；胆盐的肠肝循环。`
-      }
-    ]
-  },
-  {
-    id: 'ch7',
-    title: '第七章 能量代谢与体温',
-    icon: '🔥',
-    topics: [
-      {
-        name: '能量代谢',
-        concept: `能量代谢是生物体物质代谢过程中伴随的能量释放、转移、储存和利用的过程。人体能量来源于糖、脂肪和蛋白质的氧化分解。`,
-        mechanism: `三磷酸腺苷（ATP）是体内能量转移和利用的核心物质。ATP生成方式：①无氧代谢（ATP-CP系统、糖酵解系统）；②有氧代谢（糖、脂肪、蛋白质的有氧氧化）。能量代谢的测定：直接测热法和间接测热法。间接测热法基于物质的氧热价和呼吸商。食物的热价：1g食物氧化时释放的热量（糖17.2kJ/g，脂肪39.8kJ/g，蛋白质18.0kJ/g）。氧热价：某种食物氧化时消耗1L氧产生的热量。呼吸商（RQ）=CO₂产生量/O₂消耗量，糖=1.0，脂肪=0.71，蛋白质=0.80。基础代谢率（BMR）：基础状态下（清醒、静卧、无肌紧张、禁食12小时、室温20-25℃、精神安宁）的能量代谢率，单位kJ/(m²·h)。影响能量代谢的因素：肌肉活动（最显著）、精神活动、食物的特殊动力效应、环境温度。`,
-        sports: `运动时能量代谢显著增强，剧烈运动时可达安静时的10-20倍。不同运动强度依赖不同能量系统：①极量运动（<10秒）：ATP-CP系统；②高强度运动（30秒-2分钟）：糖酵解系统；③中低强度长时间运动：有氧氧化系统。运动后过量氧耗（EPOC）用于恢复磷酸原、清除乳酸、恢复体温等。代谢当量（MET）：1MET=安静时代谢率≈3.5ml/(kg·min)摄氧量，用于表示运动强度。`,
-        exam: `能量代谢的概念；ATP在能量代谢中的作用；三大能量系统的特点；食物的热价和氧热价；呼吸商的概念和意义；基础代谢率的概念和测定条件；影响能量代谢的因素；运动时能量代谢的特点。`
-      },
-      {
-        name: '体温及其调节',
-        concept: `体温是机体深部的平均温度。正常成人腋下温度36.0-37.4℃，口腔36.7-37.7℃，直肠36.9-37.9℃。体温在一昼夜内呈周期性波动（清晨最低，午后最高）。`,
-        mechanism: `产热器官：安静时主要是内脏（肝脏产热最多），运动时主要是骨骼肌（可达总产热的90%）。产热调节：①战栗产热（骨骼肌不随意节律性收缩）；②非战栗产热（代谢产热，褐色脂肪组织）。散热途径：皮肤（主要，辐射、传导、对流、蒸发）、呼吸道、排尿、排便。当环境温度低于皮肤温度时，辐射、传导、对流散热为主；当环境温度等于或高于皮肤温度时，蒸发散热成为唯一途径。体温调节中枢位于下丘脑（视前区-下丘脑前部PO/AH是体温调节的基本中枢）。调定点学说：体温调节类似恒温器，PO/AH设定调定点（约37℃），当体温偏离调定点时，通过产热和散热反应使体温恢复。`,
-        sports: `运动时肌肉产热大量增加，体温可升高至38-40℃，是正常的生理性体温升高。体温适度升高可提高酶活性、加快神经传导速度、降低肌肉黏滞性，有利于运动表现。但体温过高（>40℃）可导致热痉挛、热衰竭、中暑等运动性热病。运动中出汗是主要散热方式，大量出汗可导致脱水和电解质紊乱，需及时补液。长期热环境训练（热习服）可提高耐热能力（出汗率增加、出汗阈值降低、心率增加减少）。`,
-        exam: `体温的概念和正常值；产热器官和产热方式；散热的途径和方式（蒸发散热的条件）；体温调节中枢和调定点学说；运动对体温的影响；运动性热病的类型和预防；热习服的概念和表现。`
-      }
-    ]
-  },
-  {
-    id: 'ch8',
-    title: '第八章 肾脏的排泄功能',
-    icon: '💧',
-    topics: [
-      {
-        name: '尿的生成过程',
-        concept: `尿的生成包括三个基本过程：肾小球的滤过、肾小管和集合管的重吸收、肾小管和集合管的分泌。`,
-        mechanism: `①肾小球滤过：血液流经肾小球毛细血管时，除血细胞和大分子蛋白质外，血浆中的水和小分子溶质通过滤过膜进入肾小囊形成原尿。滤过的动力是有效滤过压=肾小球毛细血管血压-（血浆胶体渗透压+肾小囊内压）。肾小球滤过率（GFR）：每分钟两肾生成的原尿量，正常成人约125ml/min。滤过分数=GFR/肾血浆流量≈19%。②肾小管和集合管重吸收：原尿流经肾小管时，大部分水和溶质被重吸收回血液。近端小管重吸收能力最强（重吸收约67%的Na⁺、Cl⁻、K⁺和水，几乎全部葡萄糖和氨基酸）。葡萄糖重吸收在近端小管，为继发性主动转运，有肾糖阈（约180mg/100ml）。③肾小管和集合管分泌：分泌H⁺、K⁺、NH₃等。`,
-        sports: `运动时肾血流量减少（血液重新分配），肾小球滤过率降低，尿量减少。剧烈运动后可出现运动性蛋白尿（肾小球滤过膜通透性增加）和运动性血尿，通常是暂时性的。大量出汗导致细胞外液渗透压升高，抗利尿激素（ADH）分泌增加，水重吸收增加，尿量减少。运动中补充水分和电解质对维持肾功能和内环境稳定至关重要。`,
-        exam: `尿生成的三个基本过程；有效滤过压的计算；肾小球滤过率的概念和正常值；滤过膜的结构；近端小管重吸收的特点；肾糖阈的概念；肾小管分泌H⁺、K⁺、NH₃的意义；运动对肾功能的影响。`
-      },
-      {
-        name: '尿生成的调节',
-        concept: `尿生成的调节包括肾内自身调节、神经调节和体液调节，以维持水、电解质和酸碱平衡。`,
-        mechanism: `①肾内自身调节：肌源性机制（肾灌注压变化时入球小动脉平滑肌收缩/舒张，保持GFR稳定）和管-球反馈。②神经调节：交感神经兴奋（如运动、失血）→肾血管收缩→肾血流量减少→GFR降低→尿量减少。③体液调节：抗利尿激素（ADH/血管升压素，下丘脑视上核和室旁核分泌，神经垂体释放）：增加远曲小管和集合管对水的通透性，促进水重吸收，尿量减少。分泌调节：血浆晶体渗透压升高（最主要）、循环血量减少、动脉血压降低。醛固酮（肾上腺皮质球状带分泌）：促进远曲小管和集合管保Na⁺排K⁺，同时保水。分泌调节：肾素-血管紧张素-醛固酮系统（RAAS）、血K⁺升高、血Na⁺降低。心房钠尿肽（ANP）：促进NaCl和水排出，利尿利钠。`,
-        sports: `运动时ADH和醛固酮分泌增加，减少尿量，保留水分和电解质，维持血容量。运动后补充含电解质的饮料可更快恢复水盐平衡。长期耐力训练可提高肾脏水盐调节能力。运动员在高温高湿环境下运动，大量出汗可导致脱水和电解质紊乱，严重时引发热痉挛和中暑。合理补液原则：少量多次，运动前、中、后均需补液。`,
-        exam: `抗利尿激素的作用和分泌调节；醛固酮的作用和分泌调节；肾素-血管紧张素-醛固酮系统；交感神经对尿生成的影响；肾内自身调节；运动时尿生成的变化和调节；脱水的危害和补液原则。`
-      }
-    ]
-  },
-  {
-    id: 'ch9',
-    title: '第九章 内分泌',
-    icon: '🧬',
-    topics: [
-      {
-        name: '内分泌与激素概述',
-        concept: `内分泌系统由内分泌腺和分散于各器官的内分泌细胞组成，通过分泌激素调节机体的新陈代谢、生长发育、生殖等功能。激素是由内分泌腺或内分泌细胞分泌的高效能生物活性物质。`,
-        mechanism: `激素的分类：①含氮激素（蛋白质类、肽类、胺类）：水溶性，作用于细胞膜受体，通过第二信使（cAMP、IP₃、DG、Ca²⁺）发挥作用；②类固醇激素（肾上腺皮质激素、性激素）：脂溶性，穿过细胞膜作用于胞内受体，通过影响基因转录发挥作用。激素作用的一般特征：①特异性（作用于靶器官/靶细胞）；②高效性（微量即有显著效应）；③信使作用（传递信息，不提供能量）；④激素间相互作用（协同、拮抗、允许作用）。激素分泌的调节：①下丘脑-腺垂体-靶腺轴的分级调节；②反馈调节（负反馈为主）；③神经调节；④代谢物调节。`,
-        sports: `运动是一种强烈的生理应激，可引起多种激素分泌变化：①交感-肾上腺髓质系统激活，肾上腺素和去甲肾上腺素分泌增加；②下丘脑-垂体-肾上腺皮质轴激活，皮质醇分泌增加；③生长激素分泌增加；④胰岛素分泌减少、胰高血糖素分泌增加（维持血糖）。长期运动训练可使激素对运动的反应更适应（如皮质醇反应降低、生长激素反应增强）。`,
-        exam: `激素的概念和分类；含氮激素和类固醇激素的作用机制；激素作用的一般特征；第二信使学说；基因表达学说；激素分泌的调节（反馈调节）；运动对内分泌功能的影响。`
-      },
-      {
-        name: '下丘脑与垂体',
-        concept: `下丘脑通过垂体门脉系统调节腺垂体功能，通过下丘脑-垂体束调节神经垂体功能。垂体分为腺垂体和神经垂体两部分。`,
-        mechanism: `下丘脑调节肽：促甲状腺激素释放激素（TRH）、促性腺激素释放激素（GnRH）、促肾上腺皮质激素释放激素（CRH）、生长激素释放激素（GHRH）、生长抑素（GHIH）、催乳素释放因子（PRF）、催乳素释放抑制因子（PIF）。腺垂体激素：①生长激素（GH）：促进生长（通过IGF-1）和代谢（促进蛋白质合成、脂肪分解、升高血糖）；②促甲状腺激素（TSH）；③促肾上腺皮质激素（ACTH）；④促卵泡激素（FSH）；⑤黄体生成素（LH）；⑥催乳素（PRL）。神经垂体激素（下丘脑合成，神经垂体储存释放）：①抗利尿激素（ADH/血管升压素）；②催产素（OXT，促进子宫收缩和射乳）。`,
-        sports: `生长激素在运动时分泌增加，尤其是高强度抗阻训练和耐力训练，促进肌肉蛋白质合成和脂肪分解，有利于肌肉增长和体脂控制。长期力量训练可使运动引起的GH分泌反应增强。过度训练可导致下丘脑-垂体-性腺轴功能紊乱（女运动员三联征：饮食紊乱、闭经、骨质疏松）。运动可促进内啡肽和脑啡肽分泌，产生「跑步者高潮」，改善情绪。`,
-        exam: `下丘脑调节肽的种类和作用；腺垂体激素的种类和作用；生长激素的生理作用；神经垂体激素的来源和作用；下丘脑-垂体-靶腺轴的调节；运动对生长激素分泌的影响；女运动员三联征。`
-      },
-      {
-        name: '甲状腺激素',
-        concept: `甲状腺分泌甲状腺激素，包括四碘甲腺原氨酸（T₄，甲状腺素）和三碘甲腺原氨酸（T₃，活性更强）。甲状腺激素是调节机体代谢和生长发育的重要激素。`,
-        mechanism: `甲状腺激素的合成：①甲状腺腺泡聚碘（碘泵，继发性主动转运）；②碘的活化（过氧化酶）；③酪氨酸碘化（MIT、DIT）；④缩合（T₃、T₄）。甲状腺激素的生理作用：①对代谢的影响：提高基础代谢率，增加产热；促进糖吸收和糖原分解，升高血糖；促进脂肪分解和合成（分解大于合成）；生理剂量促进蛋白质合成，大剂量促进蛋白质分解。②对生长发育的影响：促进脑和长骨的发育，婴幼儿缺乏导致呆小症（克汀病）。③对神经系统的影响：提高中枢神经系统兴奋性。④对心血管系统的影响：心率加快、心肌收缩力增强、心输出量增加。分泌调节：下丘脑-腺垂体-甲状腺轴（TRH→TSH→T₃/T₄），T₃/T₄负反馈抑制TSH分泌。`,
-        sports: `甲状腺功能亢进患者基础代谢率高、怕热多汗、心率快，运动能力下降。甲状腺功能减退患者代谢率低、怕冷、乏力、运动能力下降。适度运动可改善甲状腺功能，但过度运动可能导致甲状腺功能紊乱。运动员应避免使用甲状腺激素作为「减肥药物」，因其有严重副作用。`,
-        exam: `甲状腺激素的合成过程；甲状腺激素的生理作用（代谢/生长发育/神经/心血管）；呆小症的病因；甲状腺激素分泌的调节（下丘脑-垂体-甲状腺轴）；甲状腺激素对代谢的影响；运动与甲状腺功能。`
-      },
-      {
-        name: '肾上腺激素',
-        concept: `肾上腺分为皮质和髓质。皮质分泌糖皮质激素（皮质醇）、盐皮质激素（醛固酮）和性激素；髓质分泌肾上腺素和去甲肾上腺素（儿茶酚胺）。`,
-        mechanism: `糖皮质激素（皮质醇）的作用：①对物质代谢：促进糖异生、升高血糖；促进蛋白质分解；促进脂肪分解和重新分布（向心性肥胖）；②应激反应中起重要作用（「允许作用」，增强儿茶酚胺的缩血管作用）；③抗炎、抗过敏、抗免疫、抗休克（药理剂量）；④维持血管对儿茶酚胺的反应性。盐皮质激素（醛固酮）：保Na⁺排K⁺保水。肾上腺髓质激素（肾上腺素、去甲肾上腺素）：①中枢神经系统兴奋性提高；②呼吸加快、通气量增加；③心率加快、心肌收缩力增强、心输出量增加、血压升高；④血液重新分配；⑤肝糖原和肌糖原分解、血糖升高、脂肪分解；⑥支气管平滑肌舒张。应激反应：机体受到伤害性刺激时，下丘脑-腺垂体-肾上腺皮质轴激活，ACTH和糖皮质激素分泌增加，提高机体对伤害性刺激的耐受力。应急反应：交感-肾上腺髓质系统激活，儿茶酚胺分泌增加，提高机体应对紧急情况的能力。`,
-        sports: `运动是一种应激和应急刺激：①运动时儿茶酚胺分泌增加，动员心肺功能和能量代谢；②运动时皮质醇分泌增加（与运动强度和持续时间正相关），促进糖异生和脂肪分解，维持血糖；③长期训练使安静时皮质醇水平降低，运动时皮质醇反应更适度（适应良好）；④过度训练时皮质醇持续升高、睾酮/皮质醇比值降低，是过度训练的内分泌标志；⑤运动后恢复期生长激素和睾酮分泌增加，促进组织修复和肌肉合成。`,
-        exam: `糖皮质激素的生理作用；应激反应与应急反应的区别；肾上腺髓质激素的作用；「允许作用」的概念；糖皮质激素对代谢的影响；运动时肾上腺激素的变化；过度训练的内分泌标志（睾酮/皮质醇比值）。`
-      },
-      {
-        name: '胰岛激素',
-        concept: `胰岛是胰腺的内分泌部分，主要分泌胰岛素（B细胞）、胰高血糖素（A细胞）、生长抑素（D细胞）和胰多肽（PP细胞）。胰岛素是体内唯一降低血糖的激素。`,
-        mechanism: `胰岛素的作用：①降低血糖（促进葡萄糖摄取、氧化、糖原合成，抑制糖异生和糖原分解）；②促进脂肪合成和储存，抑制脂肪分解；③促进蛋白质合成，抑制蛋白质分解；④促进K⁺、Mg²⁺进入细胞。胰岛素分泌的调节：①血糖浓度是最主要的调节因素（血糖升高→胰岛素分泌增加）；②氨基酸和脂肪酸促进胰岛素分泌；③胃肠激素（抑胃肽等）促进胰岛素分泌（肠-胰岛轴）；④胰高血糖素促进胰岛素分泌；⑤交感神经抑制胰岛素分泌，迷走神经促进胰岛素分泌。胰高血糖素的作用：与胰岛素相反，升高血糖（促进糖原分解和糖异生），促进脂肪分解和酮体生成。`,
-        sports: `运动时血糖维持的激素调节：①运动开始时胰岛素分泌减少（交感神经兴奋），胰高血糖素分泌增加，促进肝糖原分解和糖异生，维持血糖；②运动中儿茶酚胺和皮质醇也参与血糖调节；③长期耐力训练提高胰岛素敏感性（增加GLUT4表达和转位），改善糖代谢，是预防和治疗2型糖尿病的有效手段；④运动中补充碳水化合物可维持血糖、延缓疲劳；⑤运动后胰岛素敏感性增加，是营养补充的「窗口期」。`,
-        exam: `胰岛素的生理作用（为什么是唯一降血糖激素）；胰岛素分泌的调节；胰高血糖素的作用；胰岛素与胰高血糖素的拮抗作用；运动时血糖的激素调节；运动对胰岛素敏感性的影响；运动与糖尿病。`
-      }
-    ]
-  },
-  {
-    id: 'ch10',
-    title: '第十章 神经系统',
-    icon: '🧠',
-    topics: [
-      {
-        name: '神经元与突触传递',
-        concept: `神经元是神经系统结构和功能的基本单位，由胞体、树突和轴突组成。突触是神经元之间或神经元与效应器之间传递信息的结构。`,
-        mechanism: `突触传递过程（化学性突触）：①突触前神经元兴奋→动作电位到达轴突末梢→突触前膜去极化；②电压门控Ca²⁺通道开放→Ca²⁺内流；③突触小泡与前膜融合→释放神经递质（出胞）；④递质扩散通过突触间隙→与突触后膜受体结合；⑤突触后膜离子通道开放→产生突触后电位（兴奋性突触后电位EPSP或抑制性突触后电位IPSP）。EPSP：Na⁺内流为主，去极化，使突触后神经元兴奋性升高。IPSP：Cl⁻内流或K⁺外流，超极化，使突触后神经元兴奋性降低。神经递质：①外周递质（乙酰胆碱、去甲肾上腺素）；②中枢递质（氨基酸类：谷氨酸-兴奋性，γ-氨基丁酸GABA-抑制性；单胺类：多巴胺、5-羟色胺；肽类：脑啡肽等）。突触传递的特征：单向传递、突触延搁、总和、兴奋节律改变、后发放、对内环境变化敏感和易疲劳。`,
-        sports: `运动技能的学习和掌握本质上是突触连接的建立和强化（突触可塑性）。长期运动训练可增加突触数量、提高突触传递效率。运动时中枢神经系统内兴奋性和抑制性递质的平衡影响运动表现和疲劳发生。中枢疲劳的机制包括5-羟色胺升高、多巴胺减少、GABA增加等。运动促进脑源性神经营养因子（BDNF）分泌，促进神经元存活和突触可塑性，改善认知功能。`,
-        exam: `化学性突触传递的过程；EPSP和IPSP的产生机制；突触传递的特征；神经递质的分类（外周/中枢）；兴奋性和抑制性递质；突触可塑性；运动对突触传递的影响；中枢疲劳的神经递质机制。`
-      },
-      {
-        name: '反射与中枢抑制',
-        concept: `反射是神经系统活动的基本方式，反射弧是反射的结构基础。中枢抑制分为突触后抑制和突触前抑制。`,
-        mechanism: `反射的分类：①非条件反射（先天、固定、低级中枢）；②条件反射（后天获得、可建立可消退、大脑皮层）。中枢抑制：①突触后抑制（超极化抑制）：由抑制性中间神经元释放抑制性递质，使突触后神经元产生IPSP。包括传入侧支性抑制（交互抑制，如屈肌反射时伸肌抑制）和回返性抑制（如闰绍细胞抑制运动神经元，负反馈）。②突触前抑制（去极化抑制）：通过轴-轴突触使突触前末梢递质释放减少，EPSP减小。突触前抑制在感觉传入调控中起重要作用。中枢兴奋传播的特征：单向传播、中枢延搁、总和、兴奋节律改变、后发放、对内环境敏感和易疲劳。`,
-        sports: `牵张反射（肌紧张和腱反射）是维持身体姿势和产生运动的基础。运动中交互抑制保证拮抗肌协调活动（如屈肘时肱三头肌舒张）。运动技能学习是条件反射建立的过程（暂时性联系）。运动性疲劳时中枢抑制增强，是保护性机制。通过训练可提高中枢神经系统的协调能力和抑制控制能力，改善运动表现。`,
-        exam: `反射的概念和分类；突触后抑制的类型和机制；突触前抑制的机制；交互抑制的概念和意义；回返性抑制；牵张反射（肌紧张/腱反射）；条件反射的建立；运动技能学习的神经机制。`
-      },
-      {
-        name: '神经系统的感觉功能',
-        concept: `感觉是客观事物在人脑中的主观反映。感觉的产生包括感受器→传入神经→大脑皮层三个环节。`,
-        mechanism: `感受器的一般生理特性：①适宜刺激（每种感受器对特定刺激最敏感）；②换能作用（将刺激能量转换为神经冲动）；③编码功能（将刺激信息编码在神经冲动的序列中）；④适应现象（持续刺激时感受器敏感性降低，分为快适应和慢适应感受器）。感觉投射系统：①特异投射系统（丘脑特异感觉接替核→大脑皮层特定区域，产生特定感觉，点对点投射）；②非特异投射系统（丘脑髓板内核群→大脑皮层广泛区域，维持和改变大脑皮层兴奋状态，非点对点投射，是觉醒的基础）。脑干网状结构上行激动系统通过非特异投射系统维持觉醒。体表感觉在大脑皮层的投射特点：交叉投射、倒置排列、代表区大小与感觉灵敏度正相关。第一体感区位于中央后回。`,
-        sports: `本体感觉（肌梭、腱器官、关节感受器）在运动控制中起关键作用，提供身体位置和运动信息。运动训练可提高本体感觉灵敏度和运动控制能力。视觉和前庭感觉在维持平衡中起重要作用。运动时痛觉（如肌肉酸痛）可影响运动表现，运动性镇痛（内啡肽）可提高痛阈。感觉适应在运动中也有表现（如持续运动后对肌肉酸痛的感知降低）。`,
-        exam: `感受器的一般生理特性；特异和非特异投射系统的区别；脑干网状结构上行激动系统；体表感觉投射特点；本体感觉的感受器和作用；视觉/前庭/本体感觉在平衡中的作用；运动性镇痛。`
-      },
-      {
-        name: '神经系统对躯体运动的调节',
-        concept: `躯体运动受中枢神经系统多级调控，包括脊髓、脑干、大脑皮层运动区、基底神经节和小脑。`,
-        mechanism: `①脊髓：是躯体运动的低级中枢，完成牵张反射（肌紧张维持姿势、腱反射）和屈肌反射（防御）。脊髓前角α运动神经元是躯体运动反射的最后公路。②脑干：网状结构有易化区和抑制区，调节肌紧张。去大脑僵直（中脑上下丘之间横断）表现为四肢伸直、头尾昂起，是抗重力肌肌紧张增强，属于α僵直和γ僵直。③大脑皮层运动区：主要运动区位于中央前回（4区和6区），功能特征：交叉支配、倒置排列、代表区大小与运动精细程度正相关。④基底神经节：参与运动的策划和程序编制，调节肌紧张，处理本体感觉信息。病变导致帕金森病（运动过少、肌紧张过强）和亨廷顿病（运动过多、肌紧张降低）。⑤小脑：前庭小脑（维持身体平衡）、脊髓小脑（调节肌紧张和协调随意运动）、皮层小脑（参与运动策划和运动程序编制）。运动单位：一个α运动神经元及其所支配的全部肌纤维。运动单位的募集遵循大小原则（小运动单位先募集，大运动单位后募集）。`,
-        sports: `运动技能的形成是大脑皮层、基底神经节、小脑和脊髓协同活动的结果。小脑损伤导致共济失调（动作不协调），影响运动能力。力量训练增加运动单位募集数量和同步放电，提高肌肉力量。运动学习过程中，小脑和基底神经节参与运动程序的自动化，使熟练动作不需意识控制。神经肌肉接头是运动指令传递的关键部位，其功能异常（如重症肌无力）影响运动。`,
-        exam: `脊髓对躯体运动的调节（牵张反射/屈肌反射）；去大脑僵直的概念和机制；大脑皮层运动区的功能特征；基底神经节的功能和病变；小脑的功能分区和各部分作用；运动单位和大小原则；运动技能学习的神经机制。`
-      },
-      {
-        name: '自主神经系统',
-        concept: `自主神经系统（植物性神经系统）调节内脏活动，包括交感神经和副交感神经。其功能是调节心肌、平滑肌和腺体的活动，维持内环境稳态。`,
-        mechanism: `自主神经系统的结构特征：①节前神经元位于中枢，节后神经元位于外周神经节；②交感神经节前纤维短、节后纤维长，副交感神经节前纤维长、节后纤维短；③交感神经起源于脊髓胸腰段（T₁-L₃），副交感神经起源于脑干和脊髓骶段（S₂-S₄）；④交感神经分布广泛，副交感神经分布较局限。功能特征：①双重支配（多数器官受交感和副交感双重支配，作用相互拮抗）；②紧张性作用（持续发放低频冲动）；③效应与器官功能状态有关。交感神经功能：「应急反应」——心率加快、血压升高、支气管扩张、瞳孔扩大、胃肠运动抑制、血糖升高、脂肪分解。副交感神经功能：「休息消化」——心率减慢、血压降低、支气管收缩、瞳孔缩小、胃肠运动增强、消化腺分泌增加、胰岛素分泌增加。`,
-        sports: `运动时交感神经兴奋、副交感神经抑制，动员心肺功能和能量代谢，满足运动需要。运动后副交感神经活动恢复，心率下降，是心血管恢复的重要机制。心率变异性（HRV）反映自主神经平衡，是评估运动员疲劳和恢复状态的重要指标。长期耐力训练使迷走神经张力增强，安静心率降低（运动性心动徐缓）。过度训练时自主神经功能紊乱（交感神经张力持续升高或副交感神经功能异常）。`,
-        exam: `自主神经系统的结构特征；交感和副交感神经的功能比较；双重支配和拮抗作用；交感神经的「应急反应」；副交感神经的「休息消化」；运动时自主神经的变化；心率变异性的概念和意义；运动性心动徐缓的机制。`
-      }
-    ]
-  },
-  {
-    id: 'ch11',
-    title: '第十一章 感觉器官',
-    icon: '👁️',
-    topics: [
-      {
-        name: '视觉器官',
-        concept: `眼是视觉器官，由折光系统和感光系统组成。视觉的产生包括折光、感光和视觉传导三个环节。`,
-        mechanism: `眼的折光系统：角膜、房水、晶状体、玻璃体。晶状体是唯一可调节的折光结构，通过睫状肌收缩/舒张改变曲度实现视近调节（视近时睫状肌收缩→悬韧带松弛→晶状体变凸→折光力增强）。眼的调节：①晶状体调节（视近物时）；②瞳孔调节（瞳孔近反射：视近时瞳孔缩小，减少球面像差和色像差；瞳孔对光反射：强光下瞳孔缩小，保护视网膜）；③双眼会聚（视近时双眼向鼻侧会聚，保证物像落在对称点上）。视网膜感光细胞：①视杆细胞（感受弱光，无色觉，分布在视网膜周边，视紫红质）；②视锥细胞（感受强光和色觉，分布在黄斑中央凹，三种视锥细胞分别感受红、绿、蓝）。视紫红质的光化学反应：视紫红质（视蛋白+11-顺型视黄醛）→光照→全反型视黄醛→视蛋白+视黄醛分离→超极化感受器电位。暗适应：从亮处到暗处，视觉敏感度逐渐升高的过程（约20-30分钟，视紫红质合成增加）。明适应：从暗处到亮处，视觉恢复的过程（约1分钟，视紫红质大量分解）。视野：单眼固定注视前方一点时该眼所能看到的范围，颞侧>鼻侧，下方>上方。`,
-        sports: `视觉在运动中起重要作用：①提供环境信息（球的位置、对手位置）；②深度知觉判断距离和速度；③视觉追踪（注视移动目标）；④手眼协调。运动训练可提高视觉搜索效率和反应速度。前庭-视觉反射（前庭眼反射）在头部运动时维持视觉稳定。运动员在强光下比赛需注意明适应，夜间比赛需注意暗适应。眼肌疲劳可影响运动表现。`,
-        exam: `眼的折光系统和感光系统；眼的调节（晶状体/瞳孔/会聚）；视杆细胞和视锥细胞的功能区别；视紫红质的光化学反应；暗适应和明适应；视野的概念；视觉在运动中的作用；前庭眼反射。`
-      },
-      {
-        name: '听觉器官',
-        concept: `耳是听觉器官，由外耳、中耳和内耳组成。听觉的产生包括传音、感音和听觉传导三个环节。`,
-        mechanism: `外耳：耳廓（收集声波）、外耳道（传导声波，共振增强）。中耳：鼓膜（传声、增压）、听小骨（锤骨、砧骨、镫骨，组成听骨链，杠杆作用增压）、咽鼓管（平衡鼓室与外界气压）。中耳的增压效应：鼓膜面积（约55mm²）与卵圆窗面积（约3.2mm²）之比约17:1，听骨链杠杆比约1.3:1，总增压约22倍。内耳（耳蜗）：螺旋器（Corti器）是听觉感受器，由内毛细胞（1排，感受声音）和外毛细胞（3-5排，放大振动）组成。行波学说：声波引起基底膜振动，从蜗底向蜗顶传播，高频声波最大振幅在蜗底，低频声波最大振幅在蜗顶。毛细胞换能：基底膜振动→毛细胞纤毛弯曲→机械门控K⁺通道开放→K⁺内流→去极化→Ca²⁺内流→释放递质→听神经产生动作电位。`,
-        sports: `听觉在运动中的作用：①接收教练指令和哨声；②感知环境声音（球的击打声、脚步声）；③节奏感（音乐伴奏运动）。长期暴露在高噪音环境（如体育馆、音乐）可导致噪声性听力损伤。运动员应注意保护听力。前庭功能（内耳前庭器官）在维持身体平衡中起关键作用，与运动能力密切相关。前庭功能训练可提高平衡能力和空间定向能力（如体操、跳水、花样滑冰运动员）。`,
-        exam: `耳的结构和功能；中耳的增压效应；听小骨的名称和作用；行波学说的基本内容；毛细胞的换能机制；内毛细胞和外毛细胞的功能区别；听觉在运动中的作用；前庭器官的功能。`
-      },
-      {
-        name: '前庭器官',
-        concept: `前庭器官是内耳中感受头部位置和运动状态的器官，包括椭圆囊、球囊和三个半规管，是维持身体平衡的重要感受装置。`,
-        mechanism: `椭圆囊和球囊：囊斑是感受器，感受头部静止位置和直线变速运动（椭圆囊感受水平方向，球囊感受垂直方向）。囊斑上有耳石膜（含碳酸钙结晶，比重高），头部位置改变或直线变速运动时，耳石膜因惯性移位，刺激毛细胞纤毛弯曲，产生感受器电位。半规管：三个半规管（前、后、外）相互垂直，壶腹嵴是感受器，感受旋转变速运动。旋转开始或停止时，内淋巴因惯性流动，冲击壶腹嵴帽，使毛细胞纤毛弯曲，产生感受器电位。前庭反应：①前庭姿势调节反射（维持身体平衡）；②前庭眼反射（眼球震颤，维持视觉清晰）；③自主神经反应（前庭功能过敏时出现眩晕、恶心、呕吐、出汗，即晕动病）。`,
-        sports: `前庭功能与运动能力密切相关：①体操、跳水、花样滑冰、杂技等项目需要良好的前庭功能；②前庭功能训练可提高平衡能力、空间定向能力和抗眩晕能力；③运动中前庭、视觉和本体感觉三者整合，维持身体平衡；④前庭功能不佳者容易晕船、晕车，影响某些运动项目；⑤运动员在做转体、翻滚动作后可能出现短暂性前庭功能紊乱，需通过训练适应。`,
-        exam: `前庭器官的组成和各部分功能；囊斑和壶腹嵴的适宜刺激；椭圆囊/球囊/半规管分别感受什么运动；前庭反应的类型；前庭眼反射（眼震颤）；前庭在维持平衡中的作用；前庭功能与运动能力；晕动病的机制。`
-      }
-    ]
-  },
-  {
-    id: 'ch12',
-    title: '第十二章 运动与身体机能变化',
-    icon: '🏃',
-    topics: [
-      {
-        name: '运动中的能量供应',
-        concept: `人体运动时的能量供应由三个能量系统协同完成：ATP-CP系统（磷酸原系统）、糖酵解系统（乳酸能系统）和有氧氧化系统。不同强度和持续时间的运动依赖不同的能量系统组合。`,
-        mechanism: `①ATP-CP系统：ATP是肌肉收缩的直接能源。CP（磷酸肌酸）在肌酸激酶催化下将高能磷酸键转移给ADP生成ATP。特点：功率最高、无需氧、不产生乳酸、储量少，维持6-8秒最大强度运动。是短跑、跳跃、投掷等项目的主要供能系统。②糖酵解系统：糖原或葡萄糖在无氧条件下分解为乳酸，同时合成ATP。特点：功率中等、不需要氧、产生乳酸、维持1-2分钟高强度运动。是400m、800m跑的主要供能系统。乳酸堆积导致肌肉pH下降，抑制糖酵解酶活性和肌肉收缩，是疲劳的重要原因。③有氧氧化系统：糖、脂肪、蛋白质在氧供应充足时彻底氧化分解合成ATP。特点：功率最低、需要氧、不产生乳酸、可持续数小时。是马拉松、长距离游泳等耐力项目的主要供能系统。运动强度低于50-60%VO₂max时以脂肪供能为主，高于此强度时糖供能比例增加。`,
-        sports: `能量系统的训练适应：①速度力量训练（短跑、跳跃）增加肌酸激酶活性和CP储量，提高ATP-CP系统供能能力；②无氧耐力训练（400m、800m）增加糖酵解酶活性和乳酸耐受能力；③有氧耐力训练（长跑、游泳）增加线粒体数量和体积、提高氧化酶活性、增加肌红蛋白含量、提高最大摄氧量。运动时三个能量系统不是截然分开，而是协同供能，只是比例不同。间歇训练可同时发展多个能量系统。`,
-        exam: `三大能量系统的特点和比较；ATP-CP系统的供能机制和持续时间；糖酵解系统的供能机制和乳酸的作用；有氧氧化系统的供能机制；不同运动项目的主要供能系统；运动强度与供能物质（糖/脂肪）的关系；能量系统的训练适应。`
-      },
-      {
-        name: '运动性疲劳',
-        concept: `运动性疲劳是指机体在运动过程中，工作能力和身体机能暂时下降，经过适当休息可以恢复的生理现象。运动性疲劳是机体的保护性机制，防止机体过度耗竭。`,
-        mechanism: `运动性疲劳的机制（多因素综合）：①能量物质耗竭：ATP、CP、糖原储备减少；②代谢产物堆积：乳酸、H⁺、Pi、ADP堆积，影响酶活性和肌肉收缩；③内环境紊乱：pH下降、电解质紊乱（K⁺、Na⁺、Ca²⁺）、渗透压改变；④中枢神经系统疲劳：5-羟色胺升高、多巴胺减少、GABA增加，中枢驱动力下降；⑤神经-肌肉接头功能障碍：乙酰胆碱释放减少或受体敏感性下降；⑥兴奋-收缩耦联障碍：Ca²⁺释放和回收异常；⑦自由基损伤：运动时氧自由基生成增加，损伤细胞膜和蛋白质。疲劳的分类：①中枢疲劳（大脑和脊髓）；②外周疲劳（神经-肌肉接头、肌肉）。`,
-        sports: `不同类型运动的疲劳机制不同：①短时间最大强度运动（短跑）：主要是CP耗竭和乳酸堆积；②长时间耐力运动（马拉松）：主要是糖原耗竭、脱水、电解质紊乱、中枢疲劳；③力量训练：主要是能量物质耗竭和代谢产物堆积。延缓疲劳的措施：①合理营养（碳水化合物补充、补液、电解质）；②科学训练（提高能量系统供能能力和抗疲劳能力）；③良好的恢复手段（睡眠、营养、按摩、冷热疗）；④合理的运动节奏（避免过早疲劳）。过度训练是疲劳长期积累不能恢复的病理状态，需注意预防。`,
-        exam: `运动性疲劳的概念和特点；运动性疲劳的机制（能量耗竭/代谢产物堆积/内环境紊乱/中枢疲劳/自由基）；中枢疲劳和外周疲劳的区别；不同运动类型的疲劳机制；延缓运动性疲劳的措施；过度训练的概念和表现；运动性疲劳与过度训练的区别。`
-      },
-      {
-        name: '运动后的恢复过程',
-        concept: `恢复过程是指运动结束后，人体各项机能和能量物质逐渐恢复到运动前水平的过程。恢复过程与运动训练效果密切相关，合理的恢复是提高运动能力的关键。`,
-        mechanism: `恢复过程的三个阶段：①运动中恢复：运动过程中能量物质同时进行消耗和恢复（但消耗大于恢复）；②运动后恢复：运动结束后能量物质和机能逐渐恢复到运动前水平；③超量恢复：运动后恢复过程中，被消耗的能量物质不仅恢复到原有水平，而且超过原有水平，随后逐渐回到原有水平。超量恢复是运动训练提高运动能力的生理学基础。不同能量物质的恢复时间：①ATP-CP：2-3分钟基本恢复，完全恢复需3-5分钟；②肌糖原：低强度运动后24小时恢复，高强度运动后需46小时；③乳酸：运动后1-2小时基本清除（活动性恢复比静止性恢复快）；④氧债（运动后过量氧耗EPOC）：数分钟到数小时。促进恢复的方法：①整理活动（慢跑、拉伸，促进乳酸清除和血液回流）；②营养补充（运动后30分钟内补充碳水化合物和蛋白质）；③睡眠（最重要的恢复手段，生长激素分泌高峰）；④物理恢复（按摩、冷热交替浴、压缩服）；⑤心理恢复（放松训练、冥想）。`,
-        sports: `超量恢复原理在运动训练中的应用：①训练间隔应在超量恢复阶段进行下一次训练，以获得累积效果；②不同训练内容的恢复时间不同，需合理安排训练周期；③大强度训练后需要更长恢复时间，避免过度训练。运动后即刻心率恢复速度是评估心血管功能和疲劳状态的指标。运动员应重视恢复，「没有恢复就没有训练」。营养补充的「窗口期」（运动后30-60分钟）有利于糖原恢复和肌肉合成。睡眠不足严重影响运动表现和恢复。`,
-        exam: `恢复过程的概念和三个阶段；超量恢复的概念和意义；不同能量物质的恢复时间；ATP-CP和肌糖原的恢复特点；运动后过量氧耗（EPOC）；促进恢复的方法；整理活动的作用；超量恢复原理在训练中的应用；营养补充窗口期。`
-      },
-      {
-        name: '运动训练的生理学适应',
-        concept: `长期系统的运动训练可使机体各器官系统产生适应性变化，从而提高运动能力。运动训练的适应具有特异性（与训练类型相关）和可逆性（停训后适应逐渐消退）。`,
-        mechanism: `①心血管系统适应：运动性心脏增大（离心性肥大-耐力训练，向心性肥大-力量训练）、安静心率降低（运动性心动徐缓，迷走神经张力增强）、每搏输出量增大、心输出量储备增加、血压改善（有氧运动降压）。②呼吸系统适应：肺活量和最大通气量增加、呼吸肌耐力增强、肺弥散功能增强、氧利用效率提高。③骨骼肌适应：肌纤维类型改变（耐力训练使Ⅰ型纤维比例增加、横截面积增大；力量训练使Ⅱ型纤维肥大）、毛细血管密度增加（耐力训练）、线粒体数量和体积增加（耐力训练）、肌糖原储量增加、酶活性增强（代谢特异性）。④神经系统适应：运动单位募集能力增强、同步放电改善、神经传导速度加快、运动技能自动化、本体感觉灵敏度提高。⑤内分泌系统适应：激素对运动的反应更优化（皮质醇反应降低、生长激素反应增强）、胰岛素敏感性提高。⑥免疫系统：适度运动增强免疫功能，过度运动抑制免疫功能（开窗理论）。`,
-        sports: `训练适应的特异性原则：①耐力训练主要提高有氧代谢能力和心肺功能；②力量训练主要增加肌肉横截面积和力量；③速度训练主要提高ATP-CP系统和神经肌肉功能；④柔韧训练主要改善关节活动范围。交叉训练可全面发展身体素质。停训后适应消退（可逆性），需保持一定训练量维持。训练适应的个体差异受遗传、年龄、性别、训练水平等因素影响。青少年训练应注意循序渐进，避免过度训练影响生长发育。女性运动员应注意月经周期对运动能力的影响和「女运动员三联征」的预防。`,
-        exam: `运动训练适应的特点（特异性/可逆性）；心血管系统的训练适应（运动性心脏增大/心动徐缓）；骨骼肌的训练适应（肌纤维类型/毛细血管/线粒体）；神经系统的训练适应；耐力训练和力量训练适应的区别；停训后适应消退；训练适应的影响因素；「开窗理论」与运动免疫。`
-      },
-      {
-        name: '身体素质的生理学基础',
-        concept: `身体素质是指人体在运动中所表现出来的力量、速度、耐力、灵敏和柔韧等机能能力。各项素质有不同的生理学基础和训练方法。`,
-        mechanism: `①力量素质：生理学基础包括肌肉横截面积（肌纤维数量和粗细）、肌纤维类型（Ⅱ型纤维力量大）、神经调节能力（运动单位募集和同步放电）、肌肉初长度（最适初长度产生最大力量）、杠杆效率。力量训练的原则：超负荷、渐增阻力、专门性、合理安排练习顺序。②速度素质：生理学基础包括神经系统的反应速度和传导速度、ATP-CP系统供能能力、快肌纤维比例、肌肉力量和爆发力、动作协调性。③耐力素质：生理学基础包括最大摄氧量（VO₂max，心肺功能和氧运输能力）、乳酸阈（有氧代谢能力和乳酸清除能力）、肌纤维类型（Ⅰ型纤维比例）、能量物质储备、能源利用效率。④灵敏素质：生理学基础包括神经系统的灵活性和协调性、本体感觉、视觉和前庭功能、肌肉力量和爆发力、动作技能储备。⑤柔韧素质：生理学基础包括关节结构、肌肉和韧带的伸展性、神经对肌肉的调节（牵张反射）、年龄和性别。`,
-        sports: `各项素质的训练方法：①力量训练：抗阻训练（等长/等张/等动）、最大力量训练（85-100%1RM，1-5次）、爆发力训练（30-60%1RM，快速发力）、肌耐力训练（50-70%1RM，12-20次）；②速度训练：短距离冲刺、反应训练、下坡跑、辅助练习；③耐力训练：持续训练法、间歇训练法、法特莱克训练法、高原训练；④灵敏训练：变向跑、交叉步、球类游戏、反应训练；⑤柔韧训练：静态拉伸、动态拉伸、PNF拉伸（本体感觉神经肌肉促进法）。各项素质相互影响，全面发展是提高运动表现的基础。`,
-        exam: `各项身体素质的生理学基础；力量素质的决定因素；最大摄氧量和乳酸阈的概念及意义；快肌和慢肌与身体素质的关系；各项素质的训练方法；力量训练的原则（超负荷/渐增阻力/专门性）；间歇训练法的生理学基础；柔韧训练的方法（PNF）。`
-      }
-    ]
-  }
-];
-
-let currentPhysioChapter = null;
-
-function initPhysioChapters(){
-  const nav = document.getElementById('physioChapterNav');
-  if(!nav) return;
-  let html = '';
-  PHYSIO_CHAPTERS.forEach((ch, idx) => {
-    html += `<button onclick="showPhysioChapter('${ch.id}')" id="chapBtn_${ch.id}" style="padding:8px 14px;background:#fff;color:#ea580c;border:2px solid #fed7aa;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s" onmouseover="this.style.background='#fff7ed';this.style.borderColor='#f97316'" onmouseout="if(this.id!=='chapBtn_'+currentPhysioChapter){this.style.background='#fff';this.style.borderColor='#fed7aa'}">${ch.icon} ${ch.title}</button>`;
-  });
-  nav.innerHTML = html;
-}
-
-function showPhysioChapter(chapterId){
-  currentPhysioChapter = chapterId;
-  // 更新按钮样式
-  PHYSIO_CHAPTERS.forEach(ch => {
-    const btn = document.getElementById('chapBtn_' + ch.id);
-    if(btn){
-      if(ch.id === chapterId){
-        btn.style.background = '#ea580c';
-        btn.style.color = '#fff';
-        btn.style.borderColor = '#ea580c';
-      } else {
-        btn.style.background = '#fff';
-        btn.style.color = '#ea580c';
-        btn.style.borderColor = '#fed7aa';
-      }
-    }
-  });
-  const ch = PHYSIO_CHAPTERS.find(c => c.id === chapterId);
-  if(!ch) return;
-  const container = document.getElementById('physioChapterContent');
-  if(!container) return;
-  let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #fed7aa">`;
-  html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:28px">${ch.icon}</span><h3 style="margin:0;color:#ea580c;font-size:20px">${ch.title}</h3></div>`;
-  html += `<p style="margin:0;font-size:13px;color:#64748b">本章共 ${ch.topics.length} 个核心知识点，点击各标题可展开/收起详细内容</p>`;
-  html += `</div>`;
-  ch.topics.forEach((topic, idx) => {
-    const tid = 'topic_' + chapterId + '_' + idx;
-    html += `<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">`;
-    html += `<div onclick="toggleTopic('${tid}')" style="padding:12px 16px;background:linear-gradient(135deg,#fff7ed 0%,#ffedd5 100%);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .2s" onmouseover="this.style.background='#fed7aa'" onmouseout="this.style.background='linear-gradient(135deg,#fff7ed 0%,#ffedd5 100%)'">`;
-    html += `<span style="font-weight:700;color:#9a3412;font-size:15px">${idx+1}. ${topic.name}</span>`;
-    html += `<span id="${tid}_arrow" style="color:#f97316;font-size:18px;font-weight:700">▼</span>`;
-    html += `</div>`;
-    html += `<div id="${tid}" style="display:none;padding:16px 18px;background:#fff">`;
-    // 核心概念
-    html += `<div style="margin-bottom:14px">`;
-    html += `<div style="font-weight:700;color:#1d4ed8;font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="background:#dbeafe;padding:2px 8px;border-radius:4px;font-size:12px">核心概念</span></div>`;
-    html += `<div style="font-size:13px;line-height:1.9;color:#334155;padding-left:4px">${topic.concept}</div>`;
-    html += `</div>`;
-    // 生理机制
-    html += `<div style="margin-bottom:14px">`;
-    html += `<div style="font-weight:700;color:#7c3aed;font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="background:#ede9fe;padding:2px 8px;border-radius:4px;font-size:12px">生理机制</span></div>`;
-    html += `<div style="font-size:13px;line-height:1.9;color:#334155;padding-left:4px">${topic.mechanism}</div>`;
-    html += `</div>`;
-    // 运动实践
-    html += `<div style="margin-bottom:14px">`;
-    html += `<div style="font-weight:700;color:#059669;font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="background:#d1fae5;padding:2px 8px;border-radius:4px;font-size:12px">运动实践</span></div>`;
-    html += `<div style="font-size:13px;line-height:1.9;color:#334155;padding-left:4px">${topic.sports}</div>`;
-    html += `</div>`;
-    // 考研考点
-    html += `<div style="background:#fef3c7;border-radius:8px;padding:12px 16px;border-left:4px solid #f59e0b">`;
-    html += `<div style="font-weight:700;color:#92400e;font-size:14px;margin-bottom:6px">🎯 考研考点提示</div>`;
-    html += `<div style="font-size:13px;line-height:1.9;color:#78350f">${topic.exam}</div>`;
-    html += `</div>`;
-    html += `</div>`;
-    html += `</div>`;
-  });
-  container.innerHTML = html;
-  // 自动展开第一个知识点
-  if(ch.topics.length > 0){
-    const firstTid = 'topic_' + chapterId + '_0';
-    toggleTopic(firstTid);
-  }
-}
-
-function toggleTopic(tid){
-  const el = document.getElementById(tid);
-  const arrow = document.getElementById(tid + '_arrow');
-  if(!el) return;
-  if(el.style.display === 'none'){
-    el.style.display = 'block';
-    if(arrow) arrow.textContent = '▲';
-  } else {
-    el.style.display = 'none';
-    if(arrow) arrow.textContent = '▼';
-  }
-}
-
 let currentPhysioDiagram = 'action-potential';
 
 function initPhysioAtlas(){
   showPhysioDiagram('action-potential');
-  initPhysioChapters();
 }
 
 function showPhysioDiagram(key){
