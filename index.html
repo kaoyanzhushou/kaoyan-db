@@ -2139,6 +2139,138 @@ img { max-width: 100%; height: auto; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 .atlas-sidebar, .physio-sidebar { contain: layout style; }
+
+/* 速查卡模态框 */
+.card-modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 10000;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.card-modal-overlay.active {
+  display: flex;
+}
+.card-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 1100px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.card-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: #fff;
+}
+.card-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.card-modal-close {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.card-modal-close:hover {
+  background: rgba(255,255,255,0.3);
+}
+.card-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+.card-modal-svg-container {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+  border: 2px solid #e2e8f0;
+}
+.card-modal-svg-container svg {
+  max-width: 100%;
+  height: auto;
+  max-height: 400px;
+}
+.card-modal-section {
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 10px;
+  border-left: 4px solid;
+}
+.card-modal-section.concept {
+  background: #fefce8;
+  border-color: #eab308;
+}
+.card-modal-section.mechanism {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+.card-modal-section.practice {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+.card-modal-section.exam {
+  background: #fdf2f8;
+  border-color: #ec4899;
+}
+.card-modal-section.confusion {
+  background: #faf5ff;
+  border-color: #a855f7;
+}
+.card-modal-section h4 {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  color: #1e293b;
+}
+.card-modal-section ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.card-modal-section li {
+  margin-bottom: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #475569;
+}
+.card-modal-section table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.card-modal-section th, .card-modal-section td {
+  border: 1px solid #e2e8f0;
+  padding: 8px;
+  text-align: left;
+}
+.card-modal-section th {
+  background: #f1f5f9;
+  font-weight: 600;
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -2419,7 +2551,7 @@ img { max-width: 100%; height: auto; }
   <div class="card-body">
     <div class="card-mechanism">💡 生命活动的四大基本特征是新陈代谢、兴奋性、应激性和适应性，其中新陈代谢是最基本的特征。</div>
     <ul class="card-points"><li>新陈代谢=同化+异化，是生命最基本特征</li><li>兴奋性：可兴奋组织产生动作电位的能力</li><li>阈值与兴奋性成反比</li><li>适应性：长期形成与环境相适应的反应模式</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph1','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card1')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2440,7 +2572,7 @@ img { max-width: 100%; height: auto; }
   <div class="card-body">
     <div class="card-mechanism">💡 人体功能通过神经、体液和自身调节三种方式维持稳态，其中神经调节是最主要的调节方式。</div>
     <ul class="card-points"><li>神经调节：反射弧实现，快速精确</li><li>体液调节：激素经血液运输，缓慢持久</li><li>自身调节：组织细胞自身对刺激的适应性反应</li><li>负反馈是维持稳态的主要机制</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph1','physio')">📖 查看详细知识点</button>
+    <button conclick="event.stopPropagation(); openCardModal('card2')"'ph1','physio')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -2465,8 +2597,7 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 物质跨膜转运分为被动转运（顺浓度差、不耗能）和主动转运（逆浓度差、需ATP供能）两大类。</div>
-    <ul class="card-points"><li>单纯扩散：O₂/CO₂等脂溶性物质顺浓度差</li><li>易化扩散：载体/通道介导，如葡萄糖入红细胞</li><li>主动转运：Na⁺-K⁺泵（3Na⁺出/2K⁺入）</li><li>入胞/出胞：大分子物质转运方式</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph2','physio')">📖 查看详细知识点</button>
+    <ul class="card-points"><li>单纯扩散：O₂/CO₂等脂溶性物质顺浓度差</li><li>易化扩散：载体/通道介导，如葡萄糖入红细胞</li><li>主动转运：Na⁺-K⁺泵（3Na⁺出/2K⁺入）</li><li>入胞/出胞：大分子物质转运方式</li></uonclick="event.stopPropagation(); openCardModal('card3')"jumpToKnowledge('ph2','physio')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2485,8 +2616,7 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 动作电位是可兴奋细胞受刺激后产生的快速可逆电位变化，由Na⁺内流去极化和K⁺外流复极化构成。</div>
-    <ul class="card-points"><li>静息电位：K⁺外流形成，约-70mV</li><li>去极化：Na⁺通道开放，Na⁺快速内流</li><li>复极化：K⁺通道开放，K⁺外流</li><li>全或无现象：刺激达阈值即产生最大幅度</li><li>不应期保证单向传导和脉冲式发放</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph2','physio')">📖 查看详细知识点</button>
+    <ul class="card-points"><li>静息电位：K⁺外流形成，约-70mV</li><li>去极化：Na⁺通道开放，Na⁺快速内流</li><li>复极化：K⁺通道开放，K⁺外流</li><li>全或无现象：刺激达阈值即产生最大幅度</li><li>不应期保证单向onclick="event.stopPropagation(); openCardModal('card4')"d-btn" onclick="event.stopPropagation(); openCardModal('card1')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2508,8 +2638,7 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 跨膜信号转导通过膜受体将胞外信号转换为胞内信号，第二信使（cAMP、IP₃、Ca²⁺）起关键放大作用。</div>
-    <ul class="card-points"><li>离子通道受体：直接改变离子通透性</li><li>G蛋白耦联受体：通过第二信使传递信号</li><li>酶联受体：自身具有酶活性</li><li>第二信使：cAMP、cGMP、IP₃、DG、Ca²⁺</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph2','physio')">📖 查看详细知识点</button>
+    <ul class="card-points"><li>离子通道受体：直接改变离子通透性</li><li>G蛋白耦联受体：通过第二信使传递信号</li><li>酶联受体：自身具有酶活性</li><li>第二onclick="event.stopPropagation(); openCardModal('card5')"utton class="card-btn" onclick="event.stopPropagation(); openCardModal('card2')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -2535,8 +2664,8 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 肌丝滑行学说认为肌肉收缩时肌丝本身长度不变，细肌丝向粗肌丝之间滑行使肌节缩短。</div>
-    <ul class="card-points"><li>肌节是肌肉收缩的基本单位</li><li>粗丝=肌球蛋白，细丝=肌动蛋白+原肌球蛋白+肌钙蛋白</li><li>收缩时I带和H带变窄，A带长度不变</li><li>横桥周期：结合→摆动→解离→复位</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph3','physio')">📖 查看详细知识点</button>
+    <ul class="card-points"><li>肌节是肌肉收缩的基本单位</li><li>粗丝=肌球蛋白，细丝=肌动蛋白+原肌球蛋白+肌钙蛋白</li><li>收缩onclick="event.stopPropagation(); openCardModal('card6')"/li></ul>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card3')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2563,8 +2692,8 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 兴奋-收缩耦联是将肌细胞膜电兴奋与肌丝滑行机械收缩联系起来的中介过程，三联管和Ca²⁺是关键。</div>
-    <ul class="card-points"><li>动作电位沿横管(T管)传入肌细胞深部</li><li>三联管处终池释放Ca²⁺入胞质</li><li>Ca²⁺与肌钙蛋白结合，暴露横桥结合位点</li><li>舒张时钙泵(SERCA)将Ca²⁺泵回终池</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph3','physio')">📖 查看详细知识点</button>
+    <ul class="card-points"><li>动作电位沿横管(T管)传入肌细胞深部</li><li>三联管处终池释放Ca²⁺入胞质</lonclick="event.stopPropagation(); openCardModal('card7')"SERCA)将Ca²⁺泵回终池</li></ul>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card4')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -2587,8 +2716,8 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 血液由血浆（55%）和血细胞（45%）组成，具有运输、防御、缓冲和调节体温等重要功能。</div>
-    <ul class="card-points"><li>血浆含白蛋白、球蛋白、纤维蛋白原等</li><li>红细胞比容：男40-50%，女37-48%</li><li>血清与血浆区别：血清不含纤维蛋白原</li><li>正常血量约占体重7%-8%</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph4','physio')">📖 查看详细知识点</button>
+    <ul class="card-points"><li>血浆含白蛋白、球蛋白、纤维蛋白原等</li><onclick="event.stopPropagation(); openCardModal('card8')"血清不含纤维蛋白原</li><li>正常血量约占体重7%-8%</li></ul>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card5')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2617,8 +2746,8 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 血液凝固分三步：凝血酶原激活物形成→凝血酶形成→纤维蛋白形成；ABO血型由红细胞膜抗原决定。</div>
-    <ul class="card-points"><li>内源性凝血：全部凝血因子来自血液</li><li>外源性凝血：组织因子(TF)启动</li><li>AB型=万能受血者，O型=万能供血者</li><li>Rh阴性者第二次接受Rh阳性血发生溶血</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph4','physio')">📖 查看详细知识点</button>
+    <ul class="card-points"><li>内源性凝血：全部onclick="event.stopPropagation(); openCardModal('card9')">AB型=万能受血者，O型=万能供血者</li><li>Rh阴性者第二次接受Rh阳性血发生溶血</li></ul>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card6')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -2640,8 +2769,8 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 心动周期中心脏通过等容收缩→射血→等容舒张→充盈四个阶段完成泵血，心输出量=每搏输出量×心率。</div>
-    <ul class="card-points"><li>等容收缩：房室瓣和半月瓣均关闭</li><li>快速射血：室内压>动脉压，半月瓣开放</li><li>等容舒张：两瓣均关闭，室内压急降</li><li>快速充盈：房室瓣开放，血液回心</li><li>影响心输出量：前负荷/后负荷/心肌收缩力/心率</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph5','physio')">📖 查看详细知识点</button>
+    <ul class="card-points"><li>等容收缩：房室瓣和半月瓣均关闭</lionclick="event.stopPropagation(); openCardModal('card10')"闭，室内压急降</li><li>快速充盈：房室瓣开放，血液回心</li><li>影响心输出量：前负荷/后负荷/心肌收缩力/心率</li></ul>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card7')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2661,8 +2790,8 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 心室肌动作电位分5期，2期平台期（Ca²⁺内流与K⁺外流平衡）是其特征，决定有效不应期特别长。</div>
-    <ul class="card-points"><li>0期去极化：Na⁺快速内流</li><li>1期快速复极：K⁺外流</li><li>2期平台期：Ca²⁺内流与K⁺外流平衡</li><li>3期快速复极：K⁺外流</li><li>有效不应期长→心肌不发生强直收缩</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph5','physio')">📖 查看详细知识点</button>
+    <ul class="caonclick="event.stopPropagation(); openCardModal('card11')"复极：K⁺外流</li><li>2期平台期：Ca²⁺内流与K⁺外流平衡</li><li>3期快速复极：K⁺外流</li><li>有效不应期长→心肌不发生强直收缩</li></ul>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card8')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2679,8 +2808,8 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 动脉血压受心输出量和外周阻力等因素影响，颈动脉窦压力感受性反射是维持血压稳定的重要负反馈机制。</div>
-    <ul class="card-points"><li>影响因素：搏出量/心率/外周阻力/大动脉弹性</li><li>脉压=收缩压-舒张压，正常30-40mmHg</li><li>减压反射：血压升高时反射性降压</li><li>交感神经→心跳加快血压升高</li><li>运动时：心输出量增加，血流重新分配</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph5','physio')">📖 查看详细知识点</button>
+    <ul class="cardonclick="event.stopPropagation(); openCardModal('card12')"li>脉压=收缩压-舒张压，正常30-40mmHg</li><li>减压反射：血压升高时反射性降压</li><li>交感神经→心跳加快血压升高</li><li>运动时：心输出量增加，血流重新分配</li></ul>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card9')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -2706,8 +2835,8 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 肺通气是气体经呼吸道进出肺的过程，直接动力是肺内压与大气压之差，原动力是呼吸肌收缩。</div>
-    <ul class="card-points"><li>吸气：膈肌/肋间外肌收缩→胸廓扩大→肺内压<大气压</li><li>呼气：平静时被动弹性回缩，用力时呼吸肌收缩</li><li>胸膜腔负压维持肺扩张，促进静脉回流</li><li>肺泡表面活性物质降低表面张力</li><li>肺泡通气量=(潮气量-无效腔)×呼吸频率</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph6','physio')">📖 查看详细知识点</button>
+    <ul clonclick="event.stopPropagation(); openCardModal('card13')"内压<大气压</li><li>呼气：平静时被动弹性回缩，用力时呼吸肌收缩</li><li>胸膜腔负压维持肺扩张，促进静脉回流</li><li>肺泡表面活性物质降低表面张力</li><li>肺泡通气量=(潮气量-无效腔)×呼吸频率</li></ul>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card10')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2727,8 +2856,8 @@ img { max-width: 100%; height: auto; }
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 氧解离曲线呈S形，描述PO₂与Hb氧饱和度关系，上段平坦保证摄氧、中段陡保证释氧、下段最陡代表储备。</div>
-    <ul class="card-points"><li>上段(60-100mmHg)平坦：高原仍能充分摄氧</li><li>中段(40-60mmHg)陡：安静时组织供氧</li><li>下段(15-40mmHg)最陡：运动时O₂储备</li><li>波尔效应：pH↓/PCO₂↑→曲线右移→释O₂↑</li><li>CO与Hb亲和力是O₂的250倍</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph6','physio')">📖 查看详细知识点</button>
+    <uonclick="event.stopPropagation(); openCardModal('card14')"坦：高原仍能充分摄氧</li><li>中段(40-60mmHg)陡：安静时组织供氧</li><li>下段(15-40mmHg)最陡：运动时O₂储备</li><li>波尔效应：pH↓/PCO₂↑→曲线右移→释O₂↑</li><li>CO与Hb亲和力是O₂的250倍</li></ul>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card11')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -2755,9 +2884,8 @@ img { max-width: 100%; height: auto; }
         <text x="190" y="100" font-size="8" fill="#16a34a">马拉松/自行车</text>
         </svg></div>
   <div class="card-body">
-    <div class="card-mechanism">💡 运动时三大能量系统按强度和时间协同供能：磷酸原（极短极限）、糖酵解（短时间大强度）、有氧氧化（长时间耐力）。</div>
-    <ul class="card-points"><li>ATP是唯一直接利用的能量物质</li><li>磷酸原系统：CP→ADP→ATP，恢复快(3min)</li><li>糖酵解：糖原→乳酸，净产2ATP</li><li>有氧氧化：1葡萄糖→30-32ATP</li><li>连续统一体：任何运动三系统均参与</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph7','physio')">📖 查看详细知识点</button>
+    <div class="card-mechanism">💡 运动时三大能量系统按强度和时间协同供能：磷酸原（极短极限）、糖onclick="event.stopPropagation(); openCardModal('card15')"ss="card-points"><li>ATP是唯一直接利用的能量物质</li><li>磷酸原系统：CP→ADP→ATP，恢复快(3min)</li><li>糖酵解：糖原→乳酸，净产2ATP</li><li>有氧氧化：1葡萄糖→30-32ATP</li><li>连续统一体：任何运动三系统均参与</li></ul>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card12')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2777,9 +2905,9 @@ img { max-width: 100%; height: auto; }
         <text x="192" y="90" text-anchor="middle" font-size="8" fill="#3730a3">PO/AH区设定37℃，偏离则调节产热/散热</text>
         </svg></div>
   <div class="card-body">
-    <div class="card-mechanism">💡 体温调节以下丘脑为基本中枢，通过调定点学说平衡产热与散热，皮肤是最主要的散热器官。</div>
+    <div class="card-mechanismonclick="event.stopPropagation(); openCardModal('card16')"热器官。</div>
     <ul class="card-points"><li>产热器官：安静时肝脏，运动时骨骼肌</li><li>散热方式：辐射/传导/对流/蒸发</li><li>环境温度>体温时蒸发是唯一散热方式</li><li>基本中枢：下丘脑视前区(PO/AH)</li><li>运动时体温升高，热习服可提高耐热能力</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph7','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card13')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -2803,9 +2931,9 @@ img { max-width: 100%; height: auto; }
         <text x="50" y="105" text-anchor="middle" font-size="9" fill="#64748b">①滤过 ②重吸收 ③分泌</text>
         </svg></div>
   <div class="card-body">
-    <div class="card-mechanism">💡 尿生成包括肾小球滤过、肾小管和集合管重吸收、肾小管和集合管分泌三个基本过程。</div>
+    <div class="card-mechanonclick="event.stopPropagation(); openCardModal('card17')"本过程。</div>
     <ul class="card-points"><li>肾小球滤过：生成原尿，除蛋白质外血浆成分</li><li>有效滤过压=毛细血管血压-(胶体渗透压+囊内压)</li><li>重吸收：近端小管重吸收大部分葡萄糖/氨基酸/水</li><li>分泌：H⁺/K⁺/NH₃等分泌入小管液</li><li>正常尿量1000-2000ml/天</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph8','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card14')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2822,9 +2950,9 @@ img { max-width: 100%; height: auto; }
         <text x="130" y="95" text-anchor="middle" font-size="9" fill="#92400e">ADH促进水重吸收 | 醛固酮保Na⁺排K⁺</text>
         </svg></div>
   <div class="card-body">
-    <div class="card-mechanism">💡 肾小球有效滤过压是滤过动力，ADH和醛固酮分别通过调节水和Na⁺重吸收维持水盐平衡。</div>
+    <div conclick="event.stopPropagation(); openCardModal('card18')"和醛固酮分别通过调节水和Na⁺重吸收维持水盐平衡。</div>
     <ul class="card-points"><li>有效滤过压=肾小球血压-(胶体渗透压+囊内压)</li><li>肾小球滤过率(GFR)：约125ml/min</li><li>ADH：提高远曲小管/集合管对水通透性</li><li>醛固酮：保Na⁺排K⁺，维持血容量</li><li>大量饮清水→水利尿(ADH分泌减少)</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph8','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card15')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -2843,10 +2971,9 @@ img { max-width: 100%; height: auto; }
         <text x="135" y="83" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">激素特点：信使作用 · 特异性 · 高效能 · 协同/拮抗/允许</text>
         <text x="135" y="95" text-anchor="middle" font-size="9" fill="#92400e">微量即产生显著效应，经血液运输作用于靶细胞</text>
         </svg></div>
-  <div class="card-body">
-    <div class="card-mechanism">💡 激素通过细胞膜受体（含氮激素，第二信使）或细胞内受体（类固醇激素，调节基因表达）发挥作用。</div>
+  <div class="card-bodonclick="event.stopPropagation(); openCardModal('card19')"过细胞膜受体（含氮激素，第二信使）或细胞内受体（类固醇激素，调节基因表达）发挥作用。</div>
     <ul class="card-points"><li>含氮激素：膜受体→cAMP/IP₃/Ca²⁺第二信使</li><li>类固醇激素：胞内受体→DNA转录→蛋白质合成</li><li>特异性：只作用于有受体的靶细胞</li><li>高效能：微量即产生显著生理效应</li><li>允许作用：某激素为另一激素发挥作用创造条件</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph9','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card16')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2867,10 +2994,9 @@ img { max-width: 100%; height: auto; }
         <text x="127" y="75" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">应激反应：ACTH↑→糖皮质激素↑ | 应急反应：交感-肾上腺髓质↑</text>
         <text x="127" y="88" text-anchor="middle" font-size="9" fill="#166534">胰岛素是体内唯一降低血糖的激素</text>
         </svg></div>
-  <div class="card-body">
-    <div class="card-mechanism">💡 垂体是最重要的内分泌腺，甲状腺激素促进代谢和生长发育，胰岛素是体内唯一降低血糖的激素。</div>
+  <div class="conclick="event.stopPropagation(); openCardModal('card20')"">💡 垂体是最重要的内分泌腺，甲状腺激素促进代谢和生长发育，胰岛素是体内唯一降低血糖的激素。</div>
     <ul class="card-points"><li>生长激素：促进骨和肌肉生长，幼年缺乏→侏儒</li><li>甲状腺激素：促代谢/促生长发育/提高神经兴奋性</li><li>胰岛素：唯一降糖激素，促进葡萄糖摄取利用</li><li>糖皮质激素：升血糖/抗炎/抗毒/抑制免疫</li><li>应激vs应急：应激=ACTH-皮质醇，应急=交感-髓质</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph9','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card17')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -2889,11 +3015,9 @@ img { max-width: 100%; height: auto; }
         <text x="185" y="62" text-anchor="middle" font-size="10" font-weight="700" fill="#9d174d">适应现象</text>
         <rect x="10" y="80" width="230" height="22" rx="5" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
         <text x="125" y="95" text-anchor="middle" font-size="10" font-weight="700" fill="#991b1b">刺激能量→感受器电位→动作电位(神经冲动)</text>
-        </svg></div>
-  <div class="card-body">
-    <div class="card-mechanism">💡 感受器具有适宜刺激、换能作用、编码功能和适应现象四大生理特征，将刺激能量转换为神经冲动。</div>
+     onclick="event.stopPropagation(); openCardModal('card21')"    <div class="card-mechanism">💡 感受器具有适宜刺激、换能作用、编码功能和适应现象四大生理特征，将刺激能量转换为神经冲动。</div>
     <ul class="card-points"><li>适宜刺激：每种感受器最敏感的刺激形式</li><li>换能作用：刺激能量→感受器电位→AP</li><li>编码功能：刺激性质/强度/部位信息编码</li><li>适应现象：持续刺激时传入冲动频率下降</li><li>快适应(触觉) vs 慢适应(肌梭/颈动脉窦)</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph10','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card18')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2907,12 +3031,10 @@ img { max-width: 100%; height: auto; }
         <path d="M165,35 Q180,25 195,35" fill="none" stroke="#1e40af" stroke-width="1.5"/>
         <text x="180" y="55" text-anchor="middle" font-size="9" font-weight="700" fill="#1e40af">耳蜗</text>
         <text x="180" y="95" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">螺旋器(Corti器)</text>
-        <text x="180" y="107" text-anchor="middle" font-size="9" fill="#1e40af">声波→淋巴振动→毛细胞</text>
-        </svg></div>
-  <div class="card-body">
+        <text x="180" y="107" text-anchor="middle" font-size="9" fill="#1e40af">声波onclick="event.stopPropagation(); openCardModal('card22')"iv class="card-body">
     <div class="card-mechanism">💡 视觉依靠视网膜视锥细胞（明视觉和色觉）和视杆细胞（暗视觉），听觉依靠耳蜗螺旋器将声波转换为神经冲动。</div>
     <ul class="card-points"><li>视锥细胞：中央凹密集，司明视觉和色觉</li><li>视杆细胞：周边分布，司暗视觉，无色觉</li><li>中央凹是感光最敏锐部位(只有视锥)</li><li>耳蜗螺旋器是听觉感受器</li><li>声波经外耳道→鼓膜→听骨链→卵圆窗→淋巴</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph10','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card19')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -2936,12 +3058,11 @@ img { max-width: 100%; height: auto; }
         <rect x="210" y="25" width="55" height="50" rx="6" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
         <text x="237" y="42" text-anchor="middle" font-size="9" font-weight="700" fill="#9d174d">特征</text>
         <text x="237" y="55" text-anchor="middle" font-size="7" fill="#9d174d">单向/延搁</text>
-        <text x="237" y="65" text-anchor="middle" font-size="7" fill="#9d174d">总和/易疲劳</text>
-        </svg></div>
+        <text x="237" y="65" text-anchor="middle" font-size="7" filonclick="event.stopPropagation(); openCardModal('card23')"div>
   <div class="card-body">
     <div class="card-mechanism">💡 化学性突触传递通过突触前膜释放递质、经突触间隙扩散、作用于突触后膜受体实现，具有单向传递和突触延搁。</div>
     <ul class="card-points"><li>突触=前膜+间隙+后膜三部分</li><li>递质：Ach/去甲肾上腺素/多巴胺/谷氨酸/GABA</li><li>特征：单向传递/突触延搁/总和/易疲劳</li><li>兴奋性递质→Na⁺内流→EPSP</li><li>抑制性递质→Cl⁻内流→IPSP</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph11','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card20')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2960,12 +3081,12 @@ img { max-width: 100%; height: auto; }
         <rect x="130" y="65" width="110" height="30" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
         <text x="185" y="78" text-anchor="middle" font-size="10" font-weight="700" fill="#3730a3">肌紧张：缓慢持续/多突触</text>
         <text x="185" y="90" text-anchor="middle" font-size="8" fill="#3730a3">维持姿势最基本反射</text>
-        <defs><marker id="r1" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L6,2.5 L0,5" fill="#64748b"/></marker></defs>
+        <defs><marker id="r1" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0onclick="event.stopPropagation(); openCardModal('card24')"efs>
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 牵张反射是骨骼肌受牵拉时反射性收缩，感受器为肌梭，分为腱反射（快速单突触）和肌紧张（缓慢多突触）。</div>
     <ul class="card-points"><li>感受器：肌梭（感受肌肉长度变化）</li><li>腱反射：快速牵拉肌腱，单突触，如膝跳反射</li><li>肌紧张：缓慢持续牵拉，维持姿势最基本反射</li><li>效应器：受牵拉的同一肌肉</li><li>腱器官感受张力，抑制牵张反射（反牵张）</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph11','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card21')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -2978,12 +3099,12 @@ img { max-width: 100%; height: auto; }
         <text x="195" y="41" text-anchor="middle" font-size="9" fill="#166534">休整恢复 · 保存能量</text>
         <rect x="10" y="65" width="240" height="35" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
         <text x="130" y="80" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">交感：心跳快/血压高/支气管扩张/瞳孔大/胃肠抑制</text>
-        <text x="130" y="93" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">副交感：心跳慢/血压低/支气管收缩/瞳孔小/胃肠增强</text>
+        <text x="130" y="93" text-anchor="middle" font-size="10"onclick="event.stopPropagation(); openCardModal('card25')"血压低/支气管收缩/瞳孔小/胃肠增强</text>
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 自主神经系统分交感（应急动员）和副交感（休整恢复），两者拮抗统一维持内脏功能稳态。</div>
     <ul class="card-points"><li>交感中枢：脊髓胸腰段(T1-L3)</li><li>副交感中枢：脑干副交感核+骶髓2-4节</li><li>交感节前短节后长，副交感节前长节后短</li><li>交感分布广泛，副交感较局限</li><li>递质：交感节后多为去甲肾上腺素，副交感为Ach</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph11','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card22')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -3003,12 +3124,12 @@ img { max-width: 100%; height: auto; }
         <text x="205" y="43" text-anchor="middle" font-size="8" fill="#166534">长时间抗疲劳</text>
         <rect x="10" y="65" width="230" height="30" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
         <text x="125" y="78" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">生理学基础：肌纤维类型/肌肉横截面积/神经调节/能量供应</text>
-        <text x="125" y="91" text-anchor="middle" font-size="9" fill="#1e40af">Ⅰ型(慢缩红肌)耐力好 | Ⅱ型(快缩白肌)力量速度好</text>
+        <text x="125" y="91" text-anchor=onclick="event.stopPropagation(); openCardModal('card26')"缩红肌)耐力好 | Ⅱ型(快缩白肌)力量速度好</text>
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 力量素质分最大力量、快速力量（爆发力）和力量耐力，取决于肌纤维类型、肌肉横截面积和神经调节能力。</div>
     <ul class="card-points"><li>最大力量：肌肉收缩克服最大阻力的能力</li><li>爆发力=力量×速度，超等长训练有效</li><li>力量耐力：长时间对抗阻力的能力</li><li>Ⅰ型肌纤维(慢缩)：耐力好，Ⅱ型(快缩)：力量大</li><li>力量训练→肌纤维增粗(肥大)，非数量增加</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph12','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card23')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -3023,12 +3144,12 @@ img { max-width: 100%; height: auto; }
         <rect x="140" y="10" width="95" height="25" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
         <text x="187" y="26" text-anchor="middle" font-size="9" font-weight="700" fill="#166534">乳酸阈(外周机制)</text>
         <text x="77" y="55" text-anchor="middle" font-size="8" fill="#1e40af">心输出量</text>
-        <text x="187" y="55" text-anchor="middle" font-size="8" fill="#166534">肌肉利用氧</text>
+        <text x="187" y="55" text-anonclick="event.stopPropagation(); openCardModal('card27')">肌肉利用氧</text>
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 有氧耐力由最大摄氧量（VO₂max，中央机制）和乳酸阈（外周机制）共同决定，是耐力项目的核心素质。</div>
     <ul class="card-points"><li>VO₂max：最大摄氧量，反映心肺泵血能力</li><li>乳酸阈：血乳酸急剧上升的拐点，反映肌肉用氧</li><li>VO₂max中央机制=心输出量，外周=肌肉利用氧</li><li>耐力训练→VO₂max↑/乳酸阈↑/慢肌纤维比例↑</li><li>男性VO₂max约45-55，耐力运动员70-85 ml/kg/min</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph12','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card24')">📖 查看详细知识点</button>
   </div>
 </div>
 <div class="quick-card">
@@ -3044,12 +3165,12 @@ img { max-width: 100%; height: auto; }
         <text x="212" y="46" text-anchor="middle" font-size="8" fill="#166534">快速变换动作</text>
         <rect x="5" y="70" width="245" height="28" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
         <text x="127" y="83" text-anchor="middle" font-size="9" font-weight="700" fill="#3730a3">速度=神经反应+肌纤维类型(Ⅱ型) | 柔韧=关节结构+软组织伸展性 | 灵敏=多素质综合</text>
-        <text x="127" y="95" text-anchor="middle" font-size="8" fill="#3730a3">反应时=感受器兴奋+传入+中枢延搁+传出+效应器</text>
+        <text x="onclick="event.stopPropagation(); openCardModal('card28')"="8" fill="#3730a3">反应时=感受器兴奋+传入+中枢延搁+传出+效应器</text>
         </svg></div>
   <div class="card-body">
     <div class="card-mechanism">💡 速度、柔韧和灵敏是重要身体素质，分别取决于神经反应速度、关节活动范围和多种素质的综合协调。</div>
     <ul class="card-points"><li>速度素质：反应速度+动作速度+位移速度</li><li>反应时包括感受器→传入→中枢→传出→效应器</li><li>柔韧素质：关节结构+周围软组织伸展性+神经调节</li><li>灵敏素质：神经过程灵活性+力量/速度/柔韧综合</li><li>发展敏感期：速度10-13岁，柔韧儿童期最佳</li></ul>
-    <button class="card-btn" onclick="jumpToKnowledge('ph12','physio')">📖 查看详细知识点</button>
+    <button class="card-btn" onclick="event.stopPropagation(); openCardModal('card25')">📖 查看详细知识点</button>
   </div>
 </div>
 </div></div>
@@ -29868,6 +29989,871 @@ if(document.readyState === 'loading'){
   initReadingModule();
 }
 
+
+// ==================== 速查卡模态框数据 ====================
+const CARD_MODAL_DATA = {
+
+  card1: {
+    title: "生命四大基本特征",
+    concept: [
+      "核心概念1：生命四大基本特征的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card2: {
+    title: "三种调节方式",
+    concept: [
+      "核心概念1：三种调节方式的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card3: {
+    title: "物质跨膜转运",
+    concept: [
+      "核心概念1：物质跨膜转运的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card4: {
+    title: "静息电位与动作电位",
+    concept: [
+      "核心概念1：静息电位与动作电位的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card5: {
+    title: "跨膜信号转导",
+    concept: [
+      "核心概念1：跨膜信号转导的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card6: {
+    title: "肌丝滑行学说",
+    concept: [
+      "核心概念1：肌丝滑行学说的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card7: {
+    title: "兴奋-收缩耦联",
+    concept: [
+      "核心概念1：兴奋-收缩耦联的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card8: {
+    title: "血液组成与功能",
+    concept: [
+      "核心概念1：血液组成与功能的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card9: {
+    title: "血液凝固与血型",
+    concept: [
+      "核心概念1：血液凝固与血型的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card10: {
+    title: "心动周期与心脏泵血",
+    concept: [
+      "核心概念1：心动周期与心脏泵血的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card11: {
+    title: "心室肌动作电位",
+    concept: [
+      "核心概念1：心室肌动作电位的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card12: {
+    title: "动脉血压与压力感受性反射",
+    concept: [
+      "核心概念1：动脉血压与压力感受性反射的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card13: {
+    title: "肺通气原理",
+    concept: [
+      "核心概念1：肺通气原理的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card14: {
+    title: "氧解离曲线",
+    concept: [
+      "核心概念1：氧解离曲线的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card15: {
+    title: "运动时三大能量系统",
+    concept: [
+      "核心概念1：运动时三大能量系统的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card16: {
+    title: "体温调节机制",
+    concept: [
+      "核心概念1：体温调节机制的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card17: {
+    title: "尿生成三过程",
+    concept: [
+      "核心概念1：尿生成三过程的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card18: {
+    title: "有效滤过压与水盐平衡",
+    concept: [
+      "核心概念1：有效滤过压与水盐平衡的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card19: {
+    title: "激素作用机制",
+    concept: [
+      "核心概念1：激素作用机制的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card20: {
+    title: "垂体与主要内分泌腺",
+    concept: [
+      "核心概念1：垂体与主要内分泌腺的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card21: {
+    title: "感受器一般生理特征",
+    concept: [
+      "核心概念1：感受器一般生理特征的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card22: {
+    title: "视觉与听觉",
+    concept: [
+      "核心概念1：视觉与听觉的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card23: {
+    title: "化学性突触传递",
+    concept: [
+      "核心概念1：化学性突触传递的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card24: {
+    title: "牵张反射",
+    concept: [
+      "核心概念1：牵张反射的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card25: {
+    title: "自主神经系统",
+    concept: [
+      "核心概念1：自主神经系统的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card26: {
+    title: "力量素质",
+    concept: [
+      "核心概念1：力量素质的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card27: {
+    title: "有氧耐力素质",
+    concept: [
+      "核心概念1：有氧耐力素质的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+  card28: {
+    title: "速度、柔韧与灵敏素质",
+    concept: [
+      "核心概念1：速度、柔韧与灵敏素质的基本定义",
+      "核心概念2：关键术语与分类",
+      "核心概念3：生理意义与作用"
+    ],
+    mechanism: [
+      "机制1：基本生理过程概述",
+      "机制2：关键环节与影响因素",
+      "机制3：调节方式与反馈机制"
+    ],
+    practice: [
+      "实践1：运动中的表现与变化",
+      "实践2：训练适应与提高",
+      "实践3：临床应用与注意事项"
+    ],
+    exam: [
+      "考点1：高频考点与关键数值",
+      "考点2：常考题型与答题要点",
+      "考点3：易考概念与对比辨析"
+    ],
+    confusion: [
+      {a: "概念A", b: "概念B", diff: "主要区别点"}
+    ]
+  },
+
+};
+
+// ==================== 速查卡模态框函数 ====================
+function openCardModal(cardId) {
+  const overlay = document.getElementById('cardModalOverlay');
+  const titleEl = document.getElementById('cardModalTitle');
+  const bodyEl = document.getElementById('cardModalBody');
+  
+  const cardData = CARD_MODAL_DATA[cardId];
+  if (!cardData) {
+    console.error('Card data not found:', cardId);
+    return;
+  }
+  
+  titleEl.textContent = cardData.title;
+  
+  // 找到对应的速查卡元素，提取其SVG
+  const cardIndex = parseInt(cardId.replace('card', ''));
+  const allCards = document.querySelectorAll('.quick-card');
+  let svgHTML = '';
+  if (allCards[cardIndex - 1]) {
+    const svgEl = allCards[cardIndex - 1].querySelector('svg');
+    if (svgEl) {
+      svgHTML = svgEl.outerHTML;
+    }
+  }
+  
+  let html = '';
+  
+  // SVG放大显示
+  if (svgHTML) {
+    html += '<div class="card-modal-svg-container">' + svgHTML + '</div>';
+  }
+  
+  // 核心概念
+  if (cardData.concept && cardData.concept.length > 0) {
+    html += '<div class="card-modal-section concept"><h4>📌 核心概念</h4><ul>';
+    cardData.concept.forEach(item => {
+      html += '<li>' + item + '</li>';
+    });
+    html += '</ul></div>';
+  }
+  
+  // 生理机制
+  if (cardData.mechanism && cardData.mechanism.length > 0) {
+    html += '<div class="card-modal-section mechanism"><h4>⚙️ 生理机制</h4><ul>';
+    cardData.mechanism.forEach(item => {
+      html += '<li>' + item + '</li>';
+    });
+    html += '</ul></div>';
+  }
+  
+  // 运动实践
+  if (cardData.practice && cardData.practice.length > 0) {
+    html += '<div class="card-modal-section practice"><h4>🏃 运动实践</h4><ul>';
+    cardData.practice.forEach(item => {
+      html += '<li>' + item + '</li>';
+    });
+    html += '</ul></div>';
+  }
+  
+  // 考研考点
+  if (cardData.exam && cardData.exam.length > 0) {
+    html += '<div class="card-modal-section exam"><h4>🎯 考研考点</h4><ul>';
+    cardData.exam.forEach(item => {
+      html += '<li>' + item + '</li>';
+    });
+    html += '</ul></div>';
+  }
+  
+  // 易混概念对比
+  if (cardData.confusion && cardData.confusion.length > 0) {
+    html += '<div class="card-modal-section confusion"><h4>⚠️ 易混概念对比</h4>';
+    html += '<table><tr><th>概念A</th><th>概念B</th><th>主要区别</th></tr>';
+    cardData.confusion.forEach(item => {
+      html += '<tr><td>' + item.a + '</td><td>' + item.b + '</td><td>' + item.diff + '</td></tr>';
+    });
+    html += '</table></div>';
+  }
+  
+  bodyEl.innerHTML = html;
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCardModal() {
+  const overlay = document.getElementById('cardModalOverlay');
+  overlay.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// 点击遮罩层关闭
+document.addEventListener('click', function(e) {
+  const overlay = document.getElementById('cardModalOverlay');
+  if (e.target === overlay) {
+    closeCardModal();
+  }
+});
+
+// ESC键关闭
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeCardModal();
+  }
+});
 </script>
 
 <!-- Admin Panel -->
@@ -30052,5 +31038,17 @@ if(document.readyState === 'loading'){
     </div>
 
 
+
+<!-- 速查卡模态框 -->
+<div class="card-modal-overlay" id="cardModalOverlay">
+  <div class="card-modal">
+    <div class="card-modal-header">
+      <h3 id="cardModalTitle">速查卡详情</h3>
+      <button class="card-modal-close" onclick="closeCardModal()">&times;</button>
+    </div>
+    <div class="card-modal-body" id="cardModalBody">
+    </div>
+  </div>
+</div>
 </body>
 </html>
