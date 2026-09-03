@@ -31278,9 +31278,39 @@ function openCardModal(cardId) {
   
   document.getElementById('cardModalTitle').textContent = data.title;
   
-  // 加载SVG
+  // 加载SVG：优先使用速查卡自己的SVG，其次使用通用大图
   const svgContainer = document.getElementById('cardModalSvg');
-  if (data.svgKey && PHYSIO_DIAGRAMS[data.svgKey]) {
+  
+  // 尝试从页面速查卡元素中提取自己的SVG
+  const cardElement = document.querySelector('.quick-card[onclick*="openCardModal(\'' + cardId + '\')"]');
+  let cardSVG = null;
+  if (cardElement) {
+    const svgElement = cardElement.querySelector('.card-svg svg');
+    if (svgElement) {
+      // 克隆SVG并放大
+      cardSVG = svgElement.cloneNode(true);
+      cardSVG.setAttribute('width', '100%');
+      cardSVG.setAttribute('style', 'max-width:600px;margin:0 auto;display:block;');
+      // 放大viewBox中的内容
+      const viewBox = cardSVG.getAttribute('viewBox');
+      if (viewBox) {
+        const parts = viewBox.split(' ').map(Number);
+        if (parts.length === 4) {
+          // 增加padding让内容更清晰
+          cardSVG.setAttribute('viewBox', (parts[0]-20) + ' ' + (parts[1]-20) + ' ' + (parts[2]+40) + ' ' + (parts[3]+40));
+        }
+      }
+    }
+  }
+  
+  if (cardSVG) {
+    // 用速查卡自己的SVG，包裹在放大容器中
+    svgContainer.innerHTML = '<div style="text-align:center;padding:20px;background:#f8fafc;border-radius:12px;border:2px solid #e5e7eb;">' +
+      '<div style="font-size:14px;color:#64748b;margin-bottom:12px;">📊 ' + data.title + ' 图解</div>' +
+      cardSVG.outerHTML +
+      '</div>';
+  } else if (data.svgKey && PHYSIO_DIAGRAMS[data.svgKey]) {
+    // 回退到通用大图
     svgContainer.innerHTML = PHYSIO_DIAGRAMS[data.svgKey].svg;
   } else if (data.customSvg) {
     svgContainer.innerHTML = data.customSvg;
@@ -31294,31 +31324,29 @@ function openCardModal(cardId) {
   
   if (data.concept) {
     html += '<div class="modal-detail-card concept"><h4>📌 核心概念</h4><ul>';
-    data.concept.forEach(item => html += `<li>${item}</li>`);
+    data.concept.forEach(function(item) { html += '<li>' + item + '</li>'; });
     html += '</ul></div>';
   }
   if (data.mechanism) {
     html += '<div class="modal-detail-card mechanism"><h4>⚙️ 生理机制</h4><ul>';
-    data.mechanism.forEach(item => html += `<li>${item}</li>`);
+    data.mechanism.forEach(function(item) { html += '<li>' + item + '</li>'; });
     html += '</ul></div>';
   }
   if (data.practice) {
     html += '<div class="modal-detail-card practice"><h4>🏃 运动实践</h4><ul>';
-    data.practice.forEach(item => html += `<li>${item}</li>`);
+    data.practice.forEach(function(item) { html += '<li>' + item + '</li>'; });
     html += '</ul></div>';
   }
   if (data.exam) {
     html += '<div class="modal-detail-card exam"><h4>🎯 考研考点</h4><ul>';
-    data.exam.forEach(item => html += `<li>${item}</li>`);
+    data.exam.forEach(function(item) { html += '<li>' + item + '</li>'; });
     html += '</ul></div>';
   }
   if (data.confusion) {
-    html += '<div class="modal-detail-card confusion"><h4>⚠️ 易混概念对比</h4><table class="modal-confusion-table">';
-    data.confusion.forEach((row, i) => {
-      const tag = i === 0 ? 'th' : 'td';
-      html += '<tr>';
-      row.forEach(cell => html += `<${tag}>${cell}</${tag}>`);
-      html += '</tr>';
+    html += '<div class="modal-detail-card confusion"><h4>⚠️ 易混概念对比</h4>';
+    html += '<table class="confusion-table"><tr><th>概念A</th><th>概念B</th><th>区别</th></tr>';
+    data.confusion.forEach(function(item) {
+      html += '<tr><td>' + item.a + '</td><td>' + item.b + '</td><td>' + item.diff + '</td></tr>';
     });
     html += '</table></div>';
   }
@@ -31326,11 +31354,11 @@ function openCardModal(cardId) {
   detailsContainer.innerHTML = html;
   
   // 显示模态框
-  document.getElementById('cardModalOverlay').classList.add('active');
+  const modal = document.getElementById('cardModalOverlay');
+  modal.classList.add('active');
   document.body.style.overflow = 'hidden';
 }
 
-// 关闭速查卡模态框
 function closeCardModal() {
   document.getElementById('cardModalOverlay').classList.remove('active');
   document.body.style.overflow = '';
