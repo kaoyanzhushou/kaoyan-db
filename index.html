@@ -2316,6 +2316,16 @@ img { max-width: 100%; height: auto; }
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#2563eb">
 <meta name="application-name" content="考研资料库">
+
+<style>
+/* 性能优化：长列表延迟渲染 */
+.chapter-group, .quick-card, .knowledge-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
+}
+/* 减少重绘 */
+.tab-content { contain: layout style; }
+</style>
 </head>
 <body>
 <div id="pageLoader">
@@ -30823,10 +30833,17 @@ function toggleChapterDetail(chapterId) {
   const detail = document.getElementById('detail-' + chapterId);
   const btn = document.getElementById('btn-' + chapterId);
   if (detail && btn) {
+    const wasExpanded = detail.classList.contains('expanded');
     detail.classList.toggle('expanded');
     btn.classList.toggle('expanded');
-    const isExpanded = detail.classList.contains('expanded');
-    btn.innerHTML = isExpanded ? '收起详情 <span class="arrow">▲</span>' : '展开详情 <span class="arrow">▼</span>';
+    const isExpanded = !wasExpanded;
+    btn.innerHTML = isExpanded ? '收起详情 ▲' : '展开详情 ▼';
+    // 展开后滚动到内容区域
+    if (isExpanded) {
+      setTimeout(function() {
+        detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
   }
 }
 
