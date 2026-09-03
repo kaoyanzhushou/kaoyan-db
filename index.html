@@ -27147,7 +27147,12 @@ function showRegionDetails(region, name){
   const regionData = ATLAS_DATA.regions[region];
   if(!regionData) return;
   
+  // 隐藏系统解剖学详解，避免与区域详情同时显示
+  const sysDetail2 = document.getElementById('anatomySystemDetail');
+  if(sysDetail2) sysDetail2.style.display = 'none';
+  
   const panel = document.getElementById('atlasDetailPanel');
+  if(panel) panel.style.display = 'block';
   let html = `<h3>${regionData.icon} ${name || regionData.name}</h3>`;
   html += `<div class="atlas-meta">`;
   html += `<span class="atlas-tag region">📍 ${regionData.name}</span>`;
@@ -27247,7 +27252,12 @@ function showStructureDetail(id){
   
   if(!found) return;
   
+  // 隐藏系统解剖学详解，避免与部位详情同时显示
+  const sysDetail1 = document.getElementById('anatomySystemDetail');
+  if(sysDetail1) sysDetail1.style.display = 'none';
+  
   const panel = document.getElementById('atlasDetailPanel');
+  if(panel) panel.style.display = 'block';
   const isFav = atlasFavorites.includes(found.id);
   let html = `<h3>${getSystemIcon(found.system)} ${found.name}</h3>`;
   html += `<div class="atlas-meta">`;
@@ -27805,8 +27815,13 @@ function showAnatomySystem(key, highlightItem){
   sys.examPoints.forEach(ep => { html += '<li>' + linkAnatomyKeywords(ep, key) + '</li>'; });
   html += '</ul></div>';
   html += '</div>';
+  // 隐藏部位详情面板，避免与系统解剖学详解同时显示
+  const detailPanel = document.getElementById('atlasDetailPanel');
+  if(detailPanel) detailPanel.style.display = 'none';
+  
   const container = document.getElementById('anatomySystemDetail');
   if(container){
+    container.style.display = 'block';
     container.innerHTML = html;
     // 高亮滚动
     if(highlightItem){
