@@ -31239,25 +31239,27 @@ function safeCall(fn, context) {
 
 // ========== Service Worker 注册 ==========
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
+  function registerSW() {
     navigator.serviceWorker.register('./sw.js')
       .then(function(registration) {
         console.log('[SW] 注册成功，作用域:', registration.scope);
-        
-        // 检测到新版本时提示用户
         registration.addEventListener('updatefound', function() {
           const installingWorker = registration.installing;
-          installingWorker.addEventListener('statechange', function() {
-            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('[SW] 检测到新版本，刷新页面即可更新');
-            }
-          });
+          if (installingWorker) {
+            installingWorker.addEventListener('statechange', function() {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[SW] 检测到新版本');
+              }
+            });
+          }
         });
       })
       .catch(function(err) {
         console.log('[SW] 注册失败:', err);
       });
-  });
+  }
+  // 立即注册，不等待load事件
+  registerSW();
 }
 </script>
 
