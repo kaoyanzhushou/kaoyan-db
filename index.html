@@ -4951,330 +4951,7 @@ img { max-width: 100%; height: auto; }
 </div>
 
 <!-- Memorization Assistant -->
-<div class="tab-content" id="tab-memorize">
-  <div class="card" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;margin-bottom:16px">
-    <h3 style="color:#fff">🧠 专业课背诵助手</h3>
-    <p style="opacity:.9;margin-top:6px">基于艾宾浩斯遗忘曲线 + 主动回忆 + 间隔重复，让运动生理和运动解剖背诵效率提升3倍</p>
-  </div>
-
-  <!-- Sub-navigation -->
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;overflow-x:auto;padding-bottom:4px">
-    <button class="btn mem-subtab active" data-subtab="overview" onclick="switchMemSubtab('overview')">📊 总览</button>
-    <button class="btn mem-subtab" data-subtab="review" onclick="switchMemSubtab('review')">📅 间隔复习</button>
-    <button class="btn mem-subtab" data-subtab="dictation" onclick="switchMemSubtab('dictation')">✍️ 默写模式</button>
-    <button class="btn mem-subtab" data-subtab="fib" onclick="switchMemSubtab('fib')">📝 填空自测</button>
-    <button class="btn mem-subtab" data-subtab="wrong" onclick="switchMemSubtab('wrong')">❌ 错题本</button>
-    <button class="btn mem-subtab" data-subtab="compare" onclick="switchMemSubtab('compare')">⚖️ 易混对比</button>
-    <button class="btn mem-subtab" data-subtab="plan" onclick="switchMemSubtab('plan')">📋 每日计划</button>
-    <button class="btn mem-subtab" data-subtab="tips" onclick="switchMemSubtab('tips')">💡 方法论</button>
-    <button class="btn mem-subtab" data-subtab="pdfblank" onclick="switchMemSubtab('pdfblank')">📄 PDF挖空检测</button>
-  </div>
-
-  <!-- Overview Subtab -->
-  <div id="mem-overview" class="mem-subtab-content">
-    <!-- Stats Overview -->
-    <div class="mem-grid">
-      <div class="mem-card">
-        <div class="mem-stat" id="memTotal">0</div>
-        <div class="mem-stat-label">专业课知识点总数</div>
-      </div>
-      <div class="mem-card">
-        <div class="mem-stat" id="memMastered" style="color:#16a34a">0</div>
-        <div class="mem-stat-label">已掌握</div>
-      </div>
-      <div class="mem-card">
-        <div class="mem-stat" id="memTodayReview" style="color:#ea580c">0</div>
-        <div class="mem-stat-label">今日需复习</div>
-      </div>
-      <div class="mem-card">
-        <div class="mem-stat" id="memStreak" style="color:#7c3aed">0</div>
-        <div class="mem-stat-label">连续背诵天数</div>
-      </div>
-    </div>
-
-    <!-- 进度环形图 -->
-    <div class="card" style="margin-bottom:20px">
-      <h3>📊 背诵进度总览</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">直观展示各科知识点掌握程度，点击"运动生理"或"运动解剖"页面的"标记掌握"按钮更新进度。</p>
-      <div class="progress-ring-container" id="progressRings"></div>
-    </div>
-
-    <!-- 薄弱知识点TOP10 -->
-    <div class="card" style="margin-bottom:20px">
-      <h3>🎯 薄弱知识点分析（TOP10）</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">基于错题次数和未掌握状态智能分析，优先攻克薄弱环节。红色=高频错误，橙色=需关注。</p>
-      <div class="weak-points-list" id="weakPointsList"></div>
-    </div>
-
-    <!-- Pomodoro Timer -->
-    <div class="card" style="margin-bottom:20px">
-      <h3>⏱️ 番茄钟专注背诵</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">25分钟专注背诵 + 5分钟休息，科学用脑效率最高。背诵时关闭手机通知，全情投入。</p>
-      <div style="text-align:center;padding:20px">
-        <div id="pomodoroTimer" style="font-size:56px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums;letter-spacing:2px">25:00</div>
-        <div id="pomodoroStatus" style="font-size:14px;color:var(--text2);margin:8px 0 16px">准备开始专注背诵</div>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-          <button class="btn" id="pomodoroStartBtn" onclick="startPomodoro()">▶️ 开始</button>
-          <button class="btn btn-outline" onclick="pausePomodoro()">⏸️ 暂停</button>
-          <button class="btn btn-outline" onclick="resetPomodoro()">🔄 重置</button>
-          <button class="btn btn-outline" onclick="switchPomodoroMode()" id="pomodoroModeBtn">切换为5分钟休息</button>
-        </div>
-        <div style="margin-top:16px;font-size:13px;color:var(--text2)">
-          今日完成番茄钟：<b id="pomodoroCount" style="color:var(--primary)">0</b> 个
-        </div>
-        <div id="focusStatsContainer" style="margin-top:12px"></div>
-      </div>
-    </div>
-
-    <!-- Check-in Calendar -->
-    <div class="card" style="margin-bottom:20px">
-      <h3>📆 背诵打卡日历</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">勾选知识点或完成番茄钟即算当日打卡。绿色=已打卡，连续打卡激励持续学习。</p>
-      <div id="checkinCalendar"></div>
-    </div>
-
-    <!-- Blur Recall Toggle -->
-    <div class="card" style="margin-bottom:20px">
-      <h3>👁️ 遮挡回忆模式</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">开启后，运动生理和运动解剖页面的关键术语将被模糊处理。先尝试回忆，再点击揭示答案。主动回忆比被动阅读效率高50%以上。</p>
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <button class="btn" id="blurToggleBtn" onclick="toggleBlurMode()">🔍 开启遮挡回忆</button>
-        <span style="font-size:13px;color:var(--text2)" id="blurStatus">当前：关闭</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Review Subtab -->
-  <div id="mem-review" class="mem-subtab-content" style="display:none">
-    <div class="card" style="margin-bottom:20px">
-      <h3>📅 今日复习清单（艾宾浩斯间隔重复）</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">系统根据你勾选掌握的时间，按1天→2天→4天→7天→15天的间隔自动提醒复习。点击知识点开始复习，复习后标记"记住了"或"没记住"，系统自动调整下次复习间隔。</p>
-      <div id="reviewSessionArea"></div>
-      <div id="reviewList"></div>
-    </div>
-  </div>
-
-  <!-- Dictation Subtab -->
-  <div id="mem-dictation" class="mem-subtab-content" style="display:none">
-    <div class="card" style="margin-bottom:20px">
-      <h3>✍️ 默写模式（论述题/简答题）</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">选择科目和题目，在文本框中默写答案，然后对照参考答案检查。默写是检验背诵效果的最有效方式，考试时能写出来才算真正掌握。💡 提示：也可以使用上方"PDF挖空检测"上传自己的PDF资料进行智能挖空检测。</p>
-      <div id="dictationSetup">
-        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-          <button class="btn btn-outline dict-subject-btn selected" data-subject="physio">运动生理学</button>
-          <button class="btn btn-outline dict-subject-btn" data-subject="anatomy">运动解剖学</button>
-        </div>
-        <div id="dictationQuestionList"></div>
-      </div>
-      <div id="dictationPlay" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-          <span id="dictationCounter" style="font-size:14px;color:var(--text2)"></span>
-          <button class="btn btn-outline" onclick="backToDictationList()">← 返回题目列表</button>
-        </div>
-
-        <div class="dictation-toolbar">
-          <div class="dict-timer" id="dictTimerDisplay">00:00</div>
-          <button class="btn btn-outline" onclick="speakDictationQuestion()" style="font-size:13px;padding:8px 14px">🔊 朗读题目</button>
-          <button class="btn btn-outline" onclick="stopSpeaking()" style="font-size:13px;padding:8px 14px">⏹️ 停止朗读</button>
-          <button class="btn btn-outline" onclick="toggleDictHint()" style="font-size:13px;padding:8px 14px;background:#fef3c7;color:#92400e;border-color:#fcd34d">💡 关键词提示</button>
-        </div>
-        <div id="dictHintBox" class="dict-hint-box" style="display:none"></div>
-        <div class="quiz-card">
-          <div id="dictationQuestion" style="font-size:17px;font-weight:600;line-height:1.7;margin-bottom:16px;padding:14px;background:#faf5ff;border-radius:8px;border-left:4px solid #7c3aed"></div>
-          <textarea id="dictationAnswer" class="fib-input" style="min-height:200px;resize:vertical;font-family:inherit;line-height:1.8" placeholder="在此处默写你的答案，尽量写出完整的分点论述..."></textarea>
-          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">
-            <button class="btn btn-outline" onclick="clearDictationAnswer()">清空重写</button>
-            <button class="btn" onclick="showDictationReference()">📖 查看参考答案</button>
-            <button class="btn" onclick="markDictationMastered()" style="background:#16a34a;display:none" id="dictationMasteredBtn">✅ 已掌握，加入复习</button>
-          </div>
-          <div id="dictationReference" style="display:none;margin-top:16px;padding:16px;background:#f0fdf4;border-radius:8px;border-left:4px solid #16a34a">
-            <h4 style="color:#166534;margin-bottom:10px">📖 参考答案</h4>
-            <div id="dictationReferenceContent" style="font-size:14px;line-height:1.9;color:#1f2937"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- FIB Subtab -->
-  <div id="mem-fib" class="mem-subtab-content" style="display:none">
-    <div class="card" style="margin-bottom:20px">
-      <h3>✍️ 填空自测（专业课核心考点）</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">从真题高频考点中提取的填空题，检验精确记忆程度。输入答案后自动判分，错题自动加入错题本。</p>
-      <div id="fibSetup">
-        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-          <button class="btn btn-outline fib-subject-btn selected" data-subject="physio">运动生理学</button>
-          <button class="btn btn-outline fib-subject-btn" data-subject="anatomy">运动解剖学</button>
-          <button class="btn" onclick="startFibQuiz()">开始填空自测</button>
-        </div>
-      </div>
-      <div id="fibPlay" style="display:none">
-        <div class="fib-quiz">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-            <span id="fibCounter" style="font-size:14px;color:var(--text2)"></span>
-            <span id="fibScore" style="font-size:14px;font-weight:600;color:var(--primary)"></span>
-          </div>
-          <div class="quiz-progress" style="margin-bottom:20px"><div class="fill" id="fibProgressFill"></div></div>
-          <div class="fib-question" id="fibQuestion"></div>
-          <div style="display:flex;gap:8px;margin-bottom:12px">
-            <input type="text" class="fib-input" id="fibInput" placeholder="输入你的答案..." onkeypress="if(event.key==='Enter')submitFibAnswer()" style="flex:1">
-            <button class="btn btn-outline" onclick="showFibHint()" style="padding:8px 14px;font-size:13px;background:#fef3c7;color:#92400e;border-color:#fcd34d;white-space:nowrap">💡 提示</button>
-          </div>
-          <div id="fibFeedback" style="display:none;padding:12px 16px;border-radius:8px;margin-bottom:12px;font-size:14px"></div>
-          <div style="display:flex;gap:10px;justify-content:flex-end">
-            <button class="btn btn-outline" onclick="prevFibQuestion()" id="fibPrevBtn">上一题</button>
-            <button class="btn" onclick="submitFibAnswer()">提交答案</button>
-            <button class="btn" onclick="nextFibQuestion()" id="fibNextBtn" style="display:none">下一题</button>
-            <button class="btn" onclick="finishFibQuiz()" id="fibFinishBtn" style="display:none;background:#16a34a">完成</button>
-          </div>
-        </div>
-      </div>
-      <div id="fibResult" style="display:none"></div>
-    </div>
-  </div>
-
-  <!-- Wrong Answer Notebook Subtab -->
-  <div id="mem-wrong" class="mem-subtab-content" style="display:none">
-    <div class="card" style="margin-bottom:20px">
-      <h3>❌ 错题本</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">自动收集填空自测中做错的题目。错题是最薄弱的知识点，需要重点反复复习。掌握后可移出错题本。</p>
-
-      <div id="wrongStats" class="wrong-stats-grid"></div>
-      <div class="wrong-filter-bar">
-        <button class="wrong-filter-btn active" data-filter="all" onclick="setWrongFilter('all')">全部</button>
-        <button class="wrong-filter-btn" data-filter="physio" onclick="setWrongFilter('physio')">生理学</button>
-        <button class="wrong-filter-btn" data-filter="anatomy" onclick="setWrongFilter('anatomy')">解剖学</button>
-        <button class="wrong-filter-btn" data-filter="english" onclick="setWrongFilter('english')">英语</button>
-        <button class="wrong-filter-btn" data-filter="politics" onclick="setWrongFilter('politics')">政治</button>
-        <button class="btn" style="margin-left:auto;padding:6px 14px;font-size:12px" onclick="startWrongRedo()">🔄 错题重做</button>
-        <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;color:#dc2626" onclick="clearWrongNotebook()">🗑️ 清空</button>
-      </div>
-      <div id="wrongRedoArea" class="wrong-redo-area" style="display:none"></div>
-
-      <div id="wrongList"></div>
-    </div>
-  </div>
-
-  <!-- Compare Subtab -->
-  <div id="mem-compare" class="mem-subtab-content" style="display:none">
-    <div class="card" style="margin-bottom:20px">
-      <h3>⚖️ 易混概念对比记忆</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">专业课最容易混淆的概念对比表，点击展开查看。对比记忆比单独记忆效率高2倍。</p>
-      <div id="compareList"></div>
-    </div>
-  </div>
-
-  <!-- Plan Subtab -->
-  <div id="mem-plan" class="mem-subtab-content" style="display:none">
-    <div class="card" style="margin-bottom:20px">
-      <h3>📋 专业课每日背诵计划（高效版）</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">每天约2.5-3小时专业课背诵，遵循"少量多次+主动回忆+睡前复盘"原则</p>
-      <div id="dailyMemPlan"></div>
-    </div>
-  </div>
-
-  <!-- Tips Subtab -->
-  <div id="mem-tips" class="mem-subtab-content" style="display:none">
-    <div class="card">
-      <h3>💡 高效背诵方法论</h3>
-      <div class="mem-tip"><b>1. 主动回忆法：</b>看完一节内容后合上书，用白纸默写核心框架和关键词，再对照补充。主动回忆的记忆留存率是被动阅读的3倍。</div>
-      <div class="mem-tip"><b>2. 间隔重复法：</b>按艾宾浩斯曲线复习——当天睡前、第2天、第4天、第7天、第15天各复习一次。每次复习只需5-10分钟快速过框架。</div>
-      <div class="mem-tip"><b>3. 框架记忆法：</b>先记大框架（章→节→点），再填细节。比如运动生理学先记住21章标题，再逐章展开。用思维导图或目录页建立全局观。</div>
-      <div class="mem-tip"><b>4. 关键词提炼法：</b>每道大题提炼3-5个核心关键词，考试时围绕关键词展开。比如"心输出量影响因素"→心率、每搏量（前负荷、后负荷、心肌收缩力）。</div>
-      <div class="mem-tip"><b>5. 睡前黄金期：</b>睡前30分钟背诵的内容，睡眠中大脑会自动巩固。睡前过一遍当天背的框架，第二天早上回忆，效果最佳。</div>
-      <div class="mem-tip"><b>6. 费曼讲解法：</b>把背过的内容用自己的话讲出来（可以对着空气讲或录音），讲不清楚的地方就是没掌握的，回去重点补。</div>
-      <div class="mem-tip"><b>7. 口诀联想法：</b>为难记的内容编口诀或谐音。比如十二对脑神经→"一嗅二视三动眼，四滑五叉六外展，七面八听九舌咽，迷副舌下神经全"。</div>
-      <div class="mem-tip"><b>8. 多感官协同法：</b>背诵时眼（看）、口（读）、手（写）、脑（想）同时参与，多感官输入比单一视觉记忆牢固2-3倍。重要内容一定要动笔写一遍。</div>
-      <div class="mem-tip"><b>9. 分段蚕食法：</b>不要试图一次背完一整章。把大段内容拆成3-5个小点，逐个击破，背完一个再背下一个，最后串联起来。每次背诵量控制在20-30分钟内能完成的量。</div>
-      <div class="mem-tip"><b>10. 过度学习法：</b>刚能背诵时不要停止，再继续背诵2-3遍（过度学习50%），记忆保持时间会显著延长。但过度学习超过100%后收益递减，注意不要浪费时间。</div>
-    </div>
-  </div>
-
-  <!-- PDF Blank Detection Subtab -->
-  <div id="mem-pdfblank" class="mem-subtab-content" style="display:none">
-    <div class="card" style="margin-bottom:20px">
-      <h3>📄 PDF智能挖空检测</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">上传任意PDF资料（笔记、讲义、真题解析等），系统自动识别文本并智能挖空，生成填空题进行检测。支持自定义挖空比例和挖空方式，是检验背诵效果的终极武器。</p>
-      <div id="pdfUploadSection">
-        <div class="pdf-upload-area" id="pdfUploadArea" onclick="document.getElementById('pdfFileInput').click()">
-          <div class="pua-icon">📄</div>
-          <div class="pua-title">点击或拖拽上传PDF文件</div>
-          <div class="pua-desc">支持文字版PDF，最大50MB</div>
-        </div>
-        <input type="file" id="pdfFileInput" accept=".pdf" style="display:none" onchange="handlePdfUpload(this.files[0])">
-      </div>
-      <div id="pdfConfigSection" style="display:none">
-        <div class="pdf-info-bar">
-          <span class="pib-name" id="pdfFileName"></span>
-          <span class="pib-meta" id="pdfFileMeta"></span>
-          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="resetPdfUpload()">重新上传</button>
-        </div>
-        <div class="pdf-config">
-          <div class="pc-group">
-            <label>挖空比例</label>
-            <select id="pdfBlankRatio">
-              <option value="0.1">10%（轻度）</option>
-              <option value="0.2" selected>20%（中度）</option>
-              <option value="0.3">30%（重度）</option>
-              <option value="0.4">40%（挑战）</option>
-              <option value="0.5">50%（地狱）</option>
-            </select>
-          </div>
-          <div class="pc-group">
-            <label>挖空方式</label>
-            <select id="pdfBlankMode">
-              <option value="keyword">关键词优先（名词/术语）</option>
-              <option value="noun">仅名词</option>
-              <option value="random">随机均匀分布</option>
-              <option value="number">数字/日期/百分比</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-bottom:16px">
-          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">文本预览（前500字）</label>
-          <div class="pdf-text-preview" id="pdfTextPreview"></div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn" onclick="generatePdfBlanks()" style="background:linear-gradient(135deg,#ea580c,#7c3aed);color:#fff;font-weight:700">🎯 生成挖空题目</button>
-          <button class="btn btn-outline" onclick="regeneratePdfBlanks()">🔄 换一组挖空</button>
-        </div>
-      </div>
-      <div id="pdfBlankSection" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-          <span id="pdfBlankProgress" style="font-size:14px;color:var(--text2)"></span>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-outline" style="padding:8px 14px;font-size:13px" onclick="showAllPdfAnswers()">👁️ 显示全部答案</button>
-            <button class="btn btn-outline" style="padding:8px 14px;font-size:13px" onclick="backToPdfConfig()">⚙️ 调整设置</button>
-          </div>
-        </div>
-        <div class="pdf-progress"><div class="fill" id="pdfProgressFill" style="width:0%"></div></div>
-        <div class="pdf-blank-container">
-          <div class="pdf-blank-text" id="pdfBlankText"></div>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button class="btn" onclick="checkPdfAnswers()" style="background:#16a34a;color:#fff;font-weight:700;min-width:140px">✅ 提交检测</button>
-          <button class="btn btn-outline" onclick="resetPdfBlanks()">🔄 重新作答</button>
-        </div>
-      </div>
-      <div id="pdfResultSection" style="display:none">
-        <div class="pdf-result-stats">
-          <div class="pdf-result-stat"><div class="prs-val" id="pdfResultTotal" style="color:var(--primary)">0</div><div class="prs-lbl">总空数</div></div>
-          <div class="pdf-result-stat"><div class="prs-val" id="pdfResultCorrect" style="color:#16a34a">0</div><div class="prs-lbl">正确</div></div>
-          <div class="pdf-result-stat"><div class="prs-val" id="pdfResultWrong" style="color:#dc2626">0</div><div class="prs-lbl">错误</div></div>
-          <div class="pdf-result-stat"><div class="prs-val" id="pdfResultPct" style="color:#7c3aed">0%</div><div class="prs-lbl">正确率</div></div>
-        </div>
-        <div class="pdf-blank-container">
-          <div class="pdf-blank-text" id="pdfResultText"></div>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button class="btn" onclick="regeneratePdfBlanks()" style="background:linear-gradient(135deg,#ea580c,#7c3aed);color:#fff;font-weight:700">🔄 换一组再测</button>
-          <button class="btn btn-outline" onclick="backToPdfConfig()">⚙️ 调整设置</button>
-          <button class="btn btn-outline" onclick="resetPdfUpload()">📄 上传新PDF</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="tab-content" id="tab-memorize"><!-- 背诵助手内容延迟加载 --></div>
 
 </div>
 </div>
@@ -24192,6 +23869,20 @@ function switchTab(tabName){
     if(sb) sb.classList.remove('show');
     if(ov) ov.classList.remove('show');
   }
+
+  // 延迟渲染大tab内容
+  if(tabName === 'memorize') {
+    const placeholder = document.getElementById('tab-memorize');
+    if(placeholder && !placeholder.dataset.rendered) {
+      const template = document.getElementById('memorize-template');
+      if(template) {
+        placeholder.innerHTML = template.innerHTML;
+        placeholder.dataset.rendered = 'true';
+        // 触发背诵助手的初始化（如果有）
+        if(typeof initMemorize === 'function') initMemorize();
+      }
+    }
+  }
 }
 
 // ==================== SEARCH ====================
@@ -31410,12 +31101,28 @@ function openCardModal(cardId) {
     data.exam.forEach(function(item) { html += '<li>' + item + '</li>'; });
     html += '</ul></div>';
   }
-  if (data.confusion) {
+  if (data.confusion && data.confusion.length > 0) {
     html += '<div class="modal-detail-card confusion"><h4>⚠️ 易混概念对比</h4>';
-    html += '<table class="confusion-table"><tr><th>概念A</th><th>概念B</th><th>区别</th></tr>';
-    data.confusion.forEach(function(item) {
-      html += '<tr><td>' + item.a + '</td><td>' + item.b + '</td><td>' + item.diff + '</td></tr>';
-    });
+    // 支持二维数组格式：第一行是表头，后续行是数据
+    const conf = data.confusion;
+    const colCount = conf[0].length;
+    html += '<table class="confusion-table" style="width:100%;border-collapse:collapse;font-size:13px;">';
+    // 表头行
+    html += '<tr style="background:#ede9fe;">';
+    for(let c = 0; c < colCount; c++) {
+      html += '<th style="border:1px solid #c4b5fd;padding:8px 10px;text-align:left;font-weight:700;color:#5b21b6;">' + conf[0][c] + '</th>';
+    }
+    html += '</tr>';
+    // 数据行
+    for(let r = 1; r < conf.length; r++) {
+      html += '<tr' + (r % 2 === 0 ? ' style="background:#faf5ff;"' : '') + '>';
+      for(let c = 0; c < colCount; c++) {
+        const cellVal = conf[r][c] !== undefined ? conf[r][c] : '';
+        const fontWeight = c === 0 ? 'font-weight:600;color:#7c3aed;' : 'color:#374151;';
+        html += '<td style="border:1px solid #ddd6fe;padding:8px 10px;' + fontWeight + '">' + cellVal + '</td>';
+      }
+      html += '</tr>';
+    }
     html += '</table></div>';
   }
   
@@ -32309,5 +32016,329 @@ setTimeout(hidePageLoader, 8000);
     </div>
   </div>
 </div>
+<template id="memorize-template"><div class="tab-content" id="tab-memorize">
+  <div class="card" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;margin-bottom:16px">
+    <h3 style="color:#fff">🧠 专业课背诵助手</h3>
+    <p style="opacity:.9;margin-top:6px">基于艾宾浩斯遗忘曲线 + 主动回忆 + 间隔重复，让运动生理和运动解剖背诵效率提升3倍</p>
+  </div>
+
+  <!-- Sub-navigation -->
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;overflow-x:auto;padding-bottom:4px">
+    <button class="btn mem-subtab active" data-subtab="overview" onclick="switchMemSubtab('overview')">📊 总览</button>
+    <button class="btn mem-subtab" data-subtab="review" onclick="switchMemSubtab('review')">📅 间隔复习</button>
+    <button class="btn mem-subtab" data-subtab="dictation" onclick="switchMemSubtab('dictation')">✍️ 默写模式</button>
+    <button class="btn mem-subtab" data-subtab="fib" onclick="switchMemSubtab('fib')">📝 填空自测</button>
+    <button class="btn mem-subtab" data-subtab="wrong" onclick="switchMemSubtab('wrong')">❌ 错题本</button>
+    <button class="btn mem-subtab" data-subtab="compare" onclick="switchMemSubtab('compare')">⚖️ 易混对比</button>
+    <button class="btn mem-subtab" data-subtab="plan" onclick="switchMemSubtab('plan')">📋 每日计划</button>
+    <button class="btn mem-subtab" data-subtab="tips" onclick="switchMemSubtab('tips')">💡 方法论</button>
+    <button class="btn mem-subtab" data-subtab="pdfblank" onclick="switchMemSubtab('pdfblank')">📄 PDF挖空检测</button>
+  </div>
+
+  <!-- Overview Subtab -->
+  <div id="mem-overview" class="mem-subtab-content">
+    <!-- Stats Overview -->
+    <div class="mem-grid">
+      <div class="mem-card">
+        <div class="mem-stat" id="memTotal">0</div>
+        <div class="mem-stat-label">专业课知识点总数</div>
+      </div>
+      <div class="mem-card">
+        <div class="mem-stat" id="memMastered" style="color:#16a34a">0</div>
+        <div class="mem-stat-label">已掌握</div>
+      </div>
+      <div class="mem-card">
+        <div class="mem-stat" id="memTodayReview" style="color:#ea580c">0</div>
+        <div class="mem-stat-label">今日需复习</div>
+      </div>
+      <div class="mem-card">
+        <div class="mem-stat" id="memStreak" style="color:#7c3aed">0</div>
+        <div class="mem-stat-label">连续背诵天数</div>
+      </div>
+    </div>
+
+    <!-- 进度环形图 -->
+    <div class="card" style="margin-bottom:20px">
+      <h3>📊 背诵进度总览</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">直观展示各科知识点掌握程度，点击"运动生理"或"运动解剖"页面的"标记掌握"按钮更新进度。</p>
+      <div class="progress-ring-container" id="progressRings"></div>
+    </div>
+
+    <!-- 薄弱知识点TOP10 -->
+    <div class="card" style="margin-bottom:20px">
+      <h3>🎯 薄弱知识点分析（TOP10）</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">基于错题次数和未掌握状态智能分析，优先攻克薄弱环节。红色=高频错误，橙色=需关注。</p>
+      <div class="weak-points-list" id="weakPointsList"></div>
+    </div>
+
+    <!-- Pomodoro Timer -->
+    <div class="card" style="margin-bottom:20px">
+      <h3>⏱️ 番茄钟专注背诵</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">25分钟专注背诵 + 5分钟休息，科学用脑效率最高。背诵时关闭手机通知，全情投入。</p>
+      <div style="text-align:center;padding:20px">
+        <div id="pomodoroTimer" style="font-size:56px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums;letter-spacing:2px">25:00</div>
+        <div id="pomodoroStatus" style="font-size:14px;color:var(--text2);margin:8px 0 16px">准备开始专注背诵</div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <button class="btn" id="pomodoroStartBtn" onclick="startPomodoro()">▶️ 开始</button>
+          <button class="btn btn-outline" onclick="pausePomodoro()">⏸️ 暂停</button>
+          <button class="btn btn-outline" onclick="resetPomodoro()">🔄 重置</button>
+          <button class="btn btn-outline" onclick="switchPomodoroMode()" id="pomodoroModeBtn">切换为5分钟休息</button>
+        </div>
+        <div style="margin-top:16px;font-size:13px;color:var(--text2)">
+          今日完成番茄钟：<b id="pomodoroCount" style="color:var(--primary)">0</b> 个
+        </div>
+        <div id="focusStatsContainer" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- Check-in Calendar -->
+    <div class="card" style="margin-bottom:20px">
+      <h3>📆 背诵打卡日历</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">勾选知识点或完成番茄钟即算当日打卡。绿色=已打卡，连续打卡激励持续学习。</p>
+      <div id="checkinCalendar"></div>
+    </div>
+
+    <!-- Blur Recall Toggle -->
+    <div class="card" style="margin-bottom:20px">
+      <h3>👁️ 遮挡回忆模式</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">开启后，运动生理和运动解剖页面的关键术语将被模糊处理。先尝试回忆，再点击揭示答案。主动回忆比被动阅读效率高50%以上。</p>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button class="btn" id="blurToggleBtn" onclick="toggleBlurMode()">🔍 开启遮挡回忆</button>
+        <span style="font-size:13px;color:var(--text2)" id="blurStatus">当前：关闭</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review Subtab -->
+  <div id="mem-review" class="mem-subtab-content" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <h3>📅 今日复习清单（艾宾浩斯间隔重复）</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">系统根据你勾选掌握的时间，按1天→2天→4天→7天→15天的间隔自动提醒复习。点击知识点开始复习，复习后标记"记住了"或"没记住"，系统自动调整下次复习间隔。</p>
+      <div id="reviewSessionArea"></div>
+      <div id="reviewList"></div>
+    </div>
+  </div>
+
+  <!-- Dictation Subtab -->
+  <div id="mem-dictation" class="mem-subtab-content" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <h3>✍️ 默写模式（论述题/简答题）</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">选择科目和题目，在文本框中默写答案，然后对照参考答案检查。默写是检验背诵效果的最有效方式，考试时能写出来才算真正掌握。💡 提示：也可以使用上方"PDF挖空检测"上传自己的PDF资料进行智能挖空检测。</p>
+      <div id="dictationSetup">
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="btn btn-outline dict-subject-btn selected" data-subject="physio">运动生理学</button>
+          <button class="btn btn-outline dict-subject-btn" data-subject="anatomy">运动解剖学</button>
+        </div>
+        <div id="dictationQuestionList"></div>
+      </div>
+      <div id="dictationPlay" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <span id="dictationCounter" style="font-size:14px;color:var(--text2)"></span>
+          <button class="btn btn-outline" onclick="backToDictationList()">← 返回题目列表</button>
+        </div>
+
+        <div class="dictation-toolbar">
+          <div class="dict-timer" id="dictTimerDisplay">00:00</div>
+          <button class="btn btn-outline" onclick="speakDictationQuestion()" style="font-size:13px;padding:8px 14px">🔊 朗读题目</button>
+          <button class="btn btn-outline" onclick="stopSpeaking()" style="font-size:13px;padding:8px 14px">⏹️ 停止朗读</button>
+          <button class="btn btn-outline" onclick="toggleDictHint()" style="font-size:13px;padding:8px 14px;background:#fef3c7;color:#92400e;border-color:#fcd34d">💡 关键词提示</button>
+        </div>
+        <div id="dictHintBox" class="dict-hint-box" style="display:none"></div>
+        <div class="quiz-card">
+          <div id="dictationQuestion" style="font-size:17px;font-weight:600;line-height:1.7;margin-bottom:16px;padding:14px;background:#faf5ff;border-radius:8px;border-left:4px solid #7c3aed"></div>
+          <textarea id="dictationAnswer" class="fib-input" style="min-height:200px;resize:vertical;font-family:inherit;line-height:1.8" placeholder="在此处默写你的答案，尽量写出完整的分点论述..."></textarea>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">
+            <button class="btn btn-outline" onclick="clearDictationAnswer()">清空重写</button>
+            <button class="btn" onclick="showDictationReference()">📖 查看参考答案</button>
+            <button class="btn" onclick="markDictationMastered()" style="background:#16a34a;display:none" id="dictationMasteredBtn">✅ 已掌握，加入复习</button>
+          </div>
+          <div id="dictationReference" style="display:none;margin-top:16px;padding:16px;background:#f0fdf4;border-radius:8px;border-left:4px solid #16a34a">
+            <h4 style="color:#166534;margin-bottom:10px">📖 参考答案</h4>
+            <div id="dictationReferenceContent" style="font-size:14px;line-height:1.9;color:#1f2937"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIB Subtab -->
+  <div id="mem-fib" class="mem-subtab-content" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <h3>✍️ 填空自测（专业课核心考点）</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">从真题高频考点中提取的填空题，检验精确记忆程度。输入答案后自动判分，错题自动加入错题本。</p>
+      <div id="fibSetup">
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="btn btn-outline fib-subject-btn selected" data-subject="physio">运动生理学</button>
+          <button class="btn btn-outline fib-subject-btn" data-subject="anatomy">运动解剖学</button>
+          <button class="btn" onclick="startFibQuiz()">开始填空自测</button>
+        </div>
+      </div>
+      <div id="fibPlay" style="display:none">
+        <div class="fib-quiz">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <span id="fibCounter" style="font-size:14px;color:var(--text2)"></span>
+            <span id="fibScore" style="font-size:14px;font-weight:600;color:var(--primary)"></span>
+          </div>
+          <div class="quiz-progress" style="margin-bottom:20px"><div class="fill" id="fibProgressFill"></div></div>
+          <div class="fib-question" id="fibQuestion"></div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <input type="text" class="fib-input" id="fibInput" placeholder="输入你的答案..." onkeypress="if(event.key==='Enter')submitFibAnswer()" style="flex:1">
+            <button class="btn btn-outline" onclick="showFibHint()" style="padding:8px 14px;font-size:13px;background:#fef3c7;color:#92400e;border-color:#fcd34d;white-space:nowrap">💡 提示</button>
+          </div>
+          <div id="fibFeedback" style="display:none;padding:12px 16px;border-radius:8px;margin-bottom:12px;font-size:14px"></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn btn-outline" onclick="prevFibQuestion()" id="fibPrevBtn">上一题</button>
+            <button class="btn" onclick="submitFibAnswer()">提交答案</button>
+            <button class="btn" onclick="nextFibQuestion()" id="fibNextBtn" style="display:none">下一题</button>
+            <button class="btn" onclick="finishFibQuiz()" id="fibFinishBtn" style="display:none;background:#16a34a">完成</button>
+          </div>
+        </div>
+      </div>
+      <div id="fibResult" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- Wrong Answer Notebook Subtab -->
+  <div id="mem-wrong" class="mem-subtab-content" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <h3>❌ 错题本</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">自动收集填空自测中做错的题目。错题是最薄弱的知识点，需要重点反复复习。掌握后可移出错题本。</p>
+
+      <div id="wrongStats" class="wrong-stats-grid"></div>
+      <div class="wrong-filter-bar">
+        <button class="wrong-filter-btn active" data-filter="all" onclick="setWrongFilter('all')">全部</button>
+        <button class="wrong-filter-btn" data-filter="physio" onclick="setWrongFilter('physio')">生理学</button>
+        <button class="wrong-filter-btn" data-filter="anatomy" onclick="setWrongFilter('anatomy')">解剖学</button>
+        <button class="wrong-filter-btn" data-filter="english" onclick="setWrongFilter('english')">英语</button>
+        <button class="wrong-filter-btn" data-filter="politics" onclick="setWrongFilter('politics')">政治</button>
+        <button class="btn" style="margin-left:auto;padding:6px 14px;font-size:12px" onclick="startWrongRedo()">🔄 错题重做</button>
+        <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;color:#dc2626" onclick="clearWrongNotebook()">🗑️ 清空</button>
+      </div>
+      <div id="wrongRedoArea" class="wrong-redo-area" style="display:none"></div>
+
+      <div id="wrongList"></div>
+    </div>
+  </div>
+
+  <!-- Compare Subtab -->
+  <div id="mem-compare" class="mem-subtab-content" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <h3>⚖️ 易混概念对比记忆</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">专业课最容易混淆的概念对比表，点击展开查看。对比记忆比单独记忆效率高2倍。</p>
+      <div id="compareList"></div>
+    </div>
+  </div>
+
+  <!-- Plan Subtab -->
+  <div id="mem-plan" class="mem-subtab-content" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <h3>📋 专业课每日背诵计划（高效版）</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">每天约2.5-3小时专业课背诵，遵循"少量多次+主动回忆+睡前复盘"原则</p>
+      <div id="dailyMemPlan"></div>
+    </div>
+  </div>
+
+  <!-- Tips Subtab -->
+  <div id="mem-tips" class="mem-subtab-content" style="display:none">
+    <div class="card">
+      <h3>💡 高效背诵方法论</h3>
+      <div class="mem-tip"><b>1. 主动回忆法：</b>看完一节内容后合上书，用白纸默写核心框架和关键词，再对照补充。主动回忆的记忆留存率是被动阅读的3倍。</div>
+      <div class="mem-tip"><b>2. 间隔重复法：</b>按艾宾浩斯曲线复习——当天睡前、第2天、第4天、第7天、第15天各复习一次。每次复习只需5-10分钟快速过框架。</div>
+      <div class="mem-tip"><b>3. 框架记忆法：</b>先记大框架（章→节→点），再填细节。比如运动生理学先记住21章标题，再逐章展开。用思维导图或目录页建立全局观。</div>
+      <div class="mem-tip"><b>4. 关键词提炼法：</b>每道大题提炼3-5个核心关键词，考试时围绕关键词展开。比如"心输出量影响因素"→心率、每搏量（前负荷、后负荷、心肌收缩力）。</div>
+      <div class="mem-tip"><b>5. 睡前黄金期：</b>睡前30分钟背诵的内容，睡眠中大脑会自动巩固。睡前过一遍当天背的框架，第二天早上回忆，效果最佳。</div>
+      <div class="mem-tip"><b>6. 费曼讲解法：</b>把背过的内容用自己的话讲出来（可以对着空气讲或录音），讲不清楚的地方就是没掌握的，回去重点补。</div>
+      <div class="mem-tip"><b>7. 口诀联想法：</b>为难记的内容编口诀或谐音。比如十二对脑神经→"一嗅二视三动眼，四滑五叉六外展，七面八听九舌咽，迷副舌下神经全"。</div>
+      <div class="mem-tip"><b>8. 多感官协同法：</b>背诵时眼（看）、口（读）、手（写）、脑（想）同时参与，多感官输入比单一视觉记忆牢固2-3倍。重要内容一定要动笔写一遍。</div>
+      <div class="mem-tip"><b>9. 分段蚕食法：</b>不要试图一次背完一整章。把大段内容拆成3-5个小点，逐个击破，背完一个再背下一个，最后串联起来。每次背诵量控制在20-30分钟内能完成的量。</div>
+      <div class="mem-tip"><b>10. 过度学习法：</b>刚能背诵时不要停止，再继续背诵2-3遍（过度学习50%），记忆保持时间会显著延长。但过度学习超过100%后收益递减，注意不要浪费时间。</div>
+    </div>
+  </div>
+
+  <!-- PDF Blank Detection Subtab -->
+  <div id="mem-pdfblank" class="mem-subtab-content" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <h3>📄 PDF智能挖空检测</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">上传任意PDF资料（笔记、讲义、真题解析等），系统自动识别文本并智能挖空，生成填空题进行检测。支持自定义挖空比例和挖空方式，是检验背诵效果的终极武器。</p>
+      <div id="pdfUploadSection">
+        <div class="pdf-upload-area" id="pdfUploadArea" onclick="document.getElementById('pdfFileInput').click()">
+          <div class="pua-icon">📄</div>
+          <div class="pua-title">点击或拖拽上传PDF文件</div>
+          <div class="pua-desc">支持文字版PDF，最大50MB</div>
+        </div>
+        <input type="file" id="pdfFileInput" accept=".pdf" style="display:none" onchange="handlePdfUpload(this.files[0])">
+      </div>
+      <div id="pdfConfigSection" style="display:none">
+        <div class="pdf-info-bar">
+          <span class="pib-name" id="pdfFileName"></span>
+          <span class="pib-meta" id="pdfFileMeta"></span>
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="resetPdfUpload()">重新上传</button>
+        </div>
+        <div class="pdf-config">
+          <div class="pc-group">
+            <label>挖空比例</label>
+            <select id="pdfBlankRatio">
+              <option value="0.1">10%（轻度）</option>
+              <option value="0.2" selected>20%（中度）</option>
+              <option value="0.3">30%（重度）</option>
+              <option value="0.4">40%（挑战）</option>
+              <option value="0.5">50%（地狱）</option>
+            </select>
+          </div>
+          <div class="pc-group">
+            <label>挖空方式</label>
+            <select id="pdfBlankMode">
+              <option value="keyword">关键词优先（名词/术语）</option>
+              <option value="noun">仅名词</option>
+              <option value="random">随机均匀分布</option>
+              <option value="number">数字/日期/百分比</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">文本预览（前500字）</label>
+          <div class="pdf-text-preview" id="pdfTextPreview"></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" onclick="generatePdfBlanks()" style="background:linear-gradient(135deg,#ea580c,#7c3aed);color:#fff;font-weight:700">🎯 生成挖空题目</button>
+          <button class="btn btn-outline" onclick="regeneratePdfBlanks()">🔄 换一组挖空</button>
+        </div>
+      </div>
+      <div id="pdfBlankSection" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <span id="pdfBlankProgress" style="font-size:14px;color:var(--text2)"></span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline" style="padding:8px 14px;font-size:13px" onclick="showAllPdfAnswers()">👁️ 显示全部答案</button>
+            <button class="btn btn-outline" style="padding:8px 14px;font-size:13px" onclick="backToPdfConfig()">⚙️ 调整设置</button>
+          </div>
+        </div>
+        <div class="pdf-progress"><div class="fill" id="pdfProgressFill" style="width:0%"></div></div>
+        <div class="pdf-blank-container">
+          <div class="pdf-blank-text" id="pdfBlankText"></div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="btn" onclick="checkPdfAnswers()" style="background:#16a34a;color:#fff;font-weight:700;min-width:140px">✅ 提交检测</button>
+          <button class="btn btn-outline" onclick="resetPdfBlanks()">🔄 重新作答</button>
+        </div>
+      </div>
+      <div id="pdfResultSection" style="display:none">
+        <div class="pdf-result-stats">
+          <div class="pdf-result-stat"><div class="prs-val" id="pdfResultTotal" style="color:var(--primary)">0</div><div class="prs-lbl">总空数</div></div>
+          <div class="pdf-result-stat"><div class="prs-val" id="pdfResultCorrect" style="color:#16a34a">0</div><div class="prs-lbl">正确</div></div>
+          <div class="pdf-result-stat"><div class="prs-val" id="pdfResultWrong" style="color:#dc2626">0</div><div class="prs-lbl">错误</div></div>
+          <div class="pdf-result-stat"><div class="prs-val" id="pdfResultPct" style="color:#7c3aed">0%</div><div class="prs-lbl">正确率</div></div>
+        </div>
+        <div class="pdf-blank-container">
+          <div class="pdf-blank-text" id="pdfResultText"></div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="btn" onclick="regeneratePdfBlanks()" style="background:linear-gradient(135deg,#ea580c,#7c3aed);color:#fff;font-weight:700">🔄 换一组再测</button>
+          <button class="btn btn-outline" onclick="backToPdfConfig()">⚙️ 调整设置</button>
+          <button class="btn btn-outline" onclick="resetPdfUpload()">📄 上传新PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></template>
 </body>
 </html>
