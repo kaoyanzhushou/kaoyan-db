@@ -3147,6 +3147,19 @@ img { max-width: 100%; height: auto; }
       </div>
       
       <div class="atlas-nav-section">
+        <h4>📚 系统解剖学详解</h4>
+        <div class="atlas-nav-list" id="anatomySystemNavList">
+          <div class="atlas-nav-item" onclick="showAnatomySystemFromSidebar('nervous')" style="border-left:3px solid #7c3aed">🧠 神经系统</div>
+          <div class="atlas-nav-item" onclick="showAnatomySystemFromSidebar('circulatory')" style="border-left:3px solid #dc2626">❤️ 循环系统</div>
+          <div class="atlas-nav-item" onclick="showAnatomySystemFromSidebar('respiratory')" style="border-left:3px solid #0891b2">🫁 呼吸系统</div>
+          <div class="atlas-nav-item" onclick="showAnatomySystemFromSidebar('digestive')" style="border-left:3px solid #d97706">🍽️ 消化系统</div>
+          <div class="atlas-nav-item" onclick="showAnatomySystemFromSidebar('urinary')" style="border-left:3px solid #2563eb">💧 泌尿系统</div>
+          <div class="atlas-nav-item" onclick="showAnatomySystemFromSidebar('endocrine')" style="border-left:3px solid #db2777">🧬 内分泌系统</div>
+          <div class="atlas-nav-item" onclick="showAnatomySystemFromSidebar('sensory')" style="border-left:3px solid #059669">👁️ 感觉器</div>
+        </div>
+      </div>
+      
+      <div class="atlas-nav-section">
         <h4>⭐ 我的收藏</h4>
         <div class="atlas-nav-list" id="atlasFavList">
           <div class="atlas-nav-item" onclick="showFavorites()">查看收藏结构</div>
@@ -27630,24 +27643,158 @@ const ANATOMY_SYSTEMS = {
   }
 };
 
-function showAnatomySystem(key){
+// ==================== 解剖知识点关键词跳转映射 ====================
+const ANATOMY_KEYWORD_MAP = {
+  '脊髓': {system: 'nervous', itemName: '脊髓', label: '脊髓'},
+  '小脑': {system: 'nervous', itemName: '小脑', label: '小脑'},
+  '脑干': {system: 'nervous', itemName: '脑干', label: '脑干'},
+  '端脑': {system: 'nervous', itemName: '端脑（大脑）', label: '端脑（大脑）'},
+  '间脑': {system: 'nervous', itemName: '间脑', label: '间脑'},
+  '下丘脑': {system: 'nervous', itemName: '间脑', label: '下丘脑'},
+  '丘脑': {system: 'nervous', itemName: '间脑', label: '丘脑'},
+  '脑神经': {system: 'nervous', itemName: '脑神经（12对）', label: '脑神经（12对）'},
+  '脊神经': {system: 'nervous', itemName: '脊神经（31对）', label: '脊神经（31对）'},
+  '交感神经': {system: 'nervous', itemName: '自主神经系统', label: '交感神经'},
+  '副交感神经': {system: 'nervous', itemName: '自主神经系统', label: '副交感神经'},
+  '自主神经': {system: 'nervous', itemName: '自主神经系统', label: '自主神经系统'},
+  '内囊': {system: 'nervous', itemName: '端脑（大脑）', label: '内囊'},
+  '窦房结': {system: 'circulatory', itemName: '心传导系统', label: '窦房结'},
+  '房室结': {system: 'circulatory', itemName: '心传导系统', label: '房室结'},
+  '浦肯野': {system: 'circulatory', itemName: '心传导系统', label: '浦肯野纤维'},
+  '二尖瓣': {system: 'circulatory', itemName: '心瓣膜', label: '二尖瓣'},
+  '三尖瓣': {system: 'circulatory', itemName: '心瓣膜', label: '三尖瓣'},
+  '主动脉瓣': {system: 'circulatory', itemName: '心瓣膜', label: '主动脉瓣'},
+  '肺动脉瓣': {system: 'circulatory', itemName: '心瓣膜', label: '肺动脉瓣'},
+  '冠脉': {system: 'circulatory', itemName: '冠脉循环', label: '冠脉循环'},
+  '冠状动脉': {system: 'circulatory', itemName: '冠脉循环', label: '冠脉循环'},
+  '体循环': {system: 'circulatory', itemName: '体循环（大循环）', label: '体循环'},
+  '肺循环': {system: 'circulatory', itemName: '肺循环（小循环）', label: '肺循环'},
+  '心尖': {system: 'circulatory', itemName: '心的位置和外形', label: '心尖'},
+  '肺泡': {system: 'respiratory', itemName: '肺的结构', label: '肺泡'},
+  '膈肌': {system: 'respiratory', itemName: '吸气', label: '膈肌'},
+  '胸膜腔': {system: 'respiratory', itemName: '胸膜和胸膜腔', label: '胸膜腔'},
+  '胸膜': {system: 'respiratory', itemName: '胸膜和胸膜腔', label: '胸膜'},
+  '右主支气管': {system: 'respiratory', itemName: '气管和支气管', label: '右主支气管'},
+  '会厌': {system: 'respiratory', itemName: '喉', label: '会厌软骨'},
+  '环状软骨': {system: 'respiratory', itemName: '喉', label: '环状软骨'},
+  '肾单位': {system: 'urinary', itemName: '肾单位', label: '肾单位'},
+  '肾小球': {system: 'urinary', itemName: '肾单位', label: '肾小球'},
+  '滤过屏障': {system: 'urinary', itemName: '肾单位', label: '滤过屏障'},
+  '膀胱三角': {system: 'urinary', itemName: '膀胱', label: '膀胱三角'},
+  '输尿管': {system: 'urinary', itemName: '输尿管', label: '输尿管'},
+  '肾门': {system: 'urinary', itemName: '肾的位置和形态', label: '肾门'},
+  '胰岛素': {system: 'endocrine', itemName: '胰岛', label: '胰岛素'},
+  '胰岛': {system: 'endocrine', itemName: '胰岛', label: '胰岛'},
+  '甲状腺': {system: 'endocrine', itemName: '甲状腺', label: '甲状腺'},
+  '甲状旁腺': {system: 'endocrine', itemName: '甲状旁腺', label: '甲状旁腺'},
+  '肾上腺': {system: 'endocrine', itemName: '肾上腺', label: '肾上腺'},
+  '垂体': {system: 'endocrine', itemName: '垂体（脑垂体）', label: '垂体'},
+  '松果体': {system: 'endocrine', itemName: '松果体', label: '松果体'},
+  '降钙素': {system: 'endocrine', itemName: '甲状腺', label: '降钙素'},
+  '视网膜': {system: 'sensory', itemName: '眼球', label: '视网膜'},
+  '视杆': {system: 'sensory', itemName: '眼球', label: '视杆细胞'},
+  '视锥': {system: 'sensory', itemName: '眼球', label: '视锥细胞'},
+  '角膜': {system: 'sensory', itemName: '眼球', label: '角膜'},
+  '晶状体': {system: 'sensory', itemName: '眼球', label: '晶状体'},
+  '房水': {system: 'sensory', itemName: '眼球', label: '房水'},
+  '听小骨': {system: 'sensory', itemName: '中耳', label: '听小骨'},
+  '螺旋器': {system: 'sensory', itemName: '内耳', label: '螺旋器'},
+  '耳蜗': {system: 'sensory', itemName: '内耳', label: '耳蜗'},
+  '壶腹嵴': {system: 'sensory', itemName: '内耳', label: '壶腹嵴'},
+  '味蕾': {system: 'sensory', itemName: '味器', label: '味蕾'}
+};
+
+// ==================== 解剖-生理联动映射 ====================
+const ANATOMY_PHYSIO_MAP = {
+  'nervous': [
+    {key: 'action-potential', label: '⚡ 动作电位机制', desc: '神经元动作电位的产生与传导'},
+    {key: 'synaptic-transmission', label: '⚡ 突触传递', desc: '化学性突触传递过程与特征'},
+    {key: 'reflex-arc', label: '🔄 反射弧', desc: '反射活动的结构基础与牵张反射'},
+    {key: 'thermoregulation', label: '🌡️ 体温调节', desc: '下丘脑体温调节中枢与调定点学说'}
+  ],
+  'circulatory': [
+    {key: 'blood-circulation', label: '❤️ 血液循环', desc: '体循环与肺循环路径、心动周期、心输出量'},
+    {key: 'heart-conduction', label: '💓 心脏传导系统', desc: '窦房结起搏、房室延搁、浦肯野纤维传导'},
+    {key: 'oxygen-curve', label: '🫁 氧解离曲线', desc: '血红蛋白氧运输与S形曲线生理意义'},
+    {key: 'exercise-integration', label: '🏃 运动心血管整合', desc: '运动时心率、心输出量、血流重新分配'}
+  ],
+  'respiratory': [
+    {key: 'respiratory-mechanism', label: '🫁 呼吸机制', desc: '肺通气原理、呼吸肌运动、胸膜腔负压'},
+    {key: 'oxygen-curve', label: '🫁 氧解离曲线', desc: '肺换气与氧合血红蛋白解离'},
+    {key: 'exercise-integration', label: '🏃 运动呼吸整合', desc: '运动时肺通气量增加与氧摄取'}
+  ],
+  'digestive': [
+    {key: 'digestive-process', label: '🍽️ 消化过程', desc: '胃肠运动、消化液分泌与吸收机制'},
+    {key: 'endocrine-axis', label: '🧬 胃肠激素', desc: '胃泌素、促胰液素、缩胆囊素等胃肠激素调节'}
+  ],
+  'urinary': [
+    {key: 'kidney-excretion', label: '💧 肾脏排泄', desc: '肾小球滤过、肾小管重吸收与分泌'},
+    {key: 'endocrine-axis', label: '🧬 抗利尿激素', desc: 'ADH调节水重吸收与尿量'}
+  ],
+  'endocrine': [
+    {key: 'endocrine-axis', label: '🧬 内分泌轴', desc: '下丘脑-垂体-靶腺轴与激素调节'},
+    {key: 'thermoregulation', label: '🌡️ 体温与代谢', desc: '甲状腺激素调节基础代谢率'},
+    {key: 'energy-systems', label: '🔥 能量代谢', desc: '激素调节糖、脂肪、蛋白质代谢'}
+  ],
+  'sensory': [
+    {key: 'action-potential', label: '⚡ 感受器电位', desc: '感受器换能作用与感受器电位产生'},
+    {key: 'synaptic-transmission', label: '⚡ 感觉传导', desc: '视觉/听觉信号的突触传递与编码'}
+  ]
+};
+
+// 反向映射：生理图谱 -> 解剖系统
+const PHYSIO_ANATOMY_MAP = {
+  'action-potential': [{system: 'nervous', label: '🧠 神经系统 - 神经元与传导通路'}, {system: 'sensory', label: '👁️ 感觉器 - 感受器换能'}],
+  'muscle-contraction': [{system: 'nervous', label: '🧠 神经系统 - 运动传导通路'}],
+  'energy-systems': [{system: 'endocrine', label: '🧬 内分泌系统 - 代谢调节激素'}],
+  'reflex-arc': [{system: 'nervous', label: '🧠 神经系统 - 脊髓与反射中枢'}],
+  'blood-circulation': [{system: 'circulatory', label: '❤️ 循环系统 - 心脏与血管'}],
+  'oxygen-curve': [{system: 'circulatory', label: '❤️ 循环系统 - 血液与气体运输'}, {system: 'respiratory', label: '🫁 呼吸系统 - 肺换气'}],
+  'heart-conduction': [{system: 'circulatory', label: '❤️ 循环系统 - 心传导系统'}],
+  'kidney-excretion': [{system: 'urinary', label: '💧 泌尿系统 - 肾单位与滤过'}],
+  'respiratory-mechanism': [{system: 'respiratory', label: '🫁 呼吸系统 - 呼吸肌与肺通气'}],
+  'digestive-process': [{system: 'digestive', label: '🍽️ 消化系统 - 消化管与消化腺'}],
+  'endocrine-axis': [{system: 'endocrine', label: '🧬 内分泌系统 - 垂体与靶腺'}, {system: 'urinary', label: '💧 泌尿系统 - ADH调节'}],
+  'thermoregulation': [{system: 'nervous', label: '🧠 神经系统 - 下丘脑体温中枢'}, {system: 'endocrine', label: '🧬 内分泌系统 - 甲状腺激素'}],
+  'synaptic-transmission': [{system: 'nervous', label: '🧠 神经系统 - 突触传递'}, {system: 'sensory', label: '👁️ 感觉器 - 感觉传导'}],
+  'exercise-integration': [{system: 'circulatory', label: '❤️ 循环系统 - 运动心血管变化'}, {system: 'respiratory', label: '🫁 呼吸系统 - 运动通气变化'}, {system: 'nervous', label: '🧠 神经系统 - 运动神经调控'}]
+};
+
+function showAnatomySystem(key, highlightItem){
   const sys = ANATOMY_SYSTEMS[key];
   if(!sys) return;
+  // 侧边栏active状态
+  document.querySelectorAll('#anatomySystemNavList .atlas-nav-item').forEach(el=>el.classList.remove('active'));
+  const sideActive = document.querySelector('#anatomySystemNavList .atlas-nav-item[onclick*="\'' + key + '\'"]');
+  if(sideActive) sideActive.classList.add('active');
+  
   let html = '<div style="margin-bottom:20px">';
-  html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
+  html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">';
   html += '<span style="font-size:28px">' + sys.icon + '</span>';
   html += '<h3 style="color:' + sys.color + ';margin:0;font-size:20px">' + sys.name + '</h3>';
+  // 生理联动按钮
+  const physioLinks = ANATOMY_PHYSIO_MAP[key];
+  if(physioLinks && physioLinks.length > 0){
+    html += '<div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">';
+    html += '<span style="font-size:12px;color:#94a3b8;align-self:center">🔗 相关生理图谱：</span>';
+    physioLinks.forEach(pl => {
+      html += '<button onclick="jumpToPhysioFromAnatomy(\'' + pl.key + '\')" style="padding:5px 10px;background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600" title="' + pl.desc + '">' + pl.label + '</button>';
+    });
+    html += '</div>';
+  }
   html += '</div>';
   html += '<div style="background:#f8fafc;border-left:4px solid ' + sys.color + ';border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:16px;font-size:14px;line-height:1.8;color:#374151">';
-  html += '<b>📖 概述：</b>' + sys.overview;
+  html += '<b>📖 概述：</b>' + linkAnatomyKeywords(sys.overview, key);
   html += '</div>';
   sys.divisions.forEach(div => {
     html += '<div style="margin-bottom:16px">';
     html += '<h4 style="color:' + sys.color + ';font-size:15px;margin:0 0 10px;padding:8px 12px;background:' + sys.color + '15;border-radius:6px;border-left:3px solid ' + sys.color + '">' + div.title + '</h4>';
     div.items.forEach(item => {
-      html += '<div style="margin-bottom:10px;padding:10px 14px;background:#fff;border-radius:6px;border:1px solid #e2e8f0">';
+      const isHighlight = highlightItem && item.name === highlightItem;
+      const itemId = 'anat-item-' + key + '-' + item.name.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
+      html += '<div id="' + itemId + '" style="margin-bottom:10px;padding:10px 14px;background:' + (isHighlight ? '#fef9c3' : '#fff') + ';border-radius:6px;border:1px solid ' + (isHighlight ? '#eab308' : '#e2e8f0') + ';transition:all .3s">';
       html += '<div style="font-weight:700;color:#1f2937;font-size:14px;margin-bottom:4px">' + item.name + '</div>';
-      html += '<div style="font-size:13px;line-height:1.8;color:#475569">' + item.desc + '</div>';
+      html += '<div style="font-size:13px;line-height:1.8;color:#475569">' + linkAnatomyKeywords(item.desc, key) + '</div>';
       html += '</div>';
     });
     html += '</div>';
@@ -27655,11 +27802,73 @@ function showAnatomySystem(key){
   html += '<div style="background:#fef3c7;border-radius:8px;padding:14px 18px;margin-top:16px">';
   html += '<div style="font-weight:700;color:#92400e;font-size:14px;margin-bottom:8px">🎯 考研高频考点</div>';
   html += '<ul style="margin:0;padding-left:20px;font-size:13px;line-height:2;color:#78350f">';
-  sys.examPoints.forEach(ep => { html += '<li>' + ep + '</li>'; });
+  sys.examPoints.forEach(ep => { html += '<li>' + linkAnatomyKeywords(ep, key) + '</li>'; });
   html += '</ul></div>';
   html += '</div>';
   const container = document.getElementById('anatomySystemDetail');
-  if(container) container.innerHTML = html;
+  if(container){
+    container.innerHTML = html;
+    // 高亮滚动
+    if(highlightItem){
+      setTimeout(() => {
+        const targetId = 'anat-item-' + key + '-' + highlightItem.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
+        const target = document.getElementById(targetId);
+        if(target){
+          target.scrollIntoView({behavior:'smooth', block:'center'});
+          target.style.boxShadow = '0 0 0 3px #eab308';
+          setTimeout(() => { target.style.boxShadow = ''; target.style.background = '#fff'; }, 3000);
+        }
+      }, 100);
+    }
+  }
+}
+
+// 关键词转链接函数
+function linkAnatomyKeywords(text, currentSystem){
+  if(!text) return text;
+  let result = text;
+  // 按关键词长度降序排列，避免短词先匹配
+  const keywords = Object.keys(ANATOMY_KEYWORD_MAP).sort((a,b) => b.length - a.length);
+  keywords.forEach(kw => {
+    const mapping = ANATOMY_KEYWORD_MAP[kw];
+    if(mapping.system === currentSystem) return; // 同系统不跳转
+    // 避免重复替换已包含span标签的内容
+    if(result.indexOf('>' + kw + '<') !== -1) return;
+    const replacement = '<span onclick="jumpToAnatomyKeyword(\'' + kw + '\')" style="color:#2563eb;text-decoration:underline dotted;cursor:pointer;font-weight:600" title="跳转到' + mapping.system + '系统的' + mapping.itemName + '">' + kw + '</span>';
+    result = result.split(kw).join(replacement);
+  });
+  return result;
+}
+
+// 跳转到解剖知识点
+function jumpToAnatomyKeyword(keyword){
+  const mapping = ANATOMY_KEYWORD_MAP[keyword];
+  if(!mapping) return;
+  // 确保在解剖图谱tab
+  if(!document.getElementById('tab-atlas').classList.contains('active')){
+    switchTab('atlas');
+  }
+  setTimeout(() => {
+    showAnatomySystem(mapping.system, mapping.itemName);
+    // 滚动到详情区域
+    const detail = document.getElementById('anatomySystemDetail');
+    if(detail) detail.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 150);
+}
+
+// 从侧边栏点击系统
+function showAnatomySystemFromSidebar(key){
+  showAnatomySystem(key);
+  const detail = document.getElementById('anatomySystemDetail');
+  if(detail) detail.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// 从解剖跳转到生理图谱
+function jumpToPhysioFromAnatomy(physioKey){
+  switchTab('physio-atlas');
+  setTimeout(() => {
+    showPhysioDiagram(physioKey);
+  }, 150);
 }
 
 
@@ -28455,8 +28664,31 @@ showPhysioDiagram = function(key){
   html += '<div style="font-size:13px;line-height:1.8;color:#78350f">' + knowledge.clinicalRelevance + '</div>';
   html += '</div>';
   html += '</div>';
-  descEl.innerHTML = html;
+  // 添加解剖系统联动按钮
+  const anatLinks = PHYSIO_ANATOMY_MAP[key];
+  if(anatLinks && anatLinks.length > 0){
+    let linkHtml = '<div style="margin-top:16px;padding:14px 16px;background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe">';
+    linkHtml += '<div style="font-weight:700;color:#1e40af;font-size:14px;margin-bottom:10px">🔗 相关解剖系统</div>';
+    linkHtml += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    anatLinks.forEach(al => {
+      linkHtml += '<button onclick="jumpToAnatomyFromPhysio(\'' + al.system + '\')" style="padding:8px 14px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">' + al.label + '</button>';
+    });
+    linkHtml += '</div></div>';
+    descEl.innerHTML = html + linkHtml;
+  } else {
+    descEl.innerHTML = html;
+  }
 };
+
+// 从生理跳转到解剖系统
+function jumpToAnatomyFromPhysio(anatKey){
+  switchTab('atlas');
+  setTimeout(() => {
+    showAnatomySystem(anatKey);
+    const detail = document.getElementById('anatomySystemDetail');
+    if(detail) detail.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 150);
+}
 
 
 
