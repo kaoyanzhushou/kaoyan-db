@@ -2238,6 +2238,19 @@ img { max-width: 100%; height: auto; }
 .quick-card { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
 .quick-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
 
+
+/* 速查卡默认收起 */
+.cards-grid {
+  display: none;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease;
+}
+.cards-grid.expanded {
+  display: grid;
+  max-height: 5000px;
+  overflow: visible;
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -2598,7 +2611,7 @@ img { max-width: 100%; height: auto; }
   </div>
   <button class="expand-btn" id="btn-ch1" onclick="event.stopPropagation();toggleChapterDetail('ch1')">展开详情 <span class="arrow">▼</span></button>
 </div>
-<div class="cards-grid">
+<div class="cards-grid" id="cards-ch1">
 <div class="quick-card" onclick="openCardModal('card1')">
   <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
         <rect x="10" y="10" width="120" height="40" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
@@ -2647,7 +2660,7 @@ img { max-width: 100%; height: auto; }
   </div>
   <button class="expand-btn" id="btn-ch2" onclick="event.stopPropagation();toggleChapterDetail('ch2')">展开详情 <span class="arrow">▼</span></button>
 </div>
-<div class="cards-grid">
+<div class="cards-grid" id="cards-ch2">
 <div class="quick-card" onclick="openCardModal('card3')">
   <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
         <line x1="140" y1="5" x2="140" y2="105" stroke="#64748b" stroke-width="3" stroke-dasharray="6,3"/>
@@ -2723,7 +2736,7 @@ img { max-width: 100%; height: auto; }
   </div>
   <button class="expand-btn" id="btn-ch3" onclick="event.stopPropagation();toggleChapterDetail('ch3')">展开详情 <span class="arrow">▼</span></button>
 </div>
-<div class="cards-grid">
+<div class="cards-grid" id="cards-ch3">
 <div class="quick-card" onclick="openCardModal('card6')">
   <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
         <line x1="20" y1="55" x2="260" y2="55" stroke="#94a3b8" stroke-width="1"/>
@@ -2785,7 +2798,7 @@ img { max-width: 100%; height: auto; }
   </div>
   <button class="expand-btn" id="btn-ch4" onclick="event.stopPropagation();toggleChapterDetail('ch4')">展开详情 <span class="arrow">▼</span></button>
 </div>
-<div class="cards-grid">
+<div class="cards-grid" id="cards-ch4">
 <div class="quick-card" onclick="openCardModal('card8')">
   <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
         <circle cx="80" cy="55" r="42" fill="#fecaca" stroke="#ef4444" stroke-width="2"/>
@@ -2846,7 +2859,7 @@ img { max-width: 100%; height: auto; }
   </div>
   <button class="expand-btn" id="btn-ch5" onclick="event.stopPropagation();toggleChapterDetail('ch5')">展开详情 <span class="arrow">▼</span></button>
 </div>
-<div class="cards-grid">
+<div class="cards-grid" id="cards-ch5">
 <div class="quick-card" onclick="openCardModal('card10')">
   <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
         <path d="M20,80 L40,80 L50,30 L80,30 L90,50 L120,50 L130,80 L260,80" fill="none" stroke="#ea580c" stroke-width="2"/>
@@ -2915,7 +2928,7 @@ img { max-width: 100%; height: auto; }
   </div>
   <button class="expand-btn" id="btn-ch6" onclick="event.stopPropagation();toggleChapterDetail('ch6')">展开详情 <span class="arrow">▼</span></button>
 </div>
-<div class="cards-grid">
+<div class="cards-grid" id="cards-ch6">
 <div class="quick-card" onclick="openCardModal('card13')">
   <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
         <ellipse cx="70" cy="55" rx="35" ry="40" fill="#bfdbfe" stroke="#3b82f6" stroke-width="2"/>
@@ -2970,7 +2983,7 @@ img { max-width: 100%; height: auto; }
   </div>
   <button class="expand-btn" id="btn-ch7" onclick="event.stopPropagation();toggleChapterDetail('ch7')">展开详情 <span class="arrow">▼</span></button>
 </div>
-<div class="cards-grid">
+<div class="cards-grid" id="cards-ch7">
 <div class="quick-card">
   <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
         <rect x="10" y="15" width="75" height="50" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
@@ -3028,7 +3041,7 @@ img { max-width: 100%; height: auto; }
   </div>
   <button class="expand-btn" id="btn-ch8" onclick="event.stopPropagation();toggleChapterDetail('ch8')">展开详情 <span class="arrow">▼</span></button>
 </div>
-<div class="cards-grid">
+<div class="cards-grid" id="cards-ch8">
 <div class="quick-card">
   <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
         <circle cx="50" cy="40" r="22" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
@@ -3080,7 +3093,7 @@ img { max-width: 100%; height: auto; }
   </div>
   <button class="expand-btn" id="btn-ch9" onclick="event.stopPropagation();toggleChapterDetail('ch9')">展开详情 <span class="arrow">▼</span></button>
 </div>
-<div class="cards-grid">
+<div class="cards-grid" id="cards-ch9">
 <div class="quick-card">
   <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
         <rect x="10" y="10" width="120" height="45" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
@@ -3133,7 +3146,7 @@ img { max-width: 100%; height: auto; }
   </div>
   <button class="expand-btn" id="btn-ch10" onclick="event.stopPropagation();toggleChapterDetail('ch10')">展开详情 <span class="arrow">▼</span></button>
 </div>
-<div class="cards-grid">
+<div class="cards-grid" id="cards-ch10">
 <div class="quick-card">
   <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
         <rect x="10" y="10" width="110" height="25" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
@@ -3182,7 +3195,7 @@ img { max-width: 100%; height: auto; }
   </div>
   <button class="expand-btn" id="btn-ch11" onclick="event.stopPropagation();toggleChapterDetail('ch11')">展开详情 <span class="arrow">▼</span></button>
 </div>
-<div class="cards-grid">
+<div class="cards-grid" id="cards-ch11">
 <div class="quick-card">
   <div class="card-svg"><svg viewBox="0 0 280 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:280px">
         <rect x="10" y="35" width="70" height="30" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
@@ -31416,19 +31429,21 @@ if(document.readyState === 'loading'){
 // 可展开速查卡toggle函数
 function toggleChapterDetail(chapterId) {
   const detail = document.getElementById('detail-' + chapterId);
+  const cards = document.getElementById('cards-' + chapterId);
   const btn = document.getElementById('btn-' + chapterId);
   if (detail && btn) {
     const wasExpanded = detail.classList.contains('expanded');
-    detail.classList.toggle('expanded');
-    btn.classList.toggle('expanded');
     const isExpanded = !wasExpanded;
-    btn.innerHTML = isExpanded ? '收起详情 ▲' : '展开详情 ▼';
-    // 展开后滚动到内容区域
-    if (isExpanded) {
-      setTimeout(function() {
-        detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+    
+    // 切换detail
+    detail.classList.toggle('expanded');
+    // 切换速查卡
+    if (cards) {
+      cards.classList.toggle('expanded');
     }
+    // 切换按钮状态
+    btn.classList.toggle('expanded');
+    btn.innerHTML = isExpanded ? '收起详情 ▲' : '展开详情 ▼';
   }
 }
 
