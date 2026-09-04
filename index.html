@@ -180,6 +180,126 @@ button:focus-visible, .btn:focus-visible, .tool-btn:focus-visible{
   outline-offset:2px;
 }
 
+
+/* ==================== 动画过渡优化 ==================== */
+
+/* 弹窗/模态框动画 */
+.modal-overlay{transition:opacity 0.3s ease,visibility 0.3s ease}
+.modal-overlay:not(.hidden){animation:overlayFadeIn 0.3s ease}
+.modal-overlay.hiding{animation:overlayFadeOut 0.3s ease forwards}
+
+@keyframes overlayFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes overlayFadeOut{from{opacity:1}to{opacity:0}}
+
+.modal-content, .modal-box, .modal-dialog{animation:modalScaleIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)}
+.modal-overlay.hiding .modal-content,
+.modal-overlay.hiding .modal-box,
+.modal-overlay.hiding .modal-dialog{animation:modalScaleOut 0.25s ease forwards}
+
+@keyframes modalScaleIn{
+  from{opacity:0;transform:scale(0.9) translateY(20px)}
+  to{opacity:1;transform:scale(1) translateY(0)}
+}
+@keyframes modalScaleOut{
+  from{opacity:1;transform:scale(1) translateY(0)}
+  to{opacity:0;transform:scale(0.95) translateY(10px)}
+}
+
+/* 侧边栏动画 */
+.sidebar{transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease}
+.sidebar.collapsed{transform:translateX(-100%)}
+.sidebar-overlay{transition:opacity 0.3s ease,visibility 0.3s ease}
+
+/* 滚动动画 - 元素进入视口 */
+.scroll-animate{opacity:0;transform:translateY(30px);transition:opacity 0.6s ease,transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)}
+.scroll-animate.visible{opacity:1;transform:translateY(0)}
+.scroll-animate-left{opacity:0;transform:translateX(-30px);transition:opacity 0.6s ease,transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)}
+.scroll-animate-left.visible{opacity:1;transform:translateX(0)}
+.scroll-animate-right{opacity:0;transform:translateX(30px);transition:opacity 0.6s ease,transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)}
+.scroll-animate-right.visible{opacity:1;transform:translateX(0)}
+.scroll-animate-scale{opacity:0;transform:scale(0.9);transition:opacity 0.6s ease,transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)}
+.scroll-animate-scale.visible{opacity:1;transform:scale(1)}
+
+/* 延迟动画类 */
+.delay-100{transition-delay:0.1s !important}
+.delay-200{transition-delay:0.2s !important}
+.delay-300{transition-delay:0.3s !important}
+.delay-400{transition-delay:0.4s !important}
+.delay-500{transition-delay:0.5s !important}
+
+/* 下拉菜单动画 */
+.dropdown-menu, .dropdown-content{transform-origin:top center;transition:opacity 0.2s ease,transform 0.2s ease,visibility 0.2s ease}
+.dropdown-menu:not(.hidden), .dropdown-content:not(.hidden){animation:dropdownIn 0.25s ease}
+@keyframes dropdownIn{
+  from{opacity:0;transform:translateY(-10px) scale(0.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+/* 数字计数动画 */
+.count-up{font-variant-numeric:tabular-nums}
+
+/* 脉冲动画（强调） */
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.05)}
+}
+.animate-pulse{animation:pulse 2s ease-in-out infinite}
+
+/* 闪烁动画（提醒） */
+@keyframes blink{
+  0%,100%{opacity:1}
+  50%{opacity:0.5}
+}
+.animate-blink{animation:blink 1.5s ease-in-out infinite}
+
+/* 浮动动画 */
+@keyframes float{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-10px)}
+}
+.animate-float{animation:float 3s ease-in-out infinite}
+
+/* 渐变文字动画 */
+@keyframes gradientShift{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+.gradient-text-animate{
+  background:linear-gradient(90deg,#667eea,#764ba2,#f093fb,#667eea);
+  background-size:300% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:gradientShift 4s ease infinite;
+}
+
+/* 进度条动画 */
+@keyframes progressFill{
+  from{width:0}
+}
+.progress-bar-animate{animation:progressFill 1s ease-out}
+
+/* 骨架屏闪烁 */
+@keyframes skeletonShimmer{
+  0%{background-position:-200% 0}
+  100%{background-position:200% 0}
+}
+.skeleton-shimmer{
+  background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
+  background-size:200% 100%;
+  animation:skeletonShimmer 1.5s infinite;
+}
+
+/* 减少动画（尊重用户偏好） */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:0.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:0.01ms !important;
+  }
+}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -516,6 +636,126 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
   };
   
   console.log('✅ 按钮反馈优化已加载');
+})();
+
+
+
+// ==================== 动画过渡优化 ====================
+(function(){
+  // 滚动动画 - 元素进入视口时淡入
+  function initScrollAnimations(){
+    if(!('IntersectionObserver' in window)){
+      // 不支持IntersectionObserver时直接显示所有元素
+      document.querySelectorAll('.scroll-animate, .scroll-animate-left, .scroll-animate-right, .scroll-animate-scale').forEach(function(el){
+        el.classList.add('visible');
+      });
+      return;
+    }
+    
+    const observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    });
+    
+    // 观察所有需要滚动动画的元素
+    document.querySelectorAll('.scroll-animate, .scroll-animate-left, .scroll-animate-right, .scroll-animate-scale').forEach(function(el){
+      observer.observe(el);
+    });
+  }
+  
+  // 为卡片和内容区域自动添加滚动动画
+  function autoAddScrollAnimations(){
+    // 为主要内容卡片添加滚动动画（分批添加，避免性能问题）
+    const cards = document.querySelectorAll('.card:not(.scroll-animate):not(.no-animation)');
+    cards.forEach(function(card, index){
+      // 只添加到视口外的卡片
+      const rect = card.getBoundingClientRect();
+      if(rect.top > window.innerHeight){
+        card.classList.add('scroll-animate');
+        // 分批延迟
+        if(index % 3 === 1) card.classList.add('delay-100');
+        if(index % 3 === 2) card.classList.add('delay-200');
+      }
+    });
+  }
+  
+  // 数字计数动画
+  window.animateCountUp = function(element, target, duration){
+    if(typeof element === 'string'){
+      element = document.getElementById(element);
+    }
+    if(!element) return;
+    
+    duration = duration || 1500;
+    const start = 0;
+    const startTime = performance.now();
+    
+    function update(currentTime){
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // easeOutQuart缓动
+      const easeProgress = 1 - Math.pow(1 - progress, 4);
+      const current = Math.floor(start + (target - start) * easeProgress);
+      element.textContent = current.toLocaleString();
+      
+      if(progress < 1){
+        requestAnimationFrame(update);
+      }
+    }
+    
+    requestAnimationFrame(update);
+  };
+  
+  // 模态框关闭动画辅助函数
+  window.animateModalClose = function(overlayId, callback){
+    const overlay = document.getElementById(overlayId);
+    if(!overlay){
+      if(callback) callback();
+      return;
+    }
+    
+    overlay.classList.add('hiding');
+    setTimeout(function(){
+      overlay.classList.remove('hiding');
+      overlay.classList.add('hidden');
+      overlay.style.display = 'none';
+      if(callback) callback();
+    }, 300);
+  };
+  
+  // 初始化
+  function init(){
+    autoAddScrollAnimations();
+    initScrollAnimations();
+    console.log('✅ 动画过渡优化已加载');
+  }
+  
+  // DOM加载完成后初始化
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  
+  // 页面切换后重新初始化滚动动画
+  const originalSwitchTab = window.switchTab;
+  if(originalSwitchTab){
+    window.switchTab = function(tabName){
+      originalSwitchTab(tabName);
+      // 延迟重新初始化，等待内容渲染
+      setTimeout(function(){
+        autoAddScrollAnimations();
+        initScrollAnimations();
+      }, 100);
+    };
+  }
 })();
 
 </script>
