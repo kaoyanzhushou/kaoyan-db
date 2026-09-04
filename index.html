@@ -359,6 +359,105 @@ button:focus-visible, .btn:focus-visible, .tool-btn:focus-visible{
 .search-footer-hint{display:flex;align-items:center;gap:4px}
 .search-footer-hint kbd{background:#f5f5f5;padding:2px 6px;border-radius:3px;font-family:monospace;font-size:10px;color:#999}
 
+
+/* ==================== 错误提示与反馈优化 ==================== */
+
+/* Toast通知容器 */
+.toast-container{position:fixed;top:20px;right:20px;z-index:10001;display:flex;flex-direction:column;gap:10px;max-width:360px;width:calc(100% - 40px);pointer-events:none}
+.toast-container .toast{pointer-events:auto}
+
+/* Toast通知 */
+.toast{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:12px;background:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.15);border-left:4px solid #999;animation:toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);position:relative;overflow:hidden}
+.toast.hide{animation:toastOut 0.3s ease forwards}
+.toast-success{border-left-color:#10b981}
+.toast-error{border-left-color:#ef4444}
+.toast-warning{border-left-color:#f59e0b}
+.toast-info{border-left-color:#3b82f6}
+
+@keyframes toastIn{
+  from{opacity:0;transform:translateX(100%) scale(0.9)}
+  to{opacity:1;transform:translateX(0) scale(1)}
+}
+@keyframes toastOut{
+  from{opacity:1;transform:translateX(0) scale(1)}
+  to{opacity:0;transform:translateX(100%) scale(0.9)}
+}
+
+.toast-icon{font-size:20px;flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.toast-success .toast-icon{background:#d1fae5;color:#10b981}
+.toast-error .toast-icon{background:#fee2e2;color:#ef4444}
+.toast-warning .toast-icon{background:#fef3c7;color:#f59e0b}
+.toast-info .toast-icon{background:#dbeafe;color:#3b82f6}
+
+.toast-content{flex:1;min-width:0}
+.toast-title{font-size:14px;font-weight:600;color:#333;margin-bottom:2px}
+.toast-message{font-size:13px;color:#666;line-height:1.4}
+.toast-close{width:24px;height:24px;border:none;background:transparent;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#999;transition:all 0.2s ease;flex-shrink:0}
+.toast-close:hover{background:#f0f0f0;color:#666}
+.toast-progress{position:absolute;bottom:0;left:0;height:3px;background:currentColor;opacity:0.3;animation:toastProgress linear forwards}
+@keyframes toastProgress{from{width:100%}to{width:0%}}
+
+/* 表单验证提示 */
+.form-group{position:relative;margin-bottom:16px}
+.form-label{display:block;font-size:13px;font-weight:500;color:#555;margin-bottom:6px}
+.form-label .required{color:#ef4444;margin-left:2px}
+.form-input, .form-select, .form-textarea{width:100%;padding:10px 14px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;color:#333;background:#fff;transition:all 0.2s ease;font-family:inherit;box-sizing:border-box}
+.form-input:focus, .form-select:focus, .form-textarea:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,0.1)}
+.form-input.error, .form-select.error, .form-textarea.error{border-color:#ef4444;background:#fef2f2}
+.form-input.error:focus, .form-select.error:focus, .form-textarea.error:focus{box-shadow:0 0 0 3px rgba(239,68,68,0.1)}
+.form-input.success, .form-select.success, .form-textarea.success{border-color:#10b981}
+.form-error{display:none;font-size:12px;color:#ef4444;margin-top:6px;display:flex;align-items:center;gap:4px}
+.form-error.show{display:flex;animation:errorShake 0.4s ease}
+.form-success{display:none;font-size:12px;color:#10b981;margin-top:6px;display:flex;align-items:center;gap:4px}
+.form-success.show{display:flex}
+
+@keyframes errorShake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-4px)}
+  75%{transform:translateX(4px)}
+}
+
+/* 空状态提示 */
+.empty-state{padding:60px 20px;text-align:center;color:#999}
+.empty-state-icon{font-size:64px;margin-bottom:16px;opacity:0.5}
+.empty-state-title{font-size:16px;font-weight:500;color:#666;margin-bottom:8px}
+.empty-state-desc{font-size:13px;color:#999;margin-bottom:20px;line-height:1.5}
+.empty-state-action{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;transition:all 0.2s ease}
+.empty-state-action:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(102,126,234,0.3)}
+
+/* 加载状态 */
+.loading-state{padding:40px 20px;text-align:center;color:#999}
+.loading-spinner{width:40px;height:40px;border:3px solid #f0f0f0;border-top-color:#667eea;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px}
+.loading-text{font-size:14px;color:#666}
+
+/* 确认对话框 */
+.confirm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10002;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:all 0.3s ease;backdrop-filter:blur(4px)}
+.confirm-overlay.show{opacity:1;visibility:visible}
+.confirm-dialog{width:90%;max-width:400px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;transform:scale(0.9) translateY(20px);transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)}
+.confirm-overlay.show .confirm-dialog{transform:scale(1) translateY(0)}
+.confirm-header{padding:24px 24px 16px;text-align:center}
+.confirm-icon{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 16px}
+.confirm-icon.warning{background:#fef3c7;color:#f59e0b}
+.confirm-icon.danger{background:#fee2e2;color:#ef4444}
+.confirm-icon.info{background:#dbeafe;color:#3b82f6}
+.confirm-icon.success{background:#d1fae5;color:#10b981}
+.confirm-title{font-size:18px;font-weight:600;color:#333;margin-bottom:8px}
+.confirm-message{font-size:14px;color:#666;line-height:1.6}
+.confirm-actions{display:flex;gap:12px;padding:16px 24px 24px}
+.confirm-btn{flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s ease;font-family:inherit}
+.confirm-btn-cancel{background:#f5f5f5;color:#666}
+.confirm-btn-cancel:hover{background:#e0e0e0}
+.confirm-btn-confirm{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.confirm-btn-confirm:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(102,126,234,0.3)}
+.confirm-btn-confirm.danger{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.confirm-btn-confirm.danger:hover{box-shadow:0 4px 12px rgba(239,68,68,0.3)}
+
+/* 工具提示 */
+.tooltip{position:relative}
+.tooltip::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(4px);padding:6px 12px;background:#333;color:#fff;font-size:12px;border-radius:6px;white-space:nowrap;opacity:0;visibility:hidden;transition:all 0.2s ease;pointer-events:none;z-index:1000}
+.tooltip::before{content:'';position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#333;opacity:0;visibility:hidden;transition:all 0.2s ease;pointer-events:none}
+.tooltip:hover::after, .tooltip:hover::before{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -1076,6 +1175,253 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
   });
   
   console.log('✅ 全局搜索功能已加载');
+})();
+
+
+
+// ==================== 错误提示与反馈优化 ====================
+(function(){
+  // Toast通知系统
+  window.showToast = function(options){
+    if(typeof options === 'string'){
+      options = {message: options};
+    }
+    
+    const defaults = {
+      type: 'info', // success, error, warning, info
+      title: '',
+      message: '',
+      duration: 3000,
+      showProgress: true
+    };
+    
+    const config = {...defaults, ...options};
+    const container = document.getElementById('toastContainer');
+    if(!container) return;
+    
+    const icons = {
+      success: '✅',
+      error: '❌',
+      warning: '⚠️',
+      info: 'ℹ️'
+    };
+    
+    const titles = {
+      success: '操作成功',
+      error: '操作失败',
+      warning: '温馨提示',
+      info: '信息提示'
+    };
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + config.type;
+    
+    let progressHtml = '';
+    if(config.showProgress){
+      progressHtml = '<div class="toast-progress" style="animation-duration:' + config.duration + 'ms"></div>';
+    }
+    
+    toast.innerHTML = 
+      '<div class="toast-icon">' + (icons[config.type] || 'ℹ️') + '</div>' +
+      '<div class="toast-content">' +
+        '<div class="toast-title">' + (config.title || titles[config.type] || '提示') + '</div>' +
+        (config.message ? '<div class="toast-message">' + config.message + '</div>' : '') +
+      '</div>' +
+      '<button class="toast-close" onclick="this.parentElement.remove()">✕</button>' +
+      progressHtml;
+    
+    container.appendChild(toast);
+    
+    // 自动关闭
+    if(config.duration > 0){
+      setTimeout(function(){
+        toast.classList.add('hide');
+        setTimeout(function(){
+          if(toast.parentNode){
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, config.duration);
+    }
+    
+    return toast;
+  };
+  
+  // 快捷方法
+  window.showSuccess = function(message, title){
+    return showToast({type: 'success', message: message, title: title});
+  };
+  window.showError = function(message, title){
+    return showToast({type: 'error', message: message, title: title});
+  };
+  window.showWarning = function(message, title){
+    return showToast({type: 'warning', message: message, title: title});
+  };
+  window.showInfo = function(message, title){
+    return showToast({type: 'info', message: message, title: title});
+  };
+  
+  // 确认对话框
+  let confirmCallback = null;
+  
+  window.showConfirm = function(options){
+    if(typeof options === 'string'){
+      options = {message: options};
+    }
+    
+    const defaults = {
+      type: 'warning', // warning, danger, info, success
+      title: '确认操作',
+      message: '确定要执行此操作吗？',
+      confirmText: '确认',
+      cancelText: '取消',
+      onConfirm: null
+    };
+    
+    const config = {...defaults, ...options};
+    
+    const overlay = document.getElementById('confirmOverlay');
+    const icon = document.getElementById('confirmIcon');
+    const title = document.getElementById('confirmTitle');
+    const message = document.getElementById('confirmMessage');
+    const button = document.getElementById('confirmButton');
+    
+    if(!overlay) return;
+    
+    const icons = {
+      warning: '⚠️',
+      danger: '🗑️',
+      info: 'ℹ️',
+      success: '✅'
+    };
+    
+    icon.className = 'confirm-icon ' + config.type;
+    icon.textContent = icons[config.type] || '⚠️';
+    title.textContent = config.title;
+    message.textContent = config.message;
+    button.textContent = config.confirmText;
+    button.className = 'confirm-btn confirm-btn-confirm' + (config.type === 'danger' ? ' danger' : '');
+    
+    confirmCallback = config.onConfirm;
+    
+    overlay.classList.add('show');
+  };
+  
+  window.closeConfirm = function(){
+    const overlay = document.getElementById('confirmOverlay');
+    if(overlay){
+      overlay.classList.remove('show');
+    }
+    confirmCallback = null;
+  };
+  
+  window.executeConfirm = function(){
+    if(typeof confirmCallback === 'function'){
+      confirmCallback();
+    }
+    closeConfirm();
+  };
+  
+  // 表单验证辅助
+  window.validateForm = function(formElement, rules){
+    let isValid = true;
+    const errors = [];
+    
+    for(const fieldName in rules){
+      const field = formElement.querySelector('[name="' + fieldName + '"]');
+      if(!field) continue;
+      
+      const rule = rules[fieldName];
+      const value = field.value.trim();
+      const errorElement = field.parentElement.querySelector('.form-error');
+      
+      // 清除之前的错误状态
+      field.classList.remove('error');
+      if(errorElement) errorElement.classList.remove('show');
+      
+      // 必填验证
+      if(rule.required && !value){
+        field.classList.add('error');
+        if(errorElement){
+          errorElement.textContent = rule.requiredMessage || '此项为必填项';
+          errorElement.classList.add('show');
+        }
+        errors.push({field: fieldName, message: rule.requiredMessage || '此项为必填项'});
+        isValid = false;
+        continue;
+      }
+      
+      // 最小长度验证
+      if(rule.minLength && value.length < rule.minLength){
+        field.classList.add('error');
+        if(errorElement){
+          errorElement.textContent = rule.minLengthMessage || '至少需要' + rule.minLength + '个字符';
+          errorElement.classList.add('show');
+        }
+        errors.push({field: fieldName, message: '至少需要' + rule.minLength + '个字符'});
+        isValid = false;
+        continue;
+      }
+      
+      // 最大长度验证
+      if(rule.maxLength && value.length > rule.maxLength){
+        field.classList.add('error');
+        if(errorElement){
+          errorElement.textContent = rule.maxLengthMessage || '最多' + rule.maxLength + '个字符';
+          errorElement.classList.add('show');
+        }
+        errors.push({field: fieldName, message: '最多' + rule.maxLength + '个字符'});
+        isValid = false;
+        continue;
+      }
+      
+      // 正则验证
+      if(rule.pattern && value && !rule.pattern.test(value)){
+        field.classList.add('error');
+        if(errorElement){
+          errorElement.textContent = rule.patternMessage || '格式不正确';
+          errorElement.classList.add('show');
+        }
+        errors.push({field: fieldName, message: rule.patternMessage || '格式不正确'});
+        isValid = false;
+        continue;
+      }
+      
+      // 自定义验证
+      if(typeof rule.validator === 'function'){
+        const result = rule.validator(value, field);
+        if(result !== true){
+          field.classList.add('error');
+          if(errorElement){
+            errorElement.textContent = result || '验证失败';
+            errorElement.classList.add('show');
+          }
+          errors.push({field: fieldName, message: result || '验证失败'});
+          isValid = false;
+          continue;
+        }
+      }
+      
+      // 验证成功
+      if(value){
+        field.classList.add('success');
+      }
+    }
+    
+    return {isValid: isValid, errors: errors};
+  };
+  
+  // 全局错误处理
+  window.addEventListener('error', function(e){
+    console.error('全局错误:', e.error);
+    // 不显示给用户，避免打扰
+  });
+  
+  window.addEventListener('unhandledrejection', function(e){
+    console.error('未处理的Promise拒绝:', e.reason);
+  });
+  
+  console.log('✅ 错误提示与反馈优化已加载');
 })();
 
 </script>
@@ -30045,6 +30391,26 @@ document.body.appendChild(overlay);
         <div class="search-footer-hint"><kbd>ESC</kbd> 关闭</div>
       </div>
       <div>全局搜索</div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Toast通知容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- 确认对话框 -->
+<div class="confirm-overlay" id="confirmOverlay" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-dialog">
+    <div class="confirm-header">
+      <div class="confirm-icon" id="confirmIcon">⚠️</div>
+      <div class="confirm-title" id="confirmTitle">确认操作</div>
+      <div class="confirm-message" id="confirmMessage">确定要执行此操作吗？</div>
+    </div>
+    <div class="confirm-actions">
+      <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirm()">取消</button>
+      <button class="confirm-btn confirm-btn-confirm" id="confirmButton" onclick="executeConfirm()">确认</button>
     </div>
   </div>
 </div>
