@@ -2651,7 +2651,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
         <div class="tool-card">
           <h4>⏰ 番茄钟专注</h4>
           <p>25分钟专注+5分钟休息，提高学习效率</p>
-          <button class="tool-btn" onclick="startPomodoro()">开始专注</button>
+          <button type="button" class="tool-btn" onclick="event.stopPropagation();startPomodoro()">开始专注</button>
         </div>
       </div>
     </div>
@@ -3224,10 +3224,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
         <div id="pomodoroTimer" style="font-size:56px;font-weight:800;color:var(--primary);font-variant-numeric:tabular-nums;letter-spacing:2px">25:00</div>
         <div id="pomodoroStatus" style="font-size:14px;color:var(--text2);margin:8px 0 16px">准备开始专注背诵</div>
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-          <button class="btn" id="pomodoroStartBtn" onclick="startPomodoro()">▶️ 开始</button>
-          <button class="btn btn-outline" onclick="pausePomodoro()">⏸️ 暂停</button>
-          <button class="btn btn-outline" onclick="resetPomodoro()">🔄 重置</button>
-          <button class="btn btn-outline" onclick="switchPomodoroMode()" id="pomodoroModeBtn">切换为5分钟休息</button>
+          <button type="button" class="btn" id="pomodoroStartBtn" onclick="event.stopPropagation();startPomodoro()">▶️ 开始</button>
+          <button type="button" class="btn btn-outline" onclick="event.stopPropagation();pausePomodoro()">⏸️ 暂停</button>
+          <button type="button" class="btn btn-outline" onclick="event.stopPropagation();resetPomodoro()">🔄 重置</button>
+          <button type="button" class="btn btn-outline" onclick="event.stopPropagation();switchPomodoroMode()" id="pomodoroModeBtn">切换为5分钟休息</button>
         </div>
         <div style="margin-top:16px;font-size:13px;color:var(--text2)">
           今日完成番茄钟：<b id="pomodoroCount" style="color:var(--primary)">0</b> 个
@@ -21545,7 +21545,9 @@ if(calendarMonth < 0){ calendarMonth = 11; calendarYear--; }
 if(calendarMonth > 11){ calendarMonth = 0; calendarYear++; }
 renderCheckinCalendar();
 }
-function startPomodoro(){
+function startPomodoro(event){
+if(event && event.preventDefault) event.preventDefault();
+if(event && event.stopPropagation) event.stopPropagation();
 if(pomodoro.running) return;
 pomodoro.running = true;
 document.getElementById('pomodoroStartBtn').textContent = '⏸️ 暂停';
@@ -21584,14 +21586,18 @@ updatePomodoroDisplay();
 }
 }, 1000);
 }
-function pausePomodoro(){
+function pausePomodoro(event){
+if(event && event.preventDefault) event.preventDefault();
+if(event && event.stopPropagation) event.stopPropagation();
 pomodoro.running = false;
 clearInterval(pomodoro.interval);
 document.getElementById('pomodoroStartBtn').textContent = '▶️ 继续';
 document.getElementById('pomodoroStartBtn').onclick = startPomodoro;
 document.getElementById('pomodoroStatus').textContent = '已暂停';
 }
-function resetPomodoro(){
+function resetPomodoro(event){
+if(event && event.preventDefault) event.preventDefault();
+if(event && event.stopPropagation) event.stopPropagation();
 pomodoro.running = false;
 clearInterval(pomodoro.interval);
 pomodoro.mode = 'work';
@@ -21602,7 +21608,9 @@ document.getElementById('pomodoroStatus').textContent = '准备开始专注背�
 document.getElementById('pomodoroModeBtn').textContent = '切换为5分钟休息';
 updatePomodoroDisplay();
 }
-function switchPomodoroMode(){
+function switchPomodoroMode(event){
+if(event && event.preventDefault) event.preventDefault();
+if(event && event.stopPropagation) event.stopPropagation();
 if(pomodoro.running) return;
 if(pomodoro.mode === 'work'){
 pomodoro.mode = 'break';
