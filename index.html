@@ -25579,6 +25579,22 @@ return `<div style="margin-bottom:14px">
 </div>`;
 }).join('');
 }
+// 批量渲染辅助：使用requestAnimationFrame分批渲染，避免主线程长时间阻塞
+function batchRenderItems(items, renderFn, callback){
+  const batchSize = 5;
+  let index = 0;
+  function renderBatch(){
+    const batch = items.slice(index, index + batchSize);
+    batch.forEach(renderFn);
+    index += batchSize;
+    if(index < items.length){
+      requestAnimationFrame(renderBatch);
+    } else if(callback){
+      callback();
+    }
+  }
+  requestAnimationFrame(renderBatch);
+}
 // 从知识点内容中提取预览（前3个核心概念）
 function getKnowledgePreview(item, enh){
   try{
@@ -29495,6 +29511,16 @@ document.getElementById('pageTitle').textContent = titles[tabName] || '考研资
 if(tabName === 'dashboard') renderDashboard();
 if(tabName === 'progress') renderProgressPage();
 if(tabName === 'plan') renderPlan();
+// 延迟渲染三科知识点（第一次切换到对应tab时才渲染）
+if(tabName === 'politics' && !window.knowledgeRendered.politics){
+  try{ renderKnowledgeSection(politicsData, 'politicsContent', 'tag-politics'); window.knowledgeRendered.politics = true; }catch(e){ console.warn('politics render error:', e); }
+}
+if(tabName === 'physio' && !window.knowledgeRendered.physio){
+  try{ renderKnowledgeSection(physioData, 'physioContent', 'tag-physio'); window.knowledgeRendered.physio = true; if(typeof updatePhysioProgressStats === 'function') setTimeout(updatePhysioProgressStats, 100); }catch(e){ console.warn('physio render error:', e); }
+}
+if(tabName === 'anatomy' && !window.knowledgeRendered.anatomy){
+  try{ renderKnowledgeSection(anatomyData, 'anatomyContent', 'tag-anatomy'); window.knowledgeRendered.anatomy = true; }catch(e){ console.warn('anatomy render error:', e); }
+}
 if(tabName === 'quiz' && !quizState.started) initQuizSetup();
 if(tabName === 'flashcard') initFlashcardSetup();
 if(tabName === 'memorize') renderMemorizePage();
@@ -30666,9 +30692,8 @@ try {
 if(typeof initDefaultAdmin === 'function') initDefaultAdmin();
 } catch(e) { console.warn('initDefaultAdmin error in init:', e); }
 initDarkMode();
-renderKnowledgeSection(politicsData, 'politicsContent', 'tag-politics');
-renderKnowledgeSection(physioData, 'physioContent', 'tag-physio');
-renderKnowledgeSection(anatomyData, 'anatomyContent', 'tag-anatomy');
+// 延迟渲染：三科知识点在第一次切换到对应tab时才渲染，提升首屏加载速度
+window.knowledgeRendered = {politics:false, physio:false, anatomy:false};
 renderPlan();
 renderDashboard();
 renderCountdown();
