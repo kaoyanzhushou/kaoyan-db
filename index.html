@@ -36357,23 +36357,40 @@ function showReadingPassage(){
     return;
   }
   
-  // 优先从ALL_PASSAGES获取完整真题数据
   const fullData = (typeof ALL_PASSAGES !== 'undefined') ? ALL_PASSAGES[key] : null;
   const vocabData = READING_PASSAGE_DATA[key];
   const data = fullData || vocabData;
   
   if(!data) return;
   
-  // 题目HTML
+  // 通用解析模板（基于题型）
+  const analysisTemplates = {
+    '细节题': '本题为细节题，解题关键在于根据题干关键词定位到原文具体段落，然后将选项与原文进行一一比对，注意同义替换和偷换概念。正确答案往往是原文的同义改写，而非原文照搬。',
+    '推理题': '本题为推理题，需要基于原文信息进行合理推断。解题时要找到题干对应的原文位置，理解上下文逻辑关系，注意"言外之意"。切忌过度推理，答案必须有原文依据，不能凭空想象。',
+    '主旨题': '本题为主旨题，考查对文章整体的把握。解题时要关注文章首尾段和各段首句，找出反复出现的关键词和核心话题。正确选项应能概括全文，不能过于宽泛或过于片面。',
+    '例证题': '本题为例证题，考查例子所支持的观点。解题关键是找到例子在原文中的位置，然后向上或向下寻找该例子所论证的论点。注意：例子本身不是答案，例子支持的观点才是答案。',
+    '态度题': '本题为态度题，考查作者或文中人物的观点态度。解题时要关注文中的形容词、副词和转折词，注意区分作者态度和文中人物态度。常见态度词有：positive/negative/neutral/objective/subjective等。',
+    '词义题': '本题为词义猜测题，考查根据上下文推测词义的能力。解题时要找到该词所在的句子，分析上下文的逻辑关系（并列、转折、因果、解释等），利用语境线索推测词义。',
+    '语义题': '本题为语义理解题，考查对句子深层含义的理解。解题时要结合上下文，理解句子的字面意思和言外之意，注意比喻、反讽等修辞手法。'
+  };
+  
+  // 题目HTML（含解析）
   let questionsHtml = '';
   if(fullData && fullData.questions){
     questionsHtml = `
       <div style="background:#fef3c7;padding:16px 20px;border-radius:8px;margin-bottom:20px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px">
           <h4 style="margin:0;color:#92400e;font-size:16px">📝 真题题目（${fullData.questions.length}题）</h4>
-          <button onclick="toggleAnswers()" id="answerToggleBtn" style="background:#f59e0b;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">👁️ 显示答案</button>
+          <div style="display:flex;gap:8px">
+            <button onclick="toggleReadingAnswers()" id="readingAnswerToggleBtn" style="background:#f59e0b;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">👁️ 显示答案</button>
+            <button onclick="toggleReadingAnalysis()" id="readingAnalysisToggleBtn" style="background:#8b5cf6;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">💡 显示解析</button>
+          </div>
         </div>
-        ${fullData.questions.map((q, i) => `
+        ${fullData.questions.map((q, i) => {
+          const qType = q.type || '细节题';
+          const analysis = analysisTemplates[qType] || analysisTemplates['细节题'];
+          const answer = fullData.answers ? (fullData.answers[q.num || (i+1)] || '?') : '?';
+          return `
           <div style="background:#fff;padding:14px 18px;border-radius:8px;margin-bottom:12px;border-left:4px solid #f59e0b">
             <div style="font-size:14px;font-weight:600;color:#1e293b;margin-bottom:10px">${i+1}. ${q.question}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -36381,12 +36398,16 @@ function showReadingPassage(){
                 <div style="font-size:13px;color:#475569;padding:6px 10px;background:#f8fafc;border-radius:4px"><b>${opt}.</b> ${text}</div>
               `).join('')}
             </div>
-            <div class="answer-reveal" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #fbbf24">
-              <span style="background:#16a34a;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">答案：${fullData.answers ? fullData.answers[q.num || (i+1)] : '?'}</span>
-              <span style="margin-left:10px;font-size:12px;color:#64748b">题型：${q.type || '细节题'}</span>
+            <div class="reading-answer-reveal" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #fbbf24">
+              <span style="background:#16a34a;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">✅ 答案：${answer}</span>
+              <span style="margin-left:10px;font-size:12px;color:#64748b">📌 题型：${qType}</span>
+            </div>
+            <div class="reading-analysis-reveal" style="display:none;margin-top:8px;padding:10px 12px;background:#f5f3ff;border-radius:6px;border-left:3px solid #8b5cf6">
+              <div style="font-size:12px;font-weight:600;color:#6d28d9;margin-bottom:4px">💡 解题思路</div>
+              <div style="font-size:12px;color:#4c1d95;line-height:1.7">${analysis}</div>
             </div>
           </div>
-        `).join('')}
+        `}).join('')}
       </div>
     `;
   }
@@ -36398,12 +36419,12 @@ function showReadingPassage(){
       <div style="background:#fff;padding:20px 24px;border-radius:8px;margin-bottom:20px;border:1px solid #e2e8f0">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
           <h4 style="margin:0;color:#1e40af;font-size:16px">📖 文章原文</h4>
-          <button onclick="toggleTranslation()" id="transToggleBtn" style="background:#3b82f6;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🌐 显示翻译</button>
+          <button onclick="toggleReadingTranslation()" id="readingTransToggleBtn" style="background:#3b82f6;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🌐 显示翻译</button>
         </div>
-        <div id="passageEnglish" style="font-size:14px;line-height:2;color:#1e293b;font-family:Georgia,'Times New Roman',serif;text-align:justify">
+        <div id="readingPassageEnglish" style="font-size:14px;line-height:2;color:#1e293b;font-family:Georgia,'Times New Roman',serif;text-align:justify">
           ${fullData.english}
         </div>
-        <div id="passageTranslation" style="display:none;font-size:13px;line-height:1.9;color:#475569;margin-top:16px;padding-top:16px;border-top:2px solid #bfdbfe;background:#f8fafc;padding:16px;border-radius:6px">
+        <div id="readingPassageTranslation" style="display:none;font-size:13px;line-height:1.9;color:#475569;margin-top:16px;padding-top:16px;border-top:2px solid #bfdbfe;background:#f8fafc;padding:16px;border-radius:6px">
           <b style="color:#1e40af">📝 参考译文：</b><br><br>
           ${fullData.translation || '暂无翻译'}
         </div>
@@ -36454,27 +36475,37 @@ function showReadingPassage(){
       ${sentencesHtml}
       
       <div style="margin-top:20px;padding:14px;background:#fef3c7;border-radius:8px;border-left:4px solid #f59e0b">
-        <p style="margin:0;font-size:13px;color:#92400e">💡 <b>做题建议：</b>先通读文章原文，标记不认识的词汇，然后对照高频词汇表记忆。接着完成5道真题题目，最后点击"显示答案"核对答案并分析错误原因。重点长难句建议反复阅读，理解句子结构和翻译技巧。</p>
+        <p style="margin:0;font-size:13px;color:#92400e;line-height:1.8">💡 <b>做题建议：</b>① 先通读文章原文，标记不认识的词汇；② 对照高频词汇表记忆核心单词；③ 完成5道真题题目，先不要看答案；④ 点击"显示答案"核对答案，点击"显示解析"学习解题思路；⑤ 重点长难句建议反复阅读，理解句子结构和翻译技巧。</p>
       </div>
     </div>
   `;
 }
 
-// 切换答案显示
-function toggleAnswers(){
-  const reveals = document.querySelectorAll('.answer-reveal');
-  const btn = document.getElementById('answerToggleBtn');
+// 切换答案显示（阅读模块专用，避免函数名冲突）
+function toggleReadingAnswers(){
+  const reveals = document.querySelectorAll('.reading-answer-reveal');
+  const btn = document.getElementById('readingAnswerToggleBtn');
   let allVisible = true;
   reveals.forEach(r => { if(r.style.display === 'none') allVisible = false; });
   reveals.forEach(r => { r.style.display = allVisible ? 'none' : 'block'; });
   if(btn) btn.textContent = allVisible ? '👁️ 显示答案' : '🙈 隐藏答案';
 }
 
+// 切换解析显示
+function toggleReadingAnalysis(){
+  const reveals = document.querySelectorAll('.reading-analysis-reveal');
+  const btn = document.getElementById('readingAnalysisToggleBtn');
+  let allVisible = true;
+  reveals.forEach(r => { if(r.style.display === 'none') allVisible = false; });
+  reveals.forEach(r => { r.style.display = allVisible ? 'none' : 'block'; });
+  if(btn) btn.textContent = allVisible ? '💡 显示解析' : '🙈 隐藏解析';
+}
+
 // 切换翻译显示
-function toggleTranslation(){
-  const eng = document.getElementById('passageEnglish');
-  const trans = document.getElementById('passageTranslation');
-  const btn = document.getElementById('transToggleBtn');
+function toggleReadingTranslation(){
+  const eng = document.getElementById('readingPassageEnglish');
+  const trans = document.getElementById('readingPassageTranslation');
+  const btn = document.getElementById('readingTransToggleBtn');
   if(trans && eng){
     if(trans.style.display === 'none'){
       trans.style.display = 'block';
@@ -36488,93 +36519,6 @@ function toggleTranslation(){
   }
 }
 
-
-function renderVocabByYear(){
-  const yearSelect = document.getElementById('vocabYearSelect');
-  const container = document.getElementById('vocabContainer');
-  if(!yearSelect || !container) return;
-  
-  const selectedYear = yearSelect.value;
-  const passages = Object.entries(READING_PASSAGE_DATA)
-    .filter(([key, data]) => selectedYear === 'all' || data.year === selectedYear);
-  
-  // 汇总所有词汇
-  const allVocab = {};
-  passages.forEach(([key, data]) => {
-    (data.vocab || []).forEach(v => {
-      if(!allVocab[v]) allVocab[v] = [];
-      allVocab[v].push(`${data.year} Text ${data.text}`);
-    });
-  });
-  
-  const vocabList = Object.entries(allVocab).sort((a,b) => b[1].length - a[1].length);
-  
-  container.innerHTML = `
-    <div style="background:#fff;padding:20px;border-radius:10px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <h4 style="margin:0;color:#1e293b;font-size:18px">📊 高频词汇统计</h4>
-        <span style="color:#64748b;font-size:14px">共 ${vocabList.length} 个词汇</span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
-        ${vocabList.slice(0, 50).map(([word, sources], index) => `
-          <div style="background:${sources.length > 1 ? '#fef3c7' : '#f8fafc'};padding:10px 14px;border-radius:8px;border-left:3px solid ${sources.length > 1 ? '#f59e0b' : '#cbd5e1'}">
-            <div style="font-size:14px;font-weight:600;color:#1e293b;margin-bottom:4px">${index+1}. ${word}</div>
-            <div style="font-size:11px;color:#64748b">出现 ${sources.length} 次</div>
-            <div style="font-size:10px;color:#94a3b8;margin-top:2px">${sources.join(', ')}</div>
-          </div>
-        `).join('')}
-      </div>
-      ${vocabList.length > 50 ? `<p style="text-align:center;color:#64748b;font-size:13px;margin-top:16px">仅显示前50个高频词汇，共${vocabList.length}个</p>` : ''}
-    </div>
-  `;
-}
-
-// 初始化阅读模块（增强版）
-function initReadingModuleEnhanced(){
-  try {
-    initReadingYearSelect();
-    renderReadingQTypes();
-    renderReadingSentences();
-    renderReadingPassages();
-    renderVocabByYear();
-    
-    const done = JSON.parse(localStorage.getItem('readingDone') || '[]');
-    updateReadingProgress(done.length);
-  } catch(e) {
-    console.error('initReadingModuleEnhanced error:', e);
-  }
-}
-
-function switchReadingTab(tabName){
-  // 移除所有tab的active状态
-  document.querySelectorAll('.reading-tab').forEach(t => {
-    t.classList.remove('active');
-    t.style.background = '';
-    t.style.color = '';
-    t.style.boxShadow = '';
-  });
-  // 隐藏所有内容区域
-  document.querySelectorAll('.reading-section').forEach(s => {
-    s.classList.remove('active');
-    s.style.display = 'none';
-  });
-  // 激活当前tab
-  const activeTab = event.target.closest('.reading-tab') || event.target;
-  activeTab.classList.add('active');
-  activeTab.style.background = '#fff';
-  activeTab.style.color = '#1e40af';
-  activeTab.style.boxShadow = '0 1px 3px rgba(0,0,0,.1)';
-  // 显示当前内容区域
-  const targetSection = document.getElementById('reading-' + tabName);
-  if(targetSection){
-    targetSection.classList.add('active');
-    targetSection.style.display = 'block';
-  }
-}
-function toggleTranslation(passageId){
-const el = document.getElementById('translation-' + passageId);
-if(el) el.classList.toggle('show');
-}
 function toggleAnswers(passageId){
 const container = document.getElementById('passage-' + passageId);
 if(container){
