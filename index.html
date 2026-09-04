@@ -25532,6 +25532,7 @@ return `<div style="margin-bottom:14px">
 }
 function renderKnowledgeSection(data, containerId, tagClass){
 const container = document.getElementById(containerId);
+if(!container){ console.warn('renderKnowledgeSection: container not found -', containerId); return; }
 container.innerHTML = data.map(item=>{
 const enh = enhancedData[item.id] || {};
 let extra = '';
@@ -29543,7 +29544,6 @@ if(confirm('确定要清空所有学习数据吗？此操作不可恢复！')){
 localStorage.removeItem(STORAGE_KEY);
 appState = {knowledge:{}, dailyTasks:{}, lastVisit:null};
 renderDashboard();
-renderKnowledgeSection(englishData, 'englishContent', 'tag-english');
 renderKnowledgeSection(politicsData, 'politicsContent', 'tag-politics');
 renderKnowledgeSection(physioData, 'physioContent', 'tag-physio');
 renderKnowledgeSection(anatomyData, 'anatomyContent', 'tag-anatomy');
@@ -30522,7 +30522,6 @@ try {
 if(typeof initDefaultAdmin === 'function') initDefaultAdmin();
 } catch(e) { console.warn('initDefaultAdmin error in init:', e); }
 initDarkMode();
-renderKnowledgeSection(englishData, 'englishContent', 'tag-english');
 renderKnowledgeSection(politicsData, 'politicsContent', 'tag-politics');
 renderKnowledgeSection(physioData, 'physioContent', 'tag-physio');
 renderKnowledgeSection(anatomyData, 'anatomyContent', 'tag-anatomy');
