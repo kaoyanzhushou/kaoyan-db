@@ -34467,6 +34467,41 @@ function handleAiQuickAction(action) {
 
 console.log('✅ AI系统强化已加载');
 
+
+
+// 初始化AI学习助手页面
+function initAIAssistantPage() {
+    if (typeof renderAiQuickActions === 'function') renderAiQuickActions();
+    if (typeof renderAIRecommendations === 'function') renderAIRecommendations();
+    if (typeof renderMemoryReminders === 'function') renderMemoryReminders();
+    if (typeof renderAiChatHistory === 'function') renderAiChatHistory();
+}
+
+// 清除AI问答历史
+function clearAiChatHistory() {
+    if (confirm('确定要清除所有问答历史吗？')) {
+        aiChatHistory = [];
+        localStorage.removeItem('kaoyan_ai_chat_history');
+        if (typeof renderAiChatHistory === 'function') renderAiChatHistory();
+    }
+}
+
+// 监听Enter键提问
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.activeElement && document.activeElement.id === 'aiQuestionInput') {
+        askAI();
+    }
+});
+
+// 页面加载时初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAIAssistantPage);
+} else {
+    initAIAssistantPage();
+}
+
+console.log('✅ AI学习助手页面初始化完成');
+
 </script>
 
 <div class="admin-overlay" id="adminOverlay">
@@ -34831,6 +34866,74 @@ console.log('✅ AI系统强化已加载');
     </div>
     <div class="note-modal-content" id="noteModalContent"></div>
     <div class="note-modal-meta" id="noteModalMeta"></div>
+  </div>
+</div>
+
+
+<div class="tab-content" id="tab-ai-assistant">
+  <div style="max-width:900px;margin:0 auto;padding:20px">
+    
+    <!-- 标题 -->
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:48px;margin-bottom:8px">🤖</div>
+      <h2 style="font-size:24px;font-weight:700;color:#1f2937;margin:0 0 8px 0">AI学习助手</h2>
+      <p style="font-size:14px;color:#6b7280;margin:0">智能答疑、学习建议、个性化辅导，助你高效备考</p>
+    </div>
+    
+    <!-- 快捷操作 -->
+    <div id="aiQuickActions" style="margin-bottom:20px"></div>
+    
+    <!-- 输入区域 -->
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <input type="text" id="aiQuestionInput" placeholder="输入你的问题，例如：动作电位的产生机制是什么？" 
+               style="flex:1;padding:12px 16px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;transition:border 0.2s"
+               onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e5e7eb'">
+        <button onclick="askAI()" style="padding:12px 24px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s"
+                onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(102,126,234,0.4)'"
+                onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+          🚀 提问
+        </button>
+      </div>
+      <div style="font-size:11px;color:#9ca3af">💡 提示：按 Enter 键快速提问，AI会基于考研知识点为你解答</div>
+    </div>
+    
+    <!-- 回答区域 -->
+    <div id="aiAnswerArea" style="display:none;margin-bottom:20px">
+      <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:20px">🤖</span>
+          <span style="font-size:14px;font-weight:600;color:#1e40af">AI回答</span>
+        </div>
+        <div id="aiAnswerContent" style="font-size:14px;color:#1f2937;line-height:1.8"></div>
+      </div>
+    </div>
+    
+    <!-- AI智能推荐 -->
+    <div style="margin-bottom:20px">
+      <h3 style="font-size:16px;font-weight:600;color:#1f2937;margin:0 0 12px 0;display:flex;align-items:center;gap:8px">
+        <span>🎯</span> AI智能推荐
+      </h3>
+      <div id="aiRecommendations"></div>
+    </div>
+    
+    <!-- 记忆曲线提醒 -->
+    <div style="margin-bottom:20px">
+      <h3 style="font-size:16px;font-weight:600;color:#1f2937;margin:0 0 12px 0;display:flex;align-items:center;gap:8px">
+        <span>📚</span> 记忆曲线提醒
+      </h3>
+      <div id="memoryReminders"></div>
+    </div>
+    
+    <!-- 问答历史 -->
+    <div style="margin-bottom:20px">
+      <h3 style="font-size:16px;font-weight:600;color:#1f2937;margin:0 0 12px 0;display:flex;align-items:center;gap:8px">
+        <span>📝</span> 问答历史
+        <button onclick="clearAiChatHistory()" style="margin-left:auto;padding:4px 10px;background:#fee2e2;color:#ef4444;border:none;border-radius:6px;font-size:11px;cursor:pointer">清除历史</button>
+      </h3>
+      <div id="aiChatHistory" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;max-height:300px;overflow-y:auto"></div>
+    </div>
+    
   </div>
 </div>
 
