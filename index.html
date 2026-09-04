@@ -2283,7 +2283,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
         if(progress === 'learned') progressClass = 'learned';
         else if(progress === 'in-progress') progressClass = 'in-progress';
         
-        html += '<li class="knowledge-toc-item" onclick="jumpToKnowledge('' + item.id + '', '' + item.tab + '')">' +
+        html += '<li class="knowledge-toc-item" onclick="jumpToKnowledge(\'' + item.id + '\', \'' + item.tab + '\')">' +
                 '<span class="icon">•</span>' +
                 '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + item.title.substring(0, 20) + '</span>' +
                 '<span class="progress-dot ' + progressClass + '"></span>' +
@@ -2400,13 +2400,13 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
     
     let html = '';
     favorites.forEach(fav => {
-      html += '<div class="favorites-item" onclick="jumpToKnowledge('' + fav.id + '', '' + fav.tab + '');toggleFavoritesPanel();">' +
+      html += '<div class="favorites-item" onclick="jumpToKnowledge(\'' + fav.id + '\', \'' + fav.tab + '\');toggleFavoritesPanel();">' +
               '<span class="icon">⭐</span>' +
               '<div class="content">' +
               '<div class="title">' + fav.title + '</div>' +
               '<div class="desc">' + new Date(fav.time).toLocaleDateString() + '</div>' +
               '</div>' +
-              '<button class="remove" onclick="event.stopPropagation();removeFavorite('' + fav.id + '')">✕</button>' +
+              '<button class="remove" onclick="event.stopPropagation();removeFavorite(\'' + fav.id + '\')">✕</button>' +
               '</div>';
     });
     
@@ -2906,8 +2906,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
     html += '<div class="calendar-header">';
     html += '<div class="calendar-title">📅 学习日历 - ' + year + '年' + monthNames[month] + '</div>';
     html += '<div class="calendar-nav">';
-    html += '<button class="calendar-nav-btn" onclick="renderStudyCalendar('' + containerId + '',' + (month === 0 ? year - 1 : year) + ',' + (month === 0 ? 11 : month - 1) + ')">‹</button>';
-    html += '<button class="calendar-nav-btn" onclick="renderStudyCalendar('' + containerId + '',' + (month === 11 ? year + 1 : year) + ',' + (month === 11 ? 0 : month + 1) + ')">›</button>';
+    html += '<button class="calendar-nav-btn" onclick="renderStudyCalendar(\'' + containerId + '\',' + (month === 0 ? year - 1 : year) + ',' + (month === 0 ? 11 : month - 1) + ')">‹</button>';
+    html += '<button class="calendar-nav-btn" onclick="renderStudyCalendar(\'' + containerId + '\',' + (month === 11 ? year + 1 : year) + ',' + (month === 11 ? 0 : month + 1) + ')">›</button>';
     html += '</div></div>';
     
     html += '<div class="calendar-grid">';
@@ -2976,8 +2976,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
     html += '<div class="trend-chart-header">';
     html += '<div class="trend-chart-title">📈 学习趋势</div>';
     html += '<div class="trend-chart-tabs">';
-    html += '<button class="trend-chart-tab ' + (days === 7 ? 'active' : '') + '" onclick="renderTrendChart('' + containerId + '',7)">近7天</button>';
-    html += '<button class="trend-chart-tab ' + (days === 30 ? 'active' : '') + '" onclick="renderTrendChart('' + containerId + '',30)">近30天</button>';
+    html += '<button class="trend-chart-tab ' + (days === 7 ? 'active' : '') + '" onclick="renderTrendChart(\'' + containerId + '\',7)">近7天</button>';
+    html += '<button class="trend-chart-tab ' + (days === 30 ? 'active' : '') + '" onclick="renderTrendChart(\'' + containerId + '\',30)">近30天</button>';
     html += '</div></div>';
     
     html += '<div class="trend-chart-content">';
@@ -3268,8 +3268,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
       '</div>' +
       '<div class="flashcard-controls">' +
         '<button class="flashcard-btn prev" onclick="prevFlashcard()">← 上一张</button>' +
-        '<button class="flashcard-btn unknown" onclick="markFlashcard('unknown')">❌ 不认识</button>' +
-        '<button class="flashcard-btn know" onclick="markFlashcard('know')">✅ 认识</button>' +
+        '<button class="flashcard-btn unknown" onclick="markFlashcard(\'unknown\')">❌ 不认识</button>' +
+        '<button class="flashcard-btn know" onclick="markFlashcard(\'know\')">✅ 认识</button>' +
         '<button class="flashcard-btn next" onclick="nextFlashcard()">下一张 →</button>' +
         '<button class="flashcard-btn shuffle" onclick="shuffleFlashcards()">🔀 随机</button>' +
       '</div>' +
@@ -3697,8 +3697,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
         }
         html += '</div>';
         html += '<div class="wrongbook-item-actions">';
-        html += '<button class="wrongbook-item-btn mastered" title="标记掌握" onclick="markWrongMastered('' + q.id + '')">' + (q.isMastered ? '✅' : '○') + '</button>';
-        html += '<button class="wrongbook-item-btn delete" title="删除" onclick="removeWrongQuestion('' + q.id + '')">🗑️</button>';
+        html += '<button class="wrongbook-item-btn mastered" title="标记掌握" onclick="markWrongMastered(\'' + q.id + '\')">' + (q.isMastered ? '✅' : '○') + '</button>';
+        html += '<button class="wrongbook-item-btn delete" title="删除" onclick="removeWrongQuestion(\'' + q.id + '\')">🗑️</button>';
         html += '</div></div>';
         
         html += '<div class="wrongbook-question">' + q.question + '</div>';
@@ -3787,7 +3787,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
         const optLabel = String.fromCharCode(65 + idx);
         let optClass = '';
         if(selectedAnswer === optLabel) optClass = 'selected';
-        html += '<div class="wrongbook-practice-option ' + optClass + '" onclick="selectPracticeAnswer('' + optLabel + '')">';
+        html += '<div class="wrongbook-practice-option ' + optClass + '" onclick="selectPracticeAnswer(\'' + optLabel + '\')">';
         html += '<strong>' + optLabel + '.</strong> ' + opt;
         html += '</div>';
       });
@@ -3803,7 +3803,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
       } else {
         html += '<button class="wrongbook-btn success" onclick="finishPractice()">完成练习</button>';
       }
-      html += '<button class="wrongbook-btn danger" onclick="renderWrongbook('wrongbookContainer')">退出练习</button>';
+      html += '<button class="wrongbook-btn danger" onclick="renderWrongbook(\'wrongbookContainer\')">退出练习</button>';
       html += '</div>';
       
       html += '</div>';
@@ -4221,7 +4221,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
       html += '<div class="daily-plan-tasks">';
       tasks.forEach(task => {
         const isCompleted = taskCompletion[task.id]?.completed;
-        html += '<div class="daily-plan-task" onclick="toggleDailyTask('' + task.id + '')">';
+        html += '<div class="daily-plan-task" onclick="toggleDailyTask(\'' + task.id + '\')">';
         html += '<div class="daily-plan-task-checkbox ' + (isCompleted ? 'checked' : '') + '">' + (isCompleted ? '✓' : '') + '</div>';
         html += '<div class="daily-plan-task-content">';
         html += '<div class="daily-plan-task-title ' + (isCompleted ? 'completed' : '') + '">' + task.title + '</div>';
@@ -4511,15 +4511,15 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
     html += '<div class="report-header">';
     html += '<div class="report-title"><span class="icon">📊</span>学习报告 - ' + periodNames[period] + '</div>';
     html += '<div class="report-actions">';
-    html += '<button class="report-btn primary" onclick="renderStudyReport('' + containerId + '', '' + period + '')">🔄 刷新</button>';
-    html += '<button class="report-btn success" onclick="exportStudyReport('' + period + '')">📥 导出报告</button>';
+    html += '<button class="report-btn primary" onclick="renderStudyReport(\'' + containerId + '\', \'' + period + '\')">🔄 刷新</button>';
+    html += '<button class="report-btn success" onclick="exportStudyReport(\'' + period + '\')">📥 导出报告</button>';
     html += '</div></div>';
     
     // 周期切换
     html += '<div class="report-period-tabs">';
-    html += '<button class="report-period-tab ' + (period === 'week' ? 'active' : '') + '" onclick="renderStudyReport('' + containerId + '', 'week')">📅 周报</button>';
-    html += '<button class="report-period-tab ' + (period === 'month' ? 'active' : '') + '" onclick="renderStudyReport('' + containerId + '', 'month')">📆 月报</button>';
-    html += '<button class="report-period-tab ' + (period === 'total' ? 'active' : '') + '" onclick="renderStudyReport('' + containerId + '', 'total')">📈 总报告</button>';
+    html += '<button class="report-period-tab ' + (period === 'week' ? 'active' : '') + '" onclick="renderStudyReport(\'' + containerId + '\', \'week\')">📅 周报</button>';
+    html += '<button class="report-period-tab ' + (period === 'month' ? 'active' : '') + '" onclick="renderStudyReport(\'' + containerId + '\', \'month\')">📆 月报</button>';
+    html += '<button class="report-period-tab ' + (period === 'total' ? 'active' : '') + '" onclick="renderStudyReport(\'' + containerId + '\', \'total\')">📈 总报告</button>';
     html += '</div>';
     
     // 概览统计
@@ -4806,13 +4806,13 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
     
     // 分类标签
     html += '<div class="note-categories">';
-    html += '<span class="note-category-tag active" onclick="filterNotesByCategory('all', this)">全部</span>';
-    html += '<span class="note-category-tag" onclick="filterNotesByCategory('英语（一）', this)">📖 英语</span>';
-    html += '<span class="note-category-tag" onclick="filterNotesByCategory('政治', this)">📕 政治</span>';
-    html += '<span class="note-category-tag" onclick="filterNotesByCategory('运动生理学', this)">🫀 生理学</span>';
-    html += '<span class="note-category-tag" onclick="filterNotesByCategory('运动解剖学', this)">🦴 解剖学</span>';
-    html += '<span class="note-category-tag" onclick="filterNotesByCategory('important', this)">❗ 重点</span>';
-    html += '<span class="note-category-tag" onclick="filterNotesByCategory('review', this)">🔄 待复习</span>';
+    html += '<span class="note-category-tag active" onclick="filterNotesByCategory(\'all\', this)">全部</span>';
+    html += '<span class="note-category-tag" onclick="filterNotesByCategory(\'英语（一）\', this)">📖 英语</span>';
+    html += '<span class="note-category-tag" onclick="filterNotesByCategory(\'政治\', this)">📕 政治</span>';
+    html += '<span class="note-category-tag" onclick="filterNotesByCategory(\'运动生理学\', this)">🫀 生理学</span>';
+    html += '<span class="note-category-tag" onclick="filterNotesByCategory(\'运动解剖学\', this)">🦴 解剖学</span>';
+    html += '<span class="note-category-tag" onclick="filterNotesByCategory(\'important\', this)">❗ 重点</span>';
+    html += '<span class="note-category-tag" onclick="filterNotesByCategory(\'review\', this)">🔄 待复习</span>';
     html += '</div>';
     
     // 筛选器
@@ -4839,7 +4839,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
         };
         const typeLabel = typeLabels[note.type] || typeLabels.normal;
         
-        html += '<div class="note-item" onclick="viewNote('' + note.id + '')">';
+        html += '<div class="note-item" onclick="viewNote(\'' + note.id + '\')">';
         if(note.pinned){
           html += '<div class="note-pinned">📌</div>';
         }
@@ -4852,9 +4852,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
         html += '<span class="note-tag ' + typeLabel.class + '">' + typeLabel.text + '</span>';
         html += '</div>';
         html += '<div class="note-item-actions" onclick="event.stopPropagation()">';
-        html += '<button class="note-item-btn pin" title="置顶" onclick="toggleNotePin('' + note.id + '')">' + (note.pinned ? '📌' : '📍') + '</button>';
-        html += '<button class="note-item-btn edit" title="编辑" onclick="editNote('' + note.id + '')">✏️</button>';
-        html += '<button class="note-item-btn delete" title="删除" onclick="deleteNote('' + note.id + '')">🗑️</button>';
+        html += '<button class="note-item-btn pin" title="置顶" onclick="toggleNotePin(\'' + note.id + '\')">' + (note.pinned ? '📌' : '📍') + '</button>';
+        html += '<button class="note-item-btn edit" title="编辑" onclick="editNote(\'' + note.id + '\')">✏️</button>';
+        html += '<button class="note-item-btn delete" title="删除" onclick="deleteNote(\'' + note.id + '\')">🗑️</button>';
         html += '</div></div>';
         
         html += '<div class="note-title">' + note.title + '</div>';
@@ -5375,6 +5375,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
     <div id="notesContainer"></div>
   </div>
 </div>
+
+
 
 
   <div id="targetBannerContainer"></div>
