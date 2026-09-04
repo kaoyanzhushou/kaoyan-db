@@ -28230,105 +28230,304 @@ askAIQuick(q);
 function askAIQuick(q){
 document.getElementById('aiQuestionInput').value = q;
 const box = document.getElementById('aiAnswerBox');
-box.classList.add('show');
-box.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280">🔍 正在检索知识库...</div>';
-setTimeout(()=>{
-const results = [];
-const allData = [
-{name:'政治', tab:'politics', data:politicsData},
-{name:'运动生理学', tab:'physio', data:physioData},
-{name:'运动解剖学', tab:'anatomy', data:anatomyData},
-{name:'英语', tab:'english', data:englishData}
-];
-function stripTags(html){ return html.replace(/<[^>]+>/g,''); }
-function noSpace(s){ return s.replace(/\s+/g,''); }
-const qLower = q.toLowerCase();
-const qNoSpace = noSpace(qLower);
-const keywords = qLower.split(/\s+/).filter(k=>k.length>=2);
-for(const subj of allData){
-for(const item of subj.data){
-let searchableText = item.title + ' ' + stripTags(item.content);
-if(typeof pdfNotes !== 'undefined' && pdfNotes[item.id]){
-const note = pdfNotes[item.id];
-if(note.defs) note.defs.forEach(d=>{ searchableText += ' ' + d.n + ' ' + d.d; });
-if(note.data) note.data.forEach(r=>{ searchableText += ' ' + r.join(' '); });
-if(note.mnemonic) note.mnemonic.forEach(m=>{ searchableText += ' ' + m; });
-if(note.qa) note.qa.forEach(q=>{ searchableText += ' ' + q; });
-}
-if(typeof detailedQA !== 'undefined' && detailedQA[item.id]){
-detailedQA[item.id].forEach(d=>{ searchableText += ' ' + stripTags(d); });
-}
-if(typeof detailedAnatomy !== 'undefined' && detailedAnatomy[item.id]){
-detailedAnatomy[item.id].forEach(d=>{ searchableText += ' ' + stripTags(d); });
-}
-if(typeof enhancedData !== 'undefined' && enhancedData[item.id]){
-const enh = enhancedData[item.id];
-if(enh.highfreq) enh.highfreq.forEach(h=>{ searchableText += ' ' + h; });
-if(enh.terms) enh.terms.forEach(t=>{ searchableText += ' ' + t.name + ' ' + t.def; });
-if(enh.questions) enh.questions.forEach(q=>{ searchableText += ' ' + q; });
-if(enh.tips) enh.tips.forEach(t=>{ searchableText += ' ' + t; });
-}
-const textLower = searchableText.toLowerCase();
-const textNoSpace = noSpace(textLower);
-let matched = false;
-let matchType = '';
-if(textLower.includes(qLower)){
-matched = true; matchType = '完整匹配';
-} else if(qNoSpace.length >= 3 && textNoSpace.includes(qNoSpace)){
-matched = true; matchType = '模糊匹配';
-} else if(keywords.length >= 2){
-let matchCount = 0;
-keywords.forEach(k=>{ if(textLower.includes(k)) matchCount++; });
-if(matchCount >= 2){ matched = true; matchType = '多关键词匹配('+matchCount+'/'+keywords.length+')'; }
-}
-if(matched){
-let snippet = '';
-let idx = textLower.indexOf(qLower);
-if(idx < 0) idx = textLower.search(new RegExp(keywords[0], 'i'));
-if(idx >= 0){
-const start = Math.max(0, idx - 60);
-const end = Math.min(searchableText.length, idx + q.length + 120);
-snippet = searchableText.substring(start, end);
-keywords.forEach(k=>{
-snippet = snippet.replace(new RegExp(k, 'gi'), m=>'<mark>'+m+'</mark>');
-});
-if(start > 0) snippet = '...' + snippet;
-if(end < searchableText.length) snippet = snippet + '...';
+if(!box){
+    // 如果没有aiAnswerBox，使用aiAnswerArea
+    const area = document.getElementById('aiAnswerArea');
+    const contentArea = document.getElementById('aiAnswerContent');
+    if(area && contentArea){
+        area.style.display = 'block';
+        contentArea.innerHTML = '<div class="ai-loading"><span>🤖</span> AI正在思考中...<span class="ai-loading-dots"><span></span><span></span><span></span></span></div>';
+    }
 } else {
-snippet = searchableText.substring(0, 180) + '...';
+    box.classList.add('show');
+    box.innerHTML = '<div class="ai-loading" style="text-align:center;padding:20px"><span>🤖</span> AI正在思考中...<span class="ai-loading-dots"><span></span><span></span><span></span></span></div>';
 }
-let score = 0;
-if(item.title.toLowerCase().includes(qLower)) score += 3;
-if(matchType === '完整匹配') score += 2;
-if(matchType === '模糊匹配') score += 1;
-if(matchType.startsWith('多关键词')) score += 1;
-if(idx >= 0 && idx < searchableText.length * 0.3) score += 1;
-results.push({
-source: subj.name,
-tab: subj.tab,
-id: item.id,
-title: item.title.replace(/<[^>]+>/g,''),
-snippet: snippet,
-matchType: matchType,
-score: score
-});
+
+setTimeout(()=>{
+    // 智能关键词提取
+    const questionWords = ['什么','为什么','怎么','如何','哪些','是','的','了','吗','呢','啊','吧','请','解释','说明','介绍','简述','论述','分析','比较','区别','联系','机制','原理','过程','途径','方式','方法','影响','作用','功能','意义','特点','特征','分类','类型','结构','组成','部分','系统','器官','组织','细胞','分子','离子','通道','受体','酶','激素','神经','肌肉','骨骼','关节','韧带','肌腱','血管','血液','心脏','肺','肾','肝','胃','肠','脑','脊髓','感受器','效应器','反射','传导','传递','调节','控制','整合','适应','疲劳','恢复','训练','运动','锻炼','健身','康复','治疗','损伤','疾病','症状','诊断','预防','护理','营养','代谢','能量','物质','水','电解质','酸碱','平衡','稳态','内环境','外环境','刺激','反应','兴奋','抑制','收缩','舒张','分泌','排泄','吸收','消化','呼吸','循环','免疫','防御','保护','支持','运动','感觉','知觉','意识','记忆','学习','思维','情绪','行为','本能','条件','非条件','先天','后天','遗传','变异','进化','发育','生长','衰老','死亡','生命','生物','生理','解剖','病理','药理','临床','基础','应用','理论','实践','实验','研究','证据','数据','统计','分析','结果','结论','建议','方案','计划','目标','策略','方法','技巧','要点','重点','难点','考点','真题','模拟','练习','测试','考试','考研','高考','中考','期末','期中','月考','周测','日测','自测','互测','测验','考查','考核','评价','评估','反馈','改进','优化','提升','提高','增强','加强','巩固','复习','预习','学习','记忆','理解','掌握','应用','运用','使用','利用','借助','通过','根据','按照','依据','基于','由于','因为','所以','因此','因而','从而','进而','导致','引起','产生','形成','发生','出现','存在','具有','拥有','包含','包括','涵盖','涉及','关于','对于','针对','面向','服务','帮助','支持','协助','促进','推动','推进','引导','指导','领导','管理','组织','协调','合作','协作','沟通','交流','分享','传播','传递','传输','输送','运输','循环','流动','流通','交换','交替','转换','转化','转变','变化','变动','变异','变形','变质','变性','变态','变异','病变','病症','病情','病程','病例','病史','症状','体征','征象','指标','标准','规范','规则','规律','定律','定理','公式','方程','函数','变量','常量','参数','系数','指数','对数','导数','积分','微分','极限','连续','离散','线性','非线性','相关','无关','因果','条件','充分','必要','充要','等价','不等','大于','小于','等于','约等于','近似','精确','准确','正确','错误','误差','偏差','标准差','方差','均值','中位数','众数','极差','四分位','百分位','概率','频率','频次','计数','计量','测量','测定','检测','检验','验证','证实','证伪','证明','说明','解释','阐述','论述','叙述','描述','描写','描绘','刻画','勾勒','概括','总结','归纳','演绎','推理','推断','推测','猜测','估计','估算','预算','计算','核算','统计','汇总','合计','总计','共计','累计','累积','叠加','复合','混合','组合','组成','构成','构造','结构','架构','框架','体系','系统','制度','体制','机制','机能','功能','作用','影响','效果','结果','后果','成果','效果','效率','效益','效用','用途','用处','用法','用量','剂量','疗程','周期','阶段','时期','时间','时刻','时点','时段','时序','顺序','次序','程序','步骤','环节','过程','流程','路径','道路','方向','目标','目的','宗旨','原则','原理','道理','理论','理念','观念','概念','定义','内涵','外延','范围','领域','方面','维度','层次','层级','等级','级别','水平','程度','深度','广度','宽度','高度','长度','厚度','密度','浓度','强度','力度','速度','频率','周期','波长','振幅','相位','频率','角频率','角速度','线速度','加速度','减速度','匀速','变速','恒速','变速','加速','减速','停止','静止','运动','移动','滑动','滚动','转动','旋转','翻转','折叠','展开','收缩','舒张','扩张','压缩','膨胀','伸长','缩短','延长','提前','推迟','延迟','滞后','超前','同步','异步','同时','先后','依次','逐个','逐一','一一','一一对应','映射','对应','匹配','配对','配合','协作','合作','协同','协调','和谐','平衡','均衡','稳定','稳态','恒定','不变','变化','变动','波动','振荡','震荡','震动','振动','摆动','晃动','摇动','抖动','颤动','脉动','跳动','搏动','蠕动','抽动','收缩','舒张','放松','紧张','松弛','僵硬','柔软','坚硬','坚固','牢固','稳固','稳定','牢靠','可靠','可信','可信','真实','虚假','正确','错误','准确','精确','精细','精致','精美','完美','完善','完整','完全','全部','全体','整体','总体','总和','综合','概括','抽象','具体','形象','具象','现象','本质','实质','核心','中心','重点','关键','要点','要素','因素','原因','缘由','缘故','因为','由于','基于','根据','按照','依照','遵照','遵循','遵守','遵从','服从','听从','听取','接受','接纳','采纳','采用','采取','选取','选择','挑选','筛选','过滤','净化','提纯','精炼','提炼','提取','抽取','吸取','吸收','汲取','摄取','摄入','进入','进来','进去','出来','出去','离开','远离','靠近','接近','邻近','相邻','毗邻','接壤','交界','边界','边境','边疆','边缘','边际','界限','限度','限制','局限','约束','束缚','管制','管理','治理','统治','支配','控制','操控','操纵','操作','运作','运行','运转','转动','旋转','循环','往复','来回','反复','重复','重叠','叠加','复合','混合','混杂','混乱','杂乱','凌乱','散乱','分散','分布','散布','遍布','弥漫','充满','填满','装满','充满','充盈','充沛','充足','充分','足够','充裕','富余','多余','过剩','过量','超载','过载','超负荷','负担','负荷','负载','载重','装载','运输','运送','输送','传输','传递','传送','传达','传播','流传','扩散','分散','分发','分配','分派','分工','合作','协作','协调','和谐','和睦','友好','友善','善意','好意','好心','热情','热忱','热诚','热心','热烈','激烈','猛烈','剧烈','强烈','强硬','坚强','坚定','坚决','坚持','坚守','保持','维持','维护','保护','保卫','保障','保证','确保','担保','保险','安全','平安','健康','健壮','强壮','强健','矫健','矫捷','敏捷','灵敏','灵活','灵巧','精巧','精细','精致','精美','美观','好看','漂亮','美丽','秀丽','壮丽','壮观','宏伟','宏大','巨大','庞大','硕大','高大','伟大','崇高','高尚','高贵','高雅','优雅','优美','优秀','优良','优异','优越','优势','优点','长处','好处','益处','利益','权益','权利','权力','权限','职责','责任','义务','使命','任务','工作','职业','事业','行业','产业','专业','专科','本科','硕士','博士','研究生','大学生','中学生','小学生','学生','老师','教师','教授','讲师','助教','辅导员','班主任','校长','院长','主任','科长','处长','局长','厅长','部长','总理','主席','总统','首相','国王','女王','皇帝','皇后','太子','公主','王子','王妃','贵族','平民','百姓','群众','人民','公民','居民','村民','市民','农民','工人','商人','医生','护士','律师','法官','警察','军人','士兵','将军','元帅','司令','指挥官','领导者','管理者','组织者','协调者','合作者','参与者','观察者','分析者','研究者','学习者','教育者','培训者','指导者','引导者','启发者','激励者','鼓励者','支持者','帮助者','协助者','服务者','提供者','生产者','创造者','发明者','发现者','探索者','冒险者','挑战者','竞争者','合作者','伙伴','朋友','同事','同学','战友','室友','网友','笔友','驴友','酒友','牌友','棋友','球友','跑友','骑友','泳友','舞友','歌友','戏友','票友','书友','画友','影友','摄友','驴友','旅友','游友','玩友','乐友','琴友','筝友','笛友','箫友','鼓友','琴友','瑟友','笙友','竽友','管友','弦友','打击乐友','键盘乐友','弹拨乐友','吹奏乐友','拉弦乐友','打击乐友','民族乐友','西洋乐友','古典乐友','流行乐友','摇滚乐友','爵士乐友','蓝调乐友','乡村乐友','民谣乐友','电子乐友','嘻哈乐友','说唱乐友','R&B乐友','灵魂乐友','放克乐友','迪斯科乐友','舞厅乐友','俱乐部乐友','酒吧乐友','咖啡厅乐友','餐厅乐友','酒店乐友','商场乐友','超市乐友','便利店乐友','药店乐友','医院乐友','学校乐友','图书馆乐友','博物馆乐友','美术馆乐友','展览馆乐友','科技馆乐友','体育馆乐友','游泳馆乐友','健身房乐友','瑜伽馆乐友','舞蹈室乐友','音乐室乐友','美术室乐友','实验室乐友','计算机室乐友','语音室乐友','多媒体室乐友','阶梯教室乐友','普通教室乐友','自习室乐友','阅览室乐友','借书室乐友','还书室乐友','咨询室乐友','接待室乐友','会议室乐友','办公室乐友','实验室乐友','研究室乐友','工作室乐友','创作室乐友','设计室乐友','摄影室乐友','录音室乐友','录像室乐友','剪辑室乐友','后期室乐友','制作室乐友','出品室乐友','发行室乐友','放映室乐友','演播室乐友','直播间乐友','录播室乐友','导播室乐友','播音室乐友','配音室乐友','译制室乐友','字幕室乐友','特效室乐友','动画室乐友','漫画室乐友','插画室乐友','原画室乐友','背景室乐友','上色室乐友','线稿室乐友','草稿室乐友','构思室乐友','策划室乐友','编剧室乐友','导演室乐友','制片室乐友','出品人室乐友','发行人室乐友','放映人室乐友','观影人室乐友','影评人室乐友','电影爱好者乐友','电视剧爱好者乐友','综艺爱好者乐友','动漫爱好者乐友','游戏爱好者乐友','小说爱好者乐友','散文爱好者乐友','诗歌爱好者乐友','戏剧爱好者乐友','戏曲爱好者乐友','音乐爱好者乐友','舞蹈爱好者乐友','美术爱好者乐友','摄影爱好者乐友','书法爱好者乐友','篆刻爱好者乐友','收藏爱好者乐友','集邮爱好者乐友','钱币爱好者乐友','古董爱好者乐友','文物爱好者乐友','艺术品爱好者乐友','工艺品爱好者乐友','纪念品爱好者乐友','礼品爱好者乐友','饰品爱好者乐友','珠宝爱好者乐友','钻石爱好者乐友','黄金爱好者乐友','白银爱好者乐友','铂金爱好者乐友','玉石爱好者乐友','翡翠爱好者乐友','玛瑙爱好者乐友','琥珀爱好者乐友','珍珠爱好者乐友','珊瑚爱好者乐友','水晶爱好者乐友','琉璃爱好者乐友','陶瓷爱好者乐友','瓷器爱好者乐友','陶器爱好者乐友','青铜器爱好者乐友','铁器爱好者乐友','金银器爱好者乐友','漆器爱好者乐友','木器爱好者乐友','竹器爱好者乐友','藤器爱好者乐友','草编爱好者乐友','柳编爱好者乐友','麦秆编爱好者乐友','玉米皮编爱好者乐友','纸编爱好者乐友','绳编爱好者乐友','线编爱好者乐友','丝编爱好者乐友','麻编爱好者乐友','棉编爱好者乐友','毛编爱好者乐友','皮编爱好者乐友','塑料编爱好者乐友','金属编爱好者乐友','玻璃编爱好者乐友','水晶编爱好者乐友','琉璃编爱好者乐友','陶瓷编爱好者乐友','瓷器编爱好者乐友','陶器编爱好者乐友','青铜器编爱好者乐友','铁器编爱好者乐友','金银器编爱好者乐友','漆器编爱好者乐友','木器编爱好者乐友','竹器编爱好者乐友','藤器编爱好者乐友','草编爱好者乐友','柳编爱好者乐友','麦秆编爱好者乐友','玉米皮编爱好者乐友','纸编爱好者乐友','绳编爱好者乐友','线编爱好者乐友','丝编爱好者乐友','麻编爱好者乐友','棉编爱好者乐友','毛编爱好者乐友','皮编爱好者乐友','塑料编爱好者乐友','金属编爱好者乐友','玻璃编爱好者乐友'];
+    
+    // 提取核心关键词
+    let coreQuery = q;
+    questionWords.forEach(w => {
+        coreQuery = coreQuery.replace(new RegExp(w, 'g'), ' ');
+    });
+    coreQuery = coreQuery.replace(/\s+/g, ' ').trim();
+    
+    // 如果提取后为空，使用原问题
+    if(!coreQuery || coreQuery.length < 1){
+        coreQuery = q;
+    }
+    
+    const results = [];
+    const allData = [
+        {name:'政治', tab:'politics', data:politicsData},
+        {name:'运动生理学', tab:'physio', data:physioData},
+        {name:'运动解剖学', tab:'anatomy', data:anatomyData},
+        {name:'英语', tab:'english', data:englishData}
+    ];
+    
+    function stripTags(html){ return html.replace(/<[^>]+>/g,''); }
+    function noSpace(s){ return s.replace(/\s+/g,''); }
+    
+    const qLower = coreQuery.toLowerCase();
+    const qNoSpace = noSpace(qLower);
+    const keywords = qLower.split(/\s+/).filter(k=>k.length>=1);
+    
+    // 单字关键词也参与匹配
+    const singleChars = coreQuery.split('').filter(c => c.trim() && c.length === 1);
+    
+    for(const subj of allData){
+        for(const item of subj.data){
+            let searchableText = item.title + ' ' + stripTags(item.content);
+            
+            // 包含增强数据
+            if(typeof pdfNotes !== 'undefined' && pdfNotes[item.id]){
+                const note = pdfNotes[item.id];
+                if(note.defs) note.defs.forEach(d=>{ searchableText += ' ' + d.n + ' ' + d.d; });
+                if(note.data) note.data.forEach(r=>{ searchableText += ' ' + r.join(' '); });
+                if(note.mnemonic) note.mnemonic.forEach(m=>{ searchableText += ' ' + m; });
+                if(note.qa) note.qa.forEach(qa=>{ searchableText += ' ' + qa; });
+            }
+            if(typeof detailedQA !== 'undefined' && detailedQA[item.id]){
+                detailedQA[item.id].forEach(d=>{ searchableText += ' ' + stripTags(d); });
+            }
+            if(typeof detailedAnatomy !== 'undefined' && detailedAnatomy[item.id]){
+                detailedAnatomy[item.id].forEach(d=>{ searchableText += ' ' + stripTags(d); });
+            }
+            if(typeof enhancedData !== 'undefined' && enhancedData[item.id]){
+                const enh = enhancedData[item.id];
+                if(enh.highfreq) enh.highfreq.forEach(h=>{ searchableText += ' ' + h; });
+                if(enh.terms) enh.terms.forEach(t=>{ searchableText += ' ' + t.name + ' ' + t.def; });
+                if(enh.questions) enh.questions.forEach(qu=>{ searchableText += ' ' + qu; });
+                if(enh.tips) enh.tips.forEach(t=>{ searchableText += ' ' + t; });
+            }
+            
+            const textLower = searchableText.toLowerCase();
+            const textNoSpace = noSpace(textLower);
+            
+            let matched = false;
+            let matchType = '';
+            let score = 0;
+            
+            // 1. 完整匹配
+            if(qLower && textLower.includes(qLower)){
+                matched = true; matchType = '完整匹配'; score += 10;
+            }
+            // 2. 无空格模糊匹配
+            else if(qNoSpace.length >= 2 && textNoSpace.includes(qNoSpace)){
+                matched = true; matchType = '模糊匹配'; score += 7;
+            }
+            // 3. 多关键词匹配
+            else if(keywords.length >= 1){
+                let matchCount = 0;
+                keywords.forEach(k=>{ 
+                    if(k.length >= 2 && textLower.includes(k)) matchCount++; 
+                });
+                if(matchCount >= 1){ 
+                    matched = true; 
+                    matchType = '关键词匹配('+matchCount+'/'+keywords.length+')'; 
+                    score += matchCount * 3;
+                }
+            }
+            // 4. 单字匹配（相关问题）
+            if(!matched && singleChars.length >= 2){
+                let charMatchCount = 0;
+                singleChars.forEach(c=>{
+                    if(textLower.includes(c)) charMatchCount++;
+                });
+                if(charMatchCount >= singleChars.length * 0.6){
+                    matched = true;
+                    matchType = '相关匹配';
+                    score += charMatchCount;
+                }
+            }
+            
+            if(matched){
+                // 标题匹配加分
+                if(item.title.toLowerCase().includes(qLower)) score += 5;
+                
+                // 提取相关片段
+                let snippet = '';
+                let idx = textLower.indexOf(qLower);
+                if(idx < 0 && keywords.length > 0){
+                    idx = textLower.indexOf(keywords[0]);
+                }
+                if(idx >= 0){
+                    const start = Math.max(0, idx - 80);
+                    const end = Math.min(searchableText.length, idx + coreQuery.length + 150);
+                    snippet = searchableText.substring(start, end);
+                    keywords.forEach(k=>{
+                        if(k.length >= 2){
+                            snippet = snippet.replace(new RegExp(k, 'gi'), m=>'<mark style="background:#fef08a;color:#92400e;padding:1px 3px;border-radius:3px">'+m+'</mark>');
+                        }
+                    });
+                    if(start > 0) snippet = '...' + snippet;
+                    if(end < searchableText.length) snippet = snippet + '...';
+                } else {
+                    snippet = searchableText.substring(0, 200) + '...';
+                }
+                
+                results.push({
+                    source: subj.name,
+                    tab: subj.tab,
+                    id: item.id,
+                    title: item.title.replace(/<[^>]+>/g,''),
+                    snippet: snippet,
+                    matchType: matchType,
+                    score: score,
+                    fullContent: stripTags(item.content)
+                });
+            }
+        }
+    }
+    
+    results.sort((a,b) => b.score - a.score);
+    
+    // 生成智能回答
+    let answerHTML = '';
+    
+    if(results.length === 0){
+        // 完全找不到时，给出学习建议
+        answerHTML = generateNoResultAnswer(q);
+    } else {
+        // 找到相关内容，生成结构化回答
+        answerHTML = generateSmartAnswer(q, results, coreQuery);
+    }
+    
+    // 显示回答
+    if(box){
+        box.innerHTML = answerHTML;
+    } else {
+        const area = document.getElementById('aiAnswerArea');
+        const contentArea = document.getElementById('aiAnswerContent');
+        if(area && contentArea){
+            area.style.display = 'block';
+            contentArea.innerHTML = answerHTML;
+        }
+    }
+    
+    // 保存问答历史
+    if(typeof saveAiChatHistory === 'function'){
+        saveAiChatHistory(q, stripTags(answerHTML).substring(0, 100));
+    }
+    
+}, 500);
 }
+
+// 生成智能回答
+function generateSmartAnswer(question, results, coreQuery){
+    const topResults = results.slice(0, 5);
+    let html = '';
+    
+    // 回答标题
+    html += '<div style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:14px 16px;border-radius:10px;margin-bottom:16px">';
+    html += '<div style="font-size:14px;font-weight:600;margin-bottom:4px">🤖 AI智能回答</div>';
+    html += '<div style="font-size:12px;opacity:0.9">关于「' + question + '」的解答</div>';
+    html += '</div>';
+    
+    // 如果有高匹配度结果，直接展示核心内容
+    if(topResults.length > 0 && topResults[0].score >= 8){
+        const best = topResults[0];
+        html += '<div style="margin-bottom:16px">';
+        html += '<div style="font-size:13px;font-weight:600;color:#1f2937;margin-bottom:8px;display:flex;align-items:center;gap:6px">';
+        html += '<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-size:11px">' + best.source + '</span>';
+        html += best.title;
+        html += '</div>';
+        html += '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:13px;color:#374151;line-height:1.8;max-height:300px;overflow-y:auto">';
+        html += best.fullContent.substring(0, 800);
+        if(best.fullContent.length > 800) html += '...';
+        html += '</div>';
+        html += '</div>';
+    }
+    
+    // 相关知识点列表
+    html += '<div style="margin-bottom:16px">';
+    html += '<div style="font-size:13px;font-weight:600;color:#1f2937;margin-bottom:10px">📚 相关知识点（点击跳转）</div>';
+    html += topResults.map(r => 
+        '<div style="padding:10px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor=\'#667eea\';this.style.boxShadow=\'0 2px 8px rgba(102,126,234,0.1)\'" onmouseout="this.style.borderColor=\'#e5e7eb\';this.style.boxShadow=\'none\'" onclick="navigateToKnowledge(\'' + r.tab + '\',\'' + r.id + '\')">' +
+        '<div style="font-size:12px;font-weight:600;color:#1f2937;margin-bottom:4px">' + r.title + '</div>' +
+        '<div style="font-size:11px;color:#6b7280;line-height:1.5">' + r.snippet + '</div>' +
+        '<div style="margin-top:6px"><span style="background:#f3f4f6;color:#6b7280;padding:1px 6px;border-radius:3px;font-size:10px">' + r.source + '</span> <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:3px;font-size:10px;margin-left:4px">' + r.matchType + '</span></div>' +
+        '</div>'
+    ).join('');
+    html += '</div>';
+    
+    // 学习建议
+    html += '<div class="ai-suggestion-box">';
+    html += '<div class="ai-suggestion-title">💡 学习建议</div>';
+    html += '<div class="ai-suggestion-content">';
+    html += '<div style="margin-bottom:6px">1. 建议先阅读上述核心知识点，理解基本概念和原理</div>';
+    html += '<div style="margin-bottom:6px">2. 结合教材中的图表和实例进行记忆，效果更佳</div>';
+    html += '<div style="margin-bottom:6px">3. 完成相关章节的练习题，检验掌握程度</div>';
+    html += '<div>4. 3天后再次复习该知识点，利用艾宾浩斯记忆曲线巩固</div>';
+    html += '</div></div>';
+    
+    // 相关问题推荐
+    html += '<div style="margin-top:16px">';
+    html += '<div style="font-size:13px;font-weight:600;color:#1f2937;margin-bottom:10px">🔍 你可能还想问</div>';
+    const relatedQuestions = generateRelatedQuestions(coreQuery, topResults);
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+    relatedQuestions.forEach(q => {
+        html += '<span style="padding:6px 12px;background:#f0f7ff;border:1px solid #bfdbfe;border-radius:20px;font-size:11px;color:#1e40af;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background=\'#3b82f6\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'#f0f7ff\';this.style.color=\'#1e40af\'" onclick="askAIQuick(\'' + q.replace(/'/g, "\\\\'") + '\')">' + q + '</span>';
+    });
+    html += '</div></div>';
+    
+    return html;
 }
+
+// 生成无结果时的回答
+function generateNoResultAnswer(question){
+    let html = '';
+    
+    html += '<div style="background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;padding:14px 16px;border-radius:10px;margin-bottom:16px">';
+    html += '<div style="font-size:14px;font-weight:600;margin-bottom:4px">🤔 未找到完全匹配的知识点</div>';
+    html += '<div style="font-size:12px;opacity:0.9">但AI为你准备了以下学习建议</div>';
+    html += '</div>';
+    
+    html += '<div class="ai-analysis-box">';
+    html += '<div class="ai-analysis-title">📖 关于「' + question + '」的学习建议</div>';
+    html += '<div class="ai-analysis-content">';
+    html += '<div class="ai-analysis-item">这个问题可能涉及多个知识点的综合应用，建议先掌握基础概念</div>';
+    html += '<div class="ai-analysis-item">尝试使用更简短的核心术语进行搜索，如"动作电位"、"氧解离曲线"</div>';
+    html += '<div class="ai-analysis-item">可以分步骤提问，先问基本概念，再问机制和应用</div>';
+    html += '<div class="ai-analysis-item">结合教材原文和课堂笔记进行理解，效果更佳</div>';
+    html += '</div></div>';
+    
+    html += '<div class="ai-suggestion-box">';
+    html += '<div class="ai-suggestion-title">💡 推荐搜索方向</div>';
+    html += '<div class="ai-suggestion-content">';
+    const suggestions = ['动作电位', '静息电位', '肌肉收缩', '能量代谢', '血液循环', '呼吸机制', '肾脏排泄', '内分泌系统'];
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">';
+    suggestions.forEach(s => {
+        html += '<span style="padding:6px 12px;background:#fff;border:1px solid #86efac;border-radius:20px;font-size:11px;color:#166534;cursor:pointer" onclick="askAIQuick(\'' + s + '\')">' + s + '</span>';
+    });
+    html += '</div></div></div>';
+    
+    return html;
 }
-results.sort((a,b) => b.score - a.score);
-if(results.length === 0){
-box.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280"><p style="font-size:16px;margin-bottom:8px">😔 未找到相关知识点</p><p style="font-size:13px">建议：换个关键词试试，或使用更简短的术语（如"动作电位"而非"动作电位的产生机制是什么"）</p></div>';
-return;
+
+// 生成相关问题
+function generateRelatedQuestions(coreQuery, results){
+    const questions = [];
+    const base = coreQuery.substring(0, 10);
+    
+    if(results.length > 0){
+        const firstTitle = results[0].title;
+        questions.push(firstTitle + '的机制是什么？');
+        questions.push(firstTitle + '有什么生理意义？');
+        questions.push(firstTitle + '在运动中有什么应用？');
+        questions.push(firstTitle + '的考研考点有哪些？');
+    }
+    
+    if(questions.length < 4){
+        questions.push(coreQuery + '的定义是什么？');
+        questions.push(coreQuery + '的影响因素有哪些？');
+    }
+    
+    return questions.slice(0, 6);
 }
-const topResults = results.slice(0, 10);
-if(results.length === 0){
-box.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280"><p style="font-size:16px;margin-bottom:8px">😔 未找到相关知识点</p><p style="font-size:13px">建议：①换用更简短的核心术语（如"氧解离"而非"氧解离曲线是什么"）②尝试关键词的一部分③检查是否有错别字</p></div>';
-return;
-}
-box.innerHTML = '<p style="font-size:13px;color:#6b7280;margin-bottom:12px">找到 <b style="color:#667eea">'+results.length+'</b> 个相关知识点，显示前'+topResults.length+'个，点击卡片可直接跳转：</p>' +
-topResults.map(r => '<div class="ai-answer-item" style="cursor:pointer;transition:all 0.2s" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#f8f7ff\'" onclick="navigateToKnowledge(\''+r.tab+'\',\''+r.id+'\')"><div class="source">📚 '+r.source+' · '+r.title+' <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:3px;font-size:10px;margin-left:6px">'+r.matchType+'</span> <span style="color:#667eea;font-size:11px;margin-left:8px">👉 点击跳转</span></div><div class="content">'+r.snippet+'</div></div>').join('');
-}, 300);
-}
+
 function searchAcademic(){
 const q = document.getElementById('academicSearchInput').value.trim();
 if(!q){ alert('请输入搜索关键词'); return; }
