@@ -567,7 +567,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
       html += '<div class="quick-nav-group-title">' + group.group + '</div>';
       group.items.forEach(item => {
         const isActive = document.querySelector('.nav-item.active[data-tab="' + item.tab + '"]') ? 'active' : '';
-        html += '<div class="quick-nav-item ' + isActive + '" onclick="switchTab('' + item.tab + '');toggleQuickNav();">' +
+        html += '<div class="quick-nav-item ' + isActive + '" onclick="switchTab(\'' + item.tab + '\');toggleQuickNav();">' +
                 '<span class="icon">' + item.icon + '</span>' +
                 '<span>' + item.name + '</span>' +
                 (item.num ? '<span class="num">' + item.num + '</span>' : '') +
@@ -1038,7 +1038,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
       html += '<div class="search-group">';
       html += '<div class="search-group-title">' + type + '<span class="count">' + items.length + '</span></div>';
       items.slice(0, 8).forEach((item, index) => {
-        html += '<div class="search-result-item" onclick="selectSearchResult('' + item.tab + '', '' + item.title.replace(/'/g, "\\'") + '')" data-index="' + index + '">';
+        html += '<div class="search-result-item" data-tab="' + item.tab + '" data-title="' + item.title.replace(/"/g, '&quot;') + '" data-index="' + index + '">';
         html += '<div class="search-result-icon">' + item.icon + '</div>';
         html += '<div class="search-result-content">';
         html += '<div class="search-result-title">' + highlightText(item.title, query) + '</div>';
@@ -1052,6 +1052,15 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
     });
     
     resultsContainer.innerHTML = html;
+    
+    // 使用事件委托绑定点击事件
+    resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const tab = this.getAttribute('data-tab');
+        const title = this.getAttribute('data-title');
+        selectSearchResult(tab, title);
+      });
+    });
   };
   
   // 选择搜索结果
