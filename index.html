@@ -8987,6 +8987,45 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 </div>
 
 <script>
+// 阅读子tab切换函数（确保在全局作用域）
+window.switchReadingTab = function(tabName){
+  try {
+    var sections = document.querySelectorAll('.reading-section');
+    for(var i=0;i<sections.length;i++){
+      sections[i].style.display = 'none';
+    }
+    
+    var tabs = document.querySelectorAll('.reading-tab');
+    for(var i=0;i<tabs.length;i++){
+      tabs[i].classList.remove('active');
+      tabs[i].style.background = '';
+      tabs[i].style.color = '';
+    }
+    
+    var target = document.getElementById('reading-' + tabName);
+    if(target){
+      target.style.display = 'block';
+    }
+    
+    for(var i=0;i<tabs.length;i++){
+      var oc = tabs[i].getAttribute('onclick') || '';
+      if(oc.indexOf(tabName) >= 0){
+        tabs[i].classList.add('active');
+        tabs[i].style.background = 'linear-gradient(135deg,#3b82f6,#1d4ed8)';
+        tabs[i].style.color = '#fff';
+        break;
+      }
+    }
+    
+    if(tabName === 'passages' && typeof renderReadingPassages === 'function'){
+      renderReadingPassages();
+    }
+  } catch(e) {
+    console.error('switchReadingTab错误:', e);
+  }
+};
+
+
 // 阅读模块按钮全局函数（确保可用）
 window.toggleReadingAnswers = function(){
   var reveals = document.querySelectorAll('.reading-answer-reveal');
@@ -36360,63 +36399,6 @@ function initReadingYearSelect(){
   });
 }
 
-// 渲染真题精练文章列表
-function switchReadingTab(tabName){
-  // 隐藏所有reading-section
-  var sections = document.querySelectorAll('.reading-section');
-  for(var i=0;i<sections.length;i++){
-    sections[i].style.display = 'none';
-  }
-  
-  // 移除所有tab的active状态
-  var tabs = document.querySelectorAll('.reading-tab');
-  for(var i=0;i<tabs.length;i++){
-    tabs[i].classList.remove('active');
-    tabs[i].style.background = '';
-    tabs[i].style.color = '';
-  }
-  
-  // 显示目标section
-  var target = document.getElementById('reading-' + tabName);
-  if(target){
-    target.style.display = 'block';
-  }
-  
-  // 设置目标tab为active
-  var activeTab = document.querySelector('.reading-tab[onclick*="\'' + tabName + '\'"]');
-  if(activeTab){
-    activeTab.classList.add('active');
-    activeTab.style.background = 'linear-gradient(135deg,#3b82f6,#1d4ed8)';
-    activeTab.style.color = '#fff';
-  }
-  
-  // 根据tab类型执行初始化
-  if(tabName === 'passages'){
-    // 渲染文章列表
-    if(typeof renderReadingPassages === 'function'){
-      renderReadingPassages();
-    }
-  } else if(tabName === 'qtypes'){
-    // 渲染题型
-    if(typeof renderReadingQTypes === 'function'){
-      renderReadingQTypes();
-    }
-  } else if(tabName === 'sentences'){
-    // 渲染长难句
-    if(typeof renderReadingSentences === 'function'){
-      renderReadingSentences();
-    }
-  } else if(tabName === 'vocab'){
-    // 渲染词汇
-    if(typeof renderVocabByYear === 'function'){
-      renderVocabByYear();
-    }
-  }
-}
-
-
-// 确保switchReadingTab在全局作用域可用
-window.switchReadingTab = switchReadingTab;
 function renderReadingPassages(){
   const yearSelect = document.getElementById('readingYearSelect');
   const textSelect = document.getElementById('readingTextSelect');
