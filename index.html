@@ -28646,14 +28646,42 @@ const data = CARD_MODAL_DATA[cardId];
 if (!data) { console.warn('未找到速查卡数据:', cardId); return; }
 document.getElementById('cardModalTitle').textContent = data.title;
 const svgContainer = document.getElementById('cardModalSvg');
-if (data.svgKey && PHYSIO_DIAGRAMS[data.svgKey]) {
+
+// 优先使用速查卡片上的小图的放大版本
+let cardSvgHtml = '';
+const allCards = document.querySelectorAll('.quick-card');
+for (let i = 0; i < allCards.length; i++) {
+const card = allCards[i];
+if (card.getAttribute('onclick') && card.getAttribute('onclick').includes("'" + cardId + "'")) {
+const cardSvg = card.querySelector('.card-svg svg');
+if (cardSvg) {
+// 克隆SVG并修改样式，使其放大显示
+const clonedSvg = cardSvg.cloneNode(true);
+clonedSvg.setAttribute('width', '100%');
+clonedSvg.setAttribute('height', 'auto');
+clonedSvg.style.maxWidth = '800px';
+clonedSvg.style.maxHeight = '500px';
+clonedSvg.style.display = 'block';
+clonedSvg.style.margin = '0 auto';
+cardSvgHtml = clonedSvg.outerHTML;
+}
+break;
+}
+}
+
+if (cardSvgHtml) {
+// 使用速查卡片上的小图的放大版本
+svgContainer.innerHTML = '<div style="text-align:center;padding:20px;background:#f8fafc;border-radius:8px;margin-bottom:15px;"><h4 style="margin:0 0 10px 0;color:#1e40af;">📊 ' + data.title + '（图解）</h4>' + cardSvgHtml + '</div>';
+} else if (data.svgKey && PHYSIO_DIAGRAMS[data.svgKey]) {
+// 如果找不到速查卡片上的小图，使用PHYSIO_DIAGRAMS中的大图
 svgContainer.innerHTML = PHYSIO_DIAGRAMS[data.svgKey].svg;
-svgContainer.scrollTop = 0;
 } else if (data.customSvg) {
 svgContainer.innerHTML = data.customSvg;
 } else {
 svgContainer.innerHTML = '<p style="text-align:center;color:#64748b;">暂无图谱</p>';
 }
+svgContainer.scrollTop = 0;
+
 const detailsContainer = document.getElementById('cardModalDetails');
 let html = '';
 if (data.concept) {
