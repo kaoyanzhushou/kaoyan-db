@@ -504,6 +504,35 @@ button:focus-visible, .btn:focus-visible, .tool-btn:focus-visible{
 .knowledge-card-footer{margin-top:12px;padding-top:12px;border-top:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#999}
 .knowledge-card-tags{display:flex;gap:6px;flex-wrap:wrap}
 .knowledge-card-tag{padding:2px 8px;background:#f0f0f0;border-radius:10px;font-size:11px;color:#666}
+/* 知识点筛选器 */
+.knowledge-filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:12px 16px;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);flex-wrap:wrap}
+.knowledge-filter-bar .filter-label{font-size:13px;font-weight:600;color:#374151;margin-right:4px}
+.knowledge-filter-btn{padding:6px 14px;border:1px solid #e5e7eb;background:#fff;border-radius:20px;font-size:12px;cursor:pointer;transition:all 0.2s;color:#6b7280}
+.knowledge-filter-btn:hover{border-color:#f97316;color:#f97316}
+.knowledge-filter-btn.active{background:#f97316;color:#fff;border-color:#f97316}
+.knowledge-filter-btn .count{margin-left:4px;font-size:11px;opacity:.8}
+/* 知识点进度统计 */
+.knowledge-progress-stats{display:flex;align-items:center;gap:16px;margin-bottom:12px;padding:10px 16px;background:linear-gradient(135deg,#fff7ed,#ffedd5);border-radius:8px;font-size:13px}
+.knowledge-progress-stats .stat-item{display:flex;align-items:center;gap:6px}
+.knowledge-progress-stats .stat-val{font-weight:700;color:#ea580c}
+.knowledge-progress-bar{flex:1;height:8px;background:#fed7aa;border-radius:4px;overflow:hidden;min-width:100px}
+.knowledge-progress-bar .fill{height:100%;background:linear-gradient(90deg,#f97316,#ea580c);border-radius:4px;transition:width 0.3s ease}
+/* 知识点内容预览 */
+.knowledge-preview{margin-top:8px;padding:8px 12px;background:#f9fafb;border-radius:6px;font-size:12px;color:#6b7280;line-height:1.6;display:flex;flex-wrap:wrap;gap:6px}
+.knowledge-preview .preview-tag{padding:2px 8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;font-size:11px;color:#4b5563}
+.knowledge-preview .preview-tag.highlight{background:#fef3c7;border-color:#fcd34d;color:#92400e}
+/* 知识点学习状态指示 */
+.knowledge-status{display:flex;align-items:center;gap:6px;margin-left:auto}
+.status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.status-dot.unlearned{background:#d1d5db}
+.status-dot.learning{background:#fbbf24;animation:pulse 1.5s infinite}
+.status-dot.learned{background:#10b981}
+.status-label{font-size:11px;color:#9ca3af}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+/* 已学知识点卡片样式 */
+.knowledge-section.learned .knowledge-header{background:#f0fdf4}
+.knowledge-section.learned .knowledge-header .title{color:#166534}
+
 
 /* 知识点折叠/展开 */
 .knowledge-section{margin-bottom:20px}
@@ -7211,6 +7240,21 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
   <div style="margin:15px 0;padding:12px 16px;background:linear-gradient(135deg,#fff7ed,#ffedd5);border-left:4px solid #f97316;border-radius:0 8px 8px 0;font-size:13px;color:#9a3412;line-height:1.7">
     <b>📚 教材对照说明：</b>本模块以<b>王瑞元、孙飙《运动生理学》第6版</b>（人民体育出版社2022）为主要参考，侧重运动实践；基础机制部分参考<b>王庭槐《生理学》第9版</b>（人民卫生出版社）。两本教材内容互补，基础机制与运动应用相结合。
     <br><b>🎯 考研高频考点：</b>动作电位"全或无"、肌丝滑行学说、三大能量系统、氧解离曲线与P50、心脏传导系统、运动时心血管反应、运动性疲劳机制、最大摄氧量、乳酸阈、运动处方FITT原则
+  </div>
+  <!-- 知识点筛选器和进度统计 -->
+  <div class="knowledge-progress-stats" id="physioProgressStats">
+    <div class="stat-item">📚 总知识点：<span class="stat-val" id="physioTotalCount">0</span></div>
+    <div class="stat-item">✅ 已掌握：<span class="stat-val" id="physioLearnedCount">0</span></div>
+    <div class="stat-item">⏳ 待学习：<span class="stat-val" id="physioUnlearnedCount">0</span></div>
+    <div class="knowledge-progress-bar"><div class="fill" id="physioProgressFill" style="width:0%"></div></div>
+    <div class="stat-item"><span class="stat-val" id="physioProgressPct">0%</span></div>
+  </div>
+  <div class="knowledge-filter-bar" id="physioFilterBar">
+    <span class="filter-label">🔍 筛选：</span>
+    <button class="knowledge-filter-btn active" onclick="filterPhysioKnowledge('all')">全部 <span class="count" id="filterCountAll">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterPhysioKnowledge('unlearned')">未学 <span class="count" id="filterCountUnlearned">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterPhysioKnowledge('learned')">已学 <span class="count" id="filterCountLearned">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterPhysioKnowledge('highfreq')">🔥 高频考点 <span class="count" id="filterCountHighfreq">0</span></button>
   </div>
   <div id="physioContent"></div>
 </div>
@@ -25535,6 +25579,89 @@ return `<div style="margin-bottom:14px">
 </div>`;
 }).join('');
 }
+// 从知识点内容中提取预览（前3个核心概念）
+function getKnowledgePreview(item, enh){
+  try{
+    // 优先从enhancedData的highfreq中提取
+    if(enh.highfreq && enh.highfreq.length){
+      return enh.highfreq.slice(0,3).map(h=>'<span class="preview-tag highlight">'+h.replace(/<[^>]+>/g,'').substring(0,15)+'</span>').join('');
+    }
+    // 从content中提取h4标题
+    const h4Matches = item.content.match(/<h4[^>]*>([^<]+)<\/h4>/g);
+    if(h4Matches){
+      return h4Matches.slice(0,3).map(m=>{
+        const text = m.replace(/<[^>]+>/g,'').replace(/[📌📖✍️⚖️💡🎯📊📝]/g,'').trim();
+        return '<span class="preview-tag">'+text.substring(0,15)+'</span>';
+      }).join('');
+    }
+    // 从content中提取前几个li
+    const liMatches = item.content.match(/<li[^>]*>([^<]+)<\/li>/g);
+    if(liMatches){
+      return liMatches.slice(0,3).map(m=>{
+        const text = m.replace(/<[^>]+>/g,'').trim();
+        return '<span class="preview-tag">'+text.substring(0,15)+'</span>';
+      }).join('');
+    }
+    return '<span class="preview-tag">点击展开查看详情</span>';
+  }catch(e){
+    return '<span class="preview-tag">点击展开查看详情</span>';
+  }
+}
+// 运动生理学知识点筛选
+let currentPhysioFilter = 'all';
+function filterPhysioKnowledge(filter){
+  currentPhysioFilter = filter;
+  // 更新按钮状态
+  document.querySelectorAll('#physioFilterBar .knowledge-filter-btn').forEach(btn=>{
+    btn.classList.remove('active');
+  });
+  event.target.closest('.knowledge-filter-btn').classList.add('active');
+  // 筛选知识点
+  const sections = document.querySelectorAll('#physioContent .knowledge-section');
+  sections.forEach(section=>{
+    const id = section.id.replace('section-','');
+    const isLearned = !!appState.knowledge[id];
+    const enh = enhancedData[id] || {};
+    const isHighfreq = !!enh.highfreq;
+    let show = false;
+    switch(filter){
+      case 'all': show = true; break;
+      case 'unlearned': show = !isLearned; break;
+      case 'learned': show = isLearned; break;
+      case 'highfreq': show = isHighfreq; break;
+    }
+    section.style.display = show ? '' : 'none';
+  });
+}
+// 更新运动生理学知识点进度统计
+function updatePhysioProgressStats(){
+  try{
+    const total = physioData.length;
+    const learned = physioData.filter(item=>appState.knowledge[item.id]).length;
+    const unlearned = total - learned;
+    const highfreq = physioData.filter(item=>enhancedData[item.id]&&enhancedData[item.id].highfreq).length;
+    const pct = Math.round(learned/total*100);
+    const totalEl = document.getElementById('physioTotalCount');
+    const learnedEl = document.getElementById('physioLearnedCount');
+    const unlearnedEl = document.getElementById('physioUnlearnedCount');
+    const fillEl = document.getElementById('physioProgressFill');
+    const pctEl = document.getElementById('physioProgressPct');
+    if(totalEl) totalEl.textContent = total;
+    if(learnedEl) learnedEl.textContent = learned;
+    if(unlearnedEl) unlearnedEl.textContent = unlearned;
+    if(fillEl) fillEl.style.width = pct+'%';
+    if(pctEl) pctEl.textContent = pct+'%';
+    // 更新筛选器计数
+    const countAll = document.getElementById('filterCountAll');
+    const countUnlearned = document.getElementById('filterCountUnlearned');
+    const countLearned = document.getElementById('filterCountLearned');
+    const countHighfreq = document.getElementById('filterCountHighfreq');
+    if(countAll) countAll.textContent = '('+total+')';
+    if(countUnlearned) countUnlearned.textContent = '('+unlearned+')';
+    if(countLearned) countLearned.textContent = '('+learned+')';
+    if(countHighfreq) countHighfreq.textContent = '('+highfreq+')';
+  }catch(e){ console.warn('updatePhysioProgressStats error:', e); }
+}
 function renderKnowledgeSection(data, containerId, tagClass){
 const container = document.getElementById(containerId);
 if(!container){ console.warn('renderKnowledgeSection: container not found -', containerId); return; }
@@ -25599,8 +25726,8 @@ extra += `<h4 style="color:#7c3aed;margin:14px 0 6px">📖 解剖笔记详细知
 }
 }
 return `<div class="knowledge-section" id="section-${item.id}">
-<div class="knowledge-header" onclick="toggleSection('${item.id}')">
-<div class="title">
+<div class="knowledge-header ${appState.knowledge[item.id]?'learned':''}" onclick="toggleSection('${item.id}')">
+<div class="title" style="flex:1">
 <input type="checkbox" ${appState.knowledge[item.id]?'checked':''} onclick="event.stopPropagation();toggleKnowledge('${item.id}')" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer">
 <span class="tag ${tagClass}">考点</span>
 ${item.title}
@@ -25608,6 +25735,11 @@ ${enh.highfreq?'<span style="font-size:11px;color:#f59e0b;margin-left:6px">★�
 ${note?'<span style="font-size:11px;color:#0891b2;margin-left:6px">📖笔记</span>':''}
 ${(detailedQA[item.id]&&detailedQA[item.id].length)?'<span style="font-size:11px;color:#f43f5e;margin-left:6px">📚详细真题</span>':''}
 ${(detailedAnatomy[item.id]&&detailedAnatomy[item.id].length)?'<span style="font-size:11px;color:#8b5cf6;margin-left:6px">📖详细笔记</span>':''}
+<div class="knowledge-preview" id="preview-${item.id}">${getKnowledgePreview(item, enh)}</div>
+</div>
+<div class="knowledge-status">
+<span class="status-dot ${appState.knowledge[item.id]?'learned':'unlearned'}"></span>
+<span class="status-label">${appState.knowledge[item.id]?'已学':'未学'}</span>
 </div>
 <span class="arrow">▶</span>
 </div>
@@ -25615,6 +25747,10 @@ ${(detailedAnatomy[item.id]&&detailedAnatomy[item.id].length)?'<span style="font
 </div>`;
 }).join('');
 if(blurMode) setTimeout(applyBlurToTerms, 50);
+// 更新运动生理学进度统计（如果是physioContent）
+if(containerId === 'physioContent' && typeof updatePhysioProgressStats === 'function'){
+  setTimeout(updatePhysioProgressStats, 100);
+}
 }
 function toggleSection(id){
 const section = document.getElementById('section-'+id);
@@ -25635,6 +25771,8 @@ const total = englishData.length + politicsData.length + physioData.length + ana
 const done = Object.values(appState.knowledge).filter(v=>v).length;
 const statCards = document.querySelectorAll('#statsRow .stat-card');
 if(statCards[1]) statCards[1].querySelector('.val').textContent = `${done}/${total}`;
+// 更新运动生理学进度统计
+if(typeof updatePhysioProgressStats === 'function') updatePhysioProgressStats();
 }
 function renderPlan(){
 const now = new Date();
