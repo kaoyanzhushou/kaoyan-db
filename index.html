@@ -531,6 +531,22 @@ button:focus-visible, .btn:focus-visible, .tool-btn:focus-visible{
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 /* 已学知识点卡片样式 */
 .knowledge-section.learned .knowledge-header{background:#f0fdf4}
+/* 备考总览折叠动画 */
+.physio-overview-content{transition:max-height 0.3s ease,opacity 0.3s ease}
+.physio-overview-content.show{display:block!important}
+/* 知识点卡片难度边框 */
+.knowledge-section.difficulty-basic .knowledge-header{border-left:4px solid #3b82f6}
+.knowledge-section.difficulty-advanced .knowledge-header{border-left:4px solid #f97316}
+.knowledge-section.difficulty-highfreq .knowledge-header{border-left:4px solid #ef4444}
+.knowledge-section .knowledge-header{border-left:4px solid transparent;transition:all 0.2s ease}
+.knowledge-section:hover .knowledge-header{background:#f9fafb}
+/* 知识点关联推荐 */
+.knowledge-related{margin-top:16px;padding:12px 16px;background:#f0f9ff;border-radius:8px;border-left:4px solid #0ea5e9}
+.knowledge-related h4{margin:0 0 8px 0;font-size:13px;color:#0369a1}
+.knowledge-related .related-tags{display:flex;flex-wrap:wrap;gap:8px}
+.knowledge-related .related-tag{padding:4px 12px;background:#fff;border:1px solid #bae6fd;border-radius:16px;font-size:12px;color:#0284c7;cursor:pointer;transition:all 0.2s}
+.knowledge-related .related-tag:hover{background:#0ea5e9;color:#fff;border-color:#0ea5e9}
+
 .knowledge-section.learned .knowledge-header .title{color:#166534}
 
 
@@ -7232,14 +7248,27 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
     </div>
 
 <div class="tab-content" id="tab-physio">
-  <div class="card" style="background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff">
-    <h3 style="color:#fff">运动生理学备考总览</h3>
-    <p style="opacity:.9">专业课组成部分 | 参考书目：王瑞元、孙飙《运动生理学》第6版 人民体育出版社2022 + 王庭槐《生理学》第9版 人民卫生出版社</p>
-    <p style="opacity:.9;margin-top:8px;font-size:13px">考试范围涵盖运动生理学基础（11章）+运动训练生理学（6章）+运动健身生理学（5章）共22章，重点：骨骼肌收缩、能量代谢、运动时心肺反应、运动性疲劳与恢复、有氧无氧工作能力、身体素质、运动处方</p>
-  </div>
-  <div style="margin:15px 0;padding:12px 16px;background:linear-gradient(135deg,#fff7ed,#ffedd5);border-left:4px solid #f97316;border-radius:0 8px 8px 0;font-size:13px;color:#9a3412;line-height:1.7">
-    <b>📚 教材对照说明：</b>本模块以<b>王瑞元、孙飙《运动生理学》第6版</b>（人民体育出版社2022）为主要参考，侧重运动实践；基础机制部分参考<b>王庭槐《生理学》第9版</b>（人民卫生出版社）。两本教材内容互补，基础机制与运动应用相结合。
-    <br><b>🎯 考研高频考点：</b>动作电位"全或无"、肌丝滑行学说、三大能量系统、氧解离曲线与P50、心脏传导系统、运动时心血管反应、运动性疲劳机制、最大摄氧量、乳酸阈、运动处方FITT原则
+  <!-- 可折叠的备考总览 -->
+  <div class="physio-overview-collapsible" id="physioOverview">
+    <div class="physio-overview-header" onclick="togglePhysioOverview()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;border-radius:10px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">📋</span>
+        <span style="font-weight:700;font-size:15px">运动生理学备考总览</span>
+        <span style="font-size:12px;opacity:.8">参考书目：王瑞元《运动生理学》第6版 + 王庭槐《生理学》第9版 | 共22章</span>
+      </div>
+      <span id="physioOverviewArrow" style="font-size:14px;transition:transform 0.3s">▼</span>
+    </div>
+    <div class="physio-overview-content" id="physioOverviewContent" style="display:none;overflow:hidden;transition:max-height 0.3s ease">
+      <div class="card" style="background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;margin-bottom:10px">
+        <h3 style="color:#fff">运动生理学备考总览</h3>
+        <p style="opacity:.9">专业课组成部分 | 参考书目：王瑞元、孙飙《运动生理学》第6版 人民体育出版社2022 + 王庭槐《生理学》第9版 人民卫生出版社</p>
+        <p style="opacity:.9;margin-top:8px;font-size:13px">考试范围涵盖运动生理学基础（11章）+运动训练生理学（6章）+运动健身生理学（5章）共22章，重点：骨骼肌收缩、能量代谢、运动时心肺反应、运动性疲劳与恢复、有氧无氧工作能力、身体素质、运动处方</p>
+      </div>
+      <div style="margin:10px 0;padding:12px 16px;background:linear-gradient(135deg,#fff7ed,#ffedd5);border-left:4px solid #f97316;border-radius:0 8px 8px 0;font-size:13px;color:#9a3412;line-height:1.7">
+        <b>📚 教材对照说明：</b>本模块以<b>王瑞元、孙飙《运动生理学》第6版</b>（人民体育出版社2022）为主要参考，侧重运动实践；基础机制部分参考<b>王庭槐《生理学》第9版</b>（人民卫生出版社）。两本教材内容互补，基础机制与运动应用相结合。
+        <br><b>🎯 考研高频考点：</b>动作电位"全或无"、肌丝滑行学说、三大能量系统、氧解离曲线与P50、心脏传导系统、运动时心血管反应、运动性疲劳机制、最大摄氧量、乳酸阈、运动处方FITT原则
+      </div>
+    </div>
   </div>
   <!-- 知识点筛选器和进度统计 -->
   <div class="knowledge-progress-stats" id="physioProgressStats">
@@ -25579,6 +25608,55 @@ return `<div style="margin-bottom:14px">
 </div>`;
 }).join('');
 }
+// 运动生理学备考总览折叠
+function togglePhysioOverview(){
+  const content = document.getElementById('physioOverviewContent');
+  const arrow = document.getElementById('physioOverviewArrow');
+  if(content.style.display === 'none' || !content.classList.contains('show')){
+    content.style.display = 'block';
+    content.classList.add('show');
+    arrow.style.transform = 'rotate(180deg)';
+  } else {
+    content.style.display = 'none';
+    content.classList.remove('show');
+    arrow.style.transform = 'rotate(0deg)';
+  }
+}
+// 知识点关联推荐数据
+const KNOWLEDGE_RELATIONS = {
+  'ph1': ['ph2','ph3'],
+  'ph2': ['ph1','ph3','ph11'],
+  'ph3': ['ph2','ph4','ph5','ph7'],
+  'ph4': ['ph3','ph5'],
+  'ph5': ['ph3','ph4','ph6','ph13'],
+  'ph6': ['ph5','ph7','ph14'],
+  'ph7': ['ph3','ph6','ph8','ph15'],
+  'ph8': ['ph7','ph9','ph16'],
+  'ph9': ['ph8','ph10','ph17'],
+  'ph10': ['ph9','ph11','ph18'],
+  'ph11': ['ph2','ph10','ph12'],
+  'ph12': ['ph11','ph13'],
+  'ph13': ['ph5','ph12','ph14'],
+  'ph14': ['ph6','ph13','ph15'],
+  'ph15': ['ph7','ph14','ph16'],
+  'ph16': ['ph8','ph15','ph17'],
+  'ph17': ['ph9','ph16','ph18'],
+  'ph18': ['ph10','ph17']
+};
+// 生成知识点关联推荐HTML
+function getKnowledgeRelatedHTML(itemId){
+  const related = KNOWLEDGE_RELATIONS[itemId];
+  if(!related || !related.length) return '';
+  const allData = [...physioData, ...politicsData, ...anatomyData];
+  const relatedItems = related.map(id => allData.find(d => d.id === id)).filter(Boolean);
+  if(!relatedItems.length) return '';
+  return `<div class="knowledge-related">
+    <h4>🔗 相关知识点（点击跳转）</h4>
+    <div class="related-tags">
+      ${relatedItems.map(item => `<span class="related-tag" onclick="jumpToKnowledge('${item.id}','physio')">${item.title.replace(/[🫀❤️🫁💧🧬👁️⚡💪🔥🔄🌡️]/g,'').trim()}</span>`).join('')}
+    </div>
+  </div>`;
+}
 // 批量渲染辅助：使用requestAnimationFrame分批渲染，避免主线程长时间阻塞
 function batchRenderItems(items, renderFn, callback){
   const batchSize = 5;
@@ -25741,7 +25819,7 @@ extra += `<h4 style="color:#7c3aed;margin:14px 0 6px">📖 解剖笔记详细知
 <div style="font-size:13px;line-height:1.9">${danat.map((s,i)=>`<div style="margin-bottom:12px;padding:10px 14px;background:#faf5ff;border-radius:8px;border-left:4px solid #8b5cf6">${s}</div>`).join('')}</div>`;
 }
 }
-return `<div class="knowledge-section" id="section-${item.id}">
+return `<div class="knowledge-section ${enh.highfreq?'difficulty-highfreq':''}" id="section-${item.id}">
 <div class="knowledge-header ${appState.knowledge[item.id]?'learned':''}" onclick="toggleSection('${item.id}')">
 <div class="title" style="flex:1">
 <input type="checkbox" ${appState.knowledge[item.id]?'checked':''} onclick="event.stopPropagation();toggleKnowledge('${item.id}')" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer">
@@ -25759,7 +25837,7 @@ ${(detailedAnatomy[item.id]&&detailedAnatomy[item.id].length)?'<span style="font
 </div>
 <span class="arrow">▶</span>
 </div>
-<div class="knowledge-body">${item.content}${extra}</div>
+<div class="knowledge-body">${item.content}${extra}${getKnowledgeRelatedHTML(item.id)}</div>
 </div>`;
 }).join('');
 if(blurMode) setTimeout(applyBlurToTerms, 50);
