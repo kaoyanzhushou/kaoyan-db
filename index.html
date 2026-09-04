@@ -300,6 +300,65 @@ button:focus-visible, .btn:focus-visible, .tool-btn:focus-visible{
   }
 }
 
+
+/* ==================== 搜索功能优化 ==================== */
+
+/* 搜索面板 */
+.search-panel{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:flex-start;justify-content:center;padding-top:10vh;opacity:0;visibility:hidden;transition:all 0.3s ease;backdrop-filter:blur(4px)}
+.search-panel.show{opacity:1;visibility:visible}
+.search-panel-content{width:90%;max-width:600px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;transform:translateY(-20px) scale(0.95);transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)}
+.search-panel.show .search-panel-content{transform:translateY(0) scale(1)}
+
+/* 搜索输入框 */
+.search-input-wrapper{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid #f0f0f0;gap:12px}
+.search-input-icon{font-size:20px;color:#999;flex-shrink:0}
+.search-input{flex:1;border:none;outline:none;font-size:16px;color:#333;background:transparent;font-family:inherit}
+.search-input::placeholder{color:#bbb}
+.search-input-clear{width:28px;height:28px;border-radius:50%;background:#f0f0f0;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#999;transition:all 0.2s ease;flex-shrink:0}
+.search-input-clear:hover{background:#e0e0e0;color:#666}
+.search-input-shortcut{background:#f5f5f5;padding:4px 8px;border-radius:4px;font-size:11px;color:#999;font-family:monospace;flex-shrink:0}
+
+/* 搜索结果 */
+.search-results{max-height:50vh;overflow-y:auto;padding:8px}
+.search-results-empty{padding:40px 20px;text-align:center;color:#999}
+.search-results-empty .icon{font-size:48px;margin-bottom:12px;opacity:0.5}
+.search-results-empty .text{font-size:14px}
+
+/* 搜索结果分组 */
+.search-group{margin-bottom:8px}
+.search-group-title{padding:8px 16px;font-size:12px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:8px}
+.search-group-title .count{background:#f0f0f0;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500}
+
+/* 搜索结果项 */
+.search-result-item{padding:12px 16px;border-radius:8px;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:flex-start;gap:12px}
+.search-result-item:hover{background:#f5f5f5}
+.search-result-item:active{background:#eee}
+.search-result-icon{font-size:20px;flex-shrink:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border-radius:8px}
+.search-result-content{flex:1;min-width:0}
+.search-result-title{font-size:14px;font-weight:500;color:#333;margin-bottom:4px;line-height:1.4}
+.search-result-desc{font-size:12px;color:#999;line-height:1.4;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.search-result-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:#e8f0fe;color:#667eea;font-weight:500;flex-shrink:0;margin-top:2px}
+
+/* 搜索高亮 */
+.search-highlight{background:linear-gradient(transparent 60%, #ffd700 60%);font-weight:600;color:inherit;padding:0 1px}
+
+/* 搜索历史 */
+.search-history{padding:12px 16px;border-top:1px solid #f0f0f0}
+.search-history-title{font-size:12px;font-weight:600;color:#999;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.search-history-clear{font-size:11px;color:#999;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all 0.2s ease}
+.search-history-clear:hover{background:#f5f5f5;color:#666}
+.search-history-tags{display:flex;flex-wrap:wrap;gap:8px}
+.search-history-tag{padding:6px 12px;background:#f5f5f5;border-radius:16px;font-size:12px;color:#666;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;gap:6px}
+.search-history-tag:hover{background:#e8f0fe;color:#667eea}
+.search-history-tag .remove{width:16px;height:16px;border-radius:50%;background:#e0e0e0;display:flex;align-items:center;justify-content:center;font-size:10px;opacity:0;transition:opacity 0.2s ease}
+.search-history-tag:hover .remove{opacity:1}
+
+/* 搜索页脚 */
+.search-footer{padding:10px 16px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#bbb}
+.search-footer-hints{display:flex;gap:16px}
+.search-footer-hint{display:flex;align-items:center;gap:4px}
+.search-footer-hint kbd{background:#f5f5f5;padding:2px 6px;border-radius:3px;font-family:monospace;font-size:10px;color:#999}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -756,6 +815,267 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
       }, 100);
     };
   }
+})();
+
+
+
+// ==================== 全局搜索功能 ====================
+(function(){
+  const SEARCH_HISTORY_KEY = 'kaoyan_search_history';
+  const MAX_HISTORY = 10;
+  
+  // 搜索数据源
+  const searchDataSources = [
+    {
+      type: '功能',
+      icon: '🛠️',
+      items: [
+        {title: '仪表盘', desc: '查看学习数据总览和进度', tab: 'dashboard'},
+        {title: '英语（一）', desc: '英语知识点、真题、词汇', tab: 'english'},
+        {title: '政治', desc: '政治知识点、真题、时政', tab: 'politics'},
+        {title: '运动生理学', desc: '生理学知识点、机制、考点', tab: 'physio'},
+        {title: '运动解剖学', desc: '解剖学知识点、结构、考点', tab: 'anatomy'},
+        {title: '解剖图谱', desc: '交互式解剖图谱、骨骼肌肉', tab: 'atlas'},
+        {title: '生理图谱', desc: '交互式生理图谱、SVG可视化', tab: 'physio-atlas'},
+        {title: '备考规划', desc: '学习计划、倒计时、日程安排', tab: 'plan'},
+        {title: '学习进度', desc: '学习记录、进度追踪、统计', tab: 'progress'},
+        {title: '刷题模考', desc: '题库、模拟考试、错题本', tab: 'quiz'},
+        {title: '闪卡记忆', desc: '知识点闪卡、间隔重复', tab: 'flashcard'},
+        {title: '背诵助手', desc: '专业课背诵、番茄钟、复习', tab: 'memorize'},
+        {title: 'AI学习助手', desc: 'AI答疑、学习建议、智能辅导', tab: 'ai-assistant'},
+        {title: '阅读提升', desc: '英语阅读真题、技巧训练', tab: 'reading'},
+        {title: '专业课提升', desc: '专业课高效学习方法', tab: 'pro-course'}
+      ]
+    }
+  ];
+  
+  // 模糊搜索算法
+  function fuzzyMatch(text, query){
+    if(!query) return 0;
+    text = text.toLowerCase();
+    query = query.toLowerCase();
+    
+    // 完全匹配
+    if(text === query) return 100;
+    // 包含匹配
+    if(text.includes(query)) return 80 - (text.indexOf(query) * 0.1);
+    // 首字母匹配
+    const textWords = text.split(/[\s\-_（）()]+/);
+    const queryWords = query.split(/[\s\-_]+/);
+    let matchCount = 0;
+    queryWords.forEach(qw => {
+      if(textWords.some(tw => tw.startsWith(qw))) matchCount++;
+    });
+    if(matchCount === queryWords.length) return 60;
+    // 字符序列匹配
+    let qi = 0;
+    for(let ti = 0; ti < text.length && qi < query.length; ti++){
+      if(text[ti] === query[qi]) qi++;
+    }
+    if(qi === query.length) return 40;
+    return 0;
+  }
+  
+  // 高亮搜索关键词
+  function highlightText(text, query){
+    if(!query) return text;
+    const regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return text.replace(regex, '<span class="search-highlight">$1</span>');
+  }
+  
+  // 执行搜索
+  window.performGlobalSearch = function(query){
+    const resultsContainer = document.getElementById('globalSearchResults');
+    const clearBtn = document.getElementById('globalSearchClear');
+    if(!resultsContainer) return;
+    
+    query = (query || '').trim();
+    
+    // 显示/隐藏清除按钮
+    if(clearBtn) clearBtn.style.display = query ? 'flex' : 'none';
+    
+    if(!query){
+      resultsContainer.innerHTML = '<div class="search-results-empty"><div class="icon">💡</div><div class="text">输入关键词开始搜索<br>支持搜索知识点、题目、功能模块</div></div>';
+      return;
+    }
+    
+    // 搜索所有数据源
+    const allResults = [];
+    searchDataSources.forEach(source => {
+      source.items.forEach(item => {
+        const titleScore = fuzzyMatch(item.title, query);
+        const descScore = fuzzyMatch(item.desc || '', query) * 0.5;
+        const score = Math.max(titleScore, descScore);
+        if(score > 0){
+          allResults.push({
+            ...item,
+            type: source.type,
+            icon: source.icon,
+            score: score
+          });
+        }
+      });
+    });
+    
+    // 按分数排序
+    allResults.sort((a, b) => b.score - a.score);
+    
+    if(allResults.length === 0){
+      resultsContainer.innerHTML = '<div class="search-results-empty"><div class="icon">🔍</div><div class="text">未找到相关结果<br>试试其他关键词</div></div>';
+      return;
+    }
+    
+    // 按类型分组
+    const grouped = {};
+    allResults.forEach(r => {
+      if(!grouped[r.type]) grouped[r.type] = [];
+      grouped[r.type].push(r);
+    });
+    
+    // 渲染结果
+    let html = '';
+    Object.keys(grouped).forEach(type => {
+      const items = grouped[type];
+      html += '<div class="search-group">';
+      html += '<div class="search-group-title">' + type + '<span class="count">' + items.length + '</span></div>';
+      items.slice(0, 8).forEach((item, index) => {
+        html += '<div class="search-result-item" onclick="selectSearchResult('' + item.tab + '', '' + item.title.replace(/'/g, "\\'") + '')" data-index="' + index + '">';
+        html += '<div class="search-result-icon">' + item.icon + '</div>';
+        html += '<div class="search-result-content">';
+        html += '<div class="search-result-title">' + highlightText(item.title, query) + '</div>';
+        if(item.desc){
+          html += '<div class="search-result-desc">' + highlightText(item.desc, query) + '</div>';
+        }
+        html += '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+    
+    resultsContainer.innerHTML = html;
+  };
+  
+  // 选择搜索结果
+  window.selectSearchResult = function(tab, title){
+    if(tab && typeof switchTab === 'function'){
+      switchTab(tab);
+    }
+    closeGlobalSearch();
+    // 保存搜索历史
+    saveSearchHistory(title);
+  };
+  
+  // 打开全局搜索
+  window.openGlobalSearch = function(){
+    const panel = document.getElementById('globalSearchPanel');
+    const input = document.getElementById('globalSearchInput');
+    if(panel){
+      panel.classList.add('show');
+      setTimeout(() => {
+        if(input) input.focus();
+      }, 100);
+      renderSearchHistory();
+    }
+  };
+  
+  // 关闭全局搜索
+  window.closeGlobalSearch = function(){
+    const panel = document.getElementById('globalSearchPanel');
+    const input = document.getElementById('globalSearchInput');
+    if(panel){
+      panel.classList.remove('show');
+      if(input){
+        input.value = '';
+        performGlobalSearch('');
+      }
+    }
+  };
+  
+  // 清除搜索输入
+  window.clearGlobalSearch = function(){
+    const input = document.getElementById('globalSearchInput');
+    if(input){
+      input.value = '';
+      input.focus();
+      performGlobalSearch('');
+    }
+  };
+  
+  // 搜索历史
+  function getSearchHistory(){
+    try{
+      return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]');
+    }catch(e){
+      return [];
+    }
+  }
+  
+  function saveSearchHistory(query){
+    if(!query) return;
+    let history = getSearchHistory();
+    history = history.filter(h => h !== query);
+    history.unshift(query);
+    history = history.slice(0, MAX_HISTORY);
+    try{
+      localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history));
+    }catch(e){}
+  }
+  
+  window.clearSearchHistory = function(){
+    try{
+      localStorage.removeItem(SEARCH_HISTORY_KEY);
+    }catch(e){}
+    renderSearchHistory();
+  };
+  
+  function renderSearchHistory(){
+    const historyContainer = document.getElementById('globalSearchHistory');
+    const tagsContainer = document.getElementById('searchHistoryTags');
+    if(!historyContainer || !tagsContainer) return;
+    
+    const history = getSearchHistory();
+    if(history.length === 0){
+      historyContainer.style.display = 'none';
+      return;
+    }
+    
+    historyContainer.style.display = 'block';
+    tagsContainer.innerHTML = history.map((h, i) => 
+      '<div class="search-history-tag" onclick="document.getElementById(\'globalSearchInput\').value=\'' + h.replace(/'/g, "\\'") + '\';performGlobalSearch(\'' + h.replace(/'/g, "\\'") + '\')">' +
+      '<span>🕐</span><span>' + h + '</span>' +
+      '<span class="remove" onclick="event.stopPropagation();removeSearchHistory(' + i + ')">✕</span>' +
+      '</div>'
+    ).join('');
+  }
+  
+  window.removeSearchHistory = function(index){
+    let history = getSearchHistory();
+    history.splice(index, 1);
+    try{
+      localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history));
+    }catch(e){}
+    renderSearchHistory();
+  };
+  
+  // 键盘快捷键
+  document.addEventListener('keydown', function(e){
+    // Ctrl+K 或 Ctrl+F 打开搜索
+    if((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'f')){
+      e.preventDefault();
+      openGlobalSearch();
+      return;
+    }
+    
+    // ESC 关闭搜索
+    if(e.key === 'Escape'){
+      const panel = document.getElementById('globalSearchPanel');
+      if(panel && panel.classList.contains('show')){
+        closeGlobalSearch();
+      }
+    }
+  });
+  
+  console.log('✅ 全局搜索功能已加载');
 })();
 
 </script>
@@ -29693,6 +30013,41 @@ document.body.appendChild(overlay);
 
 <!-- 快捷键提示 -->
 <div class="shortcut-hint" id="shortcutHint"></div>
+
+
+
+<!-- 全局搜索面板 -->
+<div class="search-panel" id="globalSearchPanel" onclick="if(event.target===this)closeGlobalSearch()">
+  <div class="search-panel-content">
+    <div class="search-input-wrapper">
+      <span class="search-input-icon">🔍</span>
+      <input type="text" class="search-input" id="globalSearchInput" placeholder="搜索知识点、题目、功能..." autocomplete="off" oninput="performGlobalSearch(this.value)">
+      <button class="search-input-clear" id="globalSearchClear" onclick="clearGlobalSearch()" style="display:none">✕</button>
+      <span class="search-input-shortcut">ESC</span>
+    </div>
+    <div class="search-results" id="globalSearchResults">
+      <div class="search-results-empty">
+        <div class="icon">💡</div>
+        <div class="text">输入关键词开始搜索<br>支持搜索知识点、题目、功能模块</div>
+      </div>
+    </div>
+    <div class="search-history" id="globalSearchHistory" style="display:none">
+      <div class="search-history-title">
+        <span>🕐 搜索历史</span>
+        <span class="search-history-clear" onclick="clearSearchHistory()">清空</span>
+      </div>
+      <div class="search-history-tags" id="searchHistoryTags"></div>
+    </div>
+    <div class="search-footer">
+      <div class="search-footer-hints">
+        <div class="search-footer-hint"><kbd>↑↓</kbd> 选择</div>
+        <div class="search-footer-hint"><kbd>Enter</kbd> 打开</div>
+        <div class="search-footer-hint"><kbd>ESC</kbd> 关闭</div>
+      </div>
+      <div>全局搜索</div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
