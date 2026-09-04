@@ -717,6 +717,97 @@ button:focus-visible, .btn:focus-visible, .tool-btn:focus-visible{
 .progress-ring-text{position:absolute;font-size:24px;font-weight:700;color:#333}
 .progress-ring-label{position:absolute;bottom:20px;font-size:12px;color:#999}
 
+
+/* ==================== 背诵助手优化 ==================== */
+
+/* 闪卡容器 */
+.flashcard-container{perspective:1000px;margin:20px auto;max-width:500px}
+.flashcard{position:relative;width:100%;height:280px;transform-style:preserve-3d;transition:transform 0.6s cubic-bezier(0.4,0,0.2,1);cursor:pointer}
+.flashcard.flipped{transform:rotateY(180deg)}
+.flashcard-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:16px;padding:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(0,0,0,0.1)}
+.flashcard-front{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.flashcard-back{background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;transform:rotateY(180deg)}
+.flashcard-label{position:absolute;top:16px;left:20px;font-size:12px;opacity:0.8;background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:10px}
+.flashcard-hint{position:absolute;bottom:16px;right:20px;font-size:11px;opacity:0.6}
+.flashcard-content{font-size:20px;font-weight:600;text-align:center;line-height:1.6;max-height:180px;overflow-y:auto}
+.flashcard-content.small{font-size:16px}
+.flashcard-content::-webkit-scrollbar{width:4px}
+.flashcard-content::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.3);border-radius:2px}
+
+/* 闪卡进度 */
+.flashcard-progress{display:flex;align-items:center;justify-content:space-between;margin:16px 0;font-size:13px;color:#666}
+.flashcard-progress-bar{flex:1;height:8px;background:#e0e0e0;border-radius:4px;margin:0 12px;overflow:hidden}
+.flashcard-progress-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:4px;transition:width 0.5s ease}
+
+/* 闪卡控制按钮 */
+.flashcard-controls{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.flashcard-btn{padding:12px 24px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;gap:8px}
+.flashcard-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+.flashcard-btn:active{transform:translateY(0)}
+.flashcard-btn.prev{background:#f5f5f5;color:#666}
+.flashcard-btn.next{background:#f5f5f5;color:#666}
+.flashcard-btn.know{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.flashcard-btn.unknown{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}
+.flashcard-btn.shuffle{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
+
+/* 艾宾浩斯复习提醒 */
+.review-reminder{background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px}
+.review-reminder-icon{font-size:32px;flex-shrink:0}
+.review-reminder-content{flex:1}
+.review-reminder-title{font-size:15px;font-weight:600;color:#92400e;margin-bottom:4px}
+.review-reminder-desc{font-size:13px;color:#b45309}
+.review-reminder-btn{padding:10px 20px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s ease;white-space:nowrap}
+.review-reminder-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(245,158,11,0.3)}
+
+/* 背诵统计 */
+.recite-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.recite-stat-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:16px;text-align:center;transition:all 0.3s ease}
+.recite-stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.recite-stat-value{font-size:28px;font-weight:700;margin-bottom:4px}
+.recite-stat-value.mastered{color:#10b981}
+.recite-stat-value.learning{color:#f59e0b}
+.recite-stat-value.new{color:#94a3b8}
+.recite-stat-value.total{color:#667eea}
+.recite-stat-label{font-size:12px;color:#999}
+
+/* 背诵模式选择 */
+.recite-modes{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.recite-mode-btn{padding:10px 18px;border:1.5px solid #e0e0e0;background:#fff;border-radius:10px;font-size:13px;color:#666;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;gap:6px}
+.recite-mode-btn:hover{border-color:#667eea;color:#667eea}
+.recite-mode-btn.active{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-color:transparent}
+
+/* 听写模式 */
+.dictation-container{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:24px;margin-bottom:20px}
+.dictation-question{font-size:18px;font-weight:600;color:#333;margin-bottom:16px;text-align:center}
+.dictation-input{width:100%;padding:14px 18px;border:2px solid #e0e0e0;border-radius:10px;font-size:15px;outline:none;transition:all 0.2s ease;font-family:inherit;box-sizing:border-box}
+.dictation-input:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,0.1)}
+.dictation-input.correct{border-color:#10b981;background:#f0fdf4}
+.dictation-input.wrong{border-color:#ef4444;background:#fef2f2}
+.dictation-answer{margin-top:16px;padding:14px;background:#f8f9ff;border-radius:10px;display:none}
+.dictation-answer.show{display:block}
+.dictation-answer-title{font-size:13px;font-weight:600;color:#667eea;margin-bottom:6px}
+.dictation-answer-content{font-size:14px;color:#333;line-height:1.6}
+
+/* 背诵计时器 */
+.recite-timer{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#1e293b,#334155);color:#fff;padding:12px 20px;border-radius:12px;margin-bottom:20px}
+.recite-timer-display{font-size:24px;font-weight:700;font-family:monospace;letter-spacing:2px}
+.recite-timer-btn{padding:8px 16px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s ease}
+.recite-timer-btn.start{background:#10b981;color:#fff}
+.recite-timer-btn.pause{background:#f59e0b;color:#fff}
+.recite-timer-btn.reset{background:#64748b;color:#fff}
+.recite-timer-btn:hover{opacity:0.9}
+
+/* 背诵分类标签 */
+.recite-categories{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.recite-category-tag{padding:8px 16px;background:#f5f5f5;border-radius:20px;font-size:13px;color:#666;cursor:pointer;transition:all 0.2s ease;border:1.5px solid transparent}
+.recite-category-tag:hover{background:#e8e8e8}
+.recite-category-tag.active{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+
+/* 快捷键提示 */
+.shortcut-hints{display:flex;gap:16px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.shortcut-hint{display:flex;align-items:center;gap:6px;font-size:11px;color:#999}
+.shortcut-key{padding:2px 8px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:4px;font-family:monospace;font-size:10px;font-weight:600;color:#666}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -2566,6 +2657,384 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
   };
   
   console.log('✅ 进度追踪优化已加载');
+})();
+
+
+
+// ==================== 背诵助手优化 ====================
+(function(){
+  const RECITE_DATA_KEY = 'kaoyan_recite_data';
+  const REVIEW_DATA_KEY = 'kaoyan_review_data';
+  
+  // 闪卡状态
+  let flashcards = [];
+  let currentCardIndex = 0;
+  let isFlipped = false;
+  let reciteMode = 'sequence'; // sequence, shuffle, dictation, test
+  let reciteTimer = null;
+  let reciteSeconds = 0;
+  let isTimerRunning = false;
+  
+  // 获取背诵数据
+  function getReciteData(){
+    try{
+      return JSON.parse(localStorage.getItem(RECITE_DATA_KEY) || '{}');
+    }catch(e){
+      return {};
+    }
+  }
+  
+  // 保存背诵数据
+  function saveReciteData(data){
+    try{
+      localStorage.setItem(RECITE_DATA_KEY, JSON.stringify(data));
+    }catch(e){}
+  }
+  
+  // 获取复习数据
+  function getReviewData(){
+    try{
+      return JSON.parse(localStorage.getItem(REVIEW_DATA_KEY) || '[]');
+    }catch(e){
+      return [];
+    }
+  }
+  
+  // 保存复习数据
+  function saveReviewData(data){
+    try{
+      localStorage.setItem(REVIEW_DATA_KEY, JSON.stringify(data));
+    }catch(e){}
+  }
+  
+  // 艾宾浩斯遗忘曲线间隔（天）
+  const EBINGHAUS_INTERVALS = [1, 2, 4, 7, 15, 30];
+  
+  // 添加复习计划
+  function addReviewPlan(cardId, level){
+    const reviews = getReviewData();
+    const now = new Date();
+    const interval = EBINGHAUS_INTERVALS[Math.min(level, EBINGHAUS_INTERVALS.length - 1)];
+    const reviewDate = new Date(now);
+    reviewDate.setDate(reviewDate.getDate() + interval);
+    
+    reviews.push({
+      cardId: cardId,
+      level: level,
+      reviewDate: reviewDate.toISOString().split('T')[0],
+      created: now.toISOString()
+    });
+    
+    saveReviewData(reviews);
+  }
+  
+  // 获取今日复习数量
+  function getTodayReviewCount(){
+    const reviews = getReviewData();
+    const today = new Date().toISOString().split('T')[0];
+    return reviews.filter(r => r.reviewDate <= today).length;
+  }
+  
+  // 渲染复习提醒
+  window.renderReviewReminder = function(containerId){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    
+    const count = getTodayReviewCount();
+    
+    if(count === 0){
+      container.innerHTML = '';
+      return;
+    }
+    
+    container.innerHTML = 
+      '<div class="review-reminder">' +
+        '<div class="review-reminder-icon">⏰</div>' +
+        '<div class="review-reminder-content">' +
+          '<div class="review-reminder-title">艾宾浩斯复习提醒</div>' +
+          '<div class="review-reminder-desc">今天有 ' + count + ' 个知识点需要复习，及时复习记忆更牢固！</div>' +
+        '</div>' +
+        '<button class="review-reminder-btn" onclick="startReviewMode()">开始复习</button>' +
+      '</div>';
+  };
+  
+  // 开始复习模式
+  window.startReviewMode = function(){
+    showSuccess('已进入复习模式');
+    // 这里可以切换到复习闪卡
+  };
+  
+  // 初始化闪卡数据
+  function initFlashcards(){
+    // 从页面中提取闪卡内容，或者使用默认数据
+    flashcards = [
+      {id: 1, front: '静息电位', back: '细胞在未受刺激时，存在于细胞膜内外两侧的电位差。表现为内负外正，约为-70mV~-90mV。', category: '生理学', status: 'new'},
+      {id: 2, front: '动作电位', back: '可兴奋细胞受到刺激时，在静息电位基础上产生的快速、可逆、可传播的电位变化。包括去极化、反极化、复极化、后超极化。', category: '生理学', status: 'new'},
+      {id: 3, front: '兴奋-收缩耦联', back: '将肌细胞膜的电兴奋与肌丝滑行联系起来的中介过程。包括：AP沿横管传导→三联管处Ca²⁺释放→Ca²⁺与肌钙蛋白结合→原肌球蛋白移位→横桥循环。', category: '生理学', status: 'new'},
+      {id: 4, front: '肌丝滑行学说', back: '肌肉收缩的机制。粗肌丝（肌球蛋白）的横桥与细肌丝（肌动蛋白）结合，拉动细肌丝向M线方向滑行，导致肌节缩短。', category: '生理学', status: 'new'},
+      {id: 5, front: '氧解离曲线', back: '表示PO₂与Hb氧饱和度关系的曲线，呈S形。P50≈26mmHg。右移：CO₂↑、H⁺↑、温度↑、2,3-DPG↑；左移：相反。', category: '生理学', status: 'new'},
+      {id: 6, front: '肾小球滤过率(GFR)', back: '单位时间内（每分钟）两肾生成的超滤液量。正常成人约为125ml/min，180L/天。', category: '生理学', status: 'new'},
+      {id: 7, front: '突触传递', back: '神经元之间信息传递的方式。过程：AP到达突触前膜→Ca²⁺内流→突触小泡释放递质→递质与突触后膜受体结合→产生EPSP或IPSP。', category: '生理学', status: 'new'},
+      {id: 8, front: '牵张反射', back: '有神经支配的骨骼肌受到外力牵拉时，引起受牵拉的同一肌肉收缩的反射活动。包括腱反射和肌紧张。感受器是肌梭。', category: '生理学', status: 'new'}
+    ];
+    
+    // 从localStorage恢复状态
+    const data = getReciteData();
+    if(data.cards){
+      flashcards.forEach(card => {
+        const saved = data.cards[card.id];
+        if(saved){
+          card.status = saved.status || 'new';
+          card.reviewLevel = saved.reviewLevel || 0;
+        }
+      });
+    }
+  }
+  
+  // 渲染闪卡
+  window.renderFlashcard = function(containerId){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    
+    if(flashcards.length === 0){
+      initFlashcards();
+    }
+    
+    const card = flashcards[currentCardIndex];
+    if(!card) return;
+    
+    const total = flashcards.length;
+    const progress = ((currentCardIndex + 1) / total) * 100;
+    
+    container.innerHTML = 
+      '<div class="flashcard-container">' +
+        '<div class="flashcard ' + (isFlipped ? 'flipped' : '') + '" id="flashcard" onclick="flipFlashcard()">' +
+          '<div class="flashcard-face flashcard-front">' +
+            '<div class="flashcard-label">' + card.category + ' · ' + (currentCardIndex + 1) + '/' + total + '</div>' +
+            '<div class="flashcard-content">' + card.front + '</div>' +
+            '<div class="flashcard-hint">点击翻转查看答案</div>' +
+          '</div>' +
+          '<div class="flashcard-face flashcard-back">' +
+            '<div class="flashcard-label">答案</div>' +
+            '<div class="flashcard-content small">' + card.back + '</div>' +
+            '<div class="flashcard-hint">点击翻转返回</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flashcard-progress">' +
+        '<span>' + (currentCardIndex + 1) + ' / ' + total + '</span>' +
+        '<div class="flashcard-progress-bar"><div class="flashcard-progress-fill" style="width:' + progress + '%"></div></div>' +
+        '<span>' + Math.round(progress) + '%</span>' +
+      '</div>' +
+      '<div class="flashcard-controls">' +
+        '<button class="flashcard-btn prev" onclick="prevFlashcard()">← 上一张</button>' +
+        '<button class="flashcard-btn unknown" onclick="markFlashcard('unknown')">❌ 不认识</button>' +
+        '<button class="flashcard-btn know" onclick="markFlashcard('know')">✅ 认识</button>' +
+        '<button class="flashcard-btn next" onclick="nextFlashcard()">下一张 →</button>' +
+        '<button class="flashcard-btn shuffle" onclick="shuffleFlashcards()">🔀 随机</button>' +
+      '</div>' +
+      '<div class="shortcut-hints">' +
+        '<div class="shortcut-hint"><span class="shortcut-key">空格</span>翻转</div>' +
+        '<div class="shortcut-hint"><span class="shortcut-key">←</span>上一张</div>' +
+        '<div class="shortcut-hint"><span class="shortcut-key">→</span>下一张</div>' +
+        '<div class="shortcut-hint"><span class="shortcut-key">1</span>不认识</div>' +
+        '<div class="shortcut-hint"><span class="shortcut-key">2</span>认识</div>' +
+      '</div>';
+  };
+  
+  // 翻转闪卡
+  window.flipFlashcard = function(){
+    isFlipped = !isFlipped;
+    const card = document.getElementById('flashcard');
+    if(card){
+      card.classList.toggle('flipped', isFlipped);
+    }
+  };
+  
+  // 上一张
+  window.prevFlashcard = function(){
+    if(currentCardIndex > 0){
+      currentCardIndex--;
+      isFlipped = false;
+      renderFlashcard('flashcardContainer');
+    }
+  };
+  
+  // 下一张
+  window.nextFlashcard = function(){
+    if(currentCardIndex < flashcards.length - 1){
+      currentCardIndex++;
+      isFlipped = false;
+      renderFlashcard('flashcardContainer');
+    } else {
+      showSuccess('已完成所有闪卡！');
+    }
+  };
+  
+  // 标记闪卡
+  window.markFlashcard = function(status){
+    const card = flashcards[currentCardIndex];
+    if(!card) return;
+    
+    card.status = status === 'know' ? 'mastered' : 'learning';
+    
+    // 保存到localStorage
+    const data = getReciteData();
+    if(!data.cards) data.cards = {};
+    data.cards[card.id] = {status: card.status, reviewLevel: (data.cards[card.id]?.reviewLevel || 0) + (status === 'know' ? 1 : 0)};
+    saveReciteData(data);
+    
+    // 添加复习计划
+    if(status === 'know'){
+      addReviewPlan(card.id, data.cards[card.id].reviewLevel);
+    }
+    
+    // 自动下一张
+    setTimeout(() => {
+      nextFlashcard();
+    }, 300);
+  };
+  
+  // 随机排序
+  window.shuffleFlashcards = function(){
+    for(let i = flashcards.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [flashcards[i], flashcards[j]] = [flashcards[j], flashcards[i]];
+    }
+    currentCardIndex = 0;
+    isFlipped = false;
+    renderFlashcard('flashcardContainer');
+    showInfo('已随机排序');
+  };
+  
+  // 渲染背诵统计
+  window.renderReciteStats = function(containerId){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    
+    if(flashcards.length === 0){
+      initFlashcards();
+    }
+    
+    const mastered = flashcards.filter(c => c.status === 'mastered').length;
+    const learning = flashcards.filter(c => c.status === 'learning').length;
+    const newCards = flashcards.filter(c => c.status === 'new').length;
+    const total = flashcards.length;
+    
+    container.innerHTML = 
+      '<div class="recite-stats">' +
+        '<div class="recite-stat-card">' +
+          '<div class="recite-stat-value total">' + total + '</div>' +
+          '<div class="recite-stat-label">总卡片数</div>' +
+        '</div>' +
+        '<div class="recite-stat-card">' +
+          '<div class="recite-stat-value mastered">' + mastered + '</div>' +
+          '<div class="recite-stat-label">已掌握</div>' +
+        '</div>' +
+        '<div class="recite-stat-card">' +
+          '<div class="recite-stat-value learning">' + learning + '</div>' +
+          '<div class="recite-stat-label">学习中</div>' +
+        '</div>' +
+        '<div class="recite-stat-card">' +
+          '<div class="recite-stat-value new">' + newCards + '</div>' +
+          '<div class="recite-stat-label">未学习</div>' +
+        '</div>' +
+      '</div>';
+  };
+  
+  // 背诵计时器
+  window.renderReciteTimer = function(containerId){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    
+    container.innerHTML = 
+      '<div class="recite-timer">' +
+        '<span>⏱️</span>' +
+        '<div class="recite-timer-display" id="reciteTimerDisplay">00:00</div>' +
+        '<button class="recite-timer-btn start" id="reciteTimerBtn" onclick="toggleReciteTimer()">开始</button>' +
+        '<button class="recite-timer-btn reset" onclick="resetReciteTimer()">重置</button>' +
+      '</div>';
+  };
+  
+  // 切换计时器
+  window.toggleReciteTimer = function(){
+    const btn = document.getElementById('reciteTimerBtn');
+    if(isTimerRunning){
+      clearInterval(reciteTimer);
+      isTimerRunning = false;
+      if(btn){
+        btn.textContent = '继续';
+        btn.className = 'recite-timer-btn start';
+      }
+    } else {
+      reciteTimer = setInterval(() => {
+        reciteSeconds++;
+        updateTimerDisplay();
+      }, 1000);
+      isTimerRunning = true;
+      if(btn){
+        btn.textContent = '暂停';
+        btn.className = 'recite-timer-btn pause';
+      }
+    }
+  };
+  
+  // 重置计时器
+  window.resetReciteTimer = function(){
+    clearInterval(reciteTimer);
+    isTimerRunning = false;
+    reciteSeconds = 0;
+    updateTimerDisplay();
+    const btn = document.getElementById('reciteTimerBtn');
+    if(btn){
+      btn.textContent = '开始';
+      btn.className = 'recite-timer-btn start';
+    }
+  };
+  
+  // 更新计时器显示
+  function updateTimerDisplay(){
+    const display = document.getElementById('reciteTimerDisplay');
+    if(display){
+      const mins = Math.floor(reciteSeconds / 60);
+      const secs = reciteSeconds % 60;
+      display.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+  }
+  
+  // 键盘快捷键
+  document.addEventListener('keydown', function(e){
+    // 只在闪卡区域可见时响应
+    const flashcard = document.getElementById('flashcard');
+    if(!flashcard) return;
+    
+    // 检查闪卡是否在视口中
+    const rect = flashcard.getBoundingClientRect();
+    if(rect.top < 0 || rect.top > window.innerHeight) return;
+    
+    switch(e.key){
+      case ' ':
+        e.preventDefault();
+        flipFlashcard();
+        break;
+      case 'ArrowLeft':
+        prevFlashcard();
+        break;
+      case 'ArrowRight':
+        nextFlashcard();
+        break;
+      case '1':
+        markFlashcard('unknown');
+        break;
+      case '2':
+        markFlashcard('know');
+        break;
+    }
+  });
+  
+  // 初始化
+  initFlashcards();
+  console.log('✅ 背诵助手优化已加载');
 })();
 
 </script>
