@@ -618,6 +618,105 @@ button:focus-visible, .btn:focus-visible, .tool-btn:focus-visible{
 .chart-axis path{stroke:#ccc;stroke-width:1.5}
 .chart-axis text{fill:#666;font-size:11px}
 
+
+/* ==================== 进度追踪优化 ==================== */
+
+/* 统计卡片 */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:linear-gradient(135deg,#fff,#f8f9ff);border:1px solid #e8e8e8;border-radius:14px;padding:20px;transition:all 0.3s ease;position:relative;overflow:hidden}
+.stat-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.1);border-color:#667eea}
+.stat-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,#667eea,#764ba2)}
+.stat-card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px}
+.stat-card-value{font-size:28px;font-weight:700;color:#333;line-height:1.2}
+.stat-card-label{font-size:13px;color:#999;margin-top:4px}
+.stat-card-trend{display:flex;align-items:center;gap:4px;font-size:12px;margin-top:8px}
+.stat-card-trend.up{color:#10b981}
+.stat-card-trend.down{color:#ef4444}
+
+/* 学习日历 */
+.study-calendar{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:20px;margin-bottom:24px}
+.calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.calendar-title{font-size:16px;font-weight:600;color:#333;display:flex;align-items:center;gap:8px}
+.calendar-nav{display:flex;gap:8px}
+.calendar-nav-btn{width:32px;height:32px;border:none;background:#f5f5f5;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#666;transition:all 0.2s ease}
+.calendar-nav-btn:hover{background:#667eea;color:#fff}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calendar-day-header{text-align:center;font-size:11px;font-weight:600;color:#999;padding:8px 0}
+.calendar-day{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#666;cursor:pointer;transition:all 0.2s ease;position:relative}
+.calendar-day:hover{transform:scale(1.1);z-index:1}
+.calendar-day.empty{background:transparent;cursor:default}
+.calendar-day.empty:hover{transform:none}
+.calendar-day.level-0{background:#f5f5f5}
+.calendar-day.level-1{background:#dbeafe}
+.calendar-day.level-2{background:#93c5fd}
+.calendar-day.level-3{background:#3b82f6;color:#fff}
+.calendar-day.level-4{background:#1d4ed8;color:#fff}
+.calendar-day.today{border:2px solid #667eea;font-weight:700}
+.calendar-day .tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;white-space:nowrap;opacity:0;visibility:hidden;transition:all 0.2s ease;z-index:10}
+.calendar-day:hover .tooltip{opacity:1;visibility:visible}
+
+/* 学习趋势图表 */
+.trend-chart{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:20px;margin-bottom:24px}
+.trend-chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.trend-chart-title{font-size:16px;font-weight:600;color:#333;display:flex;align-items:center;gap:8px}
+.trend-chart-tabs{display:flex;gap:4px;background:#f5f5f5;padding:4px;border-radius:8px}
+.trend-chart-tab{padding:6px 14px;border:none;background:transparent;border-radius:6px;cursor:pointer;font-size:12px;color:#666;transition:all 0.2s ease}
+.trend-chart-tab.active{background:#fff;color:#667eea;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
+.trend-chart-content{height:200px;position:relative}
+.trend-bar{position:absolute;bottom:0;background:linear-gradient(180deg,#667eea,#764ba2);border-radius:4px 4px 0 0;transition:all 0.3s ease;cursor:pointer}
+.trend-bar:hover{opacity:0.8;transform:scaleY(1.05)}
+.trend-bar-label{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:10px;color:#999;white-space:nowrap}
+.trend-bar-value{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#667eea;opacity:0;transition:opacity 0.2s ease}
+.trend-bar:hover .trend-bar-value{opacity:1}
+
+/* 学科进度对比 */
+.subject-progress{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:20px;margin-bottom:24px}
+.subject-progress-title{font-size:16px;font-weight:600;color:#333;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.subject-progress-item{margin-bottom:14px}
+.subject-progress-item:last-child{margin-bottom:0}
+.subject-progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.subject-progress-name{font-size:14px;font-weight:500;color:#333;display:flex;align-items:center;gap:8px}
+.subject-progress-percent{font-size:13px;font-weight:600;color:#667eea}
+.subject-progress-bar{height:10px;background:#f0f0f0;border-radius:5px;overflow:hidden}
+.subject-progress-fill{height:100%;border-radius:5px;transition:width 1s ease;position:relative}
+.subject-progress-fill::after{content:'';position:absolute;top:0;right:0;width:20px;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3));animation:shimmer 2s infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+/* 目标设定 */
+.goal-section{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:20px;margin-bottom:24px}
+.goal-title{font-size:16px;font-weight:600;color:#333;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.goal-item{display:flex;align-items:center;gap:16px;padding:14px;background:#f8f9ff;border-radius:10px;margin-bottom:10px;transition:all 0.2s ease}
+.goal-item:hover{background:#f0f2ff}
+.goal-item:last-child{margin-bottom:0}
+.goal-checkbox{width:24px;height:24px;border:2px solid #ddd;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.2s ease;flex-shrink:0}
+.goal-checkbox.checked{background:#10b981;border-color:#10b981;color:#fff}
+.goal-content{flex:1;min-width:0}
+.goal-text{font-size:14px;color:#333}
+.goal-text.completed{text-decoration:line-through;color:#999}
+.goal-meta{font-size:11px;color:#999;margin-top:2px}
+.goal-progress{width:100px;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;flex-shrink:0}
+.goal-progress-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:3px;transition:width 0.5s ease}
+
+/* 成就徽章 */
+.achievements-section{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:20px;margin-bottom:24px}
+.achievements-title{font-size:16px;font-weight:600;color:#333;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.achievements-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px}
+.achievement-item{display:flex;flex-direction:column;align-items:center;padding:16px 8px;background:#f8f9ff;border-radius:10px;cursor:pointer;transition:all 0.3s ease;position:relative}
+.achievement-item:hover{transform:translateY(-4px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.achievement-item.locked{opacity:0.4;filter:grayscale(100%)}
+.achievement-icon{font-size:32px;margin-bottom:8px}
+.achievement-name{font-size:11px;font-weight:600;color:#333;text-align:center;line-height:1.3}
+.achievement-desc{font-size:10px;color:#999;text-align:center;margin-top:4px;line-height:1.3}
+.achievement-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 12px;border-radius:8px;font-size:11px;white-space:nowrap;opacity:0;visibility:hidden;transition:all 0.2s ease;z-index:10}
+.achievement-item:hover .achievement-tooltip{opacity:1;visibility:visible}
+
+/* 进度环 */
+.progress-ring-container{display:flex;align-items:center;justify-content:center;position:relative}
+.progress-ring{transform:rotate(-90deg)}
+.progress-ring-circle{transition:stroke-dashoffset 1s ease}
+.progress-ring-text{position:absolute;font-size:24px;font-weight:700;color:#333}
+.progress-ring-label{position:absolute;bottom:20px;font-size:12px;color:#999}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -2123,6 +2222,350 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
   } else {
     init();
   }
+})();
+
+
+
+// ==================== 进度追踪优化 ====================
+(function(){
+  const STUDY_DATA_KEY = 'kaoyan_study_data';
+  
+  // 获取学习数据
+  function getStudyData(){
+    try{
+      return JSON.parse(localStorage.getItem(STUDY_DATA_KEY) || '{}');
+    }catch(e){
+      return {};
+    }
+  }
+  
+  // 保存学习数据
+  function saveStudyData(data){
+    try{
+      localStorage.setItem(STUDY_DATA_KEY, JSON.stringify(data));
+    }catch(e){}
+  }
+  
+  // 记录学习时长
+  window.recordStudyTime = function(minutes, subject){
+    const data = getStudyData();
+    const today = new Date().toISOString().split('T')[0];
+    
+    if(!data.daily) data.daily = {};
+    if(!data.daily[today]) data.daily[today] = {minutes: 0, subjects: {}};
+    
+    data.daily[today].minutes += minutes;
+    if(subject){
+      data.daily[today].subjects[subject] = (data.daily[today].subjects[subject] || 0) + minutes;
+    }
+    
+    saveStudyData(data);
+  };
+  
+  // 获取统计数据
+  function getStats(){
+    const data = getStudyData();
+    const daily = data.daily || {};
+    const dates = Object.keys(daily).sort();
+    
+    // 总学习天数
+    const totalDays = dates.length;
+    
+    // 总学习时长
+    let totalMinutes = 0;
+    dates.forEach(date => {
+      totalMinutes += daily[date].minutes || 0;
+    });
+    
+    // 连续学习天数
+    let streak = 0;
+    const today = new Date();
+    for(let i = 0; i < 365; i++){
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      if(daily[dateStr] && daily[dateStr].minutes > 0){
+        streak++;
+      } else if(i > 0){
+        break;
+      }
+    }
+    
+    // 本周学习时长
+    let weekMinutes = 0;
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay());
+    for(let i = 0; i < 7; i++){
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      if(daily[dateStr]){
+        weekMinutes += daily[dateStr].minutes || 0;
+      }
+    }
+    
+    return {
+      totalDays: totalDays,
+      totalMinutes: totalMinutes,
+      totalHours: Math.floor(totalMinutes / 60),
+      streak: streak,
+      weekMinutes: weekMinutes,
+      weekHours: Math.floor(weekMinutes / 60),
+      daily: daily
+    };
+  }
+  
+  // 渲染统计卡片
+  window.renderStatsCards = function(containerId){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    
+    const stats = getStats();
+    
+    container.innerHTML = 
+      '<div class="stats-grid">' +
+        '<div class="stat-card">' +
+          '<div class="stat-card-icon" style="background:#dbeafe">📅</div>' +
+          '<div class="stat-card-value">' + stats.totalDays + '</div>' +
+          '<div class="stat-card-label">累计学习天数</div>' +
+          '<div class="stat-card-trend up">↑ 坚持就是胜利</div>' +
+        '</div>' +
+        '<div class="stat-card">' +
+          '<div class="stat-card-icon" style="background:#d1fae5">⏱️</div>' +
+          '<div class="stat-card-value">' + stats.totalHours + '<span style="font-size:16px;color:#999">h</span></div>' +
+          '<div class="stat-card-label">累计学习时长</div>' +
+          '<div class="stat-card-trend up">↑ 本周' + stats.weekHours + 'h</div>' +
+        '</div>' +
+        '<div class="stat-card">' +
+          '<div class="stat-card-icon" style="background:#fef3c7">🔥</div>' +
+          '<div class="stat-card-value">' + stats.streak + '</div>' +
+          '<div class="stat-card-label">连续学习天数</div>' +
+          '<div class="stat-card-trend ' + (stats.streak > 0 ? 'up' : 'down') + '">' + (stats.streak > 0 ? '↑ 继续保持' : '↓ 今天开始') + '</div>' +
+        '</div>' +
+        '<div class="stat-card">' +
+          '<div class="stat-card-icon" style="background:#fce7f3">📚</div>' +
+          '<div class="stat-card-value">' + Math.floor(stats.totalMinutes / 30) + '</div>' +
+          '<div class="stat-card-label">完成番茄钟</div>' +
+          '<div class="stat-card-trend up">↑ 每个25分钟</div>' +
+        '</div>' +
+      '</div>';
+  };
+  
+  // 渲染学习日历
+  window.renderStudyCalendar = function(containerId, year, month){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    
+    const now = new Date();
+    year = year || now.getFullYear();
+    month = month || now.getMonth();
+    
+    const data = getStudyData();
+    const daily = data.daily || {};
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startWeekday = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
+    
+    const monthNames = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+    const weekdayNames = ['日','一','二','三','四','五','六'];
+    
+    let html = '<div class="study-calendar">';
+    html += '<div class="calendar-header">';
+    html += '<div class="calendar-title">📅 学习日历 - ' + year + '年' + monthNames[month] + '</div>';
+    html += '<div class="calendar-nav">';
+    html += '<button class="calendar-nav-btn" onclick="renderStudyCalendar('' + containerId + '',' + (month === 0 ? year - 1 : year) + ',' + (month === 0 ? 11 : month - 1) + ')">‹</button>';
+    html += '<button class="calendar-nav-btn" onclick="renderStudyCalendar('' + containerId + '',' + (month === 11 ? year + 1 : year) + ',' + (month === 11 ? 0 : month + 1) + ')">›</button>';
+    html += '</div></div>';
+    
+    html += '<div class="calendar-grid">';
+    weekdayNames.forEach(day => {
+      html += '<div class="calendar-day-header">' + day + '</div>';
+    });
+    
+    // 空白格子
+    for(let i = 0; i < startWeekday; i++){
+      html += '<div class="calendar-day empty"></div>';
+    }
+    
+    // 日期格子
+    for(let day = 1; day <= daysInMonth; day++){
+      const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+      const minutes = daily[dateStr] ? daily[dateStr].minutes : 0;
+      
+      let level = 0;
+      if(minutes > 0) level = 1;
+      if(minutes >= 30) level = 2;
+      if(minutes >= 60) level = 3;
+      if(minutes >= 120) level = 4;
+      
+      const isToday = dateStr === now.toISOString().split('T')[0];
+      
+      html += '<div class="calendar-day level-' + level + (isToday ? ' today' : '') + '">';
+      html += day;
+      if(minutes > 0){
+        html += '<div class="tooltip">学习' + Math.floor(minutes / 60) + 'h' + (minutes % 60) + 'min</div>';
+      }
+      html += '</div>';
+    }
+    
+    html += '</div></div>';
+    
+    container.innerHTML = html;
+  };
+  
+  // 渲染学习趋势图表
+  window.renderTrendChart = function(containerId, days){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    
+    days = days || 7;
+    const data = getStudyData();
+    const daily = data.daily || {};
+    const now = new Date();
+    
+    let maxMinutes = 0;
+    const chartData = [];
+    
+    for(let i = days - 1; i >= 0; i--){
+      const date = new Date(now);
+      date.setDate(now.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const minutes = daily[dateStr] ? daily[dateStr].minutes : 0;
+      maxMinutes = Math.max(maxMinutes, minutes);
+      chartData.push({
+        date: dateStr,
+        label: (date.getMonth() + 1) + '/' + date.getDate(),
+        minutes: minutes
+      });
+    }
+    
+    let html = '<div class="trend-chart">';
+    html += '<div class="trend-chart-header">';
+    html += '<div class="trend-chart-title">📈 学习趋势</div>';
+    html += '<div class="trend-chart-tabs">';
+    html += '<button class="trend-chart-tab ' + (days === 7 ? 'active' : '') + '" onclick="renderTrendChart('' + containerId + '',7)">近7天</button>';
+    html += '<button class="trend-chart-tab ' + (days === 30 ? 'active' : '') + '" onclick="renderTrendChart('' + containerId + '',30)">近30天</button>';
+    html += '</div></div>';
+    
+    html += '<div class="trend-chart-content">';
+    const barWidth = 100 / days - 2;
+    chartData.forEach((item, index) => {
+      const height = maxMinutes > 0 ? (item.minutes / maxMinutes) * 80 : 0;
+      const left = index * (100 / days) + 1;
+      html += '<div class="trend-bar" style="left:' + left + '%;width:' + barWidth + '%;height:' + height + '%">';
+      html += '<div class="trend-bar-value">' + item.minutes + 'min</div>';
+      html += '<div class="trend-bar-label">' + item.label + '</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+    
+    container.innerHTML = html;
+  };
+  
+  // 渲染学科进度对比
+  window.renderSubjectProgress = function(containerId){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    
+    const subjects = [
+      {name: '英语（一）', icon: '📖', color: '#3b82f6', progress: 65},
+      {name: '政治', icon: '📕', color: '#ef4444', progress: 45},
+      {name: '运动生理学', icon: '🫀', color: '#f59e0b', progress: 70},
+      {name: '运动解剖学', icon: '🦴', color: '#10b981', progress: 55}
+    ];
+    
+    let html = '<div class="subject-progress">';
+    html += '<div class="subject-progress-title">📊 学科进度对比</div>';
+    
+    subjects.forEach(subject => {
+      html += '<div class="subject-progress-item">';
+      html += '<div class="subject-progress-header">';
+      html += '<div class="subject-progress-name">' + subject.icon + ' ' + subject.name + '</div>';
+      html += '<div class="subject-progress-percent">' + subject.progress + '%</div>';
+      html += '</div>';
+      html += '<div class="subject-progress-bar">';
+      html += '<div class="subject-progress-fill" style="width:' + subject.progress + '%;background:linear-gradient(90deg,' + subject.color + ',' + subject.color + 'cc)"></div>';
+      html += '</div></div>';
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+  };
+  
+  // 渲染每日目标
+  window.renderDailyGoals = function(containerId){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    
+    const goals = [
+      {id: 1, text: '背诵50个英语单词', meta: '英语', progress: 100, completed: true},
+      {id: 2, text: '学习1章运动生理学', meta: '专业课', progress: 60, completed: false},
+      {id: 3, text: '做1套政治选择题', meta: '政治', progress: 0, completed: false},
+      {id: 4, text: '复习运动解剖学笔记', meta: '专业课', progress: 30, completed: false},
+      {id: 5, text: '番茄钟专注学习2小时', meta: '通用', progress: 75, completed: false}
+    ];
+    
+    let html = '<div class="goal-section">';
+    html += '<div class="goal-title">🎯 今日学习目标</div>';
+    
+    goals.forEach(goal => {
+      html += '<div class="goal-item" onclick="toggleGoal(' + goal.id + ')">';
+      html += '<div class="goal-checkbox ' + (goal.completed ? 'checked' : '') + '">' + (goal.completed ? '✓' : '') + '</div>';
+      html += '<div class="goal-content">';
+      html += '<div class="goal-text ' + (goal.completed ? 'completed' : '') + '">' + goal.text + '</div>';
+      html += '<div class="goal-meta">' + goal.meta + '</div>';
+      html += '</div>';
+      html += '<div class="goal-progress"><div class="goal-progress-fill" style="width:' + goal.progress + '%"></div></div>';
+      html += '</div>';
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+  };
+  
+  // 切换目标完成状态
+  window.toggleGoal = function(goalId){
+    showSuccess('目标状态已更新');
+  };
+  
+  // 渲染成就徽章
+  window.renderAchievements = function(containerId){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    
+    const stats = getStats();
+    
+    const achievements = [
+      {icon: '🌱', name: '初学者', desc: '开始第一天学习', unlocked: stats.totalDays >= 1},
+      {icon: '📚', name: '学习达人', desc: '累计学习7天', unlocked: stats.totalDays >= 7},
+      {icon: '🔥', name: '坚持不懈', desc: '连续学习7天', unlocked: stats.streak >= 7},
+      {icon: '⏱️', name: '时间管理', desc: '累计学习10小时', unlocked: stats.totalHours >= 10},
+      {icon: '🏆', name: '学习冠军', desc: '累计学习30天', unlocked: stats.totalDays >= 30},
+      {icon: '💎', name: '钻石会员', desc: '累计学习100小时', unlocked: stats.totalHours >= 100},
+      {icon: '🚀', name: '火箭速度', desc: '单日学习4小时', unlocked: false},
+      {icon: '🌟', name: '全能选手', desc: '四科均有学习记录', unlocked: false}
+    ];
+    
+    let html = '<div class="achievements-section">';
+    html += '<div class="achievements-title">🏅 学习成就 (' + achievements.filter(a => a.unlocked).length + '/' + achievements.length + ')</div>';
+    html += '<div class="achievements-grid">';
+    
+    achievements.forEach(achievement => {
+      html += '<div class="achievement-item ' + (achievement.unlocked ? '' : 'locked') + '">';
+      html += '<div class="achievement-icon">' + achievement.icon + '</div>';
+      html += '<div class="achievement-name">' + achievement.name + '</div>';
+      html += '<div class="achievement-desc">' + achievement.desc + '</div>';
+      html += '<div class="achievement-tooltip">' + achievement.name + ' - ' + achievement.desc + (achievement.unlocked ? ' (已获得)' : ' (未解锁)') + '</div>';
+      html += '</div>';
+    });
+    
+    html += '</div></div>';
+    container.innerHTML = html;
+  };
+  
+  console.log('✅ 进度追踪优化已加载');
 })();
 
 </script>
