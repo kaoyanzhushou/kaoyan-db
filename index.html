@@ -2561,7 +2561,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch1">
+<div class="chapter-detail" id="detail-ch1" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -2690,7 +2690,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch2">
+<div class="chapter-detail" id="detail-ch2" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -2805,7 +2805,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch3">
+<div class="chapter-detail" id="detail-ch3" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -2919,7 +2919,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch4">
+<div class="chapter-detail" id="detail-ch4" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -3041,7 +3041,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch5">
+<div class="chapter-detail" id="detail-ch5" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -3149,7 +3149,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch6">
+<div class="chapter-detail" id="detail-ch6" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -3260,7 +3260,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch7">
+<div class="chapter-detail" id="detail-ch7" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -3365,7 +3365,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch8">
+<div class="chapter-detail" id="detail-ch8" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -3471,7 +3471,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch9">
+<div class="chapter-detail" id="detail-ch9" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -3573,7 +3573,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch10">
+<div class="chapter-detail" id="detail-ch10" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -3704,7 +3704,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch11">
+<div class="chapter-detail" id="detail-ch11" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -3830,7 +3830,7 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 </div>
-<div class="chapter-detail" id="detail-ch12">
+<div class="chapter-detail" id="detail-ch12" style="display: none;">
   <div class="detail-grid">
     <div class="detail-card concept">
       <h4>📌 核心概念</h4>
@@ -31656,9 +31656,9 @@ function toggleChapterDetail(chapterId) {
   const cardsGrid = group ? group.querySelector('.cards-grid') : null;
   
   if (detail && btn) {
-    const isExpanded = detail.classList.contains('expanded');
+    const isExpanded = btn.classList.contains('expanded');
     if (isExpanded) {
-      // 收起：隐藏详细知识点和速查卡
+      // 收起：隐藏速查卡（详细知识点始终隐藏，只通过模态框显示）
       detail.classList.remove('expanded');
       detail.style.display = 'none';
       if (cardsGrid) {
@@ -31667,9 +31667,9 @@ function toggleChapterDetail(chapterId) {
       btn.classList.remove('expanded');
       btn.innerHTML = '展开详情 <span class="arrow">▼</span>';
     } else {
-      // 展开：显示详细知识点和速查卡
-      detail.classList.add('expanded');
-      detail.style.display = 'block';
+      // 展开：只显示速查卡，不显示详细知识点（详细知识点通过模态框显示）
+      detail.classList.remove('expanded');
+      detail.style.display = 'none';
       if (cardsGrid) {
         cardsGrid.style.display = 'grid';
       }
