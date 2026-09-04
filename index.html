@@ -5690,10 +5690,43 @@ console.log('✅ 学习工具入口已加载');
 </div>
 
 <div class="tab-content" id="tab-anatomy">
-  <div class="card" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff">
-    <h3 style="color:#fff">运动解剖学备考总览</h3>
-    <p style="opacity:.9">专业课组成部分 | 参考书目：丁文龙《系统解剖学》第9版 + 潘珊珊《运动解剖学》</p>
-    <p style="opacity:.9;margin-top:8px;font-size:13px">考试范围：运动系统（骨/关节/肌肉）为核心，外加动作分析、内脏/脉管/神经/内分泌/感觉器基础</p>
+  <!-- 可折叠的备考总览 -->
+  <div class="anatomy-overview-collapsible" id="anatomyOverview">
+    <div class="anatomy-overview-header" onclick="toggleAnatomyOverview()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border-radius:10px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">📋</span>
+        <span style="font-weight:700;font-size:15px">运动解剖学备考总览</span>
+        <span style="font-size:12px;opacity:.8">参考书目：丁文龙《系统解剖学》第9版 + 潘珊珊《运动解剖学》 | 共7章</span>
+      </div>
+      <span id="anatomyOverviewArrow" style="font-size:14px;transition:transform 0.3s">▼</span>
+    </div>
+    <div class="anatomy-overview-content" id="anatomyOverviewContent" style="display:none;overflow:hidden;transition:max-height 0.3s ease">
+      <div class="card" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;margin-bottom:10px">
+        <h3 style="color:#fff">运动解剖学备考总览</h3>
+        <p style="opacity:.9">专业课组成部分 | 参考书目：丁文龙《系统解剖学》第9版 + 潘珊珊《运动解剖学》</p>
+        <p style="opacity:.9;margin-top:8px;font-size:13px">考试范围：运动系统（骨/关节/肌肉）为核心，外加动作分析、内脏/脉管/神经/内分泌/感觉器基础</p>
+      </div>
+    </div>
+  </div>
+  <!-- 知识点筛选器和进度统计 -->
+  <div class="knowledge-progress-stats" id="anatomyProgressStats" style="background:linear-gradient(135deg,#faf5ff,#f3e8ff)">
+    <div class="stat-item">📚 总知识点：<span class="stat-val" id="anatomyTotalCount" style="color:#7c3aed">0</span></div>
+    <div class="stat-item">✅ 已掌握：<span class="stat-val" id="anatomyLearnedCount" style="color:#7c3aed">0</span></div>
+    <div class="stat-item">⏳ 待学习：<span class="stat-val" id="anatomyUnlearnedCount" style="color:#7c3aed">0</span></div>
+    <div class="knowledge-progress-bar" style="background:#ddd6fe"><div class="fill" id="anatomyProgressFill" style="width:0%;background:linear-gradient(90deg,#8b5cf6,#7c3aed)"></div></div>
+    <div class="stat-item"><span class="stat-val" id="anatomyProgressPct" style="color:#7c3aed">0%</span></div>
+  </div>
+  <div class="knowledge-filter-bar" id="anatomyFilterBar">
+    <span class="filter-label">🔍 筛选：</span>
+    <button class="knowledge-filter-btn active" onclick="filterAnatomyKnowledge('all')">全部 <span class="count" id="anatomyFilterCountAll">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterAnatomyKnowledge('unlearned')">未学 <span class="count" id="anatomyFilterCountUnlearned">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterAnatomyKnowledge('learned')">已学 <span class="count" id="anatomyFilterCountLearned">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterAnatomyKnowledge('favorites')">⭐ 我的收藏 <span class="count" id="anatomyFilterCountFavorites">0</span></button>
+    <div class="view-mode-switcher">
+      <button class="view-mode-btn active" id="anatomyViewListBtn" onclick="switchAnatomyViewMode('list')" title="列表视图">☰</button>
+      <button class="view-mode-btn" id="anatomyViewCardBtn" onclick="switchAnatomyViewMode('card')" title="卡片视图">▦</button>
+      <button class="view-mode-btn" id="anatomyViewFocusBtn" onclick="switchAnatomyViewMode('focus')" title="专注模式">🎯</button>
+    </div>
   </div>
   <div id="anatomyContent"></div>
 </div>
@@ -24056,8 +24089,105 @@ function updateFavoriteCount(){
   try{ const favorites = JSON.parse(localStorage.getItem('kaoyan_favorites') || '[]'); const countEl = document.getElementById('filterCountFavorites'); if(countEl) countEl.textContent = '(' + favorites.length + ')'; }catch(e){}
 }
 
+// 运动解剖学备考总览折叠
+function toggleAnatomyOverview(){
+  const content = document.getElementById('anatomyOverviewContent');
+  const arrow = document.getElementById('anatomyOverviewArrow');
+  if(!content) return;
+  if(content.style.display === 'none' || !content.classList.contains('show')){
+    content.style.display = 'block';
+    content.classList.add('show');
+    if(arrow) arrow.style.transform = 'rotate(180deg)';
+  } else {
+    content.style.display = 'none';
+    content.classList.remove('show');
+    if(arrow) arrow.style.transform = 'rotate(0deg)';
+  }
+}
+// 运动解剖学知识点筛选
+let currentAnatomyFilter = 'all';
+function filterAnatomyKnowledge(filter){
+  currentAnatomyFilter = filter;
+  document.querySelectorAll('#anatomyFilterBar .knowledge-filter-btn').forEach(btn=>{ btn.classList.remove('active'); });
+  if(event && event.target) event.target.closest('.knowledge-filter-btn').classList.add('active');
+  const sections = document.querySelectorAll('#anatomyContent .knowledge-section');
+  sections.forEach(section=>{
+    const id = section.id.replace('section-','');
+    const isLearned = !!appState.knowledge[id];
+    const enh = enhancedData[id] || {};
+    const isHighfreq = !!enh.highfreq;
+    let show = false;
+    switch(filter){
+      case 'all': show = true; break;
+      case 'unlearned': show = !isLearned; break;
+      case 'learned': show = isLearned; break;
+      case 'highfreq': show = isHighfreq; break;
+      case 'favorites': show = isFavorited(id); break;
+    }
+    section.style.display = show ? '' : 'none';
+  });
+}
+// 运动解剖学进度统计
+function updateAnatomyProgressStats(){
+  try{
+    const total = anatomyData.length;
+    const learned = anatomyData.filter(item=>appState.knowledge[item.id]).length;
+    const unlearned = total - learned;
+    const pct = Math.round(learned/total*100);
+    const totalEl = document.getElementById('anatomyTotalCount');
+    const learnedEl = document.getElementById('anatomyLearnedCount');
+    const unlearnedEl = document.getElementById('anatomyUnlearnedCount');
+    const fillEl = document.getElementById('anatomyProgressFill');
+    const pctEl = document.getElementById('anatomyProgressPct');
+    if(totalEl) totalEl.textContent = total;
+    if(learnedEl) learnedEl.textContent = learned;
+    if(unlearnedEl) unlearnedEl.textContent = unlearned;
+    if(fillEl) fillEl.style.width = pct+'%';
+    if(pctEl) pctEl.textContent = pct+'%';
+    const countAll = document.getElementById('anatomyFilterCountAll');
+    const countUnlearned = document.getElementById('anatomyFilterCountUnlearned');
+    const countLearned = document.getElementById('anatomyFilterCountLearned');
+    if(countAll) countAll.textContent = '('+total+')';
+    if(countUnlearned) countUnlearned.textContent = '('+unlearned+')';
+    if(countLearned) countLearned.textContent = '('+learned+')';
+    updateFavoriteCount();
+  }catch(e){ console.warn('updateAnatomyProgressStats error:', e); }
+}
+// 运动解剖学视图模式切换
+let currentAnatomyViewMode = 'list';
+function switchAnatomyViewMode(mode){
+  const content = document.getElementById('anatomyContent');
+  const listBtn = document.getElementById('anatomyViewListBtn');
+  const cardBtn = document.getElementById('anatomyViewCardBtn');
+  const focusBtn = document.getElementById('anatomyViewFocusBtn');
+  if(!content) return;
+  content.classList.remove('card-view');
+  document.body.classList.remove('focus-mode');
+  if(listBtn) listBtn.classList.remove('active');
+  if(cardBtn) cardBtn.classList.remove('active');
+  if(focusBtn) focusBtn.classList.remove('active');
+  currentAnatomyViewMode = mode;
+  if(mode === 'card'){ content.classList.add('card-view'); if(cardBtn) cardBtn.classList.add('active'); }
+  else if(mode === 'focus'){ document.body.classList.add('focus-mode'); if(focusBtn) focusBtn.classList.add('active'); }
+  else { if(listBtn) listBtn.classList.add('active'); }
+  try{ const prefs = JSON.parse(localStorage.getItem('kaoyan_view_prefs') || '{}'); prefs.anatomyViewMode = mode; localStorage.setItem('kaoyan_view_prefs', JSON.stringify(prefs)); }catch(e){}
+}
+function restoreAnatomyViewMode(){
+  try{ const prefs = JSON.parse(localStorage.getItem('kaoyan_view_prefs') || '{}'); if(prefs.anatomyViewMode && prefs.anatomyViewMode !== 'list'){ setTimeout(() => switchAnatomyViewMode(prefs.anatomyViewMode), 200); } }catch(e){}
+}
+// 运动解剖学知识点关联数据
+const ANATOMY_RELATIONS = {
+  'a1': ['a2','a3','a5'],
+  'a2': ['a1','a3','a5'],
+  'a3': ['a1','a2','a4','a5'],
+  'a4': ['a3','a5'],
+  'a5': ['a1','a2','a3','a4'],
+  'a6': ['a7'],
+  'a7': ['a6']
+};
+
 function getKnowledgeRelatedHTML(itemId){
-const related = KNOWLEDGE_RELATIONS[itemId];
+const related = KNOWLEDGE_RELATIONS[itemId] || ANATOMY_RELATIONS[itemId];
 if(!related || !related.length) return '';
 const allData = [...physioData, ...politicsData, ...anatomyData];
 const relatedItems = related.map(id => allData.find(d => d.id === id)).filter(Boolean);
@@ -24282,6 +24412,7 @@ const statCards = document.querySelectorAll('#statsRow .stat-card');
 if(statCards[1]) statCards[1].querySelector('.val').textContent = `${done}/${total}`;
 
 if(typeof updatePhysioProgressStats === 'function') updatePhysioProgressStats();
+if(typeof updateAnatomyProgressStats === 'function') updateAnatomyProgressStats();
 }
 function renderPlan(){
 const now = new Date();
@@ -28012,7 +28143,7 @@ if(tabName === 'physio' && !window.knowledgeRendered.physio){
 try{ renderKnowledgeSection(physioData, 'physioContent', 'tag-physio'); window.knowledgeRendered.physio = true; if(typeof updatePhysioProgressStats === 'function') setTimeout(updatePhysioProgressStats, 100); if(typeof restoreViewMode === 'function') setTimeout(restoreViewMode, 200); }catch(e){ console.warn('physio render error:', e); }
 }
 if(tabName === 'anatomy' && !window.knowledgeRendered.anatomy){
-try{ renderKnowledgeSection(anatomyData, 'anatomyContent', 'tag-anatomy'); window.knowledgeRendered.anatomy = true; }catch(e){ console.warn('anatomy render error:', e); }
+try{ renderKnowledgeSection(anatomyData, 'anatomyContent', 'tag-anatomy'); window.knowledgeRendered.anatomy = true; if(typeof updateAnatomyProgressStats === 'function') setTimeout(updateAnatomyProgressStats, 100); if(typeof restoreAnatomyViewMode === 'function') setTimeout(restoreAnatomyViewMode, 200); }catch(e){ console.warn('anatomy render error:', e); }
 }
 if(tabName === 'quiz' && !quizState.started) initQuizSetup();
 if(tabName === 'flashcard') initFlashcardSetup();
