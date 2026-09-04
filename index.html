@@ -458,6 +458,94 @@ button:focus-visible, .btn:focus-visible, .tool-btn:focus-visible{
 .tooltip::before{content:'';position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#333;opacity:0;visibility:hidden;transition:all 0.2s ease;pointer-events:none}
 .tooltip:hover::after, .tooltip:hover::before{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
 
+
+/* ==================== 知识点展示优化 ==================== */
+
+/* 知识点目录导航 */
+.knowledge-toc{position:fixed;top:50%;right:20px;transform:translateY(-50%);width:200px;background:rgba(255,255,255,0.95);border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.1);padding:16px;z-index:999;opacity:0;visibility:hidden;transition:all 0.3s ease;backdrop-filter:blur(10px);max-height:70vh;overflow-y:auto}
+.knowledge-toc.show{opacity:1;visibility:visible}
+.knowledge-toc-title{font-size:13px;font-weight:600;color:#333;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}
+.knowledge-toc-close{width:20px;height:20px;border:none;background:transparent;cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#999;transition:all 0.2s ease}
+.knowledge-toc-close:hover{background:#f0f0f0;color:#666}
+.knowledge-toc-list{list-style:none;padding:0;margin:0}
+.knowledge-toc-item{padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:#666;transition:all 0.2s ease;margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.knowledge-toc-item:hover{background:#f5f5f5;color:#333;padding-left:14px}
+.knowledge-toc-item.active{background:linear-gradient(90deg,rgba(102,126,234,0.1),transparent);color:#667eea;font-weight:600;border-left:3px solid #667eea}
+.knowledge-toc-item .icon{font-size:14px;flex-shrink:0}
+.knowledge-toc-item .progress-dot{width:8px;height:8px;border-radius:50%;background:#e0e0e0;flex-shrink:0;margin-left:auto}
+.knowledge-toc-item .progress-dot.learned{background:#10b981}
+.knowledge-toc-item .progress-dot.in-progress{background:#f59e0b}
+
+/* 目录切换按钮 */
+.toc-toggle-btn{position:fixed;top:50%;right:0;transform:translateY(-50%);width:36px;height:80px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px 0 0 8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:998;box-shadow:-2px 0 8px rgba(0,0,0,0.1);transition:all 0.3s ease}
+.toc-toggle-btn:hover{width:44px}
+.toc-toggle-btn.hidden{display:none}
+
+/* 知识点搜索框 */
+.knowledge-search{position:sticky;top:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);padding:12px 16px;border-bottom:1px solid #f0f0f0;z-index:10;display:flex;gap:10px;align-items:center}
+.knowledge-search-input{flex:1;padding:10px 14px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;transition:all 0.2s ease;font-family:inherit}
+.knowledge-search-input:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,0.1)}
+.knowledge-search-btn{padding:10px 16px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;transition:all 0.2s ease;white-space:nowrap}
+.knowledge-search-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(102,126,234,0.3)}
+
+/* 知识点卡片优化 */
+.knowledge-card{position:relative;background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:20px;margin-bottom:16px;transition:all 0.3s ease;overflow:hidden}
+.knowledge-card:hover{border-color:#667eea;box-shadow:0 4px 16px rgba(102,126,234,0.1);transform:translateY(-2px)}
+.knowledge-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.knowledge-card-title{font-size:16px;font-weight:600;color:#333;display:flex;align-items:center;gap:8px}
+.knowledge-card-title .icon{font-size:18px}
+.knowledge-card-actions{display:flex;gap:6px}
+.knowledge-card-action-btn{width:32px;height:32px;border:none;background:#f5f5f5;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.2s ease;color:#666}
+.knowledge-card-action-btn:hover{background:#e8e8e8;transform:scale(1.1)}
+.knowledge-card-action-btn.active{background:#fef3c7;color:#f59e0b}
+.knowledge-card-action-btn.learned{background:#d1fae5;color:#10b981}
+.knowledge-card-content{font-size:14px;color:#555;line-height:1.7}
+.knowledge-card-content.highlight{background:linear-gradient(transparent 60%, #fef08a 60%);padding:0 2px}
+.knowledge-card-footer{margin-top:12px;padding-top:12px;border-top:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#999}
+.knowledge-card-tags{display:flex;gap:6px;flex-wrap:wrap}
+.knowledge-card-tag{padding:2px 8px;background:#f0f0f0;border-radius:10px;font-size:11px;color:#666}
+
+/* 知识点折叠/展开 */
+.knowledge-section{margin-bottom:20px}
+.knowledge-section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:linear-gradient(135deg,#f8f9ff,#f0f2ff);border:1px solid #e0e5ff;border-radius:10px;cursor:pointer;transition:all 0.3s ease}
+.knowledge-section-header:hover{background:linear-gradient(135deg,#f0f2ff,#e8ebff);border-color:#667eea}
+.knowledge-section-title{font-size:15px;font-weight:600;color:#333;display:flex;align-items:center;gap:10px}
+.knowledge-section-title .icon{font-size:18px}
+.knowledge-section-toggle{width:24px;height:24px;border-radius:50%;background:#fff;border:1px solid #e0e0e0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#667eea;transition:all 0.3s ease;flex-shrink:0}
+.knowledge-section.collapsed .knowledge-section-toggle{transform:rotate(-90deg)}
+.knowledge-section-content{margin-top:12px;padding:0 8px;overflow:hidden;transition:max-height 0.4s ease,opacity 0.3s ease}
+.knowledge-section.collapsed .knowledge-section-content{max-height:0 !important;opacity:0;margin-top:0;padding-top:0;padding-bottom:0}
+
+/* 搜索高亮 */
+.search-highlight-text{background:linear-gradient(transparent 60%, #fef08a 60%);font-weight:600;padding:0 2px;border-radius:2px}
+
+/* 收藏列表 */
+.favorites-panel{position:fixed;top:0;right:-320px;width:320px;height:100%;background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,0.1);z-index:10000;transition:right 0.3s ease;display:flex;flex-direction:column}
+.favorites-panel.show{right:0}
+.favorites-header{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}
+.favorites-title{font-size:16px;font-weight:600;color:#333;display:flex;align-items:center;gap:8px}
+.favorites-close{width:28px;height:28px;border:none;background:#f5f5f5;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#666;transition:all 0.2s ease}
+.favorites-close:hover{background:#e8e8e8}
+.favorites-list{flex:1;overflow-y:auto;padding:12px}
+.favorites-item{display:flex;align-items:center;gap:10px;padding:12px;border-radius:8px;cursor:pointer;transition:all 0.2s ease;margin-bottom:8px}
+.favorites-item:hover{background:#f5f5f5}
+.favorites-item .icon{font-size:18px;flex-shrink:0}
+.favorites-item .content{flex:1;min-width:0}
+.favorites-item .title{font-size:14px;font-weight:500;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.favorites-item .desc{font-size:12px;color:#999;margin-top:2px}
+.favorites-item .remove{width:24px;height:24px;border:none;background:transparent;cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#999;transition:all 0.2s ease;flex-shrink:0}
+.favorites-item .remove:hover{background:#fee2e2;color:#ef4444}
+.favorites-empty{padding:40px 20px;text-align:center;color:#999}
+.favorites-empty .icon{font-size:48px;margin-bottom:12px;opacity:0.5}
+
+/* 学习进度统计 */
+.learning-stats{display:flex;gap:16px;padding:16px;background:linear-gradient(135deg,#f8f9ff,#f0f2ff);border-radius:12px;margin-bottom:20px}
+.learning-stat{flex:1;text-align:center}
+.learning-stat-value{font-size:24px;font-weight:700;color:#667eea}
+.learning-stat-label{font-size:12px;color:#999;margin-top:4px}
+.learning-stat-bar{height:6px;background:#e0e0e0;border-radius:3px;margin-top:8px;overflow:hidden}
+.learning-stat-bar-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:3px;transition:width 0.5s ease}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -1431,6 +1519,291 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
   });
   
   console.log('✅ 错误提示与反馈优化已加载');
+})();
+
+
+
+// ==================== 知识点展示优化 ====================
+(function(){
+  const FAVORITES_KEY = 'kaoyan_favorites';
+  const LEARNING_PROGRESS_KEY = 'kaoyan_learning_progress';
+  
+  // 知识点数据（从页面中提取）
+  let knowledgeItems = [];
+  
+  // 提取页面中的知识点
+  function extractKnowledgeItems(){
+    knowledgeItems = [];
+    // 查找所有学科知识tab中的标题
+    document.querySelectorAll('.tab-content').forEach(tab => {
+      const tabId = tab.id;
+      tab.querySelectorAll('h2, h3, .knowledge-card-title, .section-title').forEach((title, index) => {
+        const text = title.textContent.trim();
+        if(text && text.length > 1 && text.length < 100){
+          knowledgeItems.push({
+            id: tabId + '_' + index,
+            tab: tabId.replace('tab-', ''),
+            title: text,
+            element: title
+          });
+        }
+      });
+    });
+  }
+  
+  // 渲染知识点目录
+  function renderKnowledgeToc(){
+    const tocList = document.getElementById('knowledgeTocList');
+    if(!tocList) return;
+    
+    // 按tab分组
+    const grouped = {};
+    knowledgeItems.forEach(item => {
+      if(!grouped[item.tab]) grouped[item.tab] = [];
+      grouped[item.tab].push(item);
+    });
+    
+    const tabNames = {
+      'english': '📖 英语',
+      'politics': '📕 政治',
+      'physio': '🫀 运动生理学',
+      'anatomy': '🦴 运动解剖学'
+    };
+    
+    let html = '';
+    Object.keys(grouped).forEach(tab => {
+      const items = grouped[tab].slice(0, 10); // 每个tab最多显示10个
+      html += '<li class="knowledge-toc-item" style="font-weight:600;color:#333;pointer-events:none">' + 
+              (tabNames[tab] || tab) + ' (' + grouped[tab].length + ')</li>';
+      items.forEach(item => {
+        const progress = getLearningProgress(item.id);
+        let progressClass = '';
+        if(progress === 'learned') progressClass = 'learned';
+        else if(progress === 'in-progress') progressClass = 'in-progress';
+        
+        html += '<li class="knowledge-toc-item" onclick="jumpToKnowledge('' + item.id + '', '' + item.tab + '')">' +
+                '<span class="icon">•</span>' +
+                '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + item.title.substring(0, 20) + '</span>' +
+                '<span class="progress-dot ' + progressClass + '"></span>' +
+                '</li>';
+      });
+    });
+    
+    tocList.innerHTML = html;
+  }
+  
+  // 跳转到知识点
+  window.jumpToKnowledge = function(id, tab){
+    if(typeof switchTab === 'function'){
+      switchTab(tab);
+    }
+    setTimeout(() => {
+      const item = knowledgeItems.find(i => i.id === id);
+      if(item && item.element){
+        item.element.scrollIntoView({behavior: 'smooth', block: 'center'});
+        item.element.style.background = '#fef08a';
+        setTimeout(() => {
+          item.element.style.background = '';
+        }, 2000);
+      }
+    }, 300);
+    toggleKnowledgeToc();
+  };
+  
+  // 切换知识点目录显示
+  window.toggleKnowledgeToc = function(){
+    const toc = document.getElementById('knowledgeToc');
+    const toggleBtn = document.getElementById('tocToggleBtn');
+    if(toc){
+      toc.classList.toggle('show');
+      if(toggleBtn){
+        toggleBtn.style.display = toc.classList.contains('show') ? 'none' : 'flex';
+      }
+      if(toc.classList.contains('show')){
+        extractKnowledgeItems();
+        renderKnowledgeToc();
+      }
+    }
+  };
+  
+  // 收藏功能
+  function getFavorites(){
+    try{
+      return JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+    }catch(e){
+      return [];
+    }
+  }
+  
+  function saveFavorites(favorites){
+    try{
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+    }catch(e){}
+  }
+  
+  window.toggleFavorite = function(id, title, tab){
+    const favorites = getFavorites();
+    const index = favorites.findIndex(f => f.id === id);
+    
+    if(index >= 0){
+      favorites.splice(index, 1);
+      showInfo('已取消收藏');
+    } else {
+      favorites.push({id: id, title: title, tab: tab, time: Date.now()});
+      showSuccess('已添加到收藏');
+    }
+    
+    saveFavorites(favorites);
+    renderFavorites();
+    updateFavoriteButtons();
+  };
+  
+  function isFavorite(id){
+    return getFavorites().some(f => f.id === id);
+  }
+  
+  function updateFavoriteButtons(){
+    document.querySelectorAll('[data-favorite-id]').forEach(btn => {
+      const id = btn.getAttribute('data-favorite-id');
+      if(isFavorite(id)){
+        btn.classList.add('active');
+        btn.textContent = '⭐';
+      } else {
+        btn.classList.remove('active');
+        btn.textContent = '☆';
+      }
+    });
+  }
+  
+  window.toggleFavoritesPanel = function(){
+    const panel = document.getElementById('favoritesPanel');
+    if(panel){
+      panel.classList.toggle('show');
+      if(panel.classList.contains('show')){
+        renderFavorites();
+      }
+    }
+  };
+  
+  function renderFavorites(){
+    const list = document.getElementById('favoritesList');
+    if(!list) return;
+    
+    const favorites = getFavorites();
+    
+    if(favorites.length === 0){
+      list.innerHTML = '<div class="favorites-empty"><div class="icon">📭</div><div>暂无收藏内容</div></div>';
+      return;
+    }
+    
+    let html = '';
+    favorites.forEach(fav => {
+      html += '<div class="favorites-item" onclick="jumpToKnowledge('' + fav.id + '', '' + fav.tab + '');toggleFavoritesPanel();">' +
+              '<span class="icon">⭐</span>' +
+              '<div class="content">' +
+              '<div class="title">' + fav.title + '</div>' +
+              '<div class="desc">' + new Date(fav.time).toLocaleDateString() + '</div>' +
+              '</div>' +
+              '<button class="remove" onclick="event.stopPropagation();removeFavorite('' + fav.id + '')">✕</button>' +
+              '</div>';
+    });
+    
+    list.innerHTML = html;
+  }
+  
+  window.removeFavorite = function(id){
+    const favorites = getFavorites().filter(f => f.id !== id);
+    saveFavorites(favorites);
+    renderFavorites();
+    updateFavoriteButtons();
+    showInfo('已移除收藏');
+  };
+  
+  // 学习进度
+  function getLearningProgress(id){
+    try{
+      const progress = JSON.parse(localStorage.getItem(LEARNING_PROGRESS_KEY) || '{}');
+      return progress[id] || '';
+    }catch(e){
+      return '';
+    }
+  }
+  
+  function setLearningProgress(id, status){
+    try{
+      const progress = JSON.parse(localStorage.getItem(LEARNING_PROGRESS_KEY) || '{}');
+      progress[id] = status;
+      localStorage.setItem(LEARNING_PROGRESS_KEY, JSON.stringify(progress));
+    }catch(e){}
+  }
+  
+  window.toggleLearningStatus = function(id, title){
+    const current = getLearningProgress(id);
+    let next = '';
+    if(current === '') next = 'in-progress';
+    else if(current === 'in-progress') next = 'learned';
+    else next = '';
+    
+    setLearningProgress(id, next);
+    
+    if(next === 'learned') showSuccess('已标记为已学会');
+    else if(next === 'in-progress') showInfo('已标记为学习中');
+    else showInfo('已取消学习标记');
+    
+    // 更新按钮状态
+    const btn = document.querySelector('[data-learning-id="' + id + '"]');
+    if(btn){
+      btn.className = 'knowledge-card-action-btn' + (next ? ' ' + next : '');
+      btn.textContent = next === 'learned' ? '✅' : (next === 'in-progress' ? '📖' : '○');
+    }
+  };
+  
+  // 知识点搜索
+  window.searchKnowledge = function(query, tab){
+    if(!query.trim()){
+      // 清除搜索高亮
+      document.querySelectorAll('.search-highlight-text').forEach(el => {
+        el.outerHTML = el.textContent;
+      });
+      return;
+    }
+    
+    const tabContent = document.getElementById('tab-' + tab);
+    if(!tabContent) return;
+    
+    // 搜索标题和内容
+    const results = [];
+    tabContent.querySelectorAll('h2, h3, h4, p, li').forEach(el => {
+      const text = el.textContent;
+      if(text.toLowerCase().includes(query.toLowerCase())){
+        results.push(el);
+      }
+    });
+    
+    // 高亮第一个结果并滚动
+    if(results.length > 0){
+      results[0].scrollIntoView({behavior: 'smooth', block: 'center'});
+      showInfo('找到 ' + results.length + ' 个相关内容');
+    } else {
+      showWarning('未找到相关内容');
+    }
+  };
+  
+  // 初始化
+  function init(){
+    // 延迟提取知识点，等待页面渲染完成
+    setTimeout(() => {
+      extractKnowledgeItems();
+    }, 1000);
+    
+    console.log('✅ 知识点展示优化已加载');
+  }
+  
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
 
 </script>
@@ -30420,6 +30793,32 @@ document.body.appendChild(overlay);
     <div class="confirm-actions">
       <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirm()">取消</button>
       <button class="confirm-btn confirm-btn-confirm" id="confirmButton" onclick="executeConfirm()">确认</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 知识点目录导航 -->
+<button class="toc-toggle-btn" id="tocToggleBtn" onclick="toggleKnowledgeToc()" title="知识点目录">📑</button>
+<div class="knowledge-toc" id="knowledgeToc">
+  <div class="knowledge-toc-title">
+    <span>📑 知识点目录</span>
+    <button class="knowledge-toc-close" onclick="toggleKnowledgeToc()">✕</button>
+  </div>
+  <ul class="knowledge-toc-list" id="knowledgeTocList"></ul>
+</div>
+
+<!-- 收藏列表面板 -->
+<div class="favorites-panel" id="favoritesPanel">
+  <div class="favorites-header">
+    <div class="favorites-title">⭐ 我的收藏</div>
+    <button class="favorites-close" onclick="toggleFavoritesPanel()">✕</button>
+  </div>
+  <div class="favorites-list" id="favoritesList">
+    <div class="favorites-empty">
+      <div class="icon">📭</div>
+      <div>暂无收藏内容</div>
     </div>
   </div>
 </div>
