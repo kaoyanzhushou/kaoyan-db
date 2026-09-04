@@ -1228,6 +1228,26 @@ button:focus-visible, .btn:focus-visible, .tool-btn:focus-visible{
 .note-modal-content{font-size:14px;color:#555;line-height:1.8;white-space:pre-wrap;word-break:break-word}
 .note-modal-meta{display:flex;gap:16px;margin-top:16px;padding-top:12px;border-top:1px solid #f0f0f0;font-size:12px;color:#999;flex-wrap:wrap}
 
+
+/* ==================== 学习工具入口 ==================== */
+.study-tools-section{margin:20px 0;padding:20px;background:linear-gradient(135deg,#f8f9ff,#f0f2ff);border-radius:14px;border:1px solid #e0e5ff}
+.study-tools-title{font-size:18px;font-weight:700;color:#333;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.study-tools-title .icon{font-size:24px}
+.study-tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.study-tool-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:20px;cursor:pointer;transition:all 0.3s ease;position:relative;overflow:hidden;text-align:center}
+.study-tool-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(102,126,234,0.2);border-color:#667eea}
+.study-tool-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,#667eea,#764ba2)}
+.study-tool-icon{font-size:40px;margin-bottom:12px}
+.study-tool-name{font-size:16px;font-weight:600;color:#333;margin-bottom:6px}
+.study-tool-desc{font-size:12px;color:#999;line-height:1.5}
+.study-tool-badge{position:absolute;top:12px;right:12px;background:#ef4444;color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
+.study-tool-content{display:none;margin-top:20px;padding:20px;background:#fff;border-radius:12px;border:1px solid #e8e8e8}
+.study-tool-content.show{display:block}
+.study-tool-content-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0f0f0}
+.study-tool-content-title{font-size:16px;font-weight:600;color:#333;display:flex;align-items:center;gap:8px}
+.study-tool-close{width:32px;height:32px;border:none;background:#f5f5f5;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#666;transition:all 0.2s ease}
+.study-tool-close:hover{background:#fee2e2;color:#ef4444}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -5107,6 +5127,57 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
   console.log('✅ 笔记功能已加载');
 })();
 
+
+
+// ==================== 学习工具入口切换 ====================
+(function(){
+  let currentTool = null;
+  
+  window.toggleStudyTool = function(toolName){
+    // 隐藏所有工具内容
+    document.querySelectorAll('.study-tool-content').forEach(el => {
+      el.classList.remove('show');
+    });
+    
+    if(currentTool === toolName){
+      currentTool = null;
+      return;
+    }
+    
+    // 显示选中的工具内容
+    const toolContent = document.getElementById('tool-' + toolName);
+    if(toolContent){
+      toolContent.classList.add('show');
+      currentTool = toolName;
+      
+      // 渲染对应功能
+      setTimeout(() => {
+        if(toolName === 'wrongbook' && typeof renderWrongbook === 'function'){
+          renderWrongbook('wrongbookContainer');
+        } else if(toolName === 'studyplan'){
+          if(typeof renderCountdown === 'function'){
+            renderCountdown('countdownContainer');
+          }
+          if(typeof renderStudyPlan === 'function'){
+            renderStudyPlan('studyplanContainer');
+          }
+        } else if(toolName === 'studyreport' && typeof renderStudyReport === 'function'){
+          renderStudyReport('reportContainer', 'week');
+        } else if(toolName === 'notes' && typeof renderNotes === 'function'){
+          renderNotes('notesContainer');
+        }
+      }, 100);
+      
+      // 滚动到工具内容
+      setTimeout(() => {
+        toolContent.scrollIntoView({behavior: 'smooth', block: 'start'});
+      }, 200);
+    }
+  };
+  
+  console.log('✅ 学习工具入口已加载');
+})();
+
 </script>
 
 <meta name="theme-color" content="#3b82f6">
@@ -5241,6 +5312,71 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 </div>
 
 <div class="tab-content active" id="tab-dashboard">
+<!-- 学习工具入口 -->
+<div class="study-tools-section">
+  <div class="study-tools-title"><span class="icon">🛠️</span>学习工具</div>
+  <div class="study-tools-grid">
+    <div class="study-tool-card" onclick="toggleStudyTool('wrongbook')">
+      <div class="study-tool-icon">📝</div>
+      <div class="study-tool-name">错题本</div>
+      <div class="study-tool-desc">自动收集错题，错题重做，薄弱知识点分析</div>
+    </div>
+    <div class="study-tool-card" onclick="toggleStudyTool('studyplan')">
+      <div class="study-tool-icon">📋</div>
+      <div class="study-tool-name">智能学习计划</div>
+      <div class="study-tool-desc">考试倒计时，每日任务，科目分配，阶段规划</div>
+    </div>
+    <div class="study-tool-card" onclick="toggleStudyTool('studyreport')">
+      <div class="study-tool-icon">📊</div>
+      <div class="study-tool-name">学习报告</div>
+      <div class="study-tool-desc">周报/月报/总报告，趋势分析，效率评估，智能建议</div>
+    </div>
+    <div class="study-tool-card" onclick="toggleStudyTool('notes')">
+      <div class="study-tool-icon">✏️</div>
+      <div class="study-tool-name">我的笔记</div>
+      <div class="study-tool-desc">新建/编辑/删除笔记，分类管理，搜索筛选，导出</div>
+    </div>
+  </div>
+  
+  <!-- 错题本内容 -->
+  <div class="study-tool-content" id="tool-wrongbook">
+    <div class="study-tool-content-header">
+      <div class="study-tool-content-title">📝 错题本</div>
+      <button class="study-tool-close" onclick="toggleStudyTool('wrongbook')">✕</button>
+    </div>
+    <div id="wrongbookContainer"></div>
+  </div>
+  
+  <!-- 智能学习计划内容 -->
+  <div class="study-tool-content" id="tool-studyplan">
+    <div class="study-tool-content-header">
+      <div class="study-tool-content-title">📋 智能学习计划</div>
+      <button class="study-tool-close" onclick="toggleStudyTool('studyplan')">✕</button>
+    </div>
+    <div id="countdownContainer"></div>
+    <div id="studyplanContainer"></div>
+  </div>
+  
+  <!-- 学习报告内容 -->
+  <div class="study-tool-content" id="tool-studyreport">
+    <div class="study-tool-content-header">
+      <div class="study-tool-content-title">📊 学习报告</div>
+      <button class="study-tool-close" onclick="toggleStudyTool('studyreport')">✕</button>
+    </div>
+    <div id="reportContainer"></div>
+  </div>
+  
+  <!-- 我的笔记内容 -->
+  <div class="study-tool-content" id="tool-notes">
+    <div class="study-tool-content-header">
+      <div class="study-tool-content-title">✏️ 我的笔记</div>
+      <button class="study-tool-close" onclick="toggleStudyTool('notes')">✕</button>
+    </div>
+    <div id="notesContainer"></div>
+  </div>
+</div>
+
+
   <div id="targetBannerContainer"></div>
     <div class="phase-banner" id="phaseBanner"></div>
   <div class="stats-row" id="statsRow"></div>
