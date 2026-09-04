@@ -30520,6 +30520,27 @@ try { switchTab(item.dataset.tab); } catch(e2){ console.error('switchTab error:'
 });
 });
 }
+
+  // 阅读模块优化：默认显示第一篇文章详情
+  setTimeout(function(){
+    try {
+      var readingTab = document.getElementById('tab-reading');
+      if(readingTab && readingTab.classList.contains('active')){
+        var textSelect = document.getElementById('readingTextSelect');
+        if(textSelect && textSelect.options.length > 1 && !textSelect.value){
+          // 触发renderReadingPassages生成列表
+          if(typeof renderReadingPassages === 'function') renderReadingPassages();
+          // 延迟选择第一篇
+          setTimeout(function(){
+            if(textSelect.options.length > 1){
+              textSelect.value = textSelect.options[1].value;
+              if(typeof showReadingPassage === 'function') showReadingPassage();
+            }
+          }, 300);
+        }
+      }
+    } catch(e) { console.log('阅读模块初始化跳过:', e); }
+  }, 800);
 });
 function askAI(){
 const q = document.getElementById('aiQuestionInput').value.trim();
@@ -36355,25 +36376,34 @@ function renderReadingPassages(){
   passages.forEach(([key, data]) => {
     const option = document.createElement('option');
     option.value = key;
-    option.textContent = `${data.year}年 Text ${data.text}`;
+    option.textContent = data.year + '年 Text ' + data.text;
     textSelect.appendChild(option);
   });
   
-  // 显示文章列表
+  // 显示文章列表（带操作提示）
   container.innerHTML = `
+    <div style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);padding:14px 18px;border-radius:10px;margin-bottom:16px;border-left:4px solid #2563eb">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:24px">👆</span>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#1e40af;margin-bottom:2px">点击任意文章卡片，查看完整真题（原文+题目+答案+解析）</div>
+          <div style="font-size:12px;color:#3b82f6">也可以使用上方下拉框快速选择年份和文章</div>
+        </div>
+      </div>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
       ${passages.map(([key, data]) => `
-        <div onclick="showReadingPassageById('${key}')" style="background:#fff;padding:16px;border-radius:10px;cursor:pointer;transition:all .2s;border:2px solid transparent;hover:border-color:#3b82f6;box-shadow:0 1px 3px rgba(0,0,0,.1)" onmouseover="this.style.borderColor='#3b82f6';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='transparent';this.style.transform='translateY(0)'">
+        <div onclick="showReadingPassageById('${key}')" style="background:#fff;padding:16px;border-radius:10px;cursor:pointer;transition:all .2s;border:2px solid transparent;box-shadow:0 1px 3px rgba(0,0,0,.1)" onmouseover="this.style.borderColor='#3b82f6';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(59,130,246,.2)'" onmouseout="this.style.borderColor='transparent';this.style.transform='translateY(0)';this.style.boxShadow='0 1px 3px rgba(0,0,0,.1)'">
           <div style="font-size:18px;font-weight:700;color:#1e40af;margin-bottom:4px">${data.year} Text ${data.text}</div>
           <div style="font-size:12px;color:#64748b;margin-bottom:8px">高频词汇 ${data.vocab ? data.vocab.length : 0} 个</div>
-          <div style="font-size:12px;color:#059669">📖 点击查看详情</div>
+          <div style="font-size:12px;color:#059669;font-weight:600">📖 点击查看完整真题</div>
         </div>
       `).join('')}
     </div>
   `;
 }
 
-// 显示指定文章详情
+
 function showReadingPassageById(key){
   const textSelect = document.getElementById('readingTextSelect');
   if(textSelect) textSelect.value = key;
