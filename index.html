@@ -36410,10 +36410,30 @@ function initReadingModuleEnhanced(){
 }
 
 function switchReadingTab(tabName){
-document.querySelectorAll('.reading-tab').forEach(t => t.classList.remove('active'));
-document.querySelectorAll('.reading-section').forEach(s => s.classList.remove('active'));
-event.target.classList.add('active');
-document.getElementById('reading-' + tabName).classList.add('active');
+  // 移除所有tab的active状态
+  document.querySelectorAll('.reading-tab').forEach(t => {
+    t.classList.remove('active');
+    t.style.background = '';
+    t.style.color = '';
+    t.style.boxShadow = '';
+  });
+  // 隐藏所有内容区域
+  document.querySelectorAll('.reading-section').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  // 激活当前tab
+  const activeTab = event.target.closest('.reading-tab') || event.target;
+  activeTab.classList.add('active');
+  activeTab.style.background = '#fff';
+  activeTab.style.color = '#1e40af';
+  activeTab.style.boxShadow = '0 1px 3px rgba(0,0,0,.1)';
+  // 显示当前内容区域
+  const targetSection = document.getElementById('reading-' + tabName);
+  if(targetSection){
+    targetSection.classList.add('active');
+    targetSection.style.display = 'block';
+  }
 }
 function toggleTranslation(passageId){
 const el = document.getElementById('translation-' + passageId);
