@@ -546,6 +546,78 @@ button:focus-visible, .btn:focus-visible, .tool-btn:focus-visible{
 .learning-stat-bar{height:6px;background:#e0e0e0;border-radius:3px;margin-top:8px;overflow:hidden}
 .learning-stat-bar-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:3px;transition:width 0.5s ease}
 
+
+/* ==================== 图表可视化优化 ==================== */
+
+/* 图表容器 */
+.chart-container{position:relative;background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:16px;margin-bottom:20px;overflow:hidden;transition:all 0.3s ease}
+.chart-container:hover{box-shadow:0 4px 16px rgba(0,0,0,0.08)}
+
+/* 图表工具栏 */
+.chart-toolbar{position:absolute;top:12px;right:12px;display:flex;gap:6px;z-index:10;opacity:0;transition:opacity 0.3s ease}
+.chart-container:hover .chart-toolbar{opacity:1}
+.chart-tool-btn{width:32px;height:32px;border:none;background:rgba(255,255,255,0.95);border:1px solid #e0e0e0;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.2s ease;color:#666;backdrop-filter:blur(4px)}
+.chart-tool-btn:hover{background:#667eea;color:#fff;border-color:#667eea;transform:scale(1.1)}
+.chart-tool-btn.active{background:#667eea;color:#fff;border-color:#667eea}
+
+/* 图表标题 */
+.chart-title{font-size:15px;font-weight:600;color:#333;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.chart-title .icon{font-size:18px}
+
+/* SVG图表优化 */
+.chart-svg{width:100%;height:auto;max-height:500px;cursor:grab;transition:transform 0.3s ease}
+.chart-svg:active{cursor:grabbing}
+.chart-svg.zoomed{cursor:zoom-out}
+
+/* 图表数据提示 */
+.chart-tooltip{position:fixed;background:rgba(0,0,0,0.85);color:#fff;padding:10px 14px;border-radius:8px;font-size:12px;pointer-events:none;z-index:10000;opacity:0;transition:opacity 0.2s ease;max-width:250px;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.chart-tooltip.show{opacity:1}
+.chart-tooltip-title{font-weight:600;margin-bottom:4px;font-size:13px}
+.chart-tooltip-value{color:#a8d8ff}
+.chart-tooltip-desc{color:#ccc;margin-top:4px;font-size:11px;line-height:1.4}
+
+/* 图表全屏查看 */
+.chart-fullscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:99999;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:all 0.3s ease}
+.chart-fullscreen.show{opacity:1;visibility:visible}
+.chart-fullscreen-content{width:90%;max-width:1200px;max-height:90vh;background:#fff;border-radius:16px;padding:30px;overflow:auto;position:relative}
+.chart-fullscreen-close{position:absolute;top:16px;right:16px;width:40px;height:40px;border:none;background:#f5f5f5;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#666;transition:all 0.2s ease;z-index:10}
+.chart-fullscreen-close:hover{background:#ef4444;color:#fff;transform:rotate(90deg)}
+.chart-fullscreen svg{width:100%;height:auto;max-height:70vh}
+
+/* 图表缩放控制 */
+.chart-zoom-controls{position:absolute;bottom:16px;right:16px;display:flex;gap:4px;z-index:10}
+.chart-zoom-btn{width:30px;height:30px;border:none;background:rgba(255,255,255,0.95);border:1px solid #e0e0e0;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#666;transition:all 0.2s ease}
+.chart-zoom-btn:hover{background:#667eea;color:#fff;border-color:#667eea}
+
+/* 图表图例 */
+.chart-legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0}
+.chart-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#666;cursor:pointer;transition:opacity 0.2s ease}
+.chart-legend-item:hover{opacity:0.7}
+.chart-legend-color{width:12px;height:12px;border-radius:3px}
+
+/* 图表加载状态 */
+.chart-loading{display:flex;align-items:center;justify-content:center;padding:40px;color:#999;font-size:14px}
+.chart-loading-spinner{width:24px;height:24px;border:2px solid #e0e0e0;border-top-color:#667eea;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:10px}
+
+/* 图表深色主题 */
+.chart-container.dark-theme{background:#1a1a2e;border-color:#2d2d44}
+.chart-container.dark-theme .chart-title{color:#e0e0e0}
+.chart-container.dark-theme .chart-tool-btn{background:rgba(45,45,68,0.95);border-color:#3d3d5c;color:#aaa}
+.chart-container.dark-theme .chart-tool-btn:hover{background:#667eea;color:#fff}
+
+/* 图表动画 */
+@keyframes chartDraw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}
+.chart-animate path, .chart-animate line, .chart-animate circle{animation:chartDraw 1.5s ease-out forwards}
+
+/* 图表网格优化 */
+.chart-grid line{stroke:#f0f0f0;stroke-width:1}
+.chart-grid text{fill:#999;font-size:10px}
+
+/* 图表坐标轴 */
+.chart-axis line{stroke:#ccc;stroke-width:1.5}
+.chart-axis path{stroke:#ccc;stroke-width:1.5}
+.chart-axis text{fill:#666;font-size:11px}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -1797,6 +1869,253 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
     }, 1000);
     
     console.log('✅ 知识点展示优化已加载');
+  }
+  
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+
+
+// ==================== 图表可视化优化 ====================
+(function(){
+  let currentZoom = 1;
+  let currentTranslate = {x: 0, y: 0};
+  let isDragging = false;
+  let dragStart = {x: 0, y: 0};
+  let activeChart = null;
+  
+  // 为所有SVG图表添加工具栏
+  function initChartToolbars(){
+    document.querySelectorAll('.physio-diagram-container, .diagram-container, svg').forEach(svg => {
+      // 跳过已经有工具栏的
+      if(svg.closest('.chart-container') || svg.closest('.has-chart-toolbar')) return;
+      
+      const container = svg.parentElement;
+      if(!container) return;
+      
+      // 只处理较大的SVG
+      if(svg.getBoundingClientRect().width < 200) return;
+      
+      container.classList.add('chart-container', 'has-chart-toolbar');
+      
+      // 添加工具栏
+      const toolbar = document.createElement('div');
+      toolbar.className = 'chart-toolbar';
+      toolbar.innerHTML = 
+        '<button class="chart-tool-btn" title="放大" onclick="event.stopPropagation();zoomChart(this, 1.2)">🔍+</button>' +
+        '<button class="chart-tool-btn" title="缩小" onclick="event.stopPropagation();zoomChart(this, 0.8)">🔍-</button>' +
+        '<button class="chart-tool-btn" title="重置" onclick="event.stopPropagation();resetChart(this)">↺</button>' +
+        '<button class="chart-tool-btn" title="全屏" onclick="event.stopPropagation();fullscreenChart(this)">⛶</button>' +
+        '<button class="chart-tool-btn" title="导出PNG" onclick="event.stopPropagation();exportChartPNG(this)">📷</button>';
+      
+      container.appendChild(toolbar);
+    });
+  }
+  
+  // 图表缩放
+  window.zoomChart = function(btn, factor){
+    const container = btn.closest('.chart-container');
+    if(!container) return;
+    
+    const svg = container.querySelector('svg');
+    if(!svg) return;
+    
+    activeChart = svg;
+    currentZoom *= factor;
+    currentZoom = Math.max(0.5, Math.min(5, currentZoom));
+    
+    applyChartTransform(svg);
+    showToast({type: 'info', message: '缩放: ' + Math.round(currentZoom * 100) + '%', duration: 1000});
+  };
+  
+  // 重置图表
+  window.resetChart = function(btn){
+    const container = btn.closest('.chart-container');
+    if(!container) return;
+    
+    const svg = container.querySelector('svg');
+    if(!svg) return;
+    
+    currentZoom = 1;
+    currentTranslate = {x: 0, y: 0};
+    svg.style.transform = '';
+    showToast({type: 'info', message: '已重置', duration: 1000});
+  };
+  
+  // 应用图表变换
+  function applyChartTransform(svg){
+    svg.style.transform = 'translate(' + currentTranslate.x + 'px, ' + currentTranslate.y + 'px) scale(' + currentZoom + ')';
+    svg.style.transformOrigin = 'center center';
+    svg.style.transition = 'transform 0.3s ease';
+  }
+  
+  // 图表全屏查看
+  window.fullscreenChart = function(btn){
+    const container = btn.closest('.chart-container');
+    if(!container) return;
+    
+    const svg = container.querySelector('svg');
+    if(!svg) return;
+    
+    const fullscreen = document.getElementById('chartFullscreen');
+    const fullscreenContent = document.getElementById('chartFullscreenContent');
+    
+    if(fullscreen && fullscreenContent){
+      fullscreenContent.innerHTML = '';
+      const clonedSvg = svg.cloneNode(true);
+      clonedSvg.style.transform = '';
+      clonedSvg.style.maxHeight = '70vh';
+      fullscreenContent.appendChild(clonedSvg);
+      fullscreen.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+  };
+  
+  // 关闭全屏查看
+  window.closeChartFullscreen = function(){
+    const fullscreen = document.getElementById('chartFullscreen');
+    if(fullscreen){
+      fullscreen.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+  };
+  
+  // 导出图表为PNG
+  window.exportChartPNG = function(btn){
+    const container = btn.closest('.chart-container');
+    if(!container) return;
+    
+    const svg = container.querySelector('svg');
+    if(!svg) return;
+    
+    try{
+      // 创建canvas
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+      const url = URL.createObjectURL(svgBlob);
+      
+      const img = new Image();
+      img.onload = function(){
+        canvas.width = img.width * 2;
+        canvas.height = img.height * 2;
+        ctx.scale(2, 2);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, img.width, img.height);
+        ctx.drawImage(img, 0, 0);
+        
+        // 下载
+        const link = document.createElement('a');
+        link.download = 'chart_' + Date.now() + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        showSuccess('图表已导出为PNG');
+      };
+      img.onerror = function(){
+        showError('导出失败，请重试');
+      };
+      img.src = url;
+    }catch(e){
+      showError('导出失败: ' + e.message);
+    }
+  };
+  
+  // 图表数据提示
+  function showChartTooltip(event, title, value, desc){
+    const tooltip = document.getElementById('chartTooltip');
+    if(!tooltip) return;
+    
+    tooltip.innerHTML = 
+      '<div class="chart-tooltip-title">' + title + '</div>' +
+      (value ? '<div class="chart-tooltip-value">' + value + '</div>' : '') +
+      (desc ? '<div class="chart-tooltip-desc">' + desc + '</div>' : '');
+    
+    tooltip.style.left = (event.clientX + 15) + 'px';
+    tooltip.style.top = (event.clientY + 15) + 'px';
+    tooltip.classList.add('show');
+  }
+  
+  function hideChartTooltip(){
+    const tooltip = document.getElementById('chartTooltip');
+    if(tooltip){
+      tooltip.classList.remove('show');
+    }
+  }
+  
+  // 为图表元素添加数据提示
+  function initChartTooltips(){
+    document.querySelectorAll('.annot-point, [data-tooltip], circle, rect').forEach(el => {
+      if(el.dataset.tooltipInit) return;
+      el.dataset.tooltipInit = 'true';
+      
+      const title = el.getAttribute('data-title') || el.getAttribute('title') || '数据点';
+      const value = el.getAttribute('data-value') || '';
+      const desc = el.getAttribute('data-desc') || el.getAttribute('data-tooltip') || '';
+      
+      if(title || value || desc){
+        el.addEventListener('mouseenter', function(e){
+          showChartTooltip(e, title, value, desc);
+        });
+        el.addEventListener('mousemove', function(e){
+          showChartTooltip(e, title, value, desc);
+        });
+        el.addEventListener('mouseleave', hideChartTooltip);
+      }
+    });
+  }
+  
+  // 图表拖拽平移
+  function initChartDrag(){
+    document.querySelectorAll('.chart-container svg').forEach(svg => {
+      svg.addEventListener('mousedown', function(e){
+        if(e.target.closest('.chart-toolbar')) return;
+        isDragging = true;
+        activeChart = svg;
+        dragStart = {x: e.clientX - currentTranslate.x, y: e.clientY - currentTranslate.y};
+        svg.style.cursor = 'grabbing';
+        svg.style.transition = 'none';
+      });
+    });
+    
+    document.addEventListener('mousemove', function(e){
+      if(!isDragging || !activeChart) return;
+      currentTranslate.x = e.clientX - dragStart.x;
+      currentTranslate.y = e.clientY - dragStart.y;
+      applyChartTransform(activeChart);
+    });
+    
+    document.addEventListener('mouseup', function(){
+      if(isDragging && activeChart){
+        isDragging = false;
+        activeChart.style.cursor = 'grab';
+        activeChart.style.transition = 'transform 0.3s ease';
+      }
+    });
+  }
+  
+  // 键盘快捷键
+  document.addEventListener('keydown', function(e){
+    // ESC关闭全屏
+    if(e.key === 'Escape'){
+      closeChartFullscreen();
+    }
+  });
+  
+  // 初始化
+  function init(){
+    setTimeout(() => {
+      initChartToolbars();
+      initChartTooltips();
+      initChartDrag();
+      console.log('✅ 图表可视化优化已加载');
+    }, 1500);
   }
   
   if(document.readyState === 'loading'){
@@ -30820,6 +31139,19 @@ document.body.appendChild(overlay);
       <div class="icon">📭</div>
       <div>暂无收藏内容</div>
     </div>
+  </div>
+</div>
+
+
+
+<!-- 图表数据提示 -->
+<div class="chart-tooltip" id="chartTooltip"></div>
+
+<!-- 图表全屏查看 -->
+<div class="chart-fullscreen" id="chartFullscreen" onclick="if(event.target===this)closeChartFullscreen()">
+  <div class="chart-fullscreen-content">
+    <button class="chart-fullscreen-close" onclick="closeChartFullscreen()">✕</button>
+    <div id="chartFullscreenContent"></div>
   </div>
 </div>
 
