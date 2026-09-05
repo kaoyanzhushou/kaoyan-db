@@ -4293,7 +4293,40 @@ console.log('✅ 学习工具入口已加载');
     <p style="opacity:.9;margin-top:8px;font-size:13px">题型：单选(16) + 多选(34) + 分析题(50) | 马原24分 + 毛中特30分 + 史纲14分 + 思修16分 + 时政16分</p>
   </div>
 
-  <!-- 进度统计栏 -->
+  
+  <!-- 政治特色工具 -->
+  <div class="card" style="background:linear-gradient(135deg,#fef2f2,#fff);border-left:4px solid #dc2626;margin-bottom:16px">
+    <h3 style="color:#991b1b;margin-bottom:12px">🎯 政治特色工具</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+      <button onclick="switchPoliticsTool('quiz')" style="padding:14px;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(220,38,38,.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        📝 选择题刷题
+        <div style="font-size:11px;font-weight:400;opacity:.9;margin-top:4px">分章节练习 | 单选+多选</div>
+      </button>
+      <button onclick="switchPoliticsTool('template')" style="padding:14px;background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(234,88,12,.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        📋 分析题模板
+        <div style="font-size:11px;font-weight:400;opacity:.9;margin-top:4px">答题套路 | 万能话术</div>
+      </button>
+      <button onclick="switchPoliticsTool('hotspot')" style="padding:14px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(37,99,235,.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        🔥 时政热点
+        <div style="font-size:11px;font-weight:400;opacity:.9;margin-top:4px">形势与政策 | 定期更新</div>
+      </button>
+      <button onclick="switchPoliticsTool('mnemonic')" style="padding:14px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(124,58,237,.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        🎵 背诵口诀
+        <div style="font-size:11px;font-weight:400;opacity:.9;margin-top:4px">记忆助记 | 快速掌握</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- 政治特色工具内容区 -->
+  <div id="politicsToolContent" style="display:none;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 id="politicsToolTitle" style="color:#1f2937;margin:0"></h3>
+      <button onclick="closePoliticsTool()" style="padding:6px 14px;background:#f3f4f6;border:none;border-radius:6px;cursor:pointer;font-size:13px;color:#6b7280">✕ 关闭</button>
+    </div>
+    <div id="politicsToolBody"></div>
+  </div>
+
+<!-- 进度统计栏 -->
   <div class="knowledge-progress-stats" id="politicsProgressStats">
     <div class="stat-item">📚 总知识点：<span class="stat-val" id="politicsTotalCount">0</span></div>
     <div class="stat-item">✅ 已掌握：<span class="stat-val" id="politicsLearnedCount">0</span></div>
@@ -7625,6 +7658,561 @@ console.log('✅ 学习工具入口已加载');
 </div>
 
 <script>
+
+
+// ========== 分析题答题模板 ==========
+const POLITICS_TEMPLATE_DATA = [
+  {
+    category: '马原',
+    color: '#dc2626',
+    icon: '🔴',
+    templates: [
+      {
+        title: '矛盾分析法（万能模板）',
+        structure: ['原理阐述：矛盾是事物发展的动力，矛盾具有普遍性和特殊性', '结合材料：材料中XX体现了矛盾的XX方面', '方法论意义：我们要坚持一分为二看问题，具体问题具体分析，抓住主要矛盾和矛盾的主要方面'],
+        keyPoints: ['矛盾同一性和斗争性辩证关系原理', '矛盾普遍性和特殊性辩证关系原理', '主要矛盾和次要矛盾、矛盾的主要方面和次要方面原理', '矛盾分析方法是根本的认识方法']
+      },
+      {
+        title: '实践与认识辩证关系',
+        structure: ['原理阐述：实践决定认识，认识对实践具有能动的反作用', '结合材料：材料中XX实践推动了XX认识的发展/XX认识指导了XX实践', '方法论意义：我们要坚持实践第一的观点，在实践中检验和发展真理，同时重视科学理论的指导作用'],
+        keyPoints: ['实践是认识的来源、动力、目的、检验标准', '认识过程的两次飞跃：感性认识到理性认识、理性认识到实践', '真理的客观性、绝对性和相对性', '认识世界和改造世界及其辩证关系']
+      },
+      {
+        title: '社会存在与社会意识辩证关系',
+        structure: ['原理阐述：社会存在决定社会意识，社会意识具有相对独立性，对社会存在具有能动的反作用', '结合材料：材料中XX社会存在决定了XX社会意识/XX社会意识反作用于XX社会存在', '方法论意义：我们要重视社会意识的能动作用，大力发展先进文化，发挥正确社会意识对社会发展的促进作用'],
+        keyPoints: ['社会存在决定社会意识', '社会意识具有相对独立性（与社会存在发展的不完全同步性、历史继承性、能动反作用）', '生产力与生产关系矛盾运动规律', '经济基础与上层建筑矛盾运动规律']
+      }
+    ]
+  },
+  {
+    category: '毛中特',
+    color: '#ea580c',
+    icon: '🟠',
+    templates: [
+      {
+        title: '习近平新时代中国特色社会主义思想',
+        structure: ['核心要义：坚持和发展中国特色社会主义', '主要内容："十个明确"、"十四个坚持"、"十三个方面成就"', '世界观和方法论："六个必须坚持"（人民至上、自信自立、守正创新、问题导向、系统观念、胸怀天下）', '历史地位：是当代中国马克思主义、二十一世纪马克思主义，是中华文化和中国精神的时代精华，实现了马克思主义中国化时代化新的飞跃'],
+        keyPoints: ['"十个明确"是核心内涵', '"十四个坚持"是基本方略', '"十三个方面成就"是实践成果', '"两个结合"是根本途径', '"两个确立"是决定性意义']
+      },
+      {
+        title: '中国式现代化',
+        structure: ['定义：中国式现代化是中国共产党领导的社会主义现代化，既有各国现代化的共同特征，更有基于自己国情的中国特色', '五个特征：人口规模巨大的现代化、全体人民共同富裕的现代化、物质文明和精神文明相协调的现代化、人与自然和谐共生的现代化、走和平发展道路的现代化', '本质要求：坚持中国共产党领导，坚持中国特色社会主义，实现高质量发展，发展全过程人民民主，丰富人民精神世界，实现全体人民共同富裕，促进人与自然和谐共生，推动构建人类命运共同体，创造人类文明新形态', '重大原则：坚持和加强党的全面领导，坚持中国特色社会主义道路，坚持以人民为中心的发展思想，坚持深化改革开放，坚持发扬斗争精神'],
+        keyPoints: ['中国式现代化是人口规模巨大的现代化', '中国式现代化是全体人民共同富裕的现代化', '中国式现代化是物质文明和精神文明相协调的现代化', '中国式现代化是人与自然和谐共生的现代化', '中国式现代化是走和平发展道路的现代化']
+      },
+      {
+        title: '全面深化改革',
+        structure: ['总目标：完善和发展中国特色社会主义制度，推进国家治理体系和治理能力现代化', '原因：改革开放是决定当代中国命运的关键一招，也是决定实现"两个一百年"奋斗目标、实现中华民族伟大复兴的关键一招', '原则：坚持党的领导，坚持以人为本，坚持正确方向，坚持依法治国，坚持系统观念', '重点：经济体制改革是全面深化改革的重点，核心问题是处理好政府和市场的关系，使市场在资源配置中起决定性作用和更好发挥政府作用'],
+        keyPoints: ['全面深化改革总目标', '改革开放是关键一招', '经济体制改革是重点', '处理好政府和市场关系', '推进国家治理体系和治理能力现代化']
+      }
+    ]
+  },
+  {
+    category: '史纲',
+    color: '#eab308',
+    icon: '🟡',
+    templates: [
+      {
+        title: '中国共产党成立的历史必然性',
+        structure: ['历史条件：近代以来，中国逐步沦为半殖民地半封建社会，民族危机和社会危机日益加深', '阶级基础：中国工人阶级的成长壮大和工人运动的发展', '思想基础：马克思主义在中国的广泛传播', '组织基础：各地共产主义小组的建立', '历史意义：中国共产党的成立，是中国历史上开天辟地的大事变，中国革命的面貌从此焕然一新'],
+        keyPoints: ['近代中国社会性质：半殖民地半封建社会', '主要矛盾：帝国主义和中华民族的矛盾、封建主义和人民大众的矛盾', '两大历史任务：争取民族独立、人民解放；实现国家富强、人民富裕', '中国共产党成立的历史意义：开天辟地的大事变']
+      },
+      {
+        title: '抗日战争胜利的原因和意义',
+        structure: ['原因：第一，以爱国主义为核心的伟大民族精神是中国人民抗日战争胜利的决定因素；第二，中国共产党的中流砥柱作用是中国人民抗日战争胜利的关键；第三，全民族抗战是中国人民抗日战争胜利的重要法宝；第四，世界所有爱好和平和正义的国家和人民、国际组织以及各种反法西斯力量的同情和支持', '意义：第一，彻底粉碎了日本军国主义殖民奴役中国的图谋，捍卫了国家主权和领土完整；第二，促进了中华民族的觉醒，使中国人民在精神上、组织上的进步达到了前所未有的高度；第三，重新确立了中国在世界上的大国地位；第四，开辟了中华民族伟大复兴的光明前景'],
+        keyPoints: ['抗日战争胜利原因：民族精神、中流砥柱、全民族抗战、国际支持', '中国共产党的中流砥柱作用', '抗日民族统一战线', '抗日战争胜利的伟大意义']
+      },
+      {
+        title: '中华人民共和国成立的历史意义',
+        structure: ['意义：第一，帝国主义列强压迫中国、奴役中国人民的历史从此结束，中华民族一洗近百年来蒙受的屈辱，开始以崭新的姿态自立于世界的民族之林；第二，本国封建主义、官僚资本主义统治的历史从此结束，长期以来受尽压迫和欺凌的广大中国人民在政治上翻了身，第一次成为新社会、新国家的主人；第三，军阀割据、战乱频仍、匪患不断的历史从此结束，国家基本统一，民族团结，社会政治局面趋向稳定，各族人民开始过上安居乐业的生活；第四，从根本上改变了中国社会的发展方向，为实现由新民主主义向社会主义的过渡，创造了条件；第五，中国共产党成为全国范围内的执政党'],
+        keyPoints: ['中华人民共和国成立的历史意义', '新民主主义革命胜利的基本经验：统一战线、武装斗争、党的建设', '中国革命胜利的原因：中国共产党的领导、人民群众的广泛参加、国际无产阶级和人民群众的支持']
+      }
+    ]
+  },
+  {
+    category: '思修',
+    color: '#16a34a',
+    icon: '🟢',
+    templates: [
+      {
+        title: '理想信念的作用和实现',
+        structure: ['作用：第一，理想信念昭示奋斗目标；第二，理想信念提供前进动力；第三，理想信念提高精神境界', '如何实现：第一，正确认识理想与现实的关系是实现理想的思想基础；第二，坚定的信念是实现理想的重要条件；第三，勇于实践、艰苦奋斗是实现理想的根本途径', '个人理想与社会理想：个人理想以社会理想为指引，社会理想是个人理想的凝练和升华'],
+        keyPoints: ['理想信念是精神之"钙"', '理想信念的作用：昭示目标、提供动力、提高境界', '实现理想的途径：思想基础、重要条件、根本途径', '个人理想与社会理想的关系']
+      },
+      {
+        title: '社会主义核心价值观',
+        structure: ['内容：国家层面——富强、民主、文明、和谐；社会层面——自由、平等、公正、法治；公民层面——爱国、敬业、诚信、友善', '显著特征：先进性、人民性、真实性', '如何践行：第一，要勤学，下得苦功夫，求得真学问；第二，要修德，加强道德修养，注重道德实践；第三，要明辨，善于明辨是非，善于决断选择；第四，要笃实，扎扎实实干事，踏踏实实做人'],
+        keyPoints: ['社会主义核心价值观的三个层面', '社会主义核心价值观的显著特征：先进性、人民性、真实性', '践行社会主义核心价值观的途径：勤学、修德、明辨、笃实', '社会主义核心价值观是当代中国精神的集中体现']
+      },
+      {
+        title: '法治思维',
+        structure: ['含义：法治思维是指以法治价值和法治精神为导向，运用法律原则、法律规则、法律方法思考和处理问题的思维模式', '基本内容：第一，法律至上（普遍适用性、优先适用性、不可违抗性）；第二，权力制约（权力由法定、有权必有责、用权受监督、违法受追究）；第三，公平正义（权利公平、机会公平、规则公平、救济公平）；第四，权利保障（宪法保障、立法保障、行政保障、司法保障）；第五，正当程序（合法性、中立性、参与性、公开性、时限性）', '如何培养：第一，学习法律知识；第二，掌握法律方法；第三，参与法律实践；第四，养成守法习惯'],
+        keyPoints: ['法治思维的基本内容：法律至上、权力制约、公平正义、权利保障、正当程序', '法律至上是法治思维的首要内容', '权利保障是法治思维的核心内容', '正当程序是法治思维的重要特征']
+      }
+    ]
+  },
+  {
+    category: '时政',
+    color: '#7c3aed',
+    icon: '🟣',
+    templates: [
+      {
+        title: '党的二十大精神',
+        structure: ['主题：高举中国特色社会主义伟大旗帜，全面贯彻新时代中国特色社会主义思想，弘扬伟大建党精神，自信自强、守正创新，踔厉奋发、勇毅前行，为全面建设社会主义现代化国家、全面推进中华民族伟大复兴而团结奋斗', '中心任务：团结带领全国各族人民全面建成社会主义现代化强国、实现第二个百年奋斗目标，以中国式现代化全面推进中华民族伟大复兴', '重大原则：坚持和加强党的全面领导，坚持中国特色社会主义道路，坚持以人民为中心的发展思想，坚持深化改革开放，坚持发扬斗争精神'],
+        keyPoints: ['党的二十大主题', '新时代新征程中国共产党的中心任务', '中国式现代化', '前进道路上必须牢牢把握的重大原则', '全面建设社会主义现代化国家的目标任务']
+      }
+    ]
+  }
+];
+
+// 渲染分析题答题模板
+function renderPoliticsTemplate() {
+  const body = document.getElementById('politicsToolBody');
+  let html = '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
+  POLITICS_TEMPLATE_DATA.forEach((cat, idx) => {
+    html += `<button onclick="showPoliticsTemplateCategory(${idx})" style="padding:8px 16px;border-radius:20px;border:2px solid ${cat.color};background:#fff;color:${cat.color};cursor:pointer;font-size:13px;font-weight:600" id="politicsTplCat${idx}">${cat.icon} ${cat.category}</button>`;
+  });
+  html += '</div><div id="politicsTemplateContent"></div>';
+  body.innerHTML = html;
+  showPoliticsTemplateCategory(0);
+}
+
+function showPoliticsTemplateCategory(idx) {
+  POLITICS_TEMPLATE_DATA.forEach((cat, i) => {
+    const btn = document.getElementById('politicsTplCat' + i);
+    if(btn) {
+      btn.style.background = i === idx ? cat.color : '#fff';
+      btn.style.color = i === idx ? '#fff' : cat.color;
+    }
+  });
+  
+  const cat = POLITICS_TEMPLATE_DATA[idx];
+  const content = document.getElementById('politicsTemplateContent');
+  let html = '';
+  cat.templates.forEach((tpl, tIdx) => {
+    html += `
+      <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid ${cat.color}">
+        <h4 style="color:${cat.color};margin:0 0 12px 0;font-size:16px">${tpl.title}</h4>
+        <div style="margin-bottom:12px">
+          <div style="font-weight:600;color:#374151;margin-bottom:6px">📝 答题结构：</div>
+          ${tpl.structure.map((s, i) => `<div style="font-size:14px;color:#4b5563;line-height:1.8;padding-left:16px;position:relative"><span style="position:absolute;left:0;color:${cat.color};font-weight:700">${i+1}.</span>${s}</div>`).join('')}
+        </div>
+        <div style="background:#f9fafb;padding:12px 16px;border-radius:8px">
+          <div style="font-weight:600;color:#374151;margin-bottom:6px">🔑 关键词/得分点：</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${tpl.keyPoints.map(k => `<span style="padding:3px 10px;background:${cat.color}15;color:${cat.color};border-radius:12px;font-size:12px;font-weight:500">${k}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  content.innerHTML = html;
+}
+
+// ========== 时政热点 ==========
+const POLITICS_HOTSPOT_DATA = [
+  {
+    date: '2026年',
+    category: '重要会议',
+    title: '党的二十届三中全会',
+    content: '全会审议通过了《中共中央关于进一步全面深化改革、推进中国式现代化的决定》，对进一步全面深化改革作出系统部署。全会强调，进一步全面深化改革，必须以习近平新时代中国特色社会主义思想为指导，全面贯彻党的二十大精神，深刻领悟"两个确立"的决定性意义，增强"四个意识"、坚定"四个自信"、做到"两个维护"。',
+    keywords: ['进一步全面深化改革', '中国式现代化', '党的二十届三中全会', '推进国家治理体系和治理能力现代化']
+  },
+  {
+    date: '2026年',
+    category: '经济发展',
+    title: '高质量发展是全面建设社会主义现代化国家的首要任务',
+    content: '高质量发展是体现新发展理念的发展，是经济发展从"有没有"转向"好不好"。必须完整、准确、全面贯彻新发展理念，加快构建以国内大循环为主体、国内国际双循环相互促进的新发展格局，推动经济实现质的有效提升和量的合理增长。',
+    keywords: ['高质量发展', '新发展理念', '新发展格局', '国内大循环']
+  },
+  {
+    date: '2026年',
+    category: '科技自立自强',
+    title: '加快实现高水平科技自立自强',
+    content: '坚持创新在我国现代化建设全局中的核心地位，健全新型举国体制，强化国家战略科技力量，提升国家创新体系整体效能，形成具有全球竞争力的开放创新生态。加快实施创新驱动发展战略，加快实现高水平科技自立自强，以国家战略需求为导向，集聚力量进行原创性引领性科技攻关，坚决打赢关键核心技术攻坚战。',
+    keywords: ['科技自立自强', '新型举国体制', '关键核心技术', '创新驱动发展']
+  },
+  {
+    date: '2026年',
+    category: '乡村振兴',
+    title: '全面推进乡村振兴',
+    content: '全面建设社会主义现代化国家，最艰巨最繁重的任务仍然在农村。坚持农业农村优先发展，坚持城乡融合发展，畅通城乡要素流动。加快建设农业强国，扎实推动乡村产业、人才、文化、生态、组织振兴。全方位夯实粮食安全根基，全面落实粮食安全党政同责，牢牢守住十八亿亩耕地红线，逐步把永久基本农田全部建成高标准农田，深入实施种业振兴行动，强化农业科技和装备支撑，健全种粮农民收益保障机制和主产区利益补偿机制，确保中国人的饭碗牢牢端在自己手中。',
+    keywords: ['乡村振兴', '农业强国', '粮食安全', '耕地红线']
+  },
+  {
+    date: '2026年',
+    category: '生态文明',
+    title: '推动绿色发展，促进人与自然和谐共生',
+    content: '大自然是人类赖以生存发展的基本条件。尊重自然、顺应自然、保护自然，是全面建设社会主义现代化国家的内在要求。必须牢固树立和践行绿水青山就是金山银山的理念，站在人与自然和谐共生的高度谋划发展。我们要推进美丽中国建设，坚持山水林田湖草沙一体化保护和系统治理，统筹产业结构调整、污染治理、生态保护、应对气候变化，协同推进降碳、减污、扩绿、增长，推进生态优先、节约集约、绿色低碳发展。',
+    keywords: ['绿水青山就是金山银山', '美丽中国', '碳达峰碳中和', '绿色发展']
+  },
+  {
+    date: '2026年',
+    category: '外交',
+    title: '推动构建人类命运共同体',
+    content: '当前，世界之变、时代之变、历史之变正以前所未有的方式展开。中国始终坚持维护世界和平、促进共同发展的外交政策宗旨，致力于推动构建人类命运共同体。我们真诚呼吁，世界各国弘扬和平、发展、公平、正义、民主、自由的全人类共同价值，促进各国人民相知相亲，尊重世界文明多样性，以文明交流超越文明隔阂、文明互鉴超越文明冲突、文明共存超越文明优越，共同应对各种全球性挑战。',
+    keywords: ['人类命运共同体', '全人类共同价值', '中国特色大国外交', '文明交流互鉴']
+  }
+];
+
+// 渲染时政热点
+function renderPoliticsHotspot() {
+  const body = document.getElementById('politicsToolBody');
+  let html = '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
+  const categories = [...new Set(POLITICS_HOTSPOT_DATA.map(h => h.category))];
+  html += `<button onclick="filterPoliticsHotspot('all')" style="padding:6px 14px;border-radius:16px;border:1px solid #2563eb;background:#2563eb;color:#fff;cursor:pointer;font-size:12px;font-weight:600" id="hotspotFilterAll">全部</button>`;
+  categories.forEach((cat, idx) => {
+    html += `<button onclick="filterPoliticsHotspot('${cat}')" style="padding:6px 14px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-size:12px;font-weight:600" id="hotspotFilter${idx}">${cat}</button>`;
+  });
+  html += '</div><div id="politicsHotspotList"></div>';
+  body.innerHTML = html;
+  filterPoliticsHotspot('all');
+}
+
+function filterPoliticsHotspot(category) {
+  document.querySelectorAll('[id^="hotspotFilter"]').forEach(btn => {
+    btn.style.background = '#fff';
+    btn.style.color = '#374151';
+    btn.style.borderColor = '#e5e7eb';
+  });
+  const activeBtn = category === 'all' ? document.getElementById('hotspotFilterAll') : document.getElementById('hotspotFilter' + [...new Set(POLITICS_HOTSPOT_DATA.map(h => h.category))].indexOf(category));
+  if(activeBtn) {
+    activeBtn.style.background = '#2563eb';
+    activeBtn.style.color = '#fff';
+    activeBtn.style.borderColor = '#2563eb';
+  }
+  
+  const list = document.getElementById('politicsHotspotList');
+  const filtered = category === 'all' ? POLITICS_HOTSPOT_DATA : POLITICS_HOTSPOT_DATA.filter(h => h.category === category);
+  
+  list.innerHTML = filtered.map(h => `
+    <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <span style="padding:3px 10px;background:#dbeafe;color:#1e40af;border-radius:12px;font-size:11px;font-weight:600">${h.category}</span>
+        <span style="font-size:12px;color:#9ca3af">${h.date}</span>
+      </div>
+      <h4 style="color:#1f2937;margin:0 0 10px 0;font-size:16px">${h.title}</h4>
+      <p style="font-size:14px;color:#4b5563;line-height:1.8;margin:0 0 12px 0">${h.content}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${h.keywords.map(k => `<span style="padding:2px 8px;background:#f0f9ff;color:#0369a1;border-radius:10px;font-size:11px">🔑 ${k}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ========== 背诵口诀 ==========
+const POLITICS_MNEMONIC_DATA = [
+  {
+    category: '马原',
+    color: '#dc2626',
+    items: [
+      {title: '唯物辩证法三大规律', mnemonic: '对质否', explanation: '对立统一规律（实质和核心）、质量互变规律、否定之否定规律'},
+      {title: '矛盾普遍性和特殊性关系', mnemonic: '普寓特，特含普', explanation: '矛盾的普遍性寓于特殊性之中，并通过特殊性表现出来；特殊性包含普遍性，没有离开普遍性的特殊性'},
+      {title: '实践对认识的决定作用', mnemonic: '来源动力目的标准', explanation: '实践是认识的来源、实践是认识发展的动力、实践是认识的目的、实践是检验认识真理性的唯一标准'},
+      {title: '社会存在和社会意识辩证关系', mnemonic: '存在决定意识，意识反作用存在', explanation: '社会存在决定社会意识，社会意识是社会存在的反映，并反作用于社会存在，具有相对独立性'},
+      {title: '商品二因素', mnemonic: '使价', explanation: '使用价值（自然属性）和价值（社会属性，最本质因素）'},
+      {title: '劳动二重性', mnemonic: '具抽', explanation: '具体劳动（创造使用价值）和抽象劳动（形成价值），劳动二重性是理解马克思主义政治经济学的枢纽'}
+    ]
+  },
+  {
+    category: '毛中特',
+    color: '#ea580c',
+    items: [
+      {title: '毛泽东思想活的灵魂', mnemonic: '实群独', explanation: '实事求是（精髓）、群众路线（根本工作路线）、独立自主（基本立足点）'},
+      {title: '新民主主义革命三大法宝', mnemonic: '统武党', explanation: '统一战线、武装斗争、党的建设'},
+      {title: '社会主义核心价值观国家层面', mnemonic: '富民文和', explanation: '富强、民主、文明、和谐'},
+      {title: '社会主义核心价值观社会层面', mnemonic: '自平公法', explanation: '自由、平等、公正、法治'},
+      {title: '社会主义核心价值观公民层面', mnemonic: '爱敬诚友', explanation: '爱国、敬业、诚信、友善'},
+      {title: '新发展理念', mnemonic: '创协绿开共', explanation: '创新（第一动力）、协调（内在要求）、绿色（必要条件）、开放（必由之路）、共享（本质要求）'},
+      {title: '六个必须坚持', mnemonic: '人自守问系胸', explanation: '必须坚持人民至上、必须坚持自信自立、必须坚持守正创新、必须坚持问题导向、必须坚持系统观念、必须坚持胸怀天下'},
+      {title: '中国式现代化五个特征', mnemonic: '人富物和平', explanation: '人口规模巨大的现代化、全体人民共同富裕的现代化、物质文明和精神文明相协调的现代化、人与自然和谐共生的现代化、走和平发展道路的现代化'}
+    ]
+  },
+  {
+    category: '史纲',
+    color: '#eab308',
+    items: [
+      {title: '重要会议口诀', mnemonic: '一大立党二大纲，三大国共要合作，四大领导工农忙，八七枪杆出政权，古田军队要增强，遵义军事与组织，瓦窑堡一起来抗日，洛川全面来抗战，六届六中马中化，七大确定毛指导，七届二中转城市', explanation: '一大（1921）：中国共产党成立；二大（1922）：制定最高纲领和最低纲领；三大（1923）：决定国共合作；四大（1925）：提出无产阶级领导权和工农联盟；八七会议（1927）：枪杆子里出政权；古田会议（1929）：思想建党、政治建军；遵义会议（1935）：确立毛泽东领导地位；瓦窑堡会议（1935）：抗日民族统一战线；洛川会议（1937）：全面抗战路线；六届六中全会（1938）：马克思主义中国化；七大（1945）：确立毛泽东思想指导地位；七届二中全会（1949）：工作重心由乡村转移到城市'},
+      {title: '三大不平等条约', mnemonic: '南马辛', explanation: '《南京条约》（1842，第一个不平等条约，开始沦为半殖民地半封建社会）、《马关条约》（1895，大大加深半殖民地化程度）、《辛丑条约》（1901，完全沦为半殖民地半封建社会）'},
+      {title: '洋务运动代表人物', mnemonic: '奕曾李左张', explanation: '奕䜣（中央代表）、曾国藩、李鸿章、左宗棠、张之洞（地方代表）'},
+      {title: '戊戌变法代表人物', mnemonic: '康梁谭严', explanation: '康有为、梁启超、谭嗣同、严复'},
+      {title: '辛亥革命意义', mnemonic: '推翻结束建立传播', explanation: '推翻了清王朝统治，结束了统治中国两千多年的封建君主专制制度，建立了中国历史上第一个资产阶级共和国，传播了民主共和理念'}
+    ]
+  },
+  {
+    category: '思修',
+    color: '#16a34a',
+    items: [
+      {title: '人生观主要内容', mnemonic: '目态值', explanation: '人生目的（核心，回答人为什么活着）、人生态度（回答人应当如何活着）、人生价值（回答什么样的人生才有价值）'},
+      {title: '理想信念作用', mnemonic: '目标动力境界', explanation: '昭示奋斗目标、提供前进动力、提高精神境界'},
+      {title: '中国精神', mnemonic: '民时', explanation: '以爱国主义为核心的民族精神，以改革创新为核心的时代精神'},
+      {title: '民族精神内涵', mnemonic: '创奋团梦', explanation: '伟大创造精神、伟大奋斗精神、伟大团结精神、伟大梦想精神'},
+      {title: '社会公德基本要求', mnemonic: '文助爱护守', explanation: '文明礼貌、助人为乐、爱护公物、保护环境、遵纪守法（最基本要求）'},
+      {title: '职业道德基本要求', mnemonic: '爱诚办热奉', explanation: '爱岗敬业（最基本要求）、诚实守信、办事公道、热情服务、奉献社会（最高层次要求）'},
+      {title: '法治思维基本内容', mnemonic: '法权公权正', explanation: '法律至上（首要内容）、权力制约、公平正义、权利保障（核心内容）、正当程序'},
+      {title: '我国宪法基本原则', mnemonic: '党人法民集', explanation: '党的领导原则、人民主权原则、尊重和保障人权原则、社会主义法治原则、民主集中制原则'}
+    ]
+  }
+];
+
+// 渲染背诵口诀
+function renderPoliticsMnemonic() {
+  const body = document.getElementById('politicsToolBody');
+  let html = '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
+  POLITICS_MNEMONIC_DATA.forEach((cat, idx) => {
+    html += `<button onclick="showPoliticsMnemonicCategory(${idx})" style="padding:8px 16px;border-radius:20px;border:2px solid ${cat.color};background:#fff;color:${cat.color};cursor:pointer;font-size:13px;font-weight:600" id="mnemonicCat${idx}">${cat.color === '#dc2626' ? '🔴' : cat.color === '#ea580c' ? '🟠' : cat.color === '#eab308' ? '🟡' : '🟢'} ${cat.category}</button>`;
+  });
+  html += '</div><div id="politicsMnemonicList"></div>';
+  body.innerHTML = html;
+  showPoliticsMnemonicCategory(0);
+}
+
+function showPoliticsMnemonicCategory(idx) {
+  POLITICS_MNEMONIC_DATA.forEach((cat, i) => {
+    const btn = document.getElementById('mnemonicCat' + i);
+    if(btn) {
+      btn.style.background = i === idx ? cat.color : '#fff';
+      btn.style.color = i === idx ? '#fff' : cat.color;
+    }
+  });
+  
+  const cat = POLITICS_MNEMONIC_DATA[idx];
+  const list = document.getElementById('politicsMnemonicList');
+  list.innerHTML = cat.items.map(item => `
+    <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid ${cat.color}">
+      <h4 style="color:${cat.color};margin:0 0 10px 0;font-size:15px">${item.title}</h4>
+      <div style="background:linear-gradient(135deg,${cat.color}10,${cat.color}05);padding:14px 18px;border-radius:8px;margin-bottom:10px">
+        <div style="font-size:12px;color:${cat.color};font-weight:600;margin-bottom:4px">🎵 记忆口诀</div>
+        <div style="font-size:20px;font-weight:800;color:${cat.color};letter-spacing:2px">${item.mnemonic}</div>
+      </div>
+      <div style="font-size:14px;color:#4b5563;line-height:1.8">
+        <span style="font-weight:600;color:#374151">📖 详细解释：</span>${item.explanation}
+      </div>
+    </div>
+  `).join('');
+}
+
+
+
+
+// ========== 政治选择题题库 ==========
+const POLITICS_QUIZ_DATA = {
+  mayuan: [
+    {id:'mq1', type:'single', chapter:'马克思主义哲学', question:'马克思主义哲学区别于其他哲学的最显著特征是？', options:['科学性','实践性','革命性','阶级性'], answer:1, explanation:'实践性是马克思主义哲学区别于其他哲学的最显著特征。马克思主义哲学的本质特征是实践性基础上的科学性和革命性的统一。'},
+    {id:'mq2', type:'single', chapter:'唯物论', question:'物质的唯一特性是？', options:['运动性','客观实在性','可知性','时空性'], answer:1, explanation:'物质的唯一特性是客观实在性，它存在于人的意识之外，可以为人的意识所反映。运动是物质的根本属性和存在方式。'},
+    {id:'mq3', type:'single', chapter:'辩证法', question:'唯物辩证法的实质和核心是？', options:['质量互变规律','对立统一规律','否定之否定规律','联系和发展的观点'], answer:1, explanation:'对立统一规律是唯物辩证法的实质和核心，它揭示了事物发展的源泉和动力，是理解其他规律和范畴的钥匙。'},
+    {id:'mq4', type:'single', chapter:'认识论', question:'认识的本质是？', options:['主体对客体的直观反映','主体在实践基础上对客体的能动反映','主体头脑中固有的','客体对主体的作用'], answer:1, explanation:'认识的本质是主体在实践基础上对客体的能动反映。这种能动反映不但具有反映客体内容的反映性特征，而且具有实践所要求的主体能动的、创造性的特征。'},
+    {id:'mq5', type:'single', chapter:'唯物史观', question:'社会历史观的基本问题是？', options:['生产力和生产关系的关系问题','经济基础和上层建筑的关系问题','社会存在和社会意识的关系问题','阶级和阶级斗争问题'], answer:2, explanation:'社会存在和社会意识的关系问题是社会历史观的基本问题。对这一问题的不同回答，划分了历史唯物主义和历史唯心主义。'},
+    {id:'mq6', type:'multiple', chapter:'辩证法', question:'下列属于矛盾同一性表现的有？', options:['矛盾双方相互依存','矛盾双方相互贯通','矛盾双方相互排斥','矛盾双方在一定条件下相互转化'], answer:[0,1,3], explanation:'矛盾的同一性是指矛盾双方相互依存、相互贯通的性质和趋势。它有两个方面的含义：一是矛盾着的对立面相互依存，互为存在的前提，并共处于一个统一体中；二是矛盾着的对立面之间相互贯通，在一定条件下相互转化。相互排斥是矛盾斗争性的表现。'},
+    {id:'mq7', type:'multiple', chapter:'认识论', question:'实践对认识的决定作用表现在？', options:['实践是认识的来源','实践是认识发展的动力','实践是认识的目的','实践是检验认识真理性的唯一标准'], answer:[0,1,2,3], explanation:'实践是认识的基础，对认识具有决定作用。主要表现在：第一，实践是认识的来源；第二，实践是认识发展的动力；第三，实践是认识的目的；第四，实践是检验认识真理性的唯一标准。'},
+    {id:'mq8', type:'single', chapter:'政治经济学', question:'商品的二因素是？', options:['使用价值和交换价值','使用价值和价值','价值和交换价值','具体劳动和抽象劳动'], answer:1, explanation:'商品是用来交换的能满足人们某种需要的劳动产品，具有使用价值和价值两个因素，是使用价值和价值的矛盾统一体。使用价值是商品的自然属性，价值是商品的社会属性，是商品最本质的因素。'},
+    {id:'mq9', type:'single', chapter:'政治经济学', question:'剩余价值率是？', options:['m/c','m/v','m/(c+v)','c/v'], answer:1, explanation:'剩余价值率(m′)=剩余价值(m)/可变资本(v)，它反映了资本家对工人的剥削程度。剩余价值率也可以用剩余劳动时间/必要劳动时间来表示。'},
+    {id:'mq10', type:'multiple', chapter:'科学社会主义', question:'共产主义社会的基本特征包括？', options:['物质财富极大丰富，消费资料按需分配','社会关系高度和谐，人们精神境界极大提高','实现每个人自由而全面的发展','国家完全消亡，阶级仍然存在'], answer:[0,1,2], explanation:'共产主义社会的基本特征：第一，物质财富极大丰富，消费资料按需分配；第二，社会关系高度和谐，人们精神境界极大提高；第三，实现每个人自由而全面的发展，人类从必然王国向自由王国飞跃。在共产主义社会，阶级和国家都将消亡。'}
+  ],
+  maozt: [
+    {id:'zq1', type:'single', chapter:'毛泽东思想', question:'毛泽东思想活的灵魂是？', options:['实事求是、群众路线、独立自主','统一战线、武装斗争、党的建设','理论联系实际、密切联系群众、批评与自我批评','解放思想、实事求是、与时俱进'], answer:0, explanation:'毛泽东思想活的灵魂是实事求是、群众路线、独立自主。实事求是是毛泽东思想的精髓，群众路线是党的根本工作路线，独立自主是中国革命和建设的基本立足点。'},
+    {id:'zq2', type:'single', chapter:'新民主主义革命', question:'新民主主义革命的三大法宝是？', options:['实事求是、群众路线、独立自主','统一战线、武装斗争、党的建设','理论联系实际、密切联系群众、批评与自我批评','土地革命、武装斗争、根据地建设'], answer:1, explanation:'统一战线、武装斗争、党的建设是中国共产党在中国革命中战胜敌人的三个主要法宝。统一战线和武装斗争是中国革命的两个基本特点，是战胜敌人的两个基本武器，党的组织是掌握这两个武器以实行对敌冲锋陷阵的英勇战士。'},
+    {id:'zq3', type:'single', chapter:'社会主义改造', question:'党在过渡时期总路线的主体是？', options:['对农业的社会主义改造','对手工业的社会主义改造','对资本主义工商业的社会主义改造','实现国家的社会主义工业化'], answer:3, explanation:'党在过渡时期的总路线是"一化三改"："一化"即社会主义工业化，这是主体；"三改"即对个体农业、手工业和资本主义工商业的社会主义改造，这是两翼。'},
+    {id:'zq4', type:'single', chapter:'中国特色社会主义', question:'邓小平理论的首要的基本的理论问题是？', options:['什么是社会主义、怎样建设社会主义','建设什么样的党、怎样建设党','实现什么样的发展、怎样发展','新时代坚持和发展什么样的中国特色社会主义、怎样坚持和发展中国特色社会主义'], answer:0, explanation:'什么是社会主义、怎样建设社会主义，是邓小平理论首要的基本的理论问题。邓小平同志紧紧抓住这个根本问题，深刻揭示了社会主义的本质，把对社会主义的认识提高到新的科学水平。'},
+    {id:'zq5', type:'single', chapter:'习近平新时代中国特色社会主义思想', question:'习近平新时代中国特色社会主义思想的核心要义是？', options:['坚持和发展中国特色社会主义','实现中华民族伟大复兴','全面建成社会主义现代化强国','推进国家治理体系和治理能力现代化'], answer:0, explanation:'坚持和发展中国特色社会主义，是习近平新时代中国特色社会主义思想的核心要义。习近平新时代中国特色社会主义思想的核心内容是"十个明确"、"十四个坚持"、"十三个方面成就"。'},
+    {id:'zq6', type:'multiple', chapter:'习近平新时代中国特色社会主义思想', question:'"六个必须坚持"包括？', options:['必须坚持人民至上','必须坚持自信自立','必须坚持守正创新','必须坚持问题导向'], answer:[0,1,2,3], explanation:'"六个必须坚持"是习近平新时代中国特色社会主义思想的世界观和方法论：必须坚持人民至上、必须坚持自信自立、必须坚持守正创新、必须坚持问题导向、必须坚持系统观念、必须坚持胸怀天下。'},
+    {id:'zq7', type:'multiple', chapter:'中国式现代化', question:'中国式现代化的特征包括？', options:['人口规模巨大的现代化','全体人民共同富裕的现代化','物质文明和精神文明相协调的现代化','人与自然和谐共生的现代化'], answer:[0,1,2,3], explanation:'中国式现代化的五个特征：人口规模巨大的现代化、全体人民共同富裕的现代化、物质文明和精神文明相协调的现代化、人与自然和谐共生的现代化、走和平发展道路的现代化。'},
+    {id:'zq8', type:'single', chapter:'新时代主要矛盾', question:'新时代我国社会主要矛盾是？', options:['人民日益增长的物质文化需要同落后的社会生产之间的矛盾','人民日益增长的美好生活需要和不平衡不充分的发展之间的矛盾','无产阶级和资产阶级的矛盾','生产力和生产关系的矛盾'], answer:1, explanation:'党的十九大明确指出，中国特色社会主义进入新时代，我国社会主要矛盾已经转化为人民日益增长的美好生活需要和不平衡不充分的发展之间的矛盾。'},
+    {id:'zq9', type:'multiple', chapter:'新发展理念', question:'新发展理念包括？', options:['创新、协调','绿色、开放','共享','高速、高效'], answer:[0,1,2], explanation:'新发展理念是创新、协调、绿色、开放、共享。创新是引领发展的第一动力，协调是持续健康发展的内在要求，绿色是永续发展的必要条件，开放是国家繁荣发展的必由之路，共享是中国特色社会主义的本质要求。'},
+    {id:'zq10', type:'single', chapter:'全面从严治党', question:'新时代党的建设的根本方针是？', options:['党要管党、全面从严治党','思想建党、理论强党','制度治党、依规治党','以党的政治建设为统领'], answer:0, explanation:'"党要管党、全面从严治党"是新时代党的建设的根本方针。全面从严治党是新时代党的建设的鲜明主题，核心是加强党的领导，基础在全面，关键在严，要害在治。'}
+  ],
+  shigang: [
+    {id:'sq1', type:'single', chapter:'反对外国侵略的斗争', question:'中国近代史的起点是？', options:['虎门销烟','鸦片战争','太平天国运动','洋务运动'], answer:1, explanation:'1840年鸦片战争是中国近代史的起点。鸦片战争以清政府的失败而告终，1842年清政府与英国签订了中国近代史上第一个不平等条约《南京条约》，中国开始沦为半殖民地半封建社会。'},
+    {id:'sq2', type:'single', chapter:'对国家出路的早期探索', question:'洋务运动的指导思想是？', options:['师夷长技以制夷','中学为体，西学为用','物竞天择，适者生存','变法维新，救亡图存'], answer:1, explanation:'洋务运动的指导思想是"中学为体，西学为用"，即以中国封建伦理纲常所维护的统治秩序为主体，用西方的近代工业和技术为辅助，并以前者来支配后者。这个思想最早由冯桂芬提出。'},
+    {id:'sq3', type:'single', chapter:'辛亥革命', question:'中国历史上第一部具有资产阶级共和国宪法性质的法典是？', options:['《钦定宪法大纲》','《中华民国临时约法》','《中华民国约法》','《中华苏维埃共和国宪法大纲》'], answer:1, explanation:'1912年3月，临时参议院颁布《中华民国临时约法》。这是中国历史上第一部具有资产阶级共和国宪法性质的法典，它规定了资产阶级共和国的国家、政府组织机构以及人民享有的各项民主权利。'},
+    {id:'sq4', type:'single', chapter:'开天辟地的大事变', question:'中国新民主主义革命的开端是？', options:['辛亥革命','新文化运动','五四运动','中国共产党成立'], answer:2, explanation:'五四运动是中国新民主主义革命的开端。五四运动具有以辛亥革命为代表的旧民主主义革命所不具备的一些特点：第一，五四运动表现了反帝反封建的彻底性；第二，五四运动是一次真正的群众运动；第三，五四运动促进了马克思主义在中国的传播及其与中国工人运动的结合。'},
+    {id:'sq5', type:'single', chapter:'中国革命的新道路', question:'"枪杆子里出政权"是在哪次会议上提出的？', options:['八七会议','遵义会议','瓦窑堡会议','洛川会议'], answer:0, explanation:'1927年8月7日，中共中央在汉口秘密召开紧急会议（即八七会议）。会议彻底清算了大革命后期的陈独秀右倾机会主义错误，确定了土地革命和武装反抗国民党反动统治的总方针。毛泽东在会上着重阐述了党必须依靠农民和掌握枪杆子的思想，强调"以后要非常注意军事，须知政权是由枪杆子中取得的"。'},
+    {id:'sq6', type:'single', chapter:'中华民族的抗日战争', question:'中国人民抗日战争的起点是？', options:['七七事变','九一八事变','一二八事变','华北事变'], answer:1, explanation:'1931年九一八事变是中国人民抗日战争的起点，中国人民不屈不挠的局部抗战揭开了世界反法西斯战争的序幕。1937年七七事变是日本全面侵华战争的开始，也是中国全民族抗战的开端。'},
+    {id:'sq7', type:'single', chapter:'为新中国而奋斗', question:'党的工作重心由乡村转移到城市是在哪次会议上决定的？', options:['中共七大','七届二中全会','七届三中全会','中共八大'], answer:1, explanation:'1949年3月召开的中共七届二中全会，规定了党在全国胜利后在政治、经济、外交方面应当采取的基本政策，指出了中国由农业国转变为工业国、由新民主主义社会转变为社会主义社会的发展方向。在这次会议上，毛泽东提出了"两个务必"的思想，即"务必使同志们继续地保持谦虚、谨慎、不骄、不躁的作风，务必使同志们继续地保持艰苦奋斗的作风"。会议还决定党的工作重心必须由乡村转移到城市。'},
+    {id:'sq8', type:'multiple', chapter:'社会主义基本制度在中国的确立', question:'中国共产党在过渡时期总路线的"三改"包括？', options:['对个体农业的社会主义改造','对手工业的社会主义改造','对资本主义工商业的社会主义改造','对官僚资本主义的改造'], answer:[0,1,2], explanation:'党在过渡时期的总路线是"一化三改"："一化"即社会主义工业化，"三改"即对个体农业、手工业和资本主义工商业的社会主义改造。官僚资本主义在新中国成立后即被没收，建立了国营经济。'},
+    {id:'sq9', type:'multiple', chapter:'改革开放与现代化建设新时期', question:'党的十一届三中全会的主要内容包括？', options:['彻底否定"两个凡是"的错误方针','高度评价关于真理标准问题的讨论','果断停止使用"以阶级斗争为纲"的口号','作出把工作重点转移到社会主义现代化建设上来和实行改革开放的战略决策'], answer:[0,1,2,3], explanation:'1978年12月召开的中共十一届三中全会，冲破长期"左"的错误的严重束缚，彻底否定了"两个凡是"的错误方针，高度评价了关于真理标准问题的讨论，并且果断停止使用"以阶级斗争为纲"的口号，作出了把工作重点转移到社会主义现代化建设上来和实行改革开放的战略决策。全会形成了以邓小平为核心的党的中央领导集体，揭开了社会主义改革开放的序幕。'},
+    {id:'sq10', type:'single', chapter:'中国特色社会主义进入新时代', question:'中国特色社会主义进入新时代的标志是？', options:['党的十八大','党的十九大','党的二十大','改革开放40周年'], answer:1, explanation:'党的十九大指出，经过长期努力，中国特色社会主义进入了新时代，这是我国发展新的历史方位。中国特色社会主义进入新时代，意味着近代以来久经磨难的中华民族迎来了从站起来、富起来到强起来的伟大飞跃，迎来了实现中华民族伟大复兴的光明前景。'}
+  ],
+  sixiu: [
+    {id:'xq1', type:'single', chapter:'人生的青春之问', question:'人生观的核心是？', options:['人生目的','人生态度','人生价值','人生理想'], answer:0, explanation:'人生目的是人生观的核心，它回答人为什么活着的问题。人生目的决定人生道路，决定人生态度，决定人生价值选择。'},
+    {id:'xq2', type:'single', chapter:'理想信念', question:'理想信念是精神之"钙"，其作用不包括？', options:['昭示奋斗目标','提供前进动力','提高精神境界','决定人生价值'], answer:3, explanation:'理想信念的作用主要表现在：第一，昭示奋斗目标；第二，提供前进动力；第三，提高精神境界。理想信念不能决定人生价值，人生价值是在实践中创造的。'},
+    {id:'xq3', type:'single', chapter:'中国精神', question:'时代精神的核心是？', options:['爱国主义','改革创新','勤劳勇敢','自强不息'], answer:1, explanation:'时代精神的核心是改革创新。改革创新精神表现为突破陈规、大胆探索、勇于创造的思想观念，表现为不甘落后、奋勇争先、追求进步的责任感和使命感，表现为坚忍不拔、自强不息、锐意进取的精神状态。'},
+    {id:'xq4', type:'single', chapter:'社会主义核心价值观', question:'社会主义核心价值观在国家层面的价值要求是？', options:['自由、平等、公正、法治','富强、民主、文明、和谐','爱国、敬业、诚信、友善','爱岗、敬业、诚信、友善'], answer:1, explanation:'社会主义核心价值观把涉及国家、社会、公民的价值要求融为一体：国家层面是富强、民主、文明、和谐；社会层面是自由、平等、公正、法治；公民层面是爱国、敬业、诚信、友善。'},
+    {id:'xq5', type:'single', chapter:'道德', question:'社会主义道德的核心是？', options:['集体主义','为人民服务','爱国主义','诚实守信'], answer:1, explanation:'社会主义道德的核心是为人民服务，原则是集体主义。为人民服务是社会主义道德区别和优越于其他社会形态道德的显著标志。'},
+    {id:'xq6', type:'multiple', chapter:'道德', question:'社会公德的基本要求包括？', options:['文明礼貌','助人为乐','爱护公物','保护环境'], answer:[0,1,2,3], explanation:'社会公德的基本要求是：文明礼貌、助人为乐、爱护公物、保护环境、遵纪守法。其中，遵纪守法是社会公德最基本的要求。'},
+    {id:'xq7', type:'single', chapter:'法律', question:'我国宪法的基本原则不包括？', options:['党的领导原则','人民主权原则','尊重和保障人权原则','权力分立原则'], answer:3, explanation:'我国宪法的基本原则包括：党的领导原则、人民主权原则、尊重和保障人权原则、社会主义法治原则、民主集中制原则。权力分立是西方资本主义国家宪法的原则，我国实行的是民主集中制原则。'},
+    {id:'xq8', type:'single', chapter:'法治思维', question:'法治思维的首要内容是？', options:['法律至上','权力制约','公平正义','权利保障'], answer:0, explanation:'法律至上是法治思维的首要内容。法律至上具体表现为法律的普遍适用性、优先适用性和不可违抗性。'},
+    {id:'xq9', type:'multiple', chapter:'权利与义务', question:'我国公民的基本权利包括？', options:['政治权利','人身权利','财产权利','社会经济权利'], answer:[0,1,2,3], explanation:'我国公民的基本权利包括：政治权利（选举权、表达权、民主管理权、监督权）、人身权利（生命健康权、人身自由权、人格尊严权、住宅安全权、通信自由权）、财产权利（私有财产权、继承权）、社会经济权利（劳动权、休息权、社会保障权、物质帮助权）、宗教信仰及文化权利。'},
+    {id:'xq10', type:'single', chapter:'人生价值', question:'人生价值评价的根本尺度是？', options:['人生活动是否符合社会发展的客观规律','是否通过实践促进了历史的进步','对社会和他人的贡献大小','个人的物质财富多少'], answer:0, explanation:'人生价值评价的根本尺度，是看一个人的人生活动是否符合社会发展的客观规律，是否通过实践促进了历史的进步。劳动以及通过劳动对社会和他人作出的贡献，是社会评价一个人的人生价值的普遍标准。'}
+  ]
+};
+
+// 政治选择题刷题状态
+let politicsQuizState = {
+  currentCategory: 'mayuan',
+  currentIndex: 0,
+  selectedAnswers: [],
+  showAnswer: false,
+  score: 0,
+  answered: 0
+};
+
+// 切换政治特色工具
+function switchPoliticsTool(tool) {
+  const content = document.getElementById('politicsToolContent');
+  const title = document.getElementById('politicsToolTitle');
+  const body = document.getElementById('politicsToolBody');
+  content.style.display = 'block';
+  
+  if(tool === 'quiz') {
+    title.textContent = '📝 政治选择题刷题';
+    renderPoliticsQuiz();
+  } else if(tool === 'template') {
+    title.textContent = '📋 分析题答题模板';
+    renderPoliticsTemplate();
+  } else if(tool === 'hotspot') {
+    title.textContent = '🔥 时政热点';
+    renderPoliticsHotspot();
+  } else if(tool === 'mnemonic') {
+    title.textContent = '🎵 背诵口诀';
+    renderPoliticsMnemonic();
+  }
+  
+  content.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function closePoliticsTool() {
+  document.getElementById('politicsToolContent').style.display = 'none';
+}
+
+// 渲染选择题刷题
+function renderPoliticsQuiz() {
+  const body = document.getElementById('politicsToolBody');
+  const state = politicsQuizState;
+  const questions = POLITICS_QUIZ_DATA[state.currentCategory];
+  const current = questions[state.currentIndex];
+  
+  let categoryBtns = `
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button onclick="changePoliticsQuizCategory('mayuan')" style="padding:8px 16px;border-radius:20px;border:2px solid ${state.currentCategory==='mayuan'?'#dc2626':'#e5e7eb'};background:${state.currentCategory==='mayuan'?'#dc2626':'#fff'};color:${state.currentCategory==='mayuan'?'#fff':'#374151'};cursor:pointer;font-size:13px;font-weight:600">🔴 马原 (${POLITICS_QUIZ_DATA.mayuan.length}题)</button>
+      <button onclick="changePoliticsQuizCategory('maozt')" style="padding:8px 16px;border-radius:20px;border:2px solid ${state.currentCategory==='maozt'?'#ea580c':'#e5e7eb'};background:${state.currentCategory==='maozt'?'#ea580c':'#fff'};color:${state.currentCategory==='maozt'?'#fff':'#374151'};cursor:pointer;font-size:13px;font-weight:600">🟠 毛中特 (${POLITICS_QUIZ_DATA.maozt.length}题)</button>
+      <button onclick="changePoliticsQuizCategory('shigang')" style="padding:8px 16px;border-radius:20px;border:2px solid ${state.currentCategory==='shigang'?'#eab308':'#e5e7eb'};background:${state.currentCategory==='shigang'?'#eab308':'#fff'};color:${state.currentCategory==='shigang'?'#fff':'#374151'};cursor:pointer;font-size:13px;font-weight:600">🟡 史纲 (${POLITICS_QUIZ_DATA.shigang.length}题)</button>
+      <button onclick="changePoliticsQuizCategory('sixiu')" style="padding:8px 16px;border-radius:20px;border:2px solid ${state.currentCategory==='sixiu'?'#16a34a':'#e5e7eb'};background:${state.currentCategory==='sixiu'?'#16a34a':'#fff'};color:${state.currentCategory==='sixiu'?'#fff':'#374151'};cursor:pointer;font-size:13px;font-weight:600">🟢 思修 (${POLITICS_QUIZ_DATA.sixiu.length}题)</button>
+    </div>
+  `;
+  
+  let typeLabel = current.type === 'single' ? '【单选题】' : '【多选题】';
+  
+  let optionsHtml = current.options.map((opt, i) => {
+    let isSelected = state.selectedAnswers.includes(i);
+    let isCorrect = current.answer === i || (Array.isArray(current.answer) && current.answer.includes(i));
+    let style = 'border:2px solid #e5e7eb;background:#fff;';
+    if(state.showAnswer) {
+      if(isCorrect) style = 'border:2px solid #16a34a;background:#dcfce7;';
+      else if(isSelected) style = 'border:2px solid #dc2626;background:#fee2e2;';
+    } else if(isSelected) {
+      style = 'border:2px solid #2563eb;background:#dbeafe;';
+    }
+    return `<div onclick="selectPoliticsQuizAnswer(${i})" style="padding:12px 16px;border-radius:8px;cursor:pointer;margin-bottom:8px;transition:all .2s;${style}">
+      <span style="font-weight:700;margin-right:8px">${String.fromCharCode(65+i)}.</span>${opt}
+    </div>`;
+  }).join('');
+  
+  let answerHtml = state.showAnswer ? `
+    <div style="background:#f0f9ff;border-left:4px solid #2563eb;padding:14px 18px;border-radius:0 8px 8px 0;margin-top:16px">
+      <div style="font-weight:700;color:#1e40af;margin-bottom:6px">✅ 正确答案：${Array.isArray(current.answer) ? current.answer.map(a=>String.fromCharCode(65+a)).join('、') : String.fromCharCode(65+current.answer)}</div>
+      <div style="font-size:14px;color:#374151;line-height:1.7">📖 ${current.explanation}</div>
+    </div>
+  ` : '';
+  
+  body.innerHTML = `
+    ${categoryBtns}
+    <div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <span style="font-size:13px;color:#6b7280">第 ${state.currentIndex+1}/${questions.length} 题 | ${typeLabel} | 章节：${current.chapter}</span>
+        <span style="font-size:13px;color:#6b7280">已答 ${state.answered} 题 | 正确 ${state.score} 题</span>
+      </div>
+      <div style="font-size:16px;font-weight:600;color:#1f2937;margin-bottom:16px;line-height:1.7">${current.question}</div>
+      ${optionsHtml}
+      ${answerHtml}
+      <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
+        ${!state.showAnswer ? `<button onclick="submitPoliticsQuizAnswer()" style="padding:10px 24px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">提交答案</button>` : ''}
+        <button onclick="nextPoliticsQuiz()" style="padding:10px 24px;background:#f3f4f6;color:#374151;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">${state.currentIndex < questions.length-1 ? '下一题 →' : '重新开始 🔄'}</button>
+        <button onclick="resetPoliticsQuiz()" style="padding:10px 24px;background:#fef2f2;color:#dc2626;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">重置进度</button>
+      </div>
+    </div>
+  `;
+}
+
+function changePoliticsQuizCategory(cat) {
+  politicsQuizState.currentCategory = cat;
+  politicsQuizState.currentIndex = 0;
+  politicsQuizState.selectedAnswers = [];
+  politicsQuizState.showAnswer = false;
+  politicsQuizState.score = 0;
+  politicsQuizState.answered = 0;
+  renderPoliticsQuiz();
+}
+
+function selectPoliticsQuizAnswer(idx) {
+  if(politicsQuizState.showAnswer) return;
+  const current = POLITICS_QUIZ_DATA[politicsQuizState.currentCategory][politicsQuizState.currentIndex];
+  if(current.type === 'single') {
+    politicsQuizState.selectedAnswers = [idx];
+  } else {
+    const i = politicsQuizState.selectedAnswers.indexOf(idx);
+    if(i > -1) politicsQuizState.selectedAnswers.splice(i, 1);
+    else politicsQuizState.selectedAnswers.push(idx);
+  }
+  renderPoliticsQuiz();
+}
+
+function submitPoliticsQuizAnswer() {
+  const state = politicsQuizState;
+  const current = POLITICS_QUIZ_DATA[state.currentCategory][state.currentIndex];
+  if(state.selectedAnswers.length === 0) {
+    alert('请先选择答案！');
+    return;
+  }
+  state.showAnswer = true;
+  state.answered++;
+  let isCorrect = false;
+  if(current.type === 'single') {
+    isCorrect = state.selectedAnswers[0] === current.answer;
+  } else {
+    const sortedSelected = [...state.selectedAnswers].sort();
+    const sortedAnswer = [...current.answer].sort();
+    isCorrect = sortedSelected.length === sortedAnswer.length && sortedSelected.every((v,i) => v === sortedAnswer[i]);
+  }
+  if(isCorrect) state.score++;
+  renderPoliticsQuiz();
+}
+
+function nextPoliticsQuiz() {
+  const state = politicsQuizState;
+  const questions = POLITICS_QUIZ_DATA[state.currentCategory];
+  if(state.currentIndex < questions.length - 1) {
+    state.currentIndex++;
+  } else {
+    state.currentIndex = 0;
+    state.score = 0;
+    state.answered = 0;
+  }
+  state.selectedAnswers = [];
+  state.showAnswer = false;
+  renderPoliticsQuiz();
+}
+
+function resetPoliticsQuiz() {
+  politicsQuizState.currentIndex = 0;
+  politicsQuizState.selectedAnswers = [];
+  politicsQuizState.showAnswer = false;
+  politicsQuizState.score = 0;
+  politicsQuizState.answered = 0;
+  renderPoliticsQuiz();
+}
+
+
+
 window.switchReadingTab = function(tabName){
 try {
 var sections = document.querySelectorAll('.reading-section');
