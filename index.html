@@ -25385,113 +25385,359 @@ function autoAnalyzeSentence(sentence){
     pattern: {name: '', desc: '', example: ''}
   };
   
-  // 1. 句子结构识别
-  let remaining = sentence;
-  const clauses = [];
+  // 清理句子
+  let s = sentence.trim().replace(/\s+/g, ' ');
   
-  // 识别定语从句
-  const attrPattern = /\b(which|who|whom|whose|when|where|why)\s+/gi;
-  let match;
-  while((match = attrPattern.exec(sentence)) !== null){
-    const start = match.index;
-    // 找到从句结束位置（到下一个连词或句末）
-    let end = sentence.length;
-    const afterClause = sentence.substring(start + match[0].length);
-    const nextConj = afterClause.search(/\b(but|and|or|so|yet|while|because|although|though|if|unless|until|before|after|since|as)\s+/i);
-    if(nextConj > 0 && nextConj < 200){
-      end = start + match[0].length + nextConj;
-    }
-    const clauseText = sentence.substring(start, end).trim();
-    if(clauseText.length > 10){
-      clauses.push({type: 'attr', text: clauseText, label: '定语从句（' + match[1] + '引导）'});
+  // ========== 1. 识别非限制性定语从句（被逗号包围的从句） ==========
+  const nonRestrictiveClauses = [];
+  // 匹配 , which/who/whom/whose ... ,  或 , which/who/whom/whose ... （句末）
+  const nrPattern = /,\s*(which|who|whom|whose)\b([^,]*?(?:,[^,]*?)*?)(?=,|\.|$)/gi;
+  let nrMatch;
+  // 使用更精确的方法：找到逗号+关系词，然后找到配对的逗号或句末
+  const commaPositions = [];
+  for(let i = 0; i < s.length; i++){
+    if(s[i] === ',') commaPositions.push(i);
+  }
+  
+  // 查找被逗号包围的从句
+  for(let i = 0; i < commaPositions.length - 1; i++){
+    const start = commaPositions[i];
+    const end = commaPositions[i+1];
+    const between = s.substring(start, end + 1);
+    if(/^,\s*(which|who|whom|whose)\b/i.test(between)){
+      // 检查这个从句是否包含完整的主谓结构
+      const clauseText = between.trim();
+      if(clauseText.length > 15){
+        nonRestrictiveClauses.push({
+          text: clauseText,
+          start: start,
+          end: end + 1,
+          type: 'nonrestrictive',
+          relWord: between.match(/^,\s*(which|who|whom|whose)\b/i)[1]
+        });
+      }
     }
   }
   
-  // 识别状语从句
-  const advPattern = /\b(because|although|though|while|when|before|after|until|unless|if|since|as|whereas|provided|so that|in order that|now that|as if|even if|even though)\s+/gi;
-  while((match = advPattern.exec(sentence)) !== null){
-    const start = match.index;
-    let end = sentence.length;
-    const afterClause = sentence.substring(start + match[0].length);
-    const nextComma = afterClause.indexOf(',');
-    if(nextComma > 0 && nextComma < 150){
-      end = start + match[0].length + nextComma + 1;
-    }
-    const clauseText = sentence.substring(start, end).trim();
-    if(clauseText.length > 8 && !clauses.some(c => c.text.includes(clauseText.substring(0, 20)))){
-      clauses.push({type: 'adv', text: clauseText, label: '状语从句（' + match[1] + '引导）'});
+  // 也检查句末的非限制性定语从句（, which ... .）
+  const lastComma = commaPositions[commaPositions.length - 1];
+  if(lastComma && s.length - lastComma > 15){
+    const afterLast = s.substring(lastComma);
+    if(/^,\s*(which|who|whom|whose)\b/i.test(afterLast) && afterLast.includes('.')){
+      const clauseText = afterLast.substring(0, afterLast.lastIndexOf('.')).trim();
+      nonRestrictiveClauses.push({
+        text: clauseText + '.',
+        start: lastComma,
+        end: s.length,
+        type: 'nonrestrictive',
+        relWord: afterLast.match(/^,\s*(which|who|whom|whose)\b/i)[1]
+      });
     }
   }
   
-  // 识别非谓语动词短语
-  const nonfinitePattern = /\b(doing|done|to do|having done|having been done|being done)\b/gi;
-  // 简化：识别以动词ing/ed开头的短语
-  // ingPattern已简化，非谓语动词识别使用基础规则
+  // ========== 2. 构建句子主干（移除非限制性定语从句） ==========
+  let mainSentence = s;
+  // 从后往前移除，避免位置偏移
+  const sortedClauses = [...nonRestrictiveClauses].sort((a,b) => b.start - a.start);
+  for(const clause of sortedClauses){
+    mainSentence = mainSentence.substring(0, clause.start) + mainSentence.substring(clause.end);
+  }
+  mainSentence = mainSentence.replace(/\s+,/g, ',').replace(/,\s*\./g, '.').replace(/\s+/g, ' ').trim();
   
-  // 主句识别（简化：取第一个逗号或从句之前的部分）
-  let mainClause = sentence;
-  const firstComma = sentence.indexOf(',');
-  const firstWhich = sentence.search(/\b(which|who|whom|whose|that|because|although|though|while|when|where|if|unless|until|before|after|since|as)\b/i);
-  let mainEnd = sentence.length;
-  if(firstComma > 0 && firstComma < mainEnd) mainEnd = firstComma;
-  if(firstWhich > 0 && firstWhich < mainEnd) mainEnd = firstWhich;
-  mainClause = sentence.substring(0, mainEnd).trim();
+  // ========== 3. 识别限制性定语从句（that/which 引导，无逗号） ==========
+  const restrictiveClauses = [];
+  const restPattern = /\b(that|which|who|whom|whose|when|where|why)\s+([a-zA-Z]+)/gi;
+  let restMatch;
+  while((restMatch = restPattern.exec(mainSentence)) !== null){
+    const start = restMatch.index;
+    // 找到从句结束（到下一个连词、介词或句末）
+    let end = mainSentence.length;
+    const after = mainSentence.substring(start);
+    // 找第二个动词或句末
+    const verbPattern = /\b(is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|shall|should|can|could|may|might|must)\b/gi;
+    let verbCount = 0;
+    let verbMatch;
+    while((verbMatch = verbPattern.exec(after)) !== null){
+      verbCount++;
+      if(verbCount === 2){
+        end = start + verbMatch.index;
+        break;
+      }
+    }
+    // 如果没找到第二个动词，到句末
+    const clauseText = mainSentence.substring(start, end).trim();
+    if(clauseText.length > 10 && !nonRestrictiveClauses.some(c => c.text.includes(clauseText.substring(0, 20)))){
+      restrictiveClauses.push({
+        text: clauseText,
+        type: 'restrictive',
+        relWord: restMatch[1]
+      });
+    }
+  }
   
-  analysis.structure.push({type: 'main', text: mainClause, label: '主句（句子主干）'});
-  clauses.forEach(c => analysis.structure.push(c));
+  // ========== 4. 识别状语从句 ==========
+  const adverbialClauses = [];
+  const advWords = ['because','although','though','while','when','before','after','until','unless','if','since','as','whereas','provided','so that','in order that','now that','as if','even if','even though'];
+  for(const word of advWords){
+    const pattern = new RegExp('\\b' + word.replace(/\s+/g, '\\s+') + '\\s+', 'gi');
+    let match;
+    while((match = pattern.exec(mainSentence)) !== null){
+      const start = match.index;
+      // 到逗号或句末
+      let end = mainSentence.length;
+      const after = mainSentence.substring(start);
+      const commaIdx = after.indexOf(',');
+      if(commaIdx > 5 && commaIdx < 150) end = start + commaIdx + 1;
+      const clauseText = mainSentence.substring(start, end).trim();
+      if(clauseText.length > 10 && !adverbialClauses.some(c => c.text.includes(clauseText.substring(0, 15)))){
+        adverbialClauses.push({
+          text: clauseText,
+          type: 'adverbial',
+          word: word
+        });
+      }
+    }
+  }
   
-  // 2. 语法成分（简化分析）
-  const words = mainClause.split(/\s+/);
-  const subjectWords = [];
+  // ========== 5. 识别状语（介词短语、as短语等） ==========
+  const adverbials = [];
+  // as 短语作状语
+  const asPattern = /\bas\s+(a|an|the)\s+([^,.;]+)/gi;
+  let asMatch;
+  while((asMatch = asPattern.exec(mainSentence)) !== null){
+    const text = asMatch[0].trim();
+    if(text.length > 8){
+      adverbials.push({text: text, type: 'as-phrase', label: 'as短语作方式/状态状语'});
+    }
+  }
+  
+  // ========== 6. 分析句子主干的语法成分 ==========
+  // 移除限制性定语从句和状语从句后，得到核心主干
+  let coreSentence = mainSentence;
+  for(const clause of [...restrictiveClauses, ...adverbialClauses].sort((a,b) => b.text.length - a.text.length)){
+    coreSentence = coreSentence.replace(clause.text, '').replace(/\s+/g, ' ').trim();
+  }
+  // 移除as状语
+  for(const adv of adverbials){
+    coreSentence = coreSentence.replace(adv.text, '').replace(/\s+/g, ' ').trim();
+  }
+  coreSentence = coreSentence.replace(/\s+,/g, ',').replace(/,\s*\./g, '.').replace(/\s+/g, ' ').trim();
+  
+  // 分析主干的主谓宾
+  const coreWords = coreSentence.split(/\s+/).filter(w => w.length > 0);
+  let subject = '';
+  let predicate = '';
+  let object = '';
   let predicateStart = -1;
   
-  // 找谓语动词（简化：找第一个动词形式）
-  for(let i = 0; i < words.length; i++){
-    const w = words[i].toLowerCase().replace(/[^a-z]/g, '');
-    if(/(is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|shall|should|can|could|may|might|must|ought|need|dare)$/.test(w) || 
-       /[a-z]+(ed|ing|es|s)$/.test(w) && w.length > 3){
+  // 找谓语动词（更精确：找be动词/助动词+实义动词）
+  const beVerbs = ['is','are','was','were','be','been','being'];
+  const auxVerbs = ['have','has','had','do','does','did','will','would','shall','should','can','could','may','might','must'];
+  
+  for(let i = 0; i < coreWords.length; i++){
+    const w = coreWords[i].toLowerCase().replace(/[^a-z]/g, '');
+    // 检查是否是be动词或助动词
+    if(beVerbs.includes(w) || auxVerbs.includes(w)){
+      // 检查后面是否有过去分词或现在分词（构成进行时/完成时/被动语态）
+      if(i + 1 < coreWords.length){
+        const nextW = coreWords[i+1].toLowerCase().replace(/[^a-z]/g, '');
+        if(nextW.endsWith('ed') || nextW.endsWith('ing') || beVerbs.includes(nextW) || auxVerbs.includes(nextW) || nextW === 'not'){
+          predicateStart = i;
+          break;
+        }
+      }
+      // be动词单独作谓语
+      if(beVerbs.includes(w)){
+        predicateStart = i;
+        break;
+      }
+    }
+    // 检查是否是实义动词（过去式或第三人称单数）
+    if(w.endsWith('ed') && w.length > 3 && !beVerbs.includes(w) && !auxVerbs.includes(w)){
+      predicateStart = i;
+      break;
+    }
+    if(w.endsWith('s') && w.length > 3 && !w.endsWith('ss') && i > 0){
+      // 可能是第三人称单数动词
       predicateStart = i;
       break;
     }
   }
   
   if(predicateStart > 0){
-    analysis.grammar.push({component: '主语', text: words.slice(0, predicateStart).join(' '), detail: '句子陈述的对象'});
-    analysis.grammar.push({component: '谓语', text: words.slice(predicateStart).join(' '), detail: '说明主语的动作或状态'});
+    subject = coreWords.slice(0, predicateStart).join(' ');
+    // 谓语可能包含多个词（助动词+实义动词）
+    let predEnd = predicateStart + 1;
+    for(let j = predicateStart + 1; j < coreWords.length; j++){
+      const w = coreWords[j].toLowerCase().replace(/[^a-z]/g, '');
+      if(w.endsWith('ed') || w.endsWith('ing') || beVerbs.includes(w) || auxVerbs.includes(w) || w === 'not' || w === 'been' || w === 'being'){
+        predEnd = j + 1;
+      } else {
+        break;
+      }
+    }
+    predicate = coreWords.slice(predicateStart, predEnd).join(' ');
+    object = coreWords.slice(predEnd).join(' ');
+  } else if(predicateStart === 0){
+    predicate = coreWords.join(' ');
   } else {
-    analysis.grammar.push({component: '主语+谓语', text: mainClause, detail: '句子主干部分'});
+    subject = coreSentence;
   }
   
-  // 3. 词汇解释
-  const vocabWords = sentence.split(/\s+/).map(w => w.toLowerCase().replace(/[^a-z]/g, '')).filter(w => w.length > 5);
-  const uniqueWords = [...new Set(vocabWords)];
-  uniqueWords.forEach(w => {
-    if(SENTENCE_VOCAB_DICT[w]){
-      analysis.vocab.push({word: w, pos: SENTENCE_VOCAB_DICT[w].pos, meaning: SENTENCE_VOCAB_DICT[w].meaning});
-    }
+  // ========== 7. 构建分析结果 ==========
+  
+  // 句子结构
+  analysis.structure.push({
+    type: 'main',
+    text: coreSentence,
+    label: '句子主干（' + (object ? '主谓宾结构' : '主谓结构') + (predicate.toLowerCase().includes('been') && predicate.toLowerCase().includes('ed') ? '，被动语态' : '') + '）'
   });
+  
+  // 非限制性定语从句
+  for(const clause of nonRestrictiveClauses){
+    analysis.structure.push({
+      type: 'nonrestrictive',
+      text: clause.text,
+      label: '非限制性定语从句（' + clause.relWord + '引导），作插入成分，修饰前面的名词或整个句子。阅读时可先跳过，抓住主干。'
+    });
+  }
+  
+  // 限制性定语从句
+  for(const clause of restrictiveClauses){
+    analysis.structure.push({
+      type: 'restrictive',
+      text: clause.text,
+      label: '限制性定语从句（' + clause.relWord + '引导），修饰先行词'
+    });
+  }
+  
+  // 状语从句
+  for(const clause of adverbialClauses){
+    analysis.structure.push({
+      type: 'adverbial',
+      text: clause.text,
+      label: '状语从句（' + clause.word + '引导）'
+    });
+  }
+  
+  // 状语
+  for(const adv of adverbials){
+    analysis.structure.push({
+      type: 'adverbial-phrase',
+      text: adv.text,
+      label: adv.label
+    });
+  }
+  
+  // 语法成分
+  if(subject){
+    analysis.grammar.push({
+      component: '主语',
+      text: subject,
+      detail: '句子陈述的对象' + (nonRestrictiveClauses.length > 0 ? '，后接非限制性定语从句作插入修饰' : '')
+    });
+  }
+  if(predicate){
+    const isPassive = predicate.toLowerCase().includes('been') && predicate.toLowerCase().includes('ed');
+    analysis.grammar.push({
+      component: '谓语',
+      text: predicate,
+      detail: isPassive ? '被动语态，强调动作的承受者' : '说明主语的动作或状态'
+    });
+  }
+  if(object && object.replace(/[.,;!?]/g, '').trim().length > 0){
+    analysis.grammar.push({
+      component: '宾语/表语',
+      text: object,
+      detail: '谓语动词的承受者或系动词后的表语'
+    });
+  }
+  
+  // 核心词汇（简单识别）
+  const coreVocab = ['demonstrate','illustrate','indicate','suggest','imply','reveal','show','prove','confirm','establish','found','create','develop','form','produce','generate','cause','lead','result','affect','influence','impact','change','alter','modify','transform','improve','enhance','increase','decrease','reduce','raise','lower','maintain','sustain','preserve','conserve','protect','defend','attack','criticize','praise','commend','emphasize','stress','highlight','underline','focus','concentrate','center','revolve','rotate','spin','turn','shift','move','transfer','transport','carry','bring','take','fetch','send','deliver','receive','accept','reject','refuse','deny','admit','acknowledge','recognize','identify','detect','discover','find','invent','create','design','plan','prepare','arrange','organize','manage','control','govern','rule','lead','guide','direct','instruct','teach','learn','study','research','investigate','explore','examine','analyze','interpret','explain','describe','depict','portray','represent','symbolize','signify','mean','imply','suggest','indicate','show','demonstrate','prove','confirm','verify','validate','authenticate','certify','testify','witness','observe','notice','perceive','discern','distinguish','differentiate','discriminate','separate','divide','split','break','cut','tear','rip','shred','destroy','ruin','damage','harm','hurt','injure','wound','pain','suffer','endure','tolerate','bear','stand','accept','receive','get','obtain','acquire','gain','attain','achieve','accomplish','complete','finish','fulfill','realize','recognize','know','understand','comprehend','grasp','master','learn','study','memorize','remember','recall','recollect','remind','forget','ignore','neglect','overlook','disregard','omit','skip','jump','leap','bound','spring','bounce','hop','skip','walk','run','march','parade','procession','demonstration','protest','riot','rebellion','revolution','reform','change','alteration','modification','adjustment','adaptation','accommodation','concession','compromise','agreement','contract','treaty','pact','alliance','coalition','partnership','collaboration','cooperation','competition','rivalry','conflict','dispute','argument','debate','discussion','conversation','dialogue','communication','interaction','connection','link','relation','relationship','association','organization','institution','establishment','foundation','basis','ground','root','origin','source','beginning','start','commencement','initiation','launch','introduction','presentation','display','exhibition','show','performance','demonstration','manifestation','expression','utterance','statement','declaration','announcement','proclamation','pronouncement','verdict','judgment','decision','determination','resolution','conclusion','end','finish','completion','fulfillment','achievement','accomplishment','success','victory','triumph','win','gain','profit','benefit','advantage','merit','virtue','goodness','excellence','superiority','greatness','majesty','splendor','glory','honor','fame','reputation','prestige','status','position','rank','grade','level','degree','extent','scope','range','reach','span','stretch','extension','expansion','growth','development','progress','advancement','improvement','enhancement','increase','rise','growth','surge','spike','jump','leap','bound','spring','bounce','hop','skip','walk','run','march','parade','procession','demonstration','protest','riot','rebellion','revolution','reform','change','alteration','modification','adjustment','adaptation','accommodation','concession','compromise','agreement','contract','treaty','pact','alliance','coalition','partnership','collaboration','cooperation','competition','rivalry','conflict','dispute','argument','debate','discussion','conversation','dialogue','communication','interaction','connection','link','relation','relationship','association','organization','institution','establishment','foundation','basis','ground','root','origin','source','beginning','start','commencement','initiation','launch','introduction','presentation','display','exhibition','show','performance','demonstration','manifestation','expression','utterance','statement','declaration','announcement','proclamation','pronouncement','verdict','judgment','decision','determination','resolution','conclusion','end','finish','completion','fulfillment','achievement','accomplishment','success','victory','triumph','win','gain','profit','benefit','advantage','merit','virtue','goodness','excellence','superiority','greatness','majesty','splendor','glory','honor','fame','reputation','prestige','status','position','rank','grade','level','degree','extent','scope','range','reach','span','stretch','extension','expansion','growth','development','progress','advancement','improvement','enhancement','increase','rise','growth','surge','spike','jump','leap'];
+  
+  const sentenceWords = s.split(/\s+/).map(w => w.toLowerCase().replace(/[^a-z]/g, '')).filter(w => w.length > 3);
+  const foundVocab = new Set();
+  for(const w of sentenceWords){
+    if(coreVocab.includes(w) && !foundVocab.has(w)){
+      foundVocab.add(w);
+      analysis.vocab.push({word: w, pos: 'v.', meaning: '（核心动词，建议查阅词典确认具体含义）'});
+    }
+  }
   
   if(analysis.vocab.length === 0){
     analysis.vocab.push({word: '（提示）', pos: '', meaning: '此句为自动分析，核心词汇识别有限。建议使用预置经典长难句获取更精准的分析。'});
   }
   
-  // 4. 翻译（基于规则的粗略翻译）
-  analysis.translation = '【自动分析参考译文】' + sentence + '（注：此句为自动分析，翻译仅供参考。建议使用预置经典长难句获取精准译文和详细解析。）';
-  
-  // 5. 难点解析
-  if(clauses.length > 0){
-    analysis.difficulties.push({label: '从句结构：', text: '本句包含' + clauses.length + '个从句，理解时需先找出主句主干，再逐层分析从句修饰关系。'});
+  // 翻译（基于结构的简单翻译）
+  let translationHint = '';
+  if(nonRestrictiveClauses.length > 0){
+    translationHint += '【翻译提示】句中包含非限制性定语从句（' + nonRestrictiveClauses.map(c => c.relWord).join('、') + '引导），翻译时可单独成句或译为前置定语。';
   }
-  if(sentence.length > 80){
-    analysis.difficulties.push({label: '句子长度：', text: '本句较长（' + sentence.length + '字符），建议采用"先找谓语、再找连词、最后找修饰"的三步分析法。'});
+  if(restrictiveClauses.length > 0){
+    translationHint += '【翻译提示】句中包含限制性定语从句，翻译时通常译为"……的"前置定语，较长时可单独成句。';
   }
-  analysis.difficulties.push({label: '分析说明：', text: '此句为AI自动分析，结果仅供参考。系统预置了20+考研经典长难句的人工精析，建议点击上方预置句子标签获取更全面准确的分析。'});
+  if(adverbialClauses.length > 0){
+    translationHint += '【翻译提示】句中包含状语从句（' + adverbialClauses.map(c => c.word).join('、') + '引导），翻译时通常放在主句之前。';
+  }
   
-  // 6. 句型总结
+  analysis.translation = translationHint + '\n\n（注：此句为AI自动分析，翻译仅供参考。建议使用预置经典长难句获取精准译文和详细解析。）';
+  
+  // 难点分析
+  if(nonRestrictiveClauses.length > 0){
+    analysis.difficulties.push({
+      label: '难点1：',
+      text: '句中包含非限制性定语从句（' + nonRestrictiveClauses.map(c => c.text).join('；') + '），被逗号包围，作插入成分。阅读时可先跳过这部分，抓住句子主干，再回头理解从句内容。'
+    });
+  }
+  if(predicate.toLowerCase().includes('been') && predicate.toLowerCase().includes('ed')){
+    analysis.difficulties.push({
+      label: '难点2：',
+      text: '谓语为被动语态（' + predicate + '），翻译时可转为主动语态或保留被动，注意动作的承受者是句子主语。'
+    });
+  }
+  if(adverbials.length > 0){
+    analysis.difficulties.push({
+      label: '难点3：',
+      text: '句中包含状语成分（' + adverbials.map(a => a.text).join('；') + '），修饰谓语动词，说明动作的方式、状态或程度。'
+    });
+  }
+  if(analysis.difficulties.length === 0){
+    analysis.difficulties.push({
+      label: '分析说明：',
+      text: '此句为AI自动分析，结果仅供参考。系统预置了20+考研经典长难句的人工精析，建议点击上方预置句子标签获取更全面准确的分析。'
+    });
+  }
+  
+  // 句型识别
+  let patternName = '简单句';
+  let patternDesc = '句子结构相对简单';
+  if(nonRestrictiveClauses.length > 0 && restrictiveClauses.length > 0){
+    patternName = '非限制性定语从句+限制性定语从句复合句';
+    patternDesc = '主句包含非限制性定语从句作插入成分，同时包含限制性定语从句修饰名词。考研阅读和翻译高频句型。';
+  } else if(nonRestrictiveClauses.length > 0){
+    patternName = '含非限制性定语从句的复合句';
+    patternDesc = '主句中插入非限制性定语从句（被逗号包围），修饰前面的名词或整个句子。阅读时可先跳过从句，抓住主干。';
+  } else if(restrictiveClauses.length > 0 && adverbialClauses.length > 0){
+    patternName = '定语从句+状语从句复合句';
+    patternDesc = '主句同时包含定语从句和状语从句，从句嵌套结构。考研翻译高频句型。';
+  } else if(restrictiveClauses.length > 0){
+    patternName = '含限制性定语从句的复合句';
+    patternDesc = '主句包含限制性定语从句，修饰先行词。考研英语最常见句型。';
+  } else if(adverbialClauses.length > 0){
+    patternName = '含状语从句的复合句';
+    patternDesc = '主句包含状语从句（' + adverbialClauses.map(c => c.word).join('、') + '引导），表示时间、原因、条件、让步等。';
+  }
+  
+  if(predicate.toLowerCase().includes('been') && predicate.toLowerCase().includes('ed')){
+    patternName += '（被动语态）';
+    patternDesc += '主句使用被动语态，强调动作的承受者。';
+  }
+  
   analysis.pattern = {
-    name: clauses.length > 0 ? '主从复合句（含' + clauses.length + '个从句）' : '简单句/并列句',
-    desc: '本句为AI自动识别的句型结构。考研英语长难句通常包含多重从句嵌套、非谓语动词、插入语等复杂结构，建议结合预置经典长难句进行系统学习。',
-    example: '点击上方预置句子标签，查看考研真题经典长难句的详细人工分析。'
+    name: patternName,
+    desc: patternDesc,
+    example: '建议点击上方预置句子标签，查看考研真题经典长难句的详细人工分析。'
   };
   
   return analysis;
