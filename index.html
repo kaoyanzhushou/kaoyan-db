@@ -25669,7 +25669,395 @@ function autoAnalyzeSentence(sentence){
     analysis.vocab.push({word: '（提示）', pos: '', meaning: '此句为自动分析，核心词汇识别有限。建议使用预置经典长难句获取更精准的分析。'});
   }
   
-  // 翻译（基于结构的简单翻译）
+  // ========== 中文译文（基于句子结构的智能翻译） ==========
+  let chineseTranslation = '';
+  
+  // 简单的词汇翻译表（考研高频词）
+  const vocabMap = {
+    'theory': '理论', 'theories': '理论',
+    'proposed': '提出', 'propose': '提出', 'proposes': '提出',
+    'einstein': '爱因斯坦',
+    'early': '早期的', '20th': '20', 'century': '世纪',
+    'widely': '广泛地', 'accepted': '接受', 'accept': '接受', 'accepts': '接受',
+    'fundamental': '基本的', 'principle': '原理', 'principles': '原理',
+    'modern': '现代的', 'physics': '物理学',
+    'science': '科学', 'scientist': '科学家', 'scientists': '科学家',
+    'research': '研究', 'study': '研究', 'studies': '研究',
+    'result': '结果', 'results': '结果', 'finding': '发现', 'findings': '发现',
+    'show': '表明', 'shows': '表明', 'showed': '表明', 'shown': '表明',
+    'indicate': '表明', 'indicates': '表明', 'indicated': '表明',
+    'suggest': '表明', 'suggests': '表明', 'suggested': '表明',
+    'demonstrate': '证明', 'demonstrates': '证明', 'demonstrated': '证明',
+    'prove': '证明', 'proves': '证明', 'proved': '证明', 'proven': '证明',
+    'confirm': '证实', 'confirms': '证实', 'confirmed': '证实',
+    'reveal': '揭示', 'reveals': '揭示', 'revealed': '揭示',
+    'important': '重要的', 'significant': '重要的', 'crucial': '关键的',
+    'necessary': '必要的', 'essential': '必要的', 'vital': '至关重要的',
+    'difficult': '困难的', 'hard': '困难的', 'easy': '容易的',
+    'possible': '可能的', 'impossible': '不可能的', 'likely': '可能的',
+    'unlikely': '不太可能的', 'able': '能够的', 'unable': '不能的',
+    'people': '人们', 'person': '人', 'human': '人类', 'humans': '人类',
+    'society': '社会', 'social': '社会的', 'culture': '文化', 'cultural': '文化的',
+    'economic': '经济的', 'economy': '经济', 'political': '政治的', 'politics': '政治',
+    'education': '教育', 'educational': '教育的', 'school': '学校', 'schools': '学校',
+    'student': '学生', 'students': '学生', 'teacher': '老师', 'teachers': '老师',
+    'learn': '学习', 'learns': '学习', 'learned': '学习', 'learning': '学习',
+    'teach': '教学', 'teaches': '教学', 'taught': '教学', 'teaching': '教学',
+    'knowledge': '知识', 'skill': '技能', 'skills': '技能', 'ability': '能力',
+    'abilities': '能力', 'development': '发展', 'develop': '发展', 'develops': '发展',
+    'developed': '发展', 'developing': '发展中的', 'growth': '增长', 'grow': '增长',
+    'grows': '增长', 'grew': '增长', 'grown': '增长', 'increase': '增加', 'increases': '增加',
+    'increased': '增加', 'increasing': '增加的', 'decrease': '减少', 'decreases': '减少',
+    'decreased': '减少', 'change': '改变', 'changes': '改变', 'changed': '改变',
+    'changing': '改变的', 'improve': '改善', 'improves': '改善', 'improved': '改善',
+    'improvement': '改善', 'affect': '影响', 'affects': '影响', 'affected': '影响',
+    'affecting': '影响', 'influence': '影响', 'influences': '影响', 'influenced': '影响',
+    'impact': '影响', 'impacts': '影响', 'impacted': '影响', 'effect': '影响',
+    'effects': '影响', 'effective': '有效的', 'effectively': '有效地',
+    'cause': '导致', 'causes': '导致', 'caused': '导致', 'causing': '导致',
+    'reason': '原因', 'reasons': '原因', 'because': '因为', 'since': '因为/自从',
+    'although': '尽管', 'though': '尽管', 'while': '当...时/尽管', 'when': '当...时',
+    'if': '如果', 'unless': '除非', 'until': '直到', 'before': '在...之前',
+    'after': '在...之后', 'as': '作为/当...时', 'which': '这/那', 'who': '谁/...的人',
+    'that': '那/引导词', 'what': '什么', 'how': '如何', 'where': '哪里', 'why': '为什么',
+    'the': '这/那', 'a': '一个', 'an': '一个', 'is': '是', 'are': '是', 'was': '是',
+    'were': '是', 'be': '是', 'been': '是', 'being': '是', 'have': '有', 'has': '有',
+    'had': '有', 'having': '有', 'do': '做', 'does': '做', 'did': '做', 'doing': '做',
+    'done': '做', 'will': '将', 'would': '将', 'shall': '将', 'should': '应该',
+    'can': '能', 'could': '能', 'may': '可能', 'might': '可能', 'must': '必须',
+    'not': '不', 'no': '不', 'never': '从不', 'always': '总是', 'often': '经常',
+    'usually': '通常', 'sometimes': '有时', 'rarely': '很少', 'seldom': '很少',
+    'already': '已经', 'yet': '还', 'still': '仍然', 'just': '刚刚/只是',
+    'very': '非常', 'too': '太/也', 'so': '如此/所以', 'such': '这样的',
+    'more': '更多', 'most': '最多', 'less': '更少', 'least': '最少',
+    'better': '更好', 'best': '最好', 'worse': '更差', 'worst': '最差',
+    'new': '新的', 'old': '旧的/老的', 'young': '年轻的', 'big': '大的',
+    'small': '小的', 'large': '大的', 'little': '小的/少的', 'few': '少的',
+    'many': '许多', 'much': '许多', 'some': '一些', 'any': '任何',
+    'all': '所有', 'every': '每个', 'each': '每个', 'both': '两者都',
+    'either': '两者任一', 'neither': '两者都不', 'other': '其他的',
+    'others': '其他人/物', 'another': '另一个', 'one': '一个', 'two': '两个',
+    'first': '第一', 'second': '第二', 'third': '第三', 'last': '最后',
+    'next': '下一个', 'previous': '上一个', 'former': '前者', 'latter': '后者',
+    'good': '好的', 'bad': '坏的', 'right': '正确的/右边', 'wrong': '错误的',
+    'true': '真的', 'false': '假的', 'real': '真实的', 'fake': '假的',
+    'same': '相同的', 'different': '不同的', 'similar': '相似的',
+    'common': '常见的/共同的', 'usual': '通常的', 'normal': '正常的',
+    'strange': '奇怪的', 'special': '特殊的', 'particular': '特定的',
+    'general': '一般的/总的', 'specific': '具体的', 'certain': '某些/确定的',
+    'sure': '确定的', 'certain': '确定的', 'confident': '自信的',
+    'happy': '高兴的', 'sad': '悲伤的', 'angry': '生气的', 'afraid': '害怕的',
+    'worried': '担心的', 'excited': '兴奋的', 'interested': '感兴趣的',
+    'boring': '无聊的', 'tired': '累的', 'busy': '忙的', 'free': '空闲的/免费的',
+    'rich': '富有的', 'poor': '贫穷的', 'healthy': '健康的', 'sick': '生病的',
+    'strong': '强壮的', 'weak': '虚弱的', 'fast': '快的', 'slow': '慢的',
+    'quick': '快的', 'early': '早的', 'late': '晚的', 'long': '长的',
+    'short': '短的', 'tall': '高的', 'high': '高的', 'low': '低的',
+    'deep': '深的', 'shallow': '浅的', 'wide': '宽的', 'narrow': '窄的',
+    'thick': '厚的', 'thin': '薄的/瘦的', 'heavy': '重的', 'light': '轻的/光',
+    'hot': '热的', 'cold': '冷的', 'warm': '温暖的', 'cool': '凉爽的',
+    'clean': '干净的', 'dirty': '脏的', 'safe': '安全的', 'dangerous': '危险的',
+    'easy': '容易的', 'simple': '简单的', 'complex': '复杂的', 'complicated': '复杂的',
+    'clear': '清楚的', 'obvious': '明显的', 'evident': '明显的', 'apparent': '明显的',
+    'dark': '黑暗的', 'bright': '明亮的', 'beautiful': '美丽的', 'pretty': '漂亮的',
+    'ugly': '丑陋的', 'nice': '好的', 'fine': '好的/罚款', 'excellent': '优秀的',
+    'wonderful': '精彩的', 'great': '伟大的', 'terrible': '可怕的', 'horrible': '可怕的',
+    'famous': '著名的', 'known': '已知的', 'unknown': '未知的', 'popular': '流行的',
+    'public': '公共的', 'private': '私人的', 'personal': '个人的', 'individual': '个人的',
+    'national': '国家的', 'international': '国际的', 'global': '全球的', 'world': '世界',
+    'country': '国家', 'countries': '国家', 'city': '城市', 'cities': '城市',
+    'town': '城镇', 'village': '村庄', 'home': '家', 'house': '房子', 'building': '建筑',
+    'room': '房间', 'door': '门', 'window': '窗户', 'table': '桌子', 'chair': '椅子',
+    'book': '书', 'books': '书', 'paper': '纸', 'pen': '笔', 'pencil': '铅笔',
+    'computer': '电脑', 'phone': '电话', 'internet': '互联网', 'technology': '技术',
+    'technological': '技术的', 'information': '信息', 'data': '数据', 'number': '数字',
+    'fact': '事实', 'facts': '事实', 'truth': '真相', 'lie': '谎言', 'lies': '谎言',
+    'story': '故事', 'stories': '故事', 'history': '历史', 'historical': '历史的',
+    'future': '未来', 'past': '过去', 'present': '现在/礼物', 'time': '时间',
+    'day': '天', 'days': '天', 'night': '夜晚', 'morning': '早晨', 'afternoon': '下午',
+    'evening': '晚上', 'year': '年', 'years': '年', 'month': '月', 'months': '月',
+    'week': '周', 'weeks': '周', 'hour': '小时', 'hours': '小时', 'minute': '分钟',
+    'minutes': '分钟', 'second': '秒/第二', 'today': '今天', 'tomorrow': '明天',
+    'yesterday': '昨天', 'now': '现在', 'then': '然后/那时', 'soon': '很快',
+    'immediately': '立即', 'suddenly': '突然', 'finally': '最终', 'eventually': '最终',
+    'recently': '最近', 'lately': '最近', 'currently': '目前', 'currently': '目前',
+    'always': '总是', 'forever': '永远', 'never': '从不', 'sometimes': '有时',
+    'often': '经常', 'frequently': '频繁地', 'rarely': '很少', 'seldom': '很少',
+    'usually': '通常', 'normally': '通常', 'generally': '一般来说', 'basically': '基本上',
+    'actually': '实际上', 'really': '真地', 'truly': '真正地', 'certainly': '当然',
+    'of course': '当然', 'maybe': '也许', 'perhaps': '也许', 'probably': '可能',
+    'possibly': '可能地', 'likely': '可能地', 'unlikely': '不太可能地',
+    'however': '然而', 'but': '但是', 'yet': '然而', 'although': '尽管', 'though': '尽管',
+    'while': '尽管/当...时', 'whereas': '然而', 'nevertheless': '然而', 'nonetheless': '然而',
+    'therefore': '因此', 'thus': '因此', 'so': '所以', 'hence': '因此', 'consequently': '因此',
+    'as a result': '结果', 'because': '因为', 'since': '因为', 'as': '因为',
+    'for': '因为', 'due to': '由于', 'owing to': '由于', 'thanks to': '多亏',
+    'if': '如果', 'unless': '除非', 'provided that': '假如', 'on condition that': '条件是',
+    'as long as': '只要', 'so long as': '只要', 'in case': '以防', 'in case of': '万一',
+    'when': '当...时', 'whenever': '无论何时', 'while': '当...时', 'as': '当...时',
+    'before': '在...之前', 'after': '在...之后', 'until': '直到', 'till': '直到',
+    'since': '自从', 'ever since': '自从', 'once': '一旦', 'as soon as': '一...就',
+    'the moment': '一...就', 'the minute': '一...就', 'immediately': '一...就',
+    'where': '在...地方', 'wherever': '无论哪里', 'everywhere': '到处', 'anywhere': '任何地方',
+    'somewhere': '某处', 'nowhere': '无处', 'here': '这里', 'there': '那里',
+    'why': '为什么', 'how': '如何', 'what': '什么', 'which': '哪个', 'who': '谁',
+    'whom': '谁（宾格）', 'whose': '谁的', 'that': '那个/引导词',
+    'and': '和', 'or': '或者', 'nor': '也不', 'not only...but also': '不仅...而且',
+    'both...and': '两者都', 'either...or': '要么...要么', 'neither...nor': '既不...也不',
+    'whether...or': '是否...还是', 'rather than': '而不是', 'instead of': '代替',
+    'other than': '除了', 'more than': '超过', 'less than': '少于', 'rather': '相当',
+    'quite': '相当', 'fairly': '相当', 'pretty': '相当', 'almost': '几乎', 'nearly': '几乎',
+    'about': '关于/大约', 'around': '大约/周围', 'approximately': '大约', 'roughly': '大约',
+    'exactly': '确切地', 'precisely': '精确地', 'specifically': '具体地', 'particularly': '特别地',
+    'especially': '尤其', 'notably': '显著地', 'chiefly': '主要地', 'mainly': '主要地',
+    'mostly': '大部分', 'largely': '很大程度上', 'partly': '部分地', 'partially': '部分地',
+    'entirely': '完全地', 'completely': '完全地', 'totally': '完全地', 'fully': '充分地',
+    'thoroughly': '彻底地', 'absolutely': '绝对地', 'utterly': '完全地', 'merely': '仅仅',
+    'only': '只有', 'just': '只是/刚刚', 'simply': '简单地/仅仅', 'solely': '唯一地',
+    'exclusively': '专门地', 'nothing but': '只不过', 'anything but': '根本不',
+    'too': '太/也', 'either': '也（否定句）', 'as well': '也', 'also': '也',
+    'besides': '此外', 'in addition': '此外', 'furthermore': '此外', 'moreover': '此外',
+    'what is more': '而且', 'what is worse': '更糟糕的是', 'worse still': '更糟糕的是',
+    'to make matters worse': '更糟糕的是', 'even worse': '更糟糕的是',
+    'first of all': '首先', 'to begin with': '首先', 'firstly': '第一', 'first': '第一',
+    'secondly': '第二', 'second': '第二', 'thirdly': '第三', 'third': '第三',
+    'lastly': '最后', 'last but not least': '最后但同样重要的是', 'finally': '最后',
+    'in conclusion': '总之', 'to sum up': '总之', 'in summary': '总之', 'in short': '简而言之',
+    'in brief': '简言之', 'in a word': '总之', 'all in all': '总的来说', 'overall': '总体上',
+    'on the whole': '总的来说', 'by and large': '大体上', 'generally speaking': '一般来说',
+    'in other words': '换句话说', 'that is to say': '也就是说', 'namely': '即',
+    'for example': '例如', 'for instance': '例如', 'such as': '例如', 'like': '像',
+    'as an illustration': '作为例证', 'a case in point': '一个恰当的例子',
+    'in fact': '事实上', 'actually': '实际上', 'as a matter of fact': '事实上',
+    'in reality': '实际上', 'practically': '实际上', 'virtually': '几乎/实际上',
+    'of course': '当然', 'certainly': '当然', 'undoubtedly': '毫无疑问', 'no doubt': '毫无疑问',
+    'surely': '肯定地', 'naturally': '自然地', 'admittedly': '诚然', 'frankly': '坦率地说',
+    'honestly': '诚实地说', 'to be frank': '坦率地说', 'to be honest': '说实话',
+    'fortunately': '幸运的是', 'luckily': '幸运的是', 'thankfully': '谢天谢地',
+    'unfortunately': '不幸的是', 'unluckily': '不幸的是', 'sadly': '可悲的是',
+    'regrettably': '遗憾的是', 'alas': '唉',
+    'in a sense': '在某种意义上', 'in a way': '在某种程度上', 'to some extent': '在某种程度上',
+    'in some respects': '在某些方面', 'up to a point': '在一定程度上',
+    'to a large extent': '在很大程度上', 'to a great extent': '在很大程度上',
+    'largely': '很大程度上', 'mostly': '大部分', 'for the most part': '在大多数情况下',
+    'in any case': '无论如何', 'under any circumstances': '在任何情况下', 'at all events': '无论如何',
+    'in any event': '无论如何', 'come what may': '不管发生什么',
+    'in no case': '决不', 'under no circumstances': '决不', 'on no account': '决不',
+    'at no time': '从不', 'by no means': '决不', 'in no way': '决不',
+    'if so': '如果是这样', 'in that case': '在那种情况下', 'under the circumstances': '在这种情况下',
+    'such being the case': '既然如此', 'if not': '如果不是这样', 'otherwise': '否则',
+    'or else': '否则', 'failing that': '如果不行的话', 'in default of': '如果没有',
+    'more importantly': '更重要的是', 'what is more important': '更重要的是',
+    'above all': '最重要的是', 'most importantly': '最重要的是', 'first and foremost': '首先也是最重要的',
+    'not to mention': '更不用说', 'let alone': '更不用说', 'much less': '更不用说',
+    'still less': '更不用说', 'to say nothing of': '更不用说',
+    'in detail': '详细地', 'at length': '详细地/最终', 'in depth': '深入地',
+    'thoroughly': '彻底地', 'specifically': '具体地', 'elaborately': '详尽地',
+    'in general': '一般来说', 'generally': '一般地', 'broadly': '广义地',
+    'on the whole': '总的来说', 'by and large': '大体上', 'for the most part': '大部分',
+    'in particular': '特别地', 'particularly': '特别地', 'especially': '尤其',
+    'specifically': '具体地', 'notably': '显著地', 'chiefly': '主要地',
+    'on the contrary': '相反', 'conversely': '相反地', 'by contrast': '相比之下',
+    'in contrast': '相比之下', 'to the contrary': '相反', 'oppositely': '相反地',
+    'by comparison': '相比之下', 'in comparison': '相比之下', 'comparatively speaking': '相对而言',
+    'compared with': '与...相比', 'in comparison with': '与...相比',
+    'similarly': '类似地', 'likewise': '同样地', 'in the same way': '以同样的方式',
+    'by the same token': '同样地', 'analogously': '类似地',
+    'accordingly': '因此', 'consequently': '因此', 'therefore': '因此', 'thus': '因此',
+    'hence': '因此', 'as a result': '结果', 'for this reason': '因为这个原因',
+    'in consequence': '结果', 'due to the fact that': '由于', 'owing to the fact that': '由于',
+    'because of the fact that': '因为', 'in view of the fact that': '鉴于',
+    'in view of this': '鉴于此', 'considering this': '考虑到这一点',
+    'taking this into account': '考虑到这一点', 'given this': '鉴于此', 'in light of this': '鉴于此',
+    'in this regard': '在这方面', 'in this respect': '在这方面', 'in this aspect': '在这方面',
+    'on this score': '在这一点上', 'in this connection': '在这方面',
+    'in many ways': '在许多方面', 'in many respects': '在许多方面', 'in several aspects': '在几个方面',
+    'on many counts': '在许多方面', 'in a number of ways': '在许多方面',
+    'in some ways': '在某些方面', 'in some respects': '在某些方面', 'in certain aspects': '在某些方面',
+    'on some counts': '在某些方面', 'in a number of respects': '在许多方面',
+    'in every way': '在各个方面', 'in all respects': '在所有方面', 'in every aspect': '在各个方面',
+    'on all counts': '在所有方面', 'in all regards': '在所有方面',
+    'in most ways': '在大多数方面', 'in most respects': '在大多数方面',
+    'in the majority of aspects': '在大多数方面', 'on most counts': '在大多数方面',
+    'in the true sense': '在真正意义上', 'in a real sense': '在真正意义上',
+    'in the proper sense': '在严格意义上', 'strictly speaking': '严格来说',
+    'properly speaking': '确切地说',
+    'in the long run': '从长远来看', 'in the long term': '从长期来看',
+    'over the long haul': '从长远来看', 'in the final analysis': '归根结底', 'ultimately': '最终',
+    'in the short run': '从短期来看', 'in the short term': '从短期来看',
+    'over the short haul': '从短期来看', 'for the time being': '暂时', 'temporarily': '暂时地',
+    'as a whole': '整体上', 'overall': '总体上', 'in general': '一般来说',
+    'by and large': '大体上', 'taken as a whole': '总的来看',
+    'from a personal perspective': '从个人角度来看', 'in my opinion': '在我看来',
+    'personally': '就个人而言', 'from my point of view': '从我的观点来看',
+    'as far as I am concerned': '就我而言',
+    'from an objective perspective': '从客观角度来看', 'objectively speaking': '客观地说',
+    'in an objective light': '客观地看', 'impartially': '公正地', 'dispassionately': '冷静地',
+    'from a historical perspective': '从历史角度来看', 'historically': '历史上',
+    'in historical context': '在历史背景下', 'from the standpoint of history': '从历史的角度来看',
+    'looking back': '回顾过去',
+    'from a global perspective': '从全球角度来看', 'globally': '全球地', 'on a global scale': '在全球范围内',
+    'worldwide': '全世界', 'internationally': '国际上',
+    'from a social perspective': '从社会角度来看', 'socially': '在社会方面', 'in social terms': '用社会学术语来说',
+    'from the societal viewpoint': '从社会的角度来看', 'in the social context': '在社会背景下',
+    'from an economic perspective': '从经济角度来看', 'economically': '在经济上', 'in economic terms': '用经济学术语来说',
+    'from the financial viewpoint': '从金融的角度来看', 'in the economic context': '在经济背景下',
+    'from a political perspective': '从政治角度来看', 'politically': '在政治上', 'in political terms': '用政治术语来说',
+    'from the governmental viewpoint': '从政府的角度来看', 'in the political context': '在政治背景下',
+    'from a cultural perspective': '从文化角度来看', 'culturally': '在文化上', 'in cultural terms': '用文化术语来说',
+    'from the cultural viewpoint': '从文化的角度来看', 'in the cultural context': '在文化背景下',
+    'from an educational perspective': '从教育角度来看', 'educationally': '在教育上', 'in educational terms': '用教育术语来说',
+    'from the educational viewpoint': '从教育的角度来看', 'in the educational context': '在教育背景下',
+    'from a technological perspective': '从技术角度来看', 'technologically': '在技术上', 'in technological terms': '用技术术语来说',
+    'from the scientific viewpoint': '从科学的角度来看', 'in the tech context': '在技术背景下',
+    'from an environmental perspective': '从环境角度来看', 'environmentally': '在环境方面', 'in environmental terms': '用环境术语来说',
+    'from the ecological viewpoint': '从生态的角度来看', 'in the environmental context': '在环境背景下',
+    'from a health perspective': '从健康角度来看', 'health-wise': '在健康方面', 'in health terms': '用健康术语来说',
+    'from the medical viewpoint': '从医学的角度来看', 'in the health context': '在健康背景下',
+    'from a psychological perspective': '从心理角度来看', 'psychologically': '在心理上', 'in psychological terms': '用心理学术语来说',
+    'from the mental viewpoint': '从心理的角度来看', 'in the psychological context': '在心理背景下',
+    'from a moral perspective': '从道德角度来看', 'morally': '在道德上', 'in moral terms': '用道德术语来说',
+    'from the ethical viewpoint': '从伦理的角度来看', 'in the moral context': '在道德背景下',
+    'from a legal perspective': '从法律角度来看', 'legally': '在法律上', 'in legal terms': '用法律术语来说',
+    'from the juridical viewpoint': '从司法的角度来看', 'in the legal context': '在法律背景下',
+    'from an academic perspective': '从学术角度来看', 'academically': '在学术上', 'in academic terms': '用学术术语来说',
+    'from the scholarly viewpoint': '从学者的角度来看', 'in the academic context': '在学术背景下',
+    'from a practical perspective': '从实践角度来看', 'practically': '实际上', 'in practical terms': '用实践术语来说',
+    'from the pragmatic viewpoint': '从实用的角度来看', 'in the practical context': '在实践背景下',
+    'from a theoretical perspective': '从理论角度来看', 'theoretically': '理论上', 'in theoretical terms': '用理论术语来说',
+    'from the abstract viewpoint': '从抽象的角度来看', 'in the theoretical context': '在理论背景下',
+    'from a macro perspective': '从宏观角度来看', 'macroscopically': '宏观地', 'in macro terms': '用宏观术语来说',
+    'from the broad viewpoint': '从广义的角度来看', 'at the macro level': '在宏观层面',
+    'from a micro perspective': '从微观角度来看', 'microscopically': '微观地', 'in micro terms': '用微观术语来说',
+    'from the detailed viewpoint': '从详细的角度来看', 'at the micro level': '在微观层面',
+    'from an internal perspective': '从内部角度来看', 'internally': '内部地', 'in internal terms': '用内部术语来说',
+    'from the inside viewpoint': '从内部的角度来看', 'within the system': '在系统内',
+    'from an external perspective': '从外部角度来看', 'externally': '外部地', 'in external terms': '用外部术语来说',
+    'from the outside viewpoint': '从外部的角度来看', 'outside the system': '在系统外',
+    'from a positive perspective': '从正面角度来看', 'positively': '积极地', 'in positive terms': '用积极的术语来说',
+    'from the favorable viewpoint': '从有利的角度来看', 'on the bright side': '从好的方面来看',
+    'from a negative perspective': '从负面角度来看', 'negatively': '消极地', 'in negative terms': '用消极的术语来说',
+    'from the unfavorable viewpoint': '从不利的角度来看', 'on the dark side': '从坏的方面来看',
+    'from an optimistic perspective': '从乐观角度来看', 'optimistically': '乐观地', 'in optimistic terms': '用乐观的术语来说',
+    'from the hopeful viewpoint': '从充满希望的角度来看', 'looking on the bright side': '看好的一面',
+    'from a pessimistic perspective': '从悲观角度来看', 'pessimistically': '悲观地', 'in pessimistic terms': '用悲观的术语来说',
+    'from the gloomy viewpoint': '从悲观的角度来看', 'looking on the dark side': '看坏的一面',
+    'from a neutral perspective': '从中立角度来看', 'neutrally': '中立地', 'in neutral terms': '用中立的术语来说',
+    'from the objective viewpoint': '从客观的角度来看', 'without bias': '不带偏见',
+    'from a dialectical perspective': '从辩证角度来看', 'dialectically': '辩证地', 'in dialectical terms': '用辩证术语来说',
+    'from the balanced viewpoint': '从平衡的角度来看', 'considering both sides': '考虑双方'
+  };
+  
+  // 翻译单个单词
+  function translateWord(word){
+    const w = word.toLowerCase().replace(/[^a-z]/g, '');
+    if(vocabMap[w]) return vocabMap[w];
+    return word;
+  }
+  
+  // 翻译短语（简单的逐词翻译）
+  function translatePhrase(phrase){
+    const words = phrase.split(/\s+/).filter(w => w.length > 0);
+    let result = '';
+    for(const w of words){
+      const clean = w.replace(/[^a-zA-Z]/g, '');
+      if(clean.length > 0){
+        const trans = translateWord(clean);
+        if(trans !== clean){
+          result += trans;
+        }
+      }
+    }
+    return result;
+  }
+  
+  // 构建中文译文
+  let translationParts = [];
+  
+  // 1. 先翻译状语从句（放在句首）
+  for(const clause of adverbialClauses){
+    const word = clause.word.toLowerCase();
+    let conjTranslation = '';
+    if(word === 'because') conjTranslation = '因为';
+    else if(word === 'although' || word === 'though') conjTranslation = '尽管';
+    else if(word === 'while') conjTranslation = '当...时/尽管';
+    else if(word === 'when') conjTranslation = '当...时';
+    else if(word === 'before') conjTranslation = '在...之前';
+    else if(word === 'after') conjTranslation = '在...之后';
+    else if(word === 'until') conjTranslation = '直到';
+    else if(word === 'unless') conjTranslation = '除非';
+    else if(word === 'if') conjTranslation = '如果';
+    else if(word === 'since') conjTranslation = '因为/自从';
+    else if(word === 'as') conjTranslation = '因为/当...时';
+    else if(word === 'whereas') conjTranslation = '然而';
+    else if(word === 'so that') conjTranslation = '以便';
+    else if(word === 'in order that') conjTranslation = '为了';
+    else if(word === 'now that') conjTranslation = '既然';
+    else if(word === 'as if' || word === 'as though') conjTranslation = '好像';
+    else if(word === 'even if' || word === 'even though') conjTranslation = '即使';
+    else conjTranslation = word;
+    
+    translationParts.push(conjTranslation + translatePhrase(clause.text.replace(new RegExp('^\\s*' + word + '\\s+', 'i'), '')) + '，');
+  }
+  
+  // 2. 翻译句子主干
+  let mainTranslation = '';
+  if(subject && predicate){
+    const isPassive = predicate.toLowerCase().includes('been') && predicate.toLowerCase().includes('ed');
+    const subjectTrans = translatePhrase(subject);
+    const predicateTrans = translatePhrase(predicate.replace(/\b(has|have|had|been|is|are|was|were|be|being)\b/gi, ''));
+    const objectTrans = object ? translatePhrase(object.replace(/[.,;!?]/g, '')) : '';
+    
+    if(isPassive){
+      // 被动语态：主语 + 被 + 谓语
+      mainTranslation = subjectTrans + '被' + (predicateTrans || '...') + (objectTrans ? '为' + objectTrans : '') + '。';
+    } else {
+      // 主动语态：主语 + 谓语 + 宾语
+      mainTranslation = subjectTrans + (predicateTrans || '...') + (objectTrans ? objectTrans : '') + '。';
+    }
+  } else {
+    mainTranslation = translatePhrase(coreSentence) + '。';
+  }
+  
+  // 3. 翻译非限制性定语从句（单独成句）
+  for(const clause of nonRestrictiveClauses){
+    const relWord = clause.relWord.toLowerCase();
+    let relTranslation = '';
+    if(relWord === 'which') relTranslation = '这';
+    else if(relWord === 'who') relTranslation = '...的人';
+    else if(relWord === 'whom') relTranslation = '...的人';
+    else if(relWord === 'whose') relTranslation = '...的';
+    else relTranslation = relWord;
+    
+    const clauseContent = clause.text.replace(/^,?\s*(which|who|whom|whose)\s+/i, '').replace(/,?\s*\.?$/, '');
+    translationParts.push('该' + relTranslation + translatePhrase(clauseContent) + '。');
+  }
+  
+  // 4. 翻译限制性定语从句（译为"……的"）
+  for(const clause of restrictiveClauses){
+    const relWord = clause.relWord.toLowerCase();
+    const clauseContent = clause.text.replace(/^\s*(that|which|who|whom|whose|when|where|why)\s+/i, '').replace(/\s*\.?$/, '');
+    // 在主干翻译中插入定语（简化处理：在句末补充说明）
+    translationParts.push('其中' + translatePhrase(clauseContent) + '。');
+  }
+  
+  // 5. 翻译as状语
+  for(const adv of adverbials){
+    if(adv.type === 'as-phrase'){
+      translationParts.push('作为' + translatePhrase(adv.text.replace(/^\s*as\s+/i, '')) + '。');
+    }
+  }
+  
+  // 组合译文
+  if(translationParts.length > 0){
+    chineseTranslation = translationParts.join('');
+    // 在开头加上主干
+    chineseTranslation = mainTranslation + chineseTranslation;
+  } else {
+    chineseTranslation = mainTranslation;
+  }
+  
+  // 翻译提示
   let translationHint = '';
   if(nonRestrictiveClauses.length > 0){
     translationHint += '【翻译提示】句中包含非限制性定语从句（' + nonRestrictiveClauses.map(c => c.relWord).join('、') + '引导），翻译时可单独成句或译为前置定语。';
@@ -25681,7 +26069,7 @@ function autoAnalyzeSentence(sentence){
     translationHint += '【翻译提示】句中包含状语从句（' + adverbialClauses.map(c => c.word).join('、') + '引导），翻译时通常放在主句之前。';
   }
   
-  analysis.translation = translationHint + '\n\n（注：此句为AI自动分析，翻译仅供参考。建议使用预置经典长难句获取精准译文和详细解析。）';
+  analysis.translation = '【中文译文】' + chineseTranslation + '\n\n' + translationHint + '\n\n（注：此句为AI自动分析，译文仅供参考。建议使用预置经典长难句获取精准译文和详细解析。）';
   
   // 难点分析
   if(nonRestrictiveClauses.length > 0){
