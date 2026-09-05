@@ -4292,6 +4292,36 @@ console.log('✅ 学习工具入口已加载');
     <p style="opacity:.9">满分100分 | 考试时间180分钟 | 目标分数：70-80+</p>
     <p style="opacity:.9;margin-top:8px;font-size:13px">题型：单选(16) + 多选(34) + 分析题(50) | 马原24分 + 毛中特30分 + 史纲14分 + 思修16分 + 时政16分</p>
   </div>
+
+  <!-- 进度统计栏 -->
+  <div class="knowledge-progress-stats" id="politicsProgressStats">
+    <div class="stat-item">📚 总知识点：<span class="stat-val" id="politicsTotalCount">0</span></div>
+    <div class="stat-item">✅ 已掌握：<span class="stat-val" id="politicsLearnedCount">0</span></div>
+    <div class="stat-item">⏳ 待学习：<span class="stat-val" id="politicsUnlearnedCount">0</span></div>
+    <div class="knowledge-progress-bar"><div class="fill" id="politicsProgressFill" style="width:0%"></div></div>
+    <div class="stat-item"><span class="stat-val" id="politicsProgressPct">0%</span></div>
+  </div>
+
+  <!-- 分类筛选器 -->
+  <div class="knowledge-filter-bar" id="politicsCategoryBar" style="margin-bottom:8px">
+    <span class="filter-label">📂 学科分类：</span>
+    <button class="knowledge-filter-btn active" onclick="filterPoliticsByCategory('all')">全部 <span class="count" id="politicsCatCountAll">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterPoliticsByCategory('mayuan')">🔴 马原 <span class="count" id="politicsCatCountMayuan">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterPoliticsByCategory('maozt')">🟠 毛中特 <span class="count" id="politicsCatCountMaozt">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterPoliticsByCategory('shigang')">🟡 史纲 <span class="count" id="politicsCatCountShigang">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterPoliticsByCategory('sixiu')">🟢 思修 <span class="count" id="politicsCatCountSixiu">0</span></button>
+  </div>
+
+  <!-- 状态筛选器 -->
+  <div class="knowledge-filter-bar" id="politicsFilterBar">
+    <span class="filter-label">🔍 状态筛选：</span>
+    <button class="knowledge-filter-btn active" onclick="filterPoliticsKnowledge('all')">全部 <span class="count" id="politicsFilterCountAll">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterPoliticsKnowledge('unlearned')">未学 <span class="count" id="politicsFilterCountUnlearned">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterPoliticsKnowledge('learned')">已学 <span class="count" id="politicsFilterCountLearned">0</span></button>
+    <button class="knowledge-filter-btn" onclick="filterPoliticsKnowledge('highfreq')">🔥 高频考点 <span class="count" id="politicsFilterCountHighfreq">0</span></button>
+    <button class="knowledge-filter-btn fav-btn" onclick="filterPoliticsKnowledge('favorites')">⭐ 我的收藏 <span class="count" id="politicsFilterCountFavorites">0</span></button>
+  </div>
+
   <div id="politicsContent"></div>
 </div>
 
@@ -24915,6 +24945,107 @@ if(countHighfreq) countHighfreq.textContent = '('+highfreq+')';
 updateFavoriteCount();
 }catch(e){ console.warn('updatePhysioProgressStats error:', e); }
 }
+
+// ========== 政治知识板块筛选与进度统计 ==========
+let currentPoliticsCategory = 'all';
+let currentPoliticsFilter = 'all';
+
+function getPoliticsCategory(item){
+    const title = item.title || '';
+    if(title.indexOf('马原') >= 0 || title.indexOf('马克思') >= 0) return 'mayuan';
+    if(title.indexOf('毛中特') >= 0 || title.indexOf('毛泽东') >= 0 || title.indexOf('习近平') >= 0 || title.indexOf('中国特色社会主义') >= 0 || title.indexOf('新民主主义') >= 0) return 'maozt';
+    if(title.indexOf('史纲') >= 0 || title.indexOf('历史') >= 0 || title.indexOf('近现代史') >= 0) return 'shigang';
+    if(title.indexOf('思修') >= 0 || title.indexOf('道德') >= 0 || title.indexOf('法治') >= 0 || title.indexOf('法律') >= 0) return 'sixiu';
+    return 'other';
+}
+
+function filterPoliticsByCategory(category){
+    currentPoliticsCategory = category;
+    document.querySelectorAll('#politicsCategoryBar .knowledge-filter-btn').forEach(btn=>{
+        btn.classList.remove('active');
+    });
+    if(event && event.target){
+        event.target.closest('.knowledge-filter-btn').classList.add('active');
+    }
+    applyPoliticsFilters();
+}
+
+function filterPoliticsKnowledge(filter){
+    currentPoliticsFilter = filter;
+    document.querySelectorAll('#politicsFilterBar .knowledge-filter-btn').forEach(btn=>{
+        btn.classList.remove('active');
+    });
+    if(event && event.target){
+        event.target.closest('.knowledge-filter-btn').classList.add('active');
+    }
+    applyPoliticsFilters();
+}
+
+function applyPoliticsFilters(){
+    const sections = document.querySelectorAll('#politicsContent .knowledge-section');
+    sections.forEach(section=>{
+        const id = section.id.replace('section-','');
+        const item = politicsData.find(p=>p.id===id);
+        if(!item){ section.style.display = 'none'; return; }
+        const cat = getPoliticsCategory(item);
+        const isLearned = !!appState.knowledge[id];
+        const enh = enhancedData[id] || {};
+        const isHighfreq = !!enh.highfreq;
+
+        let catMatch = (currentPoliticsCategory === 'all' || cat === currentPoliticsCategory);
+        let filterMatch = false;
+        switch(currentPoliticsFilter){
+            case 'all': filterMatch = true; break;
+            case 'unlearned': filterMatch = !isLearned; break;
+            case 'learned': filterMatch = isLearned; break;
+            case 'highfreq': filterMatch = isHighfreq; break;
+            case 'favorites': filterMatch = isFavorited(id); break;
+        }
+        section.style.display = (catMatch && filterMatch) ? '' : 'none';
+    });
+}
+
+function updatePoliticsProgressStats(){
+    try{
+        const total = politicsData.length;
+        const learned = politicsData.filter(item=>appState.knowledge[item.id]).length;
+        const unlearned = total - learned;
+        const highfreq = politicsData.filter(item=>enhancedData[item.id]&&enhancedData[item.id].highfreq).length;
+        const pct = Math.round(learned/total*100);
+
+        const totalEl = document.getElementById('politicsTotalCount');
+        const learnedEl = document.getElementById('politicsLearnedCount');
+        const unlearnedEl = document.getElementById('politicsUnlearnedCount');
+        const fillEl = document.getElementById('politicsProgressFill');
+        const pctEl = document.getElementById('politicsProgressPct');
+        if(totalEl) totalEl.textContent = total;
+        if(learnedEl) learnedEl.textContent = learned;
+        if(unlearnedEl) unlearnedEl.textContent = unlearned;
+        if(fillEl) fillEl.style.width = pct+'%';
+        if(pctEl) pctEl.textContent = pct+'%';
+
+        // 分类计数
+        const cats = {all: total, mayuan: 0, maozt: 0, shigang: 0, sixiu: 0};
+        politicsData.forEach(item=>{
+            const c = getPoliticsCategory(item);
+            if(cats[c] !== undefined) cats[c]++;
+        });
+        const catMap = {all: 'politicsCatCountAll', mayuan: 'politicsCatCountMayuan', maozt: 'politicsCatCountMaozt', shigang: 'politicsCatCountShigang', sixiu: 'politicsCatCountSixiu'};
+        for(const k in catMap){
+            const el = document.getElementById(catMap[k]);
+            if(el) el.textContent = '('+cats[k]+')';
+        }
+
+        // 状态筛选计数
+        const filterCounts = {all: total, unlearned: unlearned, learned: learned, highfreq: highfreq};
+        const filterMap = {all: 'politicsFilterCountAll', unlearned: 'politicsFilterCountUnlearned', learned: 'politicsFilterCountLearned', highfreq: 'politicsFilterCountHighfreq'};
+        for(const k in filterMap){
+            const el = document.getElementById(filterMap[k]);
+            if(el) el.textContent = '('+filterCounts[k]+')';
+        }
+        updateFavoriteCount();
+    }catch(e){ console.warn('updatePoliticsProgressStats error:', e); }
+}
 function renderKnowledgeSection(data, containerId, tagClass){
 const container = document.getElementById(containerId);
 if(!container){ console.warn('renderKnowledgeSection: container not found -', containerId); return; }
@@ -25026,7 +25157,7 @@ const done = Object.values(appState.knowledge).filter(v=>v).length;
 const statCards = document.querySelectorAll('#statsRow .stat-card');
 if(statCards[1]) statCards[1].querySelector('.val').textContent = `${done}/${total}`;
 
-if(typeof updatePhysioProgressStats === 'function') updatePhysioProgressStats();
+if(typeof updatePhysioProgressStats === 'function') updatePhysioProgressStats(); if(typeof updatePoliticsProgressStats === 'function') updatePoliticsProgressStats();
 if(typeof updateAnatomyProgressStats === 'function') updateAnatomyProgressStats();
 }
 function renderPlan(){
@@ -28752,7 +28883,7 @@ if(tabName === 'progress') renderProgressPage();
 if(tabName === 'plan') renderPlan();
 
 if(tabName === 'politics' && !window.knowledgeRendered.politics){
-try{ renderKnowledgeSection(politicsData, 'politicsContent', 'tag-politics'); window.knowledgeRendered.politics = true; }catch(e){ console.warn('politics render error:', e); }
+try{ renderKnowledgeSection(politicsData, 'politicsContent', 'tag-politics'); window.knowledgeRendered.politics = true; if(typeof updatePoliticsProgressStats === 'function') setTimeout(updatePoliticsProgressStats, 100); }catch(e){ console.warn('politics render error:', e); }
 }
 if(tabName === 'physio' && !window.knowledgeRendered.physio){
 try{ renderKnowledgeSection(physioData, 'physioContent', 'tag-physio'); window.knowledgeRendered.physio = true; if(typeof updatePhysioProgressStats === 'function') setTimeout(updatePhysioProgressStats, 100); if(typeof restoreViewMode === 'function') setTimeout(restoreViewMode, 200); }catch(e){ console.warn('physio render error:', e); }
