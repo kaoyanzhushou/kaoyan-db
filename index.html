@@ -395,6 +395,85 @@ body.focus-mode .focus-mode-exit{display:flex}
   }
 }
 
+
+/* ========== 闪卡翻转修复（高优先级） ========== */
+#flashcard {
+  perspective: 1000px !important;
+  height: 320px !important;
+  margin-bottom: 24px !important;
+  cursor: pointer !important;
+  position: relative !important;
+  width: 100% !important;
+  transform-style: flat !important;
+}
+
+#flashcard .flashcard-inner {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  transition: transform 0.6s !important;
+  transform-style: preserve-3d !important;
+}
+
+#flashcard.flipped .flashcard-inner {
+  transform: rotateY(180deg) !important;
+}
+
+#flashcard .flashcard-front,
+#flashcard .flashcard-back {
+  position: absolute !important;
+  width: 100% !important;
+  height: 100% !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  border-radius: 16px !important;
+  padding: 32px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1) !important;
+}
+
+#flashcard .flashcard-front {
+  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+  color: #fff !important;
+}
+
+#flashcard .flashcard-back {
+  background: linear-gradient(135deg, #f093fb, #f5576c) !important;
+  color: #fff !important;
+  transform: rotateY(180deg) !important;
+}
+
+#flashcard .fc-label {
+  font-size: 12px !important;
+  opacity: 0.8 !important;
+  margin-bottom: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+}
+
+#flashcard .fc-term {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  line-height: 1.5 !important;
+}
+
+#flashcard .fc-def {
+  font-size: 16px !important;
+  line-height: 1.8 !important;
+  text-align: center !important;
+  max-height: 240px !important;
+  overflow-y: auto !important;
+}
+
+/* 确保闪卡容器有正确的透视 */
+.flashcard-container {
+  perspective: 1000px !important;
+}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
