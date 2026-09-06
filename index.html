@@ -23996,7 +23996,7 @@ if(subject === 'vocab'){
 return buildVocabFlashcards();
 }
 if(subject === 'politics'){
-// 优先从politicsData + enhancedData获取真正的释义
+// 从politicsData + enhancedData获取真正的释义
 const politicsCards = [];
 politicsData.forEach(item=>{
 const enh = enhancedData[item.id] || {};
@@ -24006,11 +24006,8 @@ if(t.name && t.def && t.def !== '(马原) 重要考点') politicsCards.push({ter
 });
 }
 });
-// 如果获取到的卡片足够多，使用真正的释义；否则回退到POLITICS_FLASHCARDS
-if(politicsCards.length >= 5){
+console.log('[闪卡调试] 政治闪卡数量:', politicsCards.length);
 return politicsCards;
-}
-return POLITICS_FLASHCARDS.map(c => ({term:c.term, def:c.def, chapter:c.chapter}));
 }
 const cards = [];
 const dataMap = {english:englishData, politics:politicsData, physio:physioData, anatomy:anatomyData};
