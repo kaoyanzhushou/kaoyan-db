@@ -38492,42 +38492,72 @@ function toggleMockApiPanel() {
 function toggleMockAiMode() {
   const toggle = document.getElementById('mockAiToggle');
   mockUseAi = toggle.checked;
-  if (mockUseAi && !getMockApiKey()) {
-    alert('请先在「⚙️ API设置」中配置DeepSeek API Key，否则将自动使用本地模板生成。');
-    toggle.checked = false;
-    mockUseAi = false;
+  // 后端API已内置密钥，无需用户配置；用户也可选择配置自己的Key作为备用
+  if (mockUseAi) {
+    console.log('AI模式已开启（使用后端API，国内高速访问）');
   }
 }
 
+// 后端API地址（腾讯云SCF，国内高速访问）
+const BACKEND_API_URL = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com';
+
 async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens) {
-  const apiKey = getMockApiKey();
-  if (!apiKey) throw new Error('未配置API Key');
+  // 优先使用后端API（无需用户配置Key）
+  const userApiKey = getMockApiKey();
   
-  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + apiKey
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.7,
-      max_tokens: maxTokens || 2000,
-      stream: false
-    })
-  });
-  
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error('API调用失败: ' + (errorData.error?.message || response.statusText));
+  try {
+    // 调用后端API代理（密钥在服务端，安全可靠）
+    const response = await fetch(BACKEND_API_URL + '/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: maxTokens || 2000
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error('后端API调用失败: ' + (errorData.error || response.statusText));
+    }
+    
+    const data = await response.json();
+    return data.content || '';
+  } catch (backendError) {
+    // 后端API失败时，如果用户配置了自己的Key，则直连DeepSeek作为备用
+    if (userApiKey) {
+      console.warn('后端API失败，尝试直连DeepSeek:', backendError.message);
+      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + userApiKey
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.7,
+          max_tokens: maxTokens || 2000,
+          stream: false
+        })
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error('API调用失败: ' + (errorData.error?.message || response.statusText));
+      }
+      const data = await response.json();
+      return data.choices[0]?.message?.content || '';
+    }
+    throw backendError;
   }
-  
-  const data = await response.json();
-  return data.choices[0]?.message?.content || '';
 }
 
 async function generateQuestionWithAI(knowledge, type) {
