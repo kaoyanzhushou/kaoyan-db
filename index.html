@@ -38284,15 +38284,20 @@ function renderPhdSchools() {
   let contentArea = document.getElementById('phdContent-schools');
   const tabPhd = document.getElementById('tab-phd');
   const phdContainer = tabPhd ? tabPhd.querySelector('.phd-container') : null;
-  const parentContainer = phdContainer || tabPhd;
-  const needCreate = !contentArea || !contentArea.parentElement || (contentArea.parentElement !== parentContainer && contentArea.parentElement !== phdContainer) || !parentContainer;
-  if (needCreate) {
-    if (contentArea && contentArea.parentElement) contentArea.remove();
+  // 如果contentArea不存在，创建它
+  if (!contentArea) {
     contentArea = document.createElement('div');
     contentArea.className = 'phd-content';
     contentArea.id = 'phdContent-schools';
     contentArea.innerHTML = '<div id="phdSchoolArea"></div>';
-    if (parentContainer) parentContainer.appendChild(contentArea);
+  }
+  // 强制确保contentArea在phd-container内（如果phd-container存在）
+  if (phdContainer && contentArea.parentElement !== phdContainer) {
+    if (contentArea.parentElement) contentArea.remove();
+    phdContainer.appendChild(contentArea);
+  } else if (!phdContainer && contentArea.parentElement !== tabPhd && tabPhd) {
+    if (contentArea.parentElement) contentArea.remove();
+    tabPhd.appendChild(contentArea);
   }
   
   const area = document.getElementById('phdSchoolArea');
