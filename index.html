@@ -6770,6 +6770,7 @@ console.log('✅ 学习工具入口已加载');
       <div class="phd-tab" data-phd-tab="interview" onclick="switchPhdTab('interview')">
         <span class="icon">🎓</span>面试申请<span class="count" id="phdInterviewCount">0</span>
       </div>
+    <div class="phd-tab" data-phd-tab="schools" onclick="switchPhdTab('schools')">🏫 院校导师<span class="phd-tab-count" id="phdSchoolCount">0</span></div>
     </div>
 
     <!-- 专业知识库内容 -->
@@ -34571,6 +34572,7 @@ function switchPhdTab(tabName) {
   if (tabName === 'exam' && typeof renderPhdExam === 'function') renderPhdExam();
   if (tabName === 'research' && typeof renderPhdResearch === 'function') renderPhdResearch();
   if (tabName === 'interview' && typeof renderPhdInterview === 'function') renderPhdInterview();
+  if (tabName === 'schools' && typeof renderPhdSchools === 'function') renderPhdSchools();
   // 更新标签样式
   document.querySelectorAll('.phd-tab').forEach(tab => {
     tab.classList.remove('active');
@@ -35368,6 +35370,306 @@ function removePhdFavoriteItem(idx) {
 }
 
 
+
+
+// ========== 考博院校与导师信息库 ==========
+const PHD_SCHOOLS = [
+  {
+    id: `sus`,
+    name: `上海体育大学`,
+    shortName: `上体`,
+    location: `上海`,
+    level: `双一流`,
+    type: `体育类院校`,
+    desc: `上海体育大学是新中国成立最早的体育高等学府，国家"双一流"建设高校，体育学学科评估A+，运动人体科学为国家重点学科。`,
+    major: `运动人体科学`,
+    directions: ["运动生理学", "运动解剖学", "运动生物化学", "运动生物力学", "体育保健学", "运动康复学"],
+    examSubjects: ["1001英语", "2001运动生理学", "3001运动解剖学（或运动生物化学）"],
+    referenceBooks: ["王瑞元《运动生理学》", "王庭槐《生理学》", "徐国栋《运动解剖学》", "林文弢《运动生物化学》"],
+    tutors: [
+      {name: "陈佩杰", title: "教授/博导", research: "运动生理学、运动与健康促进", note: "原校长，长江学者"},
+      {name: "刘宇", title: "教授/博导", research: "运动生物力学、神经肌肉控制", note: "杰出青年基金获得者"},
+      {name: "丁树哲", title: "教授/博导", research: "运动生物化学、线粒体与运动适应", note: "生化方向带头人"},
+      {name: "庄洁", title: "教授/博导", research: "运动生理学、体质与健康", note: "青少年体质研究专家"},
+      {name: "王茹", title: "教授/博导", research: "运动与免疫、运动与代谢", note: "青年长江学者"}
+    ],
+    admissionRatio: `约8-12:1（申请考核制，竞争较激烈）`,
+    tips: `上体运动人体科学为国家重点学科，导师资源丰富，科研平台一流。申请考核制重视科研经历和论文发表，建议提前联系导师。`
+  },
+  {
+    id: `bsu`,
+    name: `北京体育大学`,
+    shortName: `北体`,
+    location: `北京`,
+    level: `双一流`,
+    type: `体育类院校`,
+    desc: `北京体育大学是国家体育总局直属高校，国家"双一流"建设高校，体育学学科评估A+，是中国体育高等教育的最高学府。`,
+    major: `运动人体科学`,
+    directions: ["运动生理学", "运动解剖学", "运动生物化学", "运动生物力学", "运动心理学", "体育统计与测量"],
+    examSubjects: ["1001英语", "2001运动生理学", "3001运动解剖学"],
+    referenceBooks: ["王瑞元《运动生理学》", "徐国栋《运动解剖学》", "田野《运动生理学高级教程》"],
+    tutors: [
+      {name: "田野", title: "教授/博导", research: "运动生理学、运动性疲劳", note: "长江学者，原校长"},
+      {name: "胡扬", title: "教授/博导", research: "运动生理学、低氧训练", note: "低氧训练领域权威"},
+      {name: "张一民", title: "教授/博导", research: "运动生理学、体质监测", note: "国民体质监测专家"},
+      {name: "周越", title: "教授/博导", research: "运动生理学、神经肌肉适应", note: "青年学术骨干"}
+    ],
+    admissionRatio: `约10-15:1（竞争激烈，北京地域优势明显）`,
+    tips: `北体运动人体科学实力雄厚，地处北京，学术资源丰富。考试难度较大，英语要求较高，建议充分准备。`
+  },
+  {
+    id: `henu`,
+    name: `河南大学`,
+    shortName: `河大`,
+    location: `河南开封`,
+    level: `双一流`,
+    type: `综合类大学`,
+    desc: `河南大学是国家"双一流"建设高校，河南省重点建设大学，体育学院历史悠久，运动人体科学学科具有博士学位授予权。`,
+    major: `运动人体科学`,
+    directions: ["运动生理学", "运动解剖学", "运动生物化学", "体育保健学"],
+    examSubjects: ["1001英语", "2001运动生理学", "3001运动解剖学"],
+    referenceBooks: ["王瑞元《运动生理学》", "徐国栋《运动解剖学》"],
+    tutors: [
+      {name: "张大超", title: "教授/博导", research: "运动生理学、运动与健康", note: "体育学院院长"},
+      {name: "李捷", title: "教授/博导", research: "运动生理学、运动训练监控", note: "运动训练监控专家"},
+      {name: "王崇喜", title: "教授/博导", research: "运动解剖学、球类运动生物力学", note: "资深教授"}
+    ],
+    admissionRatio: `约5-8:1（相对容易，河南考生较多）`,
+    tips: `河大运动人体科学招生名额相对较多，竞争压力小于体育类院校。适合希望稳妥上岸的考生。`
+  },
+  {
+    id: `zzu`,
+    name: `郑州大学`,
+    shortName: `郑大`,
+    location: `河南郑州`,
+    level: `双一流`,
+    type: `综合类大学`,
+    desc: `郑州大学是国家"双一流"建设高校，河南省唯一的国家"211工程"重点建设高校，体育学院运动人体科学具有博士学位授予权。`,
+    major: `运动人体科学`,
+    directions: ["运动生理学", "运动解剖学", "运动生物化学", "运动康复学"],
+    examSubjects: ["1001英语", "2001运动生理学", "3001运动解剖学（申请考核制）"],
+    referenceBooks: ["王瑞元《运动生理学》", "徐国栋《运动解剖学》"],
+    tutors: [
+      {name: "林克明", title: "教授/博导", research: "运动生理学、运动与心血管健康", note: "学科带头人"},
+      {name: "张绍通", title: "教授/博导", research: "运动解剖学、运动损伤", note: "运动损伤研究专家"},
+      {name: "刘华", title: "教授/博导", research: "运动生物化学、运动与代谢", note: "生化方向骨干"}
+    ],
+    admissionRatio: `约6-10:1（申请考核制，211平台有优势）`,
+    tips: `郑大作为河南唯一211，平台资源较好，省会城市区位优势明显。申请考核制重视科研基础。`
+  },
+  {
+    id: `hebtu`,
+    name: `河北师范大学`,
+    shortName: `河北师大`,
+    location: `河北石家庄`,
+    level: `省属重点`,
+    type: `师范类大学`,
+    desc: `河北师范大学是河北省属重点高校，体育学院历史悠久，运动人体科学学科具有博士学位授予权，在华北地区有较大影响力。`,
+    major: `运动人体科学`,
+    directions: ["运动生理学", "运动解剖学", "运动生物化学", "体育保健学"],
+    examSubjects: ["1001英语", "2001运动生理学", "3001运动解剖学"],
+    referenceBooks: ["王瑞元《运动生理学》", "徐国栋《运动解剖学》"],
+    tutors: [
+      {name: "赵斌", title: "教授/博导", research: "运动生理学、运动与健康促进", note: "学科带头人"},
+      {name: "何玉秀", title: "教授/博导", research: "运动生理学、肥胖与运动干预", note: "肥胖研究专家"},
+      {name: "刘建国", title: "教授/博导", research: "运动解剖学、骨骼肌适应", note: "解剖方向骨干"}
+    ],
+    admissionRatio: `约4-7:1（相对容易，性价比高）`,
+    tips: `河北师大运动人体科学招生稳定，竞争压力较小，适合追求性价比的考生。石家庄离北京近，可利用北京学术资源。`
+  },
+  {
+    id: `scnu`,
+    name: `华南师范大学`,
+    shortName: `华南师大`,
+    location: `广东广州`,
+    level: `双一流`,
+    type: `师范类大学`,
+    desc: `华南师范大学是国家"双一流"建设高校，体育学院实力雄厚，运动人体科学为广东省重点学科，在华南地区有重要影响力。`,
+    major: `运动人体科学`,
+    directions: ["运动生理学", "运动解剖学", "运动生物化学", "运动心理学"],
+    examSubjects: ["1001英语", "2001运动生理学", "3001运动解剖学"],
+    referenceBooks: ["王瑞元《运动生理学》", "徐国栋《运动解剖学》", "邓树勋《运动生理学》"],
+    tutors: [
+      {name: "邓树勋", title: "教授/博导", research: "运动生理学、运动与心血管", note: "资深教授，《运动生理学》教材主编"},
+      {name: "黄玉山", title: "教授/博导", research: "运动生理学、体质与健康", note: "体质研究专家"},
+      {name: "刘承宜", title: "教授/博导", research: "运动生物化学、激光运动医学", note: "交叉学科研究特色"}
+    ],
+    admissionRatio: `约7-12:1（华南地区热门，竞争中等偏上）`,
+    tips: `华南师大地处广州，经济发达，学术氛围好。运动生理学教材《运动生理学》（邓树勋主编）影响广泛。`
+  },
+  {
+    id: `wipe`,
+    name: `武汉体育学院`,
+    shortName: `武体`,
+    location: `湖北武汉`,
+    level: `省属重点`,
+    type: `体育类院校`,
+    desc: `武汉体育学院是新中国首批独立设置的全日制普通高等体育院校之一，运动人体科学为湖北省重点学科，在华中地区有重要影响力。`,
+    major: `运动人体科学`,
+    directions: ["运动生理学", "运动解剖学", "运动生物化学", "运动生物力学", "运动康复学"],
+    examSubjects: ["1001英语", "2001运动生理学", "3001运动解剖学（申请考核制）"],
+    referenceBooks: ["王瑞元《运动生理学》", "徐国栋《运动解剖学》"],
+    tutors: [
+      {name: "吕万刚", title: "教授/博导", research: "运动生理学、运动训练", note: "原校长"},
+      {name: "郑伟涛", title: "教授/博导", research: "运动生物力学、水上运动", note: "国家赛艇队科研团队负责人"},
+      {name: "王松", title: "教授/博导", research: "运动生理学、运动与免疫", note: "青年学术骨干"}
+    ],
+    admissionRatio: `约6-10:1（申请考核制，华中地区重要体育院校）`,
+    tips: `武体运动人体科学实力较强，科研平台完善，与国家队合作密切。申请考核制重视科研经历。`
+  },
+  {
+    id: `csu`,
+    name: `成都体育学院`,
+    shortName: `成体`,
+    location: `四川成都`,
+    level: `省属重点`,
+    type: `体育类院校`,
+    desc: `成都体育学院是西南地区唯一的体育高等学府，运动人体科学为四川省重点学科，在西南地区有重要影响力，运动医学特色鲜明。`,
+    major: `运动人体科学`,
+    directions: ["运动生理学", "运动解剖学", "运动生物化学", "运动医学", "运动康复学"],
+    examSubjects: ["1001英语", "2001运动生理学", "3001运动解剖学"],
+    referenceBooks: ["王瑞元《运动生理学》", "徐国栋《运动解剖学》"],
+    tutors: [
+      {name: "刘青", title: "教授/博导", research: "运动生理学、运动与代谢", note: "学科带头人"},
+      {name: "侯乐荣", title: "教授/博导", research: "运动医学、运动损伤", note: "运动医学专家"},
+      {name: "苏全生", title: "教授/博导", research: "运动生理学、运动与心血管", note: "原校长"}
+    ],
+    admissionRatio: `约5-9:1（西南地区首选，竞争中等）`,
+    tips: `成体运动医学特色鲜明，附属医院资源丰富，适合对运动医学和运动康复感兴趣的考生。成都生活舒适，性价比高。`
+  }
+];
+
+function renderPhdSchools() {
+  const area = document.getElementById('phdSchoolArea');
+  if (!area) {
+    // 如果内容区不存在，动态创建
+    const contentArea = document.getElementById('phdContent-schools');
+    if (contentArea) {
+      contentArea.innerHTML = '<div id="phdSchoolArea"></div>';
+    }
+    return;
+  }
+  
+  // 更新计数
+  const countEl = document.getElementById('phdSchoolCount');
+  if (countEl) countEl.textContent = PHD_SCHOOLS.length;
+  
+  let html = '<div style="margin-bottom:20px;padding:15px;background:#f0f7ff;border-radius:8px;border-left:4px solid #2196f3">';
+  html += '<strong style="color:#1565c0">🏫 院校与导师信息库</strong>';
+  html += '<span style="margin-left:10px;font-size:13px;color:#666">收录 ' + PHD_SCHOOLS.length + ' 所招收运动人体科学博士的院校信息，含招生方向、考试科目、参考书目、导师介绍、报考建议</span>';
+  html += '</div>';
+  
+  // 搜索框
+  html += '<div style="margin-bottom:20px">';
+  html += '<input type="text" id="phdSchoolSearch" class="phd-quiz-textarea" style="min-height:auto;padding:10px;margin-bottom:0" placeholder="🔍 搜索院校名称、研究方向、导师姓名..." oninput="filterPhdSchools()">';
+  html += '</div>';
+  
+  html += '<div id="phdSchoolList" class="phd-knowledge-grid">';
+  PHD_SCHOOLS.forEach((school, idx) => {
+    html += '<div class="phd-knowledge-card" style="cursor:pointer" onclick="showPhdSchoolDetail(' + idx + ')">';
+    html += '<div class="phd-knowledge-card-header">';
+    html += '<span class="phd-knowledge-card-icon">🏫</span>';
+    html += '<span class="phd-knowledge-card-title">' + school.name + '</span>';
+    html += '</div>';
+    html += '<div class="phd-knowledge-card-desc" style="margin-bottom:8px">' + school.desc.substring(0, 60) + '...</div>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
+    html += '<span class="kh-tag" style="font-size:11px">' + school.level + '</span>';
+    html += '<span class="kh-tag" style="font-size:11px">' + school.location + '</span>';
+    html += '<span class="kh-tag" style="font-size:11px">' + school.tutors.length + '位博导</span>';
+    html += '</div>';
+    html += '<div style="font-size:12px;color:#667eea;font-weight:600">点击查看详情 →</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  
+  area.innerHTML = html;
+}
+
+function filterPhdSchools() {
+  const keyword = document.getElementById('phdSchoolSearch').value.toLowerCase();
+  const list = document.getElementById('phdSchoolList');
+  if (!list) return;
+  
+  let html = '';
+  let count = 0;
+  PHD_SCHOOLS.forEach((school, idx) => {
+    const searchText = (school.name + school.shortName + school.location + school.directions.join(' ') + school.tutors.map(t => t.name + t.research).join(' ')).toLowerCase();
+    if (!keyword || searchText.includes(keyword)) {
+      count++;
+      html += '<div class="phd-knowledge-card" style="cursor:pointer" onclick="showPhdSchoolDetail(' + idx + ')">';
+      html += '<div class="phd-knowledge-card-header">';
+      html += '<span class="phd-knowledge-card-icon">🏫</span>';
+      html += '<span class="phd-knowledge-card-title">' + school.name + '</span>';
+      html += '</div>';
+      html += '<div class="phd-knowledge-card-desc" style="margin-bottom:8px">' + school.desc.substring(0, 60) + '...</div>';
+      html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
+      html += '<span class="kh-tag" style="font-size:11px">' + school.level + '</span>';
+      html += '<span class="kh-tag" style="font-size:11px">' + school.location + '</span>';
+      html += '<span class="kh-tag" style="font-size:11px">' + school.tutors.length + '位博导</span>';
+      html += '</div>';
+      html += '<div style="font-size:12px;color:#667eea;font-weight:600">点击查看详情 →</div>';
+      html += '</div>';
+    }
+  });
+  
+  if (count === 0) {
+    html = '<div class="phd-empty">未找到匹配的院校</div>';
+  }
+  
+  list.innerHTML = html;
+}
+
+function showPhdSchoolDetail(idx) {
+  const school = PHD_SCHOOLS[idx];
+  let html = '<h3>🏫 ' + school.name + '</h3>';
+  html += '<div style="margin-bottom:16px"><span class="kh-tag">' + school.level + '</span> <span class="kh-tag">' + school.location + '</span> <span class="kh-tag">' + school.type + '</span></div>';
+  
+  html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">📌 学校简介</h4>';
+  html += '<p style="font-size:14px;line-height:1.7;color:#555;margin-bottom:16px">' + school.desc + '</p>';
+  
+  html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">🎯 招生方向</h4>';
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">';
+  school.directions.forEach(d => {
+    html += '<span class="kh-tag" style="background:#e3f2fd;color:#1565c0">' + d + '</span>';
+  });
+  html += '</div>';
+  
+  html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">📝 考试科目</h4>';
+  html += '<ul style="font-size:14px;line-height:1.8;color:#555;margin-bottom:16px;padding-left:20px">';
+  school.examSubjects.forEach(s => {
+    html += '<li>' + s + '</li>';
+  });
+  html += '</ul>';
+  
+  html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">📚 参考书目</h4>';
+  html += '<ul style="font-size:14px;line-height:1.8;color:#555;margin-bottom:16px;padding-left:20px">';
+  school.referenceBooks.forEach(b => {
+    html += '<li>' + b + '</li>';
+  });
+  html += '</ul>';
+  
+  html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">👨‍🏫 博士生导师（' + school.tutors.length + '位）</h4>';
+  school.tutors.forEach(t => {
+    html += '<div style="background:#f8f9ff;border-radius:8px;padding:12px 16px;margin-bottom:10px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    html += '<strong style="font-size:15px;color:#333">' + t.name + '</strong>';
+    html += '<span style="font-size:12px;color:#667eea">' + t.title + '</span>';
+    html += '</div>';
+    html += '<div style="font-size:13px;color:#555;margin-bottom:4px">研究方向：' + t.research + '</div>';
+    if (t.note) {
+      html += '<div style="font-size:12px;color:#999">💡 ' + t.note + '</div>';
+    }
+    html += '</div>';
+  });
+  
+  html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">📊 报录比参考</h4>';
+  html += '<p style="font-size:14px;line-height:1.7;color:#555;margin-bottom:16px">' + school.admissionRatio + '</p>';
+  
+  html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">💡 报考建议</h4>';
+  html += '<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;font-size:14px;line-height:1.7;color:#555">' + school.tips + '</div>';
+  
+  showPhdDetail(html);
+}
 
 // ========== AI考博模拟面试系统 ==========
 let phdInterviewState = {
