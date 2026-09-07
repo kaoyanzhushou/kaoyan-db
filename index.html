@@ -698,7 +698,6 @@ body.focus-mode .focus-mode-exit{display:flex}
 .phd-empty{text-align:center;padding:40px;color:#999;font-size:14px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
 console.error('全局错误:', msg, '行:', lineNo, '列:', columnNo);
 return false;
@@ -37591,31 +37590,21 @@ function showPhdExamStats() {
   modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:800px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h3 style="margin:0;color:#1e293b;font-size:20px">📊 考博真题高频考点统计</h3><button onclick="document.getElementById(\'phdStatsModal\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8">×</button></div><div style="margin-bottom:16px;padding:12px 16px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0369a1">共统计 ' + PHD_EXAMS.length + ' 套真题、' + PHD_EXAMS.reduce((sum, e) => sum + e.questions.length, 0) + ' 道题目，识别出 ' + Object.keys(pointCount).length + ' 个高频考点</div><div id="phdStatsChart" style="width:100%;height:400px"></div><div id="phdStatsList" style="margin-top:20px"></div></div>';
   document.body.appendChild(modal);
   
-  // 渲染ECharts图表
-  if (typeof echarts !== 'undefined') {
-    const chart = echarts.init(document.getElementById('phdStatsChart'));
-    chart.setOption({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'value', name: '出现次数' },
-      yAxis: { type: 'category', data: labels.reverse(), axisLabel: { fontSize: 12 } },
-      series: [{
-        name: '出现次数',
-        type: 'bar',
-        data: values.reverse(),
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: '#667eea' },
-            { offset: 1, color: '#764ba2' }
-          ]),
-          borderRadius: [0, 4, 4, 0]
-        },
-        label: { show: true, position: 'right', fontSize: 12, color: '#475569' }
-      }]
-    });
-  } else {
-    document.getElementById('phdStatsChart').innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">图表库加载中...</div>';
-  }
+  // 渲染纯CSS柱状图（不依赖外部库，加载更快）
+  const maxValue = Math.max(...values, 1);
+  let chartHtml = '<div style="padding:10px 0">';
+  sortedPoints.forEach((point, idx) => {
+    const percent = (point[1] / maxValue * 100).toFixed(0);
+    const color = idx < 3 ? '#ef4444' : idx < 7 ? '#f59e0b' : '#667eea';
+    chartHtml += '<div style="display:flex;align-items:center;margin-bottom:10px">';
+    chartHtml += '<div style="width:120px;font-size:12px;color:#475569;text-align:right;padding-right:10px;flex-shrink:0">' + point[0] + '</div>';
+    chartHtml += '<div style="flex:1;background:#f1f5f9;border-radius:4px;height:24px;position:relative;overflow:hidden">';
+    chartHtml += '<div style="width:' + percent + '%;height:100%;background:linear-gradient(90deg,' + color + ',' + color + 'cc);border-radius:4px;transition:width 0.5s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px">';
+    chartHtml += '<span style="color:#fff;font-size:11px;font-weight:600">' + point[1] + '次</span>';
+    chartHtml += '</div></div></div>';
+  });
+  chartHtml += '</div>';
+  document.getElementById('phdStatsChart').innerHTML = chartHtml;
   
   // 渲染考点列表
   let listHtml = '<h4 style="color:#475569;margin-bottom:12px">📋 全部考点列表</h4><div style="display:flex;flex-wrap:wrap;gap:8px">';
