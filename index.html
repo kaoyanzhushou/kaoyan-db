@@ -39322,11 +39322,20 @@ function renderPhdProposal() {
   
   // 按钮组
   html += '<div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap">';
-  html += '<button class="phd-quiz-btn primary" onclick="generatePropProposal()" style="padding:10px 24px;font-size:14px">AI生成科研计划书</button>';
+  html += '<button class="phd-quiz-btn primary" onclick="generatePropProposal()" style="padding:10px 24px;font-size:14px">📝 模板快速生成</button>';
+  html += '<button class="phd-quiz-btn" onclick="generatePropProposalAI()" style="padding:10px 24px;font-size:14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer">🤖 AI深度生成（推荐）</button>';
   html += '<button class="phd-quiz-btn secondary" onclick="showPropGuide()" style="padding:10px 20px;font-size:14px">写作指南</button>';
   html += '<button class="phd-quiz-btn secondary" onclick="showPropChecklist()" style="padding:10px 20px;font-size:14px">自查清单</button>';
   html += '<button class="phd-quiz-btn secondary" onclick="showPropSaved()" style="padding:10px 20px;font-size:14px">我的保存(' + getPropSavedCount() + ')</button>';
   html += '</div></div>';
+  
+  // AI生成加载状态
+  html += '<div id="propAILoading" style="display:none;text-align:center;padding:40px;background:white;border:1px solid #e0e0e0;border-radius:10px;margin-bottom:20px">';
+  html += '<div style="font-size:48px;margin-bottom:16px">🤖</div>';
+  html += '<div style="font-size:16px;font-weight:600;color:#333;margin-bottom:8px">AI正在深度生成科研计划书...</div>';
+  html += '<div style="font-size:13px;color:#999;margin-bottom:16px">正在分析研究方向、构建学术框架、生成专业内容，请稍候（约30-60秒）</div>';
+  html += '<div style="width:200px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto;overflow:hidden"><div id="propAIProgress" style="width:0%;height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:2px;transition:width 0.5s"></div></div>';
+  html += '</div>';
   
   // 结果区域
   html += '<div id="propResult" style="display:none">';
@@ -39342,7 +39351,11 @@ function renderPhdProposal() {
   html += '<button class="phd-quiz-btn secondary" style="padding:6px 12px;font-size:12px" onclick="copyPropProposal()">复制</button>';
   html += '<button class="phd-quiz-btn success" style="padding:6px 12px;font-size:12px" onclick="exportPropProposal(\'txt\')">导出TXT</button>';
   html += '<button class="phd-quiz-btn success" style="padding:6px 12px;font-size:12px" onclick="exportPropProposal(\'md\')">导出MD</button>';
+  html += '<button class="phd-quiz-btn" style="padding:6px 12px;font-size:12px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="reviewPropProposalAI()">🔍 AI评审</button>';
   html += '</div></div>';
+  
+  // AI评审结果区域
+  html += '<div id="propAIReviewResult" style="display:none;margin-bottom:20px"></div>';
   
   // 章节导航
   html += '<div id="propNav" style="margin-bottom:15px;padding:10px;background:#f5f5f5;border-radius:8px;display:flex;flex-wrap:wrap;gap:6px"></div>';
@@ -39412,6 +39425,306 @@ function generatePropProposal() {
   renderPropNav();
   
   document.getElementById('propResult').scrollIntoView({behavior: 'smooth'});
+}
+
+// ========== AI深度生成科研计划书 ==========
+async function generatePropProposalAI() {
+  const field = document.getElementById('propField').value;
+  const topic = document.getElementById('propTopic').value;
+  const title = document.getElementById('propTitle').value.trim();
+  const subject = document.getElementById('propSubject').value.trim();
+  const methods = document.getElementById('propMethods').value.trim();
+  const duration = document.getElementById('propDuration').value;
+  const style = document.getElementById('propStyle').value;
+  
+  const finalTitle = title || ('基于' + topic + '的' + field + '研究：机制与应用');
+  
+  // 显示加载状态
+  document.getElementById('propAILoading').style.display = 'block';
+  document.getElementById('propResult').style.display = 'none';
+  
+  // 进度条动画
+  let progress = 0;
+  const progressInterval = setInterval(() => {
+    progress = Math.min(progress + Math.random() * 15, 90);
+    const bar = document.getElementById('propAIProgress');
+    if (bar) bar.style.width = progress + '%';
+  }, 500);
+  
+  try {
+    const systemPrompt = `你是一位资深的体育学博士研究生导师，拥有20年以上的科研经验和丰富的基金项目评审经验。你精通运动人体科学、运动生理学、运动解剖学、运动生物化学、运动生物力学等领域的研究方法和学术规范。
+
+请根据用户提供的研究信息，生成一份专业、详细、学术规范的博士研究生科研计划书。要求：
+1. 内容必须专业准确，符合体育学博士研究的学术规范
+2. 研究背景要有文献支撑感，引用该领域的经典理论和最新研究进展
+3. 研究内容要具体可行，有明确的科学问题和研究假设
+4. 研究方法要详细专业，包括实验设计、样本量、检测指标、统计方法等
+5. 技术路线要清晰，有明确的研究步骤和时间节点
+6. 创新点要突出，有明确的理论创新和方法创新
+7. 预期成果要具体，包括论文发表、专利申请、人才培养等
+8. 全文使用规范的学术语言，避免口语化表达
+9. 总字数不少于5000字，内容充实详尽
+
+请按以下章节结构生成：
+一、选题背景与研究意义
+  （一）研究背景
+  （二）研究意义（理论意义+实践意义）
+二、国内外研究现状与发展趋势
+  （一）国外研究现状
+  （二）国内研究现状
+  （三）研究现状评述与发展趋势
+三、研究目标与研究内容
+  （一）研究目标
+  （二）研究内容（分3-4个具体研究内容）
+  （三）拟解决的关键科学问题
+四、研究方法与技术路线
+  （一）研究对象与分组
+  （二）主要研究方法（详细说明每种方法的原理、操作步骤、检测指标）
+  （三）主要仪器与试剂
+  （四）数据统计与分析方法
+  （五）技术路线图（用文字描述技术路线）
+五、研究创新点
+  （一）理论创新
+  （二）方法创新
+  （三）应用创新
+六、预期研究成果
+  （一）理论成果
+  （二）学术论文（列出拟发表的期刊级别和数量）
+  （三）专利与成果转化
+  （四）人才培养
+七、研究计划与进度安排
+  （按年度/季度列出详细的研究计划）
+八、研究基础与可行性分析
+  （一）研究基础（前期工作积累、实验条件、团队优势）
+  （二）可行性分析（理论可行性、技术可行性、条件可行性）
+九、可能遇到的困难与解决方案
+十、参考文献（列出15-20篇该领域的经典和最新参考文献，格式规范）`;
+
+    const userPrompt = `请生成以下研究的科研计划书：
+
+研究领域：${field}
+研究方向：${topic}
+研究题目：${finalTitle}
+研究对象/样本：${subject || '（请根据研究方向合理设定研究对象，包括样本量、分组方式、纳入排除标准等）'}
+研究方法：${methods || '（请根据研究方向合理设定研究方法，包括实验方法、检测指标、统计方法等）'}
+研究周期：${duration}
+内容详细程度：${style === 'detailed' ? '详细型（内容充实，每个部分都要有充分的论述）' : style === 'standard' ? '标准型（框架+要点）' : '简洁型（仅框架）'}
+
+请确保内容与${topic}方向高度相关，研究方法要符合该领域的常规做法，参考文献要真实可信（可以使用该领域的经典文献和代表性学者的研究成果）。`;
+
+    console.log('开始调用AI生成科研计划书...');
+    const aiContent = await callDeepSeekAPI(systemPrompt, userPrompt, 8000, 'deepseek-chat');
+    
+    clearInterval(progressInterval);
+    const bar = document.getElementById('propAIProgress');
+    if (bar) bar.style.width = '100%';
+    
+    if (!aiContent || aiContent.length < 100) {
+      throw new Error('AI生成内容过短，请重试');
+    }
+    
+    // 格式化AI生成的内容
+    const formatted = formatPropAIContent(aiContent, finalTitle, field, topic, duration);
+    
+    // 显示结果
+    document.getElementById('propAILoading').style.display = 'none';
+    document.getElementById('propResult').style.display = 'block';
+    document.getElementById('propContent').innerHTML = formatted.html;
+    document.getElementById('propEditText').value = formatted.text;
+    updatePropWordCount();
+    renderPropNav();
+    
+    document.getElementById('propResult').scrollIntoView({behavior: 'smooth'});
+    console.log('AI生成完成，字数:', formatted.text.length);
+    
+  } catch (error) {
+    clearInterval(progressInterval);
+    console.error('AI生成失败:', error);
+    document.getElementById('propAILoading').style.display = 'none';
+    
+    // 失败时提示并回退到模板生成
+    if (confirm('AI深度生成失败：' + error.message + '\n\n是否使用模板快速生成？')) {
+      generatePropProposal();
+    }
+  }
+}
+
+// 格式化AI生成的科研计划书内容
+function formatPropAIContent(content, title, field, topic, duration) {
+  let text = '科研计划书\n\n题目：' + title + '\n\n研究领域：' + field + ' | 研究方向：' + topic + ' | 研究周期：' + duration + '\n\n' + content;
+  
+  // 转换为HTML
+  let html = '<h2 style="text-align:center;color:#333;margin-bottom:5px">' + title + '</h2>';
+  html += '<p style="text-align:center;color:#999;font-size:12px;margin-bottom:20px">研究领域：' + field + ' | 研究方向：' + topic + ' | 研究周期：' + duration + ' | 🤖 AI深度生成</p>';
+  
+  const lines = content.split('\n');
+  let inReferences = false;
+  
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    
+    // 一级标题（一、二、三...）
+    if (trimmed.match(/^[一二三四五六七八九十]+、/) && trimmed.length < 30) {
+      const secNum = trimmed.match(/^([一二三四五六七八九十]+)/)[1];
+      html += '<h3 id="prop-sec-' + secNum + '" style="color:#e65100;border-bottom:2px solid #ffcc80;padding-bottom:6px;margin-top:24px">' + trimmed + '</h3>';
+      inReferences = trimmed.includes('参考文献');
+    }
+    // 二级标题（（一）（二）...）
+    else if (trimmed.match(/^（[一二三四五六七八九十]+）/) && trimmed.length < 40) {
+      html += '<h4 style="color:#333;margin-top:16px;margin-bottom:8px">' + trimmed + '</h4>';
+    }
+    // 三级标题（1. 2. 3. ...）
+    else if (trimmed.match(/^\d+\./) && trimmed.length < 50 && !inReferences) {
+      html += '<p style="margin:8px 0;padding-left:10px;font-weight:600;color:#444">' + trimmed + '</p>';
+    }
+    // 参考文献条目
+    else if (inReferences && trimmed.match(/^\[?\d+\]?/)) {
+      html += '<p style="margin:4px 0;padding-left:20px;text-indent:-20px;font-size:12px;color:#666;line-height:1.6">' + trimmed + '</p>';
+    }
+    // 普通段落
+    else {
+      html += '<p style="margin:8px 0;text-indent:2em;line-height:1.8;color:#333">' + trimmed + '</p>';
+    }
+  });
+  
+  return { html, text };
+}
+
+// ========== AI评审科研计划书 ==========
+async function reviewPropProposalAI() {
+  const contentText = document.getElementById('propEditText').value;
+  if (!contentText || contentText.length < 200) {
+    alert('请先生成或输入科研计划书内容（至少200字）');
+    return;
+  }
+  
+  const resultArea = document.getElementById('propAIReviewResult');
+  resultArea.style.display = 'block';
+  resultArea.innerHTML = '<div style="text-align:center;padding:30px;background:white;border:1px solid #e0e0e0;border-radius:10px"><div style="font-size:36px;margin-bottom:12px">🔍</div><div style="font-size:15px;font-weight:600;color:#333">AI正在评审科研计划书...</div><div style="font-size:12px;color:#999;margin-top:8px">正在从选题价值、研究内容、研究方法、创新点、可行性等多维度进行评审，请稍候</div></div>';
+  
+  resultArea.scrollIntoView({behavior: 'smooth', block: 'start'});
+  
+  try {
+    const systemPrompt = `你是一位资深的体育学科研基金项目评审专家，拥有20年以上的科研经验和丰富的国家自然科学基金、社会科学基金项目评审经验。你精通运动人体科学、运动生理学、运动解剖学等领域的研究方法和学术规范。
+
+请对用户提供的博士研究生科研计划书进行全面、专业、客观的评审。评审要求：
+1. 从以下8个维度进行评分（每项满分10分），并给出详细的评分理由：
+   - 选题价值（研究问题的重要性、科学性、前沿性）
+   - 研究意义（理论价值和实践价值）
+   - 研究内容（内容的充实性、系统性、逻辑性）
+   - 研究方法（方法的科学性、可行性、先进性）
+   - 技术路线（路线的清晰性、合理性、可操作性）
+   - 创新点（创新的突出性、真实性、可行性）
+   - 可行性（理论可行性、技术可行性、条件可行性）
+   - 写作规范（学术规范、逻辑结构、语言表达）
+
+2. 给出总分（满分100分）和总体评价
+
+3. 详细列出计划书的优点（至少3点）
+
+4. 详细列出计划书存在的问题和不足（至少5点），每个问题都要有具体的修改建议
+
+5. 给出具体的修改建议，按章节列出需要重点修改的内容
+
+6. 评审语言要专业、客观、有建设性，既要指出问题，也要给出可操作的修改方案
+
+请按以下格式输出评审结果：
+【总体评分】XX/100分
+【各维度评分】
+1. 选题价值：X/10分 - 评分理由
+2. 研究意义：X/10分 - 评分理由
+...
+【总体评价】
+...
+【主要优点】
+1. ...
+2. ...
+3. ...
+【存在问题与修改建议】
+1. 问题：...
+   修改建议：...
+2. ...
+【重点修改清单】
+按章节列出需要修改的具体内容`;
+
+    const userPrompt = `请评审以下科研计划书：
+
+${contentText.substring(0, 8000)}${contentText.length > 8000 ? '\n\n...（内容过长，已截断，仅评审前8000字）' : ''}`;
+
+    console.log('开始调用AI评审科研计划书...');
+    const reviewResult = await callDeepSeekAPI(systemPrompt, userPrompt, 5000, 'deepseek-chat');
+    
+    if (!reviewResult || reviewResult.length < 50) {
+      throw new Error('AI评审结果过短，请重试');
+    }
+    
+    // 格式化评审结果
+    const formattedReview = formatAIReviewResult(reviewResult);
+    resultArea.innerHTML = formattedReview;
+    
+    console.log('AI评审完成');
+    
+  } catch (error) {
+    console.error('AI评审失败:', error);
+    resultArea.innerHTML = '<div style="padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;text-align:center"><div style="font-size:32px;margin-bottom:8px">❌</div><div style="color:#991b1b;font-weight:600">AI评审失败</div><div style="color:#991b1b;font-size:13px;margin-top:8px">' + error.message + '</div><button onclick="reviewPropProposalAI()" style="margin-top:12px;padding:8px 20px;background:#dc2626;color:#fff;border:none;border-radius:6px;cursor:pointer">重新评审</button></div>';
+  }
+}
+
+// 格式化AI评审结果
+function formatAIReviewResult(content) {
+  let html = '<div style="background:white;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden">';
+  
+  // 标题栏
+  html += '<div style="background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;padding:16px 20px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:18px;font-weight:700">🔍 AI科研计划书评审报告</div><div style="font-size:12px;opacity:0.9">由AI评审专家生成</div></div></div>';
+  
+  html += '<div style="padding:20px">';
+  
+  const lines = content.split('\n');
+  let currentSection = '';
+  
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    
+    // 总体评分
+    if (trimmed.includes('总体评分') || trimmed.match(/【.*评分.*】/)) {
+      html += '<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:8px;padding:16px;margin-bottom:16px;text-align:center"><div style="font-size:14px;color:#92400e;margin-bottom:4px">总体评分</div><div style="font-size:36px;font-weight:800;color:#b45309">' + (trimmed.match(/\d+/) ? trimmed.match(/\d+/)[0] : '--') + '<span style="font-size:18px">/100</span></div></div>';
+    }
+    // 各维度评分
+    else if (trimmed.match(/^\d+\./) && trimmed.includes('分') && trimmed.length < 80) {
+      const scoreMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*\/\s*10/);
+      const score = scoreMatch ? parseFloat(scoreMatch[1]) : 0;
+      const color = score >= 8 ? '#22c55e' : score >= 6 ? '#f59e0b' : '#ef4444';
+      const barWidth = score * 10;
+      html += '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="color:#333">' + trimmed.replace(/\/\s*10分.*$/, '/10分') + '</span></div><div style="background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden"><div style="width:' + barWidth + '%;height:100%;background:' + color + ';border-radius:4px;transition:width 0.5s"></div></div></div>';
+    }
+    // 主要章节标题
+    else if (trimmed.match(/【.*】/) && trimmed.length < 20) {
+      html += '<h4 style="color:#1e293b;margin-top:20px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e2e8f0">' + trimmed + '</h4>';
+    }
+    // 编号列表项
+    else if (trimmed.match(/^\d+\./) && trimmed.length > 80) {
+      html += '<div style="background:#f8fafc;border-radius:6px;padding:12px;margin-bottom:8px;border-left:3px solid #667eea"><p style="margin:0;font-size:13px;line-height:1.7;color:#334155">' + trimmed + '</p></div>';
+    }
+    // 问题和修改建议
+    else if (trimmed.startsWith('问题：') || trimmed.startsWith('修改建议：')) {
+      const isProblem = trimmed.startsWith('问题：');
+      html += '<p style="margin:6px 0;padding-left:16px;font-size:13px;line-height:1.7;color:' + (isProblem ? '#dc2626' : '#059669') + '"><strong>' + (isProblem ? '❌ ' : '✅ ') + '</strong>' + trimmed + '</p>';
+    }
+    // 普通段落
+    else {
+      html += '<p style="margin:8px 0;font-size:13px;line-height:1.8;color:#475569">' + trimmed + '</p>';
+    }
+  });
+  
+  html += '</div>';
+  
+  // 底部操作栏
+  html += '<div style="background:#f8fafc;padding:12px 20px;border-top:1px solid #e2e8f0;display:flex;gap:10px;justify-content:flex-end"><button onclick="document.getElementById(\'propAIReviewResult\').style.display=\'none\'" style="padding:6px 16px;background:#e5e7eb;color:#374151;border:none;border-radius:6px;cursor:pointer;font-size:12px">关闭评审</button><button onclick="reviewPropProposalAI()" style="padding:6px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">重新评审</button></div>';
+  
+  html += '</div>';
+  return html;
 }
 
 function generatePropContent(title, field, topic, subject, methods, duration, style) {
@@ -40559,6 +40872,534 @@ function showPhdResearchDetail(idx) {
   showPhdDetail(html);
 }
 
+// ========== AI实时对话面试系统 ==========
+let phdAIMockInterviewState = {
+  mode: 'idle', // idle, setup, chatting, ended
+  config: {
+    major: '运动生理学',
+    targetSchool: '上海体育大学',
+    interviewType: '专业面试',
+    questionCount: 8,
+    difficulty: '中等'
+  },
+  conversation: [], // {role: 'interviewer'|'candidate', content: string, timestamp: number}
+  currentQuestion: '',
+  currentAnswer: '',
+  questionIndex: 0,
+  startTime: null,
+  endTime: null,
+  scores: null,
+  aiThinking: false
+};
+
+// AI对话面试专业方向选项
+const AI_INTERVIEW_MAJORS = ['运动生理学', '运动解剖学', '运动生物化学', '运动生物力学', '体育保健学', '运动康复学', '运动心理学', '体育统计与测量', '运动医学'];
+const AI_INTERVIEW_SCHOOLS = ['上海体育大学', '北京体育大学', '河南大学', '郑州大学', '首都体育学院', '华东师范大学', '华南师范大学', '河北师范大学', '其他院校'];
+const AI_INTERVIEW_TYPES = ['专业面试', '综合面试', '英语面试', '压力面试', '导师面谈'];
+const AI_INTERVIEW_DIFFICULTIES = ['简单', '中等', '困难', '专家级'];
+
+// 开始AI对话面试（显示设置界面）
+function startPhdAIMockInterview() {
+  phdAIMockInterviewState = {
+    mode: 'setup',
+    config: {
+      major: '运动生理学',
+      targetSchool: '上海体育大学',
+      interviewType: '专业面试',
+      questionCount: 8,
+      difficulty: '中等'
+    },
+    conversation: [],
+    currentQuestion: '',
+    currentAnswer: '',
+    questionIndex: 0,
+    startTime: null,
+    endTime: null,
+    scores: null,
+    aiThinking: false
+  };
+  renderPhdAIMockInterview();
+}
+
+// 渲染AI对话面试界面
+function renderPhdAIMockInterview() {
+  const area = document.getElementById('phdInterviewArea');
+  if (!area) return;
+  
+  const state = phdAIMockInterviewState;
+  let html = '';
+  
+  if (state.mode === 'setup') {
+    // 设置界面
+    html += '<div style="background:white;border:1px solid #e0e0e0;border-radius:12px;padding:25px;margin-bottom:20px">';
+    html += '<div style="text-align:center;margin-bottom:25px"><div style="font-size:48px;margin-bottom:10px">🤖</div><div style="font-size:22px;font-weight:700;color:#333">AI实时对话面试</div><div style="font-size:14px;color:#999;margin-top:6px">AI扮演真实面试官，多轮追问，深度评测</div></div>';
+    
+    // 配置表单
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px">';
+    
+    // 专业方向
+    html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">专业方向</label>';
+    html += '<select id="aiInterviewMajor" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px">';
+    AI_INTERVIEW_MAJORS.forEach(m => { html += '<option value="' + m + '"' + (state.config.major === m ? ' selected' : '') + '>' + m + '</option>'; });
+    html += '</select></div>';
+    
+    // 目标院校
+    html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">目标院校</label>';
+    html += '<select id="aiInterviewSchool" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px">';
+    AI_INTERVIEW_SCHOOLS.forEach(s => { html += '<option value="' + s + '"' + (state.config.targetSchool === s ? ' selected' : '') + '>' + s + '</option>'; });
+    html += '</select></div>';
+    
+    // 面试类型
+    html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">面试类型</label>';
+    html += '<select id="aiInterviewType" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px">';
+    AI_INTERVIEW_TYPES.forEach(t => { html += '<option value="' + t + '"' + (state.config.interviewType === t ? ' selected' : '') + '>' + t + '</option>'; });
+    html += '</select></div>';
+    
+    // 难度
+    html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">面试难度</label>';
+    html += '<select id="aiInterviewDifficulty" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px">';
+    AI_INTERVIEW_DIFFICULTIES.forEach(d => { html += '<option value="' + d + '"' + (state.config.difficulty === d ? ' selected' : '') + '>' + d + '</option>'; });
+    html += '</select></div>';
+    
+    // 题目数量
+    html += '<div style="grid-column:span 2"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">题目数量：<span id="aiInterviewCountLabel" style="color:#667eea;font-weight:700">' + state.config.questionCount + '</span> 题</label>';
+    html += '<input type="range" id="aiInterviewCount" min="5" max="15" value="' + state.config.questionCount + '" style="width:100%" oninput="document.getElementById(\'aiInterviewCountLabel\').textContent=this.value"></div>';
+    
+    html += '</div>';
+    
+    // 开始按钮
+    html += '<div style="text-align:center;margin-top:25px">';
+    html += '<button onclick="beginPhdAIMockInterview()" style="padding:14px 50px;font-size:16px;font-weight:600;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:10px;cursor:pointer;box-shadow:0 4px 15px rgba(102,126,234,0.4)">🎤 开始AI对话面试</button>';
+    html += '<div style="margin-top:12px;font-size:12px;color:#999">面试过程中AI会根据你的回答进行追问，请认真作答</div>';
+    html += '</div></div>';
+    
+  } else if (state.mode === 'chatting' || state.mode === 'ended') {
+    // 对话界面
+    html += '<div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border-radius:12px 12px 0 0;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">';
+    html += '<div><div style="font-size:16px;font-weight:700">🤖 AI面试官</div><div style="font-size:12px;opacity:0.9">' + state.config.targetSchool + ' | ' + state.config.major + ' | ' + state.config.interviewType + '</div></div>';
+    html += '<div style="text-align:right"><div style="font-size:13px">第 <strong>' + (state.questionIndex + 1) + '</strong> / ' + state.config.questionCount + ' 题</div>';
+    if (state.startTime) {
+      const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+      html += '<div style="font-size:12px;opacity:0.9">已用时 ' + Math.floor(elapsed/60) + '分' + (elapsed%60) + '秒</div>';
+    }
+    html += '</div></div>';
+    
+    // 对话区域
+    html += '<div id="aiInterviewChatArea" style="background:#f8f9ff;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0;padding:20px;min-height:400px;max-height:500px;overflow-y:auto">';
+    
+    state.conversation.forEach((msg, idx) => {
+      if (msg.role === 'interviewer') {
+        html += '<div style="margin-bottom:18px;display:flex;gap:10px"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🤖</div><div style="flex:1"><div style="font-size:11px;color:#999;margin-bottom:4px">面试官' + (msg.questionNum ? '（第' + msg.questionNum + '题）' : '') + '</div><div style="background:white;border:1px solid #e0e0e0;border-radius:12px 12px 12px 0;padding:12px 15px;font-size:14px;line-height:1.7;color:#333;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' + msg.content + '</div></div></div>';
+      } else {
+        html += '<div style="margin-bottom:18px;display:flex;gap:10px;flex-direction:row-reverse"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f5576c,#f093fb);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👤</div><div style="flex:1"><div style="font-size:11px;color:#999;margin-bottom:4px;text-align:right">考生（你）</div><div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;border-radius:12px 12px 0 12px;padding:12px 15px;font-size:14px;line-height:1.7;color:#333">' + msg.content + '</div></div></div>';
+      }
+    });
+    
+    // AI思考中
+    if (state.aiThinking) {
+      html += '<div style="margin-bottom:18px;display:flex;gap:10px"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🤖</div><div style="flex:1"><div style="background:white;border:1px solid #e0e0e0;border-radius:12px;padding:15px;display:inline-flex;align-items:center;gap:8px"><span style="font-size:13px;color:#999">AI正在思考</span><span style="display:inline-block;width:8px;height:8px;background:#667eea;border-radius:50%;animation:pulse 1s infinite"></span></div></div></div>';
+    }
+    
+    html += '</div>';
+    
+    // 输入区域
+    if (state.mode === 'chatting' && !state.aiThinking) {
+      html += '<div style="background:white;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 12px 12px;padding:15px">';
+      html += '<textarea id="aiInterviewAnswerInput" placeholder="请输入你的回答...（建议200字以上，内容越完整评分越高）" style="width:100%;min-height:100px;border:2px solid #e0e0e0;border-radius:8px;padding:12px;font-size:14px;line-height:1.6;resize:vertical;font-family:inherit;box-sizing:border-box" oninput="updateAIInterviewWordCount()">' + state.currentAnswer + '</textarea>';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:10px">';
+      html += '<div style="font-size:12px;color:#999">已输入 <span id="aiInterviewWordCount">' + state.currentAnswer.length + '</span> 字</div>';
+      html += '<div style="display:flex;gap:8px">';
+      html += '<button onclick="endPhdAIMockInterviewEarly()" style="padding:8px 16px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:6px;cursor:pointer;font-size:13px">提前结束</button>';
+      html += '<button onclick="submitAIInterviewAnswer()" style="padding:8px 24px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600">提交回答 →</button>';
+      html += '</div></div></div>';
+    }
+    
+    // 结束界面（评分报告）
+    if (state.mode === 'ended' && state.scores) {
+      html += renderAIMockInterviewReport(state);
+    }
+    
+  }
+  
+  area.innerHTML = html;
+  
+  // 滚动到底部
+  const chatArea = document.getElementById('aiInterviewChatArea');
+  if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+// 更新AI面试回答字数
+function updateAIInterviewWordCount() {
+  const input = document.getElementById('aiInterviewAnswerInput');
+  const count = document.getElementById('aiInterviewWordCount');
+  if (input && count) {
+    count.textContent = input.value.length;
+    phdAIMockInterviewState.currentAnswer = input.value;
+  }
+}
+
+// 开始AI对话面试（从设置界面进入对话）
+async function beginPhdAIMockInterview() {
+  const state = phdAIMockInterviewState;
+  state.config.major = document.getElementById('aiInterviewMajor').value;
+  state.config.targetSchool = document.getElementById('aiInterviewSchool').value;
+  state.config.interviewType = document.getElementById('aiInterviewType').value;
+  state.config.difficulty = document.getElementById('aiInterviewDifficulty').value;
+  state.config.questionCount = parseInt(document.getElementById('aiInterviewCount').value);
+  
+  state.mode = 'chatting';
+  state.startTime = Date.now();
+  state.questionIndex = 0;
+  state.conversation = [];
+  
+  renderPhdAIMockInterview();
+  
+  // AI生成第一个问题
+  await generateNextAIInterviewQuestion(true);
+}
+
+// AI生成下一个问题
+async function generateNextAIInterviewQuestion(isFirst) {
+  const state = phdAIMockInterviewState;
+  state.aiThinking = true;
+  renderPhdAIMockInterview();
+  
+  try {
+    const systemPrompt = `你是一位资深的${state.config.targetSchool}${state.config.major}专业的博士研究生面试考官，拥有20年以上的面试经验和丰富的学术背景。你正在进行一场${state.config.interviewType}，面试难度为${state.config.difficulty}。
+
+面试要求：
+1. 问题要专业、有深度，符合${state.config.major}博士研究生的学术水平
+2. 根据考生之前的回答进行有针对性的追问，深入挖掘考生的专业功底
+3. 如果考生回答有漏洞或错误，要针对性地提问，考察考生的应变能力
+4. 问题类型要多样化：概念理解题、机制分析题、实验设计题、前沿进展题、综合应用题
+5. 每个问题要清晰明确，让考生知道需要回答什么
+6. 不要重复已经问过的问题
+7. 适当使用专业术语，考察考生的专业素养
+
+请直接输出面试问题，不要有任何前缀或解释。问题长度控制在50-150字之间。`;
+
+    let userPrompt = '';
+    if (isFirst) {
+      userPrompt = `这是面试的第一个问题，请提出一个关于${state.config.major}基础概念或核心理论的问题，难度${state.config.difficulty}。`;
+    } else {
+      const lastAnswer = state.conversation.filter(m => m.role === 'candidate').slice(-1)[0];
+      const lastQuestion = state.conversation.filter(m => m.role === 'interviewer').slice(-1)[0];
+      const history = state.conversation.slice(-6).map(m => (m.role === 'interviewer' ? '面试官：' : '考生：') + m.content).join('\n\n');
+      
+      userPrompt = `以下是之前的面试对话：
+${history}
+
+请根据考生刚才的回答，提出下一个面试问题。要求：
+1. 如果考生回答充分，可以深入追问相关的机制或前沿进展
+2. 如果考生回答有漏洞或错误，针对性地提问考察
+3. 如果考生回答较简短，可以换一个角度考察同一知识点
+4. 问题难度${state.config.difficulty}，符合博士研究生水平
+5. 这是第${state.questionIndex + 1}个问题，总共${state.config.questionCount}个问题`;
+    }
+    
+    const question = await callDeepSeekAPI(systemPrompt, userPrompt, 500, 'deepseek-chat');
+    
+    if (!question || question.length < 10) {
+      throw new Error('AI生成问题过短');
+    }
+    
+    state.currentQuestion = question.trim();
+    state.currentAnswer = '';
+    state.conversation.push({
+      role: 'interviewer',
+      content: state.currentQuestion,
+      timestamp: Date.now(),
+      questionNum: state.questionIndex + 1
+    });
+    
+    state.aiThinking = false;
+    renderPhdAIMockInterview();
+    
+  } catch (error) {
+    console.error('AI生成问题失败:', error);
+    state.aiThinking = false;
+    
+    // 失败时使用备用问题
+    const fallbackQuestions = [
+      '请阐述' + state.config.major + '领域中你最熟悉的一个核心理论，并说明其在运动实践中的应用价值。',
+      '请设计一个实验，研究运动干预对某一生理指标的影响及其分子机制。',
+      '请谈谈' + state.config.major + '领域近年来的研究进展和未来发展趋势。',
+      '如果在实验中出现了与预期不符的结果，你会如何分析和处理？',
+      '请比较两种不同研究方法的优缺点，并说明在什么情况下选择哪种方法。'
+    ];
+    const fallbackQ = fallbackQuestions[state.questionIndex % fallbackQuestions.length];
+    state.currentQuestion = fallbackQ;
+    state.currentAnswer = '';
+    state.conversation.push({
+      role: 'interviewer',
+      content: fallbackQ,
+      timestamp: Date.now(),
+      questionNum: state.questionIndex + 1
+    });
+    
+    renderPhdAIMockInterview();
+    alert('AI生成问题失败，已使用备用问题。错误：' + error.message);
+  }
+}
+
+// 提交回答
+async function submitAIInterviewAnswer() {
+  const state = phdAIMockInterviewState;
+  const answer = document.getElementById('aiInterviewAnswerInput').value.trim();
+  
+  if (!answer || answer.length < 20) {
+    alert('请输入你的回答（至少20字）');
+    return;
+  }
+  
+  state.conversation.push({
+    role: 'candidate',
+    content: answer,
+    timestamp: Date.now()
+  });
+  
+  state.questionIndex++;
+  
+  // 判断是否结束
+  if (state.questionIndex >= state.config.questionCount) {
+    await endPhdAIMockInterview();
+  } else {
+    state.currentAnswer = '';
+    await generateNextAIInterviewQuestion(false);
+  }
+}
+
+// 提前结束面试
+async function endPhdAIMockInterviewEarly() {
+  if (confirm('确定要提前结束面试吗？将根据已回答的题目生成评分报告。')) {
+    await endPhdAIMockInterview();
+  }
+}
+
+// 结束AI对话面试并生成评分报告
+async function endPhdAIMockInterview() {
+  const state = phdAIMockInterviewState;
+  state.mode = 'ended';
+  state.endTime = Date.now();
+  state.aiThinking = true;
+  renderPhdAIMockInterview();
+  
+  try {
+    const systemPrompt = `你是一位资深的${state.config.targetSchool}${state.config.major}专业的博士研究生面试评审专家。请根据以下面试对话记录，对考生的表现进行全面、客观、专业的评审。
+
+评审维度（每项满分20分，总分100分）：
+1. 专业知识（20分）：对${state.config.major}基础理论、核心概念、前沿进展的掌握程度
+2. 逻辑思维（20分）：回答的条理性、分析问题的深度、论证的严谨性
+3. 表达能力（20分）：语言表达的流畅性、连贯性、准确性，专业术语的使用
+4. 应变能力（20分）：面对追问和压力问题时的反应速度、思维灵活性
+5. 学术潜力（20分）：科研思维、创新意识、研究设计能力、学术发展潜力
+
+评审要求：
+1. 每个维度都要给出具体的评分理由，引用考生回答中的具体内容
+2. 指出考生回答中的优点和不足
+3. 给出具体的、可操作的改进建议
+4. 评审语言要专业、客观、有建设性
+5. 最后给出总体评价和总分
+
+请按以下格式输出：
+【总体评分】XX/100分
+【各维度评分】
+1. 专业知识：X/20分 - 评分理由（引用具体回答内容）
+2. 逻辑思维：X/20分 - 评分理由
+3. 表达能力：X/20分 - 评分理由
+4. 应变能力：X/20分 - 评分理由
+5. 学术潜力：X/20分 - 评分理由
+【主要优点】
+1. ...
+2. ...
+3. ...
+【存在不足】
+1. ...
+2. ...
+3. ...
+【改进建议】
+1. ...
+2. ...
+3. ...
+【总体评价】
+...`;
+
+    const conversationText = state.conversation.map((m, i) => {
+      const role = m.role === 'interviewer' ? '面试官' : '考生';
+      return `【${role}】${m.content}`;
+    }).join('\n\n');
+    
+    const userPrompt = `以下是完整的面试对话记录（共${state.questionIndex}题）：
+
+${conversationText}
+
+面试配置：
+- 专业方向：${state.config.major}
+- 目标院校：${state.config.targetSchool}
+- 面试类型：${state.config.interviewType}
+- 面试难度：${state.config.difficulty}
+
+请根据以上对话记录，对考生的面试表现进行全面评审。`;
+
+    const reviewResult = await callDeepSeekAPI(systemPrompt, userPrompt, 4000, 'deepseek-chat');
+    
+    if (!reviewResult || reviewResult.length < 50) {
+      throw new Error('AI评审结果过短');
+    }
+    
+    state.scores = {
+      raw: reviewResult,
+      total: extractScoreFromText(reviewResult),
+      dimensions: extractDimensionsFromText(reviewResult)
+    };
+    
+    state.aiThinking = false;
+    renderPhdAIMockInterview();
+    
+    // 保存到历史记录
+    saveAIMockInterviewToHistory(state);
+    
+  } catch (error) {
+    console.error('AI评审失败:', error);
+    state.aiThinking = false;
+    state.scores = {
+      raw: 'AI评审失败：' + error.message + '\n\n请查看面试对话记录，自行评估表现。',
+      total: 0,
+      dimensions: {}
+    };
+    renderPhdAIMockInterview();
+  }
+}
+
+// 从文本中提取总分
+function extractScoreFromText(text) {
+  const match = text.match(/(?:总体评分|总分)[^\d]*(\d+(?:\.\d+)?)/);
+  return match ? parseFloat(match[1]) : 0;
+}
+
+// 从文本中提取各维度评分
+function extractDimensionsFromText(text) {
+  const dimensions = {};
+  const patterns = [
+    { name: '专业知识', pattern: /专业知识[^\d]*(\d+(?:\.\d+)?)\s*\/\s*20/ },
+    { name: '逻辑思维', pattern: /逻辑思维[^\d]*(\d+(?:\.\d+)?)\s*\/\s*20/ },
+    { name: '表达能力', pattern: /表达能力[^\d]*(\d+(?:\.\d+)?)\s*\/\s*20/ },
+    { name: '应变能力', pattern: /应变能力[^\d]*(\d+(?:\.\d+)?)\s*\/\s*20/ },
+    { name: '学术潜力', pattern: /学术潜力[^\d]*(\d+(?:\.\d+)?)\s*\/\s*20/ }
+  ];
+  patterns.forEach(p => {
+    const match = text.match(p.pattern);
+    dimensions[p.name] = match ? parseFloat(match[1]) : 0;
+  });
+  return dimensions;
+}
+
+// 渲染AI面试评分报告
+function renderAIMockInterviewReport(state) {
+  let html = '<div style="background:white;border:1px solid #e0e0e0;border-radius:12px;margin-top:20px;overflow:hidden">';
+  
+  // 报告标题
+  html += '<div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px;text-align:center"><div style="font-size:24px;font-weight:700">📊 AI面试评分报告</div><div style="font-size:13px;opacity:0.9;margin-top:6px">' + state.config.targetSchool + ' | ' + state.config.major + ' | ' + state.config.interviewType + '</div></div>';
+  
+  html += '<div style="padding:20px">';
+  
+  // 总分
+  const totalScore = state.scores.total || 0;
+  const scoreColor = totalScore >= 80 ? '#22c55e' : totalScore >= 60 ? '#f59e0b' : '#ef4444';
+  const scoreLevel = totalScore >= 80 ? '优秀' : totalScore >= 70 ? '良好' : totalScore >= 60 ? '合格' : '需加强';
+  
+  html += '<div style="text-align:center;margin-bottom:25px"><div style="font-size:14px;color:#999;margin-bottom:8px">综合评分</div><div style="font-size:56px;font-weight:800;color:' + scoreColor + '">' + totalScore + '<span style="font-size:24px;color:#999">/100</span></div><div style="display:inline-block;padding:4px 16px;background:' + scoreColor + '20;color:' + scoreColor + ';border-radius:20px;font-size:14px;font-weight:600;margin-top:8px">' + scoreLevel + '</div></div>';
+  
+  // 各维度评分
+  html += '<div style="margin-bottom:25px"><div style="font-weight:600;font-size:15px;color:#333;margin-bottom:15px">📈 各维度评分</div>';
+  const dims = state.scores.dimensions || {};
+  Object.keys(dims).forEach(name => {
+    const score = dims[name];
+    const percent = (score / 20) * 100;
+    const color = score >= 16 ? '#22c55e' : score >= 12 ? '#f59e0b' : '#ef4444';
+    html += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span style="color:#333;font-weight:500">' + name + '</span><span style="color:' + color + ';font-weight:700">' + score + '/20</span></div><div style="height:10px;background:#e5e7eb;border-radius:5px;overflow:hidden"><div style="height:100%;width:' + percent + '%;background:linear-gradient(90deg,' + color + '88,' + color + ');border-radius:5px;transition:width 0.8s"></div></div></div>';
+  });
+  html += '</div>';
+  
+  // AI详细评审内容
+  html += '<div style="margin-bottom:20px"><div style="font-weight:600;font-size:15px;color:#333;margin-bottom:12px">🔍 AI详细评审</div>';
+  html += '<div style="background:#f8f9ff;border:1px solid #e0e7ff;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto;font-size:13px;line-height:1.8;color:#334155;white-space:pre-wrap">' + (state.scores.raw || '暂无评审内容') + '</div></div>';
+  
+  // 面试回放
+  html += '<div style="margin-bottom:20px"><div style="font-weight:600;font-size:15px;color:#333;margin-bottom:12px">💬 面试对话回放</div>';
+  state.conversation.forEach((msg, idx) => {
+    if (msg.role === 'interviewer') {
+      html += '<div style="margin-bottom:12px;padding:10px 14px;background:#f0f4ff;border-radius:8px;border-left:3px solid #667eea"><div style="font-size:11px;color:#667eea;font-weight:600;margin-bottom:4px">面试官' + (msg.questionNum ? '（第' + msg.questionNum + '题）' : '') + '</div><div style="font-size:13px;color:#333;line-height:1.6">' + msg.content + '</div></div>';
+    } else {
+      html += '<div style="margin-bottom:12px;padding:10px 14px;background:#fef3c7;border-radius:8px;border-left:3px solid #f59e0b;margin-left:20px"><div style="font-size:11px;color:#d97706;font-weight:600;margin-bottom:4px">考生回答</div><div style="font-size:13px;color:#333;line-height:1.6">' + msg.content + '</div></div>';
+    }
+  });
+  html += '</div>';
+  
+  // 操作按钮
+  html += '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding-top:15px;border-top:1px solid #e5e7eb">';
+  html += '<button onclick="startPhdAIMockInterview()" style="padding:10px 24px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🔄 再来一次</button>';
+  html += '<button onclick="exportAIMockInterviewReport()" style="padding:10px 24px;background:#22c55e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px">📥 导出报告</button>';
+  html += '<button onclick="renderPhdInterview()" style="padding:10px 24px;background:#e5e7eb;color:#374151;border:none;border-radius:8px;cursor:pointer;font-size:14px">← 返回面试首页</button>';
+  html += '</div>';
+  
+  html += '</div></div>';
+  return html;
+}
+
+// 保存AI面试记录到历史
+function saveAIMockInterviewToHistory(state) {
+  try {
+    const history = JSON.parse(localStorage.getItem('phd_ai_interview_history') || '[]');
+    const record = {
+      id: Date.now(),
+      date: new Date().toLocaleString(),
+      config: {...state.config},
+      totalScore: state.scores?.total || 0,
+      questionCount: state.questionIndex,
+      duration: Math.round((state.endTime - state.startTime) / 1000),
+      conversation: state.conversation,
+      scores: state.scores
+    };
+    history.unshift(record);
+    localStorage.setItem('phd_ai_interview_history', JSON.stringify(history.slice(0, 20)));
+  } catch (e) {
+    console.error('保存历史记录失败:', e);
+  }
+}
+
+// 导出AI面试报告
+function exportAIMockInterviewReport() {
+  const state = phdAIMockInterviewState;
+  let text = 'AI对话面试评分报告\n';
+  text += '='.repeat(50) + '\n\n';
+  text += '面试配置：\n';
+  text += '- 专业方向：' + state.config.major + '\n';
+  text += '- 目标院校：' + state.config.targetSchool + '\n';
+  text += '- 面试类型：' + state.config.interviewType + '\n';
+  text += '- 面试难度：' + state.config.difficulty + '\n';
+  text += '- 题目数量：' + state.questionIndex + '\n';
+  text += '- 面试时长：' + Math.round((state.endTime - state.startTime) / 60000) + '分钟\n\n';
+  text += '综合评分：' + (state.scores?.total || 0) + '/100分\n\n';
+  text += '各维度评分：\n';
+  Object.entries(state.scores?.dimensions || {}).forEach(([k, v]) => {
+    text += '- ' + k + '：' + v + '/20分\n';
+  });
+  text += '\nAI详细评审：\n' + (state.scores?.raw || '') + '\n\n';
+  text += '面试对话回放：\n' + '='.repeat(50) + '\n';
+  state.conversation.forEach(m => {
+    text += '\n【' + (m.role === 'interviewer' ? '面试官' : '考生') + '】\n' + m.content + '\n';
+  });
+  
+  const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'AI面试报告_' + new Date().toISOString().slice(0,10) + '.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function renderPhdInterview() {
   const area = document.getElementById('phdInterviewArea');
   if (!area) return;
@@ -40566,9 +41407,20 @@ function renderPhdInterview() {
   // AI模拟面试入口
   let html = '<div class="phd-practice-entry" style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%)">';
   html += '<div class="phd-practice-info"><strong>🎤 AI考博模拟面试</strong><span>AI面试官随机提问 + 实时作答 + 智能评分 + 改进建议</span></div>';
-  html += '<button class="phd-practice-btn" style="color:#f5576c" onclick="startPhdMockInterview()">🎯 开始模拟面试</button>';
+  html += '<button class="phd-practice-btn" style="color:#f5576c" onclick="startPhdMockInterview()">🎯 题库模拟面试</button>';
+  html += '<button class="phd-practice-btn" style="color:#fff;background:linear-gradient(135deg,#667eea,#764ba2);border:none" onclick="startPhdAIMockInterview()">🤖 AI实时对话面试（推荐）</button>';
   html += '<button class="phd-practice-btn secondary" onclick="showPhdInterviewHistory()">📋 面试记录</button>';
   html += '</div>';
+  
+  // AI实时对话面试说明
+  html += '<div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:10px;padding:15px 20px;margin-bottom:20px">';
+  html += '<div style="font-weight:600;color:#4338ca;margin-bottom:8px">🤖 AI实时对话面试模式说明</div>';
+  html += '<ul style="margin:0;padding-left:20px;font-size:13px;line-height:1.8;color:#475569">';
+  html += '<li>AI扮演真实面试官，根据你的回答进行<strong>多轮追问和深入提问</strong></li>';
+  html += '<li>支持<strong>专业知识深度挖掘</strong>，识别你的薄弱点并针对性提问</li>';
+  html += '<li>面试结束后生成<strong>综合评分报告</strong>，含5维度评分和详细改进建议</li>';
+  html += '<li>支持<strong>面试回放</strong>，可查看完整对话记录和每题反馈</li>';
+  html += '</ul></div>';
   
   html += '<div class="phd-knowledge-grid">';
   PHD_INTERVIEW.forEach((item, idx) => {
