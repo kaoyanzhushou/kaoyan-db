@@ -6793,6 +6793,7 @@ console.log('✅ 学习工具入口已加载');
           <option value="hy4-preview">腾讯混元 hy4</option>
         </select>
         <button onclick="sendPhdAIMessage()" style="background:#667eea;color:#fff;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600">发送</button>
+        <button onclick="clearPhdAIChat()" style="background:#fff;color:#6b7280;border:1px solid #d1d5db;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px" title="清空对话记录">🗑️ 清空</button>
       </div>
     </div>
 
@@ -26238,7 +26239,7 @@ if(typeof initVocab === 'function') initVocab();
 if(typeof initFlashcards === 'function') initFlashcards();
 if(typeof initQuiz === 'function') initQuiz();
 updateLoading(100, '加载完成！');
-setTimeout(hideLoading, 300);
+setTimeout(hideLoading, 100);
 }, 100);
 }
 // 加载逻辑：不依赖事件，直接调用（大文件script执行慢，事件可能已错过）
@@ -34699,6 +34700,132 @@ const PHD_KNOWLEDGE_BASE = {
       features: '华北地区体育强校，竞争温和，性价比高',
       difficulty: '中等偏下', admissionRate: '约20-30%',
       applicationTips: '适合求稳的考生，毕业去向以高校教师为主'
+    },
+    {
+      name: '华东师范大学', short: '华东师大', location: '上海', level: '985/双一流',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '体育学基础综合'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《体育概论》'],
+      features: '985顶尖师范院校，体育学实力强，上海地域优势',
+      difficulty: '高', admissionRate: '约8-12%',
+      applicationTips: '竞争激烈，重视科研能力和英语水平，建议提前联系导师'
+    },
+    {
+      name: '华中师范大学', short: '华中师大', location: '武汉', level: '211/双一流',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '运动解剖学'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '211师范院校，华中地区体育强校，竞争相对温和',
+      difficulty: '中等偏上', admissionRate: '约12-18%',
+      applicationTips: '华中地区认可度高，重视实验能力和科研基础'
+    },
+    {
+      name: '东北师范大学', short: '东北师大', location: '长春', level: '211/双一流',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '体育学基础'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《体育概论》'],
+      features: '211师范院校，东北地区体育强校，体育学博士点早',
+      difficulty: '中等', admissionRate: '约15-20%',
+      applicationTips: '东北地区认可度高，适合北方考生，竞争相对温和'
+    },
+    {
+      name: '陕西师范大学', short: '陕西师大', location: '西安', level: '211/双一流',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '运动解剖学'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '211师范院校，西北地区体育强校，历史悠久',
+      difficulty: '中等', admissionRate: '约15-22%',
+      applicationTips: '西北地区认可度高，适合西部考生，性价比不错'
+    },
+    {
+      name: '山东师范大学', short: '山东师大', location: '济南', level: '普通本科',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '体育学基础综合'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《体育概论》'],
+      features: '山东省属重点，体育学实力较强，竞争温和',
+      difficulty: '中等偏下', admissionRate: '约18-25%',
+      applicationTips: '山东省内认可度高，适合求稳考生，毕业去向以高校教师为主'
+    },
+    {
+      name: '天津师范大学', short: '天津师大', location: '天津', level: '普通本科',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '运动解剖学'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '天津市区位优势，体育学博士点，竞争相对温和',
+      difficulty: '中等', admissionRate: '约15-20%',
+      applicationTips: '天津地域优势，靠近北京，适合想在京津冀发展的考生'
+    },
+    {
+      name: '湖南师范大学', short: '湖南师大', location: '长沙', level: '211/双一流',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '体育学基础'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《体育概论》'],
+      features: '211师范院校，华南地区体育强校，体育学学科评估优秀',
+      difficulty: '中等偏上', admissionRate: '约12-18%',
+      applicationTips: '华南地区认可度高，重视科研能力，建议提前准备科研计划书'
+    },
+    {
+      name: '福建师范大学', short: '福建师大', location: '福州', level: '普通本科',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '运动解剖学'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '福建省属重点，体育学实力强，学科评估A类，竞争温和',
+      difficulty: '中等', admissionRate: '约15-22%',
+      applicationTips: '体育学学科评估优秀，性价比高，适合重视学科实力的考生'
+    },
+    {
+      name: '武汉体育学院', short: '武体', location: '武汉', level: '普通本科',
+      majors: ['运动人体科学', '体育教育训练学', '运动康复学'],
+      examSubjects: ['运动生理学', '运动解剖学'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '六大体育院校之一，运动人体科学实力强，科研平台好',
+      difficulty: '中等偏上', admissionRate: '约12-18%',
+      applicationTips: '体育专业院校，重视专业基础和科研能力，运动康复方向有特色'
+    },
+    {
+      name: '成都体育学院', short: '成体', location: '成都', level: '普通本科',
+      majors: ['运动人体科学', '体育教育训练学', '运动医学'],
+      examSubjects: ['运动生理学', '运动解剖学'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '六大体育院校之一，西南地区体育强校，运动医学有特色',
+      difficulty: '中等', admissionRate: '约15-20%',
+      applicationTips: '西南地区认可度高，运动医学方向有特色，适合西南考生'
+    },
+    {
+      name: '沈阳体育学院', short: '沈体', location: '沈阳', level: '普通本科',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '运动解剖学'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '六大体育院校之一，东北地区体育强校，冰雪运动有特色',
+      difficulty: '中等偏下', admissionRate: '约18-25%',
+      applicationTips: '东北地区认可度高，竞争相对温和，冰雪运动方向有特色'
+    },
+    {
+      name: '西安体育学院', short: '西体', location: '西安', level: '普通本科',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '运动解剖学'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '六大体育院校之一，西北地区体育强校，历史悠久',
+      difficulty: '中等偏下', admissionRate: '约18-25%',
+      applicationTips: '西北地区认可度高，竞争相对温和，适合西部考生'
+    },
+    {
+      name: '广州体育学院', short: '广体', location: '广州', level: '普通本科',
+      majors: ['运动人体科学', '体育教育训练学', '运动康复学'],
+      examSubjects: ['运动生理学', '体育学基础综合'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《体育概论》'],
+      features: '华南地区体育专业院校，粤港澳大湾区区位优势，运动康复有特色',
+      difficulty: '中等', admissionRate: '约15-20%',
+      applicationTips: '粤港澳大湾区区位优势，就业机会多，运动康复方向有特色'
+    },
+    {
+      name: '南京体育学院', short: '南体', location: '南京', level: '普通本科',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '运动解剖学'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '华东地区体育专业院校，江苏省属重点，体育学实力较强',
+      difficulty: '中等', admissionRate: '约15-20%',
+      applicationTips: '华东地区认可度高，江苏省内就业优势，竞争相对温和'
     }
   ],
   commonQuestions: {
@@ -34731,6 +34858,36 @@ const PHD_KNOWLEDGE_BASE = {
     physio: '运动生理学考博重点：肌肉收缩机制、神经调节、心血管调节、呼吸调节、能量代谢、体温调节、内分泌、运动疲劳与恢复',
     anatomy: '运动解剖学考博重点：运动系统（骨、关节、肌肉）、神经系统（中枢、周围、传导通路）、循环系统（心、血管）、呼吸系统、消化系统、泌尿系统、内分泌系统、感觉器',
     english: '考博英语难度介于六级和考研英语之间，重点考察阅读理解、翻译、写作，部分院校有听力'
+  },
+  examQuestions: {
+    physio: [
+      {type: '名词解释', q: '最大摄氧量', a: '最大摄氧量（VO2max）是指人体在进行有大量肌肉群参加的长时间剧烈运动中，当心肺功能和肌肉利用氧的能力达到本人极限水平时，单位时间内所能摄取的氧量。它是评定人体有氧工作能力的重要指标，反映了机体氧运输系统的最大工作能力。'},
+      {type: '名词解释', q: '乳酸阈', a: '乳酸阈（LT）是指在递增负荷运动中，血乳酸浓度随运动负荷的递增而增加，当运动强度达到某一负荷时，血乳酸浓度出现急剧增加的开始点。它反映了人体在渐增负荷运动中，血乳酸开始大量堆积时的最大摄氧量百分比，是评定人体有氧工作能力和运动耐力的重要指标。'},
+      {type: '简答题', q: '简述运动时心血管系统的反应', a: '运动时心血管系统发生一系列适应性反应：1.心率加快：运动开始后心率迅速增加，与运动强度呈正相关，最大心率约为220-年龄。2.每搏输出量增加：运动时静脉回心血量增加，心肌收缩力增强，每搏输出量增加，达到一定强度后趋于稳定。3.心输出量增加：心输出量=心率×每搏输出量，运动时心输出量显著增加，最大可达安静时的4-5倍。4.血压变化：收缩压升高，舒张压变化不大或轻度下降，脉压增大。5.血液重新分配：运动时骨骼肌和心脏的血流量显著增加，内脏器官血流量减少，以保证运动器官的血液供应。6.血容量变化：长时间运动时，由于出汗导致水分丢失，血容量减少，血液浓缩。'},
+      {type: '简答题', q: '简述运动性疲劳的机制', a: '运动性疲劳是指机体在运动过程中，工作能力暂时下降，经过适当休息后可以恢复的生理现象。其机制主要包括：1.能量物质耗竭学说：运动时体内ATP、CP、肌糖原等能量物质大量消耗，导致能量供应不足。2.代谢产物堆积学说：运动时乳酸、氢离子、氨等代谢产物在体内堆积，影响肌肉收缩和神经传导。3.内环境稳定性失调学说：运动时体内水、电解质、酸碱平衡等内环境稳定性遭到破坏，影响机体正常功能。4.中枢神经保护性抑制学说：运动时大脑皮层产生保护性抑制，以保护机体免受过度损伤。5.突变理论：运动性疲劳是能量消耗、肌力下降、兴奋性改变等多因素共同作用的结果，当这些因素达到临界点时，机体工作能力突然下降。'},
+      {type: '论述题', q: '论述运动对免疫系统的影响及其机制', a: '运动对免疫系统的影响具有双重性，与运动强度、持续时间、训练水平等因素密切相关。一、适度运动对免疫系统的积极影响：1.增强免疫细胞功能：适度运动可以增强NK细胞、T淋巴细胞、B淋巴细胞等免疫细胞的活性，提高机体免疫能力。2.促进免疫细胞循环：运动时免疫细胞从外周血向淋巴组织、黏膜等部位重新分布，增强免疫监视功能。3.调节免疫因子分泌：适度运动可以促进IL-2、IFN-γ等免疫因子的分泌，增强机体免疫应答。4.降低慢性炎症水平：长期适度运动可以降低体内慢性炎症水平，减少炎症相关疾病的发生风险。二、过度运动对免疫系统的负面影响：1.免疫功能抑制：长时间大强度运动后，机体免疫功能出现暂时性抑制，称为"开窗期"，持续数小时至数天，此期间机体对病原体的抵抗力下降，容易发生感染。2.免疫细胞凋亡增加：过度运动可以诱导淋巴细胞凋亡，导致免疫细胞数量减少。3.免疫因子分泌紊乱：过度运动可以导致促炎因子和抗炎因子分泌失衡，影响免疫功能。4.黏膜免疫功能下降：过度运动可以降低呼吸道、消化道等黏膜免疫功能，增加感染风险。三、影响机制：1.神经-内分泌-免疫网络调节：运动通过交感神经、下丘脑-垂体-肾上腺轴等神经内分泌途径调节免疫功能。2.氧化应激：运动时产生的活性氧可以调节免疫细胞功能，过度氧化应激则导致免疫损伤。3.能量代谢：免疫细胞功能依赖能量供应，运动时能量物质消耗影响免疫功能。4.细胞因子：运动时产生的细胞因子可以调节免疫细胞增殖、分化和功能。四、实践意义：1.合理安排运动负荷：避免过度训练，保持适度运动，增强免疫功能。2.注意恢复期营养：运动后及时补充碳水化合物、蛋白质、维生素等营养素，促进免疫功能恢复。3.注意个人卫生：在运动后"开窗期"注意个人卫生，避免接触病原体。4.保证充足睡眠：睡眠是免疫功能恢复的重要时期，保证充足睡眠有助于维持免疫功能。'}
+    ],
+    anatomy: [
+      {type: '名词解释', q: '突触', a: '突触是神经元与神经元之间或神经元与效应器细胞之间相互接触并传递信息的部位。突触由突触前膜、突触间隙和突触后膜三部分组成。根据传递方式的不同，突触可分为化学性突触和电突触两类，人体内绝大多数突触为化学性突触，通过神经递质传递信息。'},
+      {type: '名词解释', q: '运动单位', a: '运动单位是指一个脊髓前角运动神经元及其轴突所支配的全部肌纤维所组成的功能单位。它是肌肉收缩的基本功能单位。一个运动单位所包含的肌纤维数量因肌肉而异，眼肌等精细运动的肌肉运动单位较小（仅含数条肌纤维），而股四头肌等粗大运动的肌肉运动单位较大（可含上千条肌纤维）。'},
+      {type: '简答题', q: '简述肩关节的结构和运动', a: '肩关节是人体最灵活的关节，由肱骨头与肩胛骨的关节盂构成，属于球窝关节。一、结构特点：1.关节面：肱骨头大，关节盂小而浅，关节盂周缘有盂唇加深关节窝，但仍仅能容纳肱骨头的1/4-1/3。2.关节囊：关节囊薄而松弛，向上附着于关节盂周缘，向下附着于肱骨解剖颈，囊内有肱二头肌长头腱通过。3.韧带：关节囊周围有喙肱韧带、盂肱韧带、喙肩韧带等韧带加强，但相对薄弱。4.肌肉：肩关节周围有三角肌、冈上肌、冈下肌、小圆肌、肩胛下肌等肌肉及肌腱袖加强，对肩关节的稳定性起重要作用。二、运动形式：肩关节可绕三个运动轴进行运动：1.绕冠状轴：屈、伸运动，屈伸范围约180度。2.绕矢状轴：内收、外展运动，外展范围约180度。3.绕垂直轴：旋内、旋外运动，旋转范围约90-120度。此外，肩关节还可进行环转运动。由于肩关节结构灵活，稳定性相对较差，是人体最容易发生脱位的关节之一。'},
+      {type: '简答题', q: '简述脑脊液的产生和循环途径', a: '脑脊液是充满于脑室系统、脊髓中央管和蛛网膜下腔内的无色透明液体，对中枢神经系统起缓冲、保护、营养、运输代谢产物和维持颅内压等作用。一、产生：脑脊液主要由脑室脉络丛产生，少量由室管膜上皮和毛细血管产生。正常成人脑脊液总量约150ml，每日产生约400-500ml。二、循环途径：左、右侧脑室脉络丛产生的脑脊液→室间孔→第三脑室（与第三脑室脉络丛产生的脑脊液汇合）→中脑水管→第四脑室（与第四脑室脉络丛产生的脑脊液汇合）→第四脑室正中孔和外侧孔→蛛网膜下腔→蛛网膜粒→上矢状窦→颈内静脉→血液循环。三、功能：1.缓冲保护：脑脊液可以缓冲外力，减少脑和脊髓的震荡。2.营养运输：为中枢神经系统提供营养物质，运输代谢产物。3.维持颅内压：脑脊液的产生和吸收保持动态平衡，维持正常颅内压。4.调节中枢神经系统内环境：维持中枢神经系统内水、电解质和酸碱平衡。脑脊液循环障碍可导致脑积水和颅内压升高。'},
+      {type: '论述题', q: '论述膝关节的结构、运动及其临床意义', a: '膝关节是人体最大、最复杂的关节，由股骨下端、胫骨上端和髌骨构成，属于滑车关节。一、结构特点：1.关节面：股骨内外侧髁与胫骨内外侧髁关节面相对，关节面之间有半月板加深关节窝。髌骨与股骨髌面相关节。2.关节囊：关节囊薄而松弛，附着于各关节面周缘，囊内有滑膜覆盖，滑膜形成滑膜皱襞和滑膜囊。3.半月板：内侧半月板较大，呈"C"形；外侧半月板较小，呈"O"形。半月板可以加深关节窝、缓冲震荡、分布滑液、调节关节内压力。4.韧带：膝关节有丰富的韧带加强，包括囊内韧带（前交叉韧带、后交叉韧带）和囊外韧带（胫侧副韧带、腓侧副韧带、髌韧带、腘斜韧带等）。5.滑膜囊：膝关节周围有多个滑膜囊，如髌上囊、髌下囊、鹅足囊等，减少运动时的摩擦。二、运动形式：膝关节主要绕冠状轴进行屈、伸运动，屈伸范围约130-150度。在屈膝状态下，还可绕垂直轴进行轻度的旋内、旋外运动。三、临床意义：1.膝关节损伤：由于膝关节结构复杂、负重较大，是运动损伤中最容易受累的关节。常见损伤包括半月板损伤、交叉韧带损伤、侧副韧带损伤、髌骨脱位等。2.半月板损伤：半月板损伤多见于足球、篮球等运动中，表现为关节疼痛、肿胀、弹响、交锁等症状。3.交叉韧带损伤：前交叉韧带损伤多见于运动中急停、变向时，后交叉韧带损伤多见于膝关节屈曲位受到前方暴力。交叉韧带损伤可导致膝关节不稳定。4.膝关节骨性关节炎：膝关节是骨性关节炎最好发的关节之一，多见于中老年人，表现为关节疼痛、肿胀、僵硬、活动受限等。5.临床检查：膝关节常用的临床检查方法包括浮髌试验、麦氏征、侧方应力试验、抽屉试验、Lachman试验等，用于判断关节内积液、半月板损伤、韧带损伤等。6.康复治疗：膝关节损伤后的康复治疗包括肌力训练、关节活动度训练、平衡协调训练、功能性训练等，对恢复膝关节功能具有重要意义。'}
+    ]
+  },
+  tutorInfo: {
+    tips: '考博导师选择要点：1.研究方向匹配：选择与自己研究兴趣和背景匹配的导师。2.学术水平：了解导师的学术成果、科研项目、学术影响力。3.招生情况：了解导师近年招生人数、是否有博士招生名额。4.培养方式：了解导师的培养风格、对学生的要求、毕业要求。5.就业去向：了解导师学生的毕业去向和就业情况。6.提前联系：建议提前3-6个月联系导师，发送套磁邮件和个人简历。',
+    howToContact: '联系导师的方法：1.查找导师信息：通过学校官网、知网、Web of Science等查找导师的研究方向、近年论文、联系方式。2.准备材料：准备个人简历、成绩单、科研成果、研究兴趣陈述等材料。3.发送邮件：邮件标题简洁明了，正文包括自我介绍、研究兴趣、为什么选择这位导师、附上简历。4.注意事项：不要同时联系同一院校的多位导师；邮件要简洁，不要过长；如果一周内没有回复，可以再发一封或电话联系；联系导师前要阅读导师近年论文，了解其研究方向。'
+  },
+  timeline: {
+    '3-6月': '前期准备阶段：确定报考院校和专业，收集招生简章和参考书目，开始基础复习，联系导师。',
+    '7-8月': '强化复习阶段：系统复习专业课，完成第一轮复习，开始英语复习，准备科研计划书初稿。',
+    '9-10月': '招生简章发布：各院校发布招生简章，关注报名时间和材料要求，完成专业课第二轮复习，完善科研计划书。',
+    '11-12月': '报名阶段：完成网上报名和材料提交，邮寄纸质材料，进行冲刺复习，模拟面试。',
+    '1-2月': '初试/材料审核：部分院校进行初试，申请-考核制院校进行材料审核，公布进入复试名单。',
+    '3-4月': '复试阶段：各院校进行复试（笔试+面试），公布拟录取名单，进行调剂。',
+    '5-6月': '录取阶段：公布正式录取名单，发放录取通知书，办理档案迁移等手续。',
+    '7-8月': '入学准备：准备入学材料，办理户口迁移，提前联系导师，开始博士阶段准备。'
   }
 };
 
@@ -34899,50 +35056,113 @@ function searchPhdKnowledge(question) {
   const results = [];
   const q = question.toLowerCase();
   
-  // 检索院校信息
+  // 同义词扩展
+  const synonyms = {
+    '考博': ['博士', '博士生', '博士研究生', '读博', 'phd', 'doctor'],
+    '上岸': ['录取', '考上', '成功', '通过'],
+    '报名': ['报考', '申请', '注册', '网报'],
+    '复试': ['面试', '考核', '面试考核'],
+    '套磁': ['联系导师', '邮件', '陶瓷'],
+    '专业课': ['业务课', '专业基础', '专业综合'],
+    '英语': ['外语', 'english', '英文'],
+    '运动人体科学': ['运动人体', '人体科学', '运动科学'],
+    '运动康复': ['康复', '运动康复学'],
+    '复习': ['备考', '准备', '学习'],
+    '真题': ['考题', '试题', '历年真题'],
+    '参考书': ['参考书目', '教材', '课本'],
+    '招生简章': ['招生目录', '招生信息', '招生公告']
+  };
+  
+  // 扩展查询词
+  let expandedWords = [q];
+  for (const [key, values] of Object.entries(synonyms)) {
+    if (q.includes(key)) {
+      expandedWords = expandedWords.concat(values);
+    }
+  }
+  
+  // 计算匹配分数
+  function calcScore(text, words) {
+    let score = 0;
+    const lowerText = text.toLowerCase();
+    words.forEach(w => {
+      if (lowerText.includes(w.toLowerCase())) {
+        score += w.length > 2 ? 2 : 1;
+      }
+    });
+    return score;
+  }
+  
+  // 问题分类
+  let questionType = 'general';
+  if (q.includes('院校') || q.includes('学校') || q.includes('哪个') || q.includes('推荐')) questionType = 'school';
+  if (q.includes('报名') || q.includes('材料') || q.includes('流程') || q.includes('时间')) questionType = 'application';
+  if (q.includes('面试') || q.includes('复试') || q.includes('考核')) questionType = 'interview';
+  if (q.includes('科研') || q.includes('计划书') || q.includes('proposal') || q.includes('选题')) questionType = 'research';
+  if (q.includes('导师') || q.includes('套磁') || q.includes('联系')) questionType = 'tutor';
+  if (q.includes('生理') || q.includes('解剖') || q.includes('英语') || q.includes('真题') || q.includes('重点')) questionType = 'major';
+  if (q.includes('时间线') || q.includes('时间安排') || q.includes('几月份')) questionType = 'timeline';
+  
+  // 检索院校信息（带分数排序）
+  const schoolResults = [];
   PHD_KNOWLEDGE_BASE.schools.forEach(school => {
-    if (q.includes(school.name) || q.includes(school.short) || 
-        school.majors.some(m => q.includes(m.toLowerCase()))) {
-      results.push({
+    const schoolText = school.name + school.short + school.location + school.majors.join('') + school.features + school.examSubjects.join('');
+    const score = calcScore(schoolText, expandedWords);
+    if (score > 0 || questionType === 'school') {
+      schoolResults.push({
         type: '院校信息',
         title: school.name,
-        content: `${school.name}（${school.short}）位于${school.location}，${school.level}。
-招生专业：${school.majors.join('、')}
-考试科目：${school.examSubjects.join('、')}
-参考书目：${school.referenceBooks.join('、')}
-特点：${school.features}
-难度：${school.difficulty}，报录比约${school.admissionRate}
-申请建议：${school.applicationTips}`
+        score: score + (questionType === 'school' ? 3 : 0),
+        content: school.name + '（' + school.short + '）位于' + school.location + '，' + school.level + '。\n招生专业：' + school.majors.join('、') + '\n考试科目：' + school.examSubjects.join('、') + '\n参考书目：' + school.referenceBooks.join('、') + '\n特点：' + school.features + '\n难度：' + school.difficulty + '，报录比约' + school.admissionRate + '\n申请建议：' + school.applicationTips
       });
     }
   });
+  schoolResults.sort((a, b) => b.score - a.score);
+  results.push(...schoolResults.slice(0, 2));
   
-  // 检索常见问题
-  if (q.includes('报名') || q.includes('材料') || q.includes('流程')) {
-    results.push({ type: '报名流程', title: '考博报名常见问题', content: PHD_KNOWLEDGE_BASE.commonQuestions.application.join('\n\n') });
+  // 检索常见问题（按问题类型）
+  if (questionType === 'application' || q.includes('报名') || q.includes('材料') || q.includes('流程')) {
+    results.push({ type: '报名流程', title: '考博报名常见问题', score: 5, content: PHD_KNOWLEDGE_BASE.commonQuestions.application.join('\n\n') });
   }
-  if (q.includes('面试') || q.includes('复试')) {
-    results.push({ type: '面试准备', title: '考博面试常见问题', content: PHD_KNOWLEDGE_BASE.commonQuestions.interview.join('\n\n') });
+  if (questionType === 'interview' || q.includes('面试') || q.includes('复试')) {
+    results.push({ type: '面试准备', title: '考博面试常见问题', score: 5, content: PHD_KNOWLEDGE_BASE.commonQuestions.interview.join('\n\n') });
   }
-  if (q.includes('科研') || q.includes('计划书') || q.includes('proposal')) {
-    results.push({ type: '科研计划书', title: '科研计划书撰写要点', content: PHD_KNOWLEDGE_BASE.commonQuestions.research.join('\n\n') });
+  if (questionType === 'research' || q.includes('科研') || q.includes('计划书') || q.includes('proposal')) {
+    results.push({ type: '科研计划书', title: '科研计划书撰写要点', score: 5, content: PHD_KNOWLEDGE_BASE.commonQuestions.research.join('\n\n') });
   }
-  if (q.includes('导师') || q.includes('套磁') || q.includes('联系')) {
-    results.push({ type: '导师选择', title: '导师选择与套磁技巧', content: PHD_KNOWLEDGE_BASE.commonQuestions.tutor.join('\n\n') });
+  if (questionType === 'tutor' || q.includes('导师') || q.includes('套磁') || q.includes('联系')) {
+    results.push({ type: '导师选择', title: '导师选择与套磁技巧', score: 5, content: PHD_KNOWLEDGE_BASE.commonQuestions.tutor.join('\n\n') + '\n\n' + PHD_KNOWLEDGE_BASE.tutorInfo.tips + '\n\n' + PHD_KNOWLEDGE_BASE.tutorInfo.howToContact });
   }
   
-  // 检索专业课重点
+  // 检索招生简章时间线
+  if (questionType === 'timeline' || q.includes('时间') || q.includes('月份') || q.includes('几月份')) {
+    const timelineContent = Object.entries(PHD_KNOWLEDGE_BASE.timeline).map(([time, desc]) => time + '：' + desc).join('\n\n');
+    results.push({ type: '时间规划', title: '考博全年时间规划', score: 5, content: timelineContent });
+  }
+  
+  // 检索专业课重点和真题
   if (q.includes('生理') || q.includes('physio')) {
-    results.push({ type: '专业课重点', title: '运动生理学考博重点', content: PHD_KNOWLEDGE_BASE.keyPoints.physio });
+    results.push({ type: '专业课重点', title: '运动生理学考博重点', score: 4, content: PHD_KNOWLEDGE_BASE.keyPoints.physio });
+    const physioQuestions = PHD_KNOWLEDGE_BASE.examQuestions.physio.filter(qe => calcScore(qe.q + qe.a, expandedWords) > 0 || q.includes('真题') || q.includes('题'));
+    physioQuestions.slice(0, 2).forEach(qe => {
+      results.push({ type: '生理学真题', title: qe.type + '：' + qe.q, score: 4, content: '题目：' + qe.q + '\n\n参考答案：' + qe.a });
+    });
   }
   if (q.includes('解剖') || q.includes('anatomy')) {
-    results.push({ type: '专业课重点', title: '运动解剖学考博重点', content: PHD_KNOWLEDGE_BASE.keyPoints.anatomy });
+    results.push({ type: '专业课重点', title: '运动解剖学考博重点', score: 4, content: PHD_KNOWLEDGE_BASE.keyPoints.anatomy });
+    const anatomyQuestions = PHD_KNOWLEDGE_BASE.examQuestions.anatomy.filter(qe => calcScore(qe.q + qe.a, expandedWords) > 0 || q.includes('真题') || q.includes('题'));
+    anatomyQuestions.slice(0, 2).forEach(qe => {
+      results.push({ type: '解剖学真题', title: qe.type + '：' + qe.q, score: 4, content: '题目：' + qe.q + '\n\n参考答案：' + qe.a });
+    });
   }
   if (q.includes('英语') || q.includes('english')) {
-    results.push({ type: '英语备考', title: '考博英语备考要点', content: PHD_KNOWLEDGE_BASE.keyPoints.english });
+    results.push({ type: '英语备考', title: '考博英语备考要点', score: 4, content: PHD_KNOWLEDGE_BASE.keyPoints.english });
   }
   
-  return results;
+  // 按分数排序，只返回Top5
+  results.sort((a, b) => (b.score || 0) - (a.score || 0));
+  return results.slice(0, 5);
+}
 }
 
 function addPhdAIMessage(role, content, isKnowledge = false) {
@@ -34964,7 +35184,13 @@ function addPhdAIMessage(role, content, isKnowledge = false) {
   container.scrollTop = container.scrollHeight;
 }
 
+// 流式输出状态
+let phdStreaming = false;
+let phdStreamTimer = null;
+
 async function sendPhdAIMessage() {
+  if (phdStreaming) return; // 防止重复发送
+  
   const input = document.getElementById('phdAIInput');
   const question = input.value.trim();
   if (!question) return;
@@ -34973,20 +35199,22 @@ async function sendPhdAIMessage() {
   addPhdAIMessage('user', question);
   phdAIChatHistory.push({ role: 'user', content: question });
   
+  // 限制历史消息数量（最近8轮，避免token过长）
+  if (phdAIChatHistory.length > 16) {
+    phdAIChatHistory = phdAIChatHistory.slice(-16);
+  }
+  
   // 先检索知识库
   const knowledgeResults = searchPhdKnowledge(question);
   
   if (knowledgeResults.length > 0) {
     knowledgeResults.forEach(r => {
-      addPhdAIMessage('assistant', `【${r.type}】${r.title}
-
-${r.content}`, true);
-      phdAIChatHistory.push({ role: 'assistant', content: r.content });
+      addPhdAIMessage('assistant', '【' + r.type + '】' + r.title + '\n\n' + r.content, true);
     });
   }
   
   // 再调用AI生成更全面的回答
-  addPhdAIMessage('assistant', '🤔 正在为你生成更详细的解答...');
+  const loadingMsg = addPhdAIMessageReturn('assistant', '🤔 正在思考中，请稍候...');
   
   try {
     const model = document.getElementById('phdAIModelSelect').value;
@@ -34994,49 +35222,170 @@ ${r.content}`, true);
       ? '\n\n【知识库参考资料】\n' + knowledgeResults.map(r => r.content).join('\n\n')
       : '';
     
-    // 优化后的prompt：明确角色、回答深度、格式要求
-    const systemPrompt = `你是一位资深的体育考博咨询专家，拥有10年以上体育学/运动人体科学博士研究生考试辅导经验，熟悉全国各体育院校和师范大学的考博政策、考试科目、参考书目、导师情况和录取标准。
-
-【你的任务】
-全面、深入、专业地回答用户的体育考博相关问题，帮助用户制定科学的备考策略。
-
-【回答要求】
-1. 回答要有深度，不能泛泛而谈，要给出具体、可操作的建议
-2. 回答长度至少300字，复杂问题500-800字
-3. **必须使用标准Markdown格式**：
-   - 大标题用 ## 标题，小标题用 ### 标题
-   - 无序列表用 - 项目，有序列表用 1. 项目
-   - 重点内容用 **加粗**
-   - 不要使用中文编号（一、二、三、（1）（2）等），必须用Markdown格式
-4. 先给出核心结论，再展开详细分析
-5. 结合知识库资料和你的专业知识，进行综合分析和扩展
-6. 如果涉及具体院校，要给出该校的具体情况（考试科目、参考书目、难度、报录比等）
-7. 最后给出行动建议（用户下一步应该做什么）
-
-【知识库参考资料】
-以下是系统检索到的相关知识库资料，请优先参考并结合你的专业知识进行综合回答：
-${knowledgeContext}
-
-【重要提醒】
-- 不要只重复知识库内容，要在知识库基础上进行深入分析和扩展
-- 如果知识库信息不完整，请用你的专业知识补充
-- 回答要客观、务实，不要夸大或误导
-- 使用中文回答，专业术语要准确`;
+    // 构建多轮对话上下文
+    const recentHistory = phdAIChatHistory.slice(-10);
+    const historyContext = recentHistory.map(msg => {
+      return msg.role === 'user' ? '用户：' + msg.content : '助手：' + msg.content;
+    }).join('\n');
+    
+    // 优化后的prompt：明确角色、回答深度、格式要求、多轮上下文
+    const systemPrompt = '你是一位资深的体育考博咨询专家，拥有10年以上体育学/运动人体科学博士研究生考试辅导经验，熟悉全国各体育院校和师范大学的考博政策、考试科目、参考书目、导师情况和录取标准。\n\n【你的任务】\n全面、深入、专业地回答用户的体育考博相关问题，帮助用户制定科学的备考策略。\n\n【回答要求】\n1. 回答要有深度，不能泛泛而谈，要给出具体、可操作的建议\n2. 回答长度至少300字，复杂问题500-800字\n3. 必须使用标准Markdown格式：大标题用 ## 标题，小标题用 ### 标题，无序列表用 - 项目，有序列表用 1. 项目，重点内容用 **加粗**，不要使用中文编号（一、二、三、（1）（2）等）\n4. 先给出核心结论，再展开详细分析\n5. 结合知识库资料和你的专业知识，进行综合分析和扩展\n6. 如果涉及具体院校，要给出该校的具体情况（考试科目、参考书目、难度、报录比等）\n7. 最后给出行动建议（用户下一步应该做什么）\n\n【对话历史】\n以下是之前的对话内容，请结合上下文回答当前问题：\n' + historyContext + '\n\n【知识库参考资料】\n以下是系统检索到的相关知识库资料，请优先参考并结合你的专业知识进行综合回答：\n' + knowledgeContext + '\n\n【重要提醒】\n- 不要只重复知识库内容，要在知识库基础上进行深入分析和扩展\n- 如果知识库信息不完整，请用你的专业知识补充\n- 回答要客观、务实，不要夸大或误导\n- 使用中文回答，专业术语要准确\n- 注意这是考博（博士研究生招生）咨询，不是考研';
     
     const response = await callDeepSeekAPI(systemPrompt, question, 3000, model);
     
-    // 移除最后一条"正在生成"消息
+    // 移除加载消息
     const container = document.getElementById('phdAIChatMessages');
-    container.removeChild(container.lastChild);
+    if (loadingMsg && loadingMsg.parentNode) {
+      container.removeChild(loadingMsg);
+    }
     
-    addPhdAIMessage('assistant', response);
+    // 流式输出（打字机效果）
+    await streamPhdAIResponse(response);
+    
     phdAIChatHistory.push({ role: 'assistant', content: response });
+    
+    // 显示快速追问建议
+    showPhdQuickFollowups(question, response);
     
   } catch (error) {
     const container = document.getElementById('phdAIChatMessages');
-    container.removeChild(container.lastChild);
+    if (loadingMsg && loadingMsg.parentNode) {
+      container.removeChild(loadingMsg);
+    }
     addPhdAIMessage('assistant', '❌ 抱歉，AI回答生成失败，请稍后重试。错误信息：' + error.message);
   }
+}
+
+// 返回消息元素的add函数
+function addPhdAIMessageReturn(role, content, isKnowledge = false) {
+  const container = document.getElementById('phdAIChatMessages');
+  const msgDiv = document.createElement('div');
+  msgDiv.style.marginBottom = '12px';
+  
+  if (role === 'user') {
+    msgDiv.style.textAlign = 'right';
+    msgDiv.innerHTML = '<div style="display:inline-block;background:#667eea;color:#fff;padding:10px 16px;border-radius:12px 12px 0 12px;max-width:80%;text-align:left;font-size:14px;white-space:pre-wrap">' + content + '</div>';
+  } else {
+    let knowledgeTag = isKnowledge ? '<div style="font-size:11px;color:#667eea;margin-bottom:4px;font-weight:600">📚 来自考博知识库</div>' : '';
+    let renderedContent = isKnowledge ? content.replace(/\n/g, '<br>') : renderMarkdown(content);
+    msgDiv.innerHTML = knowledgeTag + '<div style="display:inline-block;background:#fff;border:1px solid #e5e7eb;padding:12px 18px;border-radius:12px 12px 12px 0;max-width:92%;font-size:14px;color:#374151;line-height:1.7">' + renderedContent + '</div>';
+  }
+  
+  container.appendChild(msgDiv);
+  container.scrollTop = container.scrollHeight;
+  return msgDiv;
+}
+
+// 流式输出函数
+async function streamPhdAIResponse(fullText) {
+  phdStreaming = true;
+  const container = document.getElementById('phdAIChatMessages');
+  const msgDiv = document.createElement('div');
+  msgDiv.style.marginBottom = '12px';
+  const contentDiv = document.createElement('div');
+  contentDiv.style.cssText = 'display:inline-block;background:#fff;border:1px solid #e5e7eb;padding:12px 18px;border-radius:12px 12px 12px 0;max-width:92%;font-size:14px;color:#374151;line-height:1.7';
+  msgDiv.appendChild(contentDiv);
+  container.appendChild(msgDiv);
+  
+  // 光标动画
+  const cursor = document.createElement('span');
+  cursor.style.cssText = 'display:inline-block;width:2px;height:16px;background:#667eea;margin-left:2px;vertical-align:middle;animation:blink 1s infinite';
+  contentDiv.appendChild(cursor);
+  
+  // 添加闪烁动画样式（如果不存在）
+  if (!document.getElementById('streamBlinkStyle')) {
+    const style = document.createElement('style');
+    style.id = 'streamBlinkStyle';
+    style.textContent = '@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}';
+    document.head.appendChild(style);
+  }
+  
+  // 逐字显示
+  const charsPerTick = 3; // 每次显示3个字符，加快速度
+  let currentIndex = 0;
+  
+  await new Promise(resolve => {
+    phdStreamTimer = setInterval(() => {
+      if (currentIndex >= fullText.length) {
+        clearInterval(phdStreamTimer);
+        phdStreamTimer = null;
+        phdStreaming = false;
+        // 移除光标
+        if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+        resolve();
+        return;
+      }
+      
+      currentIndex = Math.min(currentIndex + charsPerTick, fullText.length);
+      const partialText = fullText.substring(0, currentIndex);
+      contentDiv.innerHTML = renderMarkdown(partialText);
+      contentDiv.appendChild(cursor); // 重新添加光标
+      container.scrollTop = container.scrollHeight;
+    }, 30); // 30ms间隔
+  });
+}
+
+// 显示快速追问建议
+function showPhdQuickFollowups(question, answer) {
+  const container = document.getElementById('phdAIChatMessages');
+  
+  // 根据问题和回答生成追问建议
+  const followups = [];
+  
+  // 院校相关追问
+  if (question.includes('院校') || question.includes('学校') || question.includes('推荐') || answer.includes('院校')) {
+    followups.push('这些院校的考试科目有什么区别？');
+    followups.push('如何选择适合自己的导师？');
+    followups.push('考博报名需要准备哪些材料？');
+  }
+  
+  // 专业课相关追问
+  if (question.includes('生理') || question.includes('解剖') || question.includes('专业课') || answer.includes('运动生理') || answer.includes('运动解剖')) {
+    followups.push('运动生理学有哪些重点章节？');
+    followups.push('如何高效复习运动解剖学？');
+    followups.push('能给我一些考博真题吗？');
+  }
+  
+  // 面试相关追问
+  if (question.includes('面试') || question.includes('复试') || answer.includes('面试')) {
+    followups.push('面试常见问题有哪些？');
+    followups.push('如何准备科研计划书？');
+    followups.push('面试时有什么注意事项？');
+  }
+  
+  // 通用追问
+  followups.push('考博全年时间规划是怎样的？');
+  followups.push('如何提高考博英语成绩？');
+  
+  // 去重并只取前4个
+  const uniqueFollowups = [...new Set(followups)].slice(0, 4);
+  
+  if (uniqueFollowups.length > 0) {
+    const followupDiv = document.createElement('div');
+    followupDiv.style.cssText = 'margin:8px 0 16px;padding:12px;background:#f0f4ff;border-radius:12px;border-left:3px solid #667eea';
+    
+    let html = '<div style="font-size:12px;color:#667eea;font-weight:600;margin-bottom:8px">💡 你可能还想问：</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+    uniqueFollowups.forEach(f => {
+      html += '<button onclick="askPhdAIQuick(\'' + f.replace(/'/g, "\\'") + '\')" style="background:#fff;border:1px solid #c7d2fe;color:#4f46e5;padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background=#eef2ff" onmouseout="this.style.background=#fff">' + f + '</button>';
+    });
+    html += '</div>';
+    
+    followupDiv.innerHTML = html;
+    container.appendChild(followupDiv);
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+// 清空对话
+function clearPhdAIChat() {
+  if (confirm('确定要清空所有对话记录吗？')) {
+    const container = document.getElementById('phdAIChatMessages');
+    container.innerHTML = '';
+    phdAIChatHistory = [];
+    addPhdAIMessage('assistant', '对话已清空，有什么体育考博问题都可以问我！');
+  }
+}
 }
 
 function askPhdAIQuick(question) {
