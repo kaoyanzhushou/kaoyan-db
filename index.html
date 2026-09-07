@@ -35914,17 +35914,28 @@ function resetPhdTimeline() {
 
 
 }
-// ========== 科研计划书AI辅助（简化版） ==========
-const PHD_PROPOSAL_FIELDS = ["运动生理学", "运动解剖学", "运动生物化学", "运动康复学"];
+// ========== 科研计划书AI辅助（完善版） ==========
+const PHD_PROPOSAL_FIELDS = ["运动生理学", "运动解剖学", "运动生物化学", "运动康复学", "体育教育训练学", "运动人体科学"];
 const PHD_PROPOSAL_TOPICS = {
-  "运动生理学": ["运动与骨骼肌适应", "运动与心血管健康", "运动与代谢疾病", "运动与免疫调节", "运动性疲劳机制", "低氧训练生理机制"],
-  "运动解剖学": ["关节软骨退变机制", "骨骼肌损伤修复", "肌腱韧带生物力学", "脊柱生物力学", "膝关节运动损伤", "肩关节运动学"],
-  "运动生物化学": ["运动与线粒体生物发生", "运动与能量代谢", "运动与氧化应激", "运动与细胞自噬", "运动与表观遗传调控", "运动与肠道菌群代谢"],
-  "运动康复学": ["运动损伤康复机制", "运动与慢性疼痛", "运动与神经康复", "运动与骨关节康复", "运动与心肺康复", "运动康复处方优化"]
+  "运动生理学": ["运动与骨骼肌适应", "运动与心血管健康", "运动与代谢疾病", "运动与免疫调节", "运动性疲劳机制", "低氧训练生理机制", "运动与神经可塑性", "运动与内分泌适应"],
+  "运动解剖学": ["关节软骨退变机制", "骨骼肌损伤修复", "肌腱韧带生物力学", "脊柱生物力学", "膝关节运动损伤", "肩关节运动学", "足踝生物力学", "周围神经损伤与再生"],
+  "运动生物化学": ["运动与线粒体生物发生", "运动与能量代谢", "运动与氧化应激", "运动与细胞自噬", "运动与表观遗传调控", "运动与肠道菌群代谢", "运动与脂质代谢", "运动与糖代谢"],
+  "运动康复学": ["运动损伤康复机制", "运动与慢性疼痛", "运动与神经康复", "运动与骨关节康复", "运动与心肺康复", "运动与老年康复", "运动与残疾康复", "运动康复处方优化"],
+  "体育教育训练学": ["运动训练理论与方法", "体能训练理论与实践", "运动技术诊断与优化", "青少年运动训练", "运动训练负荷监控", "运动表现提升机制"],
+  "运动人体科学": ["运动与健康促进", "运动与慢性病干预", "运动与体质健康", "运动与衰老", "运动与认知功能", "运动与心理健康"]
+};
+
+const PHD_PROPOSAL_METHODS = {
+  "运动生理学": ["动物实验", "人体试验", "细胞培养", "分子生物学技术", "免疫组化", "Western Blot", "qPCR", "流式细胞术", "代谢组学", "转录组学", "在体微透析", "遥测技术"],
+  "运动解剖学": ["解剖学观察", "生物力学测试", "组织学分析", "影像学检查", "免疫荧光", "扫描电镜", "透射电镜", "有限元分析", "运动捕捉", "步态分析", "肌电分析", "压力分布测试"],
+  "运动生物化学": ["代谢组学分析", "蛋白质组学", "转录组学", "酶活性测定", "代谢通量分析", "线粒体呼吸测定", "ROS检测", "ChIP-seq", "ATAC-seq", "16S rRNA测序", "高效液相色谱", "质谱分析"],
+  "运动康复学": ["临床随机对照试验", "康复评定", "表面肌电", "运动捕捉", "平衡测试", "步态分析", "疼痛评估", "功能评分", "影像学评估", "生活质量量表", "经颅磁刺激", "虚拟现实康复"],
+  "体育教育训练学": ["文献研究法", "实验法", "调查法", "测试法", "数理统计法", "录像分析法", "专家访谈法", "个案研究法", "比较研究法", "逻辑分析法"],
+  "运动人体科学": ["流行病学调查", "队列研究", "横断面研究", "病例对照研究", "干预试验", "体质测试", "问卷调查", "生化指标检测", "免疫指标检测", "认知功能评估", "心理健康量表"]
 };
 
 function renderPhdProposal() {
-  let contentArea = document.getElementById('phdContent-timeline');
+  let contentArea = document.getElementById('phdContent-proposal');
   const tabPhd = document.getElementById('tab-phd');
   if (!contentArea || !contentArea.parentElement || contentArea.parentElement.id !== 'tab-phd') {
     if (contentArea && contentArea.parentElement) contentArea.remove();
@@ -35938,138 +35949,546 @@ function renderPhdProposal() {
   const area = document.getElementById('phdProposalArea');
   if (!area) return;
   
-  let html = '<div style="margin-bottom:20px;padding:15px;background:#fff3e0;border-radius:8px;border-left:4px solid #ff9800">';
-  html += '<strong style="color:#e65100">科研计划书AI辅助生成</strong>';
-  html += '<span style="margin-left:10px;font-size:13px;color:#666">选择研究领域和方向，AI自动生成科研计划书框架</span>';
-  html += '</div>';
+  let html = '';
   
+  // 顶部说明
+  html += '<div style="margin-bottom:20px;padding:15px;background:#fff3e0;border-radius:8px;border-left:4px solid #ff9800">';
+  html += '<strong style="color:#e65100;font-size:16px">科研计划书AI辅助生成系统</strong>';
+  html += '<div style="margin-top:8px;font-size:13px;color:#666;line-height:1.6">';
+  html += '填写研究信息，AI自动生成完整科研计划书框架。支持在线编辑、多版本保存、章节导航、一键导出。';
+  html += '</div></div>';
+  
+  // 输入区域
   html += '<div style="background:white;border:1px solid #e0e0e0;border-radius:10px;padding:20px;margin-bottom:20px">';
-  html += '<div style="font-weight:600;margin-bottom:15px;color:#333">AI生成设置</div>';
+  html += '<div style="font-weight:600;font-size:15px;margin-bottom:15px;color:#333;border-bottom:2px solid #ff9800;padding-bottom:8px">研究信息填写</div>';
   
-  html += '<div style="margin-bottom:15px"><label style="display:block;font-size:14px;font-weight:600;margin-bottom:8px">研究领域：</label>';
-  html += '<select id="proposalField" class="phd-quiz-textarea" style="min-height:auto;padding:10px" onchange="updateProposalTopics()">';
+  // 第一行：领域+方向
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px">';
+  html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究领域 <span style="color:red">*</span></label>';
+  html += '<select id="propField" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px" onchange="updatePropTopics()">';
   PHD_PROPOSAL_FIELDS.forEach(function(f) { html += '<option value="' + f + '">' + f + '</option>'; });
   html += '</select></div>';
   
-  html += '<div style="margin-bottom:15px"><label style="display:block;font-size:14px;font-weight:600;margin-bottom:8px">研究方向：</label>';
-  html += '<select id="proposalTopic" class="phd-quiz-textarea" style="min-height:auto;padding:10px"></select></div>';
+  html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究方向 <span style="color:red">*</span></label>';
+  html += '<select id="propTopic" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px"></select></div>';
+  html += '</div>';
   
-  html += '<div style="margin-bottom:15px"><label style="display:block;font-size:14px;font-weight:600;margin-bottom:8px">研究方法：</label>';
-  html += '<input type="text" id="proposalMethods" class="phd-quiz-textarea" style="min-height:auto;padding:10px" value="文献研究法, 实验法, 数据统计法"></div>';
+  // 研究题目
+  html += '<div style="margin-bottom:15px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究题目（可选，不填则AI自动生成）</label>';
+  html += '<input type="text" id="propTitle" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px" placeholder="例如：有氧运动对2型糖尿病大鼠骨骼肌胰岛素信号通路的影响及机制研究"></div>';
   
-  html += '<div class="phd-quiz-actions" style="justify-content:center">';
-  html += '<button class="phd-quiz-btn primary" onclick="generatePhdProposal()">AI生成科研计划书</button>';
+  // 研究对象
+  html += '<div style="margin-bottom:15px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究对象/样本</label>';
+  html += '<input type="text" id="propSubject" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px" placeholder="例如：SPF级C57BL/6雄性小鼠，8周龄，体重20-25g，随机分为对照组、模型组、运动干预组，每组15只"></div>';
+  
+  // 研究方法
+  html += '<div style="margin-bottom:15px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究方法（用逗号分隔，可点击下方推荐方法快速添加）</label>';
+  html += '<input type="text" id="propMethods" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px" placeholder="例如：动物实验, Western Blot, qPCR, 免疫组化, 流式细胞术">';
+  html += '<div id="propMethodTags" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div></div>';
+  
+  // 第三行：周期+模板风格
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px">';
+  html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究周期</label>';
+  html += '<select id="propDuration" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px">';
+  html += '<option value="24个月">24个月（标准）</option>';
+  html += '<option value="36个月">36个月（详细）</option>';
+  html += '<option value="18个月">18个月（紧凑）</option>';
+  html += '</select></div>';
+  
+  html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">内容详细程度</label>';
+  html += '<select id="propStyle" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px">';
+  html += '<option value="detailed">详细型（推荐，内容充实）</option>';
+  html += '<option value="standard">标准型（框架+要点）</option>';
+  html += '<option value="concise">简洁型（仅框架）</option>';
+  html += '</select></div>';
+  html += '</div>';
+  
+  // 按钮组
+  html += '<div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap">';
+  html += '<button class="phd-quiz-btn primary" onclick="generatePropProposal()" style="padding:10px 24px;font-size:14px">AI生成科研计划书</button>';
+  html += '<button class="phd-quiz-btn secondary" onclick="showPropGuide()" style="padding:10px 20px;font-size:14px">写作指南</button>';
+  html += '<button class="phd-quiz-btn secondary" onclick="showPropChecklist()" style="padding:10px 20px;font-size:14px">自查清单</button>';
+  html += '<button class="phd-quiz-btn secondary" onclick="showPropSaved()" style="padding:10px 20px;font-size:14px">我的保存(' + getPropSavedCount() + ')</button>';
   html += '</div></div>';
   
-  html += '<div id="proposalResult" style="display:none">';
-  html += '<div style="background:white;border:1px solid #e0e0e0;border-radius:10px;padding:20px">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">';
-  html += '<strong style="font-size:16px">科研计划书（AI生成框架）</strong>';
-  html += '<button class="phd-quiz-btn success" style="padding:6px 14px;font-size:12px" onclick="exportPhdProposal()">导出文本</button>';
-  html += '</div>';
-  html += '<div id="proposalContent" style="font-size:14px;line-height:1.8;color:#333;max-height:500px;overflow-y:auto;padding:15px;background:#fafafa;border-radius:8px"></div>';
+  // 结果区域
+  html += '<div id="propResult" style="display:none">';
+  html += '<div style="background:white;border:1px solid #e0e0e0;border-radius:10px;padding:20px;margin-bottom:20px">';
+  
+  // 工具栏
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;flex-wrap:wrap;gap:10px">';
+  html += '<div><strong style="font-size:16px;color:#333">科研计划书</strong>';
+  html += '<span id="propWordCount" style="margin-left:10px;font-size:12px;color:#999">0字</span></div>';
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+  html += '<button class="phd-quiz-btn secondary" style="padding:6px 12px;font-size:12px" onclick="togglePropEdit()" id="propEditBtn">编辑</button>';
+  html += '<button class="phd-quiz-btn secondary" style="padding:6px 12px;font-size:12px" onclick="savePropProposal()">保存</button>';
+  html += '<button class="phd-quiz-btn secondary" style="padding:6px 12px;font-size:12px" onclick="copyPropProposal()">复制</button>';
+  html += '<button class="phd-quiz-btn success" style="padding:6px 12px;font-size:12px" onclick="exportPropProposal(\'txt\')">导出TXT</button>';
+  html += '<button class="phd-quiz-btn success" style="padding:6px 12px;font-size:12px" onclick="exportPropProposal(\'md\')">导出MD</button>';
+  html += '</div></div>';
+  
+  // 章节导航
+  html += '<div id="propNav" style="margin-bottom:15px;padding:10px;background:#f5f5f5;border-radius:8px;display:flex;flex-wrap:wrap;gap:6px"></div>';
+  
+  // 内容区
+  html += '<div id="propContent" style="font-size:14px;line-height:1.8;color:#333;max-height:600px;overflow-y:auto;padding:20px;background:#fafafa;border-radius:8px;border:1px solid #eee"></div>';
+  
+  // 编辑区（默认隐藏）
+  html += '<textarea id="propEditText" style="display:none;width:100%;min-height:500px;border:2px solid #667eea;border-radius:8px;padding:12px;font-size:13px;line-height:1.6;font-family:inherit"></textarea>';
+  
   html += '</div></div>';
   
   area.innerHTML = html;
-  updateProposalTopics();
+  
+  // 初始化
+  updatePropTopics();
+  updatePropMethodTags();
 }
 
-function updateProposalTopics() {
-  const field = document.getElementById('proposalField').value;
-  const topicSelect = document.getElementById('proposalTopic');
+function updatePropTopics() {
+  const field = document.getElementById('propField').value;
+  const topicSelect = document.getElementById('propTopic');
   const topics = PHD_PROPOSAL_TOPICS[field] || [];
   topicSelect.innerHTML = '';
   topics.forEach(function(t) { topicSelect.innerHTML += '<option value="' + t + '">' + t + '</option>'; });
+  updatePropMethodTags();
 }
 
-function generatePhdProposal() {
-  const field = document.getElementById('proposalField').value;
-  const topic = document.getElementById('proposalTopic').value;
-  const methods = document.getElementById('proposalMethods').value;
-  
-  let lines = [];
-  lines.push("一、选题背景与研究意义");
-  lines.push("");
-  lines.push("（一）研究背景");
-  lines.push(topic + "是" + field + "领域的重要研究方向之一。近年来，随着运动科学研究的不断深入，关于" + topic + "的研究取得了显著进展。然而，目前关于" + topic + "的研究仍存在一些不足之处，需要进一步深入探讨。");
-  lines.push("");
-  lines.push("（二）研究意义");
-  lines.push("1. 理论意义：本研究有助于丰富和完善" + field + "的理论体系，深化对" + topic + "机制的认识。");
-  lines.push("2. 实践意义：本研究结果可为运动训练、运动康复、健康促进等实践领域提供理论依据和实践指导。");
-  lines.push("");
-  lines.push("二、国内外研究现状");
-  lines.push("");
-  lines.push("（一）国外研究现状");
-  lines.push("国外学者在" + topic + "领域开展了大量研究，主要集中在机制探讨、干预效果评价等方面。代表性研究包括：（此处需根据具体文献补充）");
-  lines.push("");
-  lines.push("（二）国内研究现状");
-  lines.push("国内学者在" + topic + "领域的研究起步相对较晚，但近年来发展迅速。主要研究集中在：（此处需根据具体文献补充）");
-  lines.push("");
-  lines.push("（三）研究存在的问题与不足");
-  lines.push("1. 研究方法有待创新");
-  lines.push("2. 研究深度有待加强");
-  lines.push("3. 研究结果的实践转化有待提升");
-  lines.push("");
-  lines.push("三、研究目标与研究内容");
-  lines.push("");
-  lines.push("（一）研究目标");
-  lines.push("本研究旨在探讨" + topic + "的机制及其应用价值，为" + field + "的理论发展和实践应用提供科学依据。");
-  lines.push("");
-  lines.push("（二）研究内容");
-  lines.push("1. " + topic + "的基本特征和规律研究");
-  lines.push("2. " + topic + "的机制探讨");
-  lines.push("3. 运动干预对" + topic + "的影响研究");
-  lines.push("4. " + topic + "在运动实践中的应用研究");
-  lines.push("");
-  lines.push("四、研究方法与技术路线");
-  lines.push("");
-  lines.push("（一）研究方法");
-  lines.push("本研究将采用以下研究方法：" + methods + "。");
-  lines.push("");
-  lines.push("（二）技术路线");
-  lines.push("1. 文献研究 → 确定研究问题");
-  lines.push("2. 实验设计 → 方案制定与伦理审查");
-  lines.push("3. 数据采集 → 实验实施与样本收集");
-  lines.push("4. 数据分析 → 统计分析与机制探讨");
-  lines.push("5. 结果讨论 → 论文撰写与成果推广");
-  lines.push("");
-  lines.push("五、研究创新点");
-  lines.push("1. 研究视角创新：从新的角度探讨" + topic);
-  lines.push("2. 研究方法创新：采用多种方法相结合");
-  lines.push("3. 研究内容创新：深入探讨" + topic + "的分子机制和应用价值");
-  lines.push("");
-  lines.push("六、预期研究成果");
-  lines.push("1. 阐明" + topic + "的机制");
-  lines.push("2. 发表SCI论文2-3篇");
-  lines.push("3. 申请专利1项");
-  lines.push("4. 培养博士研究生1名");
-  lines.push("5. 形成研究报告1份");
-  lines.push("");
-  lines.push("七、研究进度安排");
-  lines.push("第一阶段（第1-3个月）：文献查阅、研究方案制定、伦理审查");
-  lines.push("第二阶段（第4-9个月）：实验实施、数据采集");
-  lines.push("第三阶段（第10-15个月）：数据分析、机制探讨");
-  lines.push("第四阶段（第16-21个月）：论文撰写、成果整理");
-  lines.push("第五阶段（第22-24个月）：论文答辩、成果推广");
-  lines.push("");
-  lines.push("八、参考文献");
-  lines.push("（此处需根据具体研究内容补充15-20篇相关文献）");
-  
-  document.getElementById('proposalResult').style.display = 'block';
-  document.getElementById('proposalContent').innerHTML = lines.join('<br>');
-  document.getElementById('proposalResult').scrollIntoView({behavior: 'smooth'});
+function updatePropMethodTags() {
+  const field = document.getElementById('propField').value;
+  const methods = PHD_PROPOSAL_METHODS[field] || [];
+  const tagsDiv = document.getElementById('propMethodTags');
+  if (!tagsDiv) return;
+  tagsDiv.innerHTML = '';
+  methods.slice(0, 8).forEach(function(m) {
+    tagsDiv.innerHTML += '<span style="cursor:pointer;padding:3px 10px;background:#e3f2fd;color:#1976d2;border-radius:12px;font-size:11px" onclick="addPropMethod(\'' + m.replace(/'/g, "\\'") + '\')">' + m + '</span>';
+  });
 }
 
-function exportPhdProposal() {
-  const text = document.getElementById('proposalContent').innerText;
-  const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+function addPropMethod(method) {
+  const input = document.getElementById('propMethods');
+  const current = input.value.trim();
+  if (current.indexOf(method) === -1) {
+    input.value = current ? current + ', ' + method : method;
+  }
+}
+
+function generatePropProposal() {
+  const field = document.getElementById('propField').value;
+  const topic = document.getElementById('propTopic').value;
+  const title = document.getElementById('propTitle').value.trim();
+  const subject = document.getElementById('propSubject').value.trim();
+  const methods = document.getElementById('propMethods').value.trim();
+  const duration = document.getElementById('propDuration').value;
+  const style = document.getElementById('propStyle').value;
+  
+  const finalTitle = title || ('基于' + topic + '的' + field + '研究：机制与应用');
+  const finalSubject = subject || ('实验动物/人体受试者（根据研究需要确定）');
+  const finalMethods = methods || ('文献研究法, 实验法, 数据统计法');
+  
+  const lines = generatePropContent(finalTitle, field, topic, finalSubject, finalMethods, duration, style);
+  
+  document.getElementById('propResult').style.display = 'block';
+  document.getElementById('propContent').innerHTML = lines.html;
+  document.getElementById('propEditText').value = lines.text;
+  updatePropWordCount();
+  renderPropNav();
+  
+  document.getElementById('propResult').scrollIntoView({behavior: 'smooth'});
+}
+
+function generatePropContent(title, field, topic, subject, methods, duration, style) {
+  let textLines = [];
+  let htmlParts = [];
+  
+  function addSection(num, name, contentLines) {
+    textLines.push('');
+    textLines.push(num + '、' + name);
+    textLines.push('');
+    htmlParts.push('<h3 id="prop-sec-' + num.replace(/[^0-9]/g, '') + '" style="color:#e65100;border-bottom:2px solid #ffcc80;padding-bottom:6px;margin-top:20px">' + num + '、' + name + '</h3>');
+    contentLines.forEach(function(line) {
+      textLines.push(line);
+      if (line.trim()) {
+        if (line.match(/^（[一二三四五六七八九十]+）/)) {
+          htmlParts.push('<h4 style="color:#333;margin-top:15px;margin-bottom:8px">' + line + '</h4>');
+        } else if (line.match(/^\d+\./)) {
+          htmlParts.push('<p style="margin:6px 0;padding-left:10px">' + line + '</p>');
+        } else {
+          htmlParts.push('<p style="margin:8px 0;text-indent:2em">' + line + '</p>');
+        }
+      }
+    });
+  }
+  
+  // 标题
+  textLines.push('科研计划书');
+  textLines.push('');
+  textLines.push('题目：' + title);
+  textLines.push('');
+  htmlParts.push('<h2 style="text-align:center;color:#333;margin-bottom:5px">' + title + '</h2>');
+  htmlParts.push('<p style="text-align:center;color:#999;font-size:12px;margin-bottom:20px">研究领域：' + field + ' | 研究方向：' + topic + ' | 研究周期：' + duration + '</p>');
+  
+  // 一、选题背景与研究意义
+  let sec1 = [];
+  sec1.push('（一）研究背景');
+  sec1.push(topic + '是' + field + '领域的核心研究方向之一，与人类健康和运动表现密切相关。');
+  if (style === 'detailed') {
+    sec1.push('近年来，随着全民健身国家战略的深入推进和运动科学研究的不断发展，关于' + topic + '的研究受到了广泛关注。大量研究表明，' + topic + '在运动训练、运动康复、健康促进等领域具有重要的理论价值和实践意义。');
+    sec1.push('然而，目前关于' + topic + '的研究仍存在一些不足之处：一是研究深度有待加强，许多机制问题尚未阐明；二是研究方法有待创新，传统方法难以揭示复杂的生物学机制；三是研究结果的实践转化有待提升，实验室研究成果与实际应用之间存在差距。因此，深入开展' + topic + '的研究具有重要的科学意义和应用价值。');
+  } else {
+    sec1.push('目前关于' + topic + '的研究仍存在机制不明确、方法需创新、实践转化不足等问题，有待进一步深入研究。');
+  }
+  sec1.push('');
+  sec1.push('（二）研究意义');
+  sec1.push('1. 理论意义：本研究有助于丰富和完善' + field + '的理论体系，深化对' + topic + '机制的认识，为运动科学的发展提供新的理论支撑。');
+  sec1.push('2. 实践意义：本研究结果可为运动训练方案优化、运动损伤预防与康复、慢性病运动干预、健康促进策略制定等实践领域提供科学依据和实践指导。');
+  if (style === 'detailed') {
+    sec1.push('3. 社会意义：本研究有助于推动全民健身事业发展，提高国民健康水平，减少医疗负担，具有重要的社会效益。');
+  }
+  addSection('一', '选题背景与研究意义', sec1);
+  
+  // 二、国内外研究现状
+  let sec2 = [];
+  sec2.push('（一）国外研究现状');
+  sec2.push('国外学者在' + topic + '领域开展了大量研究，研究起步较早，方法较为先进。主要研究集中在以下几个方面：');
+  sec2.push('1. ' + topic + '的基本特征和规律研究：通过大量实验，揭示了' + topic + '的基本特征和变化规律。');
+  sec2.push('2. ' + topic + '的机制探讨：从分子、细胞、器官、整体等多个层面，探讨了' + topic + '的生物学机制。');
+  sec2.push('3. 运动干预对' + topic + '的影响：研究了不同运动方式、运动强度、运动持续时间对' + topic + '的影响。');
+  if (style === 'detailed') {
+    sec2.push('代表性研究包括：（此处需根据具体文献补充，建议引用近5年发表在《Journal of Applied Physiology》《Medicine & Science in Sports & Exercise》《American Journal of Physiology》等期刊的高水平论文）');
+  }
+  sec2.push('');
+  sec2.push('（二）国内研究现状');
+  sec2.push('国内学者在' + topic + '领域的研究起步相对较晚，但近年来发展迅速，取得了一系列重要成果。主要研究集中在：');
+  sec2.push('1. ' + topic + '的临床应用研究：将' + topic + '的研究成果应用于运动康复、慢性病干预等临床实践。');
+  sec2.push('2. 中国人群' + topic + '特征研究：针对中国人群的体质特征，研究了' + topic + '的特殊性。');
+  sec2.push('3. 传统体育项目对' + topic + '的影响：研究了太极拳、八段锦等传统体育项目对' + topic + '的影响。');
+  if (style === 'detailed') {
+    sec2.push('代表性研究包括：（此处需根据具体文献补充，建议引用《体育科学》《中国运动医学杂志》《北京体育大学学报》等国内核心期刊的论文）');
+  }
+  sec2.push('');
+  sec2.push('（三）研究存在的问题与不足');
+  sec2.push('1. 研究深度有待加强：现有研究多停留在现象描述层面，对机制的探讨不够深入。');
+  sec2.push('2. 研究方法有待创新：传统研究方法难以揭示复杂的生物学机制，需要引入多组学、高分辨成像等新技术。');
+  sec2.push('3. 研究结果的实践转化有待提升：实验室研究成果与实际应用之间存在差距，需要加强转化研究。');
+  sec2.push('4. 研究的系统性有待加强：现有研究较为零散，缺乏系统性的研究体系。');
+  addSection('二', '国内外研究现状', sec2);
+  
+  // 三、研究目标与研究内容
+  let sec3 = [];
+  sec3.push('（一）研究目标');
+  sec3.push('本研究旨在以' + topic + '为研究对象，综合运用' + methods + '等研究方法，系统探讨' + topic + '的特征、机制及运动干预效果，为' + field + '的理论发展和实践应用提供科学依据。');
+  if (style === 'detailed') {
+    sec3.push('具体目标包括：（1）阐明' + topic + '的基本特征和变化规律；（2）揭示' + topic + '的分子和细胞机制；（3）评价运动干预对' + topic + '的影响及量效关系；（4）探索' + topic + '在运动实践中的应用价值。');
+  }
+  sec3.push('');
+  sec3.push('（二）研究内容');
+  sec3.push('1. ' + topic + '的基本特征和规律研究：系统观察' + topic + '的基本特征，揭示其变化规律。');
+  sec3.push('2. ' + topic + '的机制探讨：从分子、细胞、器官、整体等多个层面，深入探讨' + topic + '的生物学机制。');
+  sec3.push('3. 运动干预对' + topic + '的影响研究：研究不同运动方式、运动强度、运动持续时间对' + topic + '的影响，揭示量效关系。');
+  sec3.push('4. ' + topic + '在运动实践中的应用研究：探索' + topic + '在运动训练、运动康复、健康促进等领域的应用价值。');
+  if (style === 'detailed') {
+    sec3.push('5. ' + topic + '的干预策略优化研究：基于机制研究结果，优化运动干预方案，提高干预效果。');
+  }
+  addSection('三', '研究目标与研究内容', sec3);
+  
+  // 四、研究方法与技术路线
+  let sec4 = [];
+  sec4.push('（一）研究对象');
+  sec4.push(subject + '。');
+  sec4.push('');
+  sec4.push('（二）研究方法');
+  sec4.push('本研究将综合运用以下研究方法：' + methods + '。');
+  if (style === 'detailed') {
+    sec4.push('各方法的具体应用如下：');
+    sec4.push('1. 文献研究法：系统检索国内外相关文献，全面了解研究现状，为研究设计提供理论依据。');
+    sec4.push('2. 实验法：设计科学严谨的实验方案，控制实验条件，确保实验结果的可靠性和可重复性。');
+    sec4.push('3. 分子生物学技术：运用Western Blot、qPCR、免疫组化等技术，检测相关蛋白和基因的表达变化。');
+    sec4.push('4. 数据统计法：运用SPSS、GraphPad Prism等统计软件，对实验数据进行统计分析，确保结果的科学性。');
+  }
+  sec4.push('');
+  sec4.push('（三）技术路线');
+  sec4.push('本研究的技术路线如下：');
+  sec4.push('第一阶段：文献研究 → 确定研究问题 → 研究方案设计 → 伦理审查');
+  sec4.push('第二阶段：实验准备 → 动物饲养/受试者招募 → 分组与干预 → 样本采集');
+  sec4.push('第三阶段：指标检测 → 分子生物学实验 → 组织学分析 → 数据整理');
+  sec4.push('第四阶段：数据分析 → 统计分析 → 机制探讨 → 结果讨论');
+  sec4.push('第五阶段：论文撰写 → 成果整理 → 专利申请 → 学术交流');
+  addSection('四', '研究方法与技术路线', sec4);
+  
+  // 五、研究创新点
+  let sec5 = [];
+  sec5.push('1. 研究视角创新：从多学科交叉的视角，系统探讨' + topic + '的机制及应用，突破传统研究的单一视角局限。');
+  sec5.push('2. 研究方法创新：综合运用' + methods + '等多种方法，从分子、细胞、器官、整体等多个层面开展研究，方法先进且系统。');
+  sec5.push('3. 研究内容创新：深入探讨' + topic + '的分子机制和运动干预效果，填补该领域的研究空白，具有重要的学术价值。');
+  if (style === 'detailed') {
+    sec5.push('4. 应用价值创新：将基础研究成果与运动实践紧密结合，探索' + topic + '在运动训练、运动康复、健康促进等领域的应用，具有重要的实践价值。');
+  }
+  addSection('五', '研究创新点', sec5);
+  
+  // 六、预期研究成果
+  let sec6 = [];
+  sec6.push('1. 理论成果：阐明' + topic + '的特征和机制，丰富和完善' + field + '的理论体系。');
+  sec6.push('2. 学术论文：在国内外核心期刊发表学术论文3-5篇，其中SCI论文2-3篇。');
+  sec6.push('3. 知识产权：申请发明专利1-2项。');
+  sec6.push('4. 人才培养：培养博士研究生1名，硕士研究生2-3名。');
+  sec6.push('5. 学术交流：参加国内外学术会议3-5次，进行学术报告交流。');
+  sec6.push('6. 实践应用：形成' + topic + '的运动干预方案1套，为运动实践提供科学指导。');
+  addSection('六', '预期研究成果', sec6);
+  
+  // 七、研究进度安排
+  let sec7 = [];
+  if (duration === '36个月') {
+    sec7.push('第一阶段（第1-6个月）：文献查阅、研究方案制定、预实验、伦理审查');
+    sec7.push('第二阶段（第7-18个月）：实验实施、样本采集、指标检测');
+    sec7.push('第三阶段（第19-27个月）：数据分析、机制探讨、论文撰写');
+    sec7.push('第四阶段（第28-33个月）：成果整理、专利申请、学术交流');
+    sec7.push('第五阶段（第34-36个月）：论文答辩、成果推广');
+  } else if (duration === '18个月') {
+    sec7.push('第一阶段（第1-3个月）：文献查阅、研究方案制定、伦理审查');
+    sec7.push('第二阶段（第4-9个月）：实验实施、样本采集、指标检测');
+    sec7.push('第三阶段（第10-14个月）：数据分析、论文撰写');
+    sec7.push('第四阶段（第15-18个月）：成果整理、论文答辩');
+  } else {
+    sec7.push('第一阶段（第1-3个月）：文献查阅、研究方案制定、预实验、伦理审查');
+    sec7.push('第二阶段（第4-9个月）：实验实施、样本采集、指标检测');
+    sec7.push('第三阶段（第10-15个月）：数据分析、机制探讨、论文撰写');
+    sec7.push('第四阶段（第16-21个月）：成果整理、专利申请、学术交流');
+    sec7.push('第五阶段（第22-24个月）：论文答辩、成果推广');
+  }
+  addSection('七', '研究进度安排', sec7);
+  
+  // 八、参考文献
+  let sec8 = [];
+  sec8.push('（以下为推荐参考文献类型，需根据具体研究内容补充15-20篇相关文献）');
+  sec8.push('1. 经典教材：' + field + '相关权威教材（如王瑞元《运动生理学》、徐国栋《运动解剖学》等）');
+  sec8.push('2. 国外期刊：近5年发表在《Journal of Applied Physiology》《Medicine & Science in Sports & Exercise》《American Journal of Physiology》《Sports Medicine》等期刊的相关论文');
+  sec8.push('3. 国内期刊：近5年发表在《体育科学》《中国运动医学杂志》《北京体育大学学报》《上海体育学院学报》等核心期刊的相关论文');
+  sec8.push('4. 学位论文：国内外相关博士、硕士学位论文');
+  sec8.push('5. 会议论文：国内外重要学术会议的相关论文');
+  addSection('八', '参考文献', sec8);
+  
+  return {
+    text: textLines.join('\n'),
+    html: htmlParts.join('')
+  };
+}
+
+function renderPropNav() {
+  const nav = document.getElementById('propNav');
+  if (!nav) return;
+  const sections = ['一、选题背景', '二、研究现状', '三、研究目标', '四、研究方法', '五、创新点', '六、预期成果', '七、进度安排', '八、参考文献'];
+  nav.innerHTML = '<span style="font-size:12px;color:#666;margin-right:8px">章节导航：</span>';
+  sections.forEach(function(s, i) {
+    nav.innerHTML += '<a href="#prop-sec-' + (i+1) + '" style="cursor:pointer;padding:3px 10px;background:white;color:#666;border-radius:4px;font-size:11px;text-decoration:none;border:1px solid #ddd" onclick="document.getElementById(\'prop-sec-' + (i+1) + '\').scrollIntoView({behavior:\'smooth\'});return false">' + s + '</a>';
+  });
+}
+
+function updatePropWordCount() {
+  const text = document.getElementById('propEditText').value || '';
+  const count = text.replace(/\s/g, '').length;
+  const el = document.getElementById('propWordCount');
+  if (el) el.textContent = count + '字';
+}
+
+function togglePropEdit() {
+  const content = document.getElementById('propContent');
+  const editArea = document.getElementById('propEditText');
+  const btn = document.getElementById('propEditBtn');
+  if (editArea.style.display === 'none') {
+    editArea.value = content.innerText;
+    editArea.style.display = 'block';
+    content.style.display = 'none';
+    btn.textContent = '保存编辑';
+    btn.className = 'phd-quiz-btn primary';
+  } else {
+    const text = editArea.value;
+    content.innerHTML = text.replace(/\n/g, '<br>');
+    editArea.style.display = 'none';
+    content.style.display = 'block';
+    btn.textContent = '编辑';
+    btn.className = 'phd-quiz-btn secondary';
+    updatePropWordCount();
+  }
+}
+
+function savePropProposal() {
+  const text = document.getElementById('propEditText').value || document.getElementById('propContent').innerText;
+  const title = document.getElementById('propTitle').value || '未命名科研计划书';
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('phdProposalSaved') || '[]'); } catch(e) { saved = []; }
+  saved.unshift({
+    title: title,
+    field: document.getElementById('propField').value,
+    topic: document.getElementById('propTopic').value,
+    text: text,
+    time: new Date().toLocaleString()
+  });
+  if (saved.length > 5) saved = saved.slice(0, 5);
+  localStorage.setItem('phdProposalSaved', JSON.stringify(saved));
+  alert('保存成功！当前共保存' + saved.length + '个版本。');
+}
+
+function getPropSavedCount() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('phdProposalSaved') || '[]');
+    return saved.length;
+  } catch(e) { return 0; }
+}
+
+function showPropSaved() {
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('phdProposalSaved') || '[]'); } catch(e) { saved = []; }
+  if (saved.length === 0) {
+    alert('暂无保存的科研计划书。');
+    return;
+  }
+  let html = '<h3 style="color:#333;margin-top:0">我的保存（' + saved.length + '个版本）</h3>';
+  saved.forEach(function(item, idx) {
+    html += '<div style="border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-bottom:10px">';
+    html += '<div style="font-weight:600;color:#333">' + item.title + '</div>';
+    html += '<div style="font-size:12px;color:#999;margin:4px 0">' + item.field + ' | ' + item.topic + ' | ' + item.time + '</div>';
+    html += '<div style="margin-top:8px;display:flex;gap:8px">';
+    html += '<button class="phd-quiz-btn primary" style="padding:4px 12px;font-size:12px" onclick="loadPropSaved(' + idx + ')">加载</button>';
+    html += '<button class="phd-quiz-btn secondary" style="padding:4px 12px;font-size:12px" onclick="deletePropSaved(' + idx + ')">删除</button>';
+    html += '</div></div>';
+  });
+  showPhdDetail(html);
+}
+
+function loadPropSaved(idx) {
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('phdProposalSaved') || '[]'); } catch(e) { saved = []; }
+  const item = saved[idx];
+  if (!item) return;
+  closePhdDetail();
+  document.getElementById('propResult').style.display = 'block';
+  document.getElementById('propContent').innerHTML = item.text.replace(/\n/g, '<br>');
+  document.getElementById('propEditText').value = item.text;
+  updatePropWordCount();
+  renderPropNav();
+  document.getElementById('propResult').scrollIntoView({behavior: 'smooth'});
+}
+
+function deletePropSaved(idx) {
+  if (!confirm('确定要删除这个版本吗？')) return;
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('phdProposalSaved') || '[]'); } catch(e) { saved = []; }
+  saved.splice(idx, 1);
+  localStorage.setItem('phdProposalSaved', JSON.stringify(saved));
+  showPropSaved();
+}
+
+function copyPropProposal() {
+  const text = document.getElementById('propEditText').value || document.getElementById('propContent').innerText;
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  alert('已复制到剪贴板！');
+}
+
+function exportPropProposal(format) {
+  const text = document.getElementById('propEditText').value || document.getElementById('propContent').innerText;
+  const title = document.getElementById('propTitle').value || '科研计划书';
+  let content = text;
+  let ext = 'txt';
+  if (format === 'md') {
+    ext = 'md';
+    content = '# ' + title + '\n\n' + text;
+  }
+  const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = '科研计划书_' + new Date().toLocaleDateString() + '.txt';
+  a.download = title + '.' + ext;
   a.click();
   URL.revokeObjectURL(url);
 }
+
+function showPropGuide() {
+  let html = '<h3 style="color:#333;margin-top:0">科研计划书写作指南</h3>';
+  html += '<h4 style="color:#e65100">一、科研计划书的重要性</h4>';
+  html += '<p style="font-size:14px;line-height:1.7;color:#555">科研计划书是考博申请的核心材料，体现申请者的科研潜力、学术视野和逻辑思维能力。一份优秀的科研计划书能够显著提升申请成功率。</p>';
+  html += '<h4 style="color:#e65100">二、核心结构与写作要点</h4>';
+  html += '<ol style="font-size:14px;line-height:1.8;color:#555">';
+  html += '<li><strong>选题背景与意义：</strong>选题要具体、聚焦，避免过大过泛。阐明研究的理论价值和实践意义。</li>';
+  html += '<li><strong>国内外研究现状：</strong>不是简单罗列文献，要进行综合分析和评价，指出研究空白和未来方向。</li>';
+  html += '<li><strong>研究目标与内容：</strong>目标要具体、可实现。内容要围绕目标展开，层次清晰。</li>';
+  html += '<li><strong>研究方法与技术路线：</strong>方法要具体、可操作，考虑时间、经费、技术条件的限制。</li>';
+  html += '<li><strong>创新点：</strong>2-3个创新点，包括理论创新、方法创新、应用创新。创新点要实事求是。</li>';
+  html += '<li><strong>预期成果：</strong>预期发表论文数量和层次、申请专利、形成标准或指南、培养人才等。</li>';
+  html += '<li><strong>研究进度安排：</strong>按年度或学期安排研究进度，明确各阶段的任务和目标。</li>';
+  html += '<li><strong>参考文献：</strong>引用最新、权威的文献，格式规范。建议15-20篇，近5年文献占比不低于50%。</li>';
+  html += '</ol>';
+  html += '<h4 style="color:#e65100">三、常见问题</h4>';
+  html += '<ul style="font-size:14px;line-height:1.8;color:#555">';
+  html += '<li>选题过大过泛，什么都想做，结果什么都做不深。</li>';
+  html += '<li>研究背景写成文献综述，缺乏批判性分析和问题意识。</li>';
+  html += '<li>研究方法过于笼统，缺乏可操作性。</li>';
+  html += '<li>创新点夸大，把常规工作说成创新。</li>';
+  html += '<li>预期成果不切实际，如博士期间发表多篇顶刊。</li>';
+  html += '<li>格式不规范，参考文献格式混乱，有错别字。</li>';
+  html += '</ul>';
+  html += '<h4 style="color:#e65100">四、写作建议</h4>';
+  html += '<ul style="font-size:14px;line-height:1.8;color:#555">';
+  html += '<li>选题要与报考导师的研究方向匹配，最好在导师研究方向的基础上提出具体问题。</li>';
+  html += '<li>研究问题要具体、聚焦，不要过于宽泛。一个好的研究问题是可行的、有意义的、有创新性的。</li>';
+  html += '<li>逻辑要清晰：从背景→问题→目标→方法→预期，逻辑链条完整，前后呼应。</li>';
+  html += '<li>语言要专业：使用学术语言，避免口语化和模糊表达。术语要准确、统一。</li>';
+  html += '<li>格式要规范：按目标院校要求的格式，字数、字体、行距、参考文献格式都要符合要求。</li>';
+  html += '</ul>';
+  showPhdDetail(html);
+}
+
+function showPropChecklist() {
+  let html = '<h3 style="color:#333;margin-top:0">科研计划书自查清单</h3>';
+  html += '<p style="font-size:13px;color:#666">提交前请逐项检查，确保计划书质量。</p>';
+  const items = [
+    ['选题', '选题是否具体、聚焦，避免过大过泛？'],
+    ['选题', '选题是否与报考导师研究方向匹配？'],
+    ['选题', '研究问题是否明确、可行、有创新性？'],
+    ['背景意义', '研究背景是否有数据和文献支撑？'],
+    ['背景意义', '理论意义和实践意义是否阐述清楚？'],
+    ['研究现状', '是否进行了综合分析，而非简单罗列？'],
+    ['研究现状', '是否指出了研究空白和未来方向？'],
+    ['研究现状', '是否引用了近5年的最新文献？'],
+    ['研究目标', '研究目标是否具体、可实现？'],
+    ['研究内容', '研究内容是否围绕目标展开，层次清晰？'],
+    ['研究方法', '研究方法是否具体、可操作？'],
+    ['研究方法', '是否考虑了时间、经费、技术条件的限制？'],
+    ['技术路线', '技术路线是否清晰、合理？'],
+    ['创新点', '创新点是否实事求是，不夸大？'],
+    ['创新点', '是否有2-3个明确的创新点？'],
+    ['预期成果', '预期成果是否切实可行？'],
+    ['预期成果', '论文、专利、人才培养等是否明确？'],
+    ['进度安排', '研究进度是否合理，各阶段任务是否明确？'],
+    ['参考文献', '参考文献数量是否足够（15-20篇）？'],
+    ['参考文献', '参考文献格式是否规范统一？'],
+    ['语言格式', '语言是否专业，避免口语化？'],
+    ['语言格式', '是否有错别字、语法错误？'],
+    ['语言格式', '格式是否符合目标院校要求？'],
+    ['逻辑结构', '逻辑链条是否完整，前后呼应？'],
+    ['字数要求', '字数是否符合目标院校要求？']
+  ];
+  let currentCat = '';
+  items.forEach(function(item, idx) {
+    if (item[0] !== currentCat) {
+      currentCat = item[0];
+      html += '<h4 style="color:#e65100;margin-top:15px;margin-bottom:8px">' + currentCat + '</h4>';
+    }
+    html += '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:13px;color:#555">';
+    html += '<input type="checkbox" style="margin-top:3px">';
+    html += '<span>' + item[1] + '</span>';
+    html += '</div>';
+  });
+  showPhdDetail(html);
+}
+
+
+
 
 
 
