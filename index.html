@@ -34533,6 +34533,59 @@ function generateEssay(k, school) {
   return { type: typeName, typeClass, question, answer, scorePoints, score, knowledge: k.name, subject: k.subject, chapter: k.chapter, school };
 }
 
+
+function renderMockResults() {
+  const area = document.getElementById('mockResultArea');
+  if (mockGeneratedQuestions.length === 0) {
+    area.innerHTML = '<div class="mock-loading">暂无生成题目，请选择知识点后点击生成。</div>';
+    return;
+  }
+
+  let html = '<div class="mock-stats-bar">';
+  html += '<div class="mock-stat-item"><div class="num">' + mockGeneratedQuestions.length + '</div><div class="label">生成题目数</div></div>';
+  html += '<div class="mock-stat-item"><div class="num">' + mockSelectedKnowledge.length + '</div><div class="label">涉及知识点</div></div>';
+  const totalScore = mockGeneratedQuestions.reduce((sum, q) => sum + q.score, 0);
+  html += '<div class="mock-stat-item"><div class="num">' + totalScore + '</div><div class="label">总分值</div></div>';
+  html += '</div>';
+
+  mockGeneratedQuestions.forEach((q, idx) => {
+    html += '<div class="mock-question-card">';
+    html += '<span class="mock-question-type ' + q.typeClass + '">' + q.type + '（' + q.score + '分）</span>';
+    html += '<span class="mock-source-tag">' + q.knowledge + ' · ' + (q.subject === 'physio' ? '运动生理学' : '运动解剖学') + '</span>';
+    html += '<div class="mock-question-title">' + (idx + 1) + '. ' + q.question + '</div>';
+    html += '<button class="mock-answer-toggle" onclick="toggleMockAnswer(' + idx + ')" id="mockAnswerToggle' + idx + '">📖 显示参考答案与得分点</button>';
+    html += '<div class="mock-answer-content" id="mockAnswerContent' + idx + '">';
+    html += '<div class="mock-answer-section">';
+    html += '<div class="mock-answer-section-title">📝 参考答案</div>';
+    html += '<div class="mock-answer-text">' + q.answer + '</div>';
+    html += '</div>';
+    html += '<div class="mock-answer-section">';
+    html += '<div class="mock-answer-section-title">🎯 得分点拆解（共' + q.score + '分）</div>';
+    html += '<div class="mock-score-points">';
+    q.scorePoints.forEach((sp, i) => {
+      html += '<div class="mock-score-point"><div class="mock-score-num">' + (i + 1) + '</div><div class="mock-score-text">' + sp.text + '</div><div class="mock-score-val">' + sp.val + '</div></div>';
+    });
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+
+  area.innerHTML = html;
+}
+
+function toggleMockAnswer(idx) {
+  const content = document.getElementById('mockAnswerContent' + idx);
+  const btn = document.getElementById('mockAnswerToggle' + idx);
+  if (content.classList.contains('show')) {
+    content.classList.remove('show');
+    btn.textContent = '📖 显示参考答案与得分点';
+  } else {
+    content.classList.add('show');
+    btn.textContent = '📕 收起参考答案';
+  }
+}
+
 // 初始化AI模拟题
 if (typeof initMockExam === "function") { setTimeout(initMockExam, 500); }
 </script>
