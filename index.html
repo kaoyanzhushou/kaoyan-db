@@ -6756,6 +6756,49 @@ console.log('✅ 学习工具入口已加载');
       </div>
     </div>
 
+    <!-- 考博AI咨询助手 -->
+    <div class="phd-ai-assistant-card" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px;padding:24px;margin-bottom:20px;color:#fff;box-shadow:0 8px 32px rgba(102,126,234,0.3)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div>
+          <h3 style="margin:0;font-size:20px">🤖 考博AI咨询助手</h3>
+          <p style="margin:4px 0 0 0;font-size:13px;opacity:0.9">你的专属体育考博顾问，解答院校选择、专业课复习、报名流程、导师选择、面试准备等问题</p>
+        </div>
+        <button onclick="togglePhdAIChat()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;backdrop-filter:blur(10px)">
+          💬 开始咨询
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span onclick="askPhdAIQuick('上体运动人体科学考博科目有哪些？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">🏫 院校选择</span>
+        <span onclick="askPhdAIQuick('运动生理学考博重点复习哪些章节？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">📚 专业课复习</span>
+        <span onclick="askPhdAIQuick('考博报名需要准备哪些材料？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">📝 报名流程</span>
+        <span onclick="askPhdAIQuick('如何选择博导？套磁邮件怎么写？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">👨‍🏫 导师选择</span>
+        <span onclick="askPhdAIQuick('考博面试常见问题有哪些？如何准备？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">🎤 面试准备</span>
+        <span onclick="showPhdSchoolRecommend()" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">🎯 个性化院校推荐</span>
+      </div>
+    </div>
+
+    <!-- 考博AI咨询对话界面（默认隐藏） -->
+    <div id="phdAIChatPanel" style="display:none;background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:1px solid #e5e7eb">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e5e7eb">
+        <h4 style="margin:0;color:#374151">💬 考博AI咨询对话</h4>
+        <button onclick="togglePhdAIChat()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px">✕</button>
+      </div>
+      <div id="phdAIChatMessages" style="height:400px;overflow-y:auto;padding:16px;background:#f9fafb;border-radius:12px;margin-bottom:16px">
+        <div style="text-align:center;color:#9ca3af;font-size:13px;padding:20px">
+          👋 你好！我是考博AI咨询助手，有什么问题尽管问我～
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <input type="text" id="phdAIInput" placeholder="输入你的考博问题，例如：上体运动人体科学考博科目？" style="flex:1;padding:12px 16px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;outline:none" onkeypress="if(event.key==='Enter')sendPhdAIMessage()">
+        <select id="phdAIModelSelect" style="padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:13px;outline:none;background:#fff;cursor:pointer;color:#374151">
+          <option value="deepseek-chat">DeepSeek V3</option>
+          <option value="hy3">腾讯混元 hy3</option>
+          <option value="hy4-preview">腾讯混元 hy4</option>
+        </select>
+        <button onclick="sendPhdAIMessage()" style="background:#667eea;color:#fff;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600">发送</button>
+      </div>
+    </div>
+
     <!-- 子模块标签 -->
     <div class="phd-tabs">
       <div class="phd-tab active" data-phd-tab="knowledge" onclick="switchPhdTab('knowledge')">
@@ -34578,6 +34621,343 @@ function initMockExam() {
   renderMockSchoolSelect();
 }
 // ========== 体育考博模块 ==========
+
+// ========== 考博AI咨询助手 - 知识库 ==========
+const PHD_KNOWLEDGE_BASE = {
+  schools: [
+    {
+      name: '上海体育大学', short: '上体', location: '上海', level: '双一流',
+      majors: ['运动人体科学', '体育教育训练学', '民族传统体育学', '体育人文社会学'],
+      examSubjects: ['运动生理学', '运动解剖学', '体育学基础综合'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）', '《体育概论》'],
+      features: '体育学顶尖院校，运动人体科学实力强，导师资源丰富，科研平台好',
+      difficulty: '较高', admissionRate: '约10-15%',
+      applicationTips: '重视科研经历，提前联系导师，英语要求较高'
+    },
+    {
+      name: '北京体育大学', short: '北体', location: '北京', level: '211/双一流',
+      majors: ['运动人体科学', '体育教育训练学', '民族传统体育学', '体育人文社会学'],
+      examSubjects: ['运动生理学', '运动解剖学', '体育学基础'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '全国体育最高学府，平台资源最好，竞争激烈',
+      difficulty: '高', admissionRate: '约8-12%',
+      applicationTips: '竞争最激烈，需要扎实的专业基础和科研成果'
+    },
+    {
+      name: '首都体育学院', short: '首体', location: '北京', level: '普通本科',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '运动解剖学'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '地理位置好，北京资源，相对北体好考',
+      difficulty: '中等', admissionRate: '约15-20%',
+      applicationTips: '性价比高，北京地域优势，适合求稳的考生'
+    },
+    {
+      name: '华南师范大学', short: '华南师大', location: '广州', level: '211/双一流',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '体育学基础'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《体育概论》'],
+      features: '211院校，华南地区体育强校，气候宜人',
+      difficulty: '中等偏上', admissionRate: '约12-18%',
+      applicationTips: '华南地区认可度高，重视实验能力'
+    },
+    {
+      name: '河南大学', short: '河大', location: '开封', level: '双一流',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '运动解剖学', '体育学基础'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '双一流院校，河南省内体育强校，竞争相对温和',
+      difficulty: '中等', admissionRate: '约18-25%',
+      applicationTips: '省内认可度高，适合河南及周边考生'
+    },
+    {
+      name: '郑州大学', short: '郑大', location: '郑州', level: '211/双一流',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '体育学基础综合'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《体育概论》'],
+      features: '211综合大学，平台好，河南省会地理位置优',
+      difficulty: '中等偏上', admissionRate: '约15-20%',
+      applicationTips: '综合大学资源丰富，重视跨学科研究'
+    },
+    {
+      name: '河北师范大学', short: '河北师大', location: '石家庄', level: '普通本科',
+      majors: ['运动人体科学', '体育教育训练学'],
+      examSubjects: ['运动生理学', '运动解剖学'],
+      referenceBooks: ['《运动生理学》（王瑞元）', '《运动解剖学》（徐国栋）'],
+      features: '华北地区体育强校，竞争温和，性价比高',
+      difficulty: '中等偏下', admissionRate: '约20-30%',
+      applicationTips: '适合求稳的考生，毕业去向以高校教师为主'
+    }
+  ],
+  commonQuestions: {
+    application: [
+      '考博报名一般在每年10-12月，具体时间以各校招生简章为准',
+      '报名材料通常包括：身份证、学历学位证书、成绩单、科研成果、专家推荐信、外语水平证明、个人陈述',
+      '部分院校实行"申请-考核制"，不需要统一笔试，直接进入面试环节',
+      '报名费一般100-200元，部分院校对贫困生有减免政策'
+    ],
+    interview: [
+      '面试通常包括：专业知识问答、科研经历介绍、英语听说测试、综合素质考察',
+      '专业问题多围绕报考方向，重点考察基础理论和研究思路',
+      '英语测试包括：英文自我介绍、专业文献朗读翻译、英文问答',
+      '面试前要熟悉自己的科研计划书，导师会针对计划书细节追问'
+    ],
+    research: [
+      '科研计划书是申请材料核心，通常5000-10000字',
+      '结构包括：研究背景与意义、国内外研究现状、研究目标与内容、研究方法与技术路线、预期成果、创新点、参考文献',
+      '选题要结合导师研究方向，要有明确的问题意识和可行性',
+      '参考文献要新（近5年为主），数量20-50篇，中英文兼顾'
+    ],
+    tutor: [
+      '建议提前3-6个月联系导师，发送套磁邮件和个人简历',
+      '套磁邮件要简洁：自我介绍、研究兴趣、为什么选这位导师、附上简历',
+      '联系导师前要阅读导师近年论文，了解其研究方向',
+      '不要同时联系同一院校的多位导师，避免冲突'
+    ]
+  },
+  keyPoints: {
+    physio: '运动生理学考博重点：肌肉收缩机制、神经调节、心血管调节、呼吸调节、能量代谢、体温调节、内分泌、运动疲劳与恢复',
+    anatomy: '运动解剖学考博重点：运动系统（骨、关节、肌肉）、神经系统（中枢、周围、传导通路）、循环系统（心、血管）、呼吸系统、消化系统、泌尿系统、内分泌系统、感觉器',
+    english: '考博英语难度介于六级和考研英语之间，重点考察阅读理解、翻译、写作，部分院校有听力'
+  }
+};
+
+// ========== 考博AI咨询助手 - 核心功能 ==========
+let phdAIChatHistory = [];
+
+function togglePhdAIChat() {
+  const panel = document.getElementById('phdAIChatPanel');
+  if (panel.style.display === 'none' || !panel.style.display) {
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+function searchPhdKnowledge(question) {
+  const results = [];
+  const q = question.toLowerCase();
+  
+  // 检索院校信息
+  PHD_KNOWLEDGE_BASE.schools.forEach(school => {
+    if (q.includes(school.name) || q.includes(school.short) || 
+        school.majors.some(m => q.includes(m.toLowerCase()))) {
+      results.push({
+        type: '院校信息',
+        title: school.name,
+        content: `${school.name}（${school.short}）位于${school.location}，${school.level}。
+招生专业：${school.majors.join('、')}
+考试科目：${school.examSubjects.join('、')}
+参考书目：${school.referenceBooks.join('、')}
+特点：${school.features}
+难度：${school.difficulty}，报录比约${school.admissionRate}
+申请建议：${school.applicationTips}`
+      });
+    }
+  });
+  
+  // 检索常见问题
+  if (q.includes('报名') || q.includes('材料') || q.includes('流程')) {
+    results.push({ type: '报名流程', title: '考博报名常见问题', content: PHD_KNOWLEDGE_BASE.commonQuestions.application.join('
+
+') });
+  }
+  if (q.includes('面试') || q.includes('复试')) {
+    results.push({ type: '面试准备', title: '考博面试常见问题', content: PHD_KNOWLEDGE_BASE.commonQuestions.interview.join('
+
+') });
+  }
+  if (q.includes('科研') || q.includes('计划书') || q.includes('proposal')) {
+    results.push({ type: '科研计划书', title: '科研计划书撰写要点', content: PHD_KNOWLEDGE_BASE.commonQuestions.research.join('
+
+') });
+  }
+  if (q.includes('导师') || q.includes('套磁') || q.includes('联系')) {
+    results.push({ type: '导师选择', title: '导师选择与套磁技巧', content: PHD_KNOWLEDGE_BASE.commonQuestions.tutor.join('
+
+') });
+  }
+  
+  // 检索专业课重点
+  if (q.includes('生理') || q.includes('physio')) {
+    results.push({ type: '专业课重点', title: '运动生理学考博重点', content: PHD_KNOWLEDGE_BASE.keyPoints.physio });
+  }
+  if (q.includes('解剖') || q.includes('anatomy')) {
+    results.push({ type: '专业课重点', title: '运动解剖学考博重点', content: PHD_KNOWLEDGE_BASE.keyPoints.anatomy });
+  }
+  if (q.includes('英语') || q.includes('english')) {
+    results.push({ type: '英语备考', title: '考博英语备考要点', content: PHD_KNOWLEDGE_BASE.keyPoints.english });
+  }
+  
+  return results;
+}
+
+function addPhdAIMessage(role, content, isKnowledge = false) {
+  const container = document.getElementById('phdAIChatMessages');
+  const msgDiv = document.createElement('div');
+  msgDiv.style.marginBottom = '12px';
+  
+  if (role === 'user') {
+    msgDiv.style.textAlign = 'right';
+    msgDiv.innerHTML = `<div style="display:inline-block;background:#667eea;color:#fff;padding:10px 16px;border-radius:12px 12px 0 12px;max-width:80%;text-align:left;font-size:14px;white-space:pre-wrap">${content}</div>`;
+  } else {
+    let knowledgeTag = isKnowledge ? '<div style="font-size:11px;color:#667eea;margin-bottom:4px;font-weight:600">📚 来自考博知识库</div>' : '';
+    msgDiv.innerHTML = `${knowledgeTag}<div style="display:inline-block;background:#fff;border:1px solid #e5e7eb;padding:10px 16px;border-radius:12px 12px 12px 0;max-width:90%;font-size:14px;white-space:pre-wrap;color:#374151">${content}</div>`;
+  }
+  
+  container.appendChild(msgDiv);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendPhdAIMessage() {
+  const input = document.getElementById('phdAIInput');
+  const question = input.value.trim();
+  if (!question) return;
+  
+  input.value = '';
+  addPhdAIMessage('user', question);
+  phdAIChatHistory.push({ role: 'user', content: question });
+  
+  // 先检索知识库
+  const knowledgeResults = searchPhdKnowledge(question);
+  
+  if (knowledgeResults.length > 0) {
+    knowledgeResults.forEach(r => {
+      addPhdAIMessage('assistant', `【${r.type}】${r.title}
+
+${r.content}`, true);
+      phdAIChatHistory.push({ role: 'assistant', content: r.content });
+    });
+  }
+  
+  // 再调用AI生成更全面的回答
+  addPhdAIMessage('assistant', '🤔 正在为你生成更详细的解答...');
+  
+  try {
+    const model = document.getElementById('phdAIModelSelect').value;
+    const knowledgeContext = knowledgeResults.length > 0 
+      ? '\n\n【知识库参考资料】\n' + knowledgeResults.map(r => r.content).join('\n\n')
+      : '';
+    
+    const systemPrompt = `你是一位专业的体育考博咨询顾问，专注体育学与运动人体科学方向博士研究生考试指导。请基于以下知识库参考资料，结合你的专业知识，全面、准确地回答用户的考博问题。回答要条理清晰，分点说明，给出具体可操作的建议。如果知识库中有相关信息，请优先使用并注明来源。${knowledgeContext}`;
+    
+    const response = await callDeepSeekAPI(systemPrompt, question, 2000, model);
+    
+    // 移除最后一条"正在生成"消息
+    const container = document.getElementById('phdAIChatMessages');
+    container.removeChild(container.lastChild);
+    
+    addPhdAIMessage('assistant', response);
+    phdAIChatHistory.push({ role: 'assistant', content: response });
+    
+  } catch (error) {
+    const container = document.getElementById('phdAIChatMessages');
+    container.removeChild(container.lastChild);
+    addPhdAIMessage('assistant', '❌ 抱歉，AI回答生成失败，请稍后重试。错误信息：' + error.message);
+  }
+}
+
+function askPhdAIQuick(question) {
+  const panel = document.getElementById('phdAIChatPanel');
+  if (panel.style.display === 'none' || !panel.style.display) {
+    panel.style.display = 'block';
+  }
+  document.getElementById('phdAIInput').value = question;
+  sendPhdAIMessage();
+}
+
+function showPhdSchoolRecommend() {
+  const panel = document.getElementById('phdAIChatPanel');
+  if (panel.style.display === 'none' || !panel.style.display) {
+    panel.style.display = 'block';
+  }
+  
+  const formHtml = `
+    <div style="background:#f0f4ff;border-radius:12px;padding:16px;margin-bottom:12px">
+      <h5 style="margin:0 0 12px 0;color:#374151">🎯 个性化院校推荐 - 请填写你的背景</h5>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <input type="text" id="recSchool" placeholder="本科院校" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
+        <input type="text" id="recMajor" placeholder="本科专业" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
+        <input type="text" id="recGpa" placeholder="GPA/成绩排名（如：3.5/4.0 前20%）" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
+        <input type="text" id="recEnglish" placeholder="英语水平（如：六级500/雅思6.5）" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
+      </div>
+      <textarea id="recResearch" placeholder="科研经历（发表论文、参与课题、竞赛获奖等）" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;min-height:60px;margin-bottom:12px;box-sizing:border-box"></textarea>
+      <input type="text" id="recInterest" placeholder="研究兴趣方向（如：运动疲劳、神经肌肉控制、运动心血管）" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-bottom:12px;box-sizing:border-box">
+      <button onclick="generatePhdSchoolRecommend()" style="background:#667eea;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;width:100%">🎯 生成个性化院校推荐</button>
+    </div>
+  `;
+  
+  const container = document.getElementById('phdAIChatMessages');
+  const formDiv = document.createElement('div');
+  formDiv.innerHTML = formHtml;
+  container.appendChild(formDiv);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function generatePhdSchoolRecommend() {
+  const background = {
+    school: document.getElementById('recSchool').value,
+    major: document.getElementById('recMajor').value,
+    gpa: document.getElementById('recGpa').value,
+    english: document.getElementById('recEnglish').value,
+    research: document.getElementById('recResearch').value,
+    interest: document.getElementById('recInterest').value
+  };
+  
+  addPhdAIMessage('user', `【个性化院校推荐】我的背景：
+本科：${background.school} ${background.major}
+成绩：${background.gpa}
+英语：${background.english}
+科研：${background.research}
+研究兴趣：${background.interest}`);
+  
+  addPhdAIMessage('assistant', '🎯 正在为你分析背景并生成个性化院校推荐...');
+  
+  try {
+    const model = document.getElementById('phdAIModelSelect').value;
+    const schoolsInfo = PHD_KNOWLEDGE_BASE.schools.map(s => 
+      `${s.name}（${s.short}）：${s.level}，位于${s.location}，难度${s.difficulty}，报录比${s.admissionRate}，特点：${s.features}，考试科目：${s.examSubjects.join('、')}`
+    ).join('\n');
+    
+    const systemPrompt = `你是一位专业的考博院校选择顾问。请根据用户的背景信息，结合以下院校数据库，为用户推荐3-5所适合的体育学/运动人体科学博士招生院校。
+    
+【院校数据库】
+${schoolsInfo}
+
+【推荐要求】
+1. 按"冲刺院校"、"匹配院校"、"保底院校"分类推荐
+2. 每所院校给出匹配度评分（⭐1-5）和推荐理由
+3. 结合用户背景分析优势和劣势
+4. 给出针对性的备考建议
+5. 回答要客观、务实，不要盲目推荐名校`;
+    
+    const userPrompt = `我的背景：
+本科院校：${background.school}
+本科专业：${background.major}
+成绩/GPA：${background.gpa}
+英语水平：${background.english}
+科研经历：${background.research}
+研究兴趣：${background.interest}
+
+请为我推荐适合的体育学/运动人体科学博士招生院校。`;
+    
+    const response = await callDeepSeekAPI(systemPrompt, userPrompt, 2500, model);
+    
+    const container = document.getElementById('phdAIChatMessages');
+    container.removeChild(container.lastChild);
+    
+    addPhdAIMessage('assistant', response);
+    
+  } catch (error) {
+    const container = document.getElementById('phdAIChatMessages');
+    container.removeChild(container.lastChild);
+    addPhdAIMessage('assistant', '❌ 推荐生成失败：' + error.message);
+  }
+}
+
+console.log('✅ 考博AI咨询助手已加载');
+
 let phdCurrentTab = 'knowledge';
 
 function switchPhdTab(tabName) {
