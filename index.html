@@ -36716,7 +36716,23 @@ function startPhdMockInterview() {
   html += '<option value="professional">专业面试（运动人体科学专业知识+科研设计）</option>';
   html += '<option value="research">科研面试（科研计划+文献阅读+研究现状）</option>';
   html += '<option value="english">英语面试（全英文问答）</option>';
+  html += '<option value="pressure">压力面试（尖锐问题+情景模拟+应变能力）</option>';
+  html += '<option value="hot">热点问题（学科前沿+政策热点+技术趋势）</option>';
   html += '<option value="mixed">混合面试（各类问题随机组合）</option>';
+  html += '</select>';
+  
+  html += '<div style="font-weight:600;margin-bottom:10px;color:#333">⏱️ 答题时间：</div>';
+  html += '<select id="phdInterviewTime" class="phd-quiz-textarea" style="min-height:auto;padding:10px;margin-bottom:15px">';
+  html += '<option value="0">不计时（自由作答）</option>';
+  html += '<option value="60">60秒/题（快速）</option>';
+  html += '<option value="120" selected>120秒/题（标准）</option>';
+  html += '<option value="180">180秒/题（深度）</option>';
+  html += '</select>';
+  
+  html += '<div style="font-weight:600;margin-bottom:10px;color:#333">💡 答题提示：</div>';
+  html += '<select id="phdInterviewHint" class="phd-quiz-textarea" style="min-height:auto;padding:10px">';
+  html += '<option value="on" selected>显示提示（答题思路+关键词）</option>';
+  html += '<option value="off">不显示提示（模拟真实面试）</option>';
   html += '</select>';
   
   html += '<div style="font-weight:600;margin-bottom:10px;color:#333">📝 题目数量：</div>';
@@ -36738,11 +36754,20 @@ function startPhdMockInterview() {
 function beginPhdInterview() {
   const type = document.getElementById('phdInterviewType').value;
   const count = parseInt(document.getElementById('phdInterviewCount').value);
+  const timeLimit = parseInt(document.getElementById('phdInterviewTime').value) || 0;
+  const showHint = document.getElementById('phdInterviewHint').value === 'on';
   
   // 从题库中随机选择题目
   let pool = [];
   if (type === 'mixed') {
-    pool = [...PHD_INTERVIEW_QUESTIONS.comprehensive, ...PHD_INTERVIEW_QUESTIONS.professional, ...PHD_INTERVIEW_QUESTIONS.research];
+    pool = [
+      ...(PHD_INTERVIEW_QUESTIONS.comprehensive || []),
+      ...(PHD_INTERVIEW_QUESTIONS.professional || []),
+      ...(PHD_INTERVIEW_QUESTIONS.research || []),
+      ...(PHD_INTERVIEW_QUESTIONS.english || []),
+      ...(PHD_INTERVIEW_QUESTIONS.pressure || []),
+      ...(PHD_INTERVIEW_QUESTIONS.hot || [])
+    ];
   } else {
     pool = PHD_INTERVIEW_QUESTIONS[type] || PHD_INTERVIEW_QUESTIONS.comprehensive;
   }
@@ -36754,33 +36779,83 @@ function beginPhdInterview() {
   phdInterviewState.answers = new Array(phdInterviewState.questions.length).fill('');
   phdInterviewState.scores = new Array(phdInterviewState.questions.length).fill(0);
   phdInterviewState.mode = 'interview';
+  phdInterviewState.timeLimit = timeLimit;
+  phdInterviewState.showHint = showHint;
+  phdInterviewState.timerInterval = null;
+  phdInterviewState.startTime = Date.now();
   
   renderPhdInterviewQuestion();
 }
 
 function renderPhdInterviewQuestion() {
+  // 清除之前的计时器
+  if (phdInterviewState.timerInterval) {
+    clearInterval(phdInterviewState.timerInterval);
+    phdInterviewState.timerInterval = null;
+  }
+  
   const q = phdInterviewState.questions[phdInterviewState.currentQ];
   const total = phdInterviewState.questions.length;
   const current = phdInterviewState.currentQ + 1;
   const body = document.getElementById('phdInterviewBody');
+  const progressPercent = Math.round((current / total) * 100);
+  const difficulty = q.difficulty || 3;
+  const difficultyStars = '★'.repeat(difficulty) + '☆'.repeat(5 - difficulty);
+  const suggestedTime = q.time || 120;
   
   let html = '<div class="phd-quiz-header">';
   html += '<div class="phd-quiz-title">🎤 面试进行中</div>';
   html += '<div class="phd-quiz-progress">第 ' + current + ' / ' + total + ' 题</div>';
   html += '</div>';
   
-  html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:15px">';
+  // 进度条
+  html += '<div style="height:6px;background:#e0e0e0;border-radius:3px;margin-bottom:15px;overflow:hidden">';
+  html += '<div style="height:100%;width:' + progressPercent + '%;background:linear-gradient(90deg,#f093fb,#f5576c);border-radius:3px;transition:width 0.3s"></div>';
+  html += '</div>';
+  
+  // 面试官信息 + 倒计时
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px">';
+  html += '<div style="display:flex;align-items:center;gap:10px">';
   html += '<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#f093fb,#f5576c);display:flex;align-items:center;justify-content:center;color:white;font-size:24px">👨‍🏫</div>';
   html += '<div>';
   html += '<div style="font-weight:600;color:#333">AI面试官</div>';
-  html += '<div style="font-size:12px;color:#999">' + q.category + '</div>';
+  html += '<div style="font-size:12px;color:#999">' + q.category + ' | 难度 ' + difficultyStars + ' | 建议 ' + suggestedTime + '秒</div>';
   html += '</div></div>';
   
+  // 倒计时显示
+  if (phdInterviewState.timeLimit > 0) {
+    html += '<div id="interviewTimer" style="font-size:24px;font-weight:700;color:#f5576c;font-family:monospace">' + formatInterviewTime(phdInterviewState.timeLimit) + '</div>';
+  }
+  html += '</div>';
+  
+  // 问题
   html += '<div class="phd-quiz-question" style="border-left-color:#f5576c"><strong>问题：</strong>' + q.q + '</div>';
   
-  html += '<div style="font-weight:600;margin-bottom:8px;color:#333">📝 你的回答：</div>';
-  html += '<textarea class="phd-quiz-textarea" id="phdInterviewAnswerInput" placeholder="请在此输入你的回答...（建议200字以上，内容越完整得分越高）">' + (phdInterviewState.answers[phdInterviewState.currentQ] || '') + '</textarea>';
+  // 答题提示（可展开/收起）
+  if (phdInterviewState.showHint && q.reference) {
+    html += '<div style="margin-bottom:15px;border:1px solid #ffe0b2;border-radius:8px;background:#fff8e1;overflow:hidden">';
+    html += '<div onclick="toggleInterviewHint()" style="padding:10px 15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;color:#e65100">';
+    html += '<span>💡 答题提示（点击展开/收起）</span>';
+    html += '<span id="hintToggleIcon">▼</span>';
+    html += '</div>';
+    html += '<div id="interviewHintContent" style="display:none;padding:0 15px 15px;border-top:1px solid #ffe0b2">';
+    html += '<div style="margin-top:12px;font-size:13px;color:#5d4037;line-height:1.8">' + q.reference + '</div>';
+    if (q.keywords && q.keywords.length > 0) {
+      html += '<div style="margin-top:12px"><strong style="color:#e65100">🎯 评分关键词：</strong>';
+      q.keywords.forEach(kw => {
+        html += '<span style="display:inline-block;background:#ffe0b2;color:#e65100;padding:2px 10px;border-radius:12px;font-size:12px;margin:3px">' + kw + '</span>';
+      });
+      html += '</div>';
+    }
+    html += '</div></div>';
+  }
   
+  // 回答输入
+  html += '<div style="font-weight:600;margin-bottom:8px;color:#333">📝 你的回答：</div>';
+  html += '<textarea class="phd-quiz-textarea" id="phdInterviewAnswerInput" placeholder="请在此输入你的回答...（建议200字以上，内容越完整得分越高）" oninput="updateInterviewWordCount()">' + (phdInterviewState.answers[phdInterviewState.currentQ] || '') + '</textarea>';
+  html += '<div style="text-align:right;font-size:12px;color:#999;margin-top:5px">已输入 <span id="interviewWordCount">' + ((phdInterviewState.answers[phdInterviewState.currentQ] || '').length) + '</span> 字</div>';
+  
+  // 操作按钮
   html += '<div class="phd-quiz-actions">';
   if (phdInterviewState.currentQ > 0) {
     html += '<button class="phd-quiz-btn secondary" onclick="prevPhdInterviewQuestion()">← 上一题</button>';
@@ -36793,6 +36868,69 @@ function renderPhdInterviewQuestion() {
   html += '</div>';
   
   body.innerHTML = html;
+  
+  // 启动倒计时
+  if (phdInterviewState.timeLimit > 0) {
+    startInterviewTimer();
+  }
+}
+
+// 辅助函数：格式化时间
+function formatInterviewTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+// 辅助函数：启动倒计时
+function startInterviewTimer() {
+  if (phdInterviewState.timerInterval) clearInterval(phdInterviewState.timerInterval);
+  let remaining = phdInterviewState.timeLimit;
+  phdInterviewState.timerInterval = setInterval(() => {
+    remaining--;
+    const timerEl = document.getElementById('interviewTimer');
+    if (timerEl) {
+      timerEl.textContent = formatInterviewTime(remaining);
+      if (remaining <= 10) {
+        timerEl.style.color = '#e74c3c';
+        timerEl.style.animation = 'pulse 1s infinite';
+      }
+    }
+    if (remaining <= 0) {
+      clearInterval(phdInterviewState.timerInterval);
+      phdInterviewState.timerInterval = null;
+      // 自动提交当前题
+      if (phdInterviewState.currentQ < phdInterviewState.questions.length - 1) {
+        submitPhdInterviewAnswer(false);
+      } else {
+        submitPhdInterviewAnswer(true);
+      }
+    }
+  }, 1000);
+}
+
+// 辅助函数：切换提示显示
+function toggleInterviewHint() {
+  const content = document.getElementById('interviewHintContent');
+  const icon = document.getElementById('hintToggleIcon');
+  if (content) {
+    if (content.style.display === 'none') {
+      content.style.display = 'block';
+      if (icon) icon.textContent = '▲';
+    } else {
+      content.style.display = 'none';
+      if (icon) icon.textContent = '▼';
+    }
+  }
+}
+
+// 辅助函数：更新字数统计
+function updateInterviewWordCount() {
+  const input = document.getElementById('phdInterviewAnswerInput');
+  const count = document.getElementById('interviewWordCount');
+  if (input && count) {
+    count.textContent = input.value.length;
+  }
 }
 
 function submitPhdInterviewAnswer(isLast) {
@@ -36800,10 +36938,16 @@ function submitPhdInterviewAnswer(isLast) {
   const answer = input ? input.value : '';
   phdInterviewState.answers[phdInterviewState.currentQ] = answer;
   
-  // 智能评分
+  // 清除计时器
+  if (phdInterviewState.timerInterval) {
+    clearInterval(phdInterviewState.timerInterval);
+    phdInterviewState.timerInterval = null;
+  }
+  
+  // 智能评分（返回各维度详细得分）
   const q = phdInterviewState.questions[phdInterviewState.currentQ];
-  const score = scorePhdInterviewAnswer(answer, q);
-  phdInterviewState.scores[phdInterviewState.currentQ] = score;
+  const scoreResult = scorePhdInterviewAnswer(answer, q);
+  phdInterviewState.scores[phdInterviewState.currentQ] = scoreResult;
   
   if (isLast) {
     finishPhdInterview();
@@ -36820,54 +36964,107 @@ function prevPhdInterviewQuestion() {
 
 // 智能评分：基于关键词匹配、内容长度、逻辑结构
 function scorePhdInterviewAnswer(answer, question) {
-  if (!answer || !answer.trim()) return 0;
+  if (!answer || !answer.trim()) {
+    return { total: 0, keyword: 0, length: 0, structure: 0, professional: 0, expression: 0, matchedKeywords: [], missingKeywords: [] };
+  }
   const ans = answer.toLowerCase();
-  let score = 0;
+  const result = { total: 0, keyword: 0, length: 0, structure: 0, professional: 0, expression: 0, matchedKeywords: [], missingKeywords: [] };
   
-  // 1. 关键词匹配（40分）
+  // 1. 关键词匹配（30分）
   const keywords = question.keywords || [];
   let matched = 0;
   keywords.forEach(kw => {
-    if (ans.includes(kw.toLowerCase())) matched++;
+    if (ans.includes(kw.toLowerCase())) {
+      matched++;
+      result.matchedKeywords.push(kw);
+    } else {
+      result.missingKeywords.push(kw);
+    }
   });
   if (keywords.length > 0) {
-    score += Math.round((matched / keywords.length) * 40);
+    result.keyword = Math.round((matched / keywords.length) * 30);
   }
   
-  // 2. 内容长度（20分）
+  // 2. 内容长度（15分）
   const len = answer.length;
-  if (len >= 500) score += 20;
-  else if (len >= 300) score += 15;
-  else if (len >= 200) score += 10;
-  else if (len >= 100) score += 5;
+  if (len >= 500) result.length = 15;
+  else if (len >= 300) result.length = 12;
+  else if (len >= 200) result.length = 9;
+  else if (len >= 100) result.length = 5;
+  else result.length = 2;
   
   // 3. 结构完整性（20分）
+  let structScore = 0;
   const hasStructure = /首先|其次|再次|最后|第一|第二|第三|一方面|另一方面|综上|因此/.test(answer);
-  if (hasStructure) score += 10;
+  if (hasStructure) structScore += 8;
   const hasExamples = /例如|比如|举例|具体来说|以.*为例/.test(answer);
-  if (hasExamples) score += 5;
+  if (hasExamples) structScore += 5;
   const hasConclusion = /综上|总之|因此|所以|由此可见|总的来说/.test(answer);
-  if (hasConclusion) score += 5;
+  if (hasConclusion) structScore += 4;
+  const hasLayers = /是什么|为什么|怎么做|定义|机制|意义|应用/.test(answer);
+  if (hasLayers) structScore += 3;
+  result.structure = Math.min(20, structScore);
   
-  // 4. 专业深度（20分）
+  // 4. 专业深度（25分）
+  let profScore = 0;
   const hasProfessional = /机制|原理|理论|研究|实验|数据|文献|学者|教授|期刊|论文/.test(answer);
-  if (hasProfessional) score += 10;
-  const hasSpecific = /[0-9]+%|[0-9]+倍|[0-9]+分钟|[0-9]+小时|mmol|ml\/min|mmHg|VO2|HR|EMG|MRI|CT|PCR|ELISA|Western/.test(answer);
-  if (hasSpecific) score += 5;
-  const hasCritical = /不足|局限|争议|挑战|问题|需要进一步|未来研究/.test(answer);
-  if (hasCritical) score += 5;
+  if (hasProfessional) profScore += 8;
+  const hasSpecific = /[0-9]+%|[0-9]+倍|[0-9]+分钟|[0-9]+小时|mmol|ml\/min|mmHg|VO2|HR|EMG|MRI|CT|PCR|ELISA|Western|Hz|g\/kg|mg\/kg/.test(answer);
+  if (hasSpecific) profScore += 6;
+  const hasCritical = /不足|局限|争议|挑战|问题|需要进一步|未来研究|展望/.test(answer);
+  if (hasCritical) profScore += 5;
+  const hasMechanism = /信号通路|基因|蛋白|受体|酶|细胞|组织|器官|系统|分子|转录|翻译|磷酸化|表达/.test(answer);
+  if (hasMechanism) profScore += 6;
+  result.professional = Math.min(25, profScore);
   
-  return Math.min(100, Math.max(0, score));
+  // 5. 语言表达（10分）
+  let exprScore = 0;
+  const sentences = answer.split(/[。！？.!?]/).filter(s => s.trim().length > 0);
+  if (sentences.length >= 5) exprScore += 4;
+  else if (sentences.length >= 3) exprScore += 2;
+  const hasTransition = /此外|另外|同时|然而|但是|因此|所以|总之|综上|值得注意的是|需要强调的是/.test(answer);
+  if (hasTransition) exprScore += 3;
+  const noRepetition = answer.length > 50 && !(/(.{10,})\1{2,}/.test(answer));
+  if (noRepetition) exprScore += 3;
+  result.expression = Math.min(10, exprScore);
+  
+  // 总分
+  result.total = Math.min(100, Math.max(0, result.keyword + result.length + result.structure + result.professional + result.expression));
+  
+  return result;
 }
 
 function finishPhdInterview() {
   phdInterviewState.mode = 'report';
   const total = phdInterviewState.questions.length;
-  let totalScore = 0;
-  phdInterviewState.scores.forEach(s => totalScore += s);
+  
+  // 计算各维度平均分
+  let totalScore = 0, totalKeyword = 0, totalLength = 0, totalStructure = 0, totalProfessional = 0, totalExpression = 0;
+  phdInterviewState.scores.forEach(s => {
+    const scoreVal = typeof s === 'object' ? s.total : s;
+    totalScore += scoreVal;
+    if (typeof s === 'object') {
+      totalKeyword += s.keyword || 0;
+      totalLength += s.length || 0;
+      totalStructure += s.structure || 0;
+      totalProfessional += s.professional || 0;
+      totalExpression += s.expression || 0;
+    }
+  });
   const avgScore = Math.round(totalScore / total);
+  const avgKeyword = Math.round(totalKeyword / total);
+  const avgLength = Math.round(totalLength / total);
+  const avgStructure = Math.round(totalStructure / total);
+  const avgProfessional = Math.round(totalProfessional / total);
+  const avgExpression = Math.round(totalExpression / total);
+  
   const scoreLevel = avgScore >= 80 ? '优秀' : (avgScore >= 60 ? '良好' : (avgScore >= 40 ? '一般' : '需加强'));
   const scoreColor = avgScore >= 80 ? '#27ae60' : (avgScore >= 60 ? '#f39c12' : '#e74c3c');
+  
+  // 计算面试用时
+  const duration = Math.round((Date.now() - phdInterviewState.startTime) / 1000);
+  const durationMin = Math.floor(duration / 60);
+  const durationSec = duration % 60;
   
   // 保存面试记录
   const history = getPhdInterviewHistory();
@@ -36877,61 +37074,217 @@ function finishPhdInterview() {
     totalQuestions: total,
     avgScore: avgScore,
     scoreLevel: scoreLevel,
+    duration: duration,
+    dimensions: { keyword: avgKeyword, length: avgLength, structure: avgStructure, professional: avgProfessional, expression: avgExpression },
     questions: phdInterviewState.questions.map((q, i) => ({
       q: q.q,
       category: q.category,
       answer: phdInterviewState.answers[i],
-      score: phdInterviewState.scores[i]
+      score: typeof phdInterviewState.scores[i] === 'object' ? phdInterviewState.scores[i].total : phdInterviewState.scores[i],
+      scoreDetail: phdInterviewState.scores[i],
+      reference: q.reference || '',
+      keywords: q.keywords || []
     }))
   });
-  savePhdInterviewHistory(history.slice(0, 20)); // 只保留最近20条
+  savePhdInterviewHistory(history.slice(0, 20));
   
   const body = document.getElementById('phdInterviewBody');
   let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">📊 面试报告</div></div>';
   
+  // 综合评分 + 用时
   html += '<div style="text-align:center;padding:20px 0;margin-bottom:20px">';
   html += '<div style="font-size:56px;font-weight:700;color:' + scoreColor + '">' + avgScore + '</div>';
   html += '<div style="font-size:18px;color:#666;margin-bottom:5px">综合评分（满分100）</div>';
-  html += '<div style="display:inline-block;background:' + scoreColor + ';color:white;padding:4px 16px;border-radius:20px;font-size:14px;font-weight:600">' + scoreLevel + '</div>';
+  html += '<div style="display:inline-block;background:' + scoreColor + ';color:white;padding:4px 16px;border-radius:20px;font-size:14px;font-weight:600;margin-right:10px">' + scoreLevel + '</div>';
+  html += '<div style="display:inline-block;background:#78909c;color:white;padding:4px 16px;border-radius:20px;font-size:14px">⏱️ 用时 ' + durationMin + '分' + durationSec + '秒</div>';
   html += '</div>';
   
-  // 各题得分
+  // 能力雷达图 + 各维度得分
+  html += '<div style="display:flex;gap:20px;margin-bottom:20px;flex-wrap:wrap">';
+  html += '<div style="flex:1;min-width:280px;background:#f8f9ff;border-radius:12px;padding:20px;text-align:center">';
+  html += '<div style="font-weight:600;margin-bottom:15px;color:#333">🎯 能力雷达图</div>';
+  html += drawInterviewRadar(avgKeyword, avgStructure, avgProfessional, avgExpression, avgLength);
+  html += '</div>';
+  
+  html += '<div style="flex:1;min-width:280px">';
+  html += '<div style="font-weight:600;margin-bottom:15px;color:#333">📊 各维度得分</div>';
+  const dimensions = [
+    { name: '内容完整度', score: avgKeyword, max: 30, color: '#f5576c', desc: '关键词覆盖' },
+    { name: '专业深度', score: avgProfessional, max: 25, color: '#4facfe', desc: '理论+数据+机制' },
+    { name: '逻辑结构', score: avgStructure, max: 20, color: '#43e97b', desc: '层次+例证+总结' },
+    { name: '回答长度', score: avgLength, max: 15, color: '#fa709a', desc: '内容充实度' },
+    { name: '语言表达', score: avgExpression, max: 10, color: '#feca57', desc: '流畅+连贯' }
+  ];
+  dimensions.forEach(d => {
+    const percent = Math.round((d.score / d.max) * 100);
+    html += '<div style="margin-bottom:12px">';
+    html += '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">';
+    html += '<span style="color:#333;font-weight:500">' + d.name + ' <span style="color:#999;font-size:11px">(' + d.desc + ')</span></span>';
+    html += '<span style="color:' + d.color + ';font-weight:700">' + d.score + '/' + d.max + '</span>';
+    html += '</div>';
+    html += '<div style="height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden">';
+    html += '<div style="height:100%;width:' + percent + '%;background:' + d.color + ';border-radius:4px;transition:width 0.5s"></div>';
+    html += '</div></div>';
+  });
+  html += '</div></div>';
+  
+  // 各题详情（可展开查看参考答案）
   html += '<div style="margin-bottom:20px">';
-  html += '<div style="font-weight:600;margin-bottom:10px;color:#333">📝 各题得分：</div>';
+  html += '<div style="font-weight:600;margin-bottom:10px;color:#333">📝 各题详情（点击展开查看参考答案）：</div>';
   phdInterviewState.questions.forEach((q, i) => {
     const s = phdInterviewState.scores[i];
-    const sColor = s >= 80 ? '#27ae60' : (s >= 60 ? '#f39c12' : '#e74c3c');
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8f9ff;border-radius:6px;margin-bottom:6px">';
-    html += '<span style="font-size:13px;color:#333;flex:1;margin-right:10px">第' + (i+1) + '题：' + q.category + '</span>';
-    html += '<span style="font-weight:700;color:' + sColor + ';font-size:15px">' + s + '分</span>';
+    const scoreVal = typeof s === 'object' ? s.total : s;
+    const sColor = scoreVal >= 80 ? '#27ae60' : (scoreVal >= 60 ? '#f39c12' : '#e74c3c');
+    html += '<div style="border:1px solid #e0e0e0;border-radius:8px;margin-bottom:8px;overflow:hidden">';
+    html += '<div onclick="toggleInterviewAnswerDetail(' + i + ')" style="padding:10px 15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#fafafa">';
+    html += '<span style="font-size:13px;color:#333;flex:1;margin-right:10px">第' + (i+1) + '题 [' + q.category + '] ' + q.q.substring(0, 30) + (q.q.length > 30 ? '...' : '') + '</span>';
+    html += '<span style="font-weight:700;color:' + sColor + ';font-size:15px;margin-right:10px">' + scoreVal + '分</span>';
+    html += '<span id="answerDetailIcon' + i + '" style="color:#999">▼</span>';
     html += '</div>';
+    html += '<div id="answerDetail' + i + '" style="display:none;padding:15px;border-top:1px solid #e0e0e0">';
+    html += '<div style="margin-bottom:10px"><strong style="color:#333">题目：</strong><span style="color:#555;font-size:13px">' + q.q + '</span></div>';
+    html += '<div style="margin-bottom:10px"><strong style="color:#333">你的回答：</strong><div style="background:#f5f5f5;padding:10px;border-radius:6px;font-size:13px;color:#555;max-height:150px;overflow-y:auto;margin-top:5px">' + (phdInterviewState.answers[i] || '（未作答）') + '</div></div>';
+    if (typeof s === 'object' && s.missingKeywords && s.missingKeywords.length > 0) {
+      html += '<div style="margin-bottom:10px"><strong style="color:#e74c3c">未覆盖的关键词：</strong>';
+      s.missingKeywords.forEach(kw => {
+        html += '<span style="display:inline-block;background:#ffebee;color:#c62828;padding:2px 8px;border-radius:10px;font-size:11px;margin:2px">' + kw + '</span>';
+      });
+      html += '</div>';
+    }
+    if (q.reference) {
+      html += '<div><strong style="color:#27ae60">💡 参考答案/答题思路：</strong><div style="background:#e8f5e9;padding:10px;border-radius:6px;font-size:13px;color:#2e7d32;max-height:200px;overflow-y:auto;margin-top:5px;line-height:1.7">' + q.reference + '</div></div>';
+    }
+    html += '</div></div>';
   });
   html += '</div>';
   
-  // 改进建议
+  // 个性化改进建议
   html += '<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:15px 20px;margin-bottom:20px">';
-  html += '<div style="font-weight:700;color:#f57f17;margin-bottom:10px">💡 改进建议：</div>';
-  html += '<ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8;color:#333">';
-  if (avgScore < 80) {
-    html += '<li><strong>内容完整度：</strong>建议回答时覆盖更多评分关键词，每个问题至少包含"是什么-为什么-怎么做"三个层次。</li>';
+  html += '<div style="font-weight:700;color:#f57f17;margin-bottom:10px">💡 个性化改进建议：</div>';
+  html += '<ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.9;color:#333">';
+  
+  // 根据各维度得分给出具体建议
+  if (avgKeyword < 20) {
+    html += '<li><strong style="color:#e74c3c">内容完整度（' + avgKeyword + '/30）：</strong>回答时遗漏了大量评分关键词。建议仔细审题，确保覆盖题目涉及的所有核心概念。答题前先列出3-5个关键词，确保每个都有涉及。</li>';
+  } else if (avgKeyword < 25) {
+    html += '<li><strong style="color:#f39c12">内容完整度（' + avgKeyword + '/30）：</strong>关键词覆盖较好，但仍有提升空间。建议回答时更加全面，不仅覆盖核心概念，还要涉及相关的延伸概念。</li>';
   }
-  if (avgScore < 70) {
-    html += '<li><strong>专业深度：</strong>建议引用具体的理论、数据、文献和学者观点，展示专业功底。避免泛泛而谈。</li>';
+  
+  if (avgProfessional < 15) {
+    html += '<li><strong style="color:#e74c3c">专业深度（' + avgProfessional + '/25）：</strong>专业深度不足，缺乏具体的理论、数据和机制分析。建议：1.引用具体的理论和学者观点；2.使用具体的数据和单位（如mmol/L、ml/min、mmHg）；3.深入分析分子机制（信号通路、基因表达、蛋白磷酸化等）；4.提及研究的局限性和未来方向。</li>';
+  } else if (avgProfessional < 20) {
+    html += '<li><strong style="color:#f39c12">专业深度（' + avgProfessional + '/25）：</strong>有一定专业基础，但深度还可以加强。建议更多引用具体的实验数据、分子机制和经典文献，展示扎实的专业功底。</li>';
   }
-  if (avgScore < 60) {
-    html += '<li><strong>回答长度：</strong>建议每题回答不少于200字，充分展开论述，展示思维深度。</li>';
-    html += '<li><strong>逻辑结构：</strong>建议使用"首先-其次-最后"等连接词，使回答层次清晰、逻辑严谨。</li>';
+  
+  if (avgStructure < 12) {
+    html += '<li><strong style="color:#e74c3c">逻辑结构（' + avgStructure + '/20）：</strong>回答缺乏清晰的逻辑结构。建议使用"是什么-为什么-怎么做"三段式，或"首先-其次-最后"的连接词。每个观点要有具体例子支撑，最后要有总结。</li>';
+  } else if (avgStructure < 16) {
+    html += '<li><strong style="color:#f39c12">逻辑结构（' + avgStructure + '/20）：</strong>结构基本清晰，但可以更加严谨。建议增加过渡词和总结句，使回答层次更加分明。</li>';
   }
-  html += '<li><strong>面试技巧：</strong>回答前先思考10秒，理清思路再作答；保持自信，语速适中；注意与面试官的眼神交流。</li>';
+  
+  if (avgLength < 8) {
+    html += '<li><strong style="color:#e74c3c">回答长度（' + avgLength + '/15）：</strong>回答过于简短，内容不够充实。建议每题回答不少于200字，充分展开论述。可以从定义、机制、影响因素、应用、研究进展等多个角度展开。</li>';
+  }
+  
+  if (avgExpression < 6) {
+    html += '<li><strong style="color:#e74c3c">语言表达（' + avgExpression + '/10）：</strong>语言表达不够流畅。建议增加句子数量，使用"此外""同时""然而""因此"等过渡词，使回答更加连贯。避免重复表述。</li>';
+  }
+  
+  // 通用建议
+  html += '<li><strong>面试技巧：</strong>1.回答前先思考10秒，理清思路再作答；2.保持自信，语速适中，注意与面试官的眼神交流；3.遇到不会的问题，可以说"这个问题我了解不多，但根据我的理解..."，展示思考过程；4.控制答题时间，避免过长或过短。</li>';
   html += '</ul></div>';
   
-  html += '<div class="phd-quiz-actions" style="justify-content:center">';
-  html += '<button class="phd-quiz-btn primary" onclick="startPhdMockInterview()">再来一次</button>';
-  html += '<button class="phd-quiz-btn secondary" onclick="showPhdInterviewHistory()">查看历史记录</button>';
+  html += '<div class="phd-quiz-actions" style="justify-content:center;flex-wrap:wrap">';
+  html += '<button class="phd-quiz-btn primary" onclick="startPhdMockInterview()">🔄 再来一次</button>';
+  html += '<button class="phd-quiz-btn secondary" onclick="showPhdInterviewHistory()">📋 查看历史记录</button>';
   html += '<button class="phd-quiz-btn secondary" onclick="closePhdInterview()">关闭</button>';
   html += '</div>';
   
   body.innerHTML = html;
+}
+
+// 辅助函数：切换答案详情显示
+function toggleInterviewAnswerDetail(index) {
+  const detail = document.getElementById('answerDetail' + index);
+  const icon = document.getElementById('answerDetailIcon' + index);
+  if (detail) {
+    if (detail.style.display === 'none') {
+      detail.style.display = 'block';
+      if (icon) icon.textContent = '▲';
+    } else {
+      detail.style.display = 'none';
+      if (icon) icon.textContent = '▼';
+    }
+  }
+}
+
+// 辅助函数：绘制能力雷达图（SVG）
+function drawInterviewRadar(keyword, structure, professional, expression, length) {
+  // 归一化到0-100
+  const dims = [
+    { name: '内容完整', value: (keyword / 30) * 100 },
+    { name: '逻辑结构', value: (structure / 20) * 100 },
+    { name: '专业深度', value: (professional / 25) * 100 },
+    { name: '语言表达', value: (expression / 10) * 100 },
+    { name: '回答长度', value: (length / 15) * 100 }
+  ];
+  
+  const cx = 120, cy = 120, r = 90;
+  const n = dims.length;
+  
+  // 计算多边形顶点
+  function getPoint(angle, radius) {
+    return {
+      x: cx + radius * Math.cos(angle - Math.PI / 2),
+      y: cy + radius * Math.sin(angle - Math.PI / 2)
+    };
+  }
+  
+  let svg = '<svg width="240" height="240" viewBox="0 0 240 240">';
+  
+  // 背景网格（4层）
+  for (let level = 1; level <= 4; level++) {
+    const points = [];
+    for (let i = 0; i < n; i++) {
+      const angle = (i * 2 * Math.PI) / n;
+      const p = getPoint(angle, (r * level) / 4);
+      points.push(p.x + ',' + p.y);
+    }
+    svg += '<polygon points="' + points.join(' ') + '" fill="none" stroke="#e0e0e0" stroke-width="1"/>';
+  }
+  
+  // 轴线
+  for (let i = 0; i < n; i++) {
+    const angle = (i * 2 * Math.PI) / n;
+    const p = getPoint(angle, r);
+    svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + p.x + '" y2="' + p.y + '" stroke="#e0e0e0" stroke-width="1"/>';
+  }
+  
+  // 数据多边形
+  const dataPoints = [];
+  for (let i = 0; i < n; i++) {
+    const angle = (i * 2 * Math.PI) / n;
+    const p = getPoint(angle, (r * dims[i].value) / 100);
+    dataPoints.push(p.x + ',' + p.y);
+  }
+  svg += '<polygon points="' + dataPoints.join(' ') + '" fill="rgba(245,87,108,0.2)" stroke="#f5576c" stroke-width="2"/>';
+  
+  // 数据点
+  for (let i = 0; i < n; i++) {
+    const angle = (i * 2 * Math.PI) / n;
+    const p = getPoint(angle, (r * dims[i].value) / 100);
+    svg += '<circle cx="' + p.x + '" cy="' + p.y + '" r="4" fill="#f5576c"/>';
+  }
+  
+  // 标签
+  for (let i = 0; i < n; i++) {
+    const angle = (i * 2 * Math.PI) / n;
+    const p = getPoint(angle, r + 20);
+    svg += '<text x="' + p.x + '" y="' + p.y + '" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#666" font-weight="500">' + dims[i].name + '</text>';
+  }
+  
+  svg += '</svg>';
+  return svg;
 }
 
 // 面试历史记录
