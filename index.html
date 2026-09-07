@@ -4942,13 +4942,13 @@ console.log('✅ 学习工具入口已加载');
   <div class="nav-item nav-sub-item" data-tab="physio-atlas" onclick="switchTab('physio-atlas')"><span class="icon">📊</span><span>生理图谱</span></div>
 
   <div class="nav-group nav-group-phd">🎓 体育考博<span class="nav-badge">HOT</span></div>
-  <div class="nav-item nav-item-phd" data-tab="phd" onclick="switchTab('phd')"><span class="icon">🎓</span><span>考博AI咨询</span></div>
-  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="switchTab('phd')"><span class="icon">🏫</span><span>院校信息库</span></div>
-  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="switchTab('phd')"><span class="icon">📝</span><span>考博真题库</span></div>
-  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="switchTab('phd')"><span class="icon">👨‍🏫</span><span>导师信息库</span></div>
-  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="switchTab('phd')"><span class="icon">🔬</span><span>科研计划书</span></div>
-  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="switchTab('phd')"><span class="icon">🎤</span><span>面试模拟</span></div>
-  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="switchTab('phd')"><span class="icon">📚</span><span>文献检索</span></div>
+  <div class="nav-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('ai')"><span class="icon">🎓</span><span>考博AI咨询</span></div>
+  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('schools')"><span class="icon">🏫</span><span>院校信息库</span></div>
+  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('exam')"><span class="icon">📝</span><span>考博真题库</span></div>
+  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('schools')"><span class="icon">👨‍🏫</span><span>导师信息库</span></div>
+  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('proposal')"><span class="icon">🔬</span><span>科研计划书</span></div>
+  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('interview')"><span class="icon">🎤</span><span>面试模拟</span></div>
+  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('literature')"><span class="icon">📚</span><span>文献检索</span></div>
 
   <div class="nav-group">🛠️ 学习工具</div>
   <div class="nav-item" data-tab="plan"><span class="icon">📅</span><span>备考规划</span></div>
@@ -36616,6 +36616,30 @@ function switchPhdTab(tabName) {
   });
   const targetContent = document.getElementById('phdContent-' + tabName);
   if (targetContent) targetContent.classList.add('active');
+}
+
+// 导航栏子项跳转到体育考博对应标签页
+function navigateToPhdSubTab(subTab) {
+  switchTab('phd');
+  setTimeout(function() {
+    if (subTab === 'ai') {
+      if (typeof togglePhdAIChat === 'function') {
+        var panel = document.getElementById('phdAIChatPanel');
+        if (panel && panel.style.display === 'none') togglePhdAIChat();
+      }
+    } else if (subTab === 'literature') {
+      if (typeof togglePhdAIChat === 'function') {
+        var panel = document.getElementById('phdAIChatPanel');
+        if (panel && panel.style.display === 'none') togglePhdAIChat();
+      }
+      setTimeout(function() {
+        if (typeof showPhdLiteratureSearch === 'function') showPhdLiteratureSearch();
+      }, 200);
+    } else {
+      switchPhdTab(subTab);
+    }
+    window.scrollTo(0, 0);
+  }, 150);
 }
 
 function showPhdDetail(html) {
