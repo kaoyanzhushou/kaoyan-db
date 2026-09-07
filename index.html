@@ -35141,6 +35141,146 @@ function togglePhdAIChat() {
   }
 }
 
+// ========== RAG知识库片段化与语义检索 ==========
+let PHD_KNOWLEDGE_CHUNKS = null;
+
+// 知识库片段化：将院校、常见问题、真题等拆分为带ID和来源的小片段
+function buildPhdKnowledgeChunks() {
+  if (PHD_KNOWLEDGE_CHUNKS) return PHD_KNOWLEDGE_CHUNKS;
+  const chunks = [];
+  let chunkId = 0;
+  
+  // 1. 院校信息片段化（每所院校拆分为多个片段）
+  PHD_KNOWLEDGE_BASE.schools.forEach(school => {
+    // 片段1：基本信息
+    chunks.push({
+      id: 'school_' + chunkId++,
+      source: school.name + ' - 基本信息',
+      type: '院校信息',
+      text: school.name + '（' + school.short + '）位于' + school.location + '，' + school.level + '。招生专业：' + school.majors.join('、') + '。特点：' + school.features
+    });
+    // 片段2：考试科目与参考书目
+    chunks.push({
+      id: 'school_' + chunkId++,
+      source: school.name + ' - 考试科目',
+      type: '院校信息',
+      text: school.name + '考试科目：' + school.examSubjects.join('、') + '。参考书目：' + school.referenceBooks.join('、')
+    });
+    // 片段3：难度与申请建议
+    chunks.push({
+      id: 'school_' + chunkId++,
+      source: school.name + ' - 难度与建议',
+      type: '院校信息',
+      text: school.name + '难度：' + school.difficulty + '，报录比约' + school.admissionRate + '。申请建议：' + school.applicationTips
+    });
+  });
+  
+  // 2. 常见问题片段化
+  const commonQMap = {
+    application: { title: '考博报名流程', type: '报名流程' },
+    interview: { title: '考博面试准备', type: '面试准备' },
+    research: { title: '科研计划书撰写', type: '科研计划书' },
+    tutor: { title: '导师选择与套磁', type: '导师选择' },
+    major: { title: '专业课复习', type: '专业课复习' },
+    timeline: { title: '考博时间线', type: '时间线' }
+  };
+  for (const [key, config] of Object.entries(commonQMap)) {
+    if (PHD_KNOWLEDGE_BASE.commonQuestions[key]) {
+      PHD_KNOWLEDGE_BASE.commonQuestions[key].forEach((q, idx) => {
+        chunks.push({
+          id: 'common_' + chunkId++,
+          source: config.title + ' - 问题' + (idx + 1),
+          type: config.type,
+          text: q
+        });
+      });
+    }
+  }
+  
+  // 3. 导师信息片段化
+  if (PHD_KNOWLEDGE_BASE.tutorInfo) {
+    const ti = PHD_KNOWLEDGE_BASE.tutorInfo;
+    if (ti.tips) chunks.push({ id: 'tutor_' + chunkId++, source: '导师选择技巧', type: '导师选择', text: ti.tips });
+    if (ti.howToContact) chunks.push({ id: 'tutor_' + chunkId++, source: '如何联系导师', type: '导师选择', text: ti.howToContact });
+    if (ti.emailTemplate) chunks.push({ id: 'tutor_' + chunkId++, source: '套磁邮件模板', type: '导师选择', text: ti.emailTemplate });
+  }
+  
+  // 4. 真题片段化
+  if (PHD_EXAMS && PHD_EXAMS.length > 0) {
+    PHD_EXAMS.forEach(exam => {
+      if (exam.questions) {
+        exam.questions.forEach((q, idx) => {
+          chunks.push({
+            id: 'exam_' + chunkId++,
+            source: exam.school + ' ' + exam.year + ' ' + exam.subject + ' - 第' + (idx + 1) + '题',
+            type: '考博真题',
+            text: '题目：' + q.q + (q.a ? '\n参考答案：' + q.a : '')
+          });
+        });
+      }
+    });
+  }
+  
+  // 5. 时间线片段化
+  if (PHD_KNOWLEDGE_BASE.timeline) {
+    for (const [period, tasks] of Object.entries(PHD_KNOWLEDGE_BASE.timeline)) {
+      chunks.push({
+        id: 'timeline_' + chunkId++,
+        source: '考博时间线 - ' + period,
+        type: '时间线',
+        text: period + '：' + (Array.isArray(tasks) ? tasks.join('；') : tasks)
+      });
+    }
+  }
+  
+  PHD_KNOWLEDGE_CHUNKS = chunks;
+  return chunks;
+}
+
+// 改进的RAG语义检索：返回Top5相关片段，带ID和来源
+function searchPhdKnowledgeRAG(question) {
+  const chunks = buildPhdKnowledgeChunks();
+  const q = question.toLowerCase();
+  
+  // 同义词扩展
+  const synonyms = {
+    '考博': ['博士', '博士生', '博士研究生', '读博', 'phd'],
+    '上岸': ['录取', '考上', '成功'],
+    '报名': ['报考', '申请', '注册'],
+    '复试': ['面试', '考核'],
+    '套磁': ['联系导师', '邮件', '陶瓷'],
+    '专业课': ['业务课', '专业基础'],
+    '运动人体科学': ['运动人体', '人体科学'],
+    '运动康复': ['康复'],
+    '真题': ['考题', '试题', '历年真题'],
+    '参考书': ['参考书目', '教材'],
+    '招生简章': ['招生目录', '招生信息']
+  };
+  let expandedWords = [q];
+  for (const [key, values] of Object.entries(synonyms)) {
+    if (q.includes(key)) expandedWords = expandedWords.concat(values);
+  }
+  
+  // 计算每个片段的匹配分数
+  const scored = chunks.map(chunk => {
+    let score = 0;
+    const lowerText = chunk.text.toLowerCase();
+    expandedWords.forEach(w => {
+      if (lowerText.includes(w.toLowerCase())) {
+        score += w.length > 3 ? 3 : (w.length > 1 ? 2 : 1);
+      }
+    });
+    // 标题/来源匹配加分
+    if (chunk.source.toLowerCase().includes(q)) score += 5;
+    if (chunk.type.toLowerCase().includes(q)) score += 3;
+    return { ...chunk, score };
+  });
+  
+  // 按分数排序，取Top5
+  scored.sort((a, b) => b.score - a.score);
+  return scored.filter(c => c.score > 0).slice(0, 5);
+}
+
 function searchPhdKnowledge(question) {
   const results = [];
   const q = question.toLowerCase();
@@ -35458,22 +35598,16 @@ async function sendPhdAIMessage() {
     phdAIChatHistory = phdAIChatHistory.slice(-16);
   }
   
-  // 先检索知识库
-  const knowledgeResults = searchPhdKnowledge(question);
+  // RAG检索知识库（返回Top5相关片段）
+  const ragResults = searchPhdKnowledgeRAG(question);
   
-  if (knowledgeResults.length > 0) {
-    knowledgeResults.forEach(r => {
-      addPhdAIMessage('assistant', '【' + r.type + '】' + r.title + '\n\n' + r.content, true);
-    });
-  }
-  
-  // 再调用AI生成更全面的回答
+  // 调用AI生成回答
   const loadingMsg = addPhdAIMessageReturn('assistant', '🤔 正在思考中，请稍候...');
   
   try {
     const model = document.getElementById('phdAIModelSelect').value;
-    const knowledgeContext = knowledgeResults.length > 0 
-      ? '\n\n【知识库参考资料】\n' + knowledgeResults.map(r => r.content).join('\n\n')
+    const knowledgeContext = ragResults.length > 0 
+      ? '\n\n【知识库参考资料】\n' + ragResults.map((r, i) => '[' + (i+1) + '] ' + r.source + '：\n' + r.text).join('\n\n')
       : '';
     
     // 构建多轮对话上下文
@@ -35521,6 +35655,11 @@ async function sendPhdAIMessage() {
     // 显示问题类型标签和操作按钮
     addPhdAnswerActions(msgDiv, questionType, typeConfig);
     
+    // 显示参考资料（RAG检索结果）
+    if (ragResults.length > 0 && lastAiAnswer) {
+      addPhdReferencesToAnswer(ragResults, lastAiAnswer);
+    }
+    
     // 显示快速追问建议
     showPhdQuickFollowups(question, response);
     
@@ -35551,6 +35690,42 @@ function addPhdAIMessageReturn(role, content, isKnowledge = false) {
   container.appendChild(msgDiv);
   container.scrollTop = container.scrollHeight;
   return msgDiv;
+}
+
+// 在AI回答下方添加参考资料折叠区域
+function addPhdReferencesToAnswer(ragResults, answerElement) {
+  if (!answerElement || ragResults.length === 0) return;
+  const refDiv = document.createElement('div');
+  refDiv.style.cssText = 'margin-top:12px;padding-top:12px;border-top:1px dashed #e5e7eb';
+  
+  const header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;color:#667eea;font-size:13px;font-weight:600;user-select:none';
+  header.innerHTML = '<span>📚</span><span>参考资料（' + ragResults.length + '条）</span><span style="margin-left:auto;font-size:11px">点击展开</span>';
+  
+  const content = document.createElement('div');
+  content.style.cssText = 'display:none;margin-top:10px;max-height:300px;overflow-y:auto';
+  
+  ragResults.forEach((r, i) => {
+    const item = document.createElement('div');
+    item.style.cssText = 'padding:10px 12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border-left:3px solid #667eea';
+    item.innerHTML = '<div style="font-size:12px;color:#667eea;font-weight:600;margin-bottom:4px">[' + (i+1) + '] ' + r.source + '</div>' +
+      '<div style="font-size:12px;color:#475569;line-height:1.6">' + r.text.substring(0, 200) + (r.text.length > 200 ? '...' : '') + '</div>';
+    content.appendChild(item);
+  });
+  
+  header.onclick = function() {
+    if (content.style.display === 'none') {
+      content.style.display = 'block';
+      header.querySelector('span:last-child').textContent = '点击收起';
+    } else {
+      content.style.display = 'none';
+      header.querySelector('span:last-child').textContent = '点击展开';
+    }
+  };
+  
+  refDiv.appendChild(header);
+  refDiv.appendChild(content);
+  answerElement.appendChild(refDiv);
 }
 
 // 流式输出函数
