@@ -497,6 +497,29 @@ body.focus-mode .focus-mode-exit{display:flex}
 .mock-empty-state .icon{font-size:48px;margin-bottom:16px}
 .mock-empty-state .text{font-size:16px;margin-bottom:8px}
 .mock-empty-state .hint{font-size:13px;color:#bbb}
+/* AI API功能 */
+.mock-api-toggle{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 14px;background:#f0f4ff;border-radius:8px;cursor:pointer;transition:all .2s}
+.mock-api-toggle:hover{background:#e0e8ff}
+.mock-api-toggle input{width:18px;height:18px;cursor:pointer}
+.mock-api-toggle label{cursor:pointer;font-size:14px;font-weight:500;color:#333}
+.mock-api-toggle .hint{font-size:12px;color:#888;margin-left:auto}
+.mock-api-config-btn{padding:6px 12px;border-radius:6px;font-size:13px;cursor:pointer;background:#667eea;color:#fff;border:none;transition:all .2s}
+.mock-api-config-btn:hover{background:#5568d3}
+.mock-api-panel{background:#f9f9f9;border-radius:8px;padding:16px;margin-bottom:16px;border:1px solid #e0e0e0}
+.mock-api-panel h4{margin:0 0 12px;font-size:15px;color:#333}
+.mock-api-panel input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:10px}
+.mock-api-panel input:focus{outline:none;border-color:#667eea}
+.mock-api-panel .api-actions{display:flex;gap:8px}
+.mock-api-panel .api-save-btn{padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;background:#667eea;color:#fff;border:none}
+.mock-api-panel .api-clear-btn{padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;background:#f0f0f0;color:#666;border:1px solid #ddd}
+.mock-api-status{font-size:12px;margin-top:8px}
+.mock-api-status.success{color:#28a745}
+.mock-api-status.error{color:#dc3545}
+.mock-ai-loading{display:flex;align-items:center;justify-content:center;padding:40px;color:#667eea}
+.mock-ai-loading .spinner{width:24px;height:24px;border:3px solid #f0f0f0;border-top-color:#667eea;border-radius:50%;animation:spin 1s linear infinite;margin-right:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mock-ai-badge{display:inline-block;padding:2px 8px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:11px;border-radius:10px;margin-left:8px}
+
 .mock-exam-container{padding:20px 0}
 .mock-exam-header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:24px 28px;border-radius:14px;margin-bottom:24px;box-shadow:0 4px 15px rgba(102,126,234,.3)}
 .mock-exam-header h2{margin:0 0 8px;font-size:22px}
@@ -8059,8 +8082,33 @@ console.log('✅ 学习工具入口已加载');
         </div>
       </div>
       
-      <div style="text-align:center;margin-top:20px">
-        <button class="mock-gen-btn" id="mockGenBtn" onclick="generateMockQuestions()">🚀 生成模拟题</button>
+      
+    <!-- AI智能生成开关 -->
+    <div class="mock-api-toggle">
+      <input type="checkbox" id="mockAiToggle" onchange="toggleMockAiMode()">
+      <label for="mockAiToggle">🤖 使用AI智能生成（DeepSeek）</label>
+      <span class="hint">默认关闭，使用本地模板</span>
+    </div>
+    <!-- API配置按钮 -->
+    <div style="margin-bottom:12px">
+      <button class="mock-api-config-btn" onclick="toggleMockApiPanel()">⚙️ API设置</button>
+    </div>
+    <!-- API配置面板 -->
+    <div class="mock-api-panel" id="mockApiPanel" style="display:none">
+      <h4>🔑 DeepSeek API 配置</h4>
+      <input type="password" id="mockApiKeyInput" placeholder="请输入DeepSeek API Key（sk-...）">
+      <div class="api-actions">
+        <button class="api-save-btn" onclick="saveMockApiKey()">💾 保存Key</button>
+        <button class="api-clear-btn" onclick="clearMockApiKey()">🗑️ 清除</button>
+      </div>
+      <div class="mock-api-status" id="mockApiStatus"></div>
+      <div style="font-size:12px;color:#999;margin-top:8px">
+        💡 Key仅保存在您的浏览器本地（localStorage），不会上传到任何服务器。<br>
+        👉 没有Key？前往 <a href="https://platform.deepseek.com/" target="_blank" style="color:#667eea">DeepSeek开放平台</a> 注册获取。
+      </div>
+    </div>
+<div style="text-align:center;margin-top:20px">
+        <button class="mock-gen-btn" id="mockGenBtn" onclick="mockUseAi ? aiGenerateMockQuestions() : generateMockQuestions()">🚀 生成模拟题</button>
       </div>
     </div>
     
@@ -34315,6 +34363,12 @@ function initMockExam() {
   // 初始化知识点树
   renderMockKnowledgeTree();
   updateMockViewCounts();
+  // 初始化AI开关状态
+  const aiToggle = document.getElementById('mockAiToggle');
+  if (aiToggle) {
+    aiToggle.checked = false;
+    mockUseAi = false;
+  }
   // 初始化院校选择
   renderMockSchoolSelect();
 }
@@ -34891,6 +34945,255 @@ function updateMockViewCounts() {
   if (favTab) favTab.textContent = favCount;
   if (wrongTab) wrongTab.textContent = wrongCount;
 }
+// ========== DeepSeek AI API 功能 ==========
+let mockUseAi = false;
+
+function getMockApiKey() {
+  return localStorage.getItem('mock_deepseek_api_key') || '';
+}
+
+function saveMockApiKey() {
+  const input = document.getElementById('mockApiKeyInput');
+  const key = input.value.trim();
+  const status = document.getElementById('mockApiStatus');
+  if (!key) {
+    status.className = 'mock-api-status error';
+    status.textContent = '❌ 请输入API Key';
+    return;
+  }
+  localStorage.setItem('mock_deepseek_api_key', key);
+  status.className = 'mock-api-status success';
+  status.textContent = '✅ API Key已保存';
+  setTimeout(() => { status.textContent = ''; }, 3000);
+}
+
+function clearMockApiKey() {
+  localStorage.removeItem('mock_deepseek_api_key');
+  document.getElementById('mockApiKeyInput').value = '';
+  const status = document.getElementById('mockApiStatus');
+  status.className = 'mock-api-status success';
+  status.textContent = '✅ API Key已清除';
+  setTimeout(() => { status.textContent = ''; }, 3000);
+}
+
+function toggleMockApiPanel() {
+  const panel = document.getElementById('mockApiPanel');
+  const input = document.getElementById('mockApiKeyInput');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    input.value = getMockApiKey();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+function toggleMockAiMode() {
+  const toggle = document.getElementById('mockAiToggle');
+  mockUseAi = toggle.checked;
+  if (mockUseAi && !getMockApiKey()) {
+    alert('请先在「⚙️ API设置」中配置DeepSeek API Key，否则将自动使用本地模板生成。');
+    toggle.checked = false;
+    mockUseAi = false;
+  }
+}
+
+async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens) {
+  const apiKey = getMockApiKey();
+  if (!apiKey) throw new Error('未配置API Key');
+  
+  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey
+    },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: maxTokens || 2000,
+      stream: false
+    })
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error('API调用失败: ' + (errorData.error?.message || response.statusText));
+  }
+  
+  const data = await response.json();
+  return data.choices[0]?.message?.content || '';
+}
+
+async function generateQuestionWithAI(knowledge, type) {
+  const systemPrompt = '你是一位资深的运动人体科学考研出题专家，精通运动生理学和运动解剖学。你熟悉上海体育大学、北京体育大学、武汉体育学院、首都体育学院、华南师范大学、成都体育学院等院校的考研真题风格。请根据给定的知识点，生成符合考研风格的' + type + '。要求：题目表述规范、考点明确、有一定深度和区分度。';
+  
+  const typeDesc = type === '名词解释' ? '名词解释题（要求准确、简洁，涵盖概念核心）' : 
+                   type === '简答题' ? '简答题（要求分点明确、逻辑清晰、涵盖主要要点）' :
+                   '论述题（要求有深度、有体系、结合运动实践、论述充分）';
+  
+  const userPrompt = '知识点：' + knowledge.name + '\n' +
+    '知识点定义：' + knowledge.def + '\n' +
+    '核心要点：' + knowledge.points.join('；') + '\n' +
+    '所属科目：' + (knowledge.subject === 'physio' ? '运动生理学' : '运动解剖学') + '\n' +
+    '请生成一道' + typeDesc + '。\n' +
+    '输出格式：只输出题目本身，不要任何解释、前缀或后缀。';
+  
+  return await callDeepSeekAPI(systemPrompt, userPrompt, 500);
+}
+
+async function generateAnswerWithAI(question, knowledge, type, score) {
+  const systemPrompt = '你是一位资深的运动人体科学考研辅导专家，精通运动生理学和运动解剖学。请为考研题目撰写详细的参考答案和得分点拆解。要求：答案准确、全面、有条理，符合考研阅卷标准；得分点明确标注分值。';
+  
+  const userPrompt = '题目：' + question + '\n' +
+    '题型：' + type + '（' + score + '分）\n' +
+    '相关知识点：' + knowledge.name + '\n' +
+    '知识点定义：' + knowledge.def + '\n' +
+    '核心要点：' + knowledge.points.join('；') + '\n\n' +
+    '请撰写详细的参考答案，要求：\n' +
+    '1. 答案结构清晰，分点论述\n' +
+    '2. 内容全面准确，涵盖所有考点\n' +
+    '3. 结合运动生理学/运动解剖学理论\n' +
+    '4. 适当结合运动实践应用\n\n' +
+    '输出格式：\n' +
+    '【参考答案】\n' +
+    '（详细答案内容，使用HTML格式，可用<p><strong><ul><li><ol>等标签）\n\n' +
+    '【得分点拆解】\n' +
+    '1. 得分点内容 - X分\n' +
+    '2. 得分点内容 - X分\n' +
+    '...';
+  
+  return await callDeepSeekAPI(systemPrompt, userPrompt, 3000);
+}
+
+function parseAiAnswerResponse(response) {
+  // 解析AI返回的答案和得分点
+  let answer = '';
+  let scorePoints = [];
+  
+  // 提取参考答案部分
+  const answerMatch = response.match(/【参考答案】([\s\S]*?)(?=【得分点拆解】|$)/);
+  if (answerMatch) {
+    answer = answerMatch[1].trim();
+  } else {
+    answer = response;
+  }
+  
+  // 提取得分点
+  const scoreMatch = response.match(/【得分点拆解】([\s\S]*)$/);
+  if (scoreMatch) {
+    const lines = scoreMatch[1].split('\n').filter(l => l.trim());
+    lines.forEach(line => {
+      const match = line.match(/^\d+[\.、]\s*(.+?)\s*[-–—]\s*(\d+)\s*分/);
+      if (match) {
+        scorePoints.push({ text: match[1].trim(), val: match[2] + '分' });
+      }
+    });
+  }
+  
+  // 如果没有解析到得分点，生成默认的
+  if (scorePoints.length === 0) {
+    scorePoints = [{ text: '答案内容完整性与准确性', val: '满分' }];
+  }
+  
+  return { answer, scorePoints };
+}
+
+async function aiGenerateMockQuestions() {
+  const area = document.getElementById('mockResultArea');
+  const btn = document.getElementById('mockGenBtn');
+  
+  // 显示加载状态
+  area.innerHTML = '<div class="mock-ai-loading"><div class="spinner"></div>🤖 AI正在智能生成题目，请稍候...</div>';
+  btn.disabled = true;
+  btn.textContent = '⏳ AI生成中...';
+  
+  try {
+    const type = document.getElementById('mockTypeSelect').value;
+    const count = parseInt(document.getElementById('mockCountSelect').value);
+    const school = document.getElementById('mockSchoolSelect').value;
+    
+    const selectedIds = mockSelectedKnowledge;
+    if (selectedIds.length === 0) {
+      alert('请先选择至少一个知识点！');
+      btn.disabled = false;
+      btn.textContent = '🚀 生成模拟题';
+      renderMockResults();
+      return;
+    }
+    
+    const allKnowledge = Object.values(MOCK_KNOWLEDGE).flat();
+    const selectedKnowledge = selectedIds.map(id => allKnowledge.find(k => k.id === id)).filter(Boolean);
+    
+    mockGeneratedQuestions = [];
+    
+    // 为每个知识点生成题目
+    for (const k of selectedKnowledge) {
+      const typesToGen = type === 'mixed' ? ['名词解释', '简答题', '论述题'] : [type];
+      
+      for (const qType of typesToGen) {
+        if (mockGeneratedQuestions.length >= count) break;
+        
+        try {
+          // AI生成题目
+          const question = await generateQuestionWithAI(k, qType);
+          const score = qType === '名词解释' ? 10 : (qType === '简答题' ? 25 : 50);
+          
+          // AI生成答案
+          const answerResponse = await generateAnswerWithAI(question, k, qType, score);
+          const parsed = parseAiAnswerResponse(answerResponse);
+          
+          const typeClass = qType === '名词解释' ? 'mock-type-noun' : (qType === '简答题' ? 'mock-type-short' : 'mock-type-essay');
+          
+          mockGeneratedQuestions.push({
+            type: qType,
+            typeClass,
+            question: question,
+            answer: parsed.answer,
+            scorePoints: parsed.scorePoints,
+            score: score,
+            knowledge: k.name,
+            subject: k.subject,
+            chapter: k.chapter,
+            school: school,
+            isAiGenerated: true
+          });
+        } catch (e) {
+          console.warn('AI生成失败，使用本地模板:', e.message);
+          // 降级到本地模板
+          if (qType === '名词解释') {
+            mockGeneratedQuestions.push(generateNounExplanation(k, school));
+          } else if (qType === '简答题') {
+            mockGeneratedQuestions.push(generateShortAnswer(k, school));
+          } else {
+            mockGeneratedQuestions.push(generateEssay(k, school));
+          }
+        }
+      }
+      if (mockGeneratedQuestions.length >= count) break;
+    }
+    
+    // 随机打乱并限制数量
+    if (mockGeneratedQuestions.length > count) {
+      mockGeneratedQuestions = mockGeneratedQuestions.sort(() => Math.random() - 0.5).slice(0, count);
+    }
+    
+    renderMockResults();
+    
+  } catch (e) {
+    console.error('AI生成失败:', e);
+    alert('AI生成失败: ' + e.message + '\n已自动切换到本地模板生成。');
+    // 完全降级到本地模板
+    generateMockQuestions();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 重新生成';
+  }
+}
+
 
 
 // 初始化AI模拟题
