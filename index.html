@@ -26241,30 +26241,33 @@ updateLoading(100, '加载完成！');
 setTimeout(hideLoading, 300);
 }, 100);
 }
-// DOMContentLoaded处理（兼容事件已触发的情况）
-function onDOMReady() {
+// 加载逻辑：不依赖事件，直接调用（大文件script执行慢，事件可能已错过）
+function startLoadingSequence() {
+try {
 updateLoading(30, '加载页面结构...');
+setTimeout(() => { try { updateLoading(50, '加载样式...'); } catch(e){} }, 50);
+setTimeout(() => { try { updateLoading(70, '初始化核心功能...'); } catch(e){} }, 100);
+setTimeout(() => { try { updateLoading(85, '加载知识库...'); } catch(e){} }, 200);
 setTimeout(() => {
-updateLoading(50, '加载样式...');
-}, 50);
-setTimeout(() => {
-updateLoading(70, '初始化核心功能...');
-}, 100);
+try {
+updateLoading(95, '加载学习工具...');
+if(typeof initVocab === 'function') initVocab();
+if(typeof initFlashcards === 'function') initFlashcards();
+if(typeof initQuiz === 'function') initQuiz();
+updateLoading(100, '加载完成！');
+setTimeout(hideLoading, 300);
+} catch(e) {
+console.warn('加载完成阶段出错:', e);
+try { hideLoading(); } catch(e2){}
 }
-if (document.readyState === 'loading') {
-document.addEventListener('DOMContentLoaded', onDOMReady);
-} else {
-onDOMReady();
+}, 400);
+} catch(e) {
+console.error('加载序列启动失败:', e);
+try { hideLoading(); } catch(e2){}
 }
-// window load处理（兼容事件已触发的情况）
-function onPageLoad() {
-lazyInitBigData();
 }
-if (document.readyState === 'complete') {
-setTimeout(onPageLoad, 100);
-} else {
-window.addEventListener('load', onPageLoad);
-}
+// 立即启动加载序列（不依赖DOMContentLoaded事件）
+startLoadingSequence();
 function switchTab(tabName){
 document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
 document.querySelector(`.nav-item[data-tab="${tabName}"]`).classList.add('active');
