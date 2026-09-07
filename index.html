@@ -540,6 +540,14 @@ body.focus-mode .focus-mode-exit{display:flex}
 .phd-content{display:none}
 .phd-content.active{display:block}
 .phd-section-card{background:#fff;border-radius:16px;padding:28px;margin-bottom:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid #f0f0f0}
+.phd-question-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;padding:10px 12px;background:#f8fafc;border-radius:8px;border-left:3px solid #667eea}
+.phd-difficulty-tag{font-size:12px;color:#d97706;font-weight:600}
+.phd-points-tag{font-size:12px;color:#475569}
+.phd-ai-answer-section{margin-top:16px;padding-top:16px;border-top:1px dashed #e2e8f0}
+.phd-ai-btn{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.3s}
+.phd-ai-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(102,126,234,0.4)}
+.phd-ai-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+.phd-ai-answer-content{margin-top:12px}
 .phd-section-header{display:flex;align-items:center;gap:20px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px;padding:24px 28px;margin-bottom:24px;color:#fff;box-shadow:0 8px 32px rgba(102,126,234,.25)}
 .phd-section-icon{width:64px;height:64px;background:rgba(255,255,255,.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;backdrop-filter:blur(10px);flex-shrink:0}
 .phd-section-info{flex:1;min-width:0}
@@ -37417,6 +37425,7 @@ function renderPhdExam() {
   html += '<button class="phd-practice-btn" onclick="startPhdPractice()">🎯 开始刷题</button>';
   html += '<button class="phd-practice-btn secondary" onclick="showPhdWrongBook()">📕 错题本</button>';
   html += '<button class="phd-practice-btn secondary" onclick="showPhdFavorites()">⭐ 我的收藏</button>';
+  html += '<button class="phd-practice-btn secondary" onclick="showPhdExamStats()">📊 高频考点统计</button>';
   html += '</div>';
   
   html += '<div id="phdExamList">';
@@ -37428,14 +37437,24 @@ function renderPhdExam() {
     html += '</div>';
     html += '<div class="phd-exam-questions">';
     exam.questions.forEach((q, qidx) => {
+      const qPoints = extractPhdExamPoints(q.q);
+      const qDifficulty = q.q.length > 80 ? '⭐⭐⭐⭐' : '⭐⭐⭐';
       html += '<div class="phd-question-item">';
       html += '<div class="phd-question-title" onclick="togglePhdAnswer(' + idx + ',' + qidx + ')">';
       html += '<span class="phd-question-num">' + (qidx+1) + '.</span> ' + q.q;
-      html += '<span class="phd-answer-toggle" id="phdToggle_' + idx + '_' + qidx + '">▼ 查看答案</span>';
+      html += '<span class="phd-answer-toggle" id="phdToggle_' + idx + '_' + qidx + '">▼ 查看详情</span>';
       html += '</div>';
       html += '<div class="phd-answer-content" id="phdAnswer_' + idx + '_' + qidx + '" style="display:none">';
-      html += '<div class="phd-answer-label">参考答案：</div>';
+      html += '<div class="phd-question-meta">';
+      html += '<span class="phd-difficulty-tag">难度：' + qDifficulty + '</span>';
+      html += '<span class="phd-points-tag">考查知识点：' + qPoints + '</span>';
+      html += '</div>';
+      html += '<div class="phd-answer-label">📖 参考答案：</div>';
       html += '<div class="phd-answer-text">' + q.a + '</div>';
+      html += '<div class="phd-ai-answer-section">';
+      html += '<button class="phd-ai-btn" onclick="generatePhdExamAIAnswer(' + idx + ',' + qidx + ',this)">🤖 AI生成详细答案与得分点</button>';
+      html += '<div class="phd-ai-answer-content" id="phdAIAnswer_' + idx + '_' + qidx + '" style="display:none"></div>';
+      html += '</div>';
       html += '</div>';
       html += '</div>';
     });
@@ -37465,6 +37484,144 @@ function filterPhdExams() {
       card.style.display = 'none';
     }
   });
+}
+
+// 提取真题考查知识点
+function extractPhdExamPoints(question) {
+  const pointMap = {
+    '最大摄氧量': '最大摄氧量', 'vo2max': '最大摄氧量', 'vo₂max': '最大摄氧量',
+    '乳酸阈': '乳酸阈', '乳酸': '乳酸代谢',
+    '运动性疲劳': '运动性疲劳', '疲劳': '运动性疲劳',
+    '肌纤维': '肌纤维类型', '慢肌': '肌纤维类型', '快肌': '肌纤维类型',
+    '线粒体': '线粒体生物发生', 'pgc-1': '线粒体生物发生', 'ampk': '线粒体生物发生',
+    '心脏': '心血管功能', '心血管': '心血管功能', '心动过缓': '运动性心脏',
+    '能量代谢': '能量代谢', '磷酸原': '能量代谢', '糖酵解': '能量代谢', '有氧氧化': '能量代谢',
+    '糖代谢': '糖代谢', '糖原': '糖代谢', '血糖': '糖代谢',
+    '脂肪': '脂肪代谢', '脂肪酸': '脂肪代谢',
+    '免疫': '运动免疫', '免疫抑制': '运动免疫',
+    '高原': '高原训练', '低氧': '低氧训练',
+    '蛋白': '运动性蛋白尿', '血尿': '运动性血尿',
+    '呼吸': '运动呼吸', '肺通气': '运动呼吸',
+    '焦虑': '运动焦虑', '心理': '运动心理学',
+    '肩关节': '肩关节', '髋关节': '髋关节', '膝关节': '膝关节', '脊柱': '脊柱',
+    '骨骼肌': '骨骼肌', '肌肉收缩': '肌肉收缩',
+    '卫星细胞': '卫星细胞', '肌肉损伤': '肌肉损伤', 'doms': '延迟性肌肉酸痛',
+    '技术分析': '运动技术分析', '生物力学': '运动生物力学',
+    '体育本质': '体育本质', '健康中国': '健康中国',
+    '生物化学': '运动生物化学', '糖异生': '糖异生'
+  };
+  const q = question.toLowerCase();
+  const points = [];
+  for (const [key, value] of Object.entries(pointMap)) {
+    if (q.includes(key.toLowerCase()) && !points.includes(value)) {
+      points.push(value);
+    }
+  }
+  return points.length > 0 ? points.join('、') : '综合应用';
+}
+
+// AI生成真题详细答案与得分点
+async function generatePhdExamAIAnswer(examIdx, qIdx, btn) {
+  const exam = PHD_EXAMS[examIdx];
+  const question = exam.questions[qIdx];
+  const answerDiv = document.getElementById('phdAIAnswer_' + examIdx + '_' + qIdx);
+  
+  btn.disabled = true;
+  btn.textContent = '🤖 AI生成中...';
+  answerDiv.style.display = 'block';
+  answerDiv.innerHTML = '<div style="padding:16px;color:#667eea;font-size:14px">⏳ AI正在生成详细答案与得分点，请稍候...</div>';
+  
+  try {
+    const model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    const systemPrompt = `你是运动人体科学考博专业课阅卷专家。请针对以下考博真题，生成一份详细、全面、专业的参考答案，要求：
+1. 答案结构清晰，分点论述，逻辑严谨
+2. 每个要点标注分值（本题按25-50分标准）
+3. 包含核心概念定义、机制分析、影响因素、实践应用、研究进展等
+4. 专业术语准确，引用权威教材观点
+5. 最后给出【得分点汇总】，列出关键得分点
+6. 使用中文回答
+
+题目信息：
+院校：${exam.school}
+年份：${exam.year}年
+科目：${exam.subject}
+题目：${question.q}
+
+现有参考答案（仅供参考，请在此基础上扩展和深化）：
+${question.a.substring(0, 500)}`;
+
+    const response = await callDeepSeekAPI(systemPrompt, question.q, 4000, model);
+    
+    answerDiv.innerHTML = '<div style="padding:16px;background:linear-gradient(135deg,#f0f4ff,#e8f0fe);border:1px solid #c7d2fe;border-radius:12px"><div style="font-weight:600;color:#4338ca;margin-bottom:12px;font-size:15px">🤖 AI生成详细答案与得分点</div><div style="font-size:14px;color:#1e293b;line-height:1.8;white-space:pre-wrap">' + response + '</div></div>';
+    btn.textContent = '✅ 已生成（点击重新生成）';
+  } catch (error) {
+    answerDiv.innerHTML = '<div style="padding:16px;color:#dc2626;font-size:14px">❌ AI生成失败：' + error.message + '</div>';
+    btn.textContent = '🤖 AI生成详细答案与得分点';
+  }
+  btn.disabled = false;
+}
+
+// 高频考点统计
+function showPhdExamStats() {
+  // 统计所有真题中的知识点出现频率
+  const pointCount = {};
+  PHD_EXAMS.forEach(exam => {
+    exam.questions.forEach(q => {
+      const points = extractPhdExamPoints(q.q);
+      points.split('、').forEach(p => {
+        if (p && p !== '综合应用') {
+          pointCount[p] = (pointCount[p] || 0) + 1;
+        }
+      });
+    });
+  });
+  
+  // 按出现次数排序，取Top15
+  const sortedPoints = Object.entries(pointCount).sort((a, b) => b[1] - a[1]).slice(0, 15);
+  const labels = sortedPoints.map(p => p[0]);
+  const values = sortedPoints.map(p => p[1]);
+  
+  // 创建模态框
+  const modal = document.createElement('div');
+  modal.id = 'phdStatsModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:800px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h3 style="margin:0;color:#1e293b;font-size:20px">📊 考博真题高频考点统计</h3><button onclick="document.getElementById(\'phdStatsModal\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8">×</button></div><div style="margin-bottom:16px;padding:12px 16px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0369a1">共统计 ' + PHD_EXAMS.length + ' 套真题、' + PHD_EXAMS.reduce((sum, e) => sum + e.questions.length, 0) + ' 道题目，识别出 ' + Object.keys(pointCount).length + ' 个高频考点</div><div id="phdStatsChart" style="width:100%;height:400px"></div><div id="phdStatsList" style="margin-top:20px"></div></div>';
+  document.body.appendChild(modal);
+  
+  // 渲染ECharts图表
+  if (typeof echarts !== 'undefined') {
+    const chart = echarts.init(document.getElementById('phdStatsChart'));
+    chart.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      xAxis: { type: 'value', name: '出现次数' },
+      yAxis: { type: 'category', data: labels.reverse(), axisLabel: { fontSize: 12 } },
+      series: [{
+        name: '出现次数',
+        type: 'bar',
+        data: values.reverse(),
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+            { offset: 0, color: '#667eea' },
+            { offset: 1, color: '#764ba2' }
+          ]),
+          borderRadius: [0, 4, 4, 0]
+        },
+        label: { show: true, position: 'right', fontSize: 12, color: '#475569' }
+      }]
+    });
+  } else {
+    document.getElementById('phdStatsChart').innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">图表库加载中...</div>';
+  }
+  
+  // 渲染考点列表
+  let listHtml = '<h4 style="color:#475569;margin-bottom:12px">📋 全部考点列表</h4><div style="display:flex;flex-wrap:wrap;gap:8px">';
+  Object.entries(pointCount).sort((a, b) => b[1] - a[1]).forEach(([point, count]) => {
+    const color = count >= 3 ? '#ef4444' : count >= 2 ? '#f59e0b' : '#3b82f6';
+    listHtml += '<span style="padding:6px 12px;background:' + color + '15;color:' + color + ';border-radius:20px;font-size:12px;border:1px solid ' + color + '30">' + point + ' (' + count + '次)</span>';
+  });
+  listHtml += '</div>';
+  document.getElementById('phdStatsList').innerHTML = listHtml;
 }
 
 function togglePhdAnswer(examIdx, qIdx) {
