@@ -480,6 +480,23 @@ body.focus-mode .focus-mode-exit{display:flex}
 
 
 /* AI模拟题系统样式 */
+/* 收藏和错题本功能 */
+.mock-view-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.mock-view-tab{padding:8px 16px;border-radius:8px;background:#f0f0f0;cursor:pointer;font-size:14px;font-weight:500;transition:all .2s;border:2px solid transparent}
+.mock-view-tab:hover{background:#e0e0e0}
+.mock-view-tab.active{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-color:#667eea}
+.mock-view-tab .count{background:rgba(255,255,255,.3);padding:2px 8px;border-radius:10px;font-size:12px;margin-left:6px}
+.mock-view-tab:not(.active) .count{background:#ddd;color:#666}
+.mock-action-bar{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.mock-action-btn{padding:6px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .2s;border:1px solid #ddd;background:#fff}
+.mock-action-btn:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.mock-action-btn.favorited{background:#fff3cd;border-color:#ffc107;color:#856404}
+.mock-action-btn.wrong-marked{background:#f8d7da;border-color:#dc3545;color:#721c24}
+.mock-action-btn.remove-btn{background:#f8d7da;border-color:#dc3545;color:#721c24}
+.mock-empty-state{text-align:center;padding:60px 20px;color:#999}
+.mock-empty-state .icon{font-size:48px;margin-bottom:16px}
+.mock-empty-state .text{font-size:16px;margin-bottom:8px}
+.mock-empty-state .hint{font-size:13px;color:#bbb}
 .mock-exam-container{padding:20px 0}
 .mock-exam-header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:24px 28px;border-radius:14px;margin-bottom:24px;box-shadow:0 4px 15px rgba(102,126,234,.3)}
 .mock-exam-header h2{margin:0 0 8px;font-size:22px}
@@ -7997,7 +8014,14 @@ console.log('✅ 学习工具入口已加载');
       <p>基于运动生理学与运动解剖学高频知识点，参考上海体育大学、北京体育大学、武汉体育学院等院校真题风格，智能生成名词解释、简答题、论述题，附带参考答案与得分点拆解。</p>
     </div>
     
-    <div class="mock-config-card">
+    
+    <!-- 视图切换标签 -->
+    <div class="mock-view-tabs">
+      <div class="mock-view-tab active" data-view="generate" onclick="switchMockView('generate')">📝 生成模拟题</div>
+      <div class="mock-view-tab" data-view="favorites" onclick="switchMockView('favorites')">⭐ 我的收藏<span class="count">0</span></div>
+      <div class="mock-view-tab" data-view="wrong" onclick="switchMockView('wrong')">❌ 错题本<span class="count">0</span></div>
+    </div>
+<div class="mock-config-card">
       <div class="mock-config-row">
         <div class="mock-config-group">
           <label>🏫 院校风格</label>
@@ -34290,6 +34314,7 @@ let mockGeneratedQuestions = [];
 function initMockExam() {
   // 初始化知识点树
   renderMockKnowledgeTree();
+  updateMockViewCounts();
   // 初始化院校选择
   renderMockSchoolSelect();
 }
@@ -34658,6 +34683,8 @@ function renderMockResults() {
   html += '</div>';
 
   mockGeneratedQuestions.forEach((q, idx) => {
+    const isFav = isMockFavorite(q);
+    const isWrong = isMockWrong(q);
     html += '<div class="mock-question-card">';
     html += '<span class="mock-question-type ' + q.typeClass + '">' + q.type + '（' + q.score + '分）</span>';
     html += '<span class="mock-source-tag">' + q.knowledge + ' · ' + (q.subject === 'physio' ? '运动生理学' : '运动解剖学') + '</span>';
@@ -34677,11 +34704,17 @@ function renderMockResults() {
     html += '</div>';
     html += '</div>';
     html += '</div>';
+    // 收藏和错题本按钮
+    html += '<div class="mock-action-bar">';
+    html += '<button class="mock-action-btn ' + (isFav ? 'favorited' : '') + '" onclick="toggleMockFavorite(' + idx + ')" id="mockFavBtn' + idx + '">' + (isFav ? '⭐ 已收藏' : '☆ 收藏') + '</button>';
+    html += '<button class="mock-action-btn ' + (isWrong ? 'wrong-marked' : '') + '" onclick="toggleMockWrong(' + idx + ')" id="mockWrongBtn' + idx + '">' + (isWrong ? '❌ 已加入错题本' : '❗ 加入错题本') + '</button>';
+    html += '</div>';
     html += '</div>';
   });
 
   area.innerHTML = html;
 }
+
 
 function toggleMockAnswer(idx) {
   const content = document.getElementById('mockAnswerContent' + idx);
@@ -34694,6 +34727,171 @@ function toggleMockAnswer(idx) {
     btn.textContent = '📕 收起参考答案';
   }
 }
+// ========== 收藏和错题本功能 ==========
+function getMockFavorites() {
+  try {
+    return JSON.parse(localStorage.getItem('mock_favorites') || '[]');
+  } catch(e) { return []; }
+}
+
+function saveMockFavorites(list) {
+  localStorage.setItem('mock_favorites', JSON.stringify(list));
+}
+
+function isMockFavorite(q) {
+  const favs = getMockFavorites();
+  return favs.some(f => f.question === q.question && f.knowledge === q.knowledge);
+}
+
+function toggleMockFavorite(idx) {
+  const q = mockGeneratedQuestions[idx];
+  const favs = getMockFavorites();
+  const existIdx = favs.findIndex(f => f.question === q.question && f.knowledge === q.knowledge);
+  const btn = document.getElementById('mockFavBtn' + idx);
+  
+  if (existIdx > -1) {
+    favs.splice(existIdx, 1);
+    if (btn) { btn.classList.remove('favorited'); btn.textContent = '☆ 收藏'; }
+  } else {
+    favs.push(q);
+    if (btn) { btn.classList.add('favorited'); btn.textContent = '⭐ 已收藏'; }
+  }
+  saveMockFavorites(favs);
+  updateMockViewCounts();
+}
+
+function getMockWrong() {
+  try {
+    return JSON.parse(localStorage.getItem('mock_wrong') || '[]');
+  } catch(e) { return []; }
+}
+
+function saveMockWrong(list) {
+  localStorage.setItem('mock_wrong', JSON.stringify(list));
+}
+
+function isMockWrong(q) {
+  const wrongs = getMockWrong();
+  return wrongs.some(w => w.question === q.question && w.knowledge === q.knowledge);
+}
+
+function toggleMockWrong(idx) {
+  const q = mockGeneratedQuestions[idx];
+  const wrongs = getMockWrong();
+  const existIdx = wrongs.findIndex(w => w.question === q.question && w.knowledge === q.knowledge);
+  const btn = document.getElementById('mockWrongBtn' + idx);
+  
+  if (existIdx > -1) {
+    wrongs.splice(existIdx, 1);
+    if (btn) { btn.classList.remove('wrong-marked'); btn.textContent = '❗ 加入错题本'; }
+  } else {
+    wrongs.push(q);
+    if (btn) { btn.classList.add('wrong-marked'); btn.textContent = '❌ 已加入错题本'; }
+  }
+  saveMockWrong(wrongs);
+  updateMockViewCounts();
+}
+
+let mockCurrentView = 'generate';
+
+function switchMockView(view) {
+  mockCurrentView = view;
+  // 更新标签样式
+  document.querySelectorAll('.mock-view-tab').forEach(tab => {
+    tab.classList.remove('active');
+    if (tab.dataset.view === view) tab.classList.add('active');
+  });
+  
+  const area = document.getElementById('mockResultArea');
+  const configCard = document.querySelector('.mock-config-card');
+  
+  if (view === 'generate') {
+    if (configCard) configCard.style.display = 'block';
+    renderMockResults();
+  } else {
+    if (configCard) configCard.style.display = 'none';
+    const list = view === 'favorites' ? getMockFavorites() : getMockWrong();
+    renderMockSavedList(list, view);
+  }
+}
+
+function renderMockSavedList(list, viewType) {
+  const area = document.getElementById('mockResultArea');
+  
+  if (list.length === 0) {
+    const icon = viewType === 'favorites' ? '⭐' : '❌';
+    const text = viewType === 'favorites' ? '暂无收藏题目' : '错题本为空';
+    const hint = viewType === 'favorites' ? '在生成题目后点击☆收藏按钮添加' : '在生成题目后点击❗加入错题本按钮添加';
+    area.innerHTML = '<div class="mock-empty-state"><div class="icon">' + icon + '</div><div class="text">' + text + '</div><div class="hint">' + hint + '</div></div>';
+    return;
+  }
+  
+  let html = '<div class="mock-stats-bar">';
+  html += '<div class="mock-stat-item"><div class="num">' + list.length + '</div><div class="label">' + (viewType === 'favorites' ? '收藏题目' : '错题数量') + '</div></div>';
+  html += '</div>';
+  
+  list.forEach((q, idx) => {
+    html += '<div class="mock-question-card">';
+    html += '<span class="mock-question-type ' + q.typeClass + '">' + q.type + '（' + q.score + '分）</span>';
+    html += '<span class="mock-source-tag">' + q.knowledge + ' · ' + (q.subject === 'physio' ? '运动生理学' : '运动解剖学') + '</span>';
+    html += '<div class="mock-question-title">' + (idx + 1) + '. ' + q.question + '</div>';
+    html += '<button class="mock-answer-toggle" onclick="toggleMockSavedAnswer(' + idx + ', \'' + viewType + '\')" id="mockSavedToggle' + viewType + idx + '">📖 显示参考答案与得分点</button>';
+    html += '<div class="mock-answer-content" id="mockSavedContent' + viewType + idx + '">';
+    html += '<div class="mock-answer-section">';
+    html += '<div class="mock-answer-section-title">📝 参考答案</div>';
+    html += '<div class="mock-answer-text">' + q.answer + '</div>';
+    html += '</div>';
+    html += '<div class="mock-answer-section">';
+    html += '<div class="mock-answer-section-title">🎯 得分点拆解（共' + q.score + '分）</div>';
+    html += '<div class="mock-score-points">';
+    q.scorePoints.forEach((sp, i) => {
+      html += '<div class="mock-score-point"><div class="mock-score-num">' + (i + 1) + '</div><div class="mock-score-text">' + sp.text + '</div><div class="mock-score-val">' + sp.val + '</div></div>';
+    });
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="mock-action-bar">';
+    html += '<button class="mock-action-btn remove-btn" onclick="removeMockSaved(' + idx + ', \'' + viewType + '\')">🗑️ 从' + (viewType === 'favorites' ? '收藏' : '错题本') + '移除</button>';
+    html += '</div>';
+    html += '</div>';
+  });
+  
+  area.innerHTML = html;
+}
+
+function toggleMockSavedAnswer(idx, viewType) {
+  const content = document.getElementById('mockSavedContent' + viewType + idx);
+  const btn = document.getElementById('mockSavedToggle' + viewType + idx);
+  if (content.classList.contains('show')) {
+    content.classList.remove('show');
+    btn.textContent = '📖 显示参考答案与得分点';
+  } else {
+    content.classList.add('show');
+    btn.textContent = '📕 收起参考答案';
+  }
+}
+
+function removeMockSaved(idx, viewType) {
+  const list = viewType === 'favorites' ? getMockFavorites() : getMockWrong();
+  list.splice(idx, 1);
+  if (viewType === 'favorites') {
+    saveMockFavorites(list);
+  } else {
+    saveMockWrong(list);
+  }
+  renderMockSavedList(viewType === 'favorites' ? getMockFavorites() : getMockWrong(), viewType);
+  updateMockViewCounts();
+}
+
+function updateMockViewCounts() {
+  const favCount = getMockFavorites().length;
+  const wrongCount = getMockWrong().length;
+  const favTab = document.querySelector('.mock-view-tab[data-view="favorites"] .count');
+  const wrongTab = document.querySelector('.mock-view-tab[data-view="wrong"] .count');
+  if (favTab) favTab.textContent = favCount;
+  if (wrongTab) wrongTab.textContent = wrongCount;
+}
+
 
 // 初始化AI模拟题
 if (typeof initMockExam === "function") { setTimeout(initMockExam, 500); }
