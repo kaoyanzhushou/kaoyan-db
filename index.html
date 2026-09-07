@@ -2342,6 +2342,302 @@ const today = new Date().toISOString().split('T')[0];
 return reviews.filter(r => r.reviewDate <= today).length;
 }
 
+
+// 错题复习提醒 - 显示今日待复习的错题
+function reviewWrongQuestions(){
+    const wrongbook = getWrongbook();
+    const reviewData = getReviewData();
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 筛选今日需要复习的错题
+    const dueReviews = reviewData.filter(r => {
+        if(r.type !== 'wrong') return false;
+        return r.reviewDate <= today;
+    });
+    
+    // 获取对应的错题详情
+    const dueQuestions = [];
+    dueReviews.forEach(r => {
+        const q = wrongbook.find(w => w.id === r.itemId || w.question === r.question);
+        if(q){
+            dueQuestions.push({...q, _reviewLevel: r.level || 0, _reviewId: r.id});
+        }
+    });
+    
+    // 显示复习提醒弹窗
+    const modal = document.createElement('div');
+    modal.className = 'review-modal-overlay';
+    modal.id = 'wrongReviewModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;display:flex;align-items:center;justify-content:center;';
+    
+    let html = '<div style="background:#fff;border-radius:16px;width:90%;max-width:700px;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">';
+    html += '<h2 style="margin:0;font-size:20px;color:#1e293b;">⏰ 错题复习提醒</h2>';
+    html += '<button onclick="closeWrongReviewModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#64748b;">&times;</button>';
+    html += '</div>';
+    
+    // 艾宾浩斯说明
+    html += '<div style="background:#f0f9ff;border-radius:10px;padding:12px 16px;margin-bottom:20px;border-left:4px solid #0ea5e9;">';
+    html += '<div style="font-size:13px;color:#0369a1;font-weight:600;margin-bottom:4px;">📚 艾宾浩斯遗忘曲线复习</div>';
+    html += '<div style="font-size:12px;color:#0284c7;line-height:1.6;">复习间隔：1天 → 2天 → 4天 → 7天 → 15天 → 30天。每次复习后自动安排下一次复习时间。</div>';
+    html += '</div>';
+    
+    if(dueQuestions.length === 0){
+        html += '<div style="text-align:center;padding:40px 20px;">';
+        html += '<div style="font-size:48px;margin-bottom:16px;">🎉</div>';
+        html += '<div style="font-size:16px;color:#16a34a;font-weight:600;margin-bottom:8px;">太棒了！今日没有需要复习的错题</div>';
+        html += '<div style="font-size:13px;color:#64748b;">继续刷题，错题会自动加入复习计划</div>';
+        html += '</div>';
+    } else {
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+        html += '<div style="font-size:14px;color:#475569;">今日待复习：<span style="color:#dc2626;font-weight:700;font-size:18px;">' + dueQuestions.length + '</span> 道</div>';
+        html += '<button onclick="startWrongReviewSession()" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">开始复习</button>';
+        html += '</div>';
+        
+        html += '<div style="max-height:400px;overflow-y:auto;">';
+        dueQuestions.forEach((q, i) => {
+            const levelColors = ['#fef3c7', '#dbeafe', '#dcfce7', '#fce7f3', '#f3e8ff', '#e0e7ff'];
+            const levelTexts = ['第1次复习', '第2次复习', '第3次复习', '第4次复习', '第5次复习', '已掌握'];
+            const level = Math.min(q._reviewLevel || 0, 5);
+            html += '<div style="background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:12px;border-left:4px solid #0ea5e9;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">';
+            html += '<span style="background:' + levelColors[level] + ';color:#475569;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;">' + levelTexts[level] + '</span>';
+            html += '<span style="font-size:11px;color:#94a3b8;">' + (q.subject || '综合') + '</span>';
+            html += '</div>';
+            html += '<div style="font-size:13px;color:#1e293b;line-height:1.6;margin-bottom:8px;">' + (q.question || '').substring(0, 150) + ((q.question || '').length > 150 ? '...' : '') + '</div>';
+            html += '<div style="font-size:12px;color:#16a34a;">✅ 正确答案：' + (q.correctAnswer || '').substring(0, 80) + '</div>';
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+}
+
+// 关闭错题复习弹窗
+function closeWrongReviewModal(){
+    const modal = document.getElementById('wrongReviewModal');
+    if(modal){
+        modal.remove();
+        document.body.style.overflow = '';
+    }
+}
+
+// 开始错题复习会话
+function startWrongReviewSession(){
+    const wrongbook = getWrongbook();
+    const reviewData = getReviewData();
+    const today = new Date().toISOString().split('T')[0];
+    
+    const dueReviews = reviewData.filter(r => r.type === 'wrong' && r.reviewDate <= today);
+    const dueQuestions = [];
+    dueReviews.forEach(r => {
+        const q = wrongbook.find(w => w.id === r.itemId || w.question === r.question);
+        if(q){
+            dueQuestions.push({...q, _reviewLevel: r.level || 0, _reviewId: r.id});
+        }
+    });
+    
+    if(dueQuestions.length === 0){
+        showSuccess('没有需要复习的错题');
+        return;
+    }
+    
+    // 关闭弹窗
+    closeWrongReviewModal();
+    
+    // 存储复习会话状态
+    window._wrongReviewSession = {
+        questions: dueQuestions,
+        currentIndex: 0,
+        correctCount: 0
+    };
+    
+    showWrongReviewQuestion();
+}
+
+// 显示错题复习题目
+function showWrongReviewQuestion(){
+    const session = window._wrongReviewSession;
+    if(!session) return;
+    
+    const q = session.questions[session.currentIndex];
+    if(!q){
+        finishWrongReviewSession();
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'review-modal-overlay';
+    modal.id = 'wrongReviewQuestionModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10001;display:flex;align-items:center;justify-content:center;';
+    
+    let html = '<div style="background:#fff;border-radius:16px;width:90%;max-width:650px;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+    html += '<div style="font-size:14px;color:#64748b;">第 ' + (session.currentIndex + 1) + ' / ' + session.questions.length + ' 题</div>';
+    html += '<button onclick="closeWrongReviewQuestion()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#64748b;">&times;</button>';
+    html += '</div>';
+    
+    // 进度条
+    const progress = ((session.currentIndex) / session.questions.length) * 100;
+    html += '<div style="height:6px;background:#e2e8f0;border-radius:3px;margin-bottom:20px;overflow:hidden;"><div style="height:100%;width:' + progress + '%;background:linear-gradient(90deg,#0ea5e9,#0284c7);border-radius:3px;transition:width 0.3s;"></div></div>';
+    
+    html += '<div style="background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:16px;">';
+    html += '<div style="font-size:15px;color:#1e293b;line-height:1.7;font-weight:500;">' + (q.question || '') + '</div>';
+    html += '</div>';
+    
+    // 你的答案
+    if(q.userAnswer){
+        html += '<div style="background:#fef2f2;border-radius:8px;padding:12px;margin-bottom:12px;border-left:3px solid #ef4444;">';
+        html += '<div style="font-size:12px;color:#dc2626;font-weight:600;margin-bottom:4px;">❌ 你的答案</div>';
+        html += '<div style="font-size:13px;color:#991b1b;">' + (q.userAnswer || '') + '</div>';
+        html += '</div>';
+    }
+    
+    // 正确答案（默认隐藏，点击显示）
+    html += '<div id="wrongReviewAnswer" style="display:none;background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:16px;border-left:3px solid #22c55e;">';
+    html += '<div style="font-size:12px;color:#16a34a;font-weight:600;margin-bottom:4px;">✅ 正确答案</div>';
+    html += '<div style="font-size:13px;color:#166534;line-height:1.6;">' + (q.correctAnswer || '') + '</div>';
+    if(q.explanation){
+        html += '<div style="font-size:12px;color:#15803d;margin-top:8px;line-height:1.6;">💡 ' + (q.explanation || '') + '</div>';
+    }
+    html += '</div>';
+    
+    // 操作按钮
+    html += '<div style="display:flex;gap:10px;margin-bottom:16px;">';
+    html += '<button onclick="document.getElementById(\'wrongReviewAnswer\').style.display=\'block\'" style="flex:1;background:#f1f5f9;color:#475569;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">👁️ 显示答案</button>';
+    html += '</div>';
+    
+    html += '<div style="display:flex;gap:10px;">';
+    html += '<button onclick="markWrongReview(false)" style="flex:1;background:#fef2f2;color:#dc2626;border:2px solid #fecaca;padding:12px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">😕 还没记住</button>';
+    html += '<button onclick="markWrongReview(true)" style="flex:1;background:#f0fdf4;color:#16a34a;border:2px solid #bbf7d0;padding:12px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">😊 记住了</button>';
+    html += '</div>';
+    
+    html += '</div>';
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+}
+
+// 标记错题复习结果
+function markWrongReview(remembered){
+    const session = window._wrongReviewSession;
+    if(!session) return;
+    
+    const q = session.questions[session.currentIndex];
+    const reviewData = getReviewData();
+    
+    // 找到对应的复习记录
+    const reviewIndex = reviewData.findIndex(r => r.id === q._reviewId);
+    if(reviewIndex > -1){
+        if(remembered){
+            // 记住了，进入下一级复习
+            const nextLevel = (q._reviewLevel || 0) + 1;
+            if(nextLevel >= EBINGHAUS_INTERVALS.length){
+                // 已完全掌握，移除复习计划
+                reviewData.splice(reviewIndex, 1);
+            } else {
+                // 安排下一次复习
+                const interval = EBINGHAUS_INTERVALS[nextLevel];
+                const nextDate = new Date();
+                nextDate.setDate(nextDate.getDate() + interval);
+                reviewData[reviewIndex].level = nextLevel;
+                reviewData[reviewIndex].reviewDate = nextDate.toISOString().split('T')[0];
+            }
+            session.correctCount++;
+        } else {
+            // 没记住，重置为第1级，明天复习
+            reviewData[reviewIndex].level = 0;
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            reviewData[reviewIndex].reviewDate = tomorrow.toISOString().split('T')[0];
+        }
+        saveReviewData(reviewData);
+    }
+    
+    // 下一题
+    session.currentIndex++;
+    closeWrongReviewQuestion();
+    
+    if(session.currentIndex < session.questions.length){
+        setTimeout(() => showWrongReviewQuestion(), 300);
+    } else {
+        finishWrongReviewSession();
+    }
+}
+
+// 完成错题复习会话
+function finishWrongReviewSession(){
+    const session = window._wrongReviewSession;
+    if(!session) return;
+    
+    const modal = document.createElement('div');
+    modal.className = 'review-modal-overlay';
+    modal.id = 'wrongReviewCompleteModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10002;display:flex;align-items:center;justify-content:center;';
+    
+    const accuracy = session.questions.length > 0 ? Math.round((session.correctCount / session.questions.length) * 100) : 0;
+    
+    let html = '<div style="background:#fff;border-radius:16px;width:90%;max-width:450px;padding:32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">';
+    html += '<div style="font-size:64px;margin-bottom:16px;">' + (accuracy >= 80 ? '🎉' : accuracy >= 60 ? '👍' : '💪') + '</div>';
+    html += '<h2 style="margin:0 0 8px;font-size:22px;color:#1e293b;">复习完成！</h2>';
+    html += '<p style="margin:0 0 24px;font-size:14px;color:#64748b;">已根据艾宾浩斯曲线安排下一次复习</p>';
+    
+    html += '<div style="display:flex;justify-content:center;gap:32px;margin-bottom:24px;">';
+    html += '<div><div style="font-size:28px;font-weight:700;color:#0ea5e9;">' + session.questions.length + '</div><div style="font-size:12px;color:#64748b;">总题数</div></div>';
+    html += '<div><div style="font-size:28px;font-weight:700;color:#16a34a;">' + session.correctCount + '</div><div style="font-size:12px;color:#64748b;">已记住</div></div>';
+    html += '<div><div style="font-size:28px;font-weight:700;color:#f59e0b;">' + accuracy + '%</div><div style="font-size:12px;color:#64748b;">正确率</div></div>';
+    html += '</div>';
+    
+    html += '<button onclick="closeWrongReviewComplete()" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border:none;padding:12px 32px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">完成</button>';
+    html += '</div>';
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+    
+    window._wrongReviewSession = null;
+}
+
+// 关闭复习完成弹窗
+function closeWrongReviewComplete(){
+    const modal = document.getElementById('wrongReviewCompleteModal');
+    if(modal) modal.remove();
+    document.body.style.overflow = '';
+}
+
+// 关闭复习题目弹窗
+function closeWrongReviewQuestion(){
+    const modal = document.getElementById('wrongReviewQuestionModal');
+    if(modal) modal.remove();
+}
+
+// 自动为新错题添加艾宾浩斯复习计划
+function autoAddWrongReview(wrongItem){
+    const reviewData = getReviewData();
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 检查是否已存在
+    const exists = reviewData.find(r => r.type === 'wrong' && (r.itemId === wrongItem.id || r.question === wrongItem.question));
+    if(exists) return;
+    
+    // 添加第1次复习（明天）
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    reviewData.push({
+        id: 'wrong_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        type: 'wrong',
+        itemId: wrongItem.id || null,
+        question: wrongItem.question || '',
+        level: 0,
+        reviewDate: tomorrow.toISOString().split('T')[0],
+        createdAt: today
+    });
+    
+    saveReviewData(reviewData);
+}
+
 // 渲染复习提醒
 window.renderReviewReminder = function(containerId){
 const container = document.getElementById(containerId);
