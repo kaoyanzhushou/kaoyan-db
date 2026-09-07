@@ -35674,8 +35674,10 @@ async function sendPhdAIMessage() {
       addPhdSearchSuggestionsToAnswer(question, finalAiAnswer);
     }
     
-    // 显示问题类型标签和操作按钮
-    addPhdAnswerActions(msgDiv, questionType, typeConfig);
+    // 显示问题类型标签和操作按钮（修复：msgDiv未定义，改用finalAiAnswer）
+    if (finalAiAnswer) {
+      addPhdAnswerActions(finalAiAnswer, questionType, typeConfig);
+    }
     
     // 显示参考资料（RAG检索结果）— 修复：使用流式输出后的最终元素
     if (ragResults.length > 0 && finalAiAnswer) {
