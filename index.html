@@ -40398,6 +40398,21 @@ function updateInterviewWordCount() {
 function submitPhdInterviewAnswer(isLast) {
   const input = document.getElementById('phdInterviewAnswerInput');
   const answer = input ? input.value : '';
+  
+  // 空回答拦截
+  if (!answer || !answer.trim()) {
+    if (!confirm('当前回答为空，确定要提交吗？（空回答将得0分）')) {
+      return;
+    }
+  }
+  
+  // 回答过短警告
+  if (answer.trim() && answer.trim().length < 30) {
+    if (!confirm('回答过短（仅' + answer.trim().length + '字），建议至少50字。确定要提交吗？')) {
+      return;
+    }
+  }
+  
   phdInterviewState.answers[phdInterviewState.currentQ] = answer;
   
   // 清除计时器
@@ -40424,15 +40439,15 @@ function prevPhdInterviewQuestion() {
   renderPhdInterviewQuestion();
 }
 
-// 智能评分：基于关键词匹配、内容长度、逻辑结构
+// 智能评分：基于关键词匹配（核心）+内容长度+逻辑结构+专业深度+语言表达
 function scorePhdInterviewAnswer(answer, question) {
   if (!answer || !answer.trim()) {
-    return { total: 0, keyword: 0, length: 0, structure: 0, professional: 0, expression: 0, matchedKeywords: [], missingKeywords: [] };
+    return { total: 0, keyword: 0, length: 0, structure: 0, professional: 0, expression: 0, matchedKeywords: [], missingKeywords: [], relevancePenalty: true };
   }
   const ans = answer.toLowerCase();
-  const result = { total: 0, keyword: 0, length: 0, structure: 0, professional: 0, expression: 0, matchedKeywords: [], missingKeywords: [] };
+  const result = { total: 0, keyword: 0, length: 0, structure: 0, professional: 0, expression: 0, matchedKeywords: [], missingKeywords: [], relevancePenalty: false };
   
-  // 1. 关键词匹配（30分）
+  // 1. 关键词匹配（40分，核心维度）
   const keywords = question.keywords || [];
   let matched = 0;
   keywords.forEach(kw => {
@@ -40444,54 +40459,81 @@ function scorePhdInterviewAnswer(answer, question) {
     }
   });
   if (keywords.length > 0) {
-    result.keyword = Math.round((matched / keywords.length) * 30);
+    result.keyword = Math.round((matched / keywords.length) * 40);
+  } else {
+    // 没有关键词的题目，给基础分20分
+    result.keyword = 20;
   }
   
-  // 2. 内容长度（15分）
-  const len = answer.length;
-  if (len >= 500) result.length = 15;
-  else if (len >= 300) result.length = 12;
-  else if (len >= 200) result.length = 9;
-  else if (len >= 100) result.length = 5;
-  else result.length = 2;
+  // 2. 内容长度（10分，提高门槛）
+  const len = answer.trim().length;
+  if (len >= 500) result.length = 10;
+  else if (len >= 300) result.length = 8;
+  else if (len >= 200) result.length = 6;
+  else if (len >= 100) result.length = 4;
+  else if (len >= 50) result.length = 2;
+  else result.length = 0;
   
-  // 3. 结构完整性（20分）
+  // 3. 结构完整性（15分）
   let structScore = 0;
   const hasStructure = /首先|其次|再次|最后|第一|第二|第三|一方面|另一方面|综上|因此/.test(answer);
-  if (hasStructure) structScore += 8;
-  const hasExamples = /例如|比如|举例|具体来说|以.*为例/.test(answer);
-  if (hasExamples) structScore += 5;
-  const hasConclusion = /综上|总之|因此|所以|由此可见|总的来说/.test(answer);
-  if (hasConclusion) structScore += 4;
-  const hasLayers = /是什么|为什么|怎么做|定义|机制|意义|应用/.test(answer);
+  if (hasStructure) structScore += 5;
+  const hasExamples = /例如|比如|举例|具体来说|以.*为例|研究表明|实验发现/.test(answer);
+  if (hasExamples) structScore += 4;
+  const hasConclusion = /综上|总之|因此|所以|由此可见|总的来说|综上所述/.test(answer);
+  if (hasConclusion) structScore += 3;
+  const hasLayers = /定义|概念|分类|机制|影响因素|生理意义|临床意义|应用|进展/.test(answer);
   if (hasLayers) structScore += 3;
-  result.structure = Math.min(20, structScore);
+  result.structure = Math.min(15, structScore);
   
-  // 4. 专业深度（25分）
+  // 4. 专业深度（20分，需要真正的专业内容）
   let profScore = 0;
-  const hasProfessional = /机制|原理|理论|研究|实验|数据|文献|学者|教授|期刊|论文/.test(answer);
-  if (hasProfessional) profScore += 8;
-  const hasSpecific = /[0-9]+%|[0-9]+倍|[0-9]+分钟|[0-9]+小时|mmol|ml\/min|mmHg|VO2|HR|EMG|MRI|CT|PCR|ELISA|Western|Hz|g\/kg|mg\/kg/.test(answer);
-  if (hasSpecific) profScore += 6;
-  const hasCritical = /不足|局限|争议|挑战|问题|需要进一步|未来研究|展望/.test(answer);
-  if (hasCritical) profScore += 5;
-  const hasMechanism = /信号通路|基因|蛋白|受体|酶|细胞|组织|器官|系统|分子|转录|翻译|磷酸化|表达/.test(answer);
-  if (hasMechanism) profScore += 6;
-  result.professional = Math.min(25, profScore);
+  // 基础专业词汇（4分）
+  const hasBasicProfessional = /机制|原理|理论|研究|实验|数据|文献|效应|功能|调节|影响/.test(answer);
+  if (hasBasicProfessional) profScore += 4;
+  // 具体专业术语（6分，需要真正的专业内容）
+  const hasSpecificTerms = /信号通路|基因表达|蛋白磷酸化|受体|酶活性|细胞因子|氧化应激|炎症反应|代谢|合成|分解|分泌|收缩|舒张|兴奋性|传导|突触|神经递质|激素|内分泌|免疫|抗体|抗原|凋亡|增殖|分化|干细胞|线粒体|ATP|氧自由基|抗氧化/.test(answer);
+  if (hasSpecificTerms) profScore += 6;
+  // 具体数据和单位（4分）
+  const hasSpecific = /[0-9]+%|[0-9]+倍|[0-9]+分钟|[0-9]+小时|mmol|ml\/min|mmHg|VO2max|HR|EMG|MRI|CT|PCR|ELISA|Western blot|Hz|g\/kg|mg\/kg|μmol|nmol|pg|ng|mg|kPa/.test(answer);
+  if (hasSpecific) profScore += 4;
+  // 批判性思维（3分）
+  const hasCritical = /不足|局限|争议|挑战|需要进一步|未来研究|展望|尚未明确|有待研究/.test(answer);
+  if (hasCritical) profScore += 3;
+  // 引用文献或学者（3分）
+  const hasReference = /研究表明|文献报道|学者认为|教授提出|实验证实|临床观察|meta分析|系统综述/.test(answer);
+  if (hasReference) profScore += 3;
+  result.professional = Math.min(20, profScore);
   
-  // 5. 语言表达（10分）
+  // 5. 语言表达（15分）
   let exprScore = 0;
   const sentences = answer.split(/[。！？.!?]/).filter(s => s.trim().length > 0);
-  if (sentences.length >= 5) exprScore += 4;
+  if (sentences.length >= 8) exprScore += 5;
+  else if (sentences.length >= 5) exprScore += 4;
   else if (sentences.length >= 3) exprScore += 2;
-  const hasTransition = /此外|另外|同时|然而|但是|因此|所以|总之|综上|值得注意的是|需要强调的是/.test(answer);
-  if (hasTransition) exprScore += 3;
+  else exprScore += 0;
+  const hasTransition = /此外|另外|同时|然而|但是|因此|所以|总之|综上|值得注意的是|需要强调的是|不仅.*而且|一方面.*另一方面/.test(answer);
+  if (hasTransition) exprScore += 5;
   const noRepetition = answer.length > 50 && !(/(.{10,})\1{2,}/.test(answer));
-  if (noRepetition) exprScore += 3;
-  result.expression = Math.min(10, exprScore);
+  if (noRepetition) exprScore += 5;
+  result.expression = Math.min(15, exprScore);
   
-  // 总分
-  result.total = Math.min(100, Math.max(0, result.keyword + result.length + result.structure + result.professional + result.expression));
+  // 总分计算
+  let rawTotal = result.keyword + result.length + result.structure + result.professional + result.expression;
+  
+  // 相关性惩罚：如果关键词匹配率低于30%，总分上限设为50分
+  if (keywords.length > 0 && (matched / keywords.length) < 0.3) {
+    result.relevancePenalty = true;
+    rawTotal = Math.min(rawTotal, 50);
+  }
+  
+  // 相关性惩罚：如果关键词匹配率为0，总分上限设为30分
+  if (keywords.length > 0 && matched === 0) {
+    result.relevancePenalty = true;
+    rawTotal = Math.min(rawTotal, 30);
+  }
+  
+  result.total = Math.min(100, Math.max(0, rawTotal));
   
   return result;
 }
