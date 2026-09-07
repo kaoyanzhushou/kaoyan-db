@@ -35665,19 +35665,21 @@ async function sendPhdAIMessage() {
     phdAIChatHistory.push({ role: 'assistant', content: response });
     phdCurrentResponse = response;
     
-    // 获取最后一个AI回答元素，添加相关搜索建议
+    // 流式输出后，重新获取最后一个AI回答元素
     const chatContainer = document.getElementById('phdAIChatMessages');
-    const lastAiAnswer = chatContainer.lastElementChild;
-    if (lastAiAnswer) {
-      addPhdSearchSuggestionsToAnswer(question, lastAiAnswer);
+    const finalAiAnswer = chatContainer.lastElementChild;
+    
+    // 添加相关搜索建议
+    if (finalAiAnswer) {
+      addPhdSearchSuggestionsToAnswer(question, finalAiAnswer);
     }
     
     // 显示问题类型标签和操作按钮
     addPhdAnswerActions(msgDiv, questionType, typeConfig);
     
-    // 显示参考资料（RAG检索结果）
-    if (ragResults.length > 0 && lastAiAnswer) {
-      addPhdReferencesToAnswer(ragResults, lastAiAnswer);
+    // 显示参考资料（RAG检索结果）— 修复：使用流式输出后的最终元素
+    if (ragResults.length > 0 && finalAiAnswer) {
+      addPhdReferencesToAnswer(ragResults, finalAiAnswer);
     }
     
     // 显示快速追问建议
