@@ -633,6 +633,46 @@ body.focus-mode .focus-mode-exit{display:flex}
 .mock-stat-item .label{font-size:12px;color:#94a3b8;margin-top:4px}
 
 .nav-badge{background:#ef4444;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:4px;font-weight:700}
+
+/* ========== 考博智能刷题样式 ========== */
+.phd-practice-entry{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:12px;padding:16px 20px;margin-bottom:20px;color:white;flex-wrap:wrap;gap:10px}
+.phd-practice-info{display:flex;flex-direction:column;gap:4px}
+.phd-practice-info strong{font-size:16px}
+.phd-practice-info span{font-size:13px;opacity:.9}
+.phd-practice-btn{background:white;color:#667eea;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.phd-practice-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.phd-practice-btn.secondary{background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.4)}
+.phd-quiz-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:10000;display:none;justify-content:center;align-items:center}
+.phd-quiz-overlay.active{display:flex}
+.phd-quiz-modal{background:white;border-radius:16px;width:90%;max-width:800px;max-height:90vh;overflow-y:auto;padding:30px;position:relative}
+.phd-quiz-close{position:absolute;top:15px;right:20px;font-size:24px;cursor:pointer;color:#999;background:none;border:none}
+.phd-quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:15px;border-bottom:2px solid #f0f0f0}
+.phd-quiz-title{font-size:20px;font-weight:700;color:#333}
+.phd-quiz-progress{font-size:14px;color:#666}
+.phd-quiz-question{background:#f8f9ff;border-left:4px solid #667eea;padding:15px 20px;border-radius:0 8px 8px 0;margin-bottom:20px;font-size:15px;line-height:1.7;color:#333}
+.phd-quiz-textarea{width:100%;min-height:150px;border:2px solid #e0e0e0;border-radius:8px;padding:12px;font-size:14px;line-height:1.6;resize:vertical;font-family:inherit;margin-bottom:15px}
+.phd-quiz-textarea:focus{outline:none;border-color:#667eea}
+.phd-quiz-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.phd-quiz-btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.phd-quiz-btn.primary{background:#667eea;color:white}
+.phd-quiz-btn.primary:hover{background:#5568d3}
+.phd-quiz-btn.secondary{background:#f0f0f0;color:#666}
+.phd-quiz-btn.success{background:#27ae60;color:white}
+.phd-quiz-btn.warning{background:#f39c12;color:white}
+.phd-quiz-answer{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:15px 20px;margin-top:15px}
+.phd-quiz-answer-title{font-weight:700;color:#2e7d32;margin-bottom:10px;font-size:15px}
+.phd-quiz-answer-content{font-size:14px;line-height:1.7;color:#333}
+.phd-quiz-score{display:inline-block;background:#ff6b6b;color:white;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;margin-left:10px}
+.phd-quiz-score.high{background:#27ae60}
+.phd-quiz-score.mid{background:#f39c12}
+.phd-list-item{background:#f8f9ff;border:1px solid #e0e0e0;border-radius:8px;padding:15px;margin-bottom:10px}
+.phd-list-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.phd-list-item-meta{font-size:12px;color:#999}
+.phd-list-item-q{font-size:14px;color:#333;line-height:1.6;margin-bottom:10px}
+.phd-list-item-actions{display:flex;gap:8px}
+.phd-list-item-btn{padding:5px 12px;border-radius:4px;font-size:12px;cursor:pointer;border:none;background:#667eea;color:white}
+.phd-list-item-btn.danger{background:#e74c3c}
+.phd-empty{text-align:center;padding:40px;color:#999;font-size:14px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -6763,6 +6803,15 @@ console.log('✅ 学习工具入口已加载');
 </div>
 
 <!-- 考博知识点详情弹窗 -->
+
+<!-- 考博智能刷题模态框 -->
+<div class="phd-quiz-overlay" id="phdQuizOverlay">
+  <div class="phd-quiz-modal">
+    <button class="phd-quiz-close" onclick="closePhdQuiz()">&times;</button>
+    <div id="phdQuizBody"></div>
+  </div>
+</div>
+
 <div class="phd-detail-modal" id="phdDetailModal" onclick="if(event.target===this)closePhdDetail()">
   <div class="phd-detail-content">
     <button class="close-btn" onclick="closePhdDetail()">&times;</button>
@@ -34825,6 +34874,14 @@ function renderPhdExam() {
   html += '</select>';
   html += '</div>';
   
+  // 智能刷题入口
+  html += '<div class="phd-practice-entry">';
+  html += '<div class="phd-practice-info"><strong>📝 智能刷题模式</strong><span>逐题作答 + 自动评分 + 错题本 + 收藏</span></div>';
+  html += '<button class="phd-practice-btn" onclick="startPhdPractice()">🎯 开始刷题</button>';
+  html += '<button class="phd-practice-btn secondary" onclick="showPhdWrongBook()">📕 错题本</button>';
+  html += '<button class="phd-practice-btn secondary" onclick="showPhdFavorites()">⭐ 我的收藏</button>';
+  html += '</div>';
+  
   html += '<div id="phdExamList">';
   PHD_EXAMS.forEach((exam, idx) => {
     html += '<div class="phd-exam-card" data-school="' + exam.school + '" data-year="' + exam.year + '" data-subject="' + exam.subject + '">';
@@ -34884,6 +34941,430 @@ function togglePhdAnswer(examIdx, qIdx) {
     toggle.textContent = '▼ 查看答案';
   }
 }
+
+// ========== 考博智能刷题系统 ==========
+let phdQuizState = {
+  examIdx: -1,
+  currentQ: 0,
+  answers: [],
+  showAnswer: false,
+  mode: 'quiz' // quiz | wrongbook | favorites
+};
+
+function getPhdWrongBook() {
+  try { return JSON.parse(localStorage.getItem('phdWrongBook') || '[]'); } catch(e) { return []; }
+}
+function savePhdWrongBook(data) {
+  localStorage.setItem('phdWrongBook', JSON.stringify(data));
+}
+function getPhdFavorites() {
+  try { return JSON.parse(localStorage.getItem('phdFavorites') || '[]'); } catch(e) { return []; }
+}
+function savePhdFavorites(data) {
+  localStorage.setItem('phdFavorites', JSON.stringify(data));
+}
+
+function openPhdQuizOverlay() {
+  document.getElementById('phdQuizOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closePhdQuiz() {
+  document.getElementById('phdQuizOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+  phdQuizState.showAnswer = false;
+}
+
+function startPhdPractice() {
+  phdQuizState.mode = 'quiz';
+  const body = document.getElementById('phdQuizBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">📝 选择真题套卷</div></div>';
+  html += '<div style="margin-bottom:15px;font-size:14px;color:#666">选择一套真题开始智能刷题，系统将逐题展示，作答后自动评分并收录错题。</div>';
+  PHD_EXAMS.forEach((exam, idx) => {
+    html += '<div class="phd-list-item" style="cursor:pointer" onclick="startPhdQuiz(' + idx + ')">';
+    html += '<div class="phd-list-item-header">';
+    html += '<strong style="font-size:15px;color:#333">' + exam.school + '</strong>';
+    html += '<span class="phd-list-item-meta">' + exam.year + ' · ' + exam.subject + ' · ' + exam.questions.length + '题</span>';
+    html += '</div>';
+    html += '<div class="phd-list-item-q" style="margin:0;color:#667eea;font-size:13px">点击开始刷题 →</div>';
+    html += '</div>';
+  });
+  body.innerHTML = html;
+  openPhdQuizOverlay();
+}
+
+function startPhdQuiz(examIdx) {
+  phdQuizState.examIdx = examIdx;
+  phdQuizState.currentQ = 0;
+  phdQuizState.answers = new Array(PHD_EXAMS[examIdx].questions.length).fill('');
+  phdQuizState.showAnswer = false;
+  renderPhdQuizQuestion();
+}
+
+function renderPhdQuizQuestion() {
+  const exam = PHD_EXAMS[phdQuizState.examIdx];
+  const q = exam.questions[phdQuizState.currentQ];
+  const body = document.getElementById('phdQuizBody');
+  const total = exam.questions.length;
+  const current = phdQuizState.currentQ + 1;
+  
+  let html = '<div class="phd-quiz-header">';
+  html += '<div class="phd-quiz-title">' + exam.school + ' · ' + exam.year + '</div>';
+  html += '<div class="phd-quiz-progress">第 ' + current + ' / ' + total + ' 题</div>';
+  html += '</div>';
+  
+  html += '<div class="phd-quiz-question"><strong>题目 ' + current + '：</strong>' + q.q + '</div>';
+  
+  if (!phdQuizState.showAnswer) {
+    html += '<textarea class="phd-quiz-textarea" id="phdQuizAnswerInput" placeholder="请在此输入你的答案...">' + (phdQuizState.answers[phdQuizState.currentQ] || '') + '</textarea>';
+    html += '<div class="phd-quiz-actions">';
+    if (phdQuizState.currentQ > 0) {
+      html += '<button class="phd-quiz-btn secondary" onclick="prevPhdQuizQuestion()">← 上一题</button>';
+    }
+    html += '<button class="phd-quiz-btn primary" onclick="submitPhdQuizAnswer()">提交答案</button>';
+    if (phdQuizState.currentQ < total - 1) {
+      html += '<button class="phd-quiz-btn secondary" onclick="skipPhdQuizQuestion()">跳过 →</button>';
+    }
+    html += '</div>';
+  } else {
+    // 已提交，显示答案和评分
+    const userAnswer = phdQuizState.answers[phdQuizState.currentQ] || '';
+    const score = scorePhdAnswer(userAnswer, q.a);
+    const scoreClass = score >= 70 ? 'high' : (score >= 40 ? 'mid' : '');
+    
+    html += '<div style="background:#fff3e0;border:1px solid #ffe0b2;border-radius:8px;padding:12px 16px;margin-bottom:15px">';
+    html += '<div style="font-weight:600;color:#e65100;margin-bottom:6px">📝 你的作答：</div>';
+    html += '<div style="font-size:14px;line-height:1.6;color:#333;white-space:pre-wrap">' + (userAnswer || '（未作答）') + '</div>';
+    html += '</div>';
+    
+    html += '<div class="phd-quiz-answer">';
+    html += '<div class="phd-quiz-answer-title">✅ 参考答案 <span class="phd-quiz-score ' + scoreClass + '">得分：' + score + '/100</span></div>';
+    html += '<div class="phd-quiz-answer-content">' + q.a + '</div>';
+    html += '</div>';
+    
+    html += '<div class="phd-quiz-actions" style="margin-top:15px">';
+    html += '<button class="phd-quiz-btn warning" onclick="togglePhdQuizFavorite()">⭐ 收藏</button>';
+    if (score < 60) {
+      html += '<button class="phd-quiz-btn danger" onclick="addToPhdWrongBookCurrent()">📕 加入错题本</button>';
+    }
+    if (phdQuizState.currentQ > 0) {
+      html += '<button class="phd-quiz-btn secondary" onclick="prevPhdQuizQuestion()">← 上一题</button>';
+    }
+    if (phdQuizState.currentQ < total - 1) {
+      html += '<button class="phd-quiz-btn success" onclick="nextPhdQuizQuestion()">下一题 →</button>';
+    } else {
+      html += '<button class="phd-quiz-btn primary" onclick="finishPhdQuiz()">🎉 完成刷题</button>';
+    }
+    html += '</div>';
+  }
+  
+  body.innerHTML = html;
+}
+
+function submitPhdQuizAnswer() {
+  const input = document.getElementById('phdQuizAnswerInput');
+  if (input) {
+    phdQuizState.answers[phdQuizState.currentQ] = input.value;
+  }
+  phdQuizState.showAnswer = true;
+  renderPhdQuizQuestion();
+}
+
+function nextPhdQuizQuestion() {
+  phdQuizState.currentQ++;
+  phdQuizState.showAnswer = false;
+  renderPhdQuizQuestion();
+}
+
+function prevPhdQuizQuestion() {
+  phdQuizState.currentQ--;
+  phdQuizState.showAnswer = false;
+  renderPhdQuizQuestion();
+}
+
+function skipPhdQuizQuestion() {
+  phdQuizState.currentQ++;
+  phdQuizState.showAnswer = false;
+  renderPhdQuizQuestion();
+}
+
+function finishPhdQuiz() {
+  const exam = PHD_EXAMS[phdQuizState.examIdx];
+  let totalScore = 0;
+  let answered = 0;
+  phdQuizState.answers.forEach((ans, idx) => {
+    if (ans && ans.trim()) {
+      answered++;
+      totalScore += scorePhdAnswer(ans, exam.questions[idx].a);
+    }
+  });
+  const avgScore = answered > 0 ? Math.round(totalScore / answered) : 0;
+  
+  const body = document.getElementById('phdQuizBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">🎉 刷题完成！</div></div>';
+  html += '<div style="text-align:center;padding:30px 0">';
+  html += '<div style="font-size:48px;font-weight:700;color:#667eea;margin-bottom:10px">' + avgScore + '</div>';
+  html += '<div style="font-size:16px;color:#666;margin-bottom:20px">平均得分（满分100）</div>';
+  html += '<div style="font-size:14px;color:#999">共 ' + exam.questions.length + ' 题，已作答 ' + answered + ' 题</div>';
+  html += '</div>';
+  html += '<div class="phd-quiz-actions" style="justify-content:center">';
+  html += '<button class="phd-quiz-btn primary" onclick="startPhdPractice()">选择其他套卷</button>';
+  html += '<button class="phd-quiz-btn secondary" onclick="closePhdQuiz()">关闭</button>';
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+// 自动评分：基于关键词匹配
+function scorePhdAnswer(userAnswer, referenceAnswer) {
+  if (!userAnswer || !userAnswer.trim()) return 0;
+  const user = userAnswer.toLowerCase();
+  const ref = referenceAnswer.toLowerCase();
+  
+  // 提取参考答案中的关键词（中文词组和英文单词）
+  const keywords = [];
+  // 提取中文2-4字词组
+  const chineseMatches = ref.match(/[\u4e00-\u9fa5]{2,6}/g);
+  if (chineseMatches) {
+    chineseMatches.forEach(w => {
+      if (w.length >= 2 && !keywords.includes(w)) keywords.push(w);
+    });
+  }
+  // 提取英文单词
+  const englishMatches = ref.match(/[a-zA-Z]{3,}/g);
+  if (englishMatches) {
+    englishMatches.forEach(w => {
+      if (!keywords.includes(w.toLowerCase())) keywords.push(w.toLowerCase());
+    });
+  }
+  
+  if (keywords.length === 0) return 50;
+  
+  // 计算匹配率
+  let matched = 0;
+  keywords.forEach(kw => {
+    if (user.includes(kw.toLowerCase())) matched++;
+  });
+  
+  const matchRate = matched / keywords.length;
+  let score = Math.round(matchRate * 80);
+  
+  // 长度加分
+  if (user.length > 100) score += 10;
+  if (user.length > 300) score += 10;
+  
+  return Math.min(100, Math.max(0, score));
+}
+
+// 错题本
+function addToPhdWrongBookCurrent() {
+  const exam = PHD_EXAMS[phdQuizState.examIdx];
+  const q = exam.questions[phdQuizState.currentQ];
+  const wrongBook = getPhdWrongBook();
+  const item = {
+    id: 'wrong_' + Date.now(),
+    examIdx: phdQuizState.examIdx,
+    qIdx: phdQuizState.currentQ,
+    school: exam.school,
+    year: exam.year,
+    question: q.q,
+    answer: q.a,
+    userAnswer: phdQuizState.answers[phdQuizState.currentQ] || '',
+    date: new Date().toLocaleDateString()
+  };
+  // 去重
+  if (!wrongBook.find(w => w.examIdx === item.examIdx && w.qIdx === item.qIdx)) {
+    wrongBook.push(item);
+    savePhdWrongBook(wrongBook);
+  }
+  alert('已加入错题本！');
+}
+
+function showPhdWrongBook() {
+  phdQuizState.mode = 'wrongbook';
+  const wrongBook = getPhdWrongBook();
+  const body = document.getElementById('phdQuizBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">📕 错题本</div><div class="phd-quiz-progress">' + wrongBook.length + ' 道错题</div></div>';
+  
+  if (wrongBook.length === 0) {
+    html += '<div class="phd-empty">暂无错题，快去刷题吧！</div>';
+  } else {
+    wrongBook.forEach((item, idx) => {
+      html += '<div class="phd-list-item">';
+      html += '<div class="phd-list-item-header">';
+      html += '<strong style="font-size:14px;color:#333">' + item.school + ' · ' + item.year + '</strong>';
+      html += '<span class="phd-list-item-meta">' + item.date + '</span>';
+      html += '</div>';
+      html += '<div class="phd-list-item-q">' + item.question + '</div>';
+      html += '<div class="phd-list-item-actions">';
+      html += '<button class="phd-list-item-btn" onclick="reviewPhdWrongItem(' + idx + ')">查看答案</button>';
+      html += '<button class="phd-list-item-btn" onclick="redoPhdWrongItem(' + idx + ')">重新作答</button>';
+      html += '<button class="phd-list-item-btn danger" onclick="removePhdWrongItem(' + idx + ')">移除</button>';
+      html += '</div>';
+      html += '</div>';
+    });
+  }
+  
+  body.innerHTML = html;
+  openPhdQuizOverlay();
+}
+
+function reviewPhdWrongItem(idx) {
+  const wrongBook = getPhdWrongBook();
+  const item = wrongBook[idx];
+  const body = document.getElementById('phdQuizBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">📕 错题详情</div></div>';
+  html += '<div class="phd-quiz-question"><strong>题目：</strong>' + item.question + '</div>';
+  html += '<div style="background:#fff3e0;border:1px solid #ffe0b2;border-radius:8px;padding:12px 16px;margin-bottom:15px">';
+  html += '<div style="font-weight:600;color:#e65100;margin-bottom:6px">📝 你的作答：</div>';
+  html += '<div style="font-size:14px;line-height:1.6;color:#333;white-space:pre-wrap">' + (item.userAnswer || '（未作答）') + '</div>';
+  html += '</div>';
+  html += '<div class="phd-quiz-answer">';
+  html += '<div class="phd-quiz-answer-title">✅ 参考答案</div>';
+  html += '<div class="phd-quiz-answer-content">' + item.answer + '</div>';
+  html += '</div>';
+  html += '<div class="phd-quiz-actions" style="margin-top:15px">';
+  html += '<button class="phd-quiz-btn secondary" onclick="showPhdWrongBook()">返回错题本</button>';
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+function redoPhdWrongItem(idx) {
+  const wrongBook = getPhdWrongBook();
+  const item = wrongBook[idx];
+  phdQuizState.examIdx = item.examIdx;
+  phdQuizState.currentQ = item.qIdx;
+  phdQuizState.answers = [item.userAnswer];
+  phdQuizState.showAnswer = false;
+  // 简化：直接显示单题作答
+  const body = document.getElementById('phdQuizBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">🔄 重新作答</div></div>';
+  html += '<div class="phd-quiz-question"><strong>题目：</strong>' + item.question + '</div>';
+  html += '<textarea class="phd-quiz-textarea" id="phdRedoInput" placeholder="请在此输入你的答案..."></textarea>';
+  html += '<div class="phd-quiz-actions">';
+  html += '<button class="phd-quiz-btn primary" onclick="submitPhdRedo(' + idx + ')">提交答案</button>';
+  html += '<button class="phd-quiz-btn secondary" onclick="showPhdWrongBook()">返回</button>';
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+function submitPhdRedo(idx) {
+  const input = document.getElementById('phdRedoInput');
+  const userAnswer = input ? input.value : '';
+  const wrongBook = getPhdWrongBook();
+  const item = wrongBook[idx];
+  const score = scorePhdAnswer(userAnswer, item.answer);
+  const scoreClass = score >= 70 ? 'high' : (score >= 40 ? 'mid' : '');
+  
+  const body = document.getElementById('phdQuizBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">✅ 作答结果</div></div>';
+  html += '<div class="phd-quiz-question"><strong>题目：</strong>' + item.question + '</div>';
+  html += '<div style="background:#fff3e0;border:1px solid #ffe0b2;border-radius:8px;padding:12px 16px;margin-bottom:15px">';
+  html += '<div style="font-weight:600;color:#e65100;margin-bottom:6px">📝 你的作答：</div>';
+  html += '<div style="font-size:14px;line-height:1.6;color:#333;white-space:pre-wrap">' + (userAnswer || '（未作答）') + '</div>';
+  html += '</div>';
+  html += '<div class="phd-quiz-answer">';
+  html += '<div class="phd-quiz-answer-title">✅ 参考答案 <span class="phd-quiz-score ' + scoreClass + '">得分：' + score + '/100</span></div>';
+  html += '<div class="phd-quiz-answer-content">' + item.answer + '</div>';
+  html += '</div>';
+  html += '<div class="phd-quiz-actions" style="margin-top:15px">';
+  if (score >= 60) {
+    html += '<button class="phd-quiz-btn success" onclick="removePhdWrongItem(' + idx + ');showPhdWrongBook()">🎉 掌握了，移出错题本</button>';
+  }
+  html += '<button class="phd-quiz-btn secondary" onclick="showPhdWrongBook()">返回错题本</button>';
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+function removePhdWrongItem(idx) {
+  const wrongBook = getPhdWrongBook();
+  wrongBook.splice(idx, 1);
+  savePhdWrongBook(wrongBook);
+}
+
+// 收藏
+function togglePhdQuizFavorite() {
+  const exam = PHD_EXAMS[phdQuizState.examIdx];
+  const q = exam.questions[phdQuizState.currentQ];
+  const favorites = getPhdFavorites();
+  const existing = favorites.findIndex(f => f.examIdx === phdQuizState.examIdx && f.qIdx === phdQuizState.currentQ);
+  
+  if (existing > -1) {
+    favorites.splice(existing, 1);
+    savePhdFavorites(favorites);
+    alert('已取消收藏');
+  } else {
+    favorites.push({
+      id: 'fav_' + Date.now(),
+      examIdx: phdQuizState.examIdx,
+      qIdx: phdQuizState.currentQ,
+      school: exam.school,
+      year: exam.year,
+      question: q.q,
+      answer: q.a,
+      date: new Date().toLocaleDateString()
+    });
+    savePhdFavorites(favorites);
+    alert('已收藏！');
+  }
+}
+
+function showPhdFavorites() {
+  phdQuizState.mode = 'favorites';
+  const favorites = getPhdFavorites();
+  const body = document.getElementById('phdQuizBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">⭐ 我的收藏</div><div class="phd-quiz-progress">' + favorites.length + ' 道收藏</div></div>';
+  
+  if (favorites.length === 0) {
+    html += '<div class="phd-empty">暂无收藏，刷题时点击⭐收藏题目吧！</div>';
+  } else {
+    favorites.forEach((item, idx) => {
+      html += '<div class="phd-list-item">';
+      html += '<div class="phd-list-item-header">';
+      html += '<strong style="font-size:14px;color:#333">' + item.school + ' · ' + item.year + '</strong>';
+      html += '<span class="phd-list-item-meta">' + item.date + '</span>';
+      html += '</div>';
+      html += '<div class="phd-list-item-q">' + item.question + '</div>';
+      html += '<div class="phd-list-item-actions">';
+      html += '<button class="phd-list-item-btn" onclick="reviewPhdFavoriteItem(' + idx + ')">查看答案</button>';
+      html += '<button class="phd-list-item-btn danger" onclick="removePhdFavoriteItem(' + idx + ')">取消收藏</button>';
+      html += '</div>';
+      html += '</div>';
+    });
+  }
+  
+  body.innerHTML = html;
+  openPhdQuizOverlay();
+}
+
+function reviewPhdFavoriteItem(idx) {
+  const favorites = getPhdFavorites();
+  const item = favorites[idx];
+  const body = document.getElementById('phdQuizBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">⭐ 收藏详情</div></div>';
+  html += '<div class="phd-quiz-question"><strong>题目：</strong>' + item.question + '</div>';
+  html += '<div class="phd-quiz-answer">';
+  html += '<div class="phd-quiz-answer-title">✅ 参考答案</div>';
+  html += '<div class="phd-quiz-answer-content">' + item.answer + '</div>';
+  html += '</div>';
+  html += '<div class="phd-quiz-actions" style="margin-top:15px">';
+  html += '<button class="phd-quiz-btn secondary" onclick="showPhdFavorites()">返回收藏</button>';
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+function removePhdFavoriteItem(idx) {
+  const favorites = getPhdFavorites();
+  favorites.splice(idx, 1);
+  savePhdFavorites(favorites);
+  showPhdFavorites();
+}
+
+// ESC关闭刷题模态框
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.getElementById('phdQuizOverlay').classList.contains('active')) {
+    closePhdQuiz();
+  }
+});
+
 
 // ========== 科研能力和面试申请渲染 ==========
 function renderPhdResearch() {
