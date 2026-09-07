@@ -35242,37 +35242,57 @@ function searchPhdKnowledgeRAG(question) {
   const chunks = buildPhdKnowledgeChunks();
   const q = question.toLowerCase();
   
-  // 同义词扩展
+  // 同义词扩展（更全面）
   const synonyms = {
-    '考博': ['博士', '博士生', '博士研究生', '读博', 'phd'],
-    '上岸': ['录取', '考上', '成功'],
-    '报名': ['报考', '申请', '注册'],
-    '复试': ['面试', '考核'],
-    '套磁': ['联系导师', '邮件', '陶瓷'],
-    '专业课': ['业务课', '专业基础'],
-    '运动人体科学': ['运动人体', '人体科学'],
-    '运动康复': ['康复'],
-    '真题': ['考题', '试题', '历年真题'],
-    '参考书': ['参考书目', '教材'],
-    '招生简章': ['招生目录', '招生信息']
+    '考博': ['博士', '博士生', '博士研究生', '读博', 'phd', '博士招生'],
+    '上岸': ['录取', '考上', '成功', '通过'],
+    '报名': ['报考', '申请', '注册', '网报', '报名时间'],
+    '复试': ['面试', '考核', '面试考核', '复试流程'],
+    '套磁': ['联系导师', '邮件', '陶瓷', '套磁邮件', '导师邮件'],
+    '专业课': ['业务课', '专业基础', '专业综合', '专业课复习'],
+    '运动人体科学': ['运动人体', '人体科学', '运动科学'],
+    '运动康复': ['康复', '康复学'],
+    '真题': ['考题', '试题', '历年真题', '真题解析'],
+    '参考书': ['参考书目', '教材', '课本', '参考教材'],
+    '招生简章': ['招生目录', '招生信息', '招生公告', '招生简章'],
+    '科研': ['科研能力', '科研经历', '科研成果', '学术'],
+    '计划书': ['科研计划', '研究计划', 'proposal', '开题报告'],
+    '怎么写': ['如何写', '写作', '撰写', '写法', '模板'],
+    '导师': ['博导', '导师选择', '联系导师', '套磁'],
+    '英语': ['外语', 'english', '英文', '考博英语'],
+    '生理': ['运动生理学', '生理学'],
+    '解剖': ['运动解剖学', '解剖学'],
+    '时间线': ['时间安排', '备考计划', '几月份', '时间节点'],
+    '难度': ['难不难', '竞争', '报录比', '好考吗'],
+    '推荐': ['哪个好', '选哪个', '院校推荐', '学校推荐']
   };
   let expandedWords = [q];
   for (const [key, values] of Object.entries(synonyms)) {
     if (q.includes(key)) expandedWords = expandedWords.concat(values);
   }
   
-  // 计算每个片段的匹配分数
+  // 计算每个片段的匹配分数（改进：完整词匹配加分更高）
   const scored = chunks.map(chunk => {
     let score = 0;
-    const lowerText = chunk.text.toLowerCase();
+    const lowerText = (chunk.text + ' ' + chunk.source + ' ' + chunk.type).toLowerCase();
+    
+    // 原始问题完整匹配（最高加分）
+    if (lowerText.includes(q)) score += 20;
+    
+    // 扩展词匹配（按词长加权）
     expandedWords.forEach(w => {
-      if (lowerText.includes(w.toLowerCase())) {
-        score += w.length > 3 ? 3 : (w.length > 1 ? 2 : 1);
+      const wl = w.toLowerCase();
+      if (lowerText.includes(wl)) {
+        if (w.length > 4) score += 5;
+        else if (w.length > 2) score += 3;
+        else score += 1;
       }
     });
-    // 标题/来源匹配加分
-    if (chunk.source.toLowerCase().includes(q)) score += 5;
-    if (chunk.type.toLowerCase().includes(q)) score += 3;
+    
+    // 来源/类型精确匹配加分
+    if (chunk.source.toLowerCase().includes(q)) score += 10;
+    if (chunk.type.toLowerCase().includes(q)) score += 5;
+    
     return { ...chunk, score };
   });
   
