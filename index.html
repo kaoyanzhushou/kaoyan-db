@@ -35547,14 +35547,15 @@ const PHD_SCHOOLS = [
 function renderPhdSchools() {
   // 动态确保内容区存在且在正确位置
   let contentArea = document.getElementById('phdContent-schools');
-  if (!contentArea || contentArea.parentElement.id !== 'tab-phd') {
+  const tabPhd = document.getElementById('tab-phd');
+  const needCreate = !contentArea || !contentArea.parentElement || contentArea.parentElement.id !== 'tab-phd' || !tabPhd;
+  if (needCreate) {
     // 如果不存在或位置不对，创建新的
-    if (contentArea) contentArea.remove();
+    if (contentArea && contentArea.parentElement) contentArea.remove();
     contentArea = document.createElement('div');
     contentArea.className = 'phd-content';
     contentArea.id = 'phdContent-schools';
     contentArea.innerHTML = '<div id="phdSchoolArea"></div>';
-    const tabPhd = document.getElementById('tab-phd');
     if (tabPhd) tabPhd.appendChild(contentArea);
   }
   
