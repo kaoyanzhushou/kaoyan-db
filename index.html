@@ -6772,6 +6772,7 @@ console.log('✅ 学习工具入口已加载');
       </div>
     <div class="phd-tab" data-phd-tab="schools" onclick="switchPhdTab('schools')">🏫 院校导师<span class="phd-tab-count" id="phdSchoolCount">0</span></div>
     <div class="phd-tab" data-phd-tab="timeline" onclick="switchPhdTab('timeline')">📅 备考时间线<span class="phd-tab-count" id="phdTimelineCount">0</span></div>
+    <div class="phd-tab" data-phd-tab="proposal" onclick="switchPhdTab('proposal')">📝 科研计划书<span class="phd-tab-count" id="phdProposalCount">AI</span></div>
     </div>
 
     <!-- 专业知识库内容 -->
@@ -34580,6 +34581,7 @@ function switchPhdTab(tabName) {
   if (tabName === 'interview' && typeof renderPhdInterview === 'function') renderPhdInterview();
   if (tabName === 'schools' && typeof renderPhdSchools === 'function') renderPhdSchools();
   if (tabName === 'timeline' && typeof renderPhdTimeline === 'function') renderPhdTimeline();
+  if (tabName === 'proposal' && typeof renderPhdProposal === 'function') renderPhdProposal();
   // 更新标签样式
   document.querySelectorAll('.phd-tab').forEach(tab => {
     tab.classList.remove('active');
@@ -35908,6 +35910,270 @@ function resetPhdTimeline() {
     localStorage.removeItem('phdTimelineDone');
     renderPhdTimeline();
   }
+
+// ========== 科研计划书AI辅助 ==========
+const PHD_PROPOSAL_TEMPLATES = [
+  {
+    field: "运动生理学",
+    topics: ["运动与骨骼肌适应", "运动与心血管健康", "运动与代谢疾病", "运动与免疫调节", "运动性疲劳机制", "低氧训练生理机制", "运动与神经可塑性", "运动与内分泌适应"],
+    methods: ["动物实验", "人体试验", "细胞培养", "分子生物学技术", "免疫组化", "Western Blot", "qPCR", "流式细胞术", "代谢组学", "转录组学"]
+  },
+  {
+    field: "运动解剖学",
+    topics: ["关节软骨退变机制", "骨骼肌损伤修复", "肌腱韧带生物力学", "脊柱生物力学", "膝关节运动损伤", "肩关节运动学", "足踝生物力学", "周围神经损伤与再生"],
+    methods: ["解剖学观察", "生物力学测试", "组织学分析", "影像学检查(MRI/CT)", "免疫荧光", "扫描电镜", "透射电镜", "有限元分析", "运动捕捉", "步态分析"]
+  },
+  {
+    field: "运动生物化学",
+    topics: ["运动与线粒体生物发生", "运动与能量代谢", "运动与氧化应激", "运动与细胞自噬", "运动与表观遗传调控", "运动与肠道菌群代谢", "运动与脂质代谢", "运动与糖代谢"],
+    methods: ["代谢组学分析", "蛋白质组学", "转录组学", "酶活性测定", "代谢通量分析", "线粒体呼吸测定", "ROS检测", "ChIP-seq", "ATAC-seq", "16S rRNA测序"]
+  },
+  {
+    field: "运动康复学",
+    topics: ["运动损伤康复机制", "运动与慢性疼痛", "运动与神经康复", "运动与骨关节康复", "运动与心肺康复", "运动与老年康复", "运动与残疾康复", "运动康复处方优化"],
+    methods: ["临床随机对照试验", "康复评定", "表面肌电", "运动捕捉", "平衡测试", "步态分析", "疼痛评估(VAS)", "功能评分", "影像学评估", "生活质量量表"]
+  }
+];
+
+function renderPhdProposal() {
+  // 动态确保内容区存在
+  let contentArea = document.getElementById('phdContent-proposal');
+  const tabPhd = document.getElementById('tab-phd');
+  if (!contentArea || !contentArea.parentElement || contentArea.parentElement.id !== 'tab-phd') {
+    if (contentArea && contentArea.parentElement) contentArea.remove();
+    contentArea = document.createElement('div');
+    contentArea.className = 'phd-content';
+    contentArea.id = 'phdContent-proposal';
+    contentArea.innerHTML = '<div id="phdProposalArea"></div>';
+    if (tabPhd) tabPhd.appendChild(contentArea);
+  }
+  
+  const area = document.getElementById('phdProposalArea');
+  if (!area) return;
+  
+  let html = '<div style="margin-bottom:20px;padding:15px;background:#fff3e0;border-radius:8px;border-left:4px solid #ff9800">';
+  html += '<strong style="color:#e65100">📝 科研计划书AI辅助生成</strong>';
+  html += '<span style="margin-left:10px;font-size:13px;color:#666">选择研究领域和方向，AI自动生成科研计划书框架，支持在线编辑和导出</span>';
+  html += '</div>';
+  
+  // 输入区域
+  html += '<div style="background:white;border:1px solid #e0e0e0;border-radius:10px;padding:20px;margin-bottom:20px">';
+  html += '<div style="font-weight:600;margin-bottom:15px;color:#333">🤖 AI生成设置</div>';
+  
+  html += '<div style="margin-bottom:15px">';
+  html += '<label style="display:block;font-size:14px;font-weight:600;margin-bottom:8px;color:#333">研究领域：</label>';
+  html += '<select id="proposalField" class="phd-quiz-textarea" style="min-height:auto;padding:10px;margin-bottom:0" onchange="updateProposalTopics()">';
+  PHD_PROPOSAL_TEMPLATES.forEach((t, i) => {
+    html += '<option value="' + i + '">' + t.field + '</option>';
+  });
+  html += '</select></div>';
+  
+  html += '<div style="margin-bottom:15px">';
+  html += '<label style="display:block;font-size:14px;font-weight:600;margin-bottom:8px;color:#333">研究方向：</label>';
+  html += '<select id="proposalTopic" class="phd-quiz-textarea" style="min-height:auto;padding:10px;margin-bottom:0"></select></div>';
+  
+  html += '<div style="margin-bottom:15px">';
+  html += '<label style="display:block;font-size:14px;font-weight:600;margin-bottom:8px;color:#333">研究方法（可多选，用逗号分隔）：</label>';
+  html += '<input type="text" id="proposalMethods" class="phd-quiz-textarea" style="min-height:auto;padding:10px;margin-bottom:0" placeholder="如：动物实验, Western Blot, qPCR, 免疫组化"></div>';
+  
+  html += '<div style="margin-bottom:15px">';
+  html += '<label style="display:block;font-size:14px;font-weight:600;margin-bottom:8px;color:#333">研究对象/样本：</label>';
+  html += '<input type="text" id="proposalSubject" class="phd-quiz-textarea" style="min-height:auto;padding:10px;margin-bottom:0" placeholder="如：SPF级C57BL/6小鼠，8周龄，雄性，随机分为对照组和运动组"></div>';
+  
+  html += '<div class="phd-quiz-actions" style="justify-content:center">';
+  html += '<button class="phd-quiz-btn primary" onclick="generatePhdProposal()">🚀 AI生成科研计划书</button>';
+  html += '<button class="phd-quiz-btn secondary" onclick="showPhdProposalGuide()">📖 写作指南</button>';
+  html += '</div></div>';
+  
+  // 结果区域
+  html += '<div id="proposalResult" style="display:none">';
+  html += '<div style="background:white;border:1px solid #e0e0e0;border-radius:10px;padding:20px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">';
+  html += '<strong style="font-size:16px;color:#333">📄 科研计划书（AI生成框架）</strong>';
+  html += '<div style="display:flex;gap:8px">';
+  html += '<button class="phd-quiz-btn secondary" style="padding:6px 14px;font-size:12px" onclick="editPhdProposal()">✏️ 编辑</button>';
+  html += '<button class="phd-quiz-btn success" style="padding:6px 14px;font-size:12px" onclick="exportPhdProposal()">📥 导出文本</button>';
+  html += '</div></div>';
+  html += '<div id="proposalContent" style="font-size:14px;line-height:1.8;color:#333;max-height:500px;overflow-y:auto;padding:15px;background:#fafafa;border-radius:8px"></div>';
+  html += '</div></div>';
+  
+  area.innerHTML = html;
+  
+  // 初始化研究方向下拉框
+  updateProposalTopics();
+}
+
+function updateProposalTopics() {
+  const fieldIdx = document.getElementById('proposalField').value;
+  const topicSelect = document.getElementById('proposalTopic');
+  const template = PHD_PROPOSAL_TEMPLATES[fieldIdx];
+  topicSelect.innerHTML = '';
+  template.topics.forEach(topic => {
+    topicSelect.innerHTML += '<option value="' + topic + '">' + topic + '</option>';
+  });
+  
+  // 自动填充研究方法
+  document.getElementById('proposalMethods').value = template.methods.slice(0, 4).join(', ');
+}
+
+function generatePhdProposal() {
+  const fieldIdx = document.getElementById('proposalField').value;
+  const topic = document.getElementById('proposalTopic').value;
+  const methods = document.getElementById('proposalMethods').value || '文献研究法, 实验法, 数据统计法';
+  const subject = document.getElementById('proposalSubject').value || '实验动物/人体受试者';
+  const template = PHD_PROPOSAL_TEMPLATES[fieldIdx];
+  
+  const proposal = generateProposalContent(template.field, topic, methods, subject);
+  
+  document.getElementById('proposalResult').style.display = 'block';
+  document.getElementById('proposalContent').innerHTML = proposal.replace(/\n/g, '<br>').replace(/  /g, '&nbsp;&nbsp;');
+  
+  // 滚动到结果
+  document.getElementById('proposalResult').scrollIntoView({behavior: 'smooth'});
+}
+
+function generateProposalContent(field, topic, methods, subject) {
+  return `
+一、选题背景与研究意义
+
+（一）研究背景
+${topic}是${field}领域的重要研究方向之一。近年来，随着运动科学研究的不断深入，关于${topic}的研究取得了显著进展。然而，目前关于${topic}的研究仍存在一些不足之处，需要进一步深入探讨。
+
+（二）研究意义
+1. 理论意义：本研究有助于丰富和完善${field}的理论体系，深化对${topic}机制的认识。
+2. 实践意义：本研究结果可为运动训练、运动康复、健康促进等实践领域提供理论依据和实践指导。
+
+二、国内外研究现状
+
+（一）国外研究现状
+国外学者在${topic}领域开展了大量研究，主要集中在机制探讨、干预效果评价等方面。代表性研究包括：...（此处需根据具体文献补充）
+
+（二）国内研究现状
+国内学者在${topic}领域的研究起步相对较晚，但近年来发展迅速。主要研究集中在...（此处需根据具体文献补充）
+
+（三）研究存在的问题与不足
+1. 研究方法有待创新
+2. 研究深度有待加强
+3. 研究结果的实践转化有待提升
+
+三、研究目标与研究内容
+
+（一）研究目标
+本研究旨在探讨${topic}的机制及其应用价值，为${field}的理论发展和实践应用提供科学依据。
+
+（二）研究内容
+1. ${topic}的基本特征和规律研究
+2. ${topic}的机制探讨
+3. 运动干预对${topic}的影响研究
+4. ${topic}在运动实践中的应用研究
+
+四、研究方法与技术路线
+
+（一）研究对象
+${subject}
+
+（二）研究方法
+本研究将采用以下研究方法：${methods}。
+
+（三）技术路线
+1. 文献研究 → 确定研究问题
+2. 实验设计 → 方案制定与伦理审查
+3. 数据采集 → 实验实施与样本收集
+4. 数据分析 → 统计分析与机制探讨
+5. 结果讨论 → 论文撰写与成果推广
+
+五、研究创新点
+
+1. 研究视角创新：从新的角度探讨${topic}
+2. 研究方法创新：采用${methods}等多种方法相结合
+3. 研究内容创新：深入探讨${topic}的分子机制和应用价值
+
+六、预期研究成果
+
+1. 阐明${topic}的机制
+2. 发表SCI论文2-3篇
+3. 申请专利1项
+4. 培养博士研究生1名
+5. 形成研究报告1份
+
+七、研究进度安排
+
+第一阶段（第1-3个月）：文献查阅、研究方案制定、伦理审查
+第二阶段（第4-9个月）：实验实施、数据采集
+第三阶段（第10-15个月）：数据分析、机制探讨
+第四阶段（第16-21个月）：论文撰写、成果整理
+第五阶段（第22-24个月）：论文答辩、成果推广
+
+八、参考文献
+
+（此处需根据具体研究内容补充15-20篇相关文献，包括近5年的经典文献和最新研究进展）
+`;
+}
+
+function editPhdProposal() {
+  const contentDiv = document.getElementById('proposalContent');
+  const currentText = contentDiv.innerText;
+  contentDiv.innerHTML = '<textarea id="proposalEditText" style="width:100%;min-height:400px;border:2px solid #667eea;border-radius:8px;padding:12px;font-size:14px;line-height:1.6;font-family:inherit">' + currentText + '</textarea>';
+  contentDiv.innerHTML += '<div style="margin-top:10px;text-align:right"><button class="phd-quiz-btn primary" onclick="savePhdProposalEdit()">💾 保存编辑</button></div>';
+}
+
+function savePhdProposalEdit() {
+  const text = document.getElementById('proposalEditText').value;
+  document.getElementById('proposalContent').innerHTML = text.replace(/\n/g, '<br>').replace(/  /g, '&nbsp;&nbsp;');
+}
+
+function exportPhdProposal() {
+  const text = document.getElementById('proposalContent').innerText;
+  const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '科研计划书_' + new Date().toLocaleDateString() + '.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function showPhdProposalGuide() {
+  const guide = `
+<h3 style="color:#333;margin-top:0">📖 科研计划书写作指南</h3>
+
+<h4 style="color:#e65100">一、科研计划书的重要性</h4>
+<p style="font-size:14px;line-height:1.7;color:#555">科研计划书是考博申请的核心材料，体现申请者的科研潜力、学术视野和逻辑思维能力。一份优秀的科研计划书能够显著提升申请成功率。</p>
+
+<h4 style="color:#e65100">二、核心结构与写作要点</h4>
+<ol style="font-size:14px;line-height:1.8;color:#555">
+<li><strong>选题背景与意义：</strong>选题要具体、聚焦，避免过大过泛。阐明研究的理论价值和实践意义。</li>
+<li><strong>国内外研究现状：</strong>不是简单罗列文献，要进行综合分析和评价，指出研究空白和未来方向。引用最新、权威的文献。</li>
+<li><strong>研究目标与内容：</strong>目标要具体、可实现。内容要围绕目标展开，层次清晰。</li>
+<li><strong>研究方法与技术路线：</strong>方法要具体、可操作，考虑时间、经费、技术条件的限制。技术路线用流程图展示，清晰明了。</li>
+<li><strong>创新点：</strong>2-3个创新点，包括理论创新、方法创新、应用创新。创新点要实事求是，不要夸大。</li>
+<li><strong>预期成果：</strong>预期发表论文数量和层次、申请专利、形成标准或指南、培养人才等。</li>
+<li><strong>研究进度安排：</strong>按年度或学期安排研究进度，明确各阶段的任务和目标。</li>
+<li><strong>参考文献：</strong>引用最新、权威的文献，格式规范。建议15-20篇，其中近5年文献占比不低于50%。</li>
+</ol>
+
+<h4 style="color:#e65100">三、常见问题</h4>
+<ul style="font-size:14px;line-height:1.8;color:#555">
+<li>选题过大过泛，什么都想做，结果什么都做不深。</li>
+<li>研究背景写成文献综述，缺乏批判性分析和问题意识。</li>
+<li>研究方法过于笼统，缺乏可操作性。</li>
+<li>创新点夸大，把常规工作说成创新。</li>
+<li>预期成果不切实际，如博士期间发表多篇顶刊。</li>
+<li>格式不规范，参考文献格式混乱，有错别字。</li>
+</ul>
+
+<h4 style="color:#e65100">四、写作建议</h4>
+<ul style="font-size:14px;line-height:1.8;color:#555">
+<li>选题要与报考导师的研究方向匹配，最好在导师研究方向的基础上提出具体问题。</li>
+<li>研究问题要具体、聚焦，不要过于宽泛。一个好的研究问题是可行的、有意义的、有创新性的。</li>
+<li>逻辑要清晰：从背景→问题→目标→方法→预期，逻辑链条完整，前后呼应。</li>
+<li>语言要专业：使用学术语言，避免口语化和模糊表达。术语要准确、统一。</li>
+<li>格式要规范：按目标院校要求的格式，字数、字体、行距、参考文献格式都要符合要求。</li>
+</ul>
+`;
+  showPhdDetail(guide);
+}
+
 }
 
 
