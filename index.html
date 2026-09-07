@@ -34722,6 +34722,141 @@ const PHD_KNOWLEDGE_BASE = {
   }
 };
 
+// ========== 考博AI咨询助手 - Markdown渲染引擎 ==========
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function renderMarkdown(text) {
+  if (!text) return '';
+  
+  // 先转义HTML
+  let html = escapeHtml(text);
+  
+  // 处理代码块 ```...```
+  html = html.replace(/```([\s\S]*?)```/g, function(match, code) {
+    return '<pre style="background:#f3f4f6;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.6"><code>' + code.trim() + '</code></pre>';
+  });
+  
+  // 处理行内代码 `...`
+  html = html.replace(/`([^`]+)`/g, '<code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:13px">$1</code>');
+  
+  // 处理加粗 **...**
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#1f2937">$1</strong>');
+  
+  // 处理斜体 *...* (注意不要和加粗冲突)
+  html = html.replace(/(^|[^*])\*([^*]+)\*([^*]|$)/g, '$1<em>$2</em>$3');
+  
+  // 按行处理
+  const lines = html.split('\n');
+  let result = [];
+  let inList = false;
+  let listType = '';
+  let inQuote = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    let trimmed = line.trim();
+    
+    // 空行
+    if (!trimmed) {
+      if (inList) {
+        result.push('</' + listType + '>');
+        inList = false;
+      }
+      if (inQuote) {
+        result.push('</blockquote>');
+        inQuote = false;
+      }
+      continue;
+    }
+    
+    // 标题
+    if (trimmed.match(/^####\s/)) {
+      if (inList) { result.push('</' + listType + '>'); inList = false; }
+      result.push('<h4 style="font-size:15px;font-weight:700;color:#1f2937;margin:12px 0 6px">' + trimmed.replace(/^####\s/, '') + '</h4>');
+      continue;
+    }
+    if (trimmed.match(/^###\s/)) {
+      if (inList) { result.push('</' + listType + '>'); inList = false; }
+      result.push('<h3 style="font-size:16px;font-weight:700;color:#1f2937;margin:14px 0 8px">' + trimmed.replace(/^###\s/, '') + '</h3>');
+      continue;
+    }
+    if (trimmed.match(/^##\s/)) {
+      if (inList) { result.push('</' + listType + '>'); inList = false; }
+      result.push('<h2 style="font-size:18px;font-weight:700;color:#111827;margin:16px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb">' + trimmed.replace(/^##\s/, '') + '</h2>');
+      continue;
+    }
+    if (trimmed.match(/^#\s/)) {
+      if (inList) { result.push('</' + listType + '>'); inList = false; }
+      result.push('<h1 style="font-size:20px;font-weight:700;color:#111827;margin:18px 0 12px">' + trimmed.replace(/^#\s/, '') + '</h1>');
+      continue;
+    }
+    
+    // 引用
+    if (trimmed.match(/^>\s?/)) {
+      if (inList) { result.push('</' + listType + '>'); inList = false; }
+      if (!inQuote) {
+        result.push('<blockquote style="border-left:4px solid #667eea;padding:8px 16px;margin:8px 0;background:#f5f7ff;color:#4b5563;border-radius:0 8px 8px 0">');
+        inQuote = true;
+      }
+      result.push('<p style="margin:4px 0">' + trimmed.replace(/^>\s?/, '') + '</p>');
+      continue;
+    } else if (inQuote) {
+      result.push('</blockquote>');
+      inQuote = false;
+    }
+    
+    // 无序列表
+    if (trimmed.match(/^[-*+]\s/)) {
+      if (!inList || listType !== 'ul') {
+        if (inList) result.push('</' + listType + '>');
+        result.push('<ul style="margin:8px 0;padding-left:24px;line-height:1.8">');
+        inList = true;
+        listType = 'ul';
+      }
+      result.push('<li style="margin:4px 0">' + trimmed.replace(/^[-*+]\s/, '') + '</li>');
+      continue;
+    }
+    
+    // 有序列表
+    if (trimmed.match(/^\d+\.\s/)) {
+      if (!inList || listType !== 'ol') {
+        if (inList) result.push('</' + listType + '>');
+        result.push('<ol style="margin:8px 0;padding-left:24px;line-height:1.8">');
+        inList = true;
+        listType = 'ol';
+      }
+      result.push('<li style="margin:4px 0">' + trimmed.replace(/^\d+\.\s/, '') + '</li>');
+      continue;
+    }
+    
+    // 分割线
+    if (trimmed.match(/^---+$/) || trimmed.match(/^\*\*\*+$/)) {
+      if (inList) { result.push('</' + listType + '>'); inList = false; }
+      result.push('<hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">');
+      continue;
+    }
+    
+    // 普通段落
+    if (inList) {
+      result.push('</' + listType + '>');
+      inList = false;
+    }
+    result.push('<p style="margin:8px 0;line-height:1.8;color:#374151">' + trimmed + '</p>');
+  }
+  
+  // 收尾
+  if (inList) result.push('</' + listType + '>');
+  if (inQuote) result.push('</blockquote>');
+  
+  return result.join('');
+}
+
+console.log('✅ 考博AI Markdown渲染引擎已加载');
+
 // ========== 考博AI咨询助手 - 核心功能 ==========
 let phdAIChatHistory = [];
 
@@ -34795,7 +34930,9 @@ function addPhdAIMessage(role, content, isKnowledge = false) {
     msgDiv.innerHTML = `<div style="display:inline-block;background:#667eea;color:#fff;padding:10px 16px;border-radius:12px 12px 0 12px;max-width:80%;text-align:left;font-size:14px;white-space:pre-wrap">${content}</div>`;
   } else {
     let knowledgeTag = isKnowledge ? '<div style="font-size:11px;color:#667eea;margin-bottom:4px;font-weight:600">📚 来自考博知识库</div>' : '';
-    msgDiv.innerHTML = `${knowledgeTag}<div style="display:inline-block;background:#fff;border:1px solid #e5e7eb;padding:10px 16px;border-radius:12px 12px 12px 0;max-width:90%;font-size:14px;white-space:pre-wrap;color:#374151">${content}</div>`;
+    // AI回答使用Markdown渲染，知识库内容使用纯文本
+    let renderedContent = isKnowledge ? content.replace(/\n/g, '<br>') : renderMarkdown(content);
+    msgDiv.innerHTML = `${knowledgeTag}<div style="display:inline-block;background:#fff;border:1px solid #e5e7eb;padding:12px 18px;border-radius:12px 12px 12px 0;max-width:92%;font-size:14px;color:#374151;line-height:1.7">${renderedContent}</div>`;
   }
   
   container.appendChild(msgDiv);
