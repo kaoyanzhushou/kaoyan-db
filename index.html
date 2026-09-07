@@ -1062,7 +1062,8 @@ html += '<div class="search-group">';
 html += '<div class="search-group-title">' + type + '<span class="count">' + items.length + '</span></div>';
 items.slice(0, 8).forEach((item, index) => {
 html += '<div class="search-result-item" data-tab="' + item.tab + '" data-title="' + item.title.replace(/"/g, '&quot;') + '" data-index="' + index + '">';
-html += '<div class="search-result-icon">' + item.icon + '</div>';
+html += '<div class="search-result-icon">' + item.icon + '</div>
+';
 html += '<div class="search-result-content">';
 html += '<div class="search-result-title">' + highlightText(item.title, query) + '</div>';
 if(item.desc){
@@ -7916,62 +7917,7 @@ console.log('✅ 学习工具入口已加载');
         </div>
 
 <!-- AI模拟题系统 -->
-<div id="tab-mock-exam" class="tab-content">
-  <div class="mock-exam-container">
-    <div class="mock-exam-header">
-      <h2>🤖 AI考研模拟题生成器</h2>
-      <p>基于运动生理学与运动解剖学高频知识点，参考上海体育大学、北京体育大学、武汉体育学院等院校真题风格，智能生成名词解释、简答题、论述题，附带参考答案与得分点拆解。</p>
-    </div>
-    
-    <div class="mock-config-card">
-      <div class="mock-config-row">
-        <div class="mock-config-group">
-          <label>🏫 院校风格</label>
-          <select id="mockSchoolSelect">
-            <option value="综合风格">综合风格（参考多校）</option>
-          </select>
-        </div>
-        <div class="mock-config-group">
-          <label>📝 题目类型</label>
-          <select id="mockTypeSelect">
-            <option value="mixed">混合题型（名词+简答+论述）</option>
-            <option value="noun">仅名词解释</option>
-            <option value="short">仅简答题</option>
-            <option value="essay">仅论述题</option>
-          </select>
-        </div>
-        <div class="mock-config-group">
-          <label>🔢 题目数量</label>
-          <select id="mockCountSelect">
-            <option value="5">5题</option>
-            <option value="10" selected>10题</option>
-            <option value="15">15题</option>
-            <option value="20">20题</option>
-          </select>
-        </div>
-      </div>
-      
-      <div class="mock-config-group" style="margin-bottom:16px">
-        <label>📚 选择知识点（已选 <span id="mockSelectedCount" style="color:#667eea;font-weight:700">0</span> 个）</label>
-        <div class="mock-knowledge-tree" id="mockKnowledgeTree">
-          <!-- 知识点树由JS动态生成 -->
-        </div>
-      </div>
-      
-      <div style="text-align:center;margin-top:20px">
-        <button class="mock-gen-btn" id="mockGenBtn" onclick="generateMockQuestions()">🚀 生成模拟题</button>
-      </div>
-    </div>
-    
-    <div class="mock-result-area" id="mockResultArea">
-      <div class="mock-loading" style="padding:40px;text-align:center;color:#94a3b8">
-        <div style="font-size:48px;margin-bottom:12px">📋</div>
-        <div>请选择知识点后点击"生成模拟题"按钮</div>
-        <div style="font-size:12px;margin-top:8px;opacity:.7">系统将根据所选知识点和院校风格智能生成题目，并附带参考答案与得分点拆解</div>
-      </div>
-    </div>
-  </div>
-</div>
+
 
         <div id="quizSetup">
       <h2 style="margin-bottom:8px">📝 刷题模考</h2>
@@ -8040,6 +7986,63 @@ console.log('✅ 学习工具入口已加载');
         </div>
       </div>
       <div id="quizReview" style="display:none;margin-top:20px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-mock-exam" class="tab-content">
+  <div class="mock-exam-container">
+    <div class="mock-exam-header">
+      <h2>🤖 AI考研模拟题生成器</h2>
+      <p>基于运动生理学与运动解剖学高频知识点，参考上海体育大学、北京体育大学、武汉体育学院等院校真题风格，智能生成名词解释、简答题、论述题，附带参考答案与得分点拆解。</p>
+    </div>
+    
+    <div class="mock-config-card">
+      <div class="mock-config-row">
+        <div class="mock-config-group">
+          <label>🏫 院校风格</label>
+          <select id="mockSchoolSelect">
+            <option value="综合风格">综合风格（参考多校）</option>
+          </select>
+        </div>
+        <div class="mock-config-group">
+          <label>📝 题目类型</label>
+          <select id="mockTypeSelect">
+            <option value="mixed">混合题型（名词+简答+论述）</option>
+            <option value="noun">仅名词解释</option>
+            <option value="short">仅简答题</option>
+            <option value="essay">仅论述题</option>
+          </select>
+        </div>
+        <div class="mock-config-group">
+          <label>🔢 题目数量</label>
+          <select id="mockCountSelect">
+            <option value="5">5题</option>
+            <option value="10" selected>10题</option>
+            <option value="15">15题</option>
+            <option value="20">20题</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="mock-config-group" style="margin-bottom:16px">
+        <label>📚 选择知识点（已选 <span id="mockSelectedCount" style="color:#667eea;font-weight:700">0</span> 个）</label>
+        <div class="mock-knowledge-tree" id="mockKnowledgeTree">
+          <!-- 知识点树由JS动态生成 -->
+        </div>
+      </div>
+      
+      <div style="text-align:center;margin-top:20px">
+        <button class="mock-gen-btn" id="mockGenBtn" onclick="generateMockQuestions()">🚀 生成模拟题</button>
+      </div>
+    </div>
+    
+    <div class="mock-result-area" id="mockResultArea">
+      <div class="mock-loading" style="padding:40px;text-align:center;color:#94a3b8">
+        <div style="font-size:48px;margin-bottom:12px">📋</div>
+        <div>请选择知识点后点击"生成模拟题"按钮</div>
+        <div style="font-size:12px;margin-top:8px;opacity:.7">系统将根据所选知识点和院校风格智能生成题目，并附带参考答案与得分点拆解</div>
+      </div>
     </div>
   </div>
 </div>
