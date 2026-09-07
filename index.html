@@ -38280,17 +38280,19 @@ const PHD_SCHOOL_DETAILS = {
 };
 
 function renderPhdSchools() {
-  // 动态确保内容区存在
+  // 动态确保内容区存在（放到phd-container内，与其他标签页同级）
   let contentArea = document.getElementById('phdContent-schools');
   const tabPhd = document.getElementById('tab-phd');
-  const needCreate = !contentArea || !contentArea.parentElement || contentArea.parentElement.id !== 'tab-phd' || !tabPhd;
+  const phdContainer = tabPhd ? tabPhd.querySelector('.phd-container') : null;
+  const parentContainer = phdContainer || tabPhd;
+  const needCreate = !contentArea || !contentArea.parentElement || (contentArea.parentElement !== parentContainer && contentArea.parentElement !== phdContainer) || !parentContainer;
   if (needCreate) {
     if (contentArea && contentArea.parentElement) contentArea.remove();
     contentArea = document.createElement('div');
     contentArea.className = 'phd-content';
     contentArea.id = 'phdContent-schools';
     contentArea.innerHTML = '<div id="phdSchoolArea"></div>';
-    if (tabPhd) tabPhd.appendChild(contentArea);
+    if (parentContainer) parentContainer.appendChild(contentArea);
   }
   
   const area = document.getElementById('phdSchoolArea');
