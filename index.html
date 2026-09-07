@@ -6818,6 +6818,7 @@ console.log('✅ 学习工具入口已加载');
         </select>
         <button onclick="sendPhdAIMessage()" style="background:#667eea;color:#fff;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600">发送</button>
         <button onclick="clearPhdAIChat()" style="background:#fff;color:#6b7280;border:1px solid #d1d5db;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px" title="清空对话记录">🗑️ 清空</button>
+        <button onclick="exportPhdChat()" style="background:#fff;color:#6b7280;border:1px solid #d1d5db;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px" title="导出对话记录为Markdown">📥 导出</button>
       </div>
     </div>
 
@@ -35223,7 +35224,173 @@ function addPhdAIMessage(role, content, isKnowledge = false) {
 
 // 流式输出状态
 let phdStreaming = false;
+let phdCurrentQuestion = '';
+let phdCurrentQuestionType = 'general';
+let phdCurrentResponse = '';
 let phdStreamTimer = null;
+
+// ========== 考博AI问题分类智能识别 ==========
+const PHD_QUESTION_TYPES = {
+  school: {
+    name: '院校选择',
+    icon: '🏫',
+    keywords: ['院校', '学校', '推荐', '哪个', '报考', '选择', '对比', '比较', '好考', '难度', '报录比', '招生', '上体', '北体', '首体', '华东师大', '华中师大'],
+    promptTemplate: `你是一位资深的体育考博院校选择专家，拥有10年以上全国体育院校和师范大学博士研究生招生咨询经验，熟悉各院校的考试科目、参考书目、导师资源、录取标准、报录比和就业去向。
+
+【你的任务】
+根据用户的背景和需求，为用户精准推荐适合的体育学/运动人体科学博士招生院校，并给出详细的对比分析和报考建议。
+
+【回答要求】
+1. 先给出核心推荐结论（推荐哪几所院校，为什么）
+2. 详细对比分析各院校的：考试科目、参考书目、难度等级、报录比、导师资源、研究方向、就业去向、地域优势
+3. 结合用户的个人背景（本科院校、专业、成绩、英语、科研经历）给出针对性建议
+4. 给出冲刺院校、稳妥院校、保底院校的分层推荐
+5. 最后给出具体的行动建议（下一步应该做什么，如何准备）
+6. 回答长度至少400字，复杂问题600-1000字
+7. 必须使用标准Markdown格式：## 大标题，### 小标题，- 无序列表，1. 有序列表，**加粗**
+8. 可以使用表格对比各院校的关键信息`
+  },
+  major: {
+    name: '专业课复习',
+    icon: '📚',
+    keywords: ['生理', '解剖', '复习', '重点', '真题', '专业课', '怎么学', '备考', '笔记', '资料', '运动生理', '运动解剖', '知识点', '考点'],
+    promptTemplate: `你是一位资深的体育考博专业课辅导专家，拥有10年以上运动生理学、运动解剖学等体育学核心课程的博士研究生考试辅导经验，熟悉全国各体育院校的专业课考试大纲、重点难点、命题规律和答题技巧。
+
+【你的任务】
+为用户提供运动生理学、运动解剖学等专业课的系统复习指导，包括重点知识点解析、复习方法、答题技巧、真题分析和备考计划。
+
+【回答要求】
+1. 先给出核心结论（该知识点/科目的重要性、复习重点）
+2. 详细解析相关知识点，确保准确、全面、深入
+3. 给出具体的复习方法和时间规划
+4. 分析命题规律和常见题型（名词解释、简答题、论述题）
+5. 给出答题技巧和得分要点（简答题25分标准，论述题50分标准）
+6. 如果涉及真题，给出详细的参考答案和评分标准
+7. 最后给出具体的行动建议（下一步应该复习什么，怎么复习）
+8. 回答长度至少400字，复杂问题600-1000字
+9. 必须使用标准Markdown格式：## 大标题，### 小标题，- 无序列表，1. 有序列表，**加粗**
+10. 专业术语要准确，符合体育学学术规范`
+  },
+  application: {
+    name: '报名流程',
+    icon: '📋',
+    keywords: ['报名', '材料', '流程', '时间', '条件', '资格', '网报', '申请', '要求', '简章', '招生简章', '截止', '缴费', '现场确认'],
+    promptTemplate: `你是一位资深的体育考博报名指导专家，拥有10年以上全国体育院校和师范大学博士研究生招生报名工作经验，熟悉各院校的报名时间、报名条件、申请材料、报名流程、缴费方式和注意事项。
+
+【你的任务】
+为用户提供体育考博报名的全流程指导，包括报名时间、报名条件、申请材料准备、报名流程、常见问题解答和注意事项。
+
+【回答要求】
+1. 先给出核心结论（报名的关键时间节点和注意事项）
+2. 详细说明报名条件（学历、学位、英语、科研等要求）
+3. 列出完整的申请材料清单，并说明每项材料的准备要点
+4. 详细说明报名流程（网上报名、材料提交、缴费、现场确认等）
+5. 给出时间规划表（各阶段应该做什么）
+6. 解答常见问题（如：专科能否报考、跨专业报考、英语要求、年龄限制等）
+7. 提醒注意事项和常见陷阱
+8. 最后给出具体的行动建议（下一步应该准备什么）
+9. 回答长度至少300字，复杂问题500-800字
+10. 必须使用标准Markdown格式：## 大标题，### 小标题，- 无序列表，1. 有序列表，**加粗**
+11. 信息要准确，以各院校最新招生简章为准`
+  },
+  tutor: {
+    name: '导师选择',
+    icon: '👨‍🏫',
+    keywords: ['导师', '套磁', '联系', '邮件', '研究方向', '博导', '教授', '选导师', '导师推荐', '导师信息'],
+    promptTemplate: `你是一位资深的体育考博导师选择指导专家，拥有10年以上体育学博士研究生导师研究和咨询经验，熟悉全国各体育院校和师范大学的博士生导师情况、研究方向、学术成果、招生偏好、培养风格和学生就业去向。
+
+【你的任务】
+为用户提供导师选择的全面指导，包括如何查找导师信息、如何评估导师、如何联系导师（套磁）、套磁邮件撰写技巧和注意事项。
+
+【回答要求】
+1. 先给出核心结论（导师选择的关键原则和注意事项）
+2. 详细说明如何查找导师信息（学校官网、知网、Web of Science、学术会议等渠道）
+3. 给出导师评估的维度（学术水平、研究方向匹配、招生名额、培养风格、项目资源、学生就业、人品口碑）
+4. 详细说明套磁的最佳时间和策略
+5. 给出套磁邮件的完整模板和撰写技巧（主题、正文、附件、跟进）
+6. 解答常见问题（如：同时联系多个导师、导师不回复怎么办、如何判断导师是否有名额）
+7. 提醒注意事项和常见陷阱
+8. 最后给出具体的行动建议（下一步应该做什么）
+9. 回答长度至少400字，复杂问题600-800字
+10. 必须使用标准Markdown格式：## 大标题，### 小标题，- 无序列表，1. 有序列表，**加粗**
+11. 可以给出套磁邮件的具体示例`
+  },
+  interview: {
+    name: '面试准备',
+    icon: '🎤',
+    keywords: ['面试', '复试', '考核', '问题', '英语', '自我介绍', '面试技巧', '面试题', '专业面试', '英语面试'],
+    promptTemplate: `你是一位资深的体育考博面试辅导专家，拥有10年以上体育学博士研究生招生面试辅导经验，熟悉各院校的面试流程、面试形式、常见问题、评分标准和录取规则。
+
+【你的任务】
+为用户提供体育考博面试的全面指导，包括面试流程、面试形式、常见问题、回答技巧、英语面试准备、专业面试准备和注意事项。
+
+【回答要求】
+1. 先给出核心结论（面试的关键要点和准备方向）
+2. 详细说明面试流程和形式（笔试、专业面试、英语面试、心理测试等）
+3. 列出常见的面试问题分类（自我介绍类、报考动机类、专业知识类、科研经历类、研究计划类、英语类、个人特质类）
+4. 给出每类问题的回答思路和技巧
+5. 提供英语面试的准备方法和常见问题
+6. 给出面试前的准备清单和时间规划
+7. 解答常见问题（如：不会的问题怎么回答、如何展示优势、着装要求、礼仪等）
+8. 提醒注意事项和常见陷阱
+9. 最后给出具体的行动建议（下一步应该准备什么）
+10. 回答长度至少400字，复杂问题600-800字
+11. 必须使用标准Markdown格式：## 大标题，### 小标题，- 无序列表，1. 有序列表，**加粗**
+12. 可以给出具体问题的回答示例`
+  },
+  research: {
+    name: '科研计划书',
+    icon: '🔬',
+    keywords: ['科研', '计划书', 'proposal', '选题', '课题', '研究计划', '研究方案', '开题', '研究设计', '研究方法'],
+    promptTemplate: `你是一位资深的体育考博科研计划书评审专家，拥有10年以上体育学博士研究生科研计划书评审和指导经验，熟悉各院校的科研计划书要求、评审标准、选题方向和写作规范。
+
+【你的任务】
+为用户提供体育考博科研计划书的全面指导，包括选题方向、研究设计、写作规范、评审标准和修改建议。
+
+【回答要求】
+1. 先给出核心结论（科研计划书的关键要点和评审重点）
+2. 详细说明科研计划书的结构和各部分写作要点（选题依据、研究目的、研究内容、研究方法、技术路线、创新点、预期成果、研究基础、进度安排、参考文献）
+3. 给出选题方向的建议（结合体育学前沿、运动人体科学热点、导师研究方向）
+4. 详细说明研究方法的选择和设计（文献研究法、实验法、调查法、数理统计法等）
+5. 给出技术路线图的绘制方法
+6. 分析评审专家关注的重点和评分标准
+7. 提供常见问题的解答（如：选题太大怎么办、创新点怎么写、研究基础不足怎么办）
+8. 提醒注意事项和常见陷阱
+9. 最后给出具体的行动建议（下一步应该做什么）
+10. 回答长度至少500字，复杂问题800-1200字
+11. 必须使用标准Markdown格式：## 大标题，### 小标题，- 无序列表，1. 有序列表，**加粗**
+12. 可以给出科研计划书的框架示例`
+  },
+  general: {
+    name: '综合咨询',
+    icon: '💡',
+    keywords: [],
+    promptTemplate: '你是一位资深的体育考博咨询专家，拥有10年以上体育学/运动人体科学博士研究生考试辅导经验，熟悉全国各体育院校和师范大学的考博政策、考试科目、参考书目、导师情况和录取标准。\n\n【你的任务】\n全面、深入、专业地回答用户的体育考博相关问题，帮助用户制定科学的备考策略。\n\n【回答要求】\n1. 回答要有深度，不能泛泛而谈，要给出具体、可操作的建议\n2. 回答长度至少300字，复杂问题500-800字\n3. 必须使用标准Markdown格式：大标题用 ## 标题，小标题用 ### 标题，无序列表用 - 项目，有序列表用 1. 项目，重点内容用 **加粗**，不要使用中文编号（一、二、三、（1）（2）等）\n4. 先给出核心结论，再展开详细分析\n5. 结合知识库资料和你的专业知识，进行综合分析和扩展\n6. 如果涉及具体院校，要给出该校的具体情况（考试科目、参考书目、难度、报录比等）\n7. 最后给出行动建议（用户下一步应该做什么）'
+  }
+};
+
+// 问题分类函数
+function classifyPhdQuestion(question) {
+  const q = question.toLowerCase();
+  let bestType = 'general';
+  let bestScore = 0;
+  
+  for (const [type, config] of Object.entries(PHD_QUESTION_TYPES)) {
+    if (type === 'general') continue;
+    let score = 0;
+    config.keywords.forEach(kw => {
+      if (q.includes(kw.toLowerCase())) {
+        score += kw.length > 2 ? 2 : 1;
+      }
+    });
+    if (score > bestScore) {
+      bestScore = score;
+      bestType = type;
+    }
+  }
+  
+  return { type: bestType, config: PHD_QUESTION_TYPES[bestType], score: bestScore };
+}
 
 async function sendPhdAIMessage() {
   if (phdStreaming) return; // 防止重复发送
@@ -35265,8 +35432,20 @@ async function sendPhdAIMessage() {
       return msg.role === 'user' ? '用户：' + msg.content : '助手：' + msg.content;
     }).join('\n');
     
-    // 优化后的prompt：明确角色、回答深度、格式要求、多轮上下文
-    const systemPrompt = '你是一位资深的体育考博咨询专家，拥有10年以上体育学/运动人体科学博士研究生考试辅导经验，熟悉全国各体育院校和师范大学的考博政策、考试科目、参考书目、导师情况和录取标准。\n\n【你的任务】\n全面、深入、专业地回答用户的体育考博相关问题，帮助用户制定科学的备考策略。\n\n【回答要求】\n1. 回答要有深度，不能泛泛而谈，要给出具体、可操作的建议\n2. 回答长度至少300字，复杂问题500-800字\n3. 必须使用标准Markdown格式：大标题用 ## 标题，小标题用 ### 标题，无序列表用 - 项目，有序列表用 1. 项目，重点内容用 **加粗**，不要使用中文编号（一、二、三、（1）（2）等）\n4. 先给出核心结论，再展开详细分析\n5. 结合知识库资料和你的专业知识，进行综合分析和扩展\n6. 如果涉及具体院校，要给出该校的具体情况（考试科目、参考书目、难度、报录比等）\n7. 最后给出行动建议（用户下一步应该做什么）\n\n【对话历史】\n以下是之前的对话内容，请结合上下文回答当前问题：\n' + historyContext + '\n\n【知识库参考资料】\n以下是系统检索到的相关知识库资料，请优先参考并结合你的专业知识进行综合回答：\n' + knowledgeContext + '\n\n【重要提醒】\n- 不要只重复知识库内容，要在知识库基础上进行深入分析和扩展\n- 如果知识库信息不完整，请用你的专业知识补充\n- 回答要客观、务实，不要夸大或误导\n- 使用中文回答，专业术语要准确\n- 注意这是考博（博士研究生招生）咨询，不是考研';
+    // 问题分类智能识别
+    const classification = classifyPhdQuestion(question);
+    const questionType = classification.type;
+    const typeConfig = classification.config;
+    
+    // 使用分类后的专用prompt模板
+    let basePrompt = typeConfig.promptTemplate;
+    
+    // 构建完整的systemPrompt
+    const systemPrompt = basePrompt + '\n\n【对话历史】\n以下是之前的对话内容，请结合上下文回答当前问题：\n' + historyContext + '\n\n【知识库参考资料】\n以下是系统检索到的相关知识库资料，请优先参考并结合你的专业知识进行综合回答：\n' + knowledgeContext + '\n\n【重要提醒】\n- 不要只重复知识库内容，要在知识库基础上进行深入分析和扩展\n- 如果知识库信息不完整，请用你的专业知识补充\n- 回答要客观、务实，不要夸大或误导\n- 使用中文回答，专业术语要准确\n- 注意这是考博（博士研究生招生）咨询，不是考研';
+    
+    // 记录当前问题类型（用于重新生成）
+    phdCurrentQuestionType = questionType;
+    phdCurrentQuestion = question;
     
     const response = await callDeepSeekAPI(systemPrompt, question, 3000, model);
     
@@ -35280,6 +35459,10 @@ async function sendPhdAIMessage() {
     await streamPhdAIResponse(response);
     
     phdAIChatHistory.push({ role: 'assistant', content: response });
+    phdCurrentResponse = response;
+    
+    // 显示问题类型标签和操作按钮
+    addPhdAnswerActions(msgDiv, questionType, typeConfig);
     
     // 显示快速追问建议
     showPhdQuickFollowups(question, response);
@@ -35363,6 +35546,209 @@ async function streamPhdAIResponse(fullText) {
 }
 
 // 显示快速追问建议
+// ========== 考博AI回答操作功能 ==========
+
+// 在AI回答下方添加操作按钮
+function addPhdAnswerActions(msgDiv, questionType, typeConfig) {
+  const actionsDiv = document.createElement('div');
+  actionsDiv.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0;flex-wrap:wrap';
+  
+  // 问题类型标签
+  const typeTag = document.createElement('span');
+  typeTag.style.cssText = 'font-size:11px;color:#667eea;background:#f0f4ff;padding:3px 8px;border-radius:10px;font-weight:600';
+  typeTag.textContent = typeConfig.icon + ' ' + typeConfig.name;
+  actionsDiv.appendChild(typeTag);
+  
+  // 复制按钮
+  const copyBtn = document.createElement('button');
+  copyBtn.style.cssText = 'font-size:12px;color:#6b7280;background:#f9fafb;border:1px solid #e5e7eb;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .2s';
+  copyBtn.textContent = '📋 复制';
+  copyBtn.onmouseover = function() { this.style.background = '#f3f4f6'; this.style.color = '#374151'; };
+  copyBtn.onmouseout = function() { this.style.background = '#f9fafb'; this.style.color = '#6b7280'; };
+  copyBtn.onclick = function() { copyPhdAnswer(phdCurrentResponse, this); };
+  actionsDiv.appendChild(copyBtn);
+  
+  // 重新生成按钮
+  const regenBtn = document.createElement('button');
+  regenBtn.style.cssText = 'font-size:12px;color:#6b7280;background:#f9fafb;border:1px solid #e5e7eb;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .2s';
+  regenBtn.textContent = '🔄 重新生成';
+  regenBtn.onmouseover = function() { this.style.background = '#f3f4f6'; this.style.color = '#374151'; };
+  regenBtn.onmouseout = function() { this.style.background = '#f9fafb'; this.style.color = '#6b7280'; };
+  regenBtn.onclick = function() { regeneratePhdAnswer(this); };
+  actionsDiv.appendChild(regenBtn);
+  
+  // 点赞按钮
+  const likeBtn = document.createElement('button');
+  likeBtn.style.cssText = 'font-size:12px;color:#6b7280;background:#f9fafb;border:1px solid #e5e7eb;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .2s';
+  likeBtn.textContent = '👍 有用';
+  likeBtn.onmouseover = function() { this.style.background = '#ecfdf5'; this.style.color = '#059669'; this.style.borderColor = '#6ee7b7'; };
+  likeBtn.onmouseout = function() { if(!this.dataset.rated){ this.style.background = '#f9fafb'; this.style.color = '#6b7280'; this.style.borderColor = '#e5e7eb'; } };
+  likeBtn.onclick = function() { ratePhdAnswer('like', this); };
+  actionsDiv.appendChild(likeBtn);
+  
+  // 点踩按钮
+  const dislikeBtn = document.createElement('button');
+  dislikeBtn.style.cssText = 'font-size:12px;color:#6b7280;background:#f9fafb;border:1px solid #e5e7eb;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .2s';
+  dislikeBtn.textContent = '👎 待改进';
+  dislikeBtn.onmouseover = function() { this.style.background = '#fef2f2'; this.style.color = '#dc2626'; this.style.borderColor = '#fca5a5'; };
+  dislikeBtn.onmouseout = function() { if(!this.dataset.rated){ this.style.background = '#f9fafb'; this.style.color = '#6b7280'; this.style.borderColor = '#e5e7eb'; } };
+  dislikeBtn.onclick = function() { ratePhdAnswer('dislike', this); };
+  actionsDiv.appendChild(dislikeBtn);
+  
+  msgDiv.appendChild(actionsDiv);
+}
+
+// 复制回答到剪贴板
+function copyPhdAnswer(content, btn) {
+  const textarea = document.createElement('textarea');
+  textarea.value = content;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  
+  try {
+    document.execCommand('copy');
+    const originalText = btn.textContent;
+    btn.textContent = '✅ 已复制';
+    btn.style.color = '#059669';
+    btn.style.background = '#ecfdf5';
+    setTimeout(function() {
+      btn.textContent = originalText;
+      btn.style.color = '#6b7280';
+      btn.style.background = '#f9fafb';
+    }, 2000);
+  } catch (e) {
+    btn.textContent = '❌ 复制失败';
+    setTimeout(function() { btn.textContent = '📋 复制'; }, 2000);
+  }
+  
+  document.body.removeChild(textarea);
+}
+
+// 重新生成回答
+async function regeneratePhdAnswer(btn) {
+  if (phdStreaming) return;
+  if (!phdCurrentQuestion) {
+    alert('没有可重新生成的问题');
+    return;
+  }
+  
+  const originalText = btn.textContent;
+  btn.textContent = '⏳ 生成中...';
+  btn.disabled = true;
+  
+  try {
+    // 移除上一条AI回答（包括操作按钮）
+    const container = document.getElementById('phdAIChatMessages');
+    const lastMsg = container.lastElementChild;
+    if (lastMsg) {
+      container.removeChild(lastMsg);
+    }
+    
+    // 从历史记录中移除上一条AI回答
+    if (phdAIChatHistory.length > 0 && phdAIChatHistory[phdAIChatHistory.length - 1].role === 'assistant') {
+      phdAIChatHistory.pop();
+    }
+    
+    // 重新发送问题
+    const input = document.getElementById('phdAIInput');
+    input.value = phdCurrentQuestion;
+    await sendPhdAIMessage();
+    
+  } catch (error) {
+    btn.textContent = '❌ 生成失败';
+    setTimeout(function() {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }, 2000);
+  }
+}
+
+// 点赞/点踩反馈
+function ratePhdAnswer(rating, btn) {
+  // 重置同组的其他按钮
+  const actionsDiv = btn.parentElement;
+  const allBtns = actionsDiv.querySelectorAll('button');
+  allBtns.forEach(function(b) {
+    if (b.textContent.includes('有用') || b.textContent.includes('待改进')) {
+      b.dataset.rated = '';
+      b.style.background = '#f9fafb';
+      b.style.color = '#6b7280';
+      b.style.borderColor = '#e5e7eb';
+    }
+  });
+  
+  // 设置当前按钮状态
+  btn.dataset.rated = 'true';
+  if (rating === 'like') {
+    btn.style.background = '#ecfdf5';
+    btn.style.color = '#059669';
+    btn.style.borderColor = '#6ee7b7';
+    btn.textContent = '✅ 已反馈';
+  } else {
+    btn.style.background = '#fef2f2';
+    btn.style.color = '#dc2626';
+    btn.style.borderColor = '#fca5a5';
+    btn.textContent = '✅ 已反馈';
+  }
+  
+  // 保存反馈到本地存储（用于后续优化）
+  try {
+    const feedback = {
+      question: phdCurrentQuestion,
+      response: phdCurrentResponse,
+      rating: rating,
+      timestamp: new Date().toISOString()
+    };
+    const feedbacks = JSON.parse(localStorage.getItem('phdAI_feedbacks') || '[]');
+    feedbacks.push(feedback);
+    localStorage.setItem('phdAI_feedbacks', JSON.stringify(feedbacks.slice(-100)));
+  } catch (e) {
+    // 忽略存储错误
+  }
+  
+  setTimeout(function() {
+    if (rating === 'like') {
+      btn.textContent = '👍 有用';
+    } else {
+      btn.textContent = '👎 待改进';
+    }
+  }, 2000);
+}
+
+// 导出对话为Markdown文件
+function exportPhdChat() {
+  if (phdAIChatHistory.length === 0) {
+    alert('暂无对话记录可导出');
+    return;
+  }
+  
+  let markdown = '# 体育考博AI咨询对话记录\n\n';
+  markdown += '导出时间：' + new Date().toLocaleString('zh-CN') + '\n\n';
+  markdown += '---\n\n';
+  
+  phdAIChatHistory.forEach(function(msg, index) {
+    if (msg.role === 'user') {
+      markdown += '## 🧑‍💻 用户提问\n\n' + msg.content + '\n\n';
+    } else {
+      markdown += '## 🤖 AI回答\n\n' + msg.content + '\n\n';
+    }
+    markdown += '---\n\n';
+  });
+  
+  // 创建下载链接
+  const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '考博AI咨询对话_' + new Date().toISOString().slice(0, 10) + '.md';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function showPhdQuickFollowups(question, answer) {
   const container = document.getElementById('phdAIChatMessages');
   
