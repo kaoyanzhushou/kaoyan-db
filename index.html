@@ -35545,15 +35545,21 @@ const PHD_SCHOOLS = [
 ];
 
 function renderPhdSchools() {
-  const area = document.getElementById('phdSchoolArea');
-  if (!area) {
-    // 如果内容区不存在，动态创建
-    const contentArea = document.getElementById('phdContent-schools');
-    if (contentArea) {
-      contentArea.innerHTML = '<div id="phdSchoolArea"></div>';
-    }
-    return;
+  // 动态确保内容区存在且在正确位置
+  let contentArea = document.getElementById('phdContent-schools');
+  if (!contentArea || contentArea.parentElement.id !== 'tab-phd') {
+    // 如果不存在或位置不对，创建新的
+    if (contentArea) contentArea.remove();
+    contentArea = document.createElement('div');
+    contentArea.className = 'phd-content';
+    contentArea.id = 'phdContent-schools';
+    contentArea.innerHTML = '<div id="phdSchoolArea"></div>';
+    const tabPhd = document.getElementById('tab-phd');
+    if (tabPhd) tabPhd.appendChild(contentArea);
   }
+  
+  const area = document.getElementById('phdSchoolArea');
+  if (!area) return;
   
   // 更新计数
   const countEl = document.getElementById('phdSchoolCount');
@@ -35589,6 +35595,7 @@ function renderPhdSchools() {
   
   area.innerHTML = html;
 }
+
 
 function filterPhdSchools() {
   const keyword = document.getElementById('phdSchoolSearch').value.toLowerCase();
