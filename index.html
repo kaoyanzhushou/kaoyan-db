@@ -34731,9 +34731,17 @@ function escapeHtml(text) {
 
 function renderMarkdown(text) {
   if (!text) return '';
-  
+  try {
   // 先转义HTML
   let html = escapeHtml(text);
+  
+  // 预处理中文编号：转换为标准Markdown
+  // 中文大标题 "一、" "二、" -> "## "
+  html = html.replace(/^([一二三四五六七八九十]+)、/gm, '## $1、');
+  // 中文小标题 "（一）" "（二）" -> "### "
+  html = html.replace(/^（([一二三四五六七八九十]+)）/gm, '### $1、');
+  // 中文数字编号 "（1）" "（2）" -> "1. "
+  html = html.replace(/^（(\d+)）/gm, '$1. ');
   
   // 处理代码块 ```...```
   html = html.replace(/```([\s\S]*?)```/g, function(match, code) {
@@ -34853,6 +34861,11 @@ function renderMarkdown(text) {
   if (inQuote) result.push('</blockquote>');
   
   return result.join('');
+  } catch (e) {
+    console.error('Markdown渲染失败:', e);
+    // 渲染失败时，至少返回带换行的纯文本
+    return '<p style="margin:8px 0;line-height:1.8;color:#374151;white-space:pre-wrap">' + escapeHtml(text) + '</p>';
+  }
 }
 
 console.log('✅ 考博AI Markdown渲染引擎已加载');
@@ -34978,7 +34991,11 @@ ${r.content}`, true);
 【回答要求】
 1. 回答要有深度，不能泛泛而谈，要给出具体、可操作的建议
 2. 回答长度至少300字，复杂问题500-800字
-3. 采用分点论述结构，使用序号（一、二、三...）和子项（1. 2. 3.）
+3. **必须使用标准Markdown格式**：
+   - 大标题用 `## 标题`，小标题用 `### 标题`
+   - 无序列表用 `- 项目`，有序列表用 `1. 项目`
+   - 重点内容用 `**加粗**`
+   - 不要使用中文编号（一、二、三、（1）（2）等），必须用Markdown格式
 4. 先给出核心结论，再展开详细分析
 5. 结合知识库资料和你的专业知识，进行综合分析和扩展
 6. 如果涉及具体院校，要给出该校的具体情况（考试科目、参考书目、难度、报录比等）
