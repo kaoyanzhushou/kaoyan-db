@@ -539,7 +539,17 @@ body.focus-mode .focus-mode-exit{display:flex}
 .phd-tab .count{background:#e0e8ff;color:#0f3460;padding:1px 7px;border-radius:8px;font-size:11px;margin-left:6px}
 .phd-content{display:none}
 .phd-content.active{display:block}
-.phd-section-card{background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.phd-section-card{background:#fff;border-radius:16px;padding:28px;margin-bottom:24px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid #f0f0f0}
+.phd-section-header{display:flex;align-items:center;gap:20px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px;padding:24px 28px;margin-bottom:24px;color:#fff;box-shadow:0 8px 32px rgba(102,126,234,.25)}
+.phd-section-icon{width:64px;height:64px;background:rgba(255,255,255,.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;backdrop-filter:blur(10px);flex-shrink:0}
+.phd-section-info{flex:1;min-width:0}
+.phd-section-title{margin:0;font-size:22px;font-weight:700;color:#fff;letter-spacing:.5px}
+.phd-section-desc{margin:6px 0 0 0;font-size:13px;color:rgba(255,255,255,.85);line-height:1.6}
+.phd-section-stats{display:flex;gap:16px;flex-shrink:0}
+.phd-stat-item{text-align:center;background:rgba(255,255,255,.15);padding:12px 20px;border-radius:12px;backdrop-filter:blur(10px);min-width:80px}
+.phd-stat-num{display:block;font-size:24px;font-weight:700;color:#fff;line-height:1.2}
+.phd-stat-label{display:block;font-size:11px;color:rgba(255,255,255,.8);margin-top:4px}
+@media (max-width:768px){.phd-section-header{flex-wrap:wrap;padding:20px}.phd-section-icon{width:48px;height:48px;font-size:24px}.phd-section-title{font-size:18px}.phd-section-stats{width:100%;justify-content:center}.phd-stat-item{padding:8px 16px;min-width:60px}}
 .phd-section-title{font-size:18px;font-weight:700;color:#1a1a2e;margin:0 0 16px;padding-bottom:12px;border-bottom:2px solid #f0f0f0;display:flex;align-items:center;gap:8px}
 .phd-section-title .num{background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
 .phd-knowledge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
@@ -6869,23 +6879,16 @@ console.log('✅ 学习工具入口已加载');
       </div>
     </div>
 
-    <!-- 子模块标签 -->
-    <div class="phd-tabs">
-      <div class="phd-tab active" data-phd-tab="knowledge" onclick="switchPhdTab('knowledge')">
-        <span class="icon">📚</span>专业知识库<span class="count" id="phdKbCount">0</span>
+    <!-- 当前模块标题区 -->
+    <div class="phd-section-header" id="phdSectionHeader">
+      <div class="phd-section-icon" id="phdSectionIcon">📚</div>
+      <div class="phd-section-info">
+        <h3 class="phd-section-title" id="phdSectionTitle">专业知识库</h3>
+        <p class="phd-section-desc" id="phdSectionDesc">运动人体科学与运动康复考博核心知识点系统梳理</p>
       </div>
-      <div class="phd-tab" data-phd-tab="exam" onclick="switchPhdTab('exam')">
-        <span class="icon">📝</span>考博真题<span class="count" id="phdExamCount">0</span>
+      <div class="phd-section-stats" id="phdSectionStats">
+        <div class="phd-stat-item"><span class="phd-stat-num" id="phdStatNum">0</span><span class="phd-stat-label">知识点</span></div>
       </div>
-      <div class="phd-tab" data-phd-tab="research" onclick="switchPhdTab('research')">
-        <span class="icon">🔬</span>科研能力<span class="count" id="phdResearchCount">0</span>
-      </div>
-      <div class="phd-tab" data-phd-tab="interview" onclick="switchPhdTab('interview')">
-        <span class="icon">🎓</span>面试申请<span class="count" id="phdInterviewCount">0</span>
-      </div>
-    <div class="phd-tab" data-phd-tab="schools" onclick="switchPhdTab('schools')">🏫 院校导师<span class="phd-tab-count" id="phdSchoolCount">0</span></div>
-    <div class="phd-tab" data-phd-tab="timeline" onclick="switchPhdTab('timeline')">📅 备考时间线<span class="phd-tab-count" id="phdTimelineCount">0</span></div>
-    <div class="phd-tab" data-phd-tab="proposal" onclick="switchPhdTab('proposal')">📝 科研计划书<span class="phd-tab-count" id="phdProposalCount">AI</span></div>
     </div>
 
     <!-- 专业知识库内容 -->
@@ -36616,6 +36619,41 @@ function switchPhdTab(tabName) {
   });
   const targetContent = document.getElementById('phdContent-' + tabName);
   if (targetContent) targetContent.classList.add('active');
+  // 更新当前模块标题区
+  updatePhdSectionHeader(tabName);
+}
+
+// 更新体育考博当前模块标题
+function updatePhdSectionHeader(tabName) {
+  const sectionInfo = {
+    knowledge: { icon: '📚', title: '专业知识库', desc: '运动人体科学与运动康复考博核心知识点系统梳理', statLabel: '知识点' },
+    exam: { icon: '📝', title: '考博真题库', desc: '各院校运动人体科学与运动康复考博历年真题及详细解析', statLabel: '真题' },
+    research: { icon: '🔬', title: '科研能力培养', desc: '科研方法、文献检索、论文写作、学术规范全方位提升', statLabel: '专题' },
+    interview: { icon: '🎓', title: '面试与申请', desc: '面试技巧、申请材料、套磁指南、个人陈述撰写指导', statLabel: '指南' },
+    schools: { icon: '🏫', title: '院校与导师', desc: '招收运动人体科学博士的院校信息、考试科目、博导介绍', statLabel: '院校' },
+    timeline: { icon: '📅', title: '备考时间线', desc: '考博全年备考规划、关键节点提醒、材料准备清单', statLabel: '节点' },
+    proposal: { icon: '📝', title: '科研计划书', desc: '科研计划书AI辅助生成、模板库、写作指南、AI评审', statLabel: '模板' }
+  };
+  const info = sectionInfo[tabName] || sectionInfo.knowledge;
+  const iconEl = document.getElementById('phdSectionIcon');
+  const titleEl = document.getElementById('phdSectionTitle');
+  const descEl = document.getElementById('phdSectionDesc');
+  const statLabelEl = document.querySelector('.phd-stat-label');
+  if (iconEl) iconEl.textContent = info.icon;
+  if (titleEl) titleEl.textContent = info.title;
+  if (descEl) descEl.textContent = info.desc;
+  if (statLabelEl) statLabelEl.textContent = info.statLabel;
+  // 更新统计数字
+  const countMap = { knowledge: 'phdKbCount', exam: 'phdExamCount', research: 'phdResearchCount', interview: 'phdInterviewCount', schools: 'phdSchoolCount', timeline: 'phdTimelineCount' };
+  const countId = countMap[tabName];
+  if (countId) {
+    const countEl = document.getElementById(countId);
+    const statNumEl = document.getElementById('phdStatNum');
+    if (countEl && statNumEl) statNumEl.textContent = countEl.textContent || '0';
+  } else if (tabName === 'proposal') {
+    const statNumEl = document.getElementById('phdStatNum');
+    if (statNumEl) statNumEl.textContent = 'AI';
+  }
 }
 
 // 导航栏子项跳转到体育考博对应标签页
