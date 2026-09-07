@@ -6771,6 +6771,7 @@ console.log('✅ 学习工具入口已加载');
         <span class="icon">🎓</span>面试申请<span class="count" id="phdInterviewCount">0</span>
       </div>
     <div class="phd-tab" data-phd-tab="schools" onclick="switchPhdTab('schools')">🏫 院校导师<span class="phd-tab-count" id="phdSchoolCount">0</span></div>
+    <div class="phd-tab" data-phd-tab="timeline" onclick="switchPhdTab('timeline')">📅 备考时间线<span class="phd-tab-count" id="phdTimelineCount">0</span></div>
     </div>
 
     <!-- 专业知识库内容 -->
@@ -34578,6 +34579,7 @@ function switchPhdTab(tabName) {
   if (tabName === 'research' && typeof renderPhdResearch === 'function') renderPhdResearch();
   if (tabName === 'interview' && typeof renderPhdInterview === 'function') renderPhdInterview();
   if (tabName === 'schools' && typeof renderPhdSchools === 'function') renderPhdSchools();
+  if (tabName === 'timeline' && typeof renderPhdTimeline === 'function') renderPhdTimeline();
   // 更新标签样式
   document.querySelectorAll('.phd-tab').forEach(tab => {
     tab.classList.remove('active');
@@ -35723,6 +35725,191 @@ const PHD_INTERVIEW_QUESTIONS = {
     {q: "请谈谈你对这个研究领域国内外研究现状的了解。", category: "研究现状", keywords: ["国内研究","国外研究","主要学者","研究热点","研究空白","发展趋势"]}
   ]
 };
+
+// ========== 考博备考时间线 ==========
+const PHD_TIMELINE = [
+  {
+    phase: "前期准备",
+    period: "3月 - 4月",
+    color: "#2196f3",
+    tasks: [
+      {title: "确定报考院校和专业", desc: "根据自身研究兴趣、学术背景、职业规划，选择2-3所目标院校", done: false},
+      {title: "调研导师信息", desc: "查阅目标导师的研究方向、近期论文、招生要求，筛选心仪导师", done: false},
+      {title: "联系导师", desc: "发送邮件介绍自己的学术背景和研究兴趣，询问招生名额", done: false},
+      {title: "准备个人简历", desc: "整理教育背景、科研经历、论文发表、获奖情况等", done: false}
+    ]
+  },
+  {
+    phase: "材料准备",
+    period: "5月 - 6月",
+    color: "#9c27b0",
+    tasks: [
+      {title: "撰写科研计划书", desc: "确定研究选题，撰写详细的科研计划书（研究背景、问题、方法、预期成果）", done: false},
+      {title: "撰写个人陈述", desc: "阐述学术经历、研究兴趣、读博动机、职业规划", done: false},
+      {title: "准备推荐信", desc: "联系2-3位推荐人（通常是硕士导师、任课教授），准备推荐信", done: false},
+      {title: "整理证明材料", desc: "成绩单、学历学位证书、英语成绩证明、论文录用通知等", done: false}
+    ]
+  },
+  {
+    phase: "暑期强化",
+    period: "7月 - 8月",
+    color: "#ff9800",
+    tasks: [
+      {title: "专业知识深化", desc: "系统复习运动生理学、运动解剖学等核心课程，阅读前沿文献", done: false},
+      {title: "英语提升", desc: "强化专业英语阅读和写作能力，准备英语面试", done: false},
+      {title: "完善科研计划书", desc: "根据导师反馈和文献阅读，修改完善科研计划书", done: false},
+      {title: "准备笔试", desc: "针对目标院校的笔试科目，制定复习计划，系统备考", done: false}
+    ]
+  },
+  {
+    phase: "报名提交",
+    period: "9月 - 10月",
+    color: "#4caf50",
+    tasks: [
+      {title: "网上报名", desc: "关注目标院校招生简章，在规定时间内完成网上报名", done: false},
+      {title: "提交申请材料", desc: "按要求提交科研计划书、个人陈述、推荐信、证明材料等", done: false},
+      {title: "缴纳报名费", desc: "按院校要求缴纳报名费", done: false},
+      {title: "确认材料审核状态", desc: "定期查看申请材料审核状态，及时补充缺失材料", done: false}
+    ]
+  },
+  {
+    phase: "初审冲刺",
+    period: "11月 - 12月",
+    color: "#f44336",
+    tasks: [
+      {title: "等待初审结果", desc: "关注院校官网，等待初审结果公布", done: false},
+      {title: "笔试冲刺复习", desc: "针对笔试科目，进行重点突破和模拟练习", done: false},
+      {title: "面试准备", desc: "准备自我介绍、研究经历介绍、专业知识问答、英语问答", done: false},
+      {title: "模拟面试", desc: "找同学或老师进行模拟面试，提升表达能力和应变能力", done: false}
+    ]
+  },
+  {
+    phase: "考试录取",
+    period: "1月 - 4月",
+    color: "#795548",
+    tasks: [
+      {title: "参加笔试", desc: "按院校安排参加笔试，注意考试时间和地点", done: false},
+      {title: "参加面试", desc: "按院校安排参加面试，保持自信，展现学术潜力", done: false},
+      {title: "等待录取结果", desc: "关注院校官网，等待录取结果公布", done: false},
+      {title: "确认录取", desc: "收到录取通知后，按要求确认录取，办理相关手续", done: false}
+    ]
+  }
+];
+
+function renderPhdTimeline() {
+  // 动态确保内容区存在
+  let contentArea = document.getElementById('phdContent-timeline');
+  const tabPhd = document.getElementById('tab-phd');
+  if (!contentArea || !contentArea.parentElement || contentArea.parentElement.id !== 'tab-phd') {
+    if (contentArea && contentArea.parentElement) contentArea.remove();
+    contentArea = document.createElement('div');
+    contentArea.className = 'phd-content';
+    contentArea.id = 'phdContent-timeline';
+    contentArea.innerHTML = '<div id="phdTimelineArea"></div>';
+    if (tabPhd) tabPhd.appendChild(contentArea);
+  }
+  
+  const area = document.getElementById('phdTimelineArea');
+  if (!area) return;
+  
+  // 更新计数
+  const countEl = document.getElementById('phdTimelineCount');
+  if (countEl) countEl.textContent = PHD_TIMELINE.length + '阶段';
+  
+  // 从localStorage读取完成状态
+  let doneTasks = {};
+  try {
+    doneTasks = JSON.parse(localStorage.getItem('phdTimelineDone') || '{}');
+  } catch(e) { doneTasks = {}; }
+  
+  // 计算总进度
+  let totalTasks = 0;
+  let doneCount = 0;
+  PHD_TIMELINE.forEach(phase => {
+    phase.tasks.forEach((task, idx) => {
+      totalTasks++;
+      const key = phase.phase + '_' + idx;
+      if (doneTasks[key]) doneCount++;
+    });
+  });
+  const progress = totalTasks > 0 ? Math.round((doneCount / totalTasks) * 100) : 0;
+  
+  let html = '<div style="margin-bottom:20px;padding:15px;background:#e8f5e9;border-radius:8px;border-left:4px solid #4caf50">';
+  html += '<strong style="color:#2e7d32">📅 考博备考时间线</strong>';
+  html += '<span style="margin-left:10px;font-size:13px;color:#666">全年6个阶段，' + totalTasks + '项关键任务，点击勾选完成状态自动保存</span>';
+  html += '</div>';
+  
+  // 进度条
+  html += '<div style="margin-bottom:25px">';
+  html += '<div style="display:flex;justify-content:space-between;margin-bottom:8px">';
+  html += '<span style="font-size:14px;font-weight:600;color:#333">备考进度</span>';
+  html += '<span style="font-size:14px;color:#666">' + doneCount + ' / ' + totalTasks + ' 项（' + progress + '%）</span>';
+  html += '</div>';
+  html += '<div style="height:10px;background:#e0e0e0;border-radius:5px;overflow:hidden">';
+  html += '<div style="height:100%;width:' + progress + '%;background:linear-gradient(90deg,#4caf50,#8bc34a);border-radius:5px;transition:width 0.3s"></div>';
+  html += '</div></div>';
+  
+  // 时间线
+  html += '<div style="position:relative;padding-left:30px">';
+  html += '<div style="position:absolute;left:10px;top:0;bottom:0;width:2px;background:#e0e0e0"></div>';
+  
+  PHD_TIMELINE.forEach((phase, phaseIdx) => {
+    html += '<div style="position:relative;margin-bottom:25px">';
+    html += '<div style="position:absolute;left:-25px;top:5px;width:16px;height:16px;border-radius:50%;background:' + phase.color + ';border:3px solid white;box-shadow:0 0 0 2px ' + phase.color + '"></div>';
+    
+    html += '<div style="background:white;border:1px solid #e0e0e0;border-radius:10px;padding:15px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+    html += '<strong style="font-size:16px;color:' + phase.color + '">' + phase.phase + '</strong>';
+    html += '<span style="font-size:13px;color:#999;background:#f5f5f5;padding:4px 12px;border-radius:15px">' + phase.period + '</span>';
+    html += '</div>';
+    
+    phase.tasks.forEach((task, taskIdx) => {
+      const key = phase.phase + '_' + taskIdx;
+      const isDone = doneTasks[key] || false;
+      html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px dashed #f0f0f0;last-child;border-bottom:none">';
+      html += '<input type="checkbox" style="margin-top:3px;cursor:pointer;width:16px;height:16px" ' + (isDone ? 'checked' : '') + ' onchange="togglePhdTimelineTask(\'' + key.replace(/'/g, "\\'") + '\', this.checked)">';
+      html += '<div style="flex:1">';
+      html += '<div style="font-size:14px;font-weight:600;color:' + (isDone ? '#999' : '#333') + ';text-decoration:' + (isDone ? 'line-through' : 'none') + '">' + task.title + '</div>';
+      html += '<div style="font-size:13px;color:#666;line-height:1.5;margin-top:4px">' + task.desc + '</div>';
+      html += '</div></div>';
+    });
+    
+    html += '</div></div>';
+  });
+  
+  html += '</div>';
+  
+  // 重置按钮
+  html += '<div style="text-align:center;margin-top:20px">';
+  html += '<button class="phd-quiz-btn secondary" onclick="resetPhdTimeline()">🔄 重置进度</button>';
+  html += '</div>';
+  
+  area.innerHTML = html;
+}
+
+function togglePhdTimelineTask(key, checked) {
+  let doneTasks = {};
+  try {
+    doneTasks = JSON.parse(localStorage.getItem('phdTimelineDone') || '{}');
+  } catch(e) { doneTasks = {}; }
+  
+  if (checked) {
+    doneTasks[key] = true;
+  } else {
+    delete doneTasks[key];
+  }
+  
+  localStorage.setItem('phdTimelineDone', JSON.stringify(doneTasks));
+  renderPhdTimeline();
+}
+
+function resetPhdTimeline() {
+  if (confirm('确定要重置所有备考进度吗？')) {
+    localStorage.removeItem('phdTimelineDone');
+    renderPhdTimeline();
+  }
+}
+
 
 function openPhdInterviewOverlay() {
   document.getElementById('phdInterviewOverlay').classList.add('active');
