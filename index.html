@@ -38320,6 +38320,10 @@ function renderPhdSchools() {
   html += '<button class="phd-sub-tab-btn" data-sub="compare" onclick="switchPhdSchoolSubTab(\'compare\')" style="' + (window.phdSchoolSubTab === 'compare' ? 'background:#667eea;color:#fff' : 'background:#f1f5f9;color:#475569') + '">⚖️ 院校对比</button>';
   html += '</div>';
   
+  // 预定义通用变量（修复作用域问题）
+  const locations = [...new Set(PHD_SCHOOLS.map(s => s.location.split(' ')[0]))];
+  const allDirections = [...new Set(PHD_SCHOOLS.flatMap(s => s.directions))];
+  
   if (window.phdSchoolSubTab === 'schools') {
     // 院校列表
     html += '<div style="margin-bottom:16px;padding:12px 16px;background:#f0f7ff;border-radius:8px;border-left:4px solid #2196f3;font-size:13px;color:#1565c0">';
@@ -38329,7 +38333,6 @@ function renderPhdSchools() {
     // 多维度筛选
     html += '<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
     html += '<input type="text" id="phdSchoolSearch" class="phd-filter-select" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px" placeholder="🔍 搜索院校名称、研究方向、导师姓名..." oninput="filterPhdSchools()">';
-    const locations = [...new Set(PHD_SCHOOLS.map(s => s.location.split(' ')[0]))];
     html += '<select id="phdSchoolLocationFilter" class="phd-filter-select" onchange="filterPhdSchools()" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px">';
     html += '<option value="">全部地区</option>';
     locations.forEach(l => { html += '<option value="' + l + '">' + l + '</option>'; });
@@ -38379,7 +38382,6 @@ function renderPhdSchools() {
     html += '<h4 style="margin:0 0 16px;color:#1e293b">📝 填写你的偏好</h4>';
     html += '<div style="margin-bottom:16px">';
     html += '<label style="display:block;margin-bottom:6px;font-size:13px;color:#475569;font-weight:600">感兴趣的研究方向（可多选）</label>';
-    const allDirections = [...new Set(PHD_SCHOOLS.flatMap(s => s.directions))];
     html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
     allDirections.forEach((d, i) => {
       html += '<label style="display:flex;align-items:center;gap:4px;padding:6px 12px;background:#f1f5f9;border-radius:20px;cursor:pointer;font-size:12px;color:#475569">';
