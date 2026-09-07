@@ -34298,22 +34298,59 @@ function generateMockQuestions() {
   }, 800);
 }
 
+
 function generateNounExplanation(k, school) {
   const typeClass = 'mock-type-noun';
   const typeName = '名词解释';
-  const score = 5;
+  const score = 10;
   
-  // 题目
-  const question = '试述' + k.name + '的概念、结构（或组成）及其生理/解剖意义。';
+  const question = '试述' + k.name + '的概念、结构（或组成）、主要特征及其生理/解剖意义。';
   
-  // 答案
-  const answer = '<p><strong>定义：</strong>' + k.def + '</p>';
+  // 详细答案
+  let answer = '<p><strong>一、概念定义</strong></p>';
+  answer += '<p>' + k.def + '</p>';
+  
+  answer += '<p><strong>二、结构与组成</strong></p>';
+  answer += '<p>' + k.name + '的结构组成主要包括以下方面：</p><ol>';
+  k.points.slice(0, 3).forEach((p, i) => {
+    const parts = p.split('：');
+    const title = parts[0];
+    const detail = parts.length > 1 ? parts.slice(1).join('：') : '';
+    answer += '<li><strong>' + title + '：</strong>' + detail + '。这是' + k.name + '的重要组成部分，对其功能实现具有关键作用。</li>';
+  });
+  answer += '</ol>';
+  
+  answer += '<p><strong>三、主要特征</strong></p>';
+  answer += '<p>' + k.name + '具有以下显著特征：</p><ul>';
+  answer += '<li><strong>特异性：</strong>具有特定的结构和功能，与其他生理/解剖结构有明确区别。</li>';
+  answer += '<li><strong>系统性：</strong>不是孤立存在，而是与其他系统相互联系、相互协调，共同维持机体正常功能。</li>';
+  answer += '<li><strong>适应性：</strong>在长期运动训练或环境变化下，其结构和功能可发生适应性改变，以适应机体需求。</li>';
+  answer += '<li><strong>可调性：</strong>受神经、体液等因素调节，可根据机体状态动态调整其功能状态。</li>';
+  answer += '</ul>';
+  
+  answer += '<p><strong>四、生理/解剖意义</strong></p>';
+  answer += '<p>' + k.name + '在人体生理/解剖中具有重要意义：</p><ol>';
+  answer += '<li>是维持机体正常生命活动的重要结构/机制，参与多种生理过程的调节。</li>';
+  answer += '<li>其功能状态直接影响机体的运动能力和健康水平。</li>';
+  answer += '<li>是运动生理学/运动解剖学的核心知识点，在考研中高频出现。</li>';
+  answer += '<li>其异常或功能障碍可能导致多种运动损伤或疾病。</li>';
+  answer += '</ol>';
+  
+  answer += '<p><strong>五、运动实践应用</strong></p>';
+  answer += '<p>在运动实践中，' + k.name + '的理论可应用于：</p><ul>';
+  answer += '<li>指导运动训练方法的选择与安排，提高训练效果。</li>';
+  answer += '<li>评价运动员身体机能状态和运动能力。</li>';
+  answer += '<li>预防运动损伤，制定科学的康复方案。</li>';
+  answer += '<li>制定个体化训练计划，实现精准训练。</li>';
+  answer += '</ul>';
   
   // 得分点
   const scorePoints = [
-    { text: '准确阐述' + k.name + '的基本概念', val: '2分' },
-    { text: '说明其结构组成或关键特征（' + k.points.slice(0, 2).map(p => p.split('：')[0]).join('、') + '）', val: '2分' },
-    { text: '阐述其生理/解剖意义或功能', val: '1分' },
+    { text: '准确阐述' + k.name + '的基本概念和定义', val: '2分' },
+    { text: '说明其结构组成（' + k.points.slice(0,2).map(p=>p.split('：')[0]).join('、') + '等）', val: '3分' },
+    { text: '阐述主要特征（特异性、系统性、适应性、可调性）', val: '2分' },
+    { text: '说明生理/解剖意义及功能作用', val: '2分' },
+    { text: '结合运动实践说明应用价值', val: '1分' },
   ];
   
   return { type: typeName, typeClass, question, answer, scorePoints, score, knowledge: k.name, subject: k.subject, chapter: k.chapter, school };
@@ -34322,30 +34359,62 @@ function generateNounExplanation(k, school) {
 function generateShortAnswer(k, school) {
   const typeClass = 'mock-type-short';
   const typeName = '简答题';
-  const score = 10 + Math.floor(Math.random() * 6); // 10-15分
+  const score = 25;
   
-  // 题目模板（根据知识点特点选择）
   const templates = [
-    '简述' + k.name + '的概念及其主要特征。',
-    '试述' + k.name + '的生理/解剖机制及其在运动实践中的意义。',
-    '简述影响' + k.name + '的主要因素。',
-    '试述' + k.name + '的过程（或机制）及其生理/解剖意义。',
+    '试述' + k.name + '的概念、机制、主要特征及其在运动实践中的应用。',
+    '简述' + k.name + '的生理/解剖基础、影响因素及其训练学意义。',
+    '试述' + k.name + '的过程（或机制）、主要特点及其对运动表现的影响。',
+    '简述' + k.name + '的概念、分类、生理/解剖意义及运动实践应用。',
   ];
   const question = templates[Math.floor(Math.random() * templates.length)];
   
-  // 答案：基于points生成
-  let answer = '<p><strong>答：</strong>' + k.def + '</p>';
-  answer += '<p><strong>主要内容：</strong></p><ol>';
-  k.points.slice(0, 4).forEach((p, i) => {
-    answer += '<li>' + p + '</li>';
+  // 详细答案（25分）
+  let answer = '<p><strong>一、概念与定义（3分）</strong></p>';
+  answer += '<p>' + k.def + '。' + k.name + '是运动生理学/运动解剖学中的核心概念，在机体功能调节和运动表现中发挥着重要作用。</p>';
+  
+  answer += '<p><strong>二、生理/解剖机制与详细内容（12分）</strong></p>';
+  answer += '<p>' + k.name + '的机制与内容主要包括以下' + k.points.length + '个方面：</p>';
+  
+  k.points.forEach((p, i) => {
+    const parts = p.split('：');
+    const title = parts[0];
+    const detail = parts.length > 1 ? parts.slice(1).join('：') : '';
+    answer += '<p><strong>（' + (i+1) + '）' + title + '</strong></p>';
+    answer += '<p>' + detail + '。</p>';
+    answer += '<p>这一机制/特征具有重要的生理/解剖意义：首先，它是' + k.name + '功能实现的基础；其次，它与其他生理/解剖过程密切相关，共同维持机体稳态；再次，在运动实践中，这一机制/特征直接影响运动员的身体机能状态和运动表现；最后，通过科学训练可以对这一机制/特征进行适应性调节，从而提高运动能力。</p>';
   });
+  
+  answer += '<p><strong>三、主要特征与影响因素（4分）</strong></p>';
+  answer += '<p><strong>主要特征：</strong></p><ul>';
+  answer += '<li><strong>特异性：</strong>' + k.name + '具有特定的结构和功能，与其他生理/解剖过程有明确区别。</li>';
+  answer += '<li><strong>系统性：</strong>与神经、内分泌、循环、呼吸等系统密切联系，相互协调。</li>';
+  answer += '<li><strong>适应性：</strong>长期运动训练可使其结构和功能发生适应性改变。</li>';
+  answer += '<li><strong>可调性：</strong>受多种因素调节，可根据机体状态动态调整。</li>';
+  answer += '</ul>';
+  answer += '<p><strong>影响因素：</strong>包括遗传因素、训练水平、年龄、性别、营养状况、环境因素（如海拔、温度）、心理状态等。</p>';
+  
+  answer += '<p><strong>四、运动实践应用与训练学意义（4分）</strong></p>';
+  answer += '<p>在运动实践中，' + k.name + '的理论具有重要应用价值：</p><ol>';
+  answer += '<li><strong>训练方法指导：</strong>根据' + k.name + '的机制和特点，科学选择训练方法和训练负荷，提高训练效果。</li>';
+  answer += '<li><strong>机能状态评价：</strong>通过检测' + k.name + '相关指标，评价运动员身体机能状态和疲劳程度。</li>';
+  answer += '<li><strong>运动损伤预防：</strong>了解' + k.name + '的异常表现，早期发现潜在问题，预防运动损伤。</li>';
+  answer += '<li><strong>个体化训练：</strong>根据个体差异，制定针对性训练计划，实现精准训练和个性化提升。</li>';
   answer += '</ol>';
   
-  // 得分点
-  const scorePoints = k.points.slice(0, 4).map((p, i) => ({
-    text: p.split('：')[0] + '（' + p.substring(p.indexOf('：') + 1, p.indexOf('：') + 30) + '...）',
-    val: Math.floor(score / 4) + '分'
-  }));
+  answer += '<p><strong>五、总结（2分）</strong></p>';
+  answer += '<p>综上所述，' + k.name + '是运动生理学/运动解剖学的核心知识点，其机制复杂、特征鲜明、影响因素多样，在运动实践中具有重要应用价值。深入理解和掌握' + k.name + '的理论，对于科学指导运动训练、提高运动表现、预防运动损伤具有重要意义。在考研复习中，应重点掌握其概念、机制、特征及运动实践应用，做到理解记忆、融会贯通。</p>';
+  
+  // 得分点（25分）
+  const scorePoints = [
+    { text: '概念定义准确，阐述清晰', val: '3分' },
+  ];
+  k.points.forEach((p, i) => {
+    scorePoints.push({ text: '第' + (i+1) + '点：' + p.split('：')[0] + '（机制+特点+意义）', val: Math.floor(12/k.points.length) + '分' });
+  });
+  scorePoints.push({ text: '主要特征与影响因素分析', val: '4分' });
+  scorePoints.push({ text: '运动实践应用与训练学意义', val: '4分' });
+  scorePoints.push({ text: '总结全面，逻辑清晰', val: '2分' });
   
   return { type: typeName, typeClass, question, answer, scorePoints, score, knowledge: k.name, subject: k.subject, chapter: k.chapter, school };
 }
@@ -34353,92 +34422,116 @@ function generateShortAnswer(k, school) {
 function generateEssay(k, school) {
   const typeClass = 'mock-type-essay';
   const typeName = '论述题';
-  const score = 20 + Math.floor(Math.random() * 11); // 20-30分
+  const score = 50;
   
-  // 题目模板
   const templates = [
-    '试述' + k.name + '的机制、影响因素及其在运动训练中的应用。',
-    '结合运动实践，论述' + k.name + '的生理/解剖基础及其训练适应。',
-    '试述' + k.name + '的概念、机制，并分析其对运动表现的影响及训练对策。',
-    '论述' + k.name + '的生理学/解剖学基础及其在运动实践中的应用价值。',
+    '试述' + k.name + '的生理/解剖机制、影响因素、运动实践应用及训练适应。',
+    '结合运动实践，论述' + k.name + '的概念、机制、特征及其对运动表现的影响与训练对策。',
+    '试述' + k.name + '的生理学/解剖学基础、训练适应规律及其在运动训练中的应用价值。',
+    '论述' + k.name + '的机制、影响因素、运动时的变化规律及训练适应，并举例说明其在运动实践中的应用。',
   ];
   const question = templates[Math.floor(Math.random() * templates.length)];
   
-  // 答案：完整论述
-  let answer = '<p><strong>一、概念与机制</strong></p>';
+  // 详细答案（50分）
+  let answer = '<p><strong>一、引言与概念定义（6分）</strong></p>';
   answer += '<p>' + k.def + '</p>';
-  answer += '<p>其核心机制包括：' + k.points.slice(0, 3).map(p => p.split('：')[0]).join('、') + '等。</p>';
+  answer += '<p>' + k.name + '是运动生理学/运动解剖学中最为核心的知识点之一，在机体功能调节、运动能力表现和运动训练适应中发挥着至关重要的作用。深入研究和掌握' + k.name + '的理论，对于科学指导运动训练、提高运动员竞技能力、预防运动损伤、促进运动康复具有重要的理论意义和实践价值。本文将从概念定义、生理/解剖机制、主要特征、影响因素、运动实践应用、训练适应等方面，对' + k.name + '进行系统论述。</p>';
   
-  answer += '<p><strong>二、详细内容</strong></p><ol>';
-  k.points.forEach(p => {
-    answer += '<li>' + p + '</li>';
+  answer += '<p><strong>二、生理/解剖机制与详细论述（20分）</strong></p>';
+  answer += '<p>' + k.name + '的机制是一个复杂的系统过程，涉及多个层面和多个环节。以下从' + k.points.length + '个主要方面进行详细论述：</p>';
+  
+  k.points.forEach((p, i) => {
+    const parts = p.split('：');
+    const title = parts[0];
+    const detail = parts.length > 1 ? parts.slice(1).join('：') : '';
+    answer += '<p><strong>（' + (i+1) + '）' + title + '</strong></p>';
+    answer += '<p>' + detail + '。</p>';
+    answer += '<p><strong>深入分析：</strong></p><ul>';
+    answer += '<li><strong>机制层面：</strong>这一过程/特征涉及细胞、组织、器官、系统等多个层面的调节，包括神经调节、体液调节、自身调节等多种调节方式的协同作用。</li>';
+    answer += '<li><strong>功能意义：</strong>' + title + '是' + k.name + '功能实现的关键环节，直接影响机体的生理功能状态和运动能力表现。其正常运行是维持机体稳态和健康的基础。</li>';
+    answer += '<li><strong>与其他系统的关系：</strong>与神经系统、内分泌系统、循环系统、呼吸系统、消化系统、泌尿系统等密切相关，相互协调、相互影响，共同维持机体正常功能。</li>';
+    answer += '<li><strong>运动时的变化：</strong>在运动过程中，' + title + '会发生动态变化，以适应运动时机体的能量需求、氧气供应、代谢产物清除等需要。运动强度越大、持续时间越长，变化越显著。</li>';
+    answer += '<li><strong>异常表现：</strong>当' + title + '发生异常或功能障碍时，可能导致多种生理功能紊乱和运动能力下降，甚至引发运动损伤或疾病。</li>';
+    answer += '</ul>';
   });
+  
+  answer += '<p><strong>三、主要特征与分类（6分）</strong></p>';
+  answer += '<p><strong>（一）主要特征</strong></p><ol>';
+  answer += '<li><strong>特异性：</strong>' + k.name + '具有特定的结构基础和功能特点，与其他生理/解剖过程有明确区别，有其独特的调节机制和功能表现。</li>';
+  answer += '<li><strong>系统性：</strong>不是孤立存在的单一过程，而是涉及多个系统、多个器官、多种调节方式的复杂系统工程，各环节之间密切联系、相互协调。</li>';
+  answer += '<li><strong>适应性：</strong>在长期运动训练或环境变化的刺激下，' + k.name + '的结构和功能可发生适应性改变，以适应机体需求的变化，这是运动训练提高运动能力的生理学基础。</li>';
+  answer += '<li><strong>可调性：</strong>受神经、体液、自身调节等多种因素调节，可根据机体状态、运动强度、环境条件等动态调整其功能状态，以维持机体稳态。</li>';
+  answer += '<li><strong>个体差异性：</strong>不同个体之间' + k.name + '的基础水平、反应特点、适应能力存在差异，受遗传、年龄、性别、训练水平等多种因素影响。</li>';
   answer += '</ol>';
   
-  answer += '<p><strong>三、运动实践应用</strong></p>';
-  answer += '<p>在运动训练中，' + k.name + '的理论可用于：①指导训练方法的选择与安排；②评价训练效果和身体机能状态；③预防运动损伤和过度训练；④制定个体化训练方案。</p>';
-  answer += '<p>长期系统训练可使机体在' + k.name + '相关方面产生适应性变化，从而提高运动能力。</p>';
+  answer += '<p><strong>（二）影响因素</strong></p><p>影响' + k.name + '的因素是多方面的，主要包括：</p><ul>';
+  answer += '<li><strong>遗传因素：</strong>遗传决定了' + k.name + '的基础水平和潜力上限，是个体差异的重要原因。</li>';
+  answer += '<li><strong>训练因素：</strong>运动训练是影响' + k.name + '最重要的因素，科学训练可显著改善其功能状态，提高运动能力。</li>';
+  answer += '<li><strong>年龄因素：</strong>随着年龄增长，' + k.name + '的功能会发生退行性变化，运动能力逐渐下降。</li>';
+  answer += '<li><strong>性别因素：</strong>男女之间在' + k.name + '的基础水平和反应特点上存在一定差异。</li>';
+  answer += '<li><strong>营养因素：</strong>合理的营养补充是维持' + k.name + '正常功能和促进训练适应的重要保障。</li>';
+  answer += '<li><strong>环境因素：</strong>海拔、温度、湿度等环境条件可影响' + k.name + '的功能状态。</li>';
+  answer += '<li><strong>心理因素：</strong>心理状态、情绪、动机等可通过神经-内分泌途径影响' + k.name + '的功能。</li>';
+  answer += '</ul>';
   
-  // 得分点
+  answer += '<p><strong>四、运动实践应用（10分）</strong></p>';
+  answer += '<p>' + k.name + '的理论在运动实践中具有广泛而重要的应用价值，主要体现在以下几个方面：</p>';
+  
+  answer += '<p><strong>（一）运动训练方法指导</strong></p>';
+  answer += '<p>根据' + k.name + '的机制和特点，可以科学选择和设计训练方法：</p><ul>';
+  answer += '<li><strong>训练负荷控制：</strong>根据' + k.name + '的反应规律和适应特点，合理安排训练强度、训练量、训练频率和间歇时间，避免过度训练和训练不足。</li>';
+  answer += '<li><strong>训练方法选择：</strong>根据训练目标和' + k.name + '的特点，选择持续训练法、间歇训练法、重复训练法、高原训练法等不同训练方法。</li>';
+  answer += '<li><strong>训练周期安排：</strong>根据' + k.name + '的适应规律，科学安排准备期、竞赛期、过渡期的训练内容和负荷，实现最佳竞技状态。</li>';
+  answer += '</ul>';
+  
+  answer += '<p><strong>（二）身体机能状态评价</strong></p>';
+  answer += '<p>通过检测' + k.name + '相关指标，可以客观评价运动员的身体机能状态：</p><ul>';
+  answer += '<li><strong>训练效果评价：</strong>通过比较训练前后' + k.name + '相关指标的变化，评价训练效果和训练适应程度。</li>';
+  answer += '<li><strong>疲劳程度监测：</strong>通过监测' + k.name + '相关指标的动态变化，早期发现运动性疲劳，及时调整训练计划。</li>';
+  answer += '<li><strong>竞技状态评估：</strong>通过综合分析' + k.name + '相关指标，评估运动员的竞技状态，为比赛安排提供依据。</li>';
+  answer += '</ul>';
+  
+  answer += '<p><strong>（三）运动损伤预防与康复</strong></p>';
+  answer += '<p>了解' + k.name + '的异常表现和功能障碍，有助于运动损伤的预防和康复：</p><ul>';
+  answer += '<li><strong>损伤预防：</strong>通过监测' + k.name + '相关指标，早期发现潜在问题，采取针对性预防措施，减少运动损伤的发生。</li>';
+  answer += '<li><strong>康复方案制定：</strong>根据' + k.name + '的恢复规律，制定科学的康复训练方案，促进损伤愈合和功能恢复。</li>';
+  answer += '<li><strong>重返运动评估：</strong>通过检测' + k.name + '相关指标，评估损伤恢复程度，确定安全重返运动的时机。</li>';
+  answer += '</ul>';
+  
+  answer += '<p><strong>（四）个体化训练与精准训练</strong></p>';
+  answer += '<p>根据个体' + k.name + '的特点和差异，可以制定个体化训练计划：</p><ul>';
+  answer += '<li>通过基因检测、机能测试等手段，了解个体' + k.name + '的基础水平和潜力特点。</li>';
+  answer += '<li>根据个体差异，制定针对性训练目标、训练内容和训练负荷。</li>';
+  answer += '<li>通过定期监测和动态调整，实现精准训练和个性化提升。</li>';
+  answer += '</ul>';
+  
+  answer += '<p><strong>五、训练适应与提高对策（5分）</strong></p>';
+  answer += '<p>长期科学的运动训练可使' + k.name + '发生适应性改变，从而提高运动能力。主要适应表现和提高对策包括：</p><ol>';
+  answer += '<li><strong>结构适应：</strong>长期训练可使相关组织器官的结构发生适应性改变，如肌纤维增粗、心肌肥厚、毛细血管增生、线粒体数量和体积增加等。</li>';
+  answer += '<li><strong>功能适应：</strong>训练可使' + k.name + '的功能显著增强，如最大摄氧量提高、乳酸阈升高、肌肉力量增大、神经募集能力增强等。</li>';
+  answer += '<li><strong>代谢适应：</strong>训练可改善能量代谢能力，提高有氧代谢和无氧代谢能力，优化能量物质利用效率。</li>';
+  answer += '<li><strong>调节适应：</strong>训练可改善神经-内分泌调节能力，提高机体对运动应激的适应能力和恢复能力。</li>';
+  answer += '<li><strong>提高对策：</strong>①遵循超负荷原则，逐步增加训练负荷；②遵循专门性原则，针对' + k.name + '的特点选择训练方法；③遵循循序渐进原则，避免突然增加负荷；④遵循系统性原则，坚持长期系统训练；⑤注意训练与恢复的平衡，促进超量恢复。</li>';
+  answer += '</ol>';
+  
+  answer += '<p><strong>六、总结与展望（3分）</strong></p>';
+  answer += '<p>综上所述，' + k.name + '是运动生理学/运动解剖学的核心知识点，其机制复杂、特征鲜明、影响因素多样，在运动实践中具有重要的理论意义和应用价值。深入理解和掌握' + k.name + '的理论，对于科学指导运动训练、提高运动表现、预防运动损伤、促进运动康复具有不可替代的作用。</p>';
+  answer += '<p>随着运动科学的不断发展和研究技术的不断进步，对' + k.name + '的研究将更加深入和全面，从宏观的整体水平到微观的分子水平，从单一因素分析到多因素综合研究，将为运动训练实践提供更加科学、精准的理论指导。在考研复习中，应重点掌握' + k.name + '的概念、机制、特征、影响因素及运动实践应用，做到理解记忆、融会贯通、学以致用。</p>';
+  
+  // 得分点（50分）
   const scorePoints = [
-    { text: '概念阐述准确、定义完整', val: Math.floor(score * 0.15) + '分' },
-    { text: '机制分析深入、逻辑清晰（' + k.points.length + '个要点）', val: Math.floor(score * 0.4) + '分' },
-    { text: '结合运动实践、应用价值分析', val: Math.floor(score * 0.25) + '分' },
-    { text: '训练适应与对策建议', val: Math.floor(score * 0.2) + '分' },
+    { text: '引言：概念定义准确，论述重要性', val: '6分' },
   ];
+  k.points.forEach((p, i) => {
+    scorePoints.push({ text: '第' + (i+1) + '点：' + p.split('：')[0] + '（机制+功能意义+运动变化+异常）', val: Math.floor(20/k.points.length) + '分' });
+  });
+  scorePoints.push({ text: '主要特征与影响因素（5特征+7因素）', val: '6分' });
+  scorePoints.push({ text: '运动实践应用（训练指导+机能评价+损伤预防+个体化）', val: '10分' });
+  scorePoints.push({ text: '训练适应与提高对策', val: '5分' });
+  scorePoints.push({ text: '总结与展望全面', val: '3分' });
   
   return { type: typeName, typeClass, question, answer, scorePoints, score, knowledge: k.name, subject: k.subject, chapter: k.chapter, school };
 }
-
-function renderMockResults() {
-  const area = document.getElementById('mockResultArea');
-  if (mockGeneratedQuestions.length === 0) {
-    area.innerHTML = '<div class="mock-loading">暂无生成题目，请选择知识点后点击生成。</div>';
-    return;
-  }
-  
-  let html = '<div class="mock-stats-bar">';
-  html += '<div class="mock-stat-item"><div class="num">' + mockGeneratedQuestions.length + '</div><div class="label">生成题目数</div></div>';
-  html += '<div class="mock-stat-item"><div class="num">' + mockSelectedKnowledge.length + '</div><div class="label">涉及知识点</div></div>';
-  const totalScore = mockGeneratedQuestions.reduce((sum, q) => sum + q.score, 0);
-  html += '<div class="mock-stat-item"><div class="num">' + totalScore + '</div><div class="label">总分值</div></div>';
-  html += '</div>';
-  
-  mockGeneratedQuestions.forEach((q, idx) => {
-    html += '<div class="mock-question-card">';
-    html += '<span class="mock-question-type ' + q.typeClass + '">' + q.type + '（' + q.score + '分）</span>';
-    html += '<span class="mock-source-tag">' + q.knowledge + ' · ' + (q.subject === 'physio' ? '运动生理学' : '运动解剖学') + '</span>';
-    html += '<div class="mock-question-title">' + (idx + 1) + '. ' + q.question + '</div>';
-    html += '<button class="mock-answer-toggle" onclick="toggleMockAnswer(' + idx + ')" id="mockAnswerToggle' + idx + '">📖 显示参考答案与得分点</button>';
-    html += '<div class="mock-answer-content" id="mockAnswerContent' + idx + '">';
-    html += '<div class="mock-answer-section">';
-    html += '<div class="mock-answer-section-title">📝 参考答案</div>';
-    html += '<div class="mock-answer-text">' + q.answer + '</div>';
-    html += '</div>';
-    html += '<div class="mock-answer-section">';
-    html += '<div class="mock-answer-section-title">🎯 得分点拆解（共' + q.score + '分）</div>';
-    html += '<div class="mock-score-points">';
-    q.scorePoints.forEach((sp, i) => {
-      html += '<div class="mock-score-point"><div class="mock-score-num">' + (i + 1) + '</div><div class="mock-score-text">' + sp.text + '</div><div class="mock-score-val">' + sp.val + '</div></div>';
-    });
-    html += '</div></div></div></div>';
-  });
-  
-  area.innerHTML = html;
-}
-
-function toggleMockAnswer(idx) {
-  const content = document.getElementById('mockAnswerContent' + idx);
-  const btn = document.getElementById('mockAnswerToggle' + idx);
-  if (content.classList.contains('show')) {
-    content.classList.remove('show');
-    btn.textContent = '📖 显示参考答案与得分点';
-  } else {
-    content.classList.add('show');
-    btn.textContent = '📕 收起参考答案';
-  }
-}
-
 
 // 初始化AI模拟题
 if (typeof initMockExam === "function") { setTimeout(initMockExam, 500); }
