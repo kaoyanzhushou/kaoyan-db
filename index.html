@@ -26241,7 +26241,8 @@ updateLoading(100, '加载完成！');
 setTimeout(hideLoading, 300);
 }, 100);
 }
-document.addEventListener('DOMContentLoaded', function() {
+// DOMContentLoaded处理（兼容事件已触发的情况）
+function onDOMReady() {
 updateLoading(30, '加载页面结构...');
 setTimeout(() => {
 updateLoading(50, '加载样式...');
@@ -26249,10 +26250,21 @@ updateLoading(50, '加载样式...');
 setTimeout(() => {
 updateLoading(70, '初始化核心功能...');
 }, 100);
-});
-window.addEventListener('load', function() {
+}
+if (document.readyState === 'loading') {
+document.addEventListener('DOMContentLoaded', onDOMReady);
+} else {
+onDOMReady();
+}
+// window load处理（兼容事件已触发的情况）
+function onPageLoad() {
 lazyInitBigData();
-});
+}
+if (document.readyState === 'complete') {
+setTimeout(onPageLoad, 100);
+} else {
+window.addEventListener('load', onPageLoad);
+}
 function switchTab(tabName){
 document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
 document.querySelector(`.nav-item[data-tab="${tabName}"]`).classList.add('active');
