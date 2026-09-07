@@ -6804,6 +6804,15 @@ console.log('✅ 学习工具入口已加载');
 
 <!-- 考博知识点详情弹窗 -->
 
+
+<!-- AI考博模拟面试模态框 -->
+<div class="phd-quiz-overlay" id="phdInterviewOverlay">
+  <div class="phd-quiz-modal">
+    <button class="phd-quiz-close" onclick="closePhdInterview()">&times;</button>
+    <div id="phdInterviewBody"></div>
+  </div>
+</div>
+
 <!-- 考博智能刷题模态框 -->
 <div class="phd-quiz-overlay" id="phdQuizOverlay">
   <div class="phd-quiz-modal">
@@ -35358,6 +35367,374 @@ function removePhdFavoriteItem(idx) {
   showPhdFavorites();
 }
 
+
+
+// ========== AI考博模拟面试系统 ==========
+let phdInterviewState = {
+  questions: [],
+  currentQ: 0,
+  answers: [],
+  scores: [],
+  mode: 'setup' // setup | interview | report | history
+};
+
+// 面试问题库（基于PHD_INTERVIEW中的面试常见问题库扩展）
+const PHD_INTERVIEW_QUESTIONS = {
+  comprehensive: [
+    {q: "请做一个简短的自我介绍，包括你的教育背景、研究经历和报考动机。", category: "自我介绍", keywords: ["教育背景","研究经历","报考动机","个人特点","学术目标"]},
+    {q: "你为什么选择报考我们学校/我做导师？", category: "动机与规划", keywords: ["研究方向","导师","学术成就","学校平台","团队氛围"]},
+    {q: "请介绍一下你硕士期间的主要研究工作和成果。", category: "研究经历", keywords: ["研究问题","研究方法","主要结果","创新点","论文发表"]},
+    {q: "你认为自己最大的学术优势和不足是什么？", category: "自我认知", keywords: ["优势","不足","改进计划","学习能力","科研潜力"]},
+    {q: "博士毕业后你有什么职业规划？", category: "职业规划", keywords: ["高校","科研院所","企业","博士后","研究方向"]}
+  ],
+  professional: [
+    {q: "请谈谈你对运动人体科学这个学科的理解和认识。", category: "专业知识", keywords: ["学科定义","研究对象","研究方法","应用领域","发展趋势"]},
+    {q: "你最感兴趣的研究方向是什么？为什么？", category: "研究兴趣", keywords: ["研究方向","兴趣来源","研究意义","前期基础","未来计划"]},
+    {q: "请介绍一个你熟悉的运动生理学经典理论及其最新研究进展。", category: "专业深度", keywords: ["理论内容","提出背景","实验证据","最新进展","应用价值"]},
+    {q: "如果让你设计一个运动与健康相关的研究课题，你会怎么做？", category: "科研设计", keywords: ["研究问题","研究假设","研究对象","研究方法","预期结果"]},
+    {q: "请谈谈运动人体科学研究中常用的实验技术和数据分析方法。", category: "研究方法", keywords: ["实验技术","测量指标","统计方法","数据分析","质量控制"]}
+  ],
+  english: [
+    {q: "Please introduce yourself in English, including your academic background and research interests.", category: "英语自我介绍", keywords: ["background","research","interest","experience","goal"]},
+    {q: "What are your research interests? Why did you choose this field?", category: "英语研究兴趣", keywords: ["research","interest","choose","field","motivation"]},
+    {q: "Please briefly describe your master's thesis research.", category: "英语研究经历", keywords: ["thesis","research","method","result","conclusion"]},
+    {q: "What do you plan to do during your PhD study?", category: "英语研究计划", keywords: ["plan","PhD","study","research","goal"]},
+    {q: "Why do you want to pursue a PhD degree?", category: "英语读博动机", keywords: ["why","PhD","pursue","career","academic"]}
+  ],
+  research: [
+    {q: "介绍一下你的科研计划书/博士期间想做什么研究？", category: "科研计划", keywords: ["研究背景","研究问题","研究目标","研究方法","预期成果","创新点"]},
+    {q: "如果你的研究假设不成立怎么办？/研究中遇到困难怎么解决？", category: "科研应变", keywords: ["备选方案","调整研究设计","寻求帮助","导师","文献","从失败中学习"]},
+    {q: "你读过哪些与报考方向相关的经典文献或最新论文？", category: "文献阅读", keywords: ["经典文献","最新论文","作者","期刊","核心观点","研究方法"]},
+    {q: "请谈谈你对这个研究领域国内外研究现状的了解。", category: "研究现状", keywords: ["国内研究","国外研究","主要学者","研究热点","研究空白","发展趋势"]}
+  ]
+};
+
+function openPhdInterviewOverlay() {
+  document.getElementById('phdInterviewOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closePhdInterview() {
+  document.getElementById('phdInterviewOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function startPhdMockInterview() {
+  phdInterviewState.mode = 'setup';
+  const body = document.getElementById('phdInterviewBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">🎤 AI考博模拟面试</div></div>';
+  html += '<div style="margin-bottom:20px;font-size:14px;color:#666;line-height:1.7">选择面试类型和题目数量，AI面试官将随机提问。请认真作答，系统将基于内容完整度、专业深度、逻辑结构进行智能评分。</div>';
+  
+  html += '<div style="margin-bottom:20px">';
+  html += '<div style="font-weight:600;margin-bottom:10px;color:#333">📌 选择面试类型：</div>';
+  html += '<select id="phdInterviewType" class="phd-quiz-textarea" style="min-height:auto;padding:10px;margin-bottom:15px">';
+  html += '<option value="comprehensive">综合面试（自我介绍+动机+研究经历+规划）</option>';
+  html += '<option value="professional">专业面试（运动人体科学专业知识+科研设计）</option>';
+  html += '<option value="research">科研面试（科研计划+文献阅读+研究现状）</option>';
+  html += '<option value="english">英语面试（全英文问答）</option>';
+  html += '<option value="mixed">混合面试（各类问题随机组合）</option>';
+  html += '</select>';
+  
+  html += '<div style="font-weight:600;margin-bottom:10px;color:#333">📝 题目数量：</div>';
+  html += '<select id="phdInterviewCount" class="phd-quiz-textarea" style="min-height:auto;padding:10px">';
+  html += '<option value="3">3题（快速模拟）</option>';
+  html += '<option value="5" selected>5题（标准模拟）</option>';
+  html += '<option value="8">8题（深度模拟）</option>';
+  html += '</select>';
+  html += '</div>';
+  
+  html += '<div class="phd-quiz-actions" style="justify-content:center">';
+  html += '<button class="phd-quiz-btn primary" onclick="beginPhdInterview()">🚀 开始面试</button>';
+  html += '</div>';
+  
+  body.innerHTML = html;
+  openPhdInterviewOverlay();
+}
+
+function beginPhdInterview() {
+  const type = document.getElementById('phdInterviewType').value;
+  const count = parseInt(document.getElementById('phdInterviewCount').value);
+  
+  // 从题库中随机选择题目
+  let pool = [];
+  if (type === 'mixed') {
+    pool = [...PHD_INTERVIEW_QUESTIONS.comprehensive, ...PHD_INTERVIEW_QUESTIONS.professional, ...PHD_INTERVIEW_QUESTIONS.research];
+  } else {
+    pool = PHD_INTERVIEW_QUESTIONS[type] || PHD_INTERVIEW_QUESTIONS.comprehensive;
+  }
+  
+  // 随机打乱并选取
+  const shuffled = pool.sort(() => Math.random() - 0.5);
+  phdInterviewState.questions = shuffled.slice(0, Math.min(count, shuffled.length));
+  phdInterviewState.currentQ = 0;
+  phdInterviewState.answers = new Array(phdInterviewState.questions.length).fill('');
+  phdInterviewState.scores = new Array(phdInterviewState.questions.length).fill(0);
+  phdInterviewState.mode = 'interview';
+  
+  renderPhdInterviewQuestion();
+}
+
+function renderPhdInterviewQuestion() {
+  const q = phdInterviewState.questions[phdInterviewState.currentQ];
+  const total = phdInterviewState.questions.length;
+  const current = phdInterviewState.currentQ + 1;
+  const body = document.getElementById('phdInterviewBody');
+  
+  let html = '<div class="phd-quiz-header">';
+  html += '<div class="phd-quiz-title">🎤 面试进行中</div>';
+  html += '<div class="phd-quiz-progress">第 ' + current + ' / ' + total + ' 题</div>';
+  html += '</div>';
+  
+  html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:15px">';
+  html += '<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#f093fb,#f5576c);display:flex;align-items:center;justify-content:center;color:white;font-size:24px">👨‍🏫</div>';
+  html += '<div>';
+  html += '<div style="font-weight:600;color:#333">AI面试官</div>';
+  html += '<div style="font-size:12px;color:#999">' + q.category + '</div>';
+  html += '</div></div>';
+  
+  html += '<div class="phd-quiz-question" style="border-left-color:#f5576c"><strong>问题：</strong>' + q.q + '</div>';
+  
+  html += '<div style="font-weight:600;margin-bottom:8px;color:#333">📝 你的回答：</div>';
+  html += '<textarea class="phd-quiz-textarea" id="phdInterviewAnswerInput" placeholder="请在此输入你的回答...（建议200字以上，内容越完整得分越高）">' + (phdInterviewState.answers[phdInterviewState.currentQ] || '') + '</textarea>';
+  
+  html += '<div class="phd-quiz-actions">';
+  if (phdInterviewState.currentQ > 0) {
+    html += '<button class="phd-quiz-btn secondary" onclick="prevPhdInterviewQuestion()">← 上一题</button>';
+  }
+  if (phdInterviewState.currentQ < total - 1) {
+    html += '<button class="phd-quiz-btn primary" onclick="submitPhdInterviewAnswer(false)">提交并下一题 →</button>';
+  } else {
+    html += '<button class="phd-quiz-btn success" onclick="submitPhdInterviewAnswer(true)">🎉 完成面试</button>';
+  }
+  html += '</div>';
+  
+  body.innerHTML = html;
+}
+
+function submitPhdInterviewAnswer(isLast) {
+  const input = document.getElementById('phdInterviewAnswerInput');
+  const answer = input ? input.value : '';
+  phdInterviewState.answers[phdInterviewState.currentQ] = answer;
+  
+  // 智能评分
+  const q = phdInterviewState.questions[phdInterviewState.currentQ];
+  const score = scorePhdInterviewAnswer(answer, q);
+  phdInterviewState.scores[phdInterviewState.currentQ] = score;
+  
+  if (isLast) {
+    finishPhdInterview();
+  } else {
+    phdInterviewState.currentQ++;
+    renderPhdInterviewQuestion();
+  }
+}
+
+function prevPhdInterviewQuestion() {
+  phdInterviewState.currentQ--;
+  renderPhdInterviewQuestion();
+}
+
+// 智能评分：基于关键词匹配、内容长度、逻辑结构
+function scorePhdInterviewAnswer(answer, question) {
+  if (!answer || !answer.trim()) return 0;
+  const ans = answer.toLowerCase();
+  let score = 0;
+  
+  // 1. 关键词匹配（40分）
+  const keywords = question.keywords || [];
+  let matched = 0;
+  keywords.forEach(kw => {
+    if (ans.includes(kw.toLowerCase())) matched++;
+  });
+  if (keywords.length > 0) {
+    score += Math.round((matched / keywords.length) * 40);
+  }
+  
+  // 2. 内容长度（20分）
+  const len = answer.length;
+  if (len >= 500) score += 20;
+  else if (len >= 300) score += 15;
+  else if (len >= 200) score += 10;
+  else if (len >= 100) score += 5;
+  
+  // 3. 结构完整性（20分）
+  const hasStructure = /首先|其次|再次|最后|第一|第二|第三|一方面|另一方面|综上|因此/.test(answer);
+  if (hasStructure) score += 10;
+  const hasExamples = /例如|比如|举例|具体来说|以.*为例/.test(answer);
+  if (hasExamples) score += 5;
+  const hasConclusion = /综上|总之|因此|所以|由此可见|总的来说/.test(answer);
+  if (hasConclusion) score += 5;
+  
+  // 4. 专业深度（20分）
+  const hasProfessional = /机制|原理|理论|研究|实验|数据|文献|学者|教授|期刊|论文/.test(answer);
+  if (hasProfessional) score += 10;
+  const hasSpecific = /[0-9]+%|[0-9]+倍|[0-9]+分钟|[0-9]+小时|mmol|ml\/min|mmHg|VO2|HR|EMG|MRI|CT|PCR|ELISA|Western/.test(answer);
+  if (hasSpecific) score += 5;
+  const hasCritical = /不足|局限|争议|挑战|问题|需要进一步|未来研究/.test(answer);
+  if (hasCritical) score += 5;
+  
+  return Math.min(100, Math.max(0, score));
+}
+
+function finishPhdInterview() {
+  phdInterviewState.mode = 'report';
+  const total = phdInterviewState.questions.length;
+  let totalScore = 0;
+  phdInterviewState.scores.forEach(s => totalScore += s);
+  const avgScore = Math.round(totalScore / total);
+  const scoreLevel = avgScore >= 80 ? '优秀' : (avgScore >= 60 ? '良好' : (avgScore >= 40 ? '一般' : '需加强'));
+  const scoreColor = avgScore >= 80 ? '#27ae60' : (avgScore >= 60 ? '#f39c12' : '#e74c3c');
+  
+  // 保存面试记录
+  const history = getPhdInterviewHistory();
+  history.unshift({
+    id: 'interview_' + Date.now(),
+    date: new Date().toLocaleString(),
+    totalQuestions: total,
+    avgScore: avgScore,
+    scoreLevel: scoreLevel,
+    questions: phdInterviewState.questions.map((q, i) => ({
+      q: q.q,
+      category: q.category,
+      answer: phdInterviewState.answers[i],
+      score: phdInterviewState.scores[i]
+    }))
+  });
+  savePhdInterviewHistory(history.slice(0, 20)); // 只保留最近20条
+  
+  const body = document.getElementById('phdInterviewBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">📊 面试报告</div></div>';
+  
+  html += '<div style="text-align:center;padding:20px 0;margin-bottom:20px">';
+  html += '<div style="font-size:56px;font-weight:700;color:' + scoreColor + '">' + avgScore + '</div>';
+  html += '<div style="font-size:18px;color:#666;margin-bottom:5px">综合评分（满分100）</div>';
+  html += '<div style="display:inline-block;background:' + scoreColor + ';color:white;padding:4px 16px;border-radius:20px;font-size:14px;font-weight:600">' + scoreLevel + '</div>';
+  html += '</div>';
+  
+  // 各题得分
+  html += '<div style="margin-bottom:20px">';
+  html += '<div style="font-weight:600;margin-bottom:10px;color:#333">📝 各题得分：</div>';
+  phdInterviewState.questions.forEach((q, i) => {
+    const s = phdInterviewState.scores[i];
+    const sColor = s >= 80 ? '#27ae60' : (s >= 60 ? '#f39c12' : '#e74c3c');
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8f9ff;border-radius:6px;margin-bottom:6px">';
+    html += '<span style="font-size:13px;color:#333;flex:1;margin-right:10px">第' + (i+1) + '题：' + q.category + '</span>';
+    html += '<span style="font-weight:700;color:' + sColor + ';font-size:15px">' + s + '分</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  
+  // 改进建议
+  html += '<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:15px 20px;margin-bottom:20px">';
+  html += '<div style="font-weight:700;color:#f57f17;margin-bottom:10px">💡 改进建议：</div>';
+  html += '<ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8;color:#333">';
+  if (avgScore < 80) {
+    html += '<li><strong>内容完整度：</strong>建议回答时覆盖更多评分关键词，每个问题至少包含"是什么-为什么-怎么做"三个层次。</li>';
+  }
+  if (avgScore < 70) {
+    html += '<li><strong>专业深度：</strong>建议引用具体的理论、数据、文献和学者观点，展示专业功底。避免泛泛而谈。</li>';
+  }
+  if (avgScore < 60) {
+    html += '<li><strong>回答长度：</strong>建议每题回答不少于200字，充分展开论述，展示思维深度。</li>';
+    html += '<li><strong>逻辑结构：</strong>建议使用"首先-其次-最后"等连接词，使回答层次清晰、逻辑严谨。</li>';
+  }
+  html += '<li><strong>面试技巧：</strong>回答前先思考10秒，理清思路再作答；保持自信，语速适中；注意与面试官的眼神交流。</li>';
+  html += '</ul></div>';
+  
+  html += '<div class="phd-quiz-actions" style="justify-content:center">';
+  html += '<button class="phd-quiz-btn primary" onclick="startPhdMockInterview()">再来一次</button>';
+  html += '<button class="phd-quiz-btn secondary" onclick="showPhdInterviewHistory()">查看历史记录</button>';
+  html += '<button class="phd-quiz-btn secondary" onclick="closePhdInterview()">关闭</button>';
+  html += '</div>';
+  
+  body.innerHTML = html;
+}
+
+// 面试历史记录
+function getPhdInterviewHistory() {
+  try { return JSON.parse(localStorage.getItem('phdInterviewHistory') || '[]'); } catch(e) { return []; }
+}
+function savePhdInterviewHistory(data) {
+  localStorage.setItem('phdInterviewHistory', JSON.stringify(data));
+}
+
+function showPhdInterviewHistory() {
+  phdInterviewState.mode = 'history';
+  const history = getPhdInterviewHistory();
+  const body = document.getElementById('phdInterviewBody');
+  
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">📋 面试历史记录</div><div class="phd-quiz-progress">' + history.length + ' 条记录</div></div>';
+  
+  if (history.length === 0) {
+    html += '<div class="phd-empty">暂无面试记录，快去开始第一次模拟面试吧！</div>';
+  } else {
+    history.forEach((item, idx) => {
+      const sColor = item.avgScore >= 80 ? '#27ae60' : (item.avgScore >= 60 ? '#f39c12' : '#e74c3c');
+      html += '<div class="phd-list-item">';
+      html += '<div class="phd-list-item-header">';
+      html += '<strong style="font-size:14px;color:#333">' + item.date + '</strong>';
+      html += '<span style="font-weight:700;color:' + sColor + ';font-size:16px">' + item.avgScore + '分 · ' + item.scoreLevel + '</span>';
+      html += '</div>';
+      html += '<div class="phd-list-item-meta" style="margin-bottom:10px">共 ' + item.totalQuestions + ' 题</div>';
+      html += '<div class="phd-list-item-actions">';
+      html += '<button class="phd-list-item-btn" onclick="viewPhdInterviewDetail(' + idx + ')">查看详情</button>';
+      html += '<button class="phd-list-item-btn danger" onclick="deletePhdInterviewRecord(' + idx + ')">删除</button>';
+      html += '</div>';
+      html += '</div>';
+    });
+  }
+  
+  html += '<div class="phd-quiz-actions" style="justify-content:center;margin-top:20px">';
+  html += '<button class="phd-quiz-btn primary" onclick="startPhdMockInterview()">开始新面试</button>';
+  html += '</div>';
+  
+  body.innerHTML = html;
+  openPhdInterviewOverlay();
+}
+
+function viewPhdInterviewDetail(idx) {
+  const history = getPhdInterviewHistory();
+  const item = history[idx];
+  const body = document.getElementById('phdInterviewBody');
+  
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">📊 面试详情</div><div class="phd-quiz-progress">' + item.date + '</div></div>';
+  
+  html += '<div style="text-align:center;padding:15px 0;margin-bottom:20px">';
+  html += '<div style="font-size:36px;font-weight:700;color:' + (item.avgScore >= 80 ? '#27ae60' : item.avgScore >= 60 ? '#f39c12' : '#e74c3c') + '">' + item.avgScore + '分</div>';
+  html += '<div style="font-size:14px;color:#666">' + item.scoreLevel + '</div>';
+  html += '</div>';
+  
+  item.questions.forEach((q, i) => {
+    const sColor = q.score >= 80 ? '#27ae60' : (q.score >= 60 ? '#f39c12' : '#e74c3c');
+    html += '<div style="background:#f8f9ff;border-radius:8px;padding:15px;margin-bottom:15px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    html += '<strong style="font-size:14px;color:#333">第' + (i+1) + '题：' + q.category + '</strong>';
+    html += '<span style="font-weight:700;color:' + sColor + '">' + q.score + '分</span>';
+    html += '</div>';
+    html += '<div style="font-size:13px;color:#555;margin-bottom:8px;line-height:1.6"><strong>问题：</strong>' + q.q + '</div>';
+    html += '<div style="font-size:13px;color:#333;line-height:1.6;white-space:pre-wrap;background:white;padding:10px;border-radius:4px"><strong>你的回答：</strong>' + (q.answer || '（未作答）') + '</div>';
+    html += '</div>';
+  });
+  
+  html += '<div class="phd-quiz-actions" style="justify-content:center">';
+  html += '<button class="phd-quiz-btn secondary" onclick="showPhdInterviewHistory()">返回记录列表</button>';
+  html += '</div>';
+  
+  body.innerHTML = html;
+}
+
+function deletePhdInterviewRecord(idx) {
+  const history = getPhdInterviewHistory();
+  history.splice(idx, 1);
+  savePhdInterviewHistory(history);
+  showPhdInterviewHistory();
+}
+
+// ESC关闭面试模态框
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.getElementById('phdInterviewOverlay').classList.contains('active')) {
+    closePhdInterview();
+  }
+});
 // ESC关闭刷题模态框
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape' && document.getElementById('phdQuizOverlay').classList.contains('active')) {
@@ -35398,7 +35775,14 @@ function renderPhdInterview() {
   const area = document.getElementById('phdInterviewArea');
   if (!area) return;
   
-  let html = '<div class="phd-knowledge-grid">';
+  // AI模拟面试入口
+  let html = '<div class="phd-practice-entry" style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%)">';
+  html += '<div class="phd-practice-info"><strong>🎤 AI考博模拟面试</strong><span>AI面试官随机提问 + 实时作答 + 智能评分 + 改进建议</span></div>';
+  html += '<button class="phd-practice-btn" style="color:#f5576c" onclick="startPhdMockInterview()">🎯 开始模拟面试</button>';
+  html += '<button class="phd-practice-btn secondary" onclick="showPhdInterviewHistory()">📋 面试记录</button>';
+  html += '</div>';
+  
+  html += '<div class="phd-knowledge-grid">';
   PHD_INTERVIEW.forEach((item, idx) => {
     html += '<div class="phd-knowledge-card" onclick="showPhdInterviewDetail(' + idx + ')">';
     html += '<div class="kh-title">' + item.icon + ' ' + item.title + '</div>';
