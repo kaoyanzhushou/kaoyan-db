@@ -6819,6 +6819,43 @@ console.log('✅ 学习工具入口已加载');
         <button onclick="sendPhdAIMessage()" style="background:#667eea;color:#fff;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600">发送</button>
         <button onclick="clearPhdAIChat()" style="background:#fff;color:#6b7280;border:1px solid #d1d5db;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px" title="清空对话记录">🗑️ 清空</button>
         <button onclick="exportPhdChat()" style="background:#fff;color:#6b7280;border:1px solid #d1d5db;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px" title="导出对话记录为Markdown">📥 导出</button>
+        <button onclick="document.getElementById('phdDocUpload').click()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600" title="上传科研计划书/简历/个人陈述，AI自动评审">📄 AI评审</button>
+        <button onclick="showPhdLiteratureSearch()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600" title="输入研究方向，自动检索PubMed文献并生成综述">📚 文献检索</button>
+        <button onclick="showPhdWebSearch()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600" title="智能生成搜索关键词，一键跳转百度/谷歌/知乎搜索最新信息">🔍 联网搜索</button>
+        <input type="file" id="phdDocUpload" style="display:none" accept=".txt,.md,.docx" onchange="handlePhdDocUpload(this)">
+      </div>
+      
+      <!-- 联网搜索面板 -->
+      <div id="phdWebSearchPanel" style="display:none;margin-top:16px;padding:20px;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h4 style="margin:0;color:#92400e;font-size:16px">🔍 联网搜索增强</h4>
+          <button onclick="document.getElementById('phdWebSearchPanel').style.display='none'" style="background:none;border:none;color:#d97706;cursor:pointer;font-size:18px">×</button>
+        </div>
+        <div style="font-size:13px;color:#78350f;margin-bottom:12px">AI智能生成搜索关键词，一键跳转各大搜索引擎获取最新招生简章、导师信息、院校动态</div>
+        <div style="display:flex;gap:10px;margin-bottom:16px">
+          <input type="text" id="phdWebSearchInput" placeholder="输入要搜索的内容，或点击下方AI推荐关键词" style="flex:1;padding:10px 14px;border:1px solid #fcd34d;border-radius:8px;font-size:13px;outline:none">
+          <button onclick="doPhdWebSearch()" style="background:#d97706;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 搜索</button>
+        </div>
+        <div id="phdWebSearchSuggestions" style="font-size:13px;color:#78350f"></div>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #fcd34d">
+          <div style="font-size:12px;color:#92400e;margin-bottom:8px;font-weight:600">选择搜索引擎：</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="setPhdSearchEngine('baidu')" id="phdEngineBaidu" style="padding:6px 14px;border-radius:6px;border:1px solid #d97706;background:#d97706;color:#fff;cursor:pointer;font-size:12px">百度</button>
+            <button onclick="setPhdSearchEngine('google')" id="phdEngineGoogle" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">谷歌</button>
+            <button onclick="setPhdSearchEngine('bing')" id="phdEngineBing" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">必应</button>
+            <button onclick="setPhdSearchEngine('zhihu')" id="phdEngineZhihu" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">知乎</button>
+            <button onclick="setPhdSearchEngine('weixin')" id="phdEngineWeixin" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">微信</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 文档评审结果面板 -->
+      <div id="phdDocReviewPanel" style="display:none;margin-top:16px;padding:20px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h4 style="margin:0;color:#065f46;font-size:16px">📄 AI文档评审报告</h4>
+          <button onclick="document.getElementById('phdDocReviewPanel').style.display='none'" style="background:none;border:none;color:#059669;cursor:pointer;font-size:18px">×</button>
+        </div>
+        <div id="phdDocReviewContent" style="font-size:14px;color:#064e3b;line-height:1.8"></div>
       </div>
     </div>
 
@@ -35461,6 +35498,13 @@ async function sendPhdAIMessage() {
     phdAIChatHistory.push({ role: 'assistant', content: response });
     phdCurrentResponse = response;
     
+    // 获取最后一个AI回答元素，添加相关搜索建议
+    const chatContainer = document.getElementById('phdAIChatMessages');
+    const lastAiAnswer = chatContainer.lastElementChild;
+    if (lastAiAnswer) {
+      addPhdSearchSuggestionsToAnswer(question, lastAiAnswer);
+    }
+    
     // 显示问题类型标签和操作按钮
     addPhdAnswerActions(msgDiv, questionType, typeConfig);
     
@@ -35626,6 +35670,373 @@ function copyPhdAnswer(content, btn) {
   document.body.removeChild(textarea);
 }
 
+
+// ========== 考博AI PubMed文献检索与分析功能 ==========
+
+// 显示文献检索面板
+function showPhdLiteratureSearch() {
+  const panel = document.getElementById('phdLiteraturePanel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('phdLitSearchInput').focus();
+}
+
+// 搜索PubMed文献
+async function searchPhdLiterature() {
+  const query = document.getElementById('phdLitSearchInput').value.trim();
+  const count = document.getElementById('phdLitCount').value;
+  const statusDiv = document.getElementById('phdLitSearchStatus');
+  const resultsDiv = document.getElementById('phdLitResults');
+  
+  if (!query) {
+    alert('请输入研究方向或关键词');
+    return;
+  }
+  
+  statusDiv.innerHTML = '⏳ 正在PubMed检索相关文献...';
+  resultsDiv.innerHTML = '';
+  
+  try {
+    // 第一步：搜索文献ID
+    const searchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=' + 
+      encodeURIComponent(query) + '&retmax=' + count + '&retmode=json&sort=relevance';
+    
+    const searchResponse = await fetch(searchUrl);
+    const searchData = await searchResponse.json();
+    const idList = searchData.esearchresult.idlist;
+    
+    if (!idList || idList.length === 0) {
+      statusDiv.innerHTML = '❌ 未找到相关文献，请尝试其他关键词';
+      return;
+    }
+    
+    statusDiv.innerHTML = '✅ 找到 ' + idList.length + ' 篇文献，正在获取摘要...';
+    
+    // 第二步：批量获取文献摘要
+    const fetchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=' + 
+      idList.join(',') + '&rettype=abstract&retmode=json';
+    
+    const fetchResponse = await fetch(fetchUrl);
+    const fetchData = await fetchResponse.json();
+    
+    // 解析文献信息
+    const articles = parsePubmedArticles(fetchData);
+    statusDiv.innerHTML = '✅ 成功获取 ' + articles.length + ' 篇文献，正在生成AI综述...';
+    
+    // 显示文献列表
+    displayPhdLiteratureList(articles, resultsDiv);
+    
+    // 第三步：调用AI生成综述
+    await generatePhdLiteratureReview(query, articles, resultsDiv);
+    
+  } catch (error) {
+    statusDiv.innerHTML = '❌ 检索失败：' + error.message + '<br>请检查网络连接后重试（PubMed API在国内可能需要较长时间）';
+  }
+}
+
+// 解析PubMed返回的文献数据
+function parsePubmedArticles(data) {
+  const articles = [];
+  
+  try {
+    // PubMed efetch返回的JSON结构
+    if (data && data.result) {
+      const uids = data.result.uids;
+      uids.forEach(function(uid) {
+        const article = data.result[uid];
+        if (article) {
+          articles.push({
+            pmid: uid,
+            title: article.title || '无标题',
+            abstract: article.abstract || article.abstracttext || '无摘要',
+            authors: article.authors ? article.authors.map(function(a) { return a.name; }).join(', ') : '未知作者',
+            journal: article.fulljournalname || article.journal || '未知期刊',
+            pubdate: article.pubdate || article.sortdate || '未知日期',
+            doi: article.elocationid || '',
+            url: 'https://pubmed.ncbi.nlm.nih.gov/' + uid + '/'
+          });
+        }
+      });
+    }
+  } catch (e) {
+    console.error('解析PubMed数据失败:', e);
+  }
+  
+  return articles;
+}
+
+// 显示文献列表
+function displayPhdLiteratureList(articles, container) {
+  let html = '<div style="margin-bottom:20px;padding:12px;background:#fff;border-radius:8px;border:1px solid #ddd6fe">';
+  html += '<div style="font-weight:600;color:#5b21b6;margin-bottom:8px">📄 检索到的文献列表：</div>';
+  
+  articles.forEach(function(article, index) {
+    html += '<div style="padding:8px 0;border-bottom:1px solid #f3f0ff">' +
+      '<div style="font-weight:600;color:#3b0764;font-size:13px">' + (index + 1) + '. ' + article.title + '</div>' +
+      '<div style="font-size:11px;color:#7c3aed;margin-top:2px">' + article.authors + '. ' + article.journal + '. ' + article.pubdate + '</div>' +
+      '<div style="font-size:11px;margin-top:2px"><a href="' + article.url + '" target="_blank" style="color:#7c3aed;text-decoration:none">🔗 PubMed链接</a></div>' +
+      '</div>';
+  });
+  
+  html += '</div>';
+  container.innerHTML += html;
+}
+
+// 生成文献综述
+async function generatePhdLiteratureReview(query, articles, container) {
+  const reviewDiv = document.createElement('div');
+  reviewDiv.style.cssText = 'padding:16px;background:#fff;border-radius:8px;border:1px solid #ddd6fe';
+  reviewDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#7c3aed">⏳ AI正在分析文献并生成综述，请稍候...</div>';
+  container.appendChild(reviewDiv);
+  
+  try {
+    // 构建文献摘要文本
+    const literatureText = articles.map(function(a, i) {
+      return '【文献' + (i + 1) + '】' +
+        '标题：' + a.title + '\n' +
+        '作者：' + a.authors + '\n' +
+        '期刊：' + a.journal + '\n' +
+        '发表时间：' + a.pubdate + '\n' +
+        '摘要：' + a.abstract.substring(0, 500) + '\n';
+    }).join('\n');
+    
+    // 构建综述prompt
+    const systemPrompt = '你是一位资深的体育学/运动人体科学学术研究专家，拥有10年以上体育学学术研究和文献综述撰写经验，熟悉运动生理学、运动解剖学、运动生物化学、运动医学等领域的前沿研究。\n\n【你的任务】\n根据用户提供的PubMed检索到的学术文献，围绕研究方向"' + query + '"，撰写一篇专业、全面、深入的文献综述。\n\n【综述要求】\n1. **研究背景与意义**：简要介绍该研究方向的背景、重要性和研究现状\n2. **文献综合分析**：对检索到的文献进行综合分析，归纳主要研究发现、研究方法、研究结论\n3. **研究热点与趋势**：总结当前研究热点、前沿方向和发展趋势\n4. **研究不足与争议**：分析现有研究的不足、局限性和争议点\n5. **未来研究方向**：提出未来研究的方向和建议\n6. **对考博选题的启示**：结合体育学/运动人体科学考博，给出选题建议和研究思路\n\n【格式要求】\n- 必须使用标准Markdown格式：## 大标题，### 小标题，- 无序列表，1. 有序列表，**加粗**\n- 引用文献时标注文献编号，如【文献1】【文献2】\n- 综述长度至少800字，复杂研究方向1000-1500字\n- 语言专业、客观、学术化\n- 先给出核心结论，再展开详细分析';
+    
+    // 调用AI
+    const model = document.getElementById('phdAIModelSelect').value;
+    const response = await callDeepSeekAPI(systemPrompt, '研究方向：' + query + '\n\n以下是检索到的文献：\n\n' + literatureText, 3000, model);
+    
+    // 显示综述
+    reviewDiv.innerHTML = '<div style="font-weight:600;color:#5b21b6;margin-bottom:12px;font-size:15px">🤖 AI文献综述：' + query + '</div>' + renderMarkdown(response);
+    
+    // 添加复制按钮
+    const copyBtn = document.createElement('button');
+    copyBtn.style.cssText = 'margin-top:16px;background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px';
+    copyBtn.textContent = '📋 复制综述';
+    copyBtn.onclick = function() {
+      const textarea = document.createElement('textarea');
+      textarea.value = response;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        copyBtn.textContent = '✅ 已复制';
+        setTimeout(function() { copyBtn.textContent = '📋 复制综述'; }, 2000);
+      } catch (e) {
+        alert('复制失败');
+      }
+      document.body.removeChild(textarea);
+    };
+    reviewDiv.appendChild(copyBtn);
+    
+  } catch (error) {
+    reviewDiv.innerHTML = '<div style="color:#dc2626;padding:20px">❌ 综述生成失败：' + error.message + '</div>';
+  }
+}
+
+
+// ========== 考博AI联网搜索增强功能 ==========
+
+let phdCurrentSearchEngine = 'baidu';
+
+// 显示联网搜索面板
+function showPhdWebSearch() {
+  const panel = document.getElementById('phdWebSearchPanel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  
+  // 自动填充当前AI输入框的内容
+  const aiInput = document.getElementById('phdAIInput');
+  if (aiInput && aiInput.value.trim()) {
+    document.getElementById('phdWebSearchInput').value = aiInput.value.trim();
+  }
+  
+  // 生成AI推荐搜索关键词
+  generatePhdSearchSuggestions();
+}
+
+// 设置搜索引擎
+function setPhdSearchEngine(engine) {
+  phdCurrentSearchEngine = engine;
+  const engines = ['baidu', 'google', 'bing', 'zhihu', 'weixin'];
+  engines.forEach(function(e) {
+    const btn = document.getElementById('phdEngine' + e.charAt(0).toUpperCase() + e.slice(1));
+    if (btn) {
+      if (e === engine) {
+        btn.style.background = '#d97706';
+        btn.style.color = '#fff';
+        btn.style.borderColor = '#d97706';
+      } else {
+        btn.style.background = '#fff';
+        btn.style.color = '#92400e';
+        btn.style.borderColor = '#fcd34d';
+      }
+    }
+  });
+}
+
+// 执行联网搜索
+function doPhdWebSearch() {
+  const query = document.getElementById('phdWebSearchInput').value.trim();
+  if (!query) {
+    alert('请输入搜索内容');
+    return;
+  }
+  
+  const encodedQuery = encodeURIComponent(query);
+  let url = '';
+  
+  switch (phdCurrentSearchEngine) {
+    case 'baidu':
+      url = 'https://www.baidu.com/s?wd=' + encodedQuery;
+      break;
+    case 'google':
+      url = 'https://www.google.com/search?q=' + encodedQuery;
+      break;
+    case 'bing':
+      url = 'https://www.bing.com/search?q=' + encodedQuery;
+      break;
+    case 'zhihu':
+      url = 'https://www.zhihu.com/search?type=content&q=' + encodedQuery;
+      break;
+    case 'weixin':
+      url = 'https://weixin.sogou.com/weixin?type=2&query=' + encodedQuery;
+      break;
+    default:
+      url = 'https://www.baidu.com/s?wd=' + encodedQuery;
+  }
+  
+  window.open(url, '_blank');
+}
+
+// AI智能生成搜索关键词建议
+function generatePhdSearchSuggestions() {
+  const currentQuestion = document.getElementById('phdAIInput').value.trim() || 
+    (phdCurrentQuestion || '体育考博');
+  
+  // 根据问题类型智能生成搜索关键词
+  const classification = classifyPhdQuestion(currentQuestion);
+  const type = classification.type;
+  
+  let suggestions = [];
+  
+  if (type === 'school') {
+    suggestions = [
+      '2026体育学博士招生简章',
+      '上海体育大学运动人体科学考博科目',
+      '北京体育大学考博报录比',
+      '体育学博士研究生招生目录',
+      '运动人体科学考博参考书目'
+    ];
+  } else if (type === 'major') {
+    suggestions = [
+      '运动生理学考博重点',
+      '运动解剖学考博真题',
+      '体育学博士专业课复习经验',
+      '运动人体科学考博资料',
+      '体育学博士研究生考试大纲'
+    ];
+  } else if (type === 'application') {
+    suggestions = [
+      '2026体育学博士报名时间',
+      '体育学考博申请材料清单',
+      '博士研究生报名条件',
+      '体育学考博英语要求',
+      '博士研究生招生简章汇总'
+    ];
+  } else if (type === 'tutor') {
+    suggestions = [
+      '上海体育大学博士生导师介绍',
+      '运动人体科学博导研究方向',
+      '体育学考博套磁邮件模板',
+      '如何联系博士生导师',
+      '体育学博士导师招生名额'
+    ];
+  } else if (type === 'interview') {
+    suggestions = [
+      '体育学博士面试常见问题',
+      '运动人体科学考博面试经验',
+      '博士研究生复试英语面试',
+      '体育学考博专业面试',
+      '博士研究生面试自我介绍模板'
+    ];
+  } else if (type === 'research') {
+    suggestions = [
+      '体育学科研计划书模板',
+      '运动人体科学博士选题方向',
+      '体育学博士研究计划写作',
+      '运动科学前沿研究热点',
+      '体育学博士开题报告范文'
+    ];
+  } else {
+    suggestions = [
+      '2026体育学博士招生简章汇总',
+      '运动人体科学考博经验',
+      '体育学博士研究生报考条件',
+      '体育学考博科目与参考书目',
+      '体育学博士就业前景'
+    ];
+  }
+  
+  // 显示建议
+  const container = document.getElementById('phdWebSearchSuggestions');
+  let html = '<div style="font-size:12px;color:#92400e;margin-bottom:8px;font-weight:600">🤖 AI推荐搜索关键词（点击直接搜索）：</div>';
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+  
+  suggestions.forEach(function(s) {
+    html += '<span onclick="document.getElementById(\'phdWebSearchInput\').value=\'' + s.replace(/'/g, "\\'") + '\';doPhdWebSearch()" style="padding:5px 10px;background:#fff;border:1px solid #fcd34d;border-radius:14px;cursor:pointer;font-size:12px;color:#92400e;transition:all .2s" onmouseover="this.style.background=\'#fef3c7\'" onmouseout="this.style.background=\'#fff\'">' + s + '</span>';
+  });
+  
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// 在AI回答中添加相关搜索建议（在流式输出结束后调用）
+function addPhdSearchSuggestionsToAnswer(question, answerDiv) {
+  try {
+    const classification = classifyPhdQuestion(question);
+    const type = classification.type;
+    
+    let searchKeywords = [];
+    if (type === 'school') {
+      searchKeywords = ['2026招生简章', '报录比', '参考书目'];
+    } else if (type === 'major') {
+      searchKeywords = ['考博真题', '复习重点', '考试大纲'];
+    } else if (type === 'application') {
+      searchKeywords = ['报名时间', '申请材料', '报名条件'];
+    } else if (type === 'tutor') {
+      searchKeywords = ['导师介绍', '研究方向', '套磁模板'];
+    } else if (type === 'interview') {
+      searchKeywords = ['面试问题', '面试经验', '英语面试'];
+    } else if (type === 'research') {
+      searchKeywords = ['选题方向', '计划书模板', '研究热点'];
+    } else {
+      searchKeywords = ['考博经验', '招生简章', '报考指南'];
+    }
+    
+    const searchDiv = document.createElement('div');
+    searchDiv.style.cssText = 'margin-top:12px;padding-top:10px;border-top:1px dashed #e5e7eb;font-size:12px;color:#6b7280';
+    
+    let html = '<div style="margin-bottom:6px;font-weight:600">🔗 相关搜索（获取最新信息）：</div>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    
+    searchKeywords.forEach(function(kw) {
+      const fullQuery = question + ' ' + kw;
+      const encoded = encodeURIComponent(fullQuery);
+      html += '<a href="https://www.baidu.com/s?wd=' + encoded + '" target="_blank" style="padding:3px 8px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;text-decoration:none;color:#6b7280;font-size:11px;transition:all .2s" onmouseover="this.style.background=\'#f3f4f6\';this.style.color=\'#374151\'" onmouseout="this.style.background=\'#f9fafb\';this.style.color=\'#6b7280\'">' + kw + '</a>';
+    });
+    
+    html += '</div>';
+    searchDiv.innerHTML = html;
+    answerDiv.appendChild(searchDiv);
+  } catch (e) {
+    // 忽略错误，不影响主要功能
+  }
+}
+
 // 重新生成回答
 async function regeneratePhdAnswer(btn) {
   if (phdStreaming) return;
@@ -35747,6 +36158,253 @@ function exportPhdChat() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+
+// ========== 考博AI文档上传与评审功能 ==========
+
+// 处理文档上传
+function handlePhdDocUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  if (file.size > maxSize) {
+    alert('文件大小不能超过5MB');
+    input.value = '';
+    return;
+  }
+  
+  const ext = file.name.split('.').pop().toLowerCase();
+  
+  if (ext === 'txt' || ext === 'md') {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const content = e.target.result;
+      reviewPhdDocument(file.name, content);
+    };
+    reader.readAsText(file, 'UTF-8');
+  } else if (ext === 'docx') {
+    // 尝试使用mammoth.js解析docx（如果已加载）
+    if (typeof mammoth !== 'undefined') {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        mammoth.extractRawText({ arrayBuffer: e.target.result })
+          .then(function(result) {
+            reviewPhdDocument(file.name, result.value);
+          })
+          .catch(function(err) {
+            alert('DOCX解析失败：' + err.message + '，请转换为TXT格式后上传');
+          });
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      alert('DOCX解析库未加载，请将文档转换为TXT或MD格式后上传');
+    }
+  } else {
+    alert('仅支持TXT、MD、DOCX格式');
+  }
+  
+  input.value = ''; // 重置文件输入
+}
+
+// AI评审文档
+async function reviewPhdDocument(fileName, content) {
+  if (!content || content.trim().length < 10) {
+    alert('文档内容太短，无法评审');
+    return;
+  }
+  
+  // 自动识别文档类型
+  const docType = detectPhdDocType(fileName, content);
+  const typeNames = {
+    proposal: '科研计划书',
+    resume: '简历',
+    statement: '个人陈述',
+    general: '文档'
+  };
+  
+  // 显示评审面板和加载状态
+  const panel = document.getElementById('phdDocReviewPanel');
+  const reviewContent = document.getElementById('phdDocReviewContent');
+  panel.style.display = 'block';
+  reviewContent.innerHTML = '<div style="text-align:center;padding:30px">⏳ 正在AI评审《' + fileName + '》（' + typeNames[docType] + '），请稍候...</div>';
+  
+  // 滚动到评审面板
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  
+  try {
+    // 构建评审prompt
+    const systemPrompt = buildPhdDocReviewPrompt(docType, content);
+    
+    // 调用AI
+    const model = document.getElementById('phdAIModelSelect').value;
+    const response = await callDeepSeekAPI(systemPrompt, '请评审以下' + typeNames[docType] + '：\n\n' + content.substring(0, 8000), 3000, model);
+    
+    // 显示评审结果
+    reviewContent.innerHTML = renderMarkdown(response);
+    
+    // 添加操作按钮
+    const actionsDiv = document.createElement('div');
+    actionsDiv.style.cssText = 'display:flex;gap:10px;margin-top:16px;padding-top:12px;border-top:1px solid #86efac';
+    actionsDiv.innerHTML = 
+      '<button onclick="copyPhdDocReview()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">📋 复制评审报告</button>' +
+      '<button onclick="document.getElementById(\'phdDocReviewPanel\').style.display=\'none\'" style="background:#fff;color:#059669;border:1px solid #86efac;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">关闭</button>';
+    reviewContent.appendChild(actionsDiv);
+    
+    // 保存当前评审内容用于复制
+    window._currentPhdDocReview = response;
+    
+  } catch (error) {
+    reviewContent.innerHTML = '<div style="color:#dc2626;padding:20px">❌ 评审失败：' + error.message + '<br><br>请检查网络连接后重试。</div>';
+  }
+}
+
+// 自动识别文档类型
+function detectPhdDocType(fileName, content) {
+  const name = fileName.toLowerCase();
+  const text = content.substring(0, 2000).toLowerCase();
+  
+  // 科研计划书
+  if (name.includes('计划') || name.includes('proposal') || name.includes('开题') || name.includes('研究方案') ||
+      text.includes('研究背景') || text.includes('研究目的') || text.includes('研究内容') || 
+      text.includes('技术路线') || text.includes('创新点') || text.includes('预期成果')) {
+    return 'proposal';
+  }
+  
+  // 简历
+  if (name.includes('简历') || name.includes('resume') || name.includes('cv') ||
+      text.includes('教育背景') || text.includes('工作经历') || text.includes('个人信息') ||
+      text.includes('联系方式') || text.includes('专业技能')) {
+    return 'resume';
+  }
+  
+  // 个人陈述
+  if (name.includes('陈述') || name.includes('statement') || name.includes('自我介绍') ||
+      text.includes('报考动机') || text.includes('个人陈述') || text.includes('为什么报考') ||
+      text.includes('职业规划') || text.includes('学习经历')) {
+    return 'statement';
+  }
+  
+  return 'general';
+}
+
+// 构建文档评审prompt
+function buildPhdDocReviewPrompt(docType, content) {
+  const basePrompt = '你是一位资深的体育学博士研究生招生评审专家，拥有10年以上体育学/运动人体科学博士研究生招生评审经验，熟悉各院校的招生标准、评审要求和录取偏好。';
+  
+  let typeSpecificPrompt = '';
+  
+  if (docType === 'proposal') {
+    typeSpecificPrompt = `
+【你的任务】
+对用户上传的体育学/运动人体科学科研计划书进行专业、全面、深入的评审，帮助用户提升科研计划书质量，提高考博录取概率。
+
+【评审维度】
+1. **总体评分**（满分100分）：给出总体分数和等级（优秀/良好/中等/待改进）
+2. **选题评价**：选题的创新性、科学性、可行性、研究价值、与体育学前沿的契合度
+3. **研究内容评价**：研究内容的完整性、逻辑性、深度、重点是否突出
+4. **研究方法评价**：研究方法的科学性、适用性、先进性、技术路线是否清晰可行
+5. **创新点评价**：创新点是否明确、有价值、可实现
+6. **写作规范评价**：结构完整性、逻辑清晰度、语言表达、格式规范、参考文献质量
+7. **优劣势分析**：详细列出3-5个优势和3-5个不足
+8. **具体修改建议**：针对每个不足给出具体、可操作的修改建议
+9. **提升方向**：给出整体提升方向和优先级建议
+
+【回答要求】
+- 必须使用标准Markdown格式：## 大标题，### 小标题，- 无序列表，1. 有序列表，**加粗**
+- 评分要客观、具体，给出评分理由
+- 修改建议要具体、可操作，不能泛泛而谈
+- 结合体育学/运动人体科学学科特点进行评审
+- 回答长度至少800字，复杂文档1000-1500字`;
+  } else if (docType === 'resume') {
+    typeSpecificPrompt = `
+【你的任务】
+对用户上传的体育学/运动人体科学考博简历进行专业评审，帮助用户优化简历，突出优势，提高考博录取概率。
+
+【评审维度】
+1. **总体评分**（满分100分）：给出总体分数和等级
+2. **结构完整性**：是否包含必要模块（个人信息、教育背景、科研经历、发表论文、获奖情况、技能证书、自我评价等）
+3. **内容质量**：经历描述是否具体、有数据支撑、有成果展示
+4. **学术亮点**：科研经历、论文发表、项目参与、学术会议等学术相关内容的质量
+5. **与考博匹配度**：简历内容与报考方向、导师研究方向的匹配程度
+6. **表达规范**：语言表达、格式排版、时间线逻辑、用词专业性
+7. **优劣势分析**：详细列出3-5个优势和3-5个不足
+8. **具体修改建议**：针对每个不足给出具体修改建议
+9. **提升方向**：给出整体提升方向
+
+【回答要求】
+- 必须使用标准Markdown格式
+- 评分客观具体，给出评分理由
+- 修改建议具体可操作
+- 结合体育学/运动人体科学考博特点
+- 回答长度至少600字`;
+  } else if (docType === 'statement') {
+    typeSpecificPrompt = `
+【你的任务】
+对用户上传的体育学/运动人体科学考博个人陈述进行专业评审，帮助用户提升个人陈述质量，打动评审专家。
+
+【评审维度】
+1. **总体评分**（满分100分）：给出总体分数和等级
+2. **结构完整性**：是否包含报考动机、学术背景、科研经历、研究兴趣、职业规划等必要内容
+3. **内容深度**：内容是否有深度、有细节、有真情实感，是否避免空泛套话
+4. **逻辑连贯性**：整体逻辑是否清晰，段落之间过渡是否自然
+5. **学术匹配度**：个人陈述与报考方向、导师研究方向的匹配程度
+6. **亮点突出**：是否突出了个人优势、学术潜力、研究热情
+7. **语言表达**：语言是否流畅、专业、有感染力，是否有语法错误
+8. **优劣势分析**：详细列出3-5个优势和3-5个不足
+9. **具体修改建议**：针对每个不足给出具体修改建议
+10. **提升方向**：给出整体提升方向
+
+【回答要求】
+- 必须使用标准Markdown格式
+- 评分客观具体
+- 修改建议具体可操作
+- 结合体育学/运动人体科学考博特点
+- 回答长度至少600字`;
+  } else {
+    typeSpecificPrompt = `
+【你的任务】
+对用户上传的文档进行专业评审，给出评分、优劣势分析和修改建议。
+
+【评审维度】
+1. **总体评分**（满分100分）
+2. **内容质量评价**
+3. **结构与逻辑评价**
+4. **语言表达评价**
+5. **优劣势分析**
+6. **具体修改建议**
+
+【回答要求】
+- 必须使用标准Markdown格式
+- 回答长度至少500字`;
+  }
+  
+  return basePrompt + '\n\n' + typeSpecificPrompt + '\n\n【重要提醒】\n- 评审要客观、专业、务实，不要夸大或敷衍\n- 结合体育学/运动人体科学学科特点\n- 使用中文回答，专业术语准确\n- 先给出总体评分和核心结论，再展开详细分析';
+}
+
+// 复制评审报告
+function copyPhdDocReview() {
+  if (!window._currentPhdDocReview) {
+    alert('没有可复制的评审报告');
+    return;
+  }
+  
+  const textarea = document.createElement('textarea');
+  textarea.value = window._currentPhdDocReview;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  
+  try {
+    document.execCommand('copy');
+    alert('✅ 评审报告已复制到剪贴板');
+  } catch (e) {
+    alert('❌ 复制失败，请手动复制');
+  }
+  
+  document.body.removeChild(textarea);
 }
 
 function showPhdQuickFollowups(question, answer) {
