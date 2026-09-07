@@ -34299,7 +34299,17 @@ document.addEventListener('DOMContentLoaded', initAIAssistantPage);
 initAIAssistantPage();
 }
 
-console.log('✅ AI学习助手页面初始化完成');
+// 初始化模型选择器
+  const modelSelect = document.getElementById('aiModelSelect');
+  if (modelSelect) {
+    modelSelect.value = currentAiModel;
+  }
+  const modelIndicator = document.getElementById('aiModelIndicator');
+  if (modelIndicator) {
+    const modelInfo = AI_MODELS.find(m => m.value === currentAiModel);
+    modelIndicator.textContent = '当前模型: ' + (modelInfo?.label || currentAiModel);
+  }
+  console.log('✅ AI学习助手页面初始化完成');
 
 
 
@@ -38501,9 +38511,32 @@ function toggleMockAiMode() {
 // 后端API地址（腾讯云SCF，国内高速访问）
 const BACKEND_API_URL = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com';
 
-async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens) {
+// AI模型选择（默认DeepSeek，可切换腾讯混元）
+let currentAiModel = localStorage.getItem('kaoyan_ai_model') || 'deepseek-chat';
+const AI_MODELS = [
+  { value: 'deepseek-chat', label: 'DeepSeek V3（推荐）', provider: 'DeepSeek' },
+  { value: 'hy3', label: '腾讯混元 hy3', provider: '腾讯云TokenHub' },
+  { value: 'hy4-preview', label: '腾讯混元 hy4（预览版）', provider: '腾讯云TokenHub' }
+];
+function setAiModel(model) {
+  currentAiModel = model;
+  localStorage.setItem('kaoyan_ai_model', model);
+  const modelSelect = document.getElementById('aiModelSelect');
+  if (modelSelect) {
+    modelSelect.value = model;
+  }
+  const modelIndicator = document.getElementById('aiModelIndicator');
+  if (modelIndicator) {
+    const modelInfo = AI_MODELS.find(m => m.value === model);
+    modelIndicator.textContent = '当前模型: ' + (modelInfo?.label || model);
+  }
+  console.log('AI模型已切换为:', model);
+}
+
+async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model) {
   // 优先使用后端API（无需用户配置Key）
   const userApiKey = getMockApiKey();
+  const useModel = model || currentAiModel || 'deepseek-chat';
   
   try {
     // 调用后端API代理（密钥在服务端，安全可靠）
@@ -38511,7 +38544,7 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: useModel,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -39122,8 +39155,16 @@ if (typeof initMockExam === "function") { setTimeout(initMockExam, 500); }
                 onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
           🚀 提问
         </button>
+        <select id="aiModelSelect" onchange="setAiModel(this.value)" style="padding:12px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;background:#fff;cursor:pointer;color:#374151">
+          <option value="deepseek-chat">DeepSeek V3</option>
+          <option value="hy3">腾讯混元 hy3</option>
+          <option value="hy4-preview">腾讯混元 hy4</option>
+        </select>
       </div>
-      <div style="font-size:11px;color:#9ca3af">💡 提示：按 Enter 键快速提问，AI会基于考研知识点为你解答</div>
+      <div style="font-size:11px;color:#9ca3af;display:flex;justify-content:space-between;align-items:center">
+        <span>💡 提示：按 Enter 键快速提问，AI会基于考研知识点为你解答</span>
+        <span id="aiModelIndicator" style="color:#667eea;font-weight:600"></span>
+      </div>
     </div>
     
     
