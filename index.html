@@ -34508,6 +34508,11 @@ let phdCurrentTab = 'knowledge';
 
 function switchPhdTab(tabName) {
   phdCurrentTab = tabName;
+  // 懒加载渲染对应模块内容
+  if (tabName === 'knowledge' && typeof renderPhdKnowledge === 'function') renderPhdKnowledge();
+  if (tabName === 'exam' && typeof renderPhdExam === 'function') renderPhdExam();
+  if (tabName === 'research' && typeof renderPhdResearch === 'function') renderPhdResearch();
+  if (tabName === 'interview' && typeof renderPhdInterview === 'function') renderPhdInterview();
   // 更新标签样式
   document.querySelectorAll('.phd-tab').forEach(tab => {
     tab.classList.remove('active');
