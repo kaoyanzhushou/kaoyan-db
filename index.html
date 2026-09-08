@@ -40455,7 +40455,8 @@ function renderPhdProposal() {
     {icon:'🏫', label:'院校要求', action:'propShowSchoolRequirements()'},
     {icon:'📂', label:'版本管理', action:'propShowVersionManager()'},
     {icon:'🔍', label:'AI多维度评审', action:'propAIReview()'},
-    {icon:'📖', label:'参考文献格式化', action:'propFormatRefs()'}
+    {icon:'📖', label:'参考文献格式化', action:'propFormatRefs()'},
+    {icon:'📚', label:'学术资源库', action:'propShowAcademicLibrary()'}
   ];
   quickFuncs.forEach(f => {
     html += '<button onclick="' + f.action + '" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f8fafc;border:1px solid #f1f5f9;border-radius:8px;cursor:pointer;font-size:12px;color:#475569;text-align:left;transition:all 0.2s" onmouseover="this.style.background=\'#eef2ff\';this.style.borderColor=\'#c7d2fe\'" onmouseout="this.style.background=\'#f8fafc\';this.style.borderColor=\'#f1f5f9\'">';
@@ -42573,6 +42574,216 @@ function propDeleteVersion(id) {
   versions = versions.filter(v => v.id !== id);
   localStorage.setItem('prop_versions', JSON.stringify(versions));
   propRenderVersionList();
+}
+
+
+// ===== 学术资源库（运动人体科学，内容经专业审核） =====
+const PROP_ACADEMIC_THEORIES = [
+  {name: '超量恢复理论', en: 'Supercompensation Theory', founder: '雅科夫列夫（Yakovlev）', year: '1950s', 
+   content: '超量恢复是指运动时消耗的能源物质及各器官系统功能，在运动后恢复到原有水平后，会出现超过原有水平的阶段。超量恢复的程度和时间取决于消耗的程度：在一定范围内，运动负荷越大，消耗越剧烈，超量恢复越明显，但出现的时间延迟；反之，运动负荷越小，超量恢复越不明显，出现时间越早。如果运动负荷过大，超过了身体的恢复能力，则会导致过度训练。超量恢复是运动训练适应的生理学基础，也是制定训练周期和间歇时间的重要依据。',
+   application: '1.制定训练间歇：根据不同能源物质的恢复时间安排间歇（磷酸原2-3分钟，肌糖原24-48小时）；2.周期训练安排：大负荷训练后安排适当恢复，使超量恢复叠加累积；3.避免过度训练：监控身体反应，防止负荷超过恢复能力。'},
+  {name: '运动适应理论', en: 'Exercise Adaptation Theory', founder: '基于Selye应激理论发展', year: '1950s-至今',
+   content: '运动适应是指机体在长期运动训练刺激下，各器官系统的形态结构和生理功能发生的长期、稳定、可逆的适应性变化。适应过程包括三个阶段：1.紧急反应期（训练初期，身体出现应激反应，功能暂时下降）；2.适应期（持续训练后，身体逐渐适应，功能提高并稳定）；3.衰竭期（如果负荷持续过大或恢复不足，适应能力下降，出现过度训练）。运动适应具有特异性（不同运动形式产生不同适应）、可逆性（停止训练后适应逐渐消退）和个体差异性（不同个体适应能力不同）。',
+   application: '1.循序渐进：训练负荷逐步增加，给身体适应时间；2.专项化训练：根据项目特点安排针对性训练；3.保持训练：适应建立后需保持一定训练量防止消退；4.个体化：根据个体差异制定训练方案。'},
+  {name: '能量代谢理论', en: 'Energy Metabolism Theory', founder: '多位学者共同建立', year: '20世纪',
+   content: '人体运动时的能量供应由三个能量系统提供：1.磷酸原系统（ATP-CP系统）：由ATP和CP分解供能，不需要氧，不产生乳酸，供能速度最快，但持续时间最短（约6-8秒），是短跑、跳跃、投掷等极限强度运动的主要供能系统；2.糖酵解系统（乳酸能系统）：由肌糖原或葡萄糖无氧酵解生成乳酸并释放能量，不需要氧，供能速度较快，持续时间约30秒-2分钟，是400米、800米等中高强度运动的主要供能系统；3.有氧氧化系统：由糖、脂肪、蛋白质在氧参与下彻底氧化供能，供能速度最慢但持续时间最长，是长时间耐力运动的主要供能系统。三个能量系统在运动中不是孤立工作，而是协同供能，只是在不同运动强度和持续时间下所占比例不同。',
+   application: '1.训练方法选择：根据项目供能特点选择训练方法（磷酸原系统训练用10秒以内极限强度间歇训练；糖酵解系统训练用30秒-2分钟高强度训练；有氧系统训练用长时间中低强度训练）；2.营养补充：根据训练类型补充相应能源物质；3.疲劳判断：根据血乳酸等指标判断供能系统工作状态。'},
+  {name: '肌纤维类型理论', en: 'Muscle Fiber Type Theory', founder: 'Brooks等', year: '1970s',
+   content: '骨骼肌纤维可分为不同类型，主要分类方法是根据肌球蛋白ATP酶活性分为：1.Ⅰ型肌纤维（慢肌纤维，ST）：收缩速度慢，收缩力量小，但抗疲劳能力强，有氧代谢能力高，毛细血管密度高，肌红蛋白含量高（呈红色），适合耐力运动；2.Ⅱ型肌纤维（快肌纤维，FT）：收缩速度快，收缩力量大，但易疲劳，无氧代谢能力高，又可分为Ⅱa型（快氧化酵解型，兼具一定有氧和无氧能力）和Ⅱx型（快酵解型，纯无氧能力，最易疲劳）。肌纤维类型分布主要由遗传决定，但长期训练可使肌纤维发生一定程度的转型（Ⅱx→Ⅱa→Ⅰ方向）。不同项目运动员肌纤维类型分布不同：耐力运动员慢肌比例高，力量速度运动员快肌比例高。',
+   application: '1.选材：根据肌纤维类型预测运动潜力；2.训练安排：根据肌纤维类型特点安排训练（慢肌多者适合耐力训练，快肌多者适合力量速度训练）；3.训练转型：通过长期耐力训练可使快肌向慢肌方向一定程度转型。'},
+  {name: '运动性疲劳理论', en: 'Exercise-Induced Fatigue Theory', founder: '多位学者', year: '20世纪',
+   content: '运动性疲劳是指机体在运动过程中，工作能力和身体功能暂时下降的现象，经过适当休息可以恢复。运动性疲劳的机制有多种学说：1.能量耗竭学说：运动中能源物质（ATP、CP、肌糖原）大量消耗导致疲劳；2.代谢产物堆积学说：运动中产生的乳酸、H+、氨等代谢产物堆积，抑制肌肉收缩；3.内环境稳定性失调学说：运动中脱水、电解质紊乱、酸碱平衡失调导致疲劳；4.中枢神经保护性抑制学说：大脑皮层为保护机体而产生的保护性抑制；5.自由基学说：运动中产生的自由基攻击细胞膜和蛋白质导致疲劳。不同运动类型的疲劳机制不同：短时间高强度运动主要是代谢产物堆积和能量耗竭；长时间耐力运动主要是能量耗竭、脱水和中枢疲劳。',
+   application: '1.疲劳监测：通过心率、血乳酸、RPE等指标监测疲劳程度；2.恢复手段：根据疲劳机制选择恢复手段（营养补充、物理恢复、睡眠等）；3.训练安排：合理安排训练和恢复，防止疲劳累积导致过度训练。'},
+  {name: '运动心脏理论', en: 'Athletic Heart Theory', founder: '多位学者', year: '20世纪',
+   content: '长期运动训练可引起心脏形态结构和功能的适应性改变，称为"运动心脏"或"运动员心脏"。运动心脏的特征包括：1.心脏肥大：长期耐力训练可引起左心室腔扩大和室壁增厚（离心性肥大），力量训练主要引起室壁增厚（向心性肥大）；2.心动徐缓：安静时心率减慢（可低至40-50次/分），是迷走神经张力增强和心功能增强的表现；3.每搏输出量增加：心脏收缩力增强，每搏输出量增加；4.最大摄氧量提高：心脏泵血功能和肌肉利用氧能力增强，最大摄氧量提高。运动心脏是生理性适应，与病理性心脏肥大不同：运动心脏肥大是可逆的（停止训练后逐渐恢复），心功能增强，无心肌纤维化和心功能下降。',
+   application: '1.训练效果评价：通过心脏形态和功能指标评价训练效果；2.运动风险筛查：区分运动心脏与病理性心脏，排除运动风险；3.康复训练：心脏病患者通过适当运动训练改善心功能。'},
+  {name: '运动免疫理论', en: 'Exercise Immunology Theory', founder: '多位学者', year: '1980s-至今',
+   content: '运动对免疫系统功能有显著影响，呈现"J型曲线"效应：1.适度运动：中等强度、规律的运动可增强免疫功能，降低感染风险，表现为免疫细胞数量和活性增加，免疫球蛋白水平升高；2.大强度运动：一次大强度运动后会出现免疫功能暂时下降的"开窗期"（open window），持续数小时至数天，此期间感染风险增加；3.长期过度训练：长期大强度训练且恢复不足可导致免疫功能持续下降，增加感染和疾病风险。运动影响免疫的机制包括：应激激素（皮质醇、儿茶酚胺）变化、免疫细胞再分布、细胞因子平衡改变、氧化应激、营养消耗等。',
+   application: '1.训练负荷控制：避免过度训练导致免疫功能下降；2.营养补充：大强度训练后补充蛋白质、维生素、微量元素等支持免疫功能；3.感染期管理：感染期间减少训练量，防止病情加重；4.恢复手段：保证充足睡眠和恢复，维持免疫功能。'},
+  {name: '运动与氧化应激理论', en: 'Exercise and Oxidative Stress Theory', founder: '多位学者', year: '1990s-至今',
+   content: '运动时能量代谢增强，氧消耗增加，会导致活性氧（ROS）生成增加，引起氧化应激。氧化应激是指体内氧化与抗氧化系统失衡，氧化作用占优势，导致细胞和组织损伤。运动引起的氧化应激具有双重作用：1.急性大强度运动：产生大量ROS，超过抗氧化系统清除能力，导致氧化损伤（脂质过氧化、蛋白质氧化、DNA损伤），与运动性疲劳和肌肉损伤有关；2.长期规律运动：中等强度的运动可诱导内源性抗氧化系统适应性增强（抗氧化酶活性升高，抗氧化物质增加），提高机体抗氧化能力，减少慢性疾病风险。运动中ROS的来源包括：线粒体电子传递链泄漏、NADPH氧化酶、黄嘌呤氧化酶、花生四烯酸代谢等。',
+   application: '1.抗氧化补充：大强度训练期间适当补充抗氧化剂（维生素C、维生素E、多酚等），但需注意过量补充可能抑制训练适应；2.训练适应：通过规律训练提高内源性抗氧化能力；3.疲劳恢复：氧化应激是运动性疲劳的机制之一，抗氧化有助于恢复。'},
+  {name: '运动与胰岛素抵抗理论', en: 'Exercise and Insulin Resistance Theory', founder: '多位学者', year: '1990s-至今',
+   content: '胰岛素抵抗是指机体对胰岛素的敏感性下降，胰岛素促进葡萄糖摄取和利用的效率降低，是2型糖尿病、代谢综合征、肥胖等疾病的重要病理基础。运动是改善胰岛素抵抗的有效手段，其机制包括：1.急性运动：一次运动后肌肉收缩可通过不依赖胰岛素的途径（AMPK信号通路）促进葡萄糖转运蛋白4（GLUT4）转位到细胞膜，增加葡萄糖摄取，运动后胰岛素敏感性可持续提高数小时至数天；2.长期运动：长期规律运动可增加肌肉质量、提高线粒体含量和功能、改善脂肪代谢、降低体脂、减少异位脂肪沉积（肝脏、肌肉脂肪浸润）、改善慢性低度炎症，从而持续改善胰岛素敏感性。不同运动类型改善胰岛素抵抗的效果不同：有氧运动主要通过消耗能量和改善代谢；抗阻训练主要通过增加肌肉质量提高葡萄糖处理能力；两者结合效果最佳。',
+   application: '1.糖尿病预防和治疗：运动是2型糖尿病预防和治疗的基石；2.运动处方：根据患者情况制定个体化运动处方（有氧运动+抗阻训练）；3.代谢综合征管理：通过运动改善胰岛素抵抗和代谢异常。'},
+  {name: '运动与骨代谢理论', en: 'Exercise and Bone Metabolism Theory', founder: '多位学者', year: '20世纪',
+   content: '骨是具有代谢活性的组织，不断进行骨重建（骨吸收和骨形成的偶联过程）。运动对骨代谢有重要影响，是维持骨健康和预防骨质疏松的重要手段。运动影响骨代谢的机制包括：1.机械应力刺激：运动时肌肉收缩和地面反作用力产生的机械应力作用于骨，通过骨细胞感知并传导信号，促进成骨细胞活性，抑制破骨细胞活性；2.激素调节：运动可调节影响骨代谢的激素（生长激素、胰岛素样生长因子-1、性激素、皮质醇等）；3.肌肉因子：运动时肌肉分泌的肌因子（如鸢尾素、骨钙素等）可调节骨代谢；4.营养因素：运动促进钙等矿物质的吸收和利用。不同运动类型对骨的影响不同：冲击性运动（跑步、跳跃）和抗阻训练对骨密度的提高效果最佳；非冲击性运动（游泳、自行车）对骨密度影响较小。运动对骨的影响具有部位特异性：承重骨和参与运动的骨适应性变化更明显。',
+   application: '1.骨质疏松预防：通过运动（尤其是冲击性运动和抗阻训练）提高骨峰值和预防老年骨丢失；2.骨折康复：在医生指导下进行适当运动促进骨折愈合和功能恢复；3.运动处方：根据年龄和骨健康状况制定个体化运动处方。'}
+];
+
+const PROP_EXPERIMENT_METHODS = [
+  {name: 'Western Blot（蛋白质免疫印迹）', category: '分子生物学',
+   principle: '通过凝胶电泳分离蛋白质，转膜后用特异性抗体检测目标蛋白的表达水平。',
+   steps: '1.样品制备：提取组织或细胞总蛋白，测定蛋白浓度；2.SDS-PAGE电泳：蛋白样品与上样缓冲液混合，煮沸变性，进行聚丙烯酰胺凝胶电泳分离；3.转膜：将凝胶中的蛋白电转移到PVDF或NC膜上；4.封闭：用5%脱脂奶粉或BSA封闭膜上非特异性结合位点；5.一抗孵育：加入目标蛋白特异性一抗，4℃孵育过夜；6.洗膜：TBST洗膜3次，每次10分钟；7.二抗孵育：加入HRP标记的二抗，室温孵育1小时；8.洗膜：TBST洗膜3次；9.显影：加入化学发光试剂（ECL），暗室中X光片显影或化学发光成像仪采集图像；10.数据分析：用ImageJ等软件分析条带灰度值，以内参蛋白（GAPDH、β-actin）归一化。',
+   applications: '检测目标蛋白表达水平、蛋白磷酸化水平、蛋白翻译后修饰等。',
+   notes: '1.蛋白样品需加入蛋白酶抑制剂和磷酸酶抑制剂防止降解；2.一抗稀释比例需预实验优化；3.内参选择需考虑实验处理是否影响内参表达；4.条带背景高可增加封闭时间或降低一抗浓度。'},
+  {name: 'qPCR（实时荧光定量PCR）', category: '分子生物学',
+   principle: '在PCR反应体系中加入荧光染料或荧光探针，实时监测PCR扩增过程中荧光信号的变化，通过标准曲线或Ct值比较实现对起始模板的定量分析。',
+   steps: '1.RNA提取：用Trizol或RNA提取试剂盒提取组织或细胞总RNA；2.逆转录：用逆转录试剂盒将RNA逆转录为cDNA；3.引物设计：根据目标基因序列设计特异性引物，扩增产物长度100-200bp；4.qPCR反应：配制反应体系（SYBR Green Mix、上下游引物、cDNA模板、水），在实时荧光定量PCR仪上进行扩增；5.熔解曲线分析：扩增结束后进行熔解曲线分析，确认扩增特异性；6.数据分析：采用2^-ΔΔCt法计算相对表达量，以内参基因（GAPDH、β-actin、18S rRNA）归一化。',
+   applications: '检测基因mRNA表达水平、miRNA表达水平、基因拷贝数变异等。',
+   notes: '1.RNA质量是关键，需检测RNA纯度（A260/A280在1.8-2.0）和完整性；2.引物特异性需验证，熔解曲线应为单峰；3.内参基因选择需考虑实验处理是否影响其表达；4.设置无模板对照（NTC）排除污染。'},
+  {name: 'ELISA（酶联免疫吸附实验）', category: '免疫学',
+   principle: '利用抗原抗体特异性结合和酶催化底物显色的原理，对样品中的目标抗原或抗体进行定性或定量检测。',
+   steps: '1.包被：将特异性抗体或抗原包被到酶标板上，4℃过夜；2.封闭：用BSA或脱脂奶粉封闭非特异性结合位点，37℃1小时；3.加样：加入标准品和待测样品，37℃孵育1-2小时；4.洗板：PBST洗板3-5次；5.加酶标抗体：加入HRP或AP标记的检测抗体，37℃孵育1小时；6.洗板：PBST洗板3-5次；7.显色：加入底物显色液（TMB），37℃避光显色10-20分钟；8.终止：加入终止液（2M H2SO4）；9.读数：用酶标仪在450nm（或450/630nm双波长）测定吸光度；10.数据分析：根据标准品浓度和吸光度绘制标准曲线，计算样品浓度。',
+   applications: '检测细胞因子、激素、蛋白浓度、抗体水平等，适用于血清、血浆、组织匀浆、细胞培养上清等样品。',
+   notes: '1.样品稀释倍数需预实验确定，确保在标准曲线范围内；2.洗板要充分，减少非特异性结合；3.显色时间需统一，避免孔间差异；4.设置复孔，减少实验误差。'},
+  {name: '免疫组化（IHC）', category: '组织学',
+   principle: '利用抗原抗体特异性结合原理，通过化学反应使标记抗体的显色剂显色，对组织细胞内的抗原进行定位、定性和定量检测。',
+   steps: '1.组织固定：用4%多聚甲醛或10%福尔马林固定组织；2.脱水包埋：梯度酒精脱水，二甲苯透明，石蜡包埋；3.切片：石蜡切片机切片，厚度4-5μm，贴于防脱载玻片上；4.脱蜡水化：二甲苯脱蜡，梯度酒精水化；5.抗原修复：高压热修复或酶消化修复抗原；6.灭活内源性酶：3%H2O2孵育10分钟；7.封闭：5%BSA或正常血清封闭30分钟；8.一抗孵育：滴加一抗，4℃湿盒孵育过夜；9.洗片：PBS洗片3次；10.二抗孵育：滴加HRP标记的二抗，37℃孵育30分钟；11.洗片：PBS洗片3次；12.DAB显色：滴加DAB显色液，显微镜下控制显色时间；13.复染：苏木素复染细胞核；14.脱水透明封片：梯度酒精脱水，二甲苯透明，中性树胶封片；15.图像采集分析：显微镜下观察采集图像，用Image-Pro Plus等软件分析阳性染色面积和强度。',
+   applications: '组织细胞中蛋白定位和半定量表达分析、病理诊断、生物标志物检测等。',
+   notes: '1.抗原修复条件需根据抗体和组织优化；2.一抗稀释比例需预实验确定；3.设置阳性对照和阴性对照；4.DAB显色时间需严格控制，避免背景过深。'},
+  {name: '流式细胞术（Flow Cytometry）', category: '细胞生物学',
+   principle: '利用流式细胞仪对悬浮细胞或微粒进行快速、多参数的定量分析和分选，通过荧光标记抗体检测细胞表面或胞内抗原表达。',
+   steps: '1.样品制备：制备单细胞悬液（外周血、组织消化、培养细胞等），调整细胞浓度1×10^6/mL；2.封闭：用Fc受体封闭剂或正常血清封闭非特异性结合；3.表面染色：加入荧光标记的表面分子抗体，4℃避光孵育20-30分钟；4.洗细胞：PBS洗细胞2次；5.固定破膜（胞内染色需要）：用固定破膜剂固定细胞并破膜；6.胞内染色：加入荧光标记的胞内蛋白抗体，室温避光孵育30分钟；7.洗细胞：PBS洗细胞2次；8.重悬：用PBS重悬细胞，过筛网；9.上机检测：流式细胞仪检测，采集10000-20000个细胞；10.数据分析：用FlowJo等软件分析，设置同型对照和阴性对照确定阳性门。',
+   applications: '免疫细胞分型（T细胞、B细胞、NK细胞亚群）、细胞凋亡检测、细胞周期分析、细胞因子胞内染色、细胞增殖检测等。',
+   notes: '1.细胞活性要好，死细胞非特异性染色高；2.荧光素选择需考虑光谱重叠，设置补偿对照；3.设置同型对照排除非特异性染色；4.样品需在24小时内检测。'},
+  {name: '细胞培养（Cell Culture）', category: '细胞生物学',
+   principle: '在体外模拟体内生理环境，使细胞存活、生长和增殖的技术。',
+   steps: '1.培养基准备：根据细胞类型选择合适培养基（DMEM、RPMI-1640、MEM等），添加10%胎牛血清和1%青链霉素；2.细胞复苏：从液氮中取出冻存细胞，37℃水浴快速融化，加入培养基，离心去除冻存液，重悬后接种培养瓶；3.传代培养：细胞生长至80-90%汇合时，弃培养基，PBS清洗，加入胰蛋白酶消化，待细胞变圆脱落时加入培养基终止消化，吹打分散细胞，按比例传代；4.细胞冻存：收集对数生长期细胞，用冻存液（90%血清+10%DMSO）重悬，分装冻存管，程序降温盒-80℃过夜，次日转入液氮长期保存；5.细胞计数：血球计数板或自动细胞计数仪计数；6.细胞活性检测：台盼蓝排斥法检测细胞活性。',
+   applications: '细胞功能研究、药物筛选、基因表达研究、蛋白表达研究、细胞治疗等。',
+   notes: '1.严格无菌操作，防止污染；2.定期检查细胞形态和生长状态；3.支原体定期检测；4.细胞传代次数不宜过多，避免细胞老化和表型改变。'},
+  {name: '动物实验（Animal Experiment）', category: '在体实验',
+   principle: '利用实验动物模拟人类疾病或生理状态，在整体水平研究运动干预的效果和机制。',
+   steps: '1.实验设计：根据研究目的选择动物种属、品系、性别、年龄，确定分组、样本量、干预方案；2.伦理审批：实验方案需经动物伦理委员会审批；3.动物适应：动物购入后适应性饲养1周；4.分组：按体重或随机分组，设置对照组和实验组；5.运动干预：根据方案进行运动训练（ treadmill跑步、游泳、转笼等），控制运动强度、时间、频率；6.样品采集：实验结束后，麻醉（戊巴比妥钠或异氟烷），腹主动脉采血或眼球取血，处死后快速取组织（肌肉、肝脏、脂肪、心脏等），液氮速冻后-80℃保存；7.指标检测：血清生化指标（血糖、血脂、胰岛素等）、组织分子生物学指标（Western Blot、qPCR等）、组织学指标（HE染色、免疫组化等）。',
+   applications: '运动干预效果评价、疾病机制研究、药物筛选、运动适应机制研究等。',
+   notes: '1.严格遵守动物伦理规范，遵循3R原则（替代、减少、优化）；2.动物饲养环境标准化（温度、湿度、光照周期）；3.运动强度需循序渐进，避免动物损伤；4.样品采集需快速，防止组织降解。'},
+  {name: '人体实验（Human Experiment）', category: '在体实验',
+   principle: '以人体为研究对象，通过运动干预、生理指标测试等方法研究运动对人体的影响。',
+   steps: '1.实验设计：根据研究目的确定研究对象（年龄、性别、健康状况、运动水平）、样本量、分组、干预方案、测试指标；2.伦理审批：实验方案需经伦理委员会审批；3.知情同意：向受试者说明实验目的、流程、风险和权益，签署知情同意书；4.筛选：通过问卷、体检、血液检查等筛选符合条件的受试者；5.基线测试：干预前进行各项指标基线测试（身体成分、心肺功能、肌肉力量、血液生化等）；6.运动干预：按方案进行运动训练，监控训练强度（心率、RPE）和训练量；7.中期/后测：干预过程中或结束后进行指标测试；8.数据分析：统计分析干预前后指标变化，比较组间差异。',
+   applications: '运动干预效果评价、运动处方研究、人体生理功能研究、运动能力测试等。',
+   notes: '1.严格遵守伦理规范，保护受试者权益；2.运动强度需个体化，避免运动损伤；3.测试条件标准化（时间、环境、设备）；4.设置洗脱期（交叉设计需要）。'},
+  {name: 'HE染色（苏木素-伊红染色）', category: '组织学',
+   principle: '苏木素使细胞核染成蓝紫色，伊红使细胞质和细胞外基质染成红色，是组织学最常用的染色方法。',
+   steps: '1.组织固定：4%多聚甲醛或10%福尔马林固定组织24-48小时；2.脱水包埋：梯度酒精脱水（70%→80%→90%→95%→100%），二甲苯透明，石蜡浸蜡包埋；3.切片：石蜡切片机切片，厚度4-5μm，45℃温水展片，捞片，60℃烤片30分钟；4.脱蜡水化：二甲苯脱蜡2次，每次10分钟；梯度酒精水化（100%→95%→90%→80%→70%），蒸馏水冲洗；5.苏木素染色：苏木素染液染色5-10分钟，自来水冲洗；6.分化：1%盐酸酒精分化数秒，自来水冲洗返蓝；7.伊红染色：伊红染液染色1-3分钟，自来水冲洗；8.脱水透明：梯度酒精脱水（70%→80%→90%→95%→100%），二甲苯透明2次；9.封片：中性树胶封片；10.观察：显微镜下观察，采集图像。',
+   applications: '组织形态学观察、病理诊断、组织损伤评估、细胞形态观察等。',
+   notes: '1.组织固定要及时充分，防止组织自溶；2.切片厚度均匀，展片温度适当；3.苏木素染色时间根据染液新旧调整；4.分化是关键，需显微镜下控制。'},
+  {name: '最大摄氧量测试（VO2max Test）', category: '生理学测试',
+   principle: '最大摄氧量是指人体在进行剧烈运动时，心肺功能和肌肉利用氧的能力达到极限水平时，单位时间内所能摄取的氧量，是评价心肺耐力和有氧运动能力的金标准。',
+   steps: '1.测试前准备：受试者测试前24小时避免剧烈运动，测试前2小时禁食，穿着运动服和运动鞋；2.仪器校准：气体分析仪和功率车/跑台校准；3.佩戴设备：佩戴面罩和心率带，连接气体分析仪；4.安静状态：安静休息5分钟，记录安静心率和摄氧量；5.热身：低强度热身3-5分钟；6.递增负荷测试：跑台或功率车进行递增负荷运动，每2-3分钟增加一定负荷（速度/坡度或功率），持续运动至力竭；7.力竭判定：满足以下3项中2项即可判定达到最大摄氧量：①呼吸商（RER）≥1.10；②心率达到最大心率的95%以上（220-年龄）；③摄氧量平台（负荷增加但摄氧量增加<150mL/min或<2mL/kg/min）；④受试者主观感觉力竭，RPE≥17；8.恢复：测试后低强度恢复5-10分钟；9.数据分析：取测试过程中最高的30秒或60秒平均摄氧量作为VO2max。',
+   applications: '心肺耐力评价、有氧运动能力评价、运动处方制定、训练效果评价、健康风险评估等。',
+   notes: '1.测试前需进行健康筛查，排除心血管疾病等禁忌症；2.测试过程中密切监测受试者状态，出现不适立即停止；3.鼓励受试者达到力竭，但不可强迫；4.气体分析仪需定期校准。'}
+];
+
+const PROP_TERMS = [
+  {en: 'VO2max', zh: '最大摄氧量', definition: '人体在进行极限强度运动时，心肺功能和肌肉利用氧的能力达到极限水平时，单位时间内所能摄取的最大氧量。是评价有氧运动能力和心肺功能的金标准，单位为mL/kg/min或L/min。'},
+  {en: 'Lactate Threshold (LT)', zh: '乳酸阈', definition: '在递增负荷运动中，血乳酸浓度随运动强度增加而增加，当运动强度达到某一水平时，血乳酸浓度开始急剧升高的拐点。乳酸阈反映了机体有氧代谢向无氧代谢过渡的临界点，是评价耐力运动能力的重要指标。'},
+  {en: 'Respiratory Exchange Ratio (RER)', zh: '呼吸商', definition: '运动时二氧化碳排出量（VCO2）与摄氧量（VO2）的比值。RER可以反映运动时的能量物质来源：RER=0.7时主要由脂肪供能，RER=1.0时主要由糖供能，RER>1.0时表明有无氧代谢参与。'},
+  {en: 'Rate of Perceived Exertion (RPE)', zh: '主观疲劳感觉量表', definition: '由Borg提出的用于评价运动强度的主观感觉量表，常用的是6-20分量表（6=完全不费力，20=极度费力）。RPE与心率、血乳酸等客观指标有较好的相关性，可用于运动强度监控和训练负荷评价。'},
+  {en: 'Delayed Onset Muscle Soreness (DOMS)', zh: '延迟性肌肉酸痛', definition: '在进行不习惯的运动（尤其是离心收缩运动）后24-72小时出现的肌肉酸痛现象。DOMS与肌肉纤维微损伤、炎症反应、结缔组织损伤等有关，通常在运动后24-48小时达到高峰，5-7天自行恢复。'},
+  {en: 'Eccentric Contraction', zh: '离心收缩', definition: '肌肉在收缩时被拉长的收缩形式，即肌肉产生的张力小于外力，肌肉在外力作用下被拉长。离心收缩产生的张力最大，但也最容易引起肌肉损伤和DOMS，如下坡跑、放下重物等动作。'},
+  {en: 'Concentric Contraction', zh: '向心收缩', definition: '肌肉在收缩时长度缩短的收缩形式，即肌肉产生的张力大于外力，肌肉缩短产生运动。向心收缩是最常见的肌肉收缩形式，如举起重物、上坡跑等动作。'},
+  {en: 'Isometric Contraction', zh: '等长收缩', definition: '肌肉在收缩时长度不变的收缩形式，即肌肉产生的张力等于外力，肌肉长度不变但产生张力。等长收缩常用于维持身体姿势和稳定关节，如站立、平板支撑等。'},
+  {en: 'Muscle Hypertrophy', zh: '肌肉肥大', definition: '通过长期抗阻训练引起的肌肉纤维增粗和肌肉体积增大的现象。肌肉肥大主要是由于肌纤维内肌原纤维数量和体积增加、肌浆蛋白增加、结缔组织增生等，是抗阻训练的主要适应之一。'},
+  {en: 'Mitochondrial Biogenesis', zh: '线粒体生物发生', definition: '细胞内新线粒体的生成过程，包括线粒体DNA复制、线粒体蛋白合成、线粒体分裂和融合等。长期有氧运动可通过PGC-1α信号通路促进骨骼肌线粒体生物发生，增加线粒体含量和功能，提高有氧代谢能力。'},
+  {en: 'PGC-1α', zh: '过氧化物酶体增殖物激活受体γ共激活因子1α', definition: '线粒体生物发生和能量代谢的关键调控因子，被称为"能量代谢的总开关"。运动可通过AMPK、p38 MAPK等信号通路激活PGC-1α，促进线粒体生物发生、肌纤维类型转换、血管新生、葡萄糖摄取等。'},
+  {en: 'AMP-activated Protein Kinase (AMPK)', zh: 'AMP激活的蛋白激酶', definition: '细胞能量状态的感受器和调节器，当细胞内AMP/ATP比值升高时被激活。运动时肌肉收缩可激活AMPK，AMPK激活后可促进葡萄糖摄取（通过GLUT4转位）、脂肪酸氧化、线粒体生物发生，同时抑制蛋白质合成和糖原合成等耗能过程。'},
+  {en: 'GLUT4', zh: '葡萄糖转运蛋白4', definition: '主要表达于骨骼肌和脂肪组织的葡萄糖转运蛋白，在静息状态下主要位于细胞内囊泡，在胰岛素刺激或肌肉收缩时转位到细胞膜，促进葡萄糖摄取。运动可通过不依赖胰岛素的途径（AMPK信号通路）促进GLUT4转位，这是运动改善胰岛素抵抗的重要机制。'},
+  {en: 'Insulin Resistance (IR)', zh: '胰岛素抵抗', definition: '机体对胰岛素的敏感性下降，胰岛素促进葡萄糖摄取和利用的效率降低，机体代偿性分泌过多胰岛素以维持血糖稳定的状态。胰岛素抵抗是2型糖尿病、代谢综合征、肥胖、心血管疾病等的重要病理基础。'},
+  {en: 'Homeostasis Model Assessment of Insulin Resistance (HOMA-IR)', zh: '胰岛素抵抗稳态模型评估', definition: '一种通过空腹血糖和空腹胰岛素浓度评估胰岛素抵抗程度的方法，计算公式为：HOMA-IR = 空腹血糖(mmol/L) × 空腹胰岛素(μU/mL) / 22.5。HOMA-IR值越高，表明胰岛素抵抗越严重。'},
+  {en: 'Reactive Oxygen Species (ROS)', zh: '活性氧', definition: '体内氧代谢过程中产生的具有高反应活性的含氧分子或离子，包括超氧阴离子（O2·-）、过氧化氢（H2O2）、羟基自由基（·OH）等。运动时能量代谢增强，ROS生成增加，适量ROS可作为信号分子参与运动适应，但过量ROS可导致氧化损伤。'},
+  {en: 'C-reactive Protein (CRP)', zh: 'C反应蛋白', definition: '一种急性时相反应蛋白，主要由肝脏合成，在炎症、感染、组织损伤时血液浓度急剧升高。CRP是反映慢性低度炎症的常用指标，高敏CRP（hs-CRP）可用于心血管疾病风险评估，运动可降低hs-CRP水平。'},
+  {en: 'Tumor Necrosis Factor-alpha (TNF-α)', zh: '肿瘤坏死因子-α', definition: '一种主要由巨噬细胞和脂肪细胞分泌的促炎细胞因子，参与炎症反应、免疫调节、细胞凋亡等过程。肥胖时脂肪组织分泌TNF-α增加，TNF-α可通过抑制胰岛素信号通路、促进胰岛素抵抗，是肥胖相关胰岛素抵抗的重要机制。'},
+  {en: 'Interleukin-6 (IL-6)', zh: '白细胞介素-6', definition: '一种多功能细胞因子，可由多种细胞分泌，包括免疫细胞、脂肪细胞、肌细胞等。运动时骨骼肌可分泌大量IL-6（肌因子），运动诱导的IL-6具有抗炎、促进葡萄糖摄取、促进脂肪氧化等有益作用，与炎症状态下的IL-6作用不同。'},
+  {en: 'Brain-derived Neurotrophic Factor (BDNF)', zh: '脑源性神经营养因子', definition: '一种主要在中枢神经系统表达的神经营养因子，参与神经元存活、分化、突触可塑性、学习记忆等过程。运动可促进脑内BDNF表达增加，这是运动改善认知功能、预防神经退行性疾病的重要机制。'},
+  {en: 'Irisin', zh: '鸢尾素', definition: '一种由骨骼肌在运动时分泌的肌因子，由FNDC5蛋白切割产生。鸢尾素可促进白色脂肪棕色化（beiging），增加能量消耗，改善葡萄糖代谢和胰岛素敏感性，被认为是运动改善代谢健康的重要介质。'},
+  {en: 'Brown Adipose Tissue (BAT)', zh: '棕色脂肪组织', definition: '一种富含线粒体和血管的脂肪组织，主要功能是产热（非战栗性产热），维持体温和能量平衡。棕色脂肪细胞表达解偶联蛋白1（UCP1），可将氧化磷酸化与ATP合成解偶联，使能量以热能形式释放。运动和寒冷刺激可激活棕色脂肪。'},
+  {en: 'Uncoupling Protein 1 (UCP1)', zh: '解偶联蛋白1', definition: '主要表达于棕色脂肪组织线粒体内膜的蛋白质，可将质子梯度与ATP合成解偶联，使质子回流释放的能量以热能形式产生，而不是合成ATP。UCP1是棕色脂肪产热的关键分子。'},
+  {en: 'Sarcopenia', zh: '肌少症', definition: '一种与年龄相关的骨骼肌质量和力量进行性下降的综合征，可导致身体功能下降、跌倒风险增加、生活质量下降等。肌少症的发生与年龄相关的肌肉蛋白合成减少、合成代谢抵抗、慢性炎症、身体活动减少、营养不足等有关，抗阻训练和蛋白质补充是预防和治疗肌少症的有效手段。'},
+  {en: 'Osteoporosis', zh: '骨质疏松症', definition: '一种以骨量减少、骨微结构破坏为特征，导致骨脆性增加和骨折风险升高的全身性骨骼疾病。骨质疏松症多见于绝经后女性和老年人，运动（尤其是冲击性运动和抗阻训练）是预防和治疗骨质疏松症的重要非药物手段。'},
+  {en: 'Bone Mineral Density (BMD)', zh: '骨密度', definition: '单位体积骨组织中矿物质的含量，是评价骨强度和诊断骨质疏松症的重要指标，常用双能X线吸收法（DXA）测定。BMD降低是骨质疏松症和骨折的重要危险因素，运动可提高或维持BMD。'},
+  {en: 'Cardiopulmonary Exercise Testing (CPET)', zh: '心肺运动试验', definition: '一种在递增负荷运动过程中同时监测心肺功能、代谢指标和气体交换的综合测试方法，可测定VO2max、无氧阈、最大心率、最大每分通气量、氧脉搏等指标，是评价心肺功能、运动耐量、制定运动处方的重要方法。'},
+  {en: 'Anaerobic Threshold (AT)', zh: '无氧阈', definition: '在递增负荷运动中，当运动强度达到某一水平时，有氧代谢已不能满足能量需求，无氧代谢开始参与供能，血乳酸浓度开始急剧升高的临界点。无氧阈反映了机体在不产生明显乳酸堆积情况下所能维持的最高运动强度，是评价耐力运动能力的重要指标。'},
+  {en: 'Excess Post-exercise Oxygen Consumption (EPOC)', zh: '运动后过量氧耗', definition: '运动结束后，机体为恢复到运动前状态而额外消耗的氧量，也称为"氧债"。EPOC用于偿还运动中的氧亏、清除乳酸、恢复磷酸原、维持升高的心率和呼吸、调节体温等。高强度间歇训练（HIIT）的EPOC效应比持续有氧运动更显著。'},
+  {en: 'High-intensity Interval Training (HIIT)', zh: '高强度间歇训练', definition: '一种由短时间高强度运动和间歇恢复期交替组成的训练模式，通常运动强度达到或超过无氧阈，间歇期进行低强度运动或完全休息。HIIT具有时间效率高、改善心肺功能和代谢健康效果显著等优点，与传统持续有氧运动相比，HIIT可在更短时间内获得相似或更好的健康效益。'}
+];
+
+function propShowAcademicLibrary() {
+  if (!window.propState) return;
+  const modal = document.getElementById('propAcademicModal');
+  if (modal) { modal.style.display = 'flex'; return; }
+  
+  let html = '<div id="propAcademicModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center">';
+  html += '<div style="background:#fff;border-radius:16px;width:90%;max-width:900px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column">';
+  // 头部
+  html += '<div style="padding:18px 24px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><div style="font-size:18px;font-weight:800">📚 运动人体科学学术资源库</div><div style="font-size:12px;opacity:0.9;margin-top:4px">经典理论 · 实验方法 · 专业术语 — 内容经专业审核</div></div>';
+  html += '<button onclick="document.getElementById(\'propAcademicModal\').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px">×</button>';
+  html += '</div>';
+  // Tab切换
+  html += '<div style="display:flex;border-bottom:1px solid #f1f5f9;background:#f8fafc">';
+  html += '<button id="propAcTab1" onclick="propSwitchAcTab(1)" style="flex:1;padding:14px;background:#fff;color:#667eea;border:none;border-bottom:2px solid #667eea;cursor:pointer;font-size:13px;font-weight:700">📖 经典理论（' + PROP_ACADEMIC_THEORIES.length + '个）</button>';
+  html += '<button id="propAcTab2" onclick="propSwitchAcTab(2)" style="flex:1;padding:14px;background:transparent;color:#64748b;border:none;border-bottom:2px solid transparent;cursor:pointer;font-size:13px;font-weight:600">🔬 实验方法（' + PROP_EXPERIMENT_METHODS.length + '个）</button>';
+  html += '<button id="propAcTab3" onclick="propSwitchAcTab(3)" style="flex:1;padding:14px;background:transparent;color:#64748b;border:none;border-bottom:2px solid transparent;cursor:pointer;font-size:13px;font-weight:600">📝 专业术语（' + PROP_TERMS.length + '个）</button>';
+  html += '</div>';
+  // 内容区
+  html += '<div id="propAcContent" style="flex:1;overflow-y:auto;padding:20px"></div>';
+  html += '</div></div>';
+  
+  document.body.insertAdjacentHTML('beforeend', html);
+  propSwitchAcTab(1);
+}
+
+function propSwitchAcTab(tab) {
+  const content = document.getElementById('propAcContent');
+  if (!content) return;
+  
+  // 更新Tab样式
+  for (let i = 1; i <= 3; i++) {
+    const btn = document.getElementById('propAcTab' + i);
+    if (btn) {
+      if (i === tab) {
+        btn.style.background = '#fff';
+        btn.style.color = '#667eea';
+        btn.style.borderBottom = '2px solid #667eea';
+        btn.style.fontWeight = '700';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = '#64748b';
+        btn.style.borderBottom = '2px solid transparent';
+        btn.style.fontWeight = '600';
+      }
+    }
+  }
+  
+  let html = '';
+  if (tab === 1) {
+    PROP_ACADEMIC_THEORIES.forEach((t, i) => {
+      html += '<div style="margin-bottom:16px;padding:16px;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+      html += '<div><span style="font-size:15px;font-weight:800;color:#1e293b">' + (i+1) + '. ' + t.name + '</span> <span style="font-size:11px;color:#94a3b8;font-style:italic">' + t.en + '</span></div>';
+      html += '<span style="font-size:10px;background:#eef2ff;color:#4f46e5;padding:2px 8px;border-radius:10px;white-space:nowrap">' + t.founder + ' · ' + t.year + '</span>';
+      html += '</div>';
+      html += '<div style="font-size:13px;color:#475569;line-height:1.8;margin-bottom:10px">' + t.content + '</div>';
+      html += '<div style="padding:10px;background:#fff;border-radius:8px;border-left:3px solid #10b981"><div style="font-size:11px;font-weight:700;color:#10b981;margin-bottom:4px">💡 在科研计划书中的应用</div><div style="font-size:12px;color:#64748b;line-height:1.7">' + t.application + '</div></div>';
+      html += '</div>';
+    });
+  } else if (tab === 2) {
+    PROP_EXPERIMENT_METHODS.forEach((m, i) => {
+      html += '<div style="margin-bottom:16px;padding:16px;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+      html += '<span style="font-size:15px;font-weight:800;color:#1e293b">' + (i+1) + '. ' + m.name + '</span>';
+      html += '<span style="font-size:10px;background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:10px;white-space:nowrap">' + m.category + '</span>';
+      html += '</div>';
+      html += '<div style="font-size:12px;color:#64748b;margin-bottom:10px"><strong style="color:#475569">原理：</strong>' + m.principle + '</div>';
+      html += '<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px">📋 操作步骤</div><div style="font-size:12px;color:#64748b;line-height:1.8;padding-left:16px">' + m.steps + '</div></div>';
+      html += '<div style="font-size:12px;color:#64748b;margin-bottom:8px"><strong style="color:#475569">应用：</strong>' + m.applications + '</div>';
+      html += '<div style="padding:10px;background:#fff;border-radius:8px;border-left:3px solid #f59e0b"><div style="font-size:11px;font-weight:700;color:#d97706;margin-bottom:4px">⚠️ 注意事项</div><div style="font-size:12px;color:#64748b;line-height:1.7">' + m.notes + '</div></div>';
+      html += '</div>';
+    });
+  } else {
+    html += '<div style="margin-bottom:14px;padding:10px;background:#eef2ff;border-radius:8px;font-size:12px;color:#4f46e5">💡 点击术语可查看详细解释，共收录' + PROP_TERMS.length + '个核心专业术语</div>';
+    PROP_TERMS.forEach((t, i) => {
+      html += '<div style="margin-bottom:10px;padding:12px 16px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;cursor:pointer" onclick="this.querySelector(\'.term-detail\').style.display=this.querySelector(\'.term-detail\').style.display===\'none\'?\'block\':\'none\'">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+      html += '<div><span style="font-size:13px;font-weight:700;color:#1e293b">' + t.zh + '</span> <span style="font-size:11px;color:#94a3b8;font-style:italic">' + t.en + '</span></div>';
+      html += '<span style="font-size:10px;color:#94a3b8">点击展开 ↓</span>';
+      html += '</div>';
+      html += '<div class="term-detail" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:12px;color:#64748b;line-height:1.8">' + t.definition + '</div>';
+      html += '</div>';
+    });
+  }
+  
+  content.innerHTML = html;
 }
 
 
