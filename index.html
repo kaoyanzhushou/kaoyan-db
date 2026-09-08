@@ -40782,14 +40782,27 @@ function propUseTopic(idx) {
 }
 
 function propGenerateChapter() {
-  if (!window.propState) return;
+  console.log('[propGenerateChapter] 函数被调用');
+  if (!window.propState) {
+    console.log('[propGenerateChapter] 没有propState，返回');
+    return;
+  }
   const idx = window.propState.currentChapter;
   const chapter = window.propState.chapters[idx];
+  console.log('[propGenerateChapter] idx:', idx, 'chapter:', chapter.title);
+  
   const editor = document.getElementById('propChapterEditor');
+  console.log('[propGenerateChapter] editor存在:', !!editor, 'editor.value长度:', editor ? editor.value.length : 0);
   if (editor) chapter.content = editor.value;
   
+  console.log('[propGenerateChapter] chapter.content长度:', chapter.content ? chapter.content.length : 0);
+  
   if (chapter.content && chapter.content.length > 100) {
-    if (!confirm('本章已有内容，AI生成将覆盖当前内容。确定继续吗？')) return;
+    console.log('[propGenerateChapter] 内容超过100字，弹confirm');
+    if (!confirm('本章已有内容，AI生成将覆盖当前内容。确定继续吗？')) {
+      console.log('[propGenerateChapter] 用户取消，返回');
+      return;
+    }
   }
   
   chapter.status = 'generating';
