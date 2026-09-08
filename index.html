@@ -40748,12 +40748,22 @@ function propGenerateChapter() {
   renderPhdProposal();
   
   const meta = window.propState.meta;
-  const systemPrompt = '你是运动人体科学领域的资深教授和科研计划书写作专家。请为博士科研计划书的"' + chapter.title + '"章节撰写详细、专业、学术化的内容。要求：1.内容充实，逻辑清晰，学术表达规范；2.结合运动人体科学专业特点；3.字数不少于800字；4.不要使用Markdown格式，直接输出正文内容，段落之间用空行分隔。';
+  const systemPrompt = '你是运动人体科学领域的资深教授、博士生导师和科研基金评审专家，具有20年以上科研和教学经验，精通运动生理学、运动解剖学、运动康复学、体质健康等领域。请为博士科研计划书的"' + chapter.title + '"章节撰写高质量、专业化、学术化的内容。\n\n【写作要求】\n1.【学术规范】使用规范的学术语言，避免口语化表达，禁用"我觉得""大概""可能"等模糊表述；使用"本研究""研究表明""综上所述"等学术用语。\n2.【专业术语】准确使用运动人体科学专业术语，如"最大摄氧量(VO2max)""胰岛素抵抗指数(HOMA-IR)""渐进性抗阻训练""高强度间歇训练(HIIT)"等，首次出现时注明英文缩写。\n3.【逻辑结构】内容层次分明，逻辑严密，段落之间衔接自然；每段有明确的中心句，论据充分，论证严谨。\n4.【内容深度】不泛泛而谈，要有具体的机制阐述、数据支撑、方法说明；体现博士水平的研究深度。\n5.【引用标注】在引用已有研究或经典理论时，用[1][2]等标注引用，如"研究表明，有氧运动可显著改善胰岛素敏感性[1]"。\n6.【字数要求】不少于1000字，内容充实详尽。\n7.【格式要求】不要使用Markdown格式（不要用#、*、-等符号），直接输出正文内容，段落之间用空行分隔。\n8.【前后一致】与研究题目和前面章节内容保持一致，不要出现矛盾或重复。';
   
-  let userPrompt = '研究题目：' + (meta.title || '未设定') + '\n研究领域：' + (meta.field || '运动人体科学') + '\n研究方向：' + (meta.topic || '') + (meta.supervisor ? '\n目标导师：' + meta.supervisor : '') + '\n\n请撰写"' + chapter.title + '"章节的详细内容。';
-  if (chapter.content) userPrompt += '\n\n参考已有内容（可在此基础上扩展优化）：\n' + chapter.content.substring(0, 500);
+  // 收集前面章节内容作为上下文
+  let prevContext = '';
+  for (let i = 0; i < idx; i++) {
+    if (window.propState.chapters[i].content && window.propState.chapters[i].content.length > 50) {
+      prevContext += '【' + window.propState.chapters[i].title + '】' + window.propState.chapters[i].content.substring(0, 200) + '...\n';
+    }
+  }
   
-  callDeepSeekAPI(systemPrompt, userPrompt, 3000, 'deepseek-chat').then(response => {
+  let userPrompt = '【研究基本信息】\n研究题目：' + (meta.title || '未设定') + '\n研究领域：' + (meta.field || '运动人体科学') + '\n研究方向：' + (meta.topic || '') + (meta.supervisor ? '\n目标导师：' + meta.supervisor : '') + '\n研究周期：' + (meta.duration || '3年') + '\n';
+  if (prevContext) userPrompt += '\n【前面章节内容摘要（请保持前后一致）】\n' + prevContext;
+  userPrompt += '\n【写作任务】\n请撰写"' + chapter.title + '"章节的详细内容，要求内容充实、逻辑严谨、学术规范、专业术语准确，并在引用已有研究时用[1][2]标注。';
+  if (chapter.content && chapter.content.length > 50) userPrompt += '\n\n【参考已有内容（可在此基础上扩展优化，保持核心观点）】\n' + chapter.content.substring(0, 500);
+  
+  callDeepSeekAPI(systemPrompt, userPrompt, 4000, 'deepseek-chat').then(response => {
     chapter.content = response.trim();
     chapter.status = 'editing';
     propAutoSave();
@@ -40779,9 +40789,9 @@ function propPolishChapter() {
   
   const originalContent = chapter.content;
   
-  const systemPrompt = '你是学术写作润色专家。请对以下科研计划书内容进行学术化润色，要求：1.提升学术表达的规范性和专业性；2.优化逻辑结构和段落衔接；3.保持原意不变，不改变核心观点；4.运动人体科学专业术语要准确；5.直接输出润色后的正文，不要添加解释说明。';
+  const systemPrompt = '你是运动人体科学领域的学术写作润色专家，具有丰富的科研论文和基金申请书润色经验。请对以下博士科研计划书内容进行深度学术化润色。\n\n【润色要求】\n1.【保持原意】严格保持原文的核心观点、研究内容和数据不变，只优化表达方式，不添加新观点或改变研究设计。\n2.【学术化表达】将口语化、模糊化表达改为规范的学术语言；禁用"我觉得""大概""差不多"等表述；使用"本研究""研究表明""综上所述"等学术用语。\n3.【专业术语】确保运动人体科学专业术语准确规范，如"最大摄氧量"而非"最大吸氧能力"，"胰岛素抵抗"而非"胰岛素不敏感"；首次出现的术语注明英文缩写。\n4.【逻辑优化】优化段落结构和句子衔接，使逻辑更严密，论证更充分；调整语序使表达更流畅。\n5.【语法修正】修正语法错误、标点错误、用词不当；统一时态和语态（科技论文多用被动语态和现在时）。\n6.【引用保留】保留原文中的引用标注[1][2]等，不要删除。\n7.【直接输出】直接输出润色后的完整正文，不要添加"润色后""修改说明"等解释性文字，不要使用Markdown格式。';
   
-  callDeepSeekAPI(systemPrompt, '请润色以下内容：\n\n' + chapter.content, 3000, 'deepseek-chat').then(response => {
+  callDeepSeekAPI(systemPrompt, '请对以下科研计划书内容进行学术化润色：\n\n' + chapter.content, 4000, 'deepseek-chat').then(response => {
     chapter.content = response.trim();
     propAutoSave();
     renderPhdProposal();
@@ -40798,11 +40808,11 @@ function propAIContinue() {
   const editor = document.getElementById('propChapterEditor');
   if (editor) chapter.content = editor.value;
   
-  const systemPrompt = '你是运动人体科学领域的科研写作专家。请根据以下上下文，继续撰写后续内容，要求：1.与前文逻辑连贯，风格一致；2.内容充实，学术表达规范；3.直接输出续写的内容，不要重复前文，不要添加解释。';
+  const systemPrompt = '你是运动人体科学领域的学术写作专家，具有丰富的科研论文写作经验。请根据上下文，为以下博士科研计划书内容续写后续部分。\n\n【续写要求】\n1.【自然衔接】与前文内容自然衔接，逻辑连贯，不要出现突兀的转折或重复。\n2.【学术规范】使用规范的学术语言，避免口语化表达；准确使用运动人体科学专业术语，首次出现注明英文缩写。\n3.【内容深度】续写内容要有实质内容，不要空洞套话；可以展开论述机制、方法、数据等。\n4.【引用标注】在引用已有研究时用[1][2]等标注引用。\n5.【直接输出】直接输出续写的新内容，不要重复前文，不要添加解释说明，不要使用Markdown格式。\n6.【字数】续写300-500字。';
   
   const context = chapter.content ? chapter.content.substring(chapter.content.length - 500) : '';
   
-  callDeepSeekAPI(systemPrompt, '请基于以下上下文继续撰写：\n\n...' + context, 2000, 'deepseek-chat').then(response => {
+  callDeepSeekAPI(systemPrompt, '【研究题目】' + (window.propState.meta.title || '未设定') + '\n【当前章节】' + chapter.title + '\n\n【前文最后部分（请在此基础上续写）】\n' + context + '\n\n请续写后续内容：', 2500, 'deepseek-chat').then(response => {
     chapter.content = (chapter.content || '') + '\n\n' + response.trim();
     propAutoSave();
     renderPhdProposal();
@@ -40817,9 +40827,9 @@ function propGenerateTechRoute() {
   const chapter = window.propState.chapters[idx];
   
   const meta = window.propState.meta;
-  const systemPrompt = '你是运动人体科学科研方法专家。请根据研究题目和内容，生成一个详细的技术路线图，用Mermaid flowchart语法输出。要求：1.包含研究准备→实验设计→数据采集→数据分析→结论输出的完整流程；2.节点描述要具体，符合运动人体科学研究特点；3.使用graph TD格式；4.只输出Mermaid代码，不要添加其他解释。';
+  const systemPrompt = '你是运动人体科学领域的科研方法专家，具有丰富的课题设计和技术路线图绘制经验。请根据研究题目和内容，生成一个专业、详细的技术路线图，用Mermaid流程图语法表示。\n\n【技术路线图要求】\n1.【完整流程】包含从研究设计→伦理审批→预实验→受试者招募→干预实施→样本采集→指标检测→数据分析→结果讨论→论文撰写的完整流程。\n2.【逻辑清晰】使用graph TD语法，节点之间用箭头连接，体现先后顺序和逻辑关系。\n3.【专业术语】使用运动人体科学专业术语，如"随机分组""基线测试""运动干预""样本采集""Western Blot""qPCR""统计分析"等。\n4.【分层结构】使用subgraph区分不同阶段，如准备阶段、实施阶段、总结阶段。\n5.【只输出代码】只输出Mermaid代码，不要添加解释说明、不要用```mermaid包裹，直接以graph TD开头。';
   
-  callDeepSeekAPI(systemPrompt, '研究题目：' + (meta.title || '未设定') + '\n研究内容：' + (chapter.content || '').substring(0, 500), 1500, 'deepseek-chat').then(response => {
+  callDeepSeekAPI(systemPrompt, '研究题目：' + (meta.title || '未设定') + '\n研究领域：' + (meta.field || '运动人体科学') + '\n研究内容：' + (chapter.content || '').substring(0, 500), 2000, 'deepseek-chat').then(response => {
     // 提取mermaid代码
     let mermaid = response;
     const codeMatch = response.match(/```mermaid\n?([\s\S]*?)```/);
