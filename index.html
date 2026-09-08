@@ -38938,7 +38938,17 @@ function renderPhdSchools() {
   } else if (window.phdSchoolSubTab === 'tools') {
     // 报考工具
     html += '<div style="margin-bottom:16px;padding:12px 16px;background:#eff6ff;border-radius:8px;border-left:4px solid #3b82f6;font-size:13px;color:#1e40af">';
-    html += '🛠️ 考博报考工具箱：招生简章查询、考博时间线、套磁邮件助手、面试资料包、套磁进度管理';
+    html += '🛠️ 考博报考工具箱：招生简章查询、考博时间线、套磁邮件助手、面试资料包、套磁进度管理、导师回复分析、套磁话术库';
+    // 到期跟进提醒
+    try {
+      const taoci = JSON.parse(localStorage.getItem('phd_taoci_records') || '[]');
+      const todayD = new Date();
+      const todayS = todayD.getFullYear() + '-' + String(todayD.getMonth() + 1).padStart(2, '0') + '-' + String(todayD.getDate()).padStart(2, '0');
+      const due = taoci.filter(r => r.followDate && r.followDate === todayS);
+      if (due.length > 0) {
+        html += '<div style="margin-bottom:16px;padding:12px 16px;background:#fef2f2;border-radius:8px;border-left:4px solid #ef4444;font-size:13px;color:#b91c1c">⏰ <strong>今日有 ' + due.length + ' 位导师需要跟进：</strong>' + due.map(r => r.supName + '（' + r.supSchool + '）').join('、') + ' <button onclick="showPhdTaociManager()" style="padding:4px 12px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;margin-left:6px">去跟进</button></div>';
+      }
+    } catch (e) {}
     html += '</div>';
     
     // 功能卡片
@@ -38984,6 +38994,20 @@ function renderPhdSchools() {
     html += '<div style="font-size:32px;margin-bottom:12px">📊</div>';
     html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">套磁进度管理</div>';
     html += '<div style="font-size:13px;color:#64748b;line-height:1.6">跟踪每位导师的套磁状态与跟进时间，待发/已发/已回复/已约面/已录取，今日跟进提醒</div>';
+    html += '</div>';
+    
+    // 导师回复分析
+    html += '<div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);cursor:pointer;border:1px solid #e2e8f0" onclick="showPhdReplyAnalyzer()">';
+    html += '<div style="font-size:32px;margin-bottom:12px">💬</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">导师回复分析</div>';
+    html += '<div style="font-size:13px;color:#64748b;line-height:1.6">粘贴导师回复邮件，AI判断回复意图（积极/观望/婉拒/客套），给出下一步策略与回复草稿</div>';
+    html += '</div>';
+    
+    // 套磁话术库
+    html += '<div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);cursor:pointer;border:1px solid #e2e8f0" onclick="showPhdTaociPhrases()">';
+    html += '<div style="font-size:32px;margin-bottom:12px">💎</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">套磁话术库</div>';
+    html += '<div style="font-size:13px;color:#64748b;line-height:1.6">六大场景得体表述：首次开口/询问名额/跟进提醒/婉拒回应/约面确认/录取致谢，可直接复制改写</div>';
     html += '</div>';
     
     html += '</div>';
@@ -39113,7 +39137,8 @@ function showPhdEmailHelper() {
   html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">👨\u200d🏫 选择导师</label><select id="emailSupervisor" onchange="toggleCustomEmailSupervisor()" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px"><option value="">请选择</option>';
   PHD_SUPERVISORS.forEach(s => { html += '<option value="' + s.id + '">' + s.name + ' - ' + s.school + '</option>'; });
   html += '<option value="custom">✍️ 自定义导师</option>';
-  html += '</select></div>';
+  html += '</select>';
+  html += '<div id="emailSupDirHint" style="display:none;margin-top:8px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:8px 12px;font-size:12px;color:#3730a3;line-height:1.8"></div></div>';
   html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">你的姓名</label><input type="text" id="emailName" placeholder="张三" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
   html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">本科/硕士院校</label><input type="text" id="emailSchool" placeholder="XX大学" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
   html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">专业</label><input type="text" id="emailMajor" placeholder="运动人体科学" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
@@ -39142,6 +39167,12 @@ function showPhdEmailHelper() {
   
   html += '<div id="emailResult" style="margin-top:20px"></div>';
   
+  // 发送时间建议
+  html += '<div style="margin-top:16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:14px 16px">';
+  html += '<div style="font-size:13px;font-weight:700;color:#0369a1;margin-bottom:8px">🕐 发送时间建议</div>';
+  html += '<div style="font-size:12px;color:#0c4a6e;line-height:1.9">① 最佳时段：<strong>工作日 8:00-9:30</strong>（导师上班查邮高峰）或 <strong>14:00-16:00</strong>（下午办公时段）<br>② 避开：周一早高峰、周五下午、节假日前一天、晚上21点后<br>③ 标题建议：「博士申请-姓名-学校-研究方向」，可加「冒昧来信敬请海涵」表谦逊<br>④ 若导师回复，尽量当天回复；跟进间隔建议 7-10 天，最多跟进 2 次</div>';
+  html += '</div>';
+  
   // 草稿润色
   html += '<div style="margin-top:20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px">';
   html += '<div style="font-size:14px;font-weight:600;color:#1e293b;margin-bottom:8px">🔄 已有草稿？让AI润色</div>';
@@ -39166,6 +39197,31 @@ function toggleCustomEmailSupervisor() {
   const sel = document.getElementById('emailSupervisor');
   const wrap = document.getElementById('customEmailSupervisorWrap');
   if (wrap) wrap.style.display = sel && sel.value === 'custom' ? 'block' : 'none';
+  // 内置导师自动补全研究方向提示
+  const hint = document.getElementById('emailSupDirHint');
+  if (hint) {
+    if (sel && sel.value && sel.value !== 'custom') {
+      const sup = PHD_SUPERVISORS.find(s => s.id === sel.value);
+      if (sup) {
+        const dir = (sup.directions && sup.directions.length ? sup.directions.join('、') : sup.research) || '';
+        hint.style.display = 'block';
+        hint.innerHTML = '🔬 该导师研究方向：' + dir + ' <button onclick="fillEmailInterestFromSup()" style="padding:3px 10px;background:#eef2ff;color:#4f46e5;border:1px solid #c7d2fe;border-radius:6px;cursor:pointer;font-size:11px;margin-left:6px">📥 填入兴趣栏</button>';
+        window._currentSupDir = dir;
+      }
+    } else {
+      hint.style.display = 'none';
+    }
+  }
+}
+function fillEmailInterestFromSup() {
+  const interest = document.getElementById('emailInterest');
+  if (interest && window._currentSupDir) {
+    if (!interest.value.trim()) {
+      interest.value = '我对' + window._currentSupDir + '方向非常感兴趣，希望能在该领域深入学习研究。';
+    } else {
+      interest.value = interest.value + '（另对' + window._currentSupDir + '方向也有浓厚兴趣）';
+    }
+  }
 }
 
 async function generatePhdEmail() {
@@ -39210,7 +39266,16 @@ async function generatePhdEmail() {
   
   const systemPrompt = '你是一位资深的考博申请文书专家，擅长撰写高回复率的导师套磁邮件。请根据用户提供的场景与信息，撰写一封完整、专业、得体的套磁邮件。\n\n写作要求：\n1. 邮件结构：Subject（邮件标题，简洁明确，如「博士申请-姓名-学校-方向」）→ 称呼（尊敬的XX教授）→ 正文 → 落款（姓名+联系邮箱+电话+日期）\n2. ' + sceneMap[scene] + '\n3. ' + toneMap[tone] + '\n4. 正文要体现对导师研究的具体了解（可引用其研究方向关键词），展现真诚而非群发模板\n5. 个人优势融入正文而非罗列，控制全文300-450字（不含标题落款）\n6. 不要编造用户未提供的信息；未提供的细节用合理中性表述\n7. 直接输出完整邮件文本，格式用换行分段，不要加解释说明';
   
-  const userPrompt = '【邮件场景】' + sceneMap[scene] + '\n【导师信息】姓名：' + supInfo.name + '；院校：' + (supInfo.school || '') + '；研究方向：' + dirText + '\n【考生信息】姓名：' + name + '；毕业/在读院校：' + school + '；专业：' + major + '；联系邮箱：' + emailAddr + '；电话：' + phone + '\n【研究方向兴趣】' + (interest || '对该方向有浓厚兴趣，希望深入系统研究') + '\n【个人优势/科研经历】' + (advantage || '（无，可省略或中性带过）') + '\n\n请按以上要求撰写完整套磁邮件。';
+  // 内容差异化：取最近历史邮件摘要，避免雷同
+  let diffInstr = '';
+  try {
+    const hist = getPhdEmailHistory();
+    if (hist.length > 0) {
+      const prevs = hist.slice(0, 3).map(h => h.text.replace(/\s+/g, ' ').slice(0, 100)).join(' || ');
+      diffInstr = '\n\n【差异化要求】你此前已为该考生写过几封套磁信（摘要：' + prevs + '）。请确保新邮件在开头、表达与结构上与它们明显不同，避免雷同感（尤其当收信导师可能互相认识时）。';
+    }
+  } catch (e) {}
+  const userPrompt = '【邮件场景】' + sceneMap[scene] + '\n【导师信息】姓名：' + supInfo.name + '；院校：' + (supInfo.school || '') + '；研究方向：' + dirText + '\n【考生信息】姓名：' + name + '；毕业/在读院校：' + school + '；专业：' + major + '；联系邮箱：' + emailAddr + '；电话：' + phone + '\n【研究方向兴趣】' + (interest || '对该方向有浓厚兴趣，希望深入系统研究') + '\n【个人优势/科研经历】' + (advantage || '（无，可省略或中性带过）') + diffInstr + '\n\n请按以上要求撰写完整套磁邮件。';
   
   const result = document.getElementById('emailResult');
   result.innerHTML = '<div style="text-align:center;color:#64748b;padding:30px;font-size:14px">🤔 AI正在根据场景与导师信息撰写邮件…（约10-20秒）</div>';
@@ -39236,7 +39301,8 @@ function renderPhdEmailResult(email, name, emailAddr, phone) {
     '<button onclick="reviewPhdEmail()" style="padding:6px 14px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">💡 AI点评</button>' +
     '<button onclick="toEnglishPhdEmail()" style="padding:6px 14px;background:#0ea5e9;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">🇬🇧 英文版</button>' +
     '<button onclick="generatePhdEmail()" style="padding:6px 14px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">🔄 再生成一版</button>' +
-    '<button onclick="downloadPhdEmail()" style="padding:6px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📥 下载txt</button>' +
+    '<button onclick="downloadPhdEmail()" style="padding:6px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📥 txt</button>' +
+    '<button onclick="downloadPhdEmailWord()" style="padding:6px 14px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📄 Word</button>' +
     '<button onclick="saveCurrentEmailToTaoci()" style="padding:6px 14px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📊 存入进度</button>' +
     '</span></div>' +
     '<textarea id="phdEmailText" rows="22" style="width:100%;padding:16px;border:none;font-size:13px;line-height:1.8;color:#334155;box-sizing:border-box;resize:vertical;font-family:inherit">' + email + '</textarea></div>' +
@@ -39267,6 +39333,23 @@ function downloadPhdEmail() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = '套磁邮件_' + new Date().toISOString().slice(0, 10) + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function downloadPhdEmailWord() {
+  const text = document.getElementById('phdEmailText').value;
+  if (!text) { alert('暂无内容'); return; }
+  const htmlContent = '<html xmlns:o=\'urn:schemas-microsoft-com:office:office\' xmlns:w=\'urn:schemas-microsoft-com:office:word\' xmlns=\'http://www.w3.org/TR/REC-html40\'>' +
+    '<head><meta charset=\'utf-8\'><title>套磁邮件</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->' +
+    '<style>body{font-family:SimSun,serif;font-size:12pt;line-height:1.8;color:#333;padding:30px}pre{white-space:pre-wrap;font-family:SimSun,serif;font-size:12pt}</style></head>' +
+    '<body><pre>' + text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre></body></html>';
+  const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '套磁邮件_' + new Date().toISOString().slice(0, 10) + '.doc';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -39551,6 +39634,203 @@ function saveCurrentEmailToTaoci() {
   saveTaociRecords(records);
   alert('已存入套磁进度管理（状态：待发）');
   showPhdTaociManager();
+}
+
+// ========== 导师回复分析 ==========
+function showPhdReplyAnalyzer() {
+  const area = document.getElementById('phdToolsContent');
+  if (!area) return;
+  let html = '<div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-top:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px"><h4 style="margin:0;color:#1e293b">💬 导师回复分析</h4><button onclick="showPhdEmailHelper()" style="padding:8px 16px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">✉️ 套磁助手</button></div>';
+  html += '<p style="font-size:13px;color:#64748b;margin-bottom:18px">把导师的回复粘贴进来，AI帮你判断真实意图，并给出下一步应对策略与回复草稿</p>';
+
+  html += '<div style="margin-bottom:16px"><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">📩 导师的回复邮件（必填）</label><textarea id="replyTeacherText" rows="6" placeholder="粘贴导师回复原文，例如：你好，来信收到。你的背景还不错，但今年名额可能比较紧张，建议同时考虑其他学校..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea></div>';
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
+  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">🧑\u200d🏫 导师身份（选填）</label><input type="text" id="replyTeacherIdentity" placeholder="如：上海体育大学 运动康复方向 博导" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
+  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">🗒️ 你的原套磁要点（选填）</label><input type="text" id="replyMyEmailKey" placeholder="如：我申请其运动与骨骼肌方向博士，附简历" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
+  html += '</div>';
+
+  html += '<button onclick="analyzePhdReply()" style="width:100%;padding:12px;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600">🔍 AI分析回复意图</button>';
+
+  html += '<div id="replyAnalyzeResult" style="margin-top:20px"></div>';
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+async function analyzePhdReply() {
+  const reply = document.getElementById('replyTeacherText').value.trim();
+  if (!reply) { alert('请粘贴导师的回复邮件'); return; }
+  const identity = document.getElementById('replyTeacherIdentity').value.trim();
+  const myKey = document.getElementById('replyMyEmailKey').value.trim();
+  const result = document.getElementById('replyAnalyzeResult');
+  result.innerHTML = '<div style="text-align:center;color:#64748b;padding:30px;font-size:14px">🔍 AI正在分析导师回复的真实意图…</div>';
+  const systemPrompt = '你是资深考博申请导师与套磁沟通专家。请分析这封导师回复邮件的真实意图，给出结构化结论：\n1. 【意图判断】从「积极争取/观望待定/婉拒/模板客套/约面信号/名额已满」中判定（可组合），并给出置信度（高/中/低）\n2. 【判断依据】引用回复中的关键句，解释为什么这样判断（如"名额紧张"通常意味着竞争激烈但未关死门）\n3. 【下一步策略】给出具体可操作建议：是否跟进、何时跟进（几天后）、跟进时说什么、是否补充材料、是否应同时联系其他导师\n4. 【风险提示】这个回复最容易被误读的点是什么\n5. 【建议回复方向】一句话概括回复时应该保持的姿态\n格式清晰分点，直接输出分析文本。';
+  const userPrompt = '【导师回复】\n' + reply + '\n\n【导师身份】' + (identity || '未知') + '\n【我的原套磁要点】' + (myKey || '未知');
+  try {
+    const analysis = await callDeepSeekAPI(systemPrompt, userPrompt, 1500, 'deepseek-chat');
+    if (!analysis || analysis.trim().length < 30) throw new Error('分析异常');
+    window._phdLastReplyAnalysis = analysis;
+    result.innerHTML = '<div style="border:1px solid #ddd6fe;border-radius:10px;overflow:hidden">' +
+      '<div style="background:#f5f3ff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ddd6fe;flex-wrap:wrap;gap:8px">' +
+      '<span style="font-size:14px;font-weight:600;color:#4c1d95">💬 AI回复意图分析</span>' +
+      '<button onclick="draftPhdReplyToTeacher()" style="padding:6px 14px;background:#7c3aed;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">✍️ 生成回复草稿</button>' +
+      '</div>' +
+      '<div style="padding:16px;font-size:13px;line-height:1.9;color:#334155;white-space:pre-wrap">' + analysis + '</div></div>';
+  } catch (e) {
+    result.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;color:#dc2626;font-size:14px">分析失败：' + e.message + '</div>';
+  }
+}
+
+async function draftPhdReplyToTeacher() {
+  const reply = document.getElementById('replyTeacherText').value.trim();
+  const identity = document.getElementById('replyTeacherIdentity').value.trim();
+  const myKey = document.getElementById('replyMyEmailKey').value.trim();
+  const analysis = window._phdLastReplyAnalysis || '';
+  if (!reply) { alert('请粘贴导师的回复邮件'); return; }
+  const result = document.getElementById('replyAnalyzeResult');
+  result.innerHTML = '<div style="text-align:center;color:#64748b;padding:30px;font-size:14px">✍️ AI正在撰写得体的回复邮件…</div>';
+  const systemPrompt = '你是考博套磁沟通专家。请根据导师的回复与分析结论，撰写一封得体的回复邮件：\n1. 姿态：不卑不亢、礼貌专业、体现韧性\n2. 内容：回应导师关心的点、补充能打消其顾虑的信息（如招生名额、研究方向匹配）\n3. 如果是婉拒/名额满：表达理解与感谢，可礼貌询问未来机会或推荐同校其他导师（视情况，保持尊严不纠缠）\n4. 如果是积极/观望：表达感谢与决心，说明后续准备（如已报名、正在备考），礼貌询问下一步\n5. 输出完整邮件（含Subject标题、称呼、正文、落款），直接输出文本，不要解释。';
+  const userPrompt = '【导师回复】\n' + reply + '\n【导师身份】' + (identity || '未知') + '\n【我的套磁要点】' + (myKey || '未知') + '\n【AI分析结论】\n' + analysis;
+  try {
+    const draft = await callDeepSeekAPI(systemPrompt, userPrompt, 2000, 'deepseek-chat');
+    if (!draft || draft.trim().length < 50) throw new Error('生成异常');
+    window._phdLastReplyDraft = draft;
+    result.innerHTML = '<div style="border:1px solid #ddd6fe;border-radius:10px;overflow:hidden">' +
+      '<div style="background:#f5f3ff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ddd6fe;flex-wrap:wrap;gap:8px">' +
+      '<span style="font-size:14px;font-weight:600;color:#4c1d95">✍️ 你的回复草稿</span>' +
+      '<span style="display:flex;gap:6px">' +
+      '<button onclick="copyPhdReplyDraft()" style="padding:6px 14px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📋 复制</button>' +
+      '<button onclick="showPhdReplyAnalyzer()" style="padding:6px 14px;background:#e5e7eb;color:#374151;border:none;border-radius:6px;cursor:pointer;font-size:12px">← 重新分析</button>' +
+      '</span></div>' +
+      '<textarea id="phdReplyDraftText" rows="16" style="width:100%;padding:16px;border:none;font-size:13px;line-height:1.8;color:#334155;box-sizing:border-box;resize:vertical;font-family:inherit">' + draft + '</textarea></div>';
+  } catch (e) {
+    result.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;color:#dc2626;font-size:14px">生成失败：' + e.message + '</div>';
+  }
+}
+
+function copyPhdReplyDraft() {
+  const text = document.getElementById('phdReplyDraftText');
+  if (!text) { alert('暂无内容'); return; }
+  text.select();
+  document.execCommand('copy');
+  alert('已复制回复草稿！发送前请核对称呼、落款与措辞。');
+}
+
+// ========== 套磁话术库 ==========
+const PHD_TAOCI_PHRASES = {
+  'first': {
+    name: '首次开口',
+    desc: '第一封套磁信的高频得体表述，注意结合导师具体研究方向改写',
+    items: [
+      { t: '冒昧打扰，我是XX大学XX专业的硕士生，对您长期从事的XX方向研究非常感兴趣，冒昧来信，希望有机会在您的指导下攻读博士学位。', tip: '标准开场，突出"读过您的研究"' },
+      { t: '我认真拜读了您发表于XX期刊的《XXX》一文，其中关于XX的观点给我很大启发，也让我坚定了在该方向深入研究的想法。', tip: '体现你真的读过论文，比泛泛而谈强十倍' },
+      { t: '我硕士阶段的研究方向是XX，掌握了XX、XX等实验技术，与您团队的方向有较好的衔接，希望能进一步了解您今年是否有招生计划。', tip: '技能与方向衔接，显示匹配度' },
+      { t: '冒昧打扰，请您海涵。我不揣冒昧地希望能在2026年报考您的博士研究生，随信附上个人简历供您参考。', tip: '极谦逊版本，适合院士/大牛级导师' },
+      { t: '我非常认同您团队关于XX的研究理念，这与我对该领域的理解和追求不谋而合，因此诚挚地向您表达申请意愿。', tip: '强调理念契合，情感向' }
+    ]
+  },
+  'ask': {
+    name: '询问名额',
+    desc: '打听招生名额/是否还有名额的得体问法',
+    items: [
+      { t: '想冒昧地向您请教一下，您今年是否还有招收博士研究生的名额？如果方便的话，恳请您告知。', tip: '直接但礼貌' },
+      { t: '考虑到报考竞争较为激烈，想向您确认一下2026年报考您门下的大致情况，以便我更好地规划备考。', tip: '侧面了解竞争情况' },
+      { t: '如果有幸能进入您的课题组，我愿意在博士入学前提前进入团队学习，熟悉研究方向与实验技术。', tip: '表明主动性，常能增加印象分' },
+      { t: '我理解名额有限，无论结果如何都非常感谢您的关注，我会继续努力提升自己。', tip: '给导师留台阶，体现成熟' }
+    ]
+  },
+  'follow': {
+    name: '跟进提醒',
+    desc: '首封未回/已回之后的礼貌跟进',
+    items: [
+      { t: '冒昧再次打扰。上次去信后，我这边有了新的进展——（如论文录用、课题结题），想第一时间向您汇报，也借此机会再次表达申请诚意。', tip: '跟进要有"新料"，不要干催' },
+      { t: '如果老师近期工作繁忙未及回复，敬请谅解。我只是想确认邮件是否妥收，如打扰到您深表歉意。', tip: '给未回复找台阶，姿态得体' },
+      { t: '我已于近日完成了博士网上报名，报考了贵校XX专业，特此告知您，也希望能得到您的进一步指导。', tip: '已报名是跟进的最佳理由' }
+    ]
+  },
+  'decline': {
+    name: '婉拒回应',
+    desc: '导师婉拒/名额满后的得体回应（重点：留体面、留后路）',
+    items: [
+      { t: '非常感谢您在百忙之中给予回复和坦诚的建议。我完全理解名额紧张的情况，也非常感谢您的关注。今后如有机会，仍希望能向您请教学习。', tip: '标准得体回应，不纠缠' },
+      { t: '感谢老师的坦诚告知。虽然遗憾，但您的建议对我很有启发，我会继续努力提升自己，也期待未来有机会再向您请教。', tip: '表达收获感，展示韧性' },
+      { t: '谢谢您！不知您是否方便推荐团队或校内其他方向相近、今年仍有招生计划的老师？若不方便也完全没关系，再次感谢您！', tip: '礼貌请求推荐，成功率不低' }
+    ]
+  },
+  'meeting': {
+    name: '约面确认',
+    desc: '导师同意交流/约见后的确认信',
+    items: [
+      { t: '非常感谢您愿意给我交流的机会！我随时方便，完全配合您的时间安排。届时我会带上简历和科研计划书向您当面请教。', tip: '表达配合+准备充分' },
+      { t: '能与您当面交流倍感荣幸。我会提前准备好硕士课题汇报，期待您的指点。', tip: '突出"准备汇报"，体现尊重' },
+      { t: '交流时间我已确认，会准时到达。为便于您提前了解，随信附上我的科研计划书初稿，恳请您指正。', tip: '提前给材料，高效专业' }
+    ]
+  },
+  'thanks': {
+    name: '录取致谢',
+    desc: '拟录取/确定接收后的致谢与表态',
+    items: [
+      { t: '衷心感谢您给予我攻读博士的机会！能加入您的团队是我莫大的荣幸，我一定加倍努力，不负您的信任。', tip: '简洁真诚' },
+      { t: '感谢您的认可与接纳！入学前我会按照您的要求提前阅读文献、熟悉方向，并完成相关实验技术的预习，争取开学后尽快进入状态。', tip: '表态+具体行动，最加分' },
+      { t: '再次感谢您和团队给我的机会！我已开始系统阅读您近年的论文，梳理了待研究问题，期待入学后能尽快在您的指导下开展工作。', tip: '证明已开始行动' }
+    ]
+  }
+};
+
+function showPhdTaociPhrases() {
+  const area = document.getElementById('phdToolsContent');
+  if (!area) return;
+  let html = '<div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-top:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px"><h4 style="margin:0;color:#1e293b">💎 套磁话术库</h4><button onclick="showPhdEmailHelper()" style="padding:8px 16px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">✉️ 套磁助手</button></div>';
+  html += '<p style="font-size:13px;color:#64748b;margin-bottom:18px">高频场景得体表述，写邮件时直接参考改写（记得结合导师具体信息个性化，切勿照搬）</p>';
+
+  html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
+  const keys = Object.keys(PHD_TAOCI_PHRASES);
+  keys.forEach(function(k, i) {
+    html += '<button id="phraseTab_' + k + '" onclick="switchPhraseTab(\'' + k + '\')" style="padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;border:1px solid #e5e7eb;background:' + (i === 0 ? '#8b5cf6' : '#fff') + ';color:' + (i === 0 ? '#fff' : '#333') + ';font-weight:600">' + PHD_TAOCI_PHRASES[k].name + '</button>';
+  });
+  html += '</div>';
+
+  html += '<div id="phraseContentArea">' + phraseContent(keys[0]) + '</div>';
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function phraseContent(key) {
+  const group = PHD_TAOCI_PHRASES[key];
+  if (!group) return '';
+  let html = '<div style="font-size:13px;color:#64748b;margin-bottom:14px">' + group.desc + '</div>';
+  group.items.forEach(function(it, i) {
+    html += '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:10px;background:#fafafa">';
+    html += '<div style="display:flex;gap:10px">';
+    html += '<div style="flex:0 0 24px;height:24px;background:#8b5cf6;color:#fff;border-radius:50%;text-align:center;font-size:12px;font-weight:700;line-height:24px">' + (i + 1) + '</div>';
+    html += '<div style="flex:1"><div style="font-size:13px;color:#1e293b;line-height:1.8">' + it.t + '</div>';
+    html += '<div style="font-size:12px;color:#8b5cf6;margin-top:6px">💡 ' + it.tip + '</div></div>';
+    html += '<button onclick="copyPhraseText(\'' + encodeURIComponent(it.t) + '\')" style="padding:5px 12px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;align-self:flex-start">复制</button>';
+    html += '</div></div>';
+  });
+  return html;
+}
+
+function switchPhraseTab(key) {
+  Object.keys(PHD_TAOCI_PHRASES).forEach(function(k) {
+    const el = document.getElementById('phraseTab_' + k);
+    if (el) { el.style.background = k === key ? '#8b5cf6' : '#fff'; el.style.color = k === key ? '#fff' : '#333'; }
+  });
+  const area = document.getElementById('phraseContentArea');
+  if (area) area.innerHTML = phraseContent(key);
+}
+
+function copyPhraseText(encoded) {
+  const text = decodeURIComponent(encoded);
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  alert('已复制！记得结合导师信息个性化改写。');
 }
 
 // 我的收藏
