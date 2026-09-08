@@ -38813,7 +38813,26 @@ function renderPhdSchools() {
     html += '<div style="flex:1;min-width:200px"><label style="display:block;margin-bottom:6px;font-size:13px;color:#475569;font-weight:600">竞争偏好</label>';
     html += '<select id="phdRecommendDifficulty" class="phd-filter-select" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px"><option value="">不限</option><option value="high">冲刺（难度高）</option><option value="medium">稳妥（难度中等）</option><option value="low">保底（难度低）</option></select></div>';
     html += '</div>';
-    html += '<button onclick="generatePhdRecommendations()" style="width:100%;padding:12px;background:linear-gradient(135deg,#a855f7,#667eea);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600">🎯 生成智能推荐</button>';
+    
+    // 用户画像（用于录取概率评估）
+    html += '<div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0">';
+    html += '<div style="font-size:13px;font-weight:600;color:#475569;margin-bottom:12px">📊 个人背景（选填，用于录取概率评估）</div>';
+    html += '<div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">';
+    html += '<div style="flex:1;min-width:150px"><label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b">本科院校层次</label>';
+    html += '<select id="phdUserUndergrad" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px"><option value="">请选择</option><option value="985">985院校</option><option value="211">211院校</option><option value="doublefirst">双一流</option><option value="ordinary">普通本科</option></select></div>';
+    html += '<div style="flex:1;min-width:150px"><label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b">GPA/成绩排名</label>';
+    html += '<select id="phdUserGPA" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px"><option value="">请选择</option><option value="top5">前5%</option><option value="top10">前10%</option><option value="top20">前20%</option><option value="top30">前30%</option><option value="other">其他</option></select></div>';
+    html += '<div style="flex:1;min-width:150px"><label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b">英语水平</label>';
+    html += '<select id="phdUserEnglish" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px"><option value="">请选择</option><option value="cet6">六级≥500</option><option value="cet6pass">六级通过</option><option value="cet4">四级通过</option><option value="ielts">雅思≥6.5</option><option value="toefl">托福≥90</option><option value="none">无</option></select></div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:12px;flex-wrap:wrap">';
+    html += '<div style="flex:1;min-width:150px"><label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b">科研经历</label>';
+    html += '<select id="phdUserResearch" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px"><option value="">请选择</option><option value="national">主持国家级项目</option><option value="provincial">主持省部级项目</option><option value="participate">参与科研项目</option><option value="none">无</option></select></div>';
+    html += '<div style="flex:1;min-width:150px"><label style="display:block;margin-bottom:4px;font-size:12px;color:#64748b">论文发表</label>';
+    html += '<select id="phdUserPaper" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px"><option value="">请选择</option><option value="sci">SCI一作</option><option value="core">核心期刊一作</option><option value="coauthor">参与发表</option><option value="none">无</option></select></div>';
+    html += '</div></div>';
+    
+    html += '<button onclick="generatePhdRecommendations()" style="width:100%;padding:12px;margin-top:16px;background:linear-gradient(135deg,#a855f7,#667eea);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600">🎯 生成智能推荐（含录取概率）</button>';
     html += '</div>';
     
     html += '<div id="phdRecommendResults"></div>';
@@ -39058,12 +39077,37 @@ function generatePhdRecommendations() {
   const level = document.getElementById('phdRecommendLevel') ? document.getElementById('phdRecommendLevel').value : '';
   const difficulty = document.getElementById('phdRecommendDifficulty') ? document.getElementById('phdRecommendDifficulty').value : '';
   
+  // 用户画像
+  const userUndergrad = document.getElementById('phdUserUndergrad') ? document.getElementById('phdUserUndergrad').value : '';
+  const userGPA = document.getElementById('phdUserGPA') ? document.getElementById('phdUserGPA').value : '';
+  const userEnglish = document.getElementById('phdUserEnglish') ? document.getElementById('phdUserEnglish').value : '';
+  const userResearch = document.getElementById('phdUserResearch') ? document.getElementById('phdUserResearch').value : '';
+  const userPaper = document.getElementById('phdUserPaper') ? document.getElementById('phdUserPaper').value : '';
+  
   if (selectedDirections.length === 0) {
     alert('请至少选择一个感兴趣的研究方向');
     return;
   }
   
-  // 计算每所院校的匹配度
+  // 计算用户背景综合实力（0-100分）
+  let userStrength = 50; // 基础分
+  if (userUndergrad === '985') userStrength += 15;
+  else if (userUndergrad === '211' || userUndergrad === 'doublefirst') userStrength += 10;
+  else if (userUndergrad === 'ordinary') userStrength += 0;
+  if (userGPA === 'top5') userStrength += 15;
+  else if (userGPA === 'top10') userStrength += 10;
+  else if (userGPA === 'top20') userStrength += 5;
+  if (userEnglish === 'ielts' || userEnglish === 'toefl' || userEnglish === 'cet6') userStrength += 10;
+  else if (userEnglish === 'cet6pass') userStrength += 5;
+  if (userResearch === 'national') userStrength += 15;
+  else if (userResearch === 'provincial') userStrength += 10;
+  else if (userResearch === 'participate') userStrength += 5;
+  if (userPaper === 'sci') userStrength += 15;
+  else if (userPaper === 'core') userStrength += 10;
+  else if (userPaper === 'coauthor') userStrength += 5;
+  userStrength = Math.min(100, userStrength);
+  
+  // 计算每所院校的匹配度和录取概率
   const scored = PHD_SCHOOLS.map((school, idx) => {
     let score = 0;
     let reasons = [];
@@ -39106,19 +39150,63 @@ function generatePhdRecommendations() {
     score += Math.min(tutorCount * 2, 15);
     if (tutorCount >= 5) reasons.push('导师资源丰富（' + tutorCount + '位博导）');
     
-    return { school, idx, score: Math.round(score), reasons };
+    // 录取概率评估（基于用户实力和院校难度）
+    const schoolDiff = detail ? detail.difficulty : 6;
+    let admissionProb = 0;
+    if (userStrength >= 80) admissionProb = Math.max(10, 95 - schoolDiff * 5);
+    else if (userStrength >= 60) admissionProb = Math.max(5, 80 - schoolDiff * 6);
+    else if (userStrength >= 40) admissionProb = Math.max(2, 60 - schoolDiff * 5);
+    else admissionProb = Math.max(1, 40 - schoolDiff * 4);
+    admissionProb = Math.min(95, Math.max(1, Math.round(admissionProb)));
+    
+    // 分类：冲刺/稳妥/保底
+    let category = '稳妥';
+    if (admissionProb < 25) category = '冲刺';
+    else if (admissionProb > 60) category = '保底';
+    
+    return { school, idx, score: Math.round(score), reasons, admissionProb, category };
   });
   
-  // 按分数排序，取Top5
+  // 按分类分组
+  const sprint = scored.filter(s => s.category === '冲刺').sort((a, b) => b.score - a.score);
+  const stable = scored.filter(s => s.category === '稳妥').sort((a, b) => b.score - a.score);
+  const safe = scored.filter(s => s.category === '保底').sort((a, b) => b.score - a.score);
+  
+  // 按分数排序，取Top8
   scored.sort((a, b) => b.score - a.score);
-  const top5 = scored.slice(0, 5);
+  const top5 = scored.slice(0, 8);
   
   // 推荐匹配的导师
   const recommendedSupervisors = PHD_SUPERVISORS.filter(sup => 
     sup.directions.some(d => selectedDirections.includes(d))
   ).slice(0, 6);
   
-  let html = '<h4 style="color:#1e293b;margin-bottom:16px">🎯 为你推荐以下院校（按匹配度排序）</h4>';
+  let html = '';
+  
+  // 用户实力评估
+  if (userUndergrad || userGPA || userEnglish || userResearch || userPaper) {
+    const strengthColor = userStrength >= 70 ? '#22c55e' : userStrength >= 50 ? '#f59e0b' : '#ef4444';
+    const strengthLabel = userStrength >= 80 ? '非常有竞争力' : userStrength >= 60 ? '有一定竞争力' : userStrength >= 40 ? '竞争力一般' : '需要加强';
+    html += '<div style="background:#f0fdf4;border-radius:12px;padding:16px 20px;margin-bottom:20px;border-left:4px solid ' + strengthColor + '">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+    html += '<div><span style="font-size:14px;font-weight:600;color:#166534">📊 综合背景评估</span><span style="margin-left:12px;font-size:13px;color:#15803d">' + strengthLabel + '</span></div>';
+    html += '<div style="font-size:28px;font-weight:800;color:' + strengthColor + '">' + userStrength + '<span style="font-size:14px;font-weight:400;color:#64748b">/100</span></div>';
+    html += '</div>';
+    html += '<div style="margin-top:8px;font-size:12px;color:#64748b">基于本科院校、GPA、英语、科研、论文综合评估，仅供参考</div>';
+    html += '</div>';
+    
+    // 分类统计
+    html += '<div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">';
+    html += '<div style="flex:1;min-width:120px;background:#fef2f2;border-radius:10px;padding:12px;text-align:center;border-left:3px solid #ef4444">';
+    html += '<div style="font-size:24px;font-weight:800;color:#ef4444">' + sprint.length + '</div><div style="font-size:12px;color:#991b1b">🚀 冲刺院校</div></div>';
+    html += '<div style="flex:1;min-width:120px;background:#fffbeb;border-radius:10px;padding:12px;text-align:center;border-left:3px solid #f59e0b">';
+    html += '<div style="font-size:24px;font-weight:800;color:#f59e0b">' + stable.length + '</div><div style="font-size:12px;color:#92400e">⚖️ 稳妥院校</div></div>';
+    html += '<div style="flex:1;min-width:120px;background:#f0fdf4;border-radius:10px;padding:12px;text-align:center;border-left:3px solid #22c55e">';
+    html += '<div style="font-size:24px;font-weight:800;color:#22c55e">' + safe.length + '</div><div style="font-size:12px;color:#166534">🛡️ 保底院校</div></div>';
+    html += '</div>';
+  }
+  
+  html += '<h4 style="color:#1e293b;margin-bottom:16px">🎯 为你推荐以下院校（按匹配度排序）</h4>';
   
   top5.forEach((item, rank) => {
     const medal = rank === 0 ? '🥇' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : (rank + 1) + '.';
@@ -39129,7 +39217,14 @@ function generatePhdRecommendations() {
     html += '<span style="font-size:18px;font-weight:700;color:#1e293b">' + item.school.name + '</span></div>';
     html += '<div style="text-align:center"><div style="font-size:24px;font-weight:800;color:' + scoreColor + '">' + item.score + '</div><div style="font-size:11px;color:#94a3b8">匹配度</div></div>';
     html += '</div>';
-    html += '<div style="font-size:13px;color:#64748b;margin-bottom:12px">' + item.school.level + ' · ' + item.school.location + ' · ' + item.school.tutors.length + '位博导</div>';
+    html += '<div style="font-size:13px;color:#64748b;margin-bottom:12px">' + item.school.level + ' · ' + item.school.location + ' · ' + item.school.tutors.length + '位博导';
+    if (item.admissionProb) {
+      const probColor = item.admissionProb >= 50 ? '#22c55e' : item.admissionProb >= 25 ? '#f59e0b' : '#ef4444';
+      const catColor = item.category === '冲刺' ? '#ef4444' : item.category === '稳妥' ? '#f59e0b' : '#22c55e';
+      html += ' · <span style="color:' + probColor + ';font-weight:600">录取概率' + item.admissionProb + '%</span>';
+      html += ' · <span style="background:' + catColor + '15;color:' + catColor + ';padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">' + item.category + '</span>';
+    }
+    html += '</div>';
     html += '<div style="margin-bottom:12px"><span style="font-size:12px;font-weight:600;color:#334155">推荐理由：</span>';
     item.reasons.forEach(r => {
       html += '<span style="display:inline-block;margin:4px 6px 0 0;padding:4px 10px;background:#f0fdf4;color:#166534;border-radius:12px;font-size:11px">✓ ' + r + '</span>';
