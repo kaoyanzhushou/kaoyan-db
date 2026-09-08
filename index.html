@@ -40410,7 +40410,7 @@ function renderPhdProposal() {
     html += '<div style="padding:18px">';
     // textarea编辑模式
     html += '<div id="propEditArea">';
-    html += '<textarea id="propChapterEditor" oninput="propOnEditorInput()" placeholder="在此输入或粘贴本章内容...\n\n提示：点击上方「AI生成」按钮，AI将根据研究方向自动生成本章内容。\n\n可使用工具栏对选中文字应用格式（加粗、标题、列表等）" style="width:100%;min-height:400px;border:1px solid #e2e8f0;border-radius:10px;padding:16px;font-size:14px;line-height:1.9;color:#334155;font-family:inherit;resize:vertical;box-sizing:border-box;transition:border-color 0.2s" onfocus="this.style.borderColor=\'#667eea\';this.style.boxShadow=\'0 0 0 3px rgba(102,126,234,0.1)\'" onblur="this.style.borderColor=\'#e2e8f0\';this.style.boxShadow=\'none\'">' + (cur.content || '') + '</textarea>';
+    html += '<textarea id="propChapterEditor" oninput="propOnEditorInput()" placeholder="在此输入或粘贴本章内容...\n\n提示：点击上方「AI生成」按钮，AI将根据研究方向自动生成本章内容。\n\n可使用工具栏对选中文字应用格式（加粗、标题、列表等）" style="width:100%;min-height:400px;border:1px solid #e2e8f0;border-radius:10px;padding:16px;font-size:14px;line-height:1.9;color:#334155;font-family:inherit;resize:vertical;box-sizing:border-box;transition:border-color 0.2s" onfocus="this.style.borderColor=\'#667eea\';this.style.boxShadow=\'0 0 0 3px rgba(102,126,234,0.1)\'" onblur="this.style.borderColor=\'#e2e8f0\';this.style.boxShadow=\'none\'">' + propEscapeHtml(cur.content || '') + '</textarea>';
     html += '</div>';
     // 预览模式（默认隐藏）
     html += '<div id="propPreviewArea" style="display:none;min-height:400px;border:1px solid #e2e8f0;border-radius:10px;padding:24px;background:#fff">';
@@ -42793,6 +42793,13 @@ function propSwitchAcTab(tab) {
   }
   
   content.innerHTML = html;
+}
+
+
+// HTML转义函数，防止特殊字符破坏textarea
+function propEscapeHtml(text) {
+  if (!text) return '';
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 
