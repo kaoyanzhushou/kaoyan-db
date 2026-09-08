@@ -39064,6 +39064,8 @@ function renderPhdSchools() {
     html += '<option value="">全部院校</option>';
     supSchools.forEach(s => { html += '<option value="' + s + '">' + s + '</option>'; });
     html += '</select>';
+    html += '<select id="phdSupervisorDirFilter" class="phd-filter-select" onchange="filterPhdSupervisors()" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px"><option value="">全部研究方向</option><option value="运动生理学">运动生理学</option><option value="运动解剖学">运动解剖学</option><option value="运动康复">运动康复</option><option value="运动生物力学">运动生物力学</option><option value="运动生物化学">运动生物化学</option><option value="体质健康">体质健康</option><option value="运动与脑健康">运动与脑健康</option><option value="运动医学">运动医学</option><option value="体育教育训练">体育教育训练</option></select>';
+    html += '<select id="phdSupervisorFeatureFilter" class="phd-filter-select" onchange="filterPhdSupervisors()" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px"><option value="">全部导师</option><option value="timeline">有近期动态</option><option value="group">有课题组信息</option><option value="metrics">有成果量化</option><option value="active">在招导师</option></select>';
     html += '</div>';
     
     html += '<div id="phdSupervisorList" class="phd-knowledge-grid">';
@@ -40250,6 +40252,8 @@ function filterPhdSchools() {
 function filterPhdSupervisors() {
   const keyword = document.getElementById('phdSupervisorSearch') ? document.getElementById('phdSupervisorSearch').value.toLowerCase() : '';
   const school = document.getElementById('phdSupervisorSchoolFilter') ? document.getElementById('phdSupervisorSchoolFilter').value : '';
+  const dirFilter = document.getElementById('phdSupervisorDirFilter') ? document.getElementById('phdSupervisorDirFilter').value : '';
+  const featureFilter = document.getElementById('phdSupervisorFeatureFilter') ? document.getElementById('phdSupervisorFeatureFilter').value : '';
   const matchKw = document.getElementById('phdMatchInput') ? document.getElementById('phdMatchInput').value.trim() : '';
   const list = document.getElementById('phdSupervisorList');
   if (!list) return;
@@ -40258,7 +40262,9 @@ function filterPhdSupervisors() {
     const searchText = (sup.name + sup.school + sup.research + sup.directions.join(' ') + sup.papers.join(' ')).toLowerCase();
     const matchKeyword = !keyword || searchText.includes(keyword);
     const matchSchool = !school || sup.school === school;
-    return matchKeyword && matchSchool;
+    const matchDir = !dirFilter || (sup.directions && sup.directions.some(function(d){return d.indexOf(dirFilter)>-1 || dirFilter.indexOf(d)>-1})) || (sup.research && sup.research.indexOf(dirFilter)>-1);
+    const matchFeature = !featureFilter || (featureFilter==='timeline'?!!sup.timeline:featureFilter==='group'?!!sup.group:featureFilter==='metrics'?!!sup.metrics:featureFilter==='active'?!sup.deceased:true);
+    return matchKeyword && matchSchool && matchDir && matchFeature;
   });
   
   // 智能匹配：计算匹配度并排序
