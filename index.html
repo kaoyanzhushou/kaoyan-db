@@ -38938,7 +38938,7 @@ function renderPhdSchools() {
   } else if (window.phdSchoolSubTab === 'tools') {
     // 报考工具
     html += '<div style="margin-bottom:16px;padding:12px 16px;background:#eff6ff;border-radius:8px;border-left:4px solid #3b82f6;font-size:13px;color:#1e40af">';
-    html += '🛠️ 考博报考工具箱：招生简章查询、考博时间线、套磁邮件助手';
+    html += '🛠️ 考博报考工具箱：招生简章查询、考博时间线、套磁邮件助手、面试资料包';
     html += '</div>';
     
     // 功能卡片
@@ -38970,6 +38970,13 @@ function renderPhdSchools() {
     html += '<div style="font-size:32px;margin-bottom:12px">⭐</div>';
     html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">我的收藏</div>';
     html += '<div style="font-size:13px;color:#64748b;line-height:1.6">查看收藏的院校和导师，快速对比和管理你的目标清单</div>';
+    html += '</div>';
+    
+    // 面试资料包
+    html += '<div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);cursor:pointer;border:1px solid #e2e8f0" onclick="showPhdInterviewKit()">';
+    html += '<div style="font-size:32px;margin-bottom:12px">📦</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">面试资料包</div>';
+    html += '<div style="font-size:13px;color:#64748b;line-height:1.6">复试全流程指南：复试流程全解、申请材料清单、面试礼仪与心理调适、高频问题清单</div>';
     html += '</div>';
     
     html += '</div>';
@@ -44370,129 +44377,114 @@ let phdGroupInterviewState = {
 };
 
 function showPhdInterviewKit() {
-  const body = document.getElementById('phdInterviewBody');
-  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">📦 面试资料包</div>';
-  html += '<button class="phd-quiz-btn" style="font-size:12px;padding:6px 12px" onclick="showPhdInterviewHome()">← 返回</button></div>';
-  html += '<div style="margin-bottom:20px;font-size:14px;color:#666;line-height:1.7">考博复试全程实用指南：备考时间线、导师套磁、申请材料、面试礼仪与心理调适（综合公开经验整理，供参考）。</div>';
+  const area = document.getElementById('phdToolsContent');
+  if (!area) return;
+
+  let html = '<div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-top:16px">';
+  html += '<h4 style="margin:0 0 6px;color:#1e293b">📦 面试资料包</h4>';
+  html += '<div style="font-size:13px;color:#64748b;margin-bottom:18px">复试全流程实用指南：流程全解、材料清单、面试礼仪与心理调适、高频问题答题框架（综合公开经验整理，供参考）。</div>';
 
   // Tab切换
   html += '<div style="display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap">';
-  const tabs = [
-    { id: 'timeline', name: '🗓️ 备考时间线' },
-    { id: 'taoci', name: '✉️ 导师套磁' },
-    { id: 'materials', name: '📄 申请材料' },
-    { id: 'etiquette', name: '🤝 礼仪与心理' }
+  const kitTabs = [
+    { id: 'process', name: '🔁 复试流程全解' },
+    { id: 'materials', name: '📄 申请材料清单' },
+    { id: 'etiquette', name: '🤝 礼仪与心理' },
+    { id: 'questions', name: '❓ 高频问题清单' }
   ];
-  tabs.forEach((t, i) => {
-    html += '<button id="kitTab_' + t.id + '" onclick="switchPhdKitTab(\'' + t.id + '\')" style="padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;border:1px solid #e5e7eb;background:' + (i === 0 ? '#667eea' : '#fff') + ';color:' + (i === 0 ? '#fff' : '#333') + ';font-weight:600">' + t.name + '</button>';
+  kitTabs.forEach(function(t, i) {
+    html += '<button id="kitTab_' + t.id + '" onclick="switchPhdKitTab(\'' + t.id + '\')" style="padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;border:1px solid #e5e7eb;background:' + (i === 0 ? '#3b82f6' : '#fff') + ';color:' + (i === 0 ? '#fff' : '#333') + ';font-weight:600">' + t.name + '</button>';
   });
   html += '</div>';
 
-  html += '<div id="kitContentArea">' + kitContent('timeline') + '</div>';
+  html += '<div id="kitContentArea">' + kitContent('process') + '</div>';
+  html += '</div>';
 
-  body.innerHTML = html;
-  openPhdInterviewOverlay();
+  area.innerHTML = html;
 }
 
 function kitContent(tab) {
-  if (tab === 'timeline') {
-    return '<div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:20px">'
-      + '<div style="font-size:16px;font-weight:700;color:#334155;margin-bottom:15px">🗓️ 考博备考时间线（以3-4月考试为例）</div>'
-      + '<div style="font-size:14px;line-height:2;color:#374151">'
-      + '<strong style="color:#667eea">■ 前一年 6-9月｜定方向、选学校、找导师</strong><br>'
-      + '· 明确研究方向（结合硕士课题与兴趣）<br>'
-      + '· 调研目标院校导师团队：近年论文、在研课题、招生意向<br>'
-      + '· 初步联系导师（邮件自我介绍+研究兴趣+读博意向）<br><br>'
-      + '<strong style="color:#667eea">■ 9-12月｜备考黄金期</strong><br>'
-      + '· 专业课系统复习（以目标院校参考书目为准，通读+精读2轮）<br>'
-      + '· 英语：坚持词汇+真题+专业文献阅读（每天1篇英文摘要）<br>'
-      + '· 完成科研计划书初稿，请导师/同行提意见<br>'
-      + '· 关注报名时间（一般11-12月）<br><br>'
-      + '<strong style="color:#667eea">■ 次年 1-2月｜冲刺期</strong><br>'
-      + '· 专业课第三轮：真题+高频考点+模拟限时作答<br>'
-      + '· 科研计划书定稿：反复打磨研究设计细节（样本量、分组、指标、统计）<br>'
-      + '· 英语：口语强化+自我介绍（中英文各准备1分钟/3分钟版）<br>'
-      + '· 面试模拟：每周2-3次（用本站AI面试系统）<br><br>'
-      + '<strong style="color:#667eea">■ 考前 1个月｜复试冲刺</strong><br>'
-      + '· 面试高频问题清单过3遍<br>'
-      + '· 科研计划书能逐条回答追问（这是面试核心）<br>'
-      + '· 准备2-3个自己的研究亮点故事<br>'
-      + '· 英语专业问题：常见方向术语+句式模板<br><br>'
-      + '<strong style="color:#667eea">■ 考后｜及时复盘</strong><br>'
-      + '· 记录面试问题与导师反馈，为可能的调剂或下一年做准备'
-      + '</div></div>';
-  }
-  if (tab === 'taoci') {
-    return '<div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:20px">'
-      + '<div style="font-size:16px;font-weight:700;color:#334155;margin-bottom:15px">✉️ 导师套磁指南</div>'
-      + '<div style="font-size:14px;line-height:2;color:#374151">'
-      + '<strong style="color:#667eea">■ 套磁最佳时间</strong><br>'
-      + '· 首轮：前一年6-9月（了解招生名额与方向匹配度）<br>'
-      + '· 次轮：报名前后（告知已报名，附最新成果）<br>'
-      + '· 考前：复试前1-2周（表明备考状态，礼貌请教）<br><br>'
-      + '<strong style="color:#667eea">■ 邮件结构（5段式）</strong><br>'
-      + '① 标题：博士申请-姓名-硕士学校-研究方向<br>'
-      + '② 开场：自我介绍（学校+专业+毕业时间）+ 邮件目的<br>'
-      + '③ 主体：对导师研究的理解（读过哪几篇论文、理解其核心观点）+ 自己的研究兴趣与匹配点<br>'
-      + '④ 展示：硕士课题简介、已有成果（论文/专利/获奖）、掌握的技术<br>'
-      + '⑤ 结尾：表达诚意+礼貌询问（如"请问老师今年是否有招收博士生的计划"）+ 附件简历/计划书<br><br>'
-      + '<strong style="color:#667eea">■ 避坑要点</strong><br>'
-      + '· 不要群发模板：每封邮件要体现你读过导师的论文<br>'
-      + '· 不要过度承诺：科研计划书方向要真实可行<br>'
-      + '· 不要频繁催促：一般等1-2周，礼貌跟进一次即可<br>'
-      + '· 附件用PDF：简历+成绩单+代表作（如有）+科研计划书（摘要版）'
-      + '</div></div>';
+  if (tab === 'process') {
+    return '<div style="font-size:14px;line-height:2;color:#374151">'
+      + '<strong style="color:#3b82f6">■ 考博复试流程全解（以多数院校通用流程为例）</strong><br><br>'
+      + '<strong>① 报名与资格审查</strong><br>'
+      + '· 网上报名（一般11-12月）→ 提交材料 → 资格审核（学历学位、英语成绩、专家推荐信）<br>'
+      + '· 注意：部分院校要求提前联系导师确认接收意向，务必提前邮件沟通<br><br>'
+      + '<strong>② 初试（笔试）</strong><br>'
+      + '· 专业课：通常1-2门，以参考书目为准，题型含名词解释/简答/论述/研究设计<br>'
+      + '· 英语：词汇语法+阅读理解+翻译，部分院校有听力与写作<br>'
+      + '· 复习要点：真题导向、高频考点反复过、限时模拟作答<br><br>'
+      + '<strong>③ 复试（综合面试）</strong><br>'
+      + '· 英语口语：自我介绍+日常问答+可能涉及专业英语提问<br>'
+      + '· 专业综合面试：科研计划书汇报（5-15分钟PPT）+ 专家提问（研究设计、方法、创新点）<br>'
+      + '· 思想政治与心理素质考察：报考动机、学术志向、抗压能力<br><br>'
+      + '<strong>④ 体检与录取</strong><br>'
+      + '· 拟录取名单公示 → 体检 → 政审 → 发放录取通知书<br>'
+      + '· 时间线参考：12月报名 → 3-4月初试 → 4-5月复试 → 6月录取'
+      + '</div>';
   }
   if (tab === 'materials') {
-    return '<div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:20px">'
-      + '<div style="font-size:16px;font-weight:700;color:#334155;margin-bottom:15px">📄 申请材料清单与准备要点</div>'
-      + '<div style="font-size:14px;line-height:2;color:#374151">'
-      + '<strong style="color:#667eea">■ 核心材料</strong><br>'
+    return '<div style="font-size:14px;line-height:2;color:#374151">'
+      + '<strong style="color:#3b82f6">■ 核心材料</strong><br>'
       + '· 博士报名登记表（按要求填写，注意照片与签名）<br>'
       + '· 硕士学历学位证书、学籍证明<br>'
       + '· 硕士成绩单（加盖学校公章）<br>'
       + '· 专家推荐信2-3封（建议：硕士导师+1位教授；内容具体，避免空话）<br><br>'
-      + '<strong style="color:#667eea">■ 加分材料</strong><br>'
+      + '<strong style="color:#3b82f6">■ 加分材料</strong><br>'
       + '· 科研计划书（5000-10000字）：选题依据/目标/内容/方法/创新点/进度<br>'
       + '· 已发表论文（全文PDF，重点标出自己贡献）<br>'
       + '· 个人简历（1-2页：教育/科研/实践/技能/获奖）<br>'
       + '· 英语成绩（六级/雅思/托福，按学校要求）<br>'
       + '· 硕士学位论文（或摘要+目录）<br><br>'
-      + '<strong style="color:#667eea">■ 材料准备要点</strong><br>'
+      + '<strong style="color:#3b82f6">■ 材料准备要点</strong><br>'
       + '· 所有材料准备电子版+纸质版（按学校要求装订）<br>'
       + '· 简历和计划书让2-3位老师帮忙提意见<br>'
       + '· 获奖证书扫描件统一整理成PDF<br>'
       + '· 提前确认报名系统开放时间，避免最后一天提交'
-      + '</div></div>';
+      + '</div>';
   }
-  return '<div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:20px">'
-    + '<div style="font-size:16px;font-weight:700;color:#334155;margin-bottom:15px">🤝 面试礼仪与心理调适</div>'
-    + '<div style="font-size:14px;line-height:2;color:#374151">'
-    + '<strong style="color:#667eea">■ 面试礼仪</strong><br>'
-    + '· 着装：整洁得体（正式但不夸张），男生衬衫/商务休闲，女生职业装/素雅裙装<br>'
-    + '· 入场：轻敲门，进门微笑问好，得到示意再落座<br>'
-    + '· 交流：眼神与每位面试官有交流，坐姿端正，手部自然<br>'
-    + '· 答题：听完问题停顿2-3秒组织思路再答；被打断时礼貌倾听<br>'
-    + '· 离场：道谢、轻推椅子、轻轻关门<br><br>'
-    + '<strong style="color:#667eea">■ 心理调适</strong><br>'
-    + '· 考前：模拟面试脱敏（用本站AI面试系统练习）+ 正念呼吸<br>'
-    + '· 考中：紧张时放慢语速，说"请允许我思考一下"争取缓冲<br>'
-    + '· 遇到不会的题：诚实说明+展示思路（"这个问题我了解有限，但我认为可以从……角度分析"）<br>'
-    + '· 考后：无论结果如何，及时复盘记录，不沉溺于情绪<br><br>'
-    + '<strong style="color:#667eea">■ 常见压力题应对</strong><br>'
-    + '· 「你硕士期间为什么没有发高水平论文？」→ 承认差距+说明原因+展示现在的能力提升<br>'
-    + '· 「你的研究方向和我们团队不太匹配？」→ 说明交叉点+学习意愿+可迁移技能<br>'
-    + '· 「如果今年没考上你怎么办？」→ 表达坚持+说明备选方案（体现成熟心态）'
-    + '</div></div>';
+  if (tab === 'etiquette') {
+    return '<div style="font-size:14px;line-height:2;color:#374151">'
+      + '<strong style="color:#3b82f6">■ 面试礼仪</strong><br>'
+      + '· 着装：整洁得体（正式但不夸张），男生衬衫/商务休闲，女生职业装/素雅裙装<br>'
+      + '· 入场：轻敲门，进门微笑问好，得到示意再落座<br>'
+      + '· 交流：眼神与每位面试官有交流，坐姿端正，手部自然<br>'
+      + '· 答题：听完问题停顿2-3秒组织思路再答；被打断时礼貌倾听<br>'
+      + '· 离场：道谢、轻推椅子、轻轻关门<br><br>'
+      + '<strong style="color:#3b82f6">■ 心理调适</strong><br>'
+      + '· 考前：模拟面试脱敏（用本站AI面试系统练习）+ 正念呼吸<br>'
+      + '· 考中：紧张时放慢语速，说"请允许我思考一下"争取缓冲<br>'
+      + '· 遇到不会的题：诚实说明+展示思路（"这个问题我了解有限，但我认为可以从……角度分析"）<br>'
+      + '· 考后：无论结果如何，及时复盘记录，不沉溺于情绪<br><br>'
+      + '<strong style="color:#3b82f6">■ 常见压力题应对</strong><br>'
+      + '· 「你硕士期间为什么没有发高水平论文？」→ 承认差距+说明原因+展示现在的能力提升<br>'
+      + '· 「你的研究方向和我们团队不太匹配？」→ 说明交叉点+学习意愿+可迁移技能<br>'
+      + '· 「如果今年没考上你怎么办？」→ 表达坚持+说明备选方案（体现成熟心态）'
+      + '</div>';
+  }
+  return '<div style="font-size:14px;line-height:2;color:#374151">'
+    + '<strong style="color:#3b82f6">■ 高频问题分类与答题框架</strong><br><br>'
+    + '<strong>① 专业基础类</strong>（如"简述运动性疲劳的机制"）<br>'
+    + '· 框架：概念界定 → 分类 → 核心机制（2-3点）→ 证据/实验 → 应用意义<br><br>'
+    + '<strong>② 研究设计类</strong>（如"如果研究间歇训练对心肌重塑的影响，你会怎么设计？"）<br>'
+    + '· 框架：研究假设 → 对象与分组 → 干预方案 → 观测指标 → 统计方法 → 预期结果与创新点<br><br>'
+    + '<strong>③ 科研计划书答辩类</strong>（"你的研究为什么有价值？创新点在哪？"）<br>'
+    + '· 框架：问题背景（数据/文献支撑）→ 研究缺口 → 你的切入点 → 可行性（团队/平台/技术）→ 预期贡献<br><br>'
+    + '<strong>④ 个人规划类</strong>（"为什么读博？为什么选我们学校？"）<br>'
+    + '· 框架：学术兴趣来源（具体经历）→ 与目标导师/方向的匹配点（读过其论文）→ 3-5年规划 → 表达诚意<br><br>'
+    + '<strong>⑤ 英语问答类</strong>（Tell me about your research.）<br>'
+    + '· 框架：Topic sentence（研究方向）→ Research background → Methods → Key findings → Future plan<br><br>'
+    + '<strong>⑥ 压力应变类</strong>（"你最大的缺点是什么？"）<br>'
+    + '· 框架：真实但不致命 → 已采取的改进措施 → 现在的进步表现'
+    + '</div>';
 }
 
 function switchPhdKitTab(tab) {
-  const tabs = ['timeline', 'taoci', 'materials', 'etiquette'];
-  const names = ['🗓️ 备考时间线', '✉️ 导师套磁', '📄 申请材料', '🤝 礼仪与心理'];
-  tabs.forEach((t, i) => {
+  const tabs = ['process', 'materials', 'etiquette', 'questions'];
+  tabs.forEach(function(t) {
     const el = document.getElementById('kitTab_' + t);
     if (el) {
-      el.style.background = t === tab ? '#667eea' : '#fff';
+      el.style.background = t === tab ? '#3b82f6' : '#fff';
       el.style.color = t === tab ? '#fff' : '#333';
     }
   });
@@ -47269,7 +47261,6 @@ function renderPhdInterview() {
   html += '<button class="phd-practice-btn" style="color:#0e7490;background:#ecfeff;border:1px solid #a5f3fc" onclick="showPhdSchoolGuides()">🏫 院校面试指南</button>';
   html += '<button class="phd-practice-btn" style="color:#be185d;background:#fdf2f8;border:1px solid #fbcfe8" onclick="startPhdSelfIntro()">📝 自我介绍AI生成</button>';
   html += '<button class="phd-practice-btn" style="color:#0891b2;background:#ecfeff;border:1px solid #a5f3fc" onclick="showPhdLearningAnalytics()">📊 学习分析</button>';
-  html += '<button class="phd-practice-btn" style="color:#7c2d12;background:#ffedd5;border:1px solid #fed7aa" onclick="showPhdInterviewKit()">📦 面试资料包</button>';
   html += '<button class="phd-practice-btn" style="color:#fff;background:linear-gradient(135deg,#667eea,#764ba2);border:none" onclick="startPhdAIMockInterview()">🤖 AI实时对话面试（推荐）</button>';
   html += '<button class="phd-practice-btn secondary" onclick="showPhdInterviewHistory()">📋 面试记录</button>';
   html += '<button class="phd-practice-btn secondary" onclick="showPhdWrongBook()">📒 错题本/收藏</button>';
