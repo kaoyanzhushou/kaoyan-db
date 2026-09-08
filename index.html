@@ -40839,10 +40839,10 @@ function propGenerateChapter() {
     console.log('[propGenerateChapter] 已设置chapter.content, 长度:', chapter.content.length);
     
     chapter.status = 'editing';
-    propAutoSave();
-    console.log('[propGenerateChapter] 已保存, 开始渲染...');
+    renderPhdProposal(); // 先渲染更新编辑器
+    console.log('[propGenerateChapter] 已渲染, 开始保存...');
     
-    renderPhdProposal();
+    propAutoSave(); // 再保存（编辑器已更新）
     console.log('[propGenerateChapter] 渲染完成');
     
     // 生成完成后自动运行内容校验
@@ -40879,8 +40879,8 @@ function propPolishChapter() {
   
   callDeepSeekAPI(systemPrompt, '请对以下科研计划书内容进行学术化润色：\n\n' + chapter.content, 4000, 'deepseek-chat').then(response => {
     chapter.content = response.trim();
-    propAutoSave();
     renderPhdProposal();
+    propAutoSave();
     alert('润色完成！\n\n原文字数: ' + originalContent.length + '\n润色后字数: ' + chapter.content.length);
   }).catch(err => {
     alert('润色失败: ' + err.message);
@@ -40900,8 +40900,8 @@ function propAIContinue() {
   
   callDeepSeekAPI(systemPrompt, '【研究题目】' + (window.propState.meta.title || '未设定') + '\n【当前章节】' + chapter.title + '\n\n【前文最后部分（请在此基础上续写）】\n' + context + '\n\n请续写后续内容：', 2500, 'deepseek-chat').then(response => {
     chapter.content = (chapter.content || '') + '\n\n' + response.trim();
-    propAutoSave();
     renderPhdProposal();
+    propAutoSave();
   }).catch(err => {
     alert('续写失败: ' + err.message);
   });
@@ -41083,8 +41083,8 @@ function propFormatRefs() {
   
   callDeepSeekAPI(systemPrompt, '请格式化以下参考文献：\n\n' + chapter.content, 2000, 'deepseek-chat').then(response => {
     chapter.content = response.trim();
-    propAutoSave();
     renderPhdProposal();
+    propAutoSave();
     alert('参考文献格式化完成！');
   }).catch(err => {
     alert('格式化失败: ' + err.message);
