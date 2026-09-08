@@ -40353,24 +40353,66 @@ function renderPhdProposal() {
     });
     html += '</div></div>';
   } else {
-    // 编辑模式
+    // 编辑模式（升级版）
     const cur = window.propState.chapters[window.propState.currentChapter];
+    const curCount = cur.content ? cur.content.length : 0;
+    // 各章目标字数
+    const chapterTargets = {bg: 1500, review: 2000, goals: 1200, methods: 2500, results: 1000, schedule: 800, refs: 500};
+    const targetCount = chapterTargets[cur.id] || 1500;
+    const countPercent = Math.min(100, Math.round(curCount / targetCount * 100));
+    
     html += '<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9;overflow:hidden">';
     // 章节头部
-    html += '<div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">';
+    html += '<div style="padding:14px 18px;border-bottom:1px solid #f1f5f9">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">';
     html += '<div style="display:flex;align-items:center;gap:10px">';
     html += '<span style="font-size:16px">' + (cur.status === 'confirmed' ? '✅' : cur.status === 'editing' ? '✏️' : '⬜') + '</span>';
     html += '<span style="font-size:16px;font-weight:800;color:#1e293b">' + cur.title + '</span>';
-    html += '<span id="propCurChapterCount" style="font-size:12px;color:#94a3b8;background:#f1f5f9;padding:3px 10px;border-radius:10px">' + (cur.content ? cur.content.length : 0) + '字</span>';
     html += '</div>';
-    html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">';
+    // 编辑/预览切换
+    html += '<div style="display:flex;background:#f1f5f9;border-radius:7px;padding:2px">';
+    html += '<button id="propEditModeBtn" onclick="propSwitchEditMode(\'edit\')" style="padding:5px 12px;background:#667eea;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">✏️ 编辑</button>';
+    html += '<button id="propPreviewModeBtn" onclick="propSwitchEditMode(\'preview\')" style="padding:5px 12px;background:transparent;color:#64748b;border:none;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">👁️ 预览</button>';
+    html += '</div>';
     html += '<button onclick="propGenerateChapter()" style="padding:7px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">🤖 AI生成</button>';
     html += '<button onclick="propPolishChapter()" style="padding:7px 14px;background:#f1f5f9;color:#475569;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">✨ AI润色</button>';
     html += '<button onclick="propConfirmChapter()" style="padding:7px 14px;background:#10b981;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">✅ 确认本章</button>';
     html += '</div></div>';
+    // 字数进度条
+    html += '<div style="display:flex;align-items:center;gap:10px">';
+    html += '<span id="propCurChapterCount" style="font-size:12px;color:#475569;font-weight:600;white-space:nowrap">' + curCount + ' / ' + targetCount + ' 字</span>';
+    html += '<div style="flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden">';
+    html += '<div style="height:100%;width:' + countPercent + '%;background:' + (countPercent >= 100 ? '#10b981' : countPercent >= 60 ? '#f59e0b' : '#ef4444') + ';border-radius:3px;transition:width 0.3s"></div>';
+    html += '</div>';
+    html += '<span style="font-size:11px;color:#94a3b8;white-space:nowrap">' + countPercent + '%</span>';
+    html += '</div></div>';
+    // 富文本工具栏（编辑模式下显示）
+    html += '<div id="propToolbar" style="padding:8px 18px;background:#f8fafc;border-bottom:1px solid #f1f5f9;display:flex;gap:4px;flex-wrap:wrap;align-items:center">';
+    html += '<button onclick="propFormatText(\'bold\')" title="加粗" style="padding:5px 9px;background:#fff;border:1px solid #e2e8f0;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700;color:#475569" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">B</button>';
+    html += '<button onclick="propFormatText(\'italic\')" title="斜体" style="padding:5px 9px;background:#fff;border:1px solid #e2e8f0;border-radius:5px;cursor:pointer;font-size:12px;font-style:italic;color:#475569" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">I</button>';
+    html += '<button onclick="propFormatText(\'underline\')" title="下划线" style="padding:5px 9px;background:#fff;border:1px solid #e2e8f0;border-radius:5px;cursor:pointer;font-size:12px;text-decoration:underline;color:#475569" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">U</button>';
+    html += '<div style="width:1px;height:20px;background:#e2e8f0;margin:0 4px"></div>';
+    html += '<button onclick="propFormatText(\'h2\')" title="二级标题" style="padding:5px 9px;background:#fff;border:1px solid #e2e8f0;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;color:#475569" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">H2</button>';
+    html += '<button onclick="propFormatText(\'h3\')" title="三级标题" style="padding:5px 9px;background:#fff;border:1px solid #e2e8f0;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;color:#475569" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">H3</button>';
+    html += '<div style="width:1px;height:20px;background:#e2e8f0;margin:0 4px"></div>';
+    html += '<button onclick="propFormatText(\'ul\')" title="无序列表" style="padding:5px 9px;background:#fff;border:1px solid #e2e8f0;border-radius:5px;cursor:pointer;font-size:12px;color:#475569" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">• 列表</button>';
+    html += '<button onclick="propFormatText(\'ol\')" title="有序列表" style="padding:5px 9px;background:#fff;border:1px solid #e2e8f0;border-radius:5px;cursor:pointer;font-size:12px;color:#475569" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">1. 列表</button>';
+    html += '<button onclick="propFormatText(\'quote\')" title="引用" style="padding:5px 9px;background:#fff;border:1px solid #e2e8f0;border-radius:5px;cursor:pointer;font-size:12px;color:#475569" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">❝ 引用</button>';
+    html += '<div style="width:1px;height:20px;background:#e2e8f0;margin:0 4px"></div>';
+    html += '<button onclick="propFormatText(\'clear\')" title="清除格式" style="padding:5px 9px;background:#fff;border:1px solid #e2e8f0;border-radius:5px;cursor:pointer;font-size:11px;color:#94a3b8" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=\'#fff\'">清除格式</button>';
+    html += '<span style="margin-left:auto;font-size:10px;color:#94a3b8">💡 选中文字后点击按钮应用格式</span>';
+    html += '</div>';
     // 编辑区
     html += '<div style="padding:18px">';
-    html += '<textarea id="propChapterEditor" oninput="propOnEditorInput()" placeholder="在此输入或粘贴本章内容...\n\n提示：点击上方「AI生成」按钮，AI将根据研究方向自动生成本章内容。" style="width:100%;min-height:400px;border:1px solid #e2e8f0;border-radius:10px;padding:16px;font-size:14px;line-height:1.9;color:#334155;font-family:inherit;resize:vertical;box-sizing:border-box;transition:border-color 0.2s" onfocus="this.style.borderColor=\'#667eea\';this.style.boxShadow=\'0 0 0 3px rgba(102,126,234,0.1)\'" onblur="this.style.borderColor=\'#e2e8f0\';this.style.boxShadow=\'none\'">' + (cur.content || '') + '</textarea>';
+    // textarea编辑模式
+    html += '<div id="propEditArea">';
+    html += '<textarea id="propChapterEditor" oninput="propOnEditorInput()" placeholder="在此输入或粘贴本章内容...\n\n提示：点击上方「AI生成」按钮，AI将根据研究方向自动生成本章内容。\n\n可使用工具栏对选中文字应用格式（加粗、标题、列表等）" style="width:100%;min-height:400px;border:1px solid #e2e8f0;border-radius:10px;padding:16px;font-size:14px;line-height:1.9;color:#334155;font-family:inherit;resize:vertical;box-sizing:border-box;transition:border-color 0.2s" onfocus="this.style.borderColor=\'#667eea\';this.style.boxShadow=\'0 0 0 3px rgba(102,126,234,0.1)\'" onblur="this.style.borderColor=\'#e2e8f0\';this.style.boxShadow=\'none\'">' + (cur.content || '') + '</textarea>';
+    html += '</div>';
+    // 预览模式（默认隐藏）
+    html += '<div id="propPreviewArea" style="display:none;min-height:400px;border:1px solid #e2e8f0;border-radius:10px;padding:24px;background:#fff">';
+    html += '<div id="propPreviewContent" style="font-size:14px;line-height:2;color:#334155;font-family:inherit"></div>';
+    html += '</div>';
     // 底部操作
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px">';
     html += '<div style="display:flex;gap:8px">';
@@ -42531,6 +42573,143 @@ function propDeleteVersion(id) {
   versions = versions.filter(v => v.id !== id);
   localStorage.setItem('prop_versions', JSON.stringify(versions));
   propRenderVersionList();
+}
+
+
+// ===== 编辑器升级支持函数 =====
+function propSwitchEditMode(mode) {
+  const editArea = document.getElementById('propEditArea');
+  const previewArea = document.getElementById('propPreviewArea');
+  const editBtn = document.getElementById('propEditModeBtn');
+  const previewBtn = document.getElementById('propPreviewModeBtn');
+  const toolbar = document.getElementById('propToolbar');
+  if (!editArea || !previewArea) return;
+  
+  if (mode === 'preview') {
+    // 保存当前编辑内容
+    const editor = document.getElementById('propChapterEditor');
+    if (editor && window.propState) {
+      const idx = window.propState.currentChapter;
+      window.propState.chapters[idx].content = editor.value;
+    }
+    // 渲染预览
+    propRenderPreview();
+    editArea.style.display = 'none';
+    previewArea.style.display = 'block';
+    if (toolbar) toolbar.style.display = 'none';
+    if (editBtn) { editBtn.style.background = 'transparent'; editBtn.style.color = '#64748b'; }
+    if (previewBtn) { previewBtn.style.background = '#667eea'; previewBtn.style.color = '#fff'; }
+  } else {
+    editArea.style.display = 'block';
+    previewArea.style.display = 'none';
+    if (toolbar) toolbar.style.display = 'flex';
+    if (editBtn) { editBtn.style.background = '#667eea'; editBtn.style.color = '#fff'; }
+    if (previewBtn) { previewBtn.style.background = 'transparent'; previewBtn.style.color = '#64748b'; }
+  }
+}
+
+function propRenderPreview() {
+  const previewContent = document.getElementById('propPreviewContent');
+  if (!previewContent || !window.propState) return;
+  const idx = window.propState.currentChapter;
+  const content = window.propState.chapters[idx].content || '';
+  
+  // 简单的Markdown-like渲染
+  let html = content;
+  // 转义HTML
+  html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // 标题
+  html = html.replace(/^### (.+)$/gm, '<h3 style="font-size:15px;font-weight:700;color:#1e293b;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0">$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2 style="font-size:17px;font-weight:800;color:#1e293b;margin:20px 0 10px">$1</h2>');
+  // 加粗
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight:700;color:#1e293b">$1</strong>');
+  // 斜体
+  html = html.replace(/\*(.+?)\*/g, '<em style="font-style:italic">$1</em>');
+  // 无序列表
+  html = html.replace(/^[-•] (.+)$/gm, '<li style="margin-left:20px;line-height:2">$1</li>');
+  // 有序列表
+  html = html.replace(/^\d+\. (.+)$/gm, '<li style="margin-left:20px;line-height:2;list-style:decimal">$1</li>');
+  // 引用
+  html = html.replace(/^> (.+)$/gm, '<blockquote style="border-left:3px solid #667eea;padding:8px 16px;margin:12px 0;background:#f8fafc;color:#64748b;border-radius:0 6px 6px 0">$1</blockquote>');
+  // 段落
+  html = html.replace(/\n\n/g, '</p><p style="margin:0 0 12px;text-indent:2em">');
+  html = '<p style="margin:0 0 12px;text-indent:2em">' + html + '</p>';
+  // 清理空段落
+  html = html.replace(/<p style="margin:0 0 12px;text-indent:2em"><\/p>/g, '');
+  
+  previewContent.innerHTML = html;
+}
+
+function propFormatText(format) {
+  const editor = document.getElementById('propChapterEditor');
+  if (!editor) return;
+  
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const selectedText = editor.value.substring(start, end);
+  
+  if (!selectedText && format !== 'clear') {
+    alert('请先选中要格式化的文字');
+    return;
+  }
+  
+  let newText = selectedText;
+  let cursorOffset = 0;
+  
+  switch(format) {
+    case 'bold':
+      newText = '**' + selectedText + '**';
+      cursorOffset = 2;
+      break;
+    case 'italic':
+      newText = '*' + selectedText + '*';
+      cursorOffset = 1;
+      break;
+    case 'underline':
+      newText = selectedText; // textarea不支持下划线，用提示
+      alert('提示：纯文本编辑器不支持下划线格式。可在预览模式下查看其他格式效果。');
+      return;
+    case 'h2':
+      // 如果选中行已有##则移除，否则添加
+      if (selectedText.startsWith('## ')) {
+        newText = selectedText.substring(3);
+      } else {
+        newText = '\n## ' + selectedText + '\n';
+      }
+      break;
+    case 'h3':
+      if (selectedText.startsWith('### ')) {
+        newText = selectedText.substring(4);
+      } else {
+        newText = '\n### ' + selectedText + '\n';
+      }
+      break;
+    case 'ul':
+      // 每行添加•
+      const lines = selectedText.split('\n');
+      newText = lines.map(l => l.startsWith('• ') ? l : '• ' + l).join('\n');
+      break;
+    case 'ol':
+      const olLines = selectedText.split('\n');
+      newText = olLines.map((l, i) => l.match(/^\d+\. /) ? l : (i+1) + '. ' + l).join('\n');
+      break;
+    case 'quote':
+      const quoteLines = selectedText.split('\n');
+      newText = quoteLines.map(l => l.startsWith('> ') ? l : '> ' + l).join('\n');
+      break;
+    case 'clear':
+      // 清除所有格式标记
+      newText = selectedText.replace(/\*\*/g, '').replace(/\*/g, '').replace(/^##\s+/gm, '').replace(/^###\s+/gm, '').replace(/^[-•]\s+/gm, '').replace(/^\d+\.\s+/gm, '').replace(/^>\s+/gm, '');
+      break;
+  }
+  
+  editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+  editor.focus();
+  editor.selectionStart = start + cursorOffset;
+  editor.selectionEnd = start + newText.length - cursorOffset;
+  
+  // 触发input事件更新字数
+  propOnEditorInput();
 }
 
 
