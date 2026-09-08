@@ -44281,6 +44281,259 @@ let phdReverseInterviewState = {
   major: '运动生理学'
 };
 
+const PHD_GROUP_TOPICS = [
+  { title: '我国竞技体育「科技助力」的利与弊及未来发展方向', desc: '讨论：科技助力在竞技体育中的作用边界、伦理问题、未来重点' },
+  { title: '「健康中国」战略下体育科研工作者应如何发挥作用', desc: '讨论：体医融合、运动处方、健康服务体系的建设路径' },
+  { title: '运动损伤康复中「回归运动」标准应如何制定', desc: '讨论：评估指标、主观报告与客观数据的权重、个体化考量' },
+  { title: '人工智能在运动训练监控中的应用前景与伦理边界', desc: '讨论：可穿戴设备、AI教练、数据隐私与运动员权益' },
+  { title: '青少年体质持续下降背景下学校体育改革的关键突破口', desc: '讨论：课程设置、师资、评价机制、家校社协同' },
+  { title: '个性化运动处方能否替代传统群体化运动指导', desc: '讨论：精准医学视角、成本效益、可推广性' }
+];
+
+let phdGroupInterviewState = {
+  mode: 'setup',       // setup | discuss | ended
+  topic: '',
+  topicDesc: '',
+  candidates: [],      // [{name, style}]
+  rounds: 2,
+  currentRound: 0,
+  maxRounds: 2,
+  conversation: [],    // {role: 'host'|'cand'|'user'|'system', name, content}
+  aiThinking: false
+};
+
+function startPhdGroupInterview() {
+  phdGroupInterviewState = { mode: 'setup', topic: '', topicDesc: '', candidates: [], rounds: 2, currentRound: 0, maxRounds: 2, conversation: [], aiThinking: false };
+  const body = document.getElementById('phdInterviewBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">👥 小组面试（无领导小组讨论）</div></div>';
+  html += '<div style="margin-bottom:20px;font-size:14px;color:#666;line-height:1.7">模拟考博复试中的无领导小组讨论：AI扮演多名观点不同的考生与你同场讨论，AI面试官主持全场。结束后AI导师从观点质量、逻辑表达、协作意识等维度点评你的表现。</div>';
+
+  html += '<div style="margin-bottom:20px">';
+  html += '<div style="font-weight:600;margin-bottom:10px;color:#333">📋 讨论话题：</div>';
+  html += '<select id="groupTopicSel" class="phd-quiz-textarea" style="min-height:auto;padding:10px;margin-bottom:10px">';
+  PHD_GROUP_TOPICS.forEach((t, i) => {
+    html += '<option value="' + i + '">' + t.title + '</option>';
+  });
+  html += '<option value="custom">✍️ 自定义话题</option>';
+  html += '</select>';
+  html += '<textarea id="groupTopicCustom" class="phd-quiz-textarea" placeholder="自定义话题（如：运动与肠道菌群研究的热点与挑战）" style="min-height:50px;display:none"></textarea>';
+
+  html += '<div style="font-weight:600;margin-bottom:10px;color:#333;margin-top:15px">👥 AI考生人数：</div>';
+  html += '<select id="groupCandCount" class="phd-quiz-textarea" style="min-height:auto;padding:10px;margin-bottom:15px">';
+  html += '<option value="2">2位AI考生（精简讨论）</option>';
+  html += '<option value="3" selected>3位AI考生（标准讨论）</option>';
+  html += '</select>';
+
+  html += '<div style="font-weight:600;margin-bottom:10px;color:#333">🔄 讨论轮数：</div>';
+  html += '<select id="groupRounds" class="phd-quiz-textarea" style="min-height:auto;padding:10px">';
+  html += '<option value="2">2轮（快速模拟）</option>';
+  html += '<option value="3" selected>3轮（标准模拟）</option>';
+  html += '</select>';
+  html += '</div>';
+
+  html += '<div class="phd-quiz-actions" style="justify-content:center">';
+  html += '<button class="phd-quiz-btn primary" onclick="beginPhdGroupInterview()">🚀 开始讨论</button>';
+  html += '</div>';
+
+  body.innerHTML = html;
+  openPhdInterviewOverlay();
+
+  // 话题切换时显示/隐藏自定义输入
+  document.getElementById('groupTopicSel').addEventListener('change', function () {
+    document.getElementById('groupTopicCustom').style.display = this.value === 'custom' ? 'block' : 'none';
+  });
+}
+
+function beginPhdGroupInterview() {
+  const sel = document.getElementById('groupTopicSel');
+  const idx = parseInt(sel.value);
+  if (sel.value === 'custom') {
+    const custom = document.getElementById('groupTopicCustom').value.trim();
+    if (!custom) { alert('请输入自定义话题'); return; }
+    phdGroupInterviewState.topic = custom;
+    phdGroupInterviewState.topicDesc = '无领导小组讨论话题';
+  } else {
+    phdGroupInterviewState.topic = PHD_GROUP_TOPICS[idx].title;
+    phdGroupInterviewState.topicDesc = PHD_GROUP_TOPICS[idx].desc;
+  }
+  const n = parseInt(document.getElementById('groupCandCount').value);
+  const roundN = parseInt(document.getElementById('groupRounds').value);
+  phdGroupInterviewState.maxRounds = roundN;
+  phdGroupInterviewState.rounds = roundN;
+  // AI考生人设
+  const all = [
+    { name: '考生A · 严谨实证', style: '注重科学证据、数据统计与研究设计严谨性，引用文献与机制' },
+    { name: '考生B · 实践应用', style: '侧重一线训练与康复实践、可操作性、落地建议，善举实例' },
+    { name: '考生C · 批判思辨', style: '喜欢质疑主流观点、指出盲区与伦理问题、提出另类视角' },
+    { name: '考生D · 综合协调', style: '善于总结归纳各方观点、寻找共识、推动讨论进程' }
+  ];
+  phdGroupInterviewState.candidates = all.slice(0, n);
+  phdGroupInterviewState.currentRound = 0;
+  phdGroupInterviewState.conversation = [];
+  phdGroupInterviewState.mode = 'discuss';
+  phdGroupInterviewState.conversation.push({ role: 'host', name: '面试官', content: '欢迎各位参加今天的无领导小组讨论。讨论话题：「' + phdGroupInterviewState.topic + '」。' + phdGroupInterviewState.topicDesc + '。请各位依次发表观点，注意倾听他人、补充或质疑，最后形成一定共识。讨论现在开始，请各位考生发言。' });
+  renderPhdGroupInterview();
+  // 首轮：AI考生先发言
+  setTimeout(() => { generateGroupCandidateSpeech('first'); }, 800);
+}
+
+function renderPhdGroupInterview() {
+  const body = document.getElementById('phdInterviewBody');
+  const st = phdGroupInterviewState;
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">👥 小组面试 · 无领导小组讨论</div>';
+  html += '<button class="phd-quiz-btn" style="font-size:12px;padding:6px 12px" onclick="showPhdInterviewHome()">← 返回</button></div>';
+  html += '<div style="margin-bottom:12px;font-size:13px;color:#555;line-height:1.6">📋 话题：' + st.topic + ' ｜ 轮次：' + (st.currentRound + 1) + '/' + st.maxRounds + ' ｜ 考生：' + st.candidates.map(c => c.name).join('、') + ' + 你</div>';
+
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:15px;max-height:440px;overflow-y:auto;margin-bottom:15px" id="groupChatArea">';
+  st.conversation.forEach(m => {
+    if (m.role === 'host') {
+      html += '<div style="margin-bottom:12px;text-align:center"><div style="display:inline-block;max-width:90%;background:#eef2ff;border-radius:12px;padding:10px 14px;font-size:13px;color:#3730a3;text-align:left;line-height:1.7;white-space:pre-wrap">🎙️ <strong>' + m.name + '：</strong>' + m.content + '</div></div>';
+    } else if (m.role === 'cand') {
+      html += '<div style="margin-bottom:12px;text-align:left"><div style="display:inline-block;max-width:85%;background:#f0fdf4;border-radius:12px 12px 12px 2px;padding:10px 14px;font-size:13px;color:#14532d;line-height:1.7;white-space:pre-wrap">👤 <strong>' + m.name + '：</strong>' + m.content + '</div></div>';
+    } else if (m.role === 'user') {
+      html += '<div style="margin-bottom:12px;text-align:right"><div style="display:inline-block;max-width:80%;background:#e0f2fe;border-radius:12px 12px 2px 12px;padding:10px 14px;font-size:13px;color:#0c4a6e;text-align:left;line-height:1.7;white-space:pre-wrap">🙋 <strong>你：</strong>' + m.content + '</div></div>';
+    } else {
+      html += '<div style="margin-bottom:12px;text-align:center;font-size:12px;color:#999">' + m.content + '</div>';
+    }
+  });
+  if (st.aiThinking) {
+    html += '<div style="text-align:center;color:#888;padding:10px;font-size:13px">🤔 AI考生们正在思考发言…</div>';
+  }
+  html += '</div>';
+
+  // 输入区（讨论轮次内可用）
+  if (st.mode === 'discuss' && !st.aiThinking) {
+    html += '<textarea id="groupUserInput" class="phd-quiz-textarea" placeholder="轮到你发言：发表你的观点、补充或质疑其他考生…（也可点击下方按钮跳过你的发言）" style="min-height:70px"></textarea>';
+    html += '<div class="phd-quiz-actions" style="margin-top:10px">';
+    html += '<button class="phd-quiz-btn primary" style="flex:2" onclick="submitGroupUserSpeech()">📤 提交我的发言</button>';
+    html += '<button class="phd-quiz-btn" style="flex:1" onclick="skipGroupUserSpeech()">⏭️ 跳过本轮</button>';
+    html += '<button class="phd-quiz-btn" style="flex:1" onclick="endGroupInterview()">🏁 结束讨论</button>';
+    html += '</div>';
+  } else if (st.mode === 'discuss' && st.aiThinking) {
+    html += '<div class="phd-quiz-actions" style="justify-content:center;margin-top:5px"><span style="font-size:13px;color:#888">AI考生发言中，请稍候…</span></div>';
+  }
+
+  body.innerHTML = html;
+  const area = document.getElementById('groupChatArea');
+  if (area) area.scrollTop = area.scrollHeight;
+}
+
+async function generateGroupCandidateSpeech(kind) {
+  const st = phdGroupInterviewState;
+  st.aiThinking = true;
+  renderPhdGroupInterview();
+
+  const candDesc = st.candidates.map((c, i) => (i + 1) + '. ' + c.name + '（角色定位：' + c.style + '）').join('\n');
+  const history = st.conversation.slice(-8).map(m => {
+    const who = m.role === 'host' ? '面试官' : (m.role === 'user' ? '考生你' : m.name);
+    return who + '：' + m.content;
+  }).join('\n\n');
+
+  let systemPrompt, userPrompt;
+  if (kind === 'first') {
+    systemPrompt = '你是一名资深的考博复试无领导小组讨论模拟系统。请扮演「' + st.candidates.map(c => c.name).join('」「') + '」这' + st.candidates.length + '位考生，围绕讨论话题分别发表第一轮观点。\n\n' + candDesc + '\n\n要求：\n1. 每位考生的发言要体现其角色定位，观点鲜明、各有侧重、互不相同\n2. 每位发言150-300字，先亮明观点，再给出2-3条论据（可引用研究、机制、案例）\n3. 发言用第一人称，风格符合各自角色\n4. 输出格式：\n【考生A · 严谨实证】\n（发言内容）\n【考生B · 实践应用】\n（发言内容）\n……';
+    userPrompt = '讨论话题：「' + st.topic + '」\n话题说明：' + st.topicDesc + '\n\n请生成' + st.candidates.length + '位考生的第一轮发言。';
+  } else {
+    systemPrompt = '你是一名资深的考博复试无领导小组讨论模拟系统。请扮演「' + st.candidates.map(c => c.name).join('」「') + '」这' + st.candidates.length + '位考生，围绕讨论话题进行第' + (st.currentRound + 1) + '轮发言。本轮要回应前面的发言（包括考生的发言），推进讨论。\n\n' + candDesc + '\n\n要求：\n1. 每位考生的发言要体现角色定位和讨论的递进：可以补充新论据、回应他人观点、提出质疑或寻求共识\n2. 有一位考生要针对「考生你」的发言给出回应或补充\n3. 每位发言120-250字\n4. 输出格式：\n【考生A · 严谨实证】\n（发言内容）\n【考生B · 实践应用】\n（发言内容）\n……';
+    userPrompt = '讨论话题：「' + st.topic + '」\n第' + (st.currentRound + 1) + '轮。\n\n此前讨论记录：\n' + history + '\n\n请生成' + st.candidates.length + '位考生本轮发言。';
+  }
+
+  try {
+    const text = await callDeepSeekAPI(systemPrompt, userPrompt, 1800, 'deepseek-chat');
+    // 解析各考生发言：按【姓名】分段
+    const segs = String(text || '').split(/【([^】]+)】/).filter(Boolean);
+    if (segs.length >= 2) {
+      for (let i = 0; i + 1 < segs.length; i += 2) {
+        const name = segs[i].trim();
+        const content = (segs[i + 1] || '').trim();
+        if (name && content) {
+          st.conversation.push({ role: 'cand', name: '「' + name.replace(/^考生/, '考生') + '」', content: content });
+        }
+      }
+    } else {
+      // 解析失败，整段作为第一条考生发言
+      st.candidates.forEach((c, i) => {
+        st.conversation.push({ role: 'cand', name: c.name, content: (text || '').slice(0, 300) });
+      });
+    }
+  } catch (e) {
+    st.candidates.forEach((c, i) => {
+      st.conversation.push({ role: 'cand', name: c.name, content: '（网络异常，发言未生成，请继续）' });
+    });
+  }
+  st.aiThinking = false;
+  renderPhdGroupInterview();
+}
+
+function submitGroupUserSpeech() {
+  const st = phdGroupInterviewState;
+  const input = document.getElementById('groupUserInput');
+  const txt = input ? input.value.trim() : '';
+  if (!txt) {
+    alert('请输入你的发言内容');
+    return;
+  }
+  st.conversation.push({ role: 'user', name: '你', content: txt });
+  st.currentRound++;
+  if (st.currentRound >= st.maxRounds) {
+    st.conversation.push({ role: 'system', content: '—— 讨论结束，正在生成点评 ——' });
+    renderPhdGroupInterview();
+    endGroupInterview();
+  } else {
+    renderPhdGroupInterview();
+    setTimeout(() => { generateGroupCandidateSpeech('next'); }, 600);
+  }
+}
+
+function skipGroupUserSpeech() {
+  const st = phdGroupInterviewState;
+  st.conversation.push({ role: 'user', name: '你', content: '（本轮我暂时不发表观点，先听取大家的意见）' });
+  st.currentRound++;
+  if (st.currentRound >= st.maxRounds) {
+    st.conversation.push({ role: 'system', content: '—— 讨论结束，正在生成点评 ——' });
+    renderPhdGroupInterview();
+    endGroupInterview();
+  } else {
+    renderPhdGroupInterview();
+    setTimeout(() => { generateGroupCandidateSpeech('next'); }, 600);
+  }
+}
+
+async function endGroupInterview() {
+  const st = phdGroupInterviewState;
+  st.mode = 'ended';
+  st.aiThinking = true;
+  renderPhdGroupInterview();
+
+  const transcript = st.conversation.map(m => {
+    const who = m.role === 'host' ? '面试官' : (m.role === 'user' ? '考生你' : m.name);
+    return who + '：' + m.content;
+  }).join('\n\n');
+
+  const systemPrompt = '你是一位资深的' + st.candidates.length + '人无领导小组讨论面试官兼考博复试培训专家。以下是刚才无领导小组讨论（话题：「' + st.topic + '」）的完整记录。\n\n请从「真实考生」的角度，重点点评「考生你」的表现，输出结构化点评：\n1. 【你的表现评分】按五项各20分制评分：观点质量与专业深度、逻辑与表达、倾听与互动协作、主动性、讨论推进贡献；并给出总分和等级\n2. 【观点质量点评】：你的发言是否有实质内容、是否结合专业理论或研究依据\n3. 【亮点与不足】：明确指出表现好的地方和需要改进的地方\n4. 【AI考生参考发言】：从本次讨论中提炼2-3个值得学习的发言角度或表述方式\n5. 【改进建议】：具体可操作的提升建议\n\n要求：点评客观、具体、专业，全文中文，700-1000字。';
+  try {
+    const report = await callDeepSeekAPI(systemPrompt, '讨论记录：\n' + transcript, 1800, 'deepseek-chat');
+    const body = document.getElementById('phdInterviewBody');
+    let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">👥 小组面试 · 讨论点评</div>';
+    html += '<button class="phd-quiz-btn" style="font-size:12px;padding:6px 12px" onclick="showPhdInterviewHome()">← 返回首页</button></div>';
+    html += '<div style="margin-bottom:15px;font-size:13px;color:#555">📋 话题：' + st.topic + '</div>';
+    html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:18px;font-size:14px;color:#14532d;line-height:1.9;white-space:pre-wrap">' + (report || '暂无点评') + '</div>';
+    html += '<div style="margin-top:15px;font-weight:600;color:#333;margin-bottom:10px">📋 讨论全程回顾</div>';
+    html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:15px;max-height:320px;overflow-y:auto">';
+    st.conversation.forEach(m => {
+      const who = m.role === 'host' ? '🎙️ 面试官' : (m.role === 'user' ? '🙋 你' : '👤 ' + m.name);
+      html += '<div style="margin-bottom:10px;font-size:13px;line-height:1.7"><strong>' + who + '：</strong>' + m.content + '</div><hr style="border:none;border-top:1px dashed #eee">';
+    });
+    html += '</div>';
+    html += '<div class="phd-quiz-actions" style="margin-top:15px"><button class="phd-quiz-btn primary" onclick="startPhdGroupInterview()">👥 再来一场</button></div>';
+    body.innerHTML = html;
+  } catch (e) {
+    st.aiThinking = false;
+    alert('点评生成失败，请重试');
+    renderPhdGroupInterview();
+  }
+}
+
 function startPhdReverseInterview() {
   phdReverseInterviewState = {
     mode: 'setup', conversation: [], aiThinking: false,
@@ -45261,7 +45514,10 @@ let phdAIMockInterviewState = {
   startTime: null,
   endTime: null,
   scores: null,
-  aiThinking: false
+  aiThinking: false,
+  answerTimeLimit: 0,
+  questionDeadline: null,
+  timerInterval: null
 };
 
 // AI对话面试专业方向选项
@@ -45308,7 +45564,10 @@ function startPhdAIMockInterview() {
     startTime: null,
     endTime: null,
     scores: null,
-    aiThinking: false
+    aiThinking: false,
+    answerTimeLimit: 0,
+    questionDeadline: null,
+    timerInterval: null
   };
   renderPhdAIMockInterview();
 }
@@ -45363,6 +45622,16 @@ function renderPhdAIMockInterview() {
     // 题目数量
     html += '<div style="grid-column:span 2"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">题目数量：<span id="aiInterviewCountLabel" style="color:#667eea;font-weight:700">' + state.config.questionCount + '</span> 题</label>';
     html += '<input type="range" id="aiInterviewCount" min="5" max="15" value="' + state.config.questionCount + '" style="width:100%" oninput="document.getElementById(\'aiInterviewCountLabel\').textContent=this.value"></div>';
+
+    // 每题时限（拟人化：超时面试官会打断）
+    html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">每题时限</label>';
+    html += '<select id="aiInterviewTimeLimit" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px">';
+    html += '<option value="0">不限时（自由作答）</option>';
+    html += '<option value="60">60秒/题（紧张型）</option>';
+    html += '<option value="120" selected>120秒/题（标准）</option>';
+    html += '<option value="180">180秒/题（宽松）</option>';
+    html += '</select>';
+    html += '<div style="font-size:11px;color:#888;margin-top:4px">⏰ 超时面试官会礼貌打断并进入下一题</div></div>';
     
     html += '</div>';
     
@@ -45388,7 +45657,14 @@ function renderPhdAIMockInterview() {
     
     state.conversation.forEach((msg, idx) => {
       if (msg.role === 'interviewer') {
-        html += '<div style="margin-bottom:18px;display:flex;gap:10px"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🤖</div><div style="flex:1"><div style="font-size:11px;color:#999;margin-bottom:4px">面试官' + (msg.questionNum ? '（第' + msg.questionNum + '题）' : '') + '</div><div style="background:white;border:1px solid #e0e0e0;border-radius:12px 12px 12px 0;padding:12px 15px;font-size:14px;line-height:1.7;color:#333;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' + msg.content + '</div></div></div>';
+        const personaIcon = { '学术严谨型':'🎓', '温和引导型':'💡', '压力挑战型':'🔥', '实践应用型':'🏥', '英文面试型':'🌍' }[state.config.interviewerStyle] || '🤖';
+        let face = personaIcon;
+        let action = '提问';
+        if (msg.interrupt) { face = '⏰'; action = '打断'; }
+        else if (msg.hint) { face = '💡'; action = '提示'; }
+        else if (msg.questionNum && state.conversation[idx-1] && state.conversation[idx-1].role === 'candidate') { face = '📝'; action = '记录后追问'; }
+        else if (msg.questionNum === 1 && state.conversation.filter(m => m.role === 'candidate').length === 0) { action = '开场提问'; }
+        html += '<div style="margin-bottom:18px;display:flex;gap:10px"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">' + face + '</div><div style="flex:1"><div style="font-size:11px;color:#999;margin-bottom:4px">面试官 · ' + action + (msg.questionNum ? '（第' + msg.questionNum + '题）' : '') + '</div><div style="background:white;border:1px solid #e0e0e0;border-radius:12px 12px 12px 0;padding:12px 15px;font-size:14px;line-height:1.7;color:#333;box-shadow:0 2px 8px rgba(0,0,0,0.05)">' + msg.content + '</div></div></div>';
       } else {
         html += '<div style="margin-bottom:18px;display:flex;gap:10px;flex-direction:row-reverse"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f5576c,#f093fb);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👤</div><div style="flex:1"><div style="font-size:11px;color:#999;margin-bottom:4px;text-align:right">考生（你）</div><div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;border-radius:12px 12px 0 12px;padding:12px 15px;font-size:14px;line-height:1.7;color:#333">' + msg.content + '</div></div></div>';
       }
@@ -45396,7 +45672,8 @@ function renderPhdAIMockInterview() {
     
     // AI思考中
     if (state.aiThinking) {
-      html += '<div style="margin-bottom:18px;display:flex;gap:10px"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🤖</div><div style="flex:1"><div style="background:white;border:1px solid #e0e0e0;border-radius:12px;padding:15px;display:inline-flex;align-items:center;gap:8px"><span style="font-size:13px;color:#999">AI正在思考</span><span style="display:inline-block;width:8px;height:8px;background:#667eea;border-radius:50%;animation:pulse 1s infinite"></span></div></div></div>';
+      const personaIcon2 = { '学术严谨型':'🎓', '温和引导型':'💡', '压力挑战型':'🔥', '实践应用型':'🏥', '英文面试型':'🌍' }[state.config.interviewerStyle] || '🤖';
+      html += '<div style="margin-bottom:18px;display:flex;gap:10px"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">⏳</div><div style="flex:1"><div style="background:white;border:1px solid #e0e0e0;border-radius:12px;padding:15px;display:inline-flex;align-items:center;gap:8px"><span style="font-size:13px;color:#999">' + personaIcon2 + ' 面试官正在思考</span><span style="display:inline-block;width:8px;height:8px;background:#667eea;border-radius:50%;animation:pulse 1s infinite"></span></div></div></div>';
     }
     
     html += '</div>';
@@ -45406,8 +45683,9 @@ function renderPhdAIMockInterview() {
       html += '<div style="background:white;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 12px 12px;padding:15px">';
       html += '<textarea id="aiInterviewAnswerInput" placeholder="请输入你的回答...（建议200字以上，内容越完整评分越高）" style="width:100%;min-height:100px;border:2px solid #e0e0e0;border-radius:8px;padding:12px;font-size:14px;line-height:1.6;resize:vertical;font-family:inherit;box-sizing:border-box" oninput="updateAIInterviewWordCount()">' + state.currentAnswer + '</textarea>';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:10px">';
-      html += '<div style="font-size:12px;color:#999">已输入 <span id="aiInterviewWordCount">' + state.currentAnswer.length + '</span> 字</div>';
+      html += '<div style="font-size:12px;color:#999">已输入 <span id="aiInterviewWordCount">' + state.currentAnswer.length + '</span> 字 ｜ <span id="aiInterviewCountdown" style="color:#333;font-weight:600"></span></div>';
       html += '<div style="display:flex;gap:8px">';
+      html += '<button onclick="hintAIInterviewAnswer()" title="让面试官给一点答题提示" style="padding:8px 14px;background:#fffbeb;color:#b45309;border:1px solid #fde68a;border-radius:6px;cursor:pointer;font-size:13px">💡 提示一下</button>';
       html += '<button onclick="endPhdAIMockInterviewEarly()" style="padding:8px 16px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:6px;cursor:pointer;font-size:13px">提前结束</button>';
       html += '<button onclick="submitAIInterviewAnswer()" style="padding:8px 24px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600">提交回答 →</button>';
       html += '</div></div></div>';
@@ -45437,6 +45715,94 @@ function updateAIInterviewWordCount() {
   }
 }
 
+// ===== 拟人化增强：每题计时器 =====
+function startAIQuestionTimer() {
+  const state = phdAIMockInterviewState;
+  stopAIQuestionTimer();
+  const limit = state.answerTimeLimit;
+  if (!limit || limit <= 0) return;
+  state.questionDeadline = Date.now() + limit * 1000;
+  state.timerInterval = setInterval(() => {
+    if (state.mode !== 'chatting') { stopAIQuestionTimer(); return; }
+    const remain = Math.max(0, Math.ceil((state.questionDeadline - Date.now()) / 1000));
+    const el = document.getElementById('aiInterviewCountdown');
+    if (el) {
+      el.textContent = '⏱️ 剩余 ' + Math.floor(remain / 60) + ':' + String(remain % 60).padStart(2, '0');
+      el.style.color = remain <= 30 ? '#dc2626' : '#333';
+    }
+    if (remain <= 0) {
+      stopAIQuestionTimer();
+      interruptAIInterviewTimeout();
+    }
+  }, 1000);
+}
+
+function stopAIQuestionTimer() {
+  const state = phdAIMockInterviewState;
+  if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  }
+  const el = document.getElementById('aiInterviewCountdown');
+  if (el) el.textContent = '';
+}
+
+// 超时打断：面试官礼貌打断并进入下一题
+async function interruptAIInterviewTimeout() {
+  const state = phdAIMockInterviewState;
+  if (state.mode !== 'chatting' || state.aiThinking) return;
+  state.conversation.push({
+    role: 'interviewer',
+    content: '（⏰ 面试官打断：时间到。请先记住你的核心思路，我们按当前作答记录，继续下一题。面试时也要注意把握答题节奏。）',
+    timestamp: Date.now(),
+    interrupt: true,
+    questionNum: state.questionIndex + 1
+  });
+  state.conversation.push({
+    role: 'candidate',
+    content: '（超时未答）',
+    timestamp: Date.now(),
+    isEmpty: true
+  });
+  state.questionIndex++;
+  if (state.questionIndex >= state.config.questionCount) {
+    await endPhdAIMockInterview();
+  } else {
+    state.currentAnswer = '';
+    await generateNextAIInterviewQuestion(false);
+  }
+}
+
+// 冷场提示：让面试官给当前题目一个答题提示
+async function hintAIInterviewAnswer() {
+  const state = phdAIMockInterviewState;
+  if (!state.currentQuestion || state.aiThinking || state.mode !== 'chatting') return;
+  // 同步输入框内容
+  const input = document.getElementById('aiInterviewAnswerInput');
+  if (input) state.currentAnswer = input.value;
+  state.aiThinking = true;
+  renderPhdAIMockInterview();
+  const systemPrompt = '你是一位耐心、专业的考博面试考官。考生在回答问题时需要一点提示，请给出一段简短（80-150字）的答题提示：点明该问题的核心考察点、答题切入角度或关键专业术语，帮助考生理清思路。不要直接给出完整答案，用第一人称（如「你可以从……角度入手」）。';
+  try {
+    const hint = await callDeepSeekAPI(systemPrompt, '当前问题：' + state.currentQuestion, 300, 'deepseek-chat');
+    state.conversation.push({
+      role: 'interviewer',
+      content: '（💡 面试官提示：' + (hint || '请从核心概念出发，先给出你的基本理解，再展开机制或应用。') + '）',
+      timestamp: Date.now(),
+      hint: true
+    });
+  } catch (e) {
+    state.conversation.push({
+      role: 'interviewer',
+      content: '（💡 面试官提示：先从定义入手，再谈机制、举例，最后总结。）',
+      timestamp: Date.now(),
+      hint: true
+    });
+  }
+  state.aiThinking = false;
+  renderPhdAIMockInterview();
+}
+
 // 开始AI对话面试（从设置界面进入对话）
 async function beginPhdAIMockInterview() {
   const state = phdAIMockInterviewState;
@@ -45446,6 +45812,7 @@ async function beginPhdAIMockInterview() {
   state.config.difficulty = document.getElementById('aiInterviewDifficulty').value;
   state.config.interviewerStyle = document.getElementById('aiInterviewStyle') ? document.getElementById('aiInterviewStyle').value : '学术严谨型';
   state.config.questionCount = parseInt(document.getElementById('aiInterviewCount').value);
+  state.answerTimeLimit = parseInt(document.getElementById('aiInterviewTimeLimit').value) || 0;
   
   state.mode = 'chatting';
   state.startTime = Date.now();
@@ -45522,6 +45889,7 @@ ${history}
       timestamp: Date.now(),
       questionNum: state.questionIndex + 1
     });
+    startAIQuestionTimer();
     
     state.aiThinking = false;
     renderPhdAIMockInterview();
@@ -45557,6 +45925,8 @@ ${history}
 async function submitAIInterviewAnswer() {
   const state = phdAIMockInterviewState;
   const answer = document.getElementById('aiInterviewAnswerInput').value.trim();
+  
+  stopAIQuestionTimer();
   
   if (!answer || answer.length < 20) {
     // 空回答或过短回答，记录为0分回答但不阻止继续
@@ -45606,6 +45976,7 @@ async function endPhdAIMockInterviewEarly() {
 // 结束AI对话面试并生成评分报告
 async function endPhdAIMockInterview() {
   const state = phdAIMockInterviewState;
+  stopAIQuestionTimer();
   state.mode = 'ended';
   state.endTime = Date.now();
   state.aiThinking = true;
@@ -46274,6 +46645,7 @@ function renderPhdInterview() {
   html += '<button class="phd-practice-btn" style="color:#f5576c" onclick="startPhdMockInterview()">🎯 题库模拟面试</button>';
   html += '<button class="phd-practice-btn" style="color:#059669;background:#ecfdf5;border:1px solid #a7f3d0" onclick="startPhdResearchDesign()">🔬 研究设计专项</button>';
   html += '<button class="phd-practice-btn" style="color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe" onclick="startPhdReverseInterview()">🔄 反向模拟</button>';
+  html += '<button class="phd-practice-btn" style="color:#b45309;background:#fffbeb;border:1px solid #fde68a" onclick="startPhdGroupInterview()">👥 小组面试</button>';
   html += '<button class="phd-practice-btn" style="color:#fff;background:linear-gradient(135deg,#667eea,#764ba2);border:none" onclick="startPhdAIMockInterview()">🤖 AI实时对话面试（推荐）</button>';
   html += '<button class="phd-practice-btn secondary" onclick="showPhdInterviewHistory()">📋 面试记录</button>';
   html += '<button class="phd-practice-btn secondary" onclick="showPhdWrongBook()">📒 错题本/收藏</button>';
