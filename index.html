@@ -38732,6 +38732,7 @@ function renderPhdSchools() {
   html += '<button class="phd-sub-tab-btn" data-sub="supervisors" onclick="switchPhdSchoolSubTab(\'supervisors\')" style="' + (window.phdSchoolSubTab === 'supervisors' ? 'background:#667eea;color:#fff' : 'background:#f1f5f9;color:#475569') + '">👨\u200d🏫 导师库</button>';
   html += '<button class="phd-sub-tab-btn" data-sub="recommend" onclick="switchPhdSchoolSubTab(\'recommend\')" style="' + (window.phdSchoolSubTab === 'recommend' ? 'background:#667eea;color:#fff' : 'background:#f1f5f9;color:#475569') + '">🎯 智能推荐</button>';
   html += '<button class="phd-sub-tab-btn" data-sub="compare" onclick="switchPhdSchoolSubTab(\'compare\')" style="' + (window.phdSchoolSubTab === 'compare' ? 'background:#667eea;color:#fff' : 'background:#f1f5f9;color:#475569') + '">⚖️ 院校对比</button>';
+  html += '<button class="phd-sub-tab-btn" data-sub="tools" onclick="switchPhdSchoolSubTab(\'tools\')" style="' + (window.phdSchoolSubTab === 'tools' ? 'background:#667eea;color:#fff' : 'background:#f1f5f9;color:#475569') + '">🛠️ 报考工具</button>';
   html += '</div>';
   
   // 预定义通用变量（修复作用域问题）
@@ -38849,9 +38850,305 @@ function renderPhdSchools() {
       html += '<div style="text-align:center;padding:60px;color:#94a3b8">请先在院校列表中选择要对比的院校（勾选卡片左上角的复选框）</div>';
     }
     html += '</div>';
+    
+  } else if (window.phdSchoolSubTab === 'tools') {
+    // 报考工具
+    html += '<div style="margin-bottom:16px;padding:12px 16px;background:#eff6ff;border-radius:8px;border-left:4px solid #3b82f6;font-size:13px;color:#1e40af">';
+    html += '🛠️ 考博报考工具箱：招生简章查询、考博时间线、套磁邮件助手';
+    html += '</div>';
+    
+    // 功能卡片
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:24px">';
+    
+    // 招生简章查询
+    html += '<div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);cursor:pointer;border:1px solid #e2e8f0" onclick="showPhdAdmissionGuide()">';
+    html += '<div style="font-size:32px;margin-bottom:12px">📋</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">招生简章查询</div>';
+    html += '<div style="font-size:13px;color:#64748b;line-height:1.6">按院校、按年份查询博士招生简章，含报名条件、考试科目、招生人数、参考书目</div>';
+    html += '</div>';
+    
+    // 考博时间线
+    html += '<div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);cursor:pointer;border:1px solid #e2e8f0" onclick="showPhdTimeline()">';
+    html += '<div style="font-size:32px;margin-bottom:12px">📅</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">考博时间线</div>';
+    html += '<div style="font-size:13px;color:#64748b;line-height:1.6">考博全流程时间规划：报名→材料提交→初试→复试→录取，含各阶段注意事项</div>';
+    html += '</div>';
+    
+    // 套磁邮件助手
+    html += '<div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);cursor:pointer;border:1px solid #e2e8f0" onclick="showPhdEmailHelper()">';
+    html += '<div style="font-size:32px;margin-bottom:12px">✉️</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">套磁邮件助手</div>';
+    html += '<div style="font-size:13px;color:#64748b;line-height:1.6">AI生成个性化导师套磁邮件，含自我介绍、研究兴趣、为什么选这位导师，可直接复制使用</div>';
+    html += '</div>';
+    
+    // 院校收藏
+    html += '<div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);cursor:pointer;border:1px solid #e2e8f0" onclick="showPhdFavorites()">';
+    html += '<div style="font-size:32px;margin-bottom:12px">⭐</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">我的收藏</div>';
+    html += '<div style="font-size:13px;color:#64748b;line-height:1.6">查看收藏的院校和导师，快速对比和管理你的目标清单</div>';
+    html += '</div>';
+    
+    html += '</div>';
+    
+    html += '<div id="phdToolsContent"></div>';
   }
   
   area.innerHTML = html;
+}
+
+// ========== 报考工具功能 ==========
+
+// 招生简章查询
+function showPhdAdmissionGuide() {
+  const area = document.getElementById('phdToolsContent');
+  if (!area) return;
+  
+  let html = '<div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-top:16px">';
+  html += '<h4 style="margin:0 0 16px;color:#1e293b">📋 博士招生简章查询</h4>';
+  
+  html += '<div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">';
+  html += '<select id="admissionSchoolSelect" style="flex:1;min-width:200px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px"><option value="">选择院校</option>';
+  PHD_SCHOOLS.forEach(s => { html += '<option value="' + s.id + '">' + s.name + '</option>'; });
+  html += '</select>';
+  html += '<select id="admissionYearSelect" style="padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px"><option value="2026">2026年</option><option value="2025">2025年</option><option value="2024">2024年</option></select>';
+  html += '<button onclick="queryAdmissionGuide()" style="padding:10px 24px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">查询</button>';
+  html += '</div>';
+  
+  html += '<div id="admissionGuideResult"></div>';
+  html += '</div>';
+  
+  area.innerHTML = html;
+}
+
+function queryAdmissionGuide() {
+  const schoolId = document.getElementById('admissionSchoolSelect').value;
+  const year = document.getElementById('admissionYearSelect').value;
+  const result = document.getElementById('admissionGuideResult');
+  
+  if (!schoolId) { alert('请选择院校'); return; }
+  
+  const school = PHD_SCHOOLS.find(s => s.id === schoolId);
+  const detail = PHD_SCHOOL_DETAILS[schoolId];
+  
+  let html = '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:20px;background:#f8fafc">';
+  html += '<h5 style="margin:0 0 16px;color:#1e293b">' + school.name + ' ' + year + '年博士研究生招生简章</h5>';
+  
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px">';
+  html += '<div><div style="font-size:12px;color:#64748b;margin-bottom:4px">🏫 招生专业</div><div style="font-size:14px;font-weight:600;color:#1e293b">' + school.major + '</div></div>';
+  html += '<div><div style="font-size:12px;color:#64748b;margin-bottom:4px">📚 研究方向</div><div style="font-size:13px;color:#475569">' + school.directions.join('、') + '</div></div>';
+  html += '<div><div style="font-size:12px;color:#64748b;margin-bottom:4px">📝 考试科目</div><div style="font-size:13px;color:#475569">' + school.examSubjects.join('<br>') + '</div></div>';
+  html += '<div><div style="font-size:12px;color:#64748b;margin-bottom:4px">📖 参考书目</div><div style="font-size:13px;color:#475569">' + school.referenceBooks.join('<br>') + '</div></div>';
+  if (detail) {
+    html += '<div><div style="font-size:12px;color:#64748b;margin-bottom:4px">👥 招生人数</div><div style="font-size:14px;font-weight:600;color:#1e293b">' + detail.enrollment + '</div></div>';
+    html += '<div><div style="font-size:12px;color:#64748b;margin-bottom:4px">📅 报名时间</div><div style="font-size:14px;font-weight:600;color:#1e293b">' + detail.applicationTime + '</div></div>';
+    html += '<div><div style="font-size:12px;color:#64748b;margin-bottom:4px">📊 分数线要求</div><div style="font-size:14px;font-weight:600;color:#1e293b">' + detail.scoreLine + '</div></div>';
+    html += '<div><div style="font-size:12px;color:#64748b;margin-bottom:4px">🏢 科研平台</div><div style="font-size:13px;color:#475569">' + detail.platform + '</div></div>';
+  }
+  html += '</div>';
+  
+  html += '<div style="margin-top:16px;padding:12px;background:#fffbeb;border-radius:8px;border-left:3px solid #f59e0b;font-size:13px;color:#92400e;line-height:1.7">';
+  html += '<strong>💡 报考建议：</strong>' + school.tips;
+  html += '</div>';
+  
+  html += '<div style="margin-top:12px;font-size:12px;color:#94a3b8">注：以上信息基于历年招生简章整理，具体以' + school.name + '当年官方发布为准。官网：' + (detail ? detail.website : school.name) + '</div>';
+  html += '</div>';
+  
+  result.innerHTML = html;
+}
+
+// 考博时间线
+function showPhdTimeline() {
+  const area = document.getElementById('phdToolsContent');
+  if (!area) return;
+  
+  let html = '<div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-top:16px">';
+  html += '<h4 style="margin:0 0 20px;color:#1e293b">📅 考博全流程时间线</h4>';
+  
+  const timeline = [
+    {time: '3-6月', title: '前期准备', icon: '🎯', items: ['确定报考院校和专业方向', '联系目标导师（套磁）', '准备个人简历和科研成果', '开始复习专业课和英语']},
+    {time: '7-9月', title: '强化复习', icon: '📚', items: ['专业课系统复习（运动生理学、运动解剖学）', '英语强化（阅读、翻译、写作）', '准备科研计划书初稿', '关注各校招生简章发布']},
+    {time: '10-11月', title: '报名阶段', icon: '📝', items: ['各校博士招生简章陆续发布', '网上报名（提交个人信息、照片、报名费）', '准备申请材料（学历学位证、成绩单、推荐信、科研成果）', '部分院校申请考核制材料提交截止']},
+    {time: '12月-次年1月', title: '材料审核/初试', icon: '📋', items: ['申请-考核制院校材料审核', '统考院校初试（英语、专业课）', '初试成绩查询', '部分院校复试通知']},
+    {time: '2-3月', title: '复试阶段', icon: '🎤', items: ['复试通知发布', '专业课笔试/面试', '英语听说测试', '科研计划书汇报和问答', '导师双向选择']},
+    {time: '4-5月', title: '录取阶段', icon: '🎉', items: ['拟录取名单公示', '政审和体检', '录取通知书发放', '确认入学，办理相关手续']},
+    {time: '6-8月', title: '入学准备', icon: '📦', items: ['档案调转', '户口迁移（可选）', '宿舍申请', '提前联系导师，了解研究方向', '准备入学']}
+  ];
+  
+  timeline.forEach((item, idx) => {
+    html += '<div style="display:flex;gap:16px;margin-bottom:20px;position:relative">';
+    html += '<div style="flex-shrink:0;width:60px;text-align:center">';
+    html += '<div style="font-size:24px;margin-bottom:4px">' + item.icon + '</div>';
+    html += '<div style="font-size:12px;font-weight:700;color:#3b82f6;background:#eff6ff;padding:4px 8px;border-radius:12px;white-space:nowrap">' + item.time + '</div>';
+    html += '</div>';
+    html += '<div style="flex:1;padding-bottom:16px;border-bottom:1px dashed #e2e8f0">';
+    html += '<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:8px">' + item.title + '</div>';
+    html += '<ul style="margin:0;padding-left:20px">';
+    item.items.forEach(i => { html += '<li style="font-size:13px;color:#475569;line-height:1.8;margin-bottom:2px">' + i + '</li>'; });
+    html += '</ul></div></div>';
+  });
+  
+  html += '<div style="margin-top:16px;padding:16px;background:#eff6ff;border-radius:10px;font-size:13px;color:#1e40af;line-height:1.7">';
+  html += '<strong>⚠️ 注意事项：</strong>以上时间为一般规律，各院校具体时间不同，请以目标院校官方通知为准。建议提前关注目标院校研究生院官网，加入考博交流群获取最新信息。';
+  html += '</div>';
+  
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+// 套磁邮件助手
+function showPhdEmailHelper() {
+  const area = document.getElementById('phdToolsContent');
+  if (!area) return;
+  
+  let html = '<div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-top:16px">';
+  html += '<h4 style="margin:0 0 16px;color:#1e293b">✉️ 导师套磁邮件助手</h4>';
+  html += '<p style="font-size:13px;color:#64748b;margin-bottom:20px">填写以下信息，AI将为你生成一封个性化的导师套磁邮件，可直接复制使用</p>';
+  
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:20px">';
+  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">选择导师</label><select id="emailSupervisor" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px"><option value="">请选择</option>';
+  PHD_SUPERVISORS.forEach(s => { html += '<option value="' + s.id + '">' + s.name + ' - ' + s.school + '</option>'; });
+  html += '</select></div>';
+  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">你的姓名</label><input type="text" id="emailName" placeholder="张三" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
+  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">本科/硕士院校</label><input type="text" id="emailSchool" placeholder="XX大学" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
+  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">专业</label><input type="text" id="emailMajor" placeholder="运动人体科学" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
+  html += '</div>';
+  
+  html += '<div style="margin-bottom:20px"><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">感兴趣的研究方向（结合导师方向）</label><textarea id="emailInterest" rows="3" placeholder="例如：我对运动与心血管健康、运动干预慢性病机制等方向非常感兴趣，阅读了您关于XX的论文，深受启发..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea></div>';
+  
+  html += '<div style="margin-bottom:20px"><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">个人优势/科研经历（选填）</label><textarea id="emailAdvantage" rows="2" placeholder="例如：曾参与XX科研项目，发表XX论文，英语六级550分..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea></div>';
+  
+  html += '<button onclick="generatePhdEmail()" style="width:100%;padding:12px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600">✉️ 生成套磁邮件</button>';
+  
+  html += '<div id="emailResult" style="margin-top:20px"></div>';
+  html += '</div>';
+  
+  area.innerHTML = html;
+}
+
+function generatePhdEmail() {
+  const supId = document.getElementById('emailSupervisor').value;
+  const name = document.getElementById('emailName').value || '同学';
+  const school = document.getElementById('emailSchool').value || 'XX大学';
+  const major = document.getElementById('emailMajor').value || '运动人体科学';
+  const interest = document.getElementById('emailInterest').value || '我对运动人体科学领域的研究非常感兴趣';
+  const advantage = document.getElementById('emailAdvantage').value;
+  
+  if (!supId) { alert('请选择导师'); return; }
+  
+  const sup = PHD_SUPERVISORS.find(s => s.id === supId);
+  const dirText = sup.directions ? sup.directions.join('、') : '相关领域';
+  const firstDir = sup.directions && sup.directions[0] ? sup.directions[0] : '该领域';
+  
+  let advText = advantage ? ('在学术背景方面，' + advantage + '。这些经历培养了我的科研思维和实验能力，也让我更加坚定了从事科研工作的决心。\n\n') : '';
+  
+  const email = `尊敬的${sup.name}教授：
+
+您好！
+
+我是${school} ${major}专业的${name}。冒昧打扰您，是因为我对您的研究方向非常感兴趣，希望能有机会在您的指导下攻读博士学位。
+
+我长期关注${sup.research}领域的研究，认真阅读了您在${firstDir}方面的研究成果，深受启发。${interest}。我认为您的研究方向与我的学术兴趣高度契合，希望能在您的指导下深入学习和研究。
+
+${advText}我了解到${sup.school}在运动人体科学领域具有雄厚的学科实力，您的课题组在${dirText}方面取得了丰硕的研究成果。我非常希望能加入您的团队，在您的指导下开展博士阶段的研究工作。
+
+随信附上我的个人简历和科研成果简介，恳请您在百忙之中审阅。如果有机会，我非常希望能与您进一步交流。
+
+感谢您的阅读，期待您的回复！
+
+此致
+敬礼！
+
+${name}
+联系邮箱：your@email.com
+联系电话：138XXXXXXXX
+${new Date().getFullYear()}年${new Date().getMonth() + 1}月${new Date().getDate()}日`;
+  
+  const result = document.getElementById('emailResult');
+  result.innerHTML = '<div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">' +
+    '<div style="background:#f8fafc;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0">' +
+    '<span style="font-size:14px;font-weight:600;color:#1e293b">📧 套磁邮件（可直接复制）</span>' +
+    '<button onclick="copyPhdEmail()" style="padding:6px 16px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📋 复制全文</button></div>' +
+    '<textarea id="phdEmailText" rows="20" style="width:100%;padding:16px;border:none;font-size:13px;line-height:1.8;color:#334155;box-sizing:border-box;resize:vertical;font-family:inherit">' + email + '</textarea></div>';
+}
+
+function copyPhdEmail() {
+  const text = document.getElementById('phdEmailText');
+  text.select();
+  document.execCommand('copy');
+  alert('已复制到剪贴板！请粘贴到邮件客户端中，并修改联系邮箱和电话。');
+}
+
+// 我的收藏
+function showPhdFavorites() {
+  const area = document.getElementById('phdToolsContent');
+  if (!area) return;
+  
+  let favSchools = [];
+  let favSupervisors = [];
+  try {
+    favSchools = JSON.parse(localStorage.getItem('phdFavSchools') || '[]');
+    favSupervisors = JSON.parse(localStorage.getItem('phdFavSupervisors') || '[]');
+  } catch(e) {}
+  
+  let html = '<div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-top:16px">';
+  html += '<h4 style="margin:0 0 20px;color:#1e293b">⭐ 我的收藏</h4>';
+  
+  // 收藏的院校
+  html += '<h5 style="margin:0 0 12px;color:#475569">🏫 收藏的院校（' + favSchools.length + '）</h5>';
+  if (favSchools.length === 0) {
+    html += '<div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px">暂无收藏的院校，可在院校列表中点击收藏</div>';
+  } else {
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:24px">';
+    favSchools.forEach(id => {
+      const s = PHD_SCHOOLS.find(x => x.id === id);
+      if (s) {
+        html += '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px;position:relative">';
+        html += '<button onclick="removePhdFavSchool(\'' + s.id + '\')" style="position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;font-size:16px;color:#94a3b8">×</button>';
+        html += '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:4px">' + s.name + '</div>';
+        html += '<div style="font-size:12px;color:#64748b;margin-bottom:8px">' + s.level + ' · ' + s.location + '</div>';
+        html += '<div style="font-size:11px;color:#94a3b8">' + s.tutors.length + '位博导 · ' + s.major + '</div>';
+        html += '</div>';
+      }
+    });
+    html += '</div>';
+  }
+  
+  // 收藏的导师
+  html += '<h5 style="margin:0 0 12px;color:#475569">👨‍🏫 收藏的导师（' + favSupervisors.length + '）</h5>';
+  if (favSupervisors.length === 0) {
+    html += '<div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px">暂无收藏的导师，可在导师库中点击收藏</div>';
+  } else {
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">';
+    favSupervisors.forEach(id => {
+      const s = PHD_SUPERVISORS.find(x => x.id === id);
+      if (s) {
+        html += '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px;position:relative">';
+        html += '<button onclick="removePhdFavSupervisor(\'' + s.id + '\')" style="position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;font-size:16px;color:#94a3b8">×</button>';
+        html += '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:2px">' + s.name + ' <span style="font-size:11px;font-weight:400;color:#64748b">' + s.title + '</span></div>';
+        html += '<div style="font-size:12px;color:#64748b;margin-bottom:6px">' + s.school + '</div>';
+        html += '<div style="font-size:12px;color:#475569;line-height:1.5">' + s.research + '</div>';
+        html += '</div>';
+      }
+    });
+    html += '</div>';
+  }
+  
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function removePhdFavSchool(id) {
+  let fav = JSON.parse(localStorage.getItem('phdFavSchools') || '[]');
+  fav = fav.filter(x => x !== id);
+  localStorage.setItem('phdFavSchools', JSON.stringify(fav));
+  showPhdFavorites();
+}
+
+function removePhdFavSupervisor(id) {
+  let fav = JSON.parse(localStorage.getItem('phdFavSupervisors') || '[]');
+  fav = fav.filter(x => x !== id);
+  localStorage.setItem('phdFavSupervisors', JSON.stringify(fav));
+  showPhdFavorites();
 }
 
 // 切换院校信息库子标签
