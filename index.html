@@ -40301,6 +40301,9 @@ function renderPhdProposal() {
   html += '<div style="width:220px;flex-shrink:0;position:sticky;top:16px">';
   html += '<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9;overflow:hidden">';
   html += '<div style="padding:12px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:13px;font-weight:700">📑 章节目录</div>';
+  html += '<div style="padding:8px 10px;border-bottom:1px solid #f1f5f9">';
+  html += '<input type="text" id="propSearchInput" placeholder="🔍 搜索章节内容..." oninput="propSearchChapters(this.value)" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;color:#475569;box-sizing:border-box;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor=\'#667eea\'" onblur="this.style.borderColor=\'#e2e8f0\'">';
+  html += '</div>';
   html += '<div id="propChapterNav" style="padding:8px">';
   window.propState.chapters.forEach((ch, idx) => {
     const statusIcon = ch.status === 'confirmed' ? '✅' : ch.status === 'editing' ? '✏️' : ch.status === 'generating' ? '⏳' : '⬜';
@@ -40789,6 +40792,7 @@ function propGenerateChapter() {
   
   chapter.status = 'generating';
   renderPhdProposal();
+  propShowLoading('AI正在生成「' + chapter.title + '」...');
   
   const meta = window.propState.meta;
   const systemPrompt = '你是运动人体科学领域的资深教授、博士生导师和科研基金评审专家，具有20年以上科研和教学经验，精通运动生理学、运动解剖学、运动康复学、体质健康等领域。请为博士科研计划书的"' + chapter.title + '"章节撰写高质量、专业化、学术化的内容。\n\n【写作要求】\n1.【学术规范】使用规范的学术语言，避免口语化表达，禁用"我觉得""大概""可能"等模糊表述；使用"本研究""研究表明""综上所述"等学术用语。\n2.【专业术语】准确使用运动人体科学专业术语，如"最大摄氧量(VO2max)""胰岛素抵抗指数(HOMA-IR)""渐进性抗阻训练""高强度间歇训练(HIIT)"等，首次出现时注明英文缩写。\n3.【逻辑结构】内容层次分明，逻辑严密，段落之间衔接自然；每段有明确的中心句，论据充分，论证严谨。\n4.【内容深度】不泛泛而谈，要有具体的机制阐述、数据支撑、方法说明；体现博士水平的研究深度。\n5.【引用标注】在引用已有研究或经典理论时，用[1][2]等标注引用，如"研究表明，有氧运动可显著改善胰岛素敏感性[1]"。\n6.【字数要求】不少于1000字，内容充实详尽。\n7.【格式要求】不要使用Markdown格式（不要用#、*、-等符号），直接输出正文内容，段落之间用空行分隔。\n8.【前后一致】与研究题目和前面章节内容保持一致，不要出现矛盾或重复。';
@@ -40807,6 +40811,7 @@ function propGenerateChapter() {
   if (chapter.content && chapter.content.length > 50) userPrompt += '\n\n【参考已有内容（可在此基础上扩展优化，保持核心观点）】\n' + chapter.content.substring(0, 500);
   
   callDeepSeekAPI(systemPrompt, userPrompt, 4000, 'deepseek-chat').then(response => {
+    propHideLoading();
     chapter.content = response.trim();
     chapter.status = 'editing';
     propAutoSave();
@@ -40814,7 +40819,7 @@ function propGenerateChapter() {
   }).catch(err => {
     chapter.status = 'pending';
     renderPhdProposal();
-    alert('AI生成失败: ' + err.message);
+    propShowError('AI生成失败：' + (err.message || '网络错误') + '。请检查网络连接后重试。', 'propGenerateChapter()');
   });
 }
 
@@ -42784,6 +42789,105 @@ function propSwitchAcTab(tab) {
   }
   
   content.innerHTML = html;
+}
+
+
+// ===== 体验优化函数 =====
+function propSearchChapters(keyword) {
+  const nav = document.getElementById('propChapterNav');
+  if (!nav || !window.propState) return;
+  keyword = keyword.trim().toLowerCase();
+  
+  // 重新渲染章节列表
+  let html = '';
+  let matchCount = 0;
+  window.propState.chapters.forEach((ch, idx) => {
+    const titleMatch = ch.title.toLowerCase().includes(keyword);
+    const contentMatch = ch.content && ch.content.toLowerCase().includes(keyword);
+    if (keyword && !titleMatch && !contentMatch) return;
+    matchCount++;
+    
+    const statusIcon = ch.status === 'confirmed' ? '✅' : ch.status === 'editing' ? '✏️' : ch.status === 'generating' ? '⏳' : '⬜';
+    const isActive = window.propState.currentChapter === idx;
+    
+    // 高亮匹配的标题
+    let displayTitle = ch.title;
+    if (keyword && titleMatch) {
+      const regex = new RegExp('(' + keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+      displayTitle = ch.title.replace(regex, '<span style="background:#fef08a;color:#92400e;padding:0 2px;border-radius:2px">$1</span>');
+    }
+    
+    html += '<div onclick="propSwitchChapter(' + idx + ')" style="padding:10px 12px;margin-bottom:4px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;transition:all 0.2s;' + (isActive ? 'background:#eef2ff;color:#4f46e5;font-weight:700' : 'color:#64748b:hover:background:#f8fafc') + '">';
+    html += '<span style="flex-shrink:0">' + statusIcon + '</span>';
+    html += '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + displayTitle + '</span>';
+    if (keyword && contentMatch) {
+      html += '<span style="font-size:9px;background:#dcfce7;color:#16a34a;padding:1px 5px;border-radius:8px;flex-shrink:0">内容匹配</span>';
+    } else {
+      html += '<span id="propChapterCount_' + idx + '" style="font-size:11px;color:#94a3b8;flex-shrink:0">' + (ch.content ? ch.content.length : 0) + '</span>';
+    }
+    html += '</div>';
+  });
+  
+  if (keyword && matchCount === 0) {
+    html = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px">🔍 未找到匹配"<br><strong style="color:#64748b">' + keyword + '</strong>"的章节</div>';
+  }
+  
+  nav.innerHTML = html;
+}
+
+function propShowLoading(message) {
+  // 移除已有的加载层
+  const existing = document.getElementById('propLoadingOverlay');
+  if (existing) existing.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'propLoadingOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+  
+  const tips = [
+    '正在分析研究方向...',
+    '正在检索相关文献...',
+    '正在构建逻辑框架...',
+    '正在撰写专业内容...',
+    '正在优化学术表达...',
+    '正在检查专业术语...'
+  ];
+  const randomTip = tips[Math.floor(Math.random() * tips.length)];
+  
+  overlay.innerHTML = '<div style="text-align:center;padding:30px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.1);border:1px solid #f1f5f9;max-width:320px">' +
+    '<div style="width:48px;height:48px;margin:0 auto 16px;border:3px solid #e2e8f0;border-top-color:#667eea;border-radius:50%;animation:propSpin 0.8s linear infinite"></div>' +
+    '<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:8px">' + (message || 'AI正在生成中...') + '</div>' +
+    '<div style="font-size:12px;color:#94a3b8;line-height:1.6">' + randomTip + '<br>请稍候，内容越详细需要的时间越长</div>' +
+    '</div>' +
+    '<style>@keyframes propSpin{to{transform:rotate(360deg)}}</style>';
+  
+  document.body.appendChild(overlay);
+}
+
+function propHideLoading() {
+  const overlay = document.getElementById('propLoadingOverlay');
+  if (overlay) overlay.remove();
+}
+
+function propShowError(message, retryFunc) {
+  propHideLoading();
+  const existing = document.getElementById('propErrorOverlay');
+  if (existing) existing.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'propErrorOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:10000;display:flex;align-items:center;justify-content:center';
+  
+  overlay.innerHTML = '<div style="text-align:center;padding:28px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);max-width:360px;margin:20px">' +
+    '<div style="font-size:40px;margin-bottom:12px">⚠️</div>' +
+    '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">生成遇到问题</div>' +
+    '<div style="font-size:13px;color:#64748b;line-height:1.7;margin-bottom:20px">' + (message || 'AI服务暂时不可用，请稍后重试。') + '</div>' +
+    '<div style="display:flex;gap:10px;justify-content:center">' +
+    (retryFunc ? '<button onclick="' + retryFunc + ';document.getElementById(\'propErrorOverlay\').remove()" style="padding:10px 24px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">🔄 重试</button>' : '') +
+    '<button onclick="document.getElementById(\'propErrorOverlay\').remove()" style="padding:10px 24px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">知道了</button>' +
+    '</div></div>';
+  
+  document.body.appendChild(overlay);
 }
 
 
