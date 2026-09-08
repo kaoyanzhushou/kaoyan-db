@@ -38938,7 +38938,7 @@ function renderPhdSchools() {
   } else if (window.phdSchoolSubTab === 'tools') {
     // 报考工具
     html += '<div style="margin-bottom:16px;padding:12px 16px;background:#eff6ff;border-radius:8px;border-left:4px solid #3b82f6;font-size:13px;color:#1e40af">';
-    html += '🛠️ 考博报考工具箱：招生简章查询、考博时间线、套磁邮件助手、面试资料包';
+    html += '🛠️ 考博报考工具箱：招生简章查询、考博时间线、套磁邮件助手、面试资料包、套磁进度管理';
     html += '</div>';
     
     // 功能卡片
@@ -38977,6 +38977,13 @@ function renderPhdSchools() {
     html += '<div style="font-size:32px;margin-bottom:12px">📦</div>';
     html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">面试资料包</div>';
     html += '<div style="font-size:13px;color:#64748b;line-height:1.6">复试全流程指南：复试流程全解、申请材料清单、面试礼仪与心理调适、高频问题清单</div>';
+    html += '</div>';
+    
+    // 套磁进度管理
+    html += '<div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);cursor:pointer;border:1px solid #e2e8f0" onclick="showPhdTaociManager()">';
+    html += '<div style="font-size:32px;margin-bottom:12px">📊</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">套磁进度管理</div>';
+    html += '<div style="font-size:13px;color:#64748b;line-height:1.6">跟踪每位导师的套磁状态与跟进时间，待发/已发/已回复/已约面/已录取，今日跟进提醒</div>';
     html += '</div>';
     
     html += '</div>';
@@ -39226,11 +39233,16 @@ function renderPhdEmailResult(email, name, emailAddr, phone) {
     '<span style="font-size:14px;font-weight:600;color:#1e293b">📧 套磁邮件 <span style="font-size:12px;color:#94a3b8;font-weight:400">约' + words + '字</span></span>' +
     '<span style="display:flex;gap:6px;flex-wrap:wrap">' +
     '<button onclick="copyPhdEmail()" style="padding:6px 14px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📋 复制全文</button>' +
+    '<button onclick="reviewPhdEmail()" style="padding:6px 14px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">💡 AI点评</button>' +
+    '<button onclick="toEnglishPhdEmail()" style="padding:6px 14px;background:#0ea5e9;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">🇬🇧 英文版</button>' +
     '<button onclick="generatePhdEmail()" style="padding:6px 14px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">🔄 再生成一版</button>' +
     '<button onclick="downloadPhdEmail()" style="padding:6px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📥 下载txt</button>' +
+    '<button onclick="saveCurrentEmailToTaoci()" style="padding:6px 14px;background:#ef4444;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📊 存入进度</button>' +
     '</span></div>' +
     '<textarea id="phdEmailText" rows="22" style="width:100%;padding:16px;border:none;font-size:13px;line-height:1.8;color:#334155;box-sizing:border-box;resize:vertical;font-family:inherit">' + email + '</textarea></div>' +
-    '<div style="margin-top:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1e40af">💡 发送前记得：修改联系邮箱/电话为真实信息，核对导师姓名职称，附上简历PDF，标题按「博士申请-姓名-学校-方向」格式。</div>';
+    '<div style="margin-top:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1e40af">💡 发送前记得：修改联系邮箱/电话为真实信息，核对导师姓名职称，附上简历PDF，标题按「博士申请-姓名-学校-方向」格式。</div>' +
+    '<div style="margin-top:6px;font-size:11px;color:#94a3b8">📚 已自动存入邮件历史库（最多保存20条），可点上方「📊 存入进度」同步到套磁进度管理</div>';
+  savePhdEmailToHistory(email);
 }
 
 async function polishPhdEmailDraft(withExpand) {
@@ -39312,6 +39324,233 @@ function copyPhdEmail() {
   text.select();
   document.execCommand('copy');
   alert('已复制到剪贴板！请粘贴到邮件客户端，核对导师姓名职称、附件与落款信息后再发送。');
+}
+
+// ========== 套磁邮件增强功能 ==========
+
+// 邮件历史库
+function getPhdEmailHistory() {
+  try { return JSON.parse(localStorage.getItem('phd_email_history') || '[]'); } catch (e) { return []; }
+}
+function savePhdEmailToHistory(email) {
+  try {
+    const hist = getPhdEmailHistory();
+    hist.unshift({ id: Date.now(), date: new Date().toLocaleString(), text: email });
+    localStorage.setItem('phd_email_history', JSON.stringify(hist.slice(0, 20)));
+  } catch (e) {}
+}
+
+// AI点评
+async function reviewPhdEmail() {
+  const email = window._phdLastEmail || (document.getElementById('phdEmailText') ? document.getElementById('phdEmailText').value : '');
+  if (!email) { alert('暂无邮件内容'); return; }
+  const result = document.getElementById('emailResult');
+  result.innerHTML = '<div style="text-align:center;color:#64748b;padding:30px;font-size:14px">💡 AI正在从导师视角审阅这封邮件…</div>';
+  const systemPrompt = '你是一位资深考博导师兼套磁信审阅专家。请从目标导师的视角审阅这封套磁邮件，给出结构化点评：\n1. 【总体评价】一句话概括这封邮件的水平与风格\n2. 【亮点】2-3条值得保留的优点\n3. 【风险点】2-3条可能引起导师反感的点（如模板感、啰嗦、空泛、过度承诺）\n4. 【回复率预判】低/中/高 + 一句理由\n5. 【具体改进建议】3-5条可操作建议，每条给出「原句→建议改法」\n格式清晰分点，语气专业中肯，直接输出点评文本。';
+  try {
+    const advice = await callDeepSeekAPI(systemPrompt, '【待审阅邮件】\n' + email, 1600, 'deepseek-chat');
+    if (!advice || advice.trim().length < 30) throw new Error('点评异常');
+    window._phdLastAdvice = advice;
+    result.innerHTML = '<div style="border:1px solid #ddd6fe;border-radius:10px;overflow:hidden">' +
+      '<div style="background:#f5f3ff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ddd6fe;flex-wrap:wrap;gap:8px">' +
+      '<span style="font-size:14px;font-weight:600;color:#4c1d95">💡 AI导师视角点评</span>' +
+      '<span style="display:flex;gap:6px">' +
+      '<button onclick="rewritePhdEmailByAdvice()" style="padding:6px 14px;background:#7c3aed;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">✍️ 按建议重写</button>' +
+      '<button onclick="renderPhdEmailResult(window._phdLastEmail,\'\',\'\',\'\')" style="padding:6px 14px;background:#e5e7eb;color:#374151;border:none;border-radius:6px;cursor:pointer;font-size:12px">← 返回邮件</button>' +
+      '</span></div>' +
+      '<div style="padding:16px;font-size:13px;line-height:1.9;color:#334155;white-space:pre-wrap">' + advice + '</div></div>';
+  } catch (e) {
+    result.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;color:#dc2626;font-size:14px">点评失败：' + e.message + '</div>';
+  }
+}
+
+// 按建议重写
+async function rewritePhdEmailByAdvice() {
+  const email = window._phdLastEmail || '';
+  const advice = window._phdLastAdvice || '';
+  if (!email) { alert('暂无邮件内容'); return; }
+  const result = document.getElementById('emailResult');
+  result.innerHTML = '<div style="text-align:center;color:#64748b;padding:30px;font-size:14px">✍️ AI正在按建议重写邮件…</div>';
+  const systemPrompt = '你是考博套磁信写作专家。请根据AI点评意见，重写这封套磁邮件：\n1. 保留原邮件的关键信息（姓名、院校、专业、导师信息、联系方式）\n2. 采纳点评中的改进建议，修正风险点\n3. 保持原场景与语气基调，输出完整邮件（含Subject标题）\n4. 直接输出重写后的邮件文本，不要解释。';
+  try {
+    const rewritten = await callDeepSeekAPI(systemPrompt, '【AI点评意见】\n' + advice + '\n\n【原邮件】\n' + email, 2200, 'deepseek-chat');
+    if (!rewritten || rewritten.trim().length < 50) throw new Error('重写结果异常');
+    window._phdLastEmail = rewritten;
+    renderPhdEmailResult(rewritten, '', '', '');
+  } catch (e) {
+    result.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;color:#dc2626;font-size:14px">重写失败：' + e.message + '</div>';
+  }
+}
+
+// 英文版
+async function toEnglishPhdEmail() {
+  const email = window._phdLastEmail || (document.getElementById('phdEmailText') ? document.getElementById('phdEmailText').value : '');
+  if (!email) { alert('暂无邮件内容'); return; }
+  const result = document.getElementById('emailResult');
+  result.innerHTML = '<div style="text-align:center;color:#64748b;padding:30px;font-size:14px">🇬🇧 AI正在转换为地道英文学术邮件…</div>';
+  const systemPrompt = '你是学术英语写作专家。请将中文考博套磁邮件翻译为地道的英文套磁邮件：\n1. 语气专业礼貌，符合国际学术惯例（Dear Professor XX, ... Sincerely/Respectfully yours）\n2. 专业术语准确，句式简洁地道，避免中式英语\n3. 保留全部关键信息（姓名、院校、研究方向、联系方式）\n4. 输出完整英文邮件（含Subject行），直接输出文本。';
+  try {
+    const eng = await callDeepSeekAPI(systemPrompt, '【中文邮件】\n' + email, 2200, 'deepseek-chat');
+    if (!eng || eng.trim().length < 50) throw new Error('转换异常');
+    window._phdLastEmail = eng;
+    renderPhdEmailResult(eng, '', '', '');
+  } catch (e) {
+    result.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;color:#dc2626;font-size:14px">转换失败：' + e.message + '</div>';
+  }
+}
+
+// 邮件历史库展示
+function showPhdEmailHistory() {
+  const area = document.getElementById('phdToolsContent');
+  if (!area) return;
+  const hist = getPhdEmailHistory();
+  let html = '<div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-top:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px"><h4 style="margin:0;color:#1e293b">📚 邮件历史库</h4><button onclick="showPhdEmailHelper()" style="padding:8px 16px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">✉️ 返回套磁助手</button></div>';
+  if (hist.length === 0) {
+    html += '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">暂无历史邮件，生成邮件后会自动保存到这里</div>';
+  } else {
+    html += '<div style="font-size:12px;color:#64748b;margin-bottom:12px">共 ' + hist.length + ' 条历史记录（自动保存最近20条）</div>';
+    hist.forEach(function(h) {
+      const preview = h.text.replace(/\s+/g, ' ').slice(0, 80);
+      html += '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:10px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">';
+      html += '<div style="font-size:12px;color:#94a3b8">🕐 ' + h.date + '</div>';
+      html += '<div style="display:flex;gap:6px">';
+      html += '<button onclick="restorePhdEmailFromHistory(' + h.id + ')" style="padding:5px 12px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📋 载入</button>';
+      html += '<button onclick="deletePhdEmailHistory(' + h.id + ')" style="padding:5px 12px;background:#fee2e2;color:#b91c1c;border:none;border-radius:6px;cursor:pointer;font-size:12px">删除</button>';
+      html += '</div></div>';
+      html += '<div style="margin-top:8px;font-size:13px;color:#475569;line-height:1.6">' + preview + '…</div>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+  area.innerHTML = html;
+}
+function restorePhdEmailFromHistory(id) {
+  const h = getPhdEmailHistory().find(x => x.id === id);
+  if (!h) { alert('记录不存在'); return; }
+  window._phdLastEmail = h.text;
+  showPhdEmailHelper();
+  const result = document.getElementById('emailResult');
+  if (result) renderPhdEmailResult(h.text, '', '', '');
+}
+function deletePhdEmailHistory(id) {
+  try {
+    const hist = getPhdEmailHistory().filter(x => x.id !== id);
+    localStorage.setItem('phd_email_history', JSON.stringify(hist));
+    showPhdEmailHistory();
+  } catch (e) {}
+}
+
+// ========== 套磁进度管理 CRM ==========
+function getTaociRecords() {
+  try { return JSON.parse(localStorage.getItem('phd_taoci_records') || '[]'); } catch (e) { return []; }
+}
+function saveTaociRecords(records) {
+  try { localStorage.setItem('phd_taoci_records', JSON.stringify(records)); } catch (e) {}
+}
+function showPhdTaociManager() {
+  const area = document.getElementById('phdToolsContent');
+  if (!area) return;
+  const records = getTaociRecords();
+  const statusList = ['待发', '已发', '已回复', '已约面', '已录取', '放弃'];
+  const today = new Date();
+  const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
+  let html = '<div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-top:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px"><h4 style="margin:0;color:#1e293b">📊 套磁进度管理</h4><button onclick="showPhdEmailHelper()" style="padding:8px 16px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">✉️ 返回套磁助手</button></div>';
+
+  // 统计卡
+  const cnt = {};
+  statusList.forEach(s => cnt[s] = 0);
+  records.forEach(r => { if (cnt[r.status] !== undefined) cnt[r.status]++; });
+  const dueToday = records.filter(r => r.followDate && r.followDate === todayStr);
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:18px">';
+  const statCards = [
+    { label: '总数', value: records.length, color: '#334155' },
+    { label: '已发', value: cnt['已发'], color: '#3b82f6' },
+    { label: '已回复', value: cnt['已回复'], color: '#8b5cf6' },
+    { label: '已约面/录取', value: cnt['已约面'] + cnt['已录取'], color: '#10b981' },
+    { label: '待发', value: cnt['待发'], color: '#f59e0b' },
+    { label: '今日需跟进', value: dueToday.length, color: '#ef4444' }
+  ];
+  statCards.forEach(s => {
+    html += '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:' + s.color + '">' + s.value + '</div><div style="font-size:11px;color:#64748b;margin-top:4px">' + s.label + '</div></div>';
+  });
+  html += '</div>';
+
+  // 新增记录表单
+  html += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:18px">';
+  html += '<div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px">➕ 新增套磁记录</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">';
+  html += '<input id="taociName" placeholder="导师姓名" style="padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box">';
+  html += '<input id="taociSchool" placeholder="院校" style="padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box">';
+  html += '<select id="taociStatus" style="padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px">' + statusList.map(s => '<option>' + s + '</option>').join('') + '</select>';
+  html += '<input id="taociFollowDate" placeholder="下次跟进日期 如2026-09-15" style="padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box">';
+  html += '</div>';
+  html += '<button onclick="addPhdTaociRecord()" style="margin-top:10px;padding:9px 22px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">保存记录</button>';
+  html += '</div>';
+
+  if (records.length === 0) {
+    html += '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">暂无套磁记录，可手动新增，或生成邮件后点「📊 存入进度」</div>';
+  } else {
+    // 今日跟进提醒
+    if (dueToday.length > 0) {
+      html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#b91c1c">⏰ <strong>今日（' + todayStr + '）有 ' + dueToday.length + ' 位导师需要跟进：</strong>' + dueToday.map(r => r.supName + '（' + r.supSchool + '）').join('、') + '</div>';
+    }
+    records.forEach(function(r, i) {
+      const isDue = r.followDate === todayStr;
+      html += '<div style="border:1px solid ' + (isDue ? '#fecaca' : '#e2e8f0') + ';border-radius:10px;padding:14px;margin-bottom:10px;' + (isDue ? 'background:#fff7f7' : '') + '">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">';
+      html += '<div><span style="font-size:14px;font-weight:700;color:#1e293b">🎓 ' + r.supName + '</span> <span style="font-size:12px;color:#64748b">' + r.supSchool + '</span></div>';
+      html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
+      html += '<select onchange="updatePhdTaociStatus(' + r.id + ', this.value)" style="padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px">' + statusList.map(s => '<option' + (r.status === s ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>';
+      if (r.followDate) html += '<span style="font-size:11px;color:' + (isDue ? '#dc2626' : '#94a3b8') + '">⏱️ ' + r.followDate + '</span>';
+      html += '<button onclick="deletePhdTaociRecord(' + r.id + ')" style="padding:5px 10px;background:#fee2e2;color:#b91c1c;border:none;border-radius:6px;cursor:pointer;font-size:12px">删除</button>';
+      html += '</div></div>';
+      if (r.scene) html += '<div style="margin-top:6px;font-size:11px;color:#94a3b8">场景：' + r.scene + '</div>';
+      if (r.note) html += '<div style="margin-top:6px;font-size:12px;color:#475569;background:#f8fafc;border-radius:6px;padding:6px 10px">📝 ' + r.note + '</div>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+  area.innerHTML = html;
+}
+function addPhdTaociRecord() {
+  const name = document.getElementById('taociName').value.trim();
+  const school = document.getElementById('taociSchool').value.trim();
+  const status = document.getElementById('taociStatus').value;
+  const followDate = document.getElementById('taociFollowDate').value.trim();
+  if (!name) { alert('请填写导师姓名'); return; }
+  const records = getTaociRecords();
+  records.unshift({ id: Date.now(), supName: name, supSchool: school || '未填院校', status: status, followDate: followDate, scene: '', note: '' });
+  saveTaociRecords(records);
+  showPhdTaociManager();
+}
+function updatePhdTaociStatus(id, status) {
+  const records = getTaociRecords();
+  const r = records.find(x => x.id === id);
+  if (r) { r.status = status; saveTaociRecords(records); }
+}
+function deletePhdTaociRecord(id) {
+  if (!confirm('确定删除这条套磁记录？')) return;
+  const records = getTaociRecords().filter(x => x.id !== id);
+  saveTaociRecords(records);
+  showPhdTaociManager();
+}
+function saveCurrentEmailToTaoci() {
+  const email = window._phdLastEmail || (document.getElementById('phdEmailText') ? document.getElementById('phdEmailText').value : '');
+  if (!email) { alert('暂无邮件内容'); return; }
+  const firstLine = email.split('\n')[0] || '';
+  const m = firstLine.match(/(尊敬的|Dear)?\s*([\u4e00-\u9fa5A-Za-z]+)(教授|老师|Prof)/);
+  const supName = m ? m[2] : '目标导师';
+  const sceneSel = document.getElementById('emailScene');
+  const sceneName = sceneSel ? sceneSel.options[sceneSel.selectedIndex].text : '';
+  const records = getTaociRecords();
+  records.unshift({ id: Date.now(), supName: supName, supSchool: '', status: '待发', followDate: '', scene: sceneName || '首封套磁', note: email.slice(0, 200) });
+  saveTaociRecords(records);
+  alert('已存入套磁进度管理（状态：待发）');
+  showPhdTaociManager();
 }
 
 // 我的收藏
