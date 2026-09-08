@@ -40812,15 +40812,36 @@ function propGenerateChapter() {
   userPrompt += '\n【写作任务】\n请撰写"' + chapter.title + '"章节的详细内容，要求内容充实、逻辑严谨、学术规范、专业术语准确，并在引用已有研究时用[1][2]标注。';
   if (chapter.content && chapter.content.length > 50) userPrompt += '\n\n【参考已有内容（可在此基础上扩展优化，保持核心观点）】\n' + chapter.content.substring(0, 500);
   
+  console.log('[propGenerateChapter] systemPrompt长度:', systemPrompt.length);
+  console.log('[propGenerateChapter] userPrompt长度:', userPrompt.length);
+  console.log('[propGenerateChapter] userPrompt内容:', userPrompt.substring(0, 500));
+  
   callDeepSeekAPI(systemPrompt, userPrompt, 4000, 'deepseek-chat').then(response => {
+    console.log('[propGenerateChapter] API返回成功, response长度:', response ? response.length : 0);
+    console.log('[propGenerateChapter] response前200字:', response ? response.substring(0, 200) : 'empty');
+    console.log('[propGenerateChapter] response.trim()长度:', response ? response.trim().length : 0);
+    
     propHideLoading();
     chapter.content = response.trim();
+    console.log('[propGenerateChapter] 已设置chapter.content, 长度:', chapter.content.length);
+    
     chapter.status = 'editing';
     propAutoSave();
+    console.log('[propGenerateChapter] 已保存, 开始渲染...');
+    
     renderPhdProposal();
+    console.log('[propGenerateChapter] 渲染完成');
+    
     // 生成完成后自动运行内容校验
-    setTimeout(() => propShowValidationResult(), 500);
+    setTimeout(() => {
+      try {
+        propShowValidationResult();
+      } catch(e) {
+        console.error('[propGenerateChapter] 校验函数出错:', e.message);
+      }
+    }, 500);
   }).catch(err => {
+    console.error('[propGenerateChapter] API调用失败:', err.message, err.stack);
     chapter.status = 'pending';
     renderPhdProposal();
     propShowError('AI生成失败：' + (err.message || '网络错误') + '。请检查网络连接后重试。', 'propGenerateChapter()');
