@@ -40619,14 +40619,31 @@ function showPhdSchoolDetail(idx) {
   
   html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">👨‍🏫 博士生导师（' + school.tutors.length + '位）</h4>';
   school.tutors.forEach(t => {
-    html += '<div style="background:#f8f9ff;border-radius:8px;padding:12px 16px;margin-bottom:10px">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
-    html += '<strong style="font-size:15px;color:#333">' + t.name + '</strong>';
-    html += '<span style="font-size:12px;color:#667eea">' + t.title + '</span>';
-    html += '</div>';
-    html += '<div style="font-size:13px;color:#555;margin-bottom:4px">研究方向：' + t.research + '</div>';
-    if (t.note) html += '<div style="font-size:12px;color:#999">💡 ' + t.note + '</div>';
-    html += '</div>';
+    const full = PHD_SUPERVISORS.find(function(s){ return s.name === t.name; });
+    if (full) {
+      html += '<div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:12px">';
+      html += '<div style="background:linear-gradient(135deg,#1e293b,#334155);padding:14px 16px;color:#fff">';
+      html += '<div style="font-size:16px;font-weight:700">🎓 ' + full.name + '</div>';
+      html += '<div style="font-size:12px;color:#cbd5e1;margin-top:4px">' + full.school + ' · ' + (full.title || '教授/博导') + '</div>';
+      if (full.enrollment) html += '<div style="font-size:12px;color:#fbbf24;margin-top:4px">📌 ' + full.enrollment + '</div>';
+      html += '</div><div style="padding:14px">';
+      const fdirs = (full.directions && full.directions.length) ? full.directions.join('、') : (full.research || '—');
+      html += '<div style="font-size:13px;color:#475569;line-height:1.8;margin-bottom:10px">🔬 研究方向：' + fdirs + '</div>';
+      if (full.metrics) html += '<div style="background:linear-gradient(135deg,#fefce8,#fef9c3);border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#854d0e;margin-bottom:4px">📊 成果量化</div><div style="font-size:12px;color:#713f12;line-height:1.8">' + full.metrics + '</div></div>';
+      if (full.awards) html += '<div style="font-size:12px;color:#6d28d9;margin-bottom:10px">🏅 ' + full.awards + '</div>';
+      if (full.note) html += '<div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:12px;color:#64748b;line-height:1.7;margin-bottom:8px">💡 ' + full.note + '</div>';
+      if (full.email) html += '<div style="font-size:12px;color:#3b82f6">✉️ 公开邮箱：' + full.email + '</div>';
+      html += '</div></div>';
+    } else {
+      html += '<div style="background:#f8f9ff;border-radius:8px;padding:12px 16px;margin-bottom:10px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+      html += '<strong style="font-size:15px;color:#333">' + t.name + '</strong>';
+      html += '<span style="font-size:12px;color:#667eea">' + t.title + '</span>';
+      html += '</div>';
+      html += '<div style="font-size:13px;color:#555;margin-bottom:4px">研究方向：' + t.research + '</div>';
+      if (t.note) html += '<div style="font-size:12px;color:#999">💡 ' + t.note + '</div>';
+      html += '</div>';
+    }
   });
   
   html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">📊 报录比参考</h4>';
@@ -40640,40 +40657,29 @@ function showPhdSchoolDetail(idx) {
 
 function showPhdSupervisorDetail(idx) {
   const sup = PHD_SUPERVISORS[idx];
-  let html = '<h3>👨\u200d🏫 ' + sup.name + '</h3>';
-  html += '<div style="margin-bottom:16px"><span class="kh-tag">' + sup.school + '</span> <span class="kh-tag">' + sup.title + '</span></div>';
-  
-  html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">🎯 研究方向</h4>';
-  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">';
-  sup.directions.forEach(d => {
-    html += '<span class="kh-tag" style="background:#dcfce7;color:#166534">' + d + '</span>';
-  });
+  const dirs = (sup.directions && sup.directions.length) ? sup.directions.join('、') : (sup.research || '—');
+  const papers = (sup.papers && sup.papers.length) ? sup.papers.map(function(p){ return '<li style="margin-bottom:4px">' + p + '</li>'; }).join('') : '<li style="color:#94a3b8">（官网查询中）</li>';
+  const projects = (sup.projects && sup.projects.length) ? sup.projects.map(function(p){ return '<li style="margin-bottom:4px">' + p + '</li>'; }).join('') : '<li style="color:#94a3b8">（官网查询中）</li>';
+  const edu = sup.edu ? '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:8px">🎓 教育经历</div><div style="font-size:13px;color:#475569;line-height:1.8;margin-bottom:14px">' + sup.edu + '</div>' : '';
+  const exp = sup.experience ? '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:8px">💼 工作经历与学术职务</div><div style="font-size:13px;color:#475569;line-height:1.8;margin-bottom:14px">' + sup.experience + '</div>' : '';
+  const awards = sup.awards ? '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:8px">🏅 荣誉与学术兼职</div><div style="font-size:13px;color:#475569;line-height:1.8;margin-bottom:14px">' + sup.awards + '</div>' : '';
+  let html = '<div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">';
+  html += '<div style="background:linear-gradient(135deg,#1e293b,#334155);padding:18px 20px;color:#fff">';
+  html += '<div style="font-size:18px;font-weight:700">🎓 ' + sup.name + '</div>';
+  html += '<div style="font-size:12px;color:#cbd5e1;margin-top:4px">' + sup.school + ' · ' + (sup.title || '教授/博导') + '</div>';
+  if (sup.enrollment) html += '<div style="font-size:12px;color:#fbbf24;margin-top:4px">📌 ' + sup.enrollment + '</div>';
   html += '</div>';
-  
-  html += '<p style="font-size:14px;line-height:1.7;color:#555;margin-bottom:16px">' + sup.research + '</p>';
-  
-  html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">📄 代表性论文</h4>';
-  html += '<ul style="font-size:14px;line-height:1.8;color:#555;margin-bottom:16px;padding-left:20px">';
-  sup.papers.forEach(p => { html += '<li>' + p + '</li>'; });
-  html += '</ul>';
-  
-  html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">🔬 科研项目</h4>';
-  html += '<ul style="font-size:14px;line-height:1.8;color:#555;margin-bottom:16px;padding-left:20px">';
-  sup.projects.forEach(p => { html += '<li>' + p + '</li>'; });
-  html += '</ul>';
-  
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">';
-  html += '<div style="background:#f0f9ff;padding:12px;border-radius:8px"><div style="font-size:11px;color:#0369a1;margin-bottom:4px">🎓 招生情况</div><div style="font-size:13px;color:#0c4a6e">' + sup.enrollment + '</div></div>';
-  html += '<div style="background:#fefce8;padding:12px;border-radius:8px"><div style="font-size:11px;color:#ca8a04;margin-bottom:4px">📧 联系方式</div><div style="font-size:13px;color:#854d0e">' + sup.email + '</div></div>';
-  html += '</div>';
-  
-  html += '<h4 style="color:#333;margin-top:20px;margin-bottom:8px">💡 导师介绍</h4>';
-  html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;font-size:14px;line-height:1.7;color:#555">' + sup.note + '</div>';
-  
-  html += '<div style="margin-top:20px;padding:12px 16px;background:#fffbeb;border-radius:8px;border-left:4px solid #f59e0b;font-size:12px;color:#92400e">';
-  html += '⚠️ 提示：导师信息仅供参考，具体招生情况请以学校官网最新招生简章为准，建议提前邮件联系导师。';
-  html += '</div>';
-  
+  html += '<div style="padding:16px">';
+  html += edu + exp;
+  html += '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:8px">🔬 研究方向</div><div style="font-size:13px;color:#475569;line-height:1.8;margin-bottom:14px">' + dirs + '</div>';
+  html += '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:8px">📄 代表性成果</div><ul style="margin:0 0 14px 0;padding-left:18px;font-size:13px;color:#475569;line-height:1.7">' + papers + '</ul>';
+  html += '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:8px">📁 科研项目与平台</div><ul style="margin:0 0 14px 0;padding-left:18px;font-size:13px;color:#475569;line-height:1.7">' + projects + '</ul>';
+  if (sup.metrics) html += '<div style="background:linear-gradient(135deg,#fefce8,#fef9c3);border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:#854d0e;margin-bottom:4px">📊 成果量化</div><div style="font-size:12px;color:#713f12;line-height:1.8">' + sup.metrics + '</div></div>';
+  html += awards;
+  if (sup.note) html += '<div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:12px;color:#64748b;line-height:1.7">💡 ' + sup.note + '</div>';
+  if (sup.email) html += '<div style="margin-top:10px;font-size:12px;color:#3b82f6">✉️ 公开邮箱：' + sup.email + '（建议以学院官网最新信息为准）</div>';
+  html += '<div style="margin-top:12px;font-size:11px;color:#94a3b8">以上信息来源于院校官网及公开学术资料整理，供参考；招生名额与报考要求以当年招生简章为准。</div>';
+  html += '</div></div>';
   showPhdDetail(html);
 }
 
