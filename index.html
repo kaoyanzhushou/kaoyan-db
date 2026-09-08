@@ -38758,7 +38758,7 @@ function renderPhdSchools() {
     
     // 对比模式提示
     html += '<div id="phdCompareBar" style="display:none;margin-bottom:16px;padding:12px 16px;background:#fef3c7;border-radius:8px;border-left:4px solid #f59e0b">';
-    html += '<span style="color:#92400e;font-size:13px">已选择 <strong id="phdCompareCount">0</strong> 所院校进行对比（最多3所）</span>';
+    html += '<span style="color:#92400e;font-size:13px">已选择 <strong id="phdCompareCount">0</strong> 所院校进行对比（最多4所）</span>';
     html += '<button onclick="showPhdSchoolCompare()" style="margin-left:12px;padding:6px 16px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">开始对比</button>';
     html += '<button onclick="clearPhdCompare()" style="margin-left:8px;padding:6px 12px;background:#e5e7eb;color:#374151;border:none;border-radius:6px;cursor:pointer;font-size:13px">清空</button>';
     html += '</div>';
@@ -38840,7 +38840,7 @@ function renderPhdSchools() {
   } else if (window.phdSchoolSubTab === 'compare') {
     // 院校对比
     html += '<div style="margin-bottom:16px;padding:12px 16px;background:#fef3c7;border-radius:8px;border-left:4px solid #f59e0b;font-size:13px;color:#92400e">';
-    html += '⚖️ 选择2-3所院校进行多维度对比';
+    html += '⚖️ 选择2-4所院校进行多维度对比（含雷达图与AI综合评价）';
     html += '</div>';
     html += '<div id="phdCompareContent">';
     if (window.phdCompareList && window.phdCompareList.length > 0) {
@@ -38961,8 +38961,8 @@ if (typeof window.phdCompareList === 'undefined') window.phdCompareList = [];
 
 function togglePhdCompare(idx, checked) {
   if (checked) {
-    if (window.phdCompareList.length >= 3) {
-      alert('最多只能对比3所院校');
+    if (window.phdCompareList.length >= 4) {
+      alert('最多只能对比4所院校');
       const checkbox = document.querySelector('.phd-compare-checkbox[data-idx="' + idx + '"]');
       if (checkbox) checkbox.checked = false;
       return;
@@ -38998,7 +38998,110 @@ function showPhdSchoolCompare() {
 
 function renderPhdCompareTable() {
   const schools = window.phdCompareList.map(idx => PHD_SCHOOLS[idx]);
-  let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+  let html = '';
+  
+  // AI综合评价卡片
+  if (schools.length >= 2) {
+    html += '<div style="background:linear-gradient(135deg,#667eea15,#a855f715);border-radius:12px;padding:20px;margin-bottom:20px;border:1px solid #667eea30">';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:18px">🤖</span><span style="font-size:15px;font-weight:700;color:#4c1d95">AI 综合对比分析</span></div>';
+    
+    // 找出各维度最优
+    const easiest = schools.reduce((a, b) => {
+      const da = PHD_SCHOOL_DETAILS[a.id] ? PHD_SCHOOL_DETAILS[a.id].difficulty : 10;
+      const db = PHD_SCHOOL_DETAILS[b.id] ? PHD_SCHOOL_DETAILS[b.id].difficulty : 10;
+      return da < db ? a : b;
+    });
+    const mostTutors = schools.reduce((a, b) => (a.tutors.length > b.tutors.length ? a : b));
+    const highestLevel = schools.find(s => s.level.includes('985')) || schools.find(s => s.level.includes('211')) || schools[0];
+    
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px">';
+    html += '<div style="background:#fff;border-radius:8px;padding:12px"><div style="font-size:12px;color:#64748b;margin-bottom:4px">🎯 难度最低</div><div style="font-size:14px;font-weight:700;color:#059669">' + easiest.name + '</div><div style="font-size:11px;color:#64748b;margin-top:2px">难度评分 ' + (PHD_SCHOOL_DETAILS[easiest.id] ? PHD_SCHOOL_DETAILS[easiest.id].difficulty : '-') + '/10</div></div>';
+    html += '<div style="background:#fff;border-radius:8px;padding:12px"><div style="font-size:12px;color:#64748b;margin-bottom:4px">👨‍🏫 导师最多</div><div style="font-size:14px;font-weight:700;color:#2563eb">' + mostTutors.name + '</div><div style="font-size:11px;color:#64748b;margin-top:2px">' + mostTutors.tutors.length + '位博导</div></div>';
+    html += '<div style="background:#fff;border-radius:8px;padding:12px"><div style="font-size:12px;color:#64748b;margin-bottom:4px">🏆 层次最高</div><div style="font-size:14px;font-weight:700;color:#d97706">' + highestLevel.name + '</div><div style="font-size:11px;color:#64748b;margin-top:2px">' + highestLevel.level + '</div></div>';
+    html += '</div>';
+    
+    // AI建议
+    html += '<div style="background:#fff;border-radius:8px;padding:12px;font-size:13px;color:#475569;line-height:1.7">';
+    html += '<strong style="color:#4c1d95">💡 选择建议：</strong>';
+    html += '如果你追求学术平台和资源，优先考虑<strong>' + highestLevel.name + '</strong>；';
+    html += '如果希望提高录取概率，<strong>' + easiest.name + '</strong>难度较低更稳妥；';
+    html += '如果重视导师指导，<strong>' + mostTutors.name + '</strong>导师资源更丰富。';
+    html += '建议结合自身背景（本科院校、GPA、英语、科研经历）综合选择，可在"智能推荐"中生成个性化录取概率评估。';
+    html += '</div></div>';
+  }
+  
+  // 雷达图对比（SVG实现）
+  if (schools.length >= 2) {
+    html += '<div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06)">';
+    html += '<h5 style="margin:0 0 16px;color:#1e293b">📊 多维雷达图对比</h5>';
+    html += '<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">';
+    
+    // 生成雷达图SVG
+    const dimensions = ['专业实力', '导师资源', '科研平台', '地理优势', '录取概率', '就业前景'];
+    const cx = 150, cy = 150, r = 100;
+    const colors = ['#667eea', '#f59e0b', '#22c55e', '#ef4444'];
+    
+    let svg = '<svg width="300" height="300" viewBox="0 0 300 300">';
+    // 背景网格
+    for (let ring = 1; ring <= 5; ring++) {
+      const ringR = (r * ring) / 5;
+      let points = [];
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI * 2 * i) / 6 - Math.PI / 2;
+        points.push((cx + ringR * Math.cos(angle)) + ',' + (cy + ringR * Math.sin(angle)));
+      }
+      svg += '<polygon points="' + points.join(' ') + '" fill="none" stroke="#e2e8f0" stroke-width="1"/>';
+    }
+    // 轴线
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI * 2 * i) / 6 - Math.PI / 2;
+      svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + (cx + r * Math.cos(angle)) + '" y2="' + (cy + r * Math.sin(angle)) + '" stroke="#e2e8f0" stroke-width="1"/>';
+      // 标签
+      const labelR = r + 20;
+      const lx = cx + labelR * Math.cos(angle);
+      const ly = cy + labelR * Math.sin(angle);
+      svg += '<text x="' + lx + '" y="' + ly + '" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#64748b">' + dimensions[i] + '</text>';
+    }
+    
+    // 各院校数据
+    schools.forEach((school, si) => {
+      const detail = PHD_SCHOOL_DETAILS[school.id];
+      const diff = detail ? detail.difficulty : 6;
+      // 评分（0-100）
+      const scores = [
+        Math.min(100, (school.level.includes('985') ? 95 : school.level.includes('211') ? 80 : school.level.includes('双一流') ? 75 : 60)), // 专业实力
+        Math.min(100, school.tutors.length * 15), // 导师资源
+        Math.min(100, detail ? 70 + (detail.platform.length > 20 ? 15 : 0) : 60), // 科研平台
+        Math.min(100, ['北京', '上海'].some(c => school.location.includes(c)) ? 95 : ['广州', '武汉', '南京'].some(c => school.location.includes(c)) ? 80 : 65), // 地理优势
+        Math.max(20, 100 - diff * 8), // 录取概率（难度越低概率越高）
+        Math.min(100, detail ? 70 + (detail.employment.length > 15 ? 15 : 0) : 60) // 就业前景
+      ];
+      
+      let points = [];
+      scores.forEach((s, i) => {
+        const angle = (Math.PI * 2 * i) / 6 - Math.PI / 2;
+        const pr = (s / 100) * r;
+        points.push((cx + pr * Math.cos(angle)) + ',' + (cy + pr * Math.sin(angle)));
+      });
+      svg += '<polygon points="' + points.join(' ') + '" fill="' + colors[si % 4] + '25" stroke="' + colors[si % 4] + '" stroke-width="2"/>';
+    });
+    svg += '</svg>';
+    
+    html += '<div>' + svg + '</div>';
+    
+    // 图例
+    html += '<div style="flex:1;min-width:200px">';
+    schools.forEach((school, si) => {
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="width:16px;height:16px;background:' + colors[si % 4] + ';border-radius:3px;display:inline-block"></span><span style="font-size:13px;color:#334155;font-weight:600">' + school.name + '</span></div>';
+    });
+    html += '<div style="margin-top:16px;padding:12px;background:#f8fafc;border-radius:8px;font-size:12px;color:#64748b;line-height:1.6">';
+    html += '<strong>说明：</strong>雷达图基于院校层次、导师数量、科研平台、地理位置、难度评分、就业方向等维度综合评估，仅供参考。面积越大表示综合优势越明显。';
+    html += '</div></div>';
+    
+    html += '</div></div>';
+  }
+  
+  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
   
   // 表头
   html += '<thead><tr style="background:#667eea;color:#fff">';
