@@ -39053,7 +39053,12 @@ function renderPhdSchools() {
     html += '</div>';
     
     html += '<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
-    html += '<input type="text" id="phdSupervisorSearch" class="phd-filter-select" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px" placeholder="🔍 搜索导师姓名、研究方向..." oninput="filterPhdSupervisors()">';
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%;margin-bottom:8px">';
+    html += '<input type="text" id="phdSupervisorSearch" class="phd-filter-select" style="flex:1;min-width:180px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px" placeholder="🔍 搜索导师姓名/院校..." oninput="filterPhdSupervisors()">';
+    html += '<input type="text" id="phdMatchInput" style="flex:2;min-width:240px;padding:8px 12px;border:1px solid #3b82f6;border-radius:8px;font-size:13px;background:#eff6ff" placeholder="🎯 输入研究方向智能匹配导师（如：运动与脑健康、运动生物力学、运动康复）" oninput="filterPhdSupervisors()">';
+    html += '<button onclick="document.getElementById(\'phdMatchInput\').value=\'\';filterPhdSupervisors()" style="padding:8px 14px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;cursor:pointer;color:#475569;white-space:nowrap">清除匹配</button>';
+    html += '</div>';
+    html += '<div id="phdMatchInfo" style="font-size:12px;color:#3b82f6;margin-bottom:8px;display:none;line-height:1.6"></div>';
     const supSchools = [...new Set(PHD_SUPERVISORS.map(s => s.school))];
     html += '<select id="phdSupervisorSchoolFilter" class="phd-filter-select" onchange="filterPhdSupervisors()" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px">';
     html += '<option value="">全部院校</option>';
@@ -40205,7 +40210,7 @@ function renderPhdSupervisorCards(supervisors) {
     html += '<div class="phd-knowledge-card" style="cursor:pointer" onclick="showPhdSupervisorDetail(' + realIdx + ')">';
     html += '<div class="phd-knowledge-card-header">';
     html += '<span class="phd-knowledge-card-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a)">👨\u200d🏫</span>';
-    html += '<span class="phd-knowledge-card-title">' + sup.name + (sup.timeline ? ' <span style="font-size:9px;background:#ffedd5;color:#c2410c;padding:1px 6px;border-radius:8px;vertical-align:middle">📅 近期动态</span>' : '') + '</span>';
+    html += '<span class="phd-knowledge-card-title">' + sup.name + (sup.timeline ? ' <span style="font-size:9px;background:#ffedd5;color:#c2410c;padding:1px 6px;border-radius:8px;vertical-align:middle">📅 近期动态</span>' : '') + (sup._matchScore ? ' <span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:1px 6px;border-radius:8px;vertical-align:middle">🎯 匹配度'+sup._matchScore+'</span>' : '') + '</span>';
     html += '</div>';
     html += '<div style="font-size:12px;color:#64748b;margin-bottom:6px">' + sup.school + ' · ' + sup.title + '</div>';
     html += '<div class="phd-knowledge-card-desc" style="margin-bottom:8px;font-size:12px">' + sup.research + '</div>';
@@ -40245,6 +40250,7 @@ function filterPhdSchools() {
 function filterPhdSupervisors() {
   const keyword = document.getElementById('phdSupervisorSearch') ? document.getElementById('phdSupervisorSearch').value.toLowerCase() : '';
   const school = document.getElementById('phdSupervisorSchoolFilter') ? document.getElementById('phdSupervisorSchoolFilter').value : '';
+  const matchKw = document.getElementById('phdMatchInput') ? document.getElementById('phdMatchInput').value.trim() : '';
   const list = document.getElementById('phdSupervisorList');
   if (!list) return;
   
@@ -40255,8 +40261,48 @@ function filterPhdSupervisors() {
     return matchKeyword && matchSchool;
   });
   
+  // 智能匹配：计算匹配度并排序
+  if (matchKw) {
+    const kw = matchKw.toLowerCase();
+    const tokens = [];
+    const enWords = matchKw.match(/[a-zA-Z]+/g)||[];
+    enWords.forEach(function(w){ if(w.length>=2) tokens.push(w.toLowerCase()); });
+    const cnSeg = matchKw.replace(/[a-zA-Z0-9\s,，、。.;；:：!！?？（）()【】\[\]]/g,'');
+    for(var L=2;L<=Math.min(4,cnSeg.length);L++){
+      for(var p=0;p<=cnSeg.length-L;p++){
+        var seg=cnSeg.substr(p,L);
+        if(tokens.indexOf(seg)===-1) tokens.push(seg);
+      }
+    }
+    filtered = filtered.map(function(sup){
+      var score=0; var hits=[];
+      var text = ((sup.directions?sup.directions.join(' '):'')+' '+(sup.research||'')+' '+(sup.group||'')+' '+(sup.timeline||'')+' '+(sup.metrics||'')+' '+(sup.awards||'')+' '+sup.school+' '+sup.name).toLowerCase();
+      tokens.forEach(function(t){
+        if(text.indexOf(t)>-1){ score += (t.length>=3?3:1); if(hits.indexOf(t)===-1) hits.push(t); }
+      });
+      if(sup.directions){
+        sup.directions.forEach(function(d){
+          if(d.toLowerCase().indexOf(kw)>-1 || kw.indexOf(d.toLowerCase())>-1) score += 5;
+        });
+      }
+      return {sup:sup, score:score, hits:hits};
+    }).filter(function(m){return m.score>0}).sort(function(a,b){return b.score-a.score}).map(function(m){
+      // 在卡片上标注匹配度
+      m.sup._matchScore = m.score; m.sup._matchHits = m.hits; return m.sup;
+    });
+    var info = document.getElementById('phdMatchInfo');
+    if(info){
+      info.style.display='block';
+      var topHits = filtered.length>0 ? (filtered[0]._matchHits||[]).slice(0,5).join('、') : '';
+      info.innerHTML = '🎯 智能匹配结果：找到 <b style="color:#1d4ed8">'+filtered.length+'</b> 位相关导师（按匹配度从高到低排序）。'+(topHits?'匹配关键词：<span style="background:#dbeafe;padding:1px 6px;border-radius:4px">'+topHits+'</span>':'')+'<br><span style="color:#64748b;font-size:11px">提示：输入越具体（如"运动与脑健康 神经可塑性"），匹配越精准。</span>';
+    }
+  } else {
+    var info2 = document.getElementById('phdMatchInfo'); if(info2) info2.style.display='none';
+    filtered.forEach(function(s){ delete s._matchScore; delete s._matchHits; });
+  }
+  
   if (filtered.length === 0) {
-    list.innerHTML = '<div class="phd-empty">未找到匹配的导师</div>';
+    list.innerHTML = '<div class="phd-empty">未找到匹配的导师<br><span style="font-size:12px;color:#94a3b8">试试更宽泛的关键词，或清除智能匹配输入框</span></div>';
   } else {
     list.innerHTML = renderPhdSupervisorCards(filtered);
   }
