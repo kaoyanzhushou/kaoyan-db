@@ -40405,7 +40405,13 @@ function renderPhdProposal() {
     {icon:'➕', label:'AI续写', action:'propAIContinue()'},
     {icon:'📊', label:'生成技术路线图', action:'propGenerateTechRoute()'},
     {icon:'🎤', label:'模拟导师提问', action:'propSimulateSupervisorQuestions()'},
+    {icon:'🔬', label:'研究设计工坊', action:'propShowResearchDesignWorkshop()'},
     {icon:'📈', label:'统计方法助手', action:'propShowStatsHelper()'},
+    {icon:'💰', label:'经费预算生成', action:'propShowBudgetGenerator()'},
+    {icon:'📅', label:'甘特图生成', action:'propShowGanttGenerator()'},
+    {icon:'📚', label:'优秀范例库', action:'propShowExamplesLibrary()'},
+    {icon:'🏫', label:'院校要求', action:'propShowSchoolRequirements()'},
+    {icon:'📂', label:'版本管理', action:'propShowVersionManager()'},
     {icon:'🔍', label:'AI多维度评审', action:'propAIReview()'},
     {icon:'📖', label:'参考文献格式化', action:'propFormatRefs()'}
   ];
@@ -41632,6 +41638,889 @@ function propInsertStatsReport() {
   }
   propCloseTopicModal();
   alert('已将统计方法报告插入到当前章节！');
+}
+
+
+// ===== 研究设计工坊 =====
+function propShowResearchDesignWorkshop() {
+  const modal = document.getElementById('propTopicModal');
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modal || !modalContent) return;
+  modal.style.display = 'flex';
+  propDesignStep = 0;
+  propDesignData = {pico: {}, hypothesis: '', variables: {}, sampleSize: {}};
+  propRenderDesignStep();
+}
+
+let propDesignStep = 0;
+let propDesignData = {pico: {}, hypothesis: '', variables: {}, sampleSize: {}};
+
+function propRenderDesignStep() {
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modalContent) return;
+  
+  const steps = ['研究问题(PICO)', '研究假设', '变量定义', '样本量计算', '完成'];
+  const currentStep = steps[propDesignStep];
+  
+  let html = '<div style="padding:20px 24px;border-bottom:1px solid #f1f5f9">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html += '<div><h3 style="margin:0;font-size:18px;color:#1e293b">🔬 研究设计工坊</h3><p style="margin:4px 0 0;font-size:13px;color:#64748b">交互式引导，完善研究设计，可一键插入计划书</p></div>';
+  html += '<button onclick="propCloseTopicModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;padding:0 8px">×</button>';
+  html += '</div>';
+  // 进度条
+  html += '<div style="display:flex;gap:4px;margin-bottom:4px">';
+  steps.forEach((s, i) => {
+    html += '<div style="flex:1;height:4px;border-radius:2px;background:' + (i <= propDesignStep ? 'linear-gradient(90deg,#667eea,#764ba2)' : '#e2e8f0') + '"></div>';
+  });
+  html += '</div>';
+  html += '<div style="font-size:11px;color:#94a3b8">第 ' + (propDesignStep+1) + '/5 步：' + currentStep + '</div>';
+  html += '</div>';
+  
+  html += '<div style="padding:20px;max-height:60vh;overflow-y:auto">';
+  
+  if (propDesignStep === 0) {
+    // PICO框架
+    html += '<div style="margin-bottom:16px;padding:12px;background:#eff6ff;border-radius:10px;font-size:12px;color:#1e40af;line-height:1.7">';
+    html += '<strong>💡 PICO框架</strong>是构建研究问题的标准方法：<br>';
+    html += '<strong>P</strong>(Population)：研究对象 | <strong>I</strong>(Intervention)：干预/暴露因素<br>';
+    html += '<strong>C</strong>(Comparison)：对照/比较 | <strong>O</strong>(Outcome)：结局指标';
+    html += '</div>';
+    
+    const picoFields = [
+      {key: 'P', label: 'P - 研究对象', placeholder: '如：2型糖尿病患者、健康大学生、老年骨质疏松患者', required: true},
+      {key: 'I', label: 'I - 干预/暴露因素', placeholder: '如：12周中等强度有氧运动、高强度间歇训练、运动康复干预', required: true},
+      {key: 'C', label: 'C - 对照/比较', placeholder: '如：常规护理组、无运动对照组、低强度运动组', required: true},
+      {key: 'O', label: 'O - 结局指标', placeholder: '如：糖化血红蛋白、最大摄氧量、骨密度、胰岛素抵抗指数', required: true}
+    ];
+    
+    picoFields.forEach(f => {
+      html += '<div style="margin-bottom:14px">';
+      html += '<label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">' + f.label + (f.required ? ' <span style="color:#dc2626">*</span>' : '') + '</label>';
+      html += '<textarea id="pico_' + f.key + '" rows="2" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit" placeholder="' + f.placeholder + '">' + (propDesignData.pico[f.key] || '') + '</textarea>';
+      html += '</div>';
+    });
+    
+  } else if (propDesignStep === 1) {
+    // 研究假设
+    html += '<div style="margin-bottom:16px;padding:12px;background:#f0fdf4;border-radius:10px;font-size:12px;color:#166534;line-height:1.7">';
+    html += '<strong>💡 研究假设</strong>是对研究问题的预期答案，分为：<br>';
+    html += '<strong>研究假设(H1)</strong>：研究者预期的结果（如：运动干预能显著降低血糖）<br>';
+    html += '<strong>零假设(H0)</strong>：与研究假设相反（如：运动干预对血糖无显著影响）';
+    html += '</div>';
+    
+    html += '<div style="margin-bottom:14px">';
+    html += '<label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">研究假设（H1）</label>';
+    html += '<textarea id="design_hypothesis" rows="4" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit" placeholder="如：12周中等强度有氧运动干预能够显著降低2型糖尿病患者的糖化血红蛋白水平，改善胰岛素抵抗，其机制可能与AMPK信号通路激活有关。">' + (propDesignData.hypothesis || '') + '</textarea>';
+    html += '</div>';
+    
+    html += '<div style="padding:10px;background:#f8fafc;border-radius:8px;font-size:12px;color:#64748b">';
+    html += '<strong>零假设（H0）自动生成：</strong><br>';
+    html += '<em>12周中等强度有氧运动干预对2型糖尿病患者的糖化血红蛋白水平无显著影响。</em>';
+    html += '</div>';
+    
+  } else if (propDesignStep === 2) {
+    // 变量定义
+    html += '<div style="margin-bottom:16px;padding:12px;background:#faf5ff;border-radius:10px;font-size:12px;color:#6b21a8;line-height:1.7">';
+    html += '<strong>💡 变量定义</strong>是研究设计的核心，需明确：<br>';
+    html += '<strong>自变量</strong>：研究者操纵的变量（如运动干预）<br>';
+    html += '<strong>因变量</strong>：被测量的结局指标（如血糖、VO2max）<br>';
+    html += '<strong>控制变量</strong>：可能影响结果但需控制的变量（如年龄、性别、饮食）';
+    html += '</div>';
+    
+    const varFields = [
+      {key: 'independent', label: '自变量（Independent Variable）', placeholder: '如：运动干预方式（有氧运动组/对照组）、运动强度、运动时长', rows: 2},
+      {key: 'dependent', label: '因变量（Dependent Variable）', placeholder: '如：糖化血红蛋白(HbA1c)、空腹血糖(FBG)、最大摄氧量(VO2max)、胰岛素抵抗指数(HOMA-IR)', rows: 3},
+      {key: 'control', label: '控制变量（Control Variable）', placeholder: '如：年龄、性别、BMI、饮食习惯、用药情况、基线水平', rows: 2}
+    ];
+    
+    varFields.forEach(f => {
+      html += '<div style="margin-bottom:14px">';
+      html += '<label style="display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">' + f.label + '</label>';
+      html += '<textarea id="var_' + f.key + '" rows="' + f.rows + '" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit" placeholder="' + f.placeholder + '">' + (propDesignData.variables[f.key] || '') + '</textarea>';
+      html += '</div>';
+    });
+    
+  } else if (propDesignStep === 3) {
+    // 样本量计算
+    html += '<div style="margin-bottom:16px;padding:12px;background:#fffbeb;border-radius:10px;font-size:12px;color:#92400e;line-height:1.7">';
+    html += '<strong>💡 样本量估算</strong>是研究设计的关键环节，需说明估算依据。<br>';
+    html += '常用方法：<strong>公式法</strong>（基于均值/率的比较）、<strong>经验法</strong>（参考同类研究）、<strong>软件法</strong>（G*Power、PASS）';
+    html += '</div>';
+    
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">';
+    html += '<div><label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">研究类型</label>';
+    html += '<select id="ss_type" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">';
+    html += '<option value="means">两均数比较（t检验）</option>';
+    html += '<option value="rates">两率比较（卡方检验）</option>';
+    html += '<option value="anova">多组均数比较（ANOVA）</option>';
+    html += '<option value="correlation">相关性分析</option>';
+    html += '</select></div>';
+    html += '<div><label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">检验水准 α</label>';
+    html += '<select id="ss_alpha" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">';
+    html += '<option value="0.05">0.05（双侧）</option>';
+    html += '<option value="0.01">0.01（双侧）</option>';
+    html += '</select></div>';
+    html += '<div><label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">检验效能 1-β</label>';
+    html += '<select id="ss_power" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">';
+    html += '<option value="0.8">0.80（80%）</option>';
+    html += '<option value="0.9">0.90（90%）</option>';
+    html += '</select></div>';
+    html += '<div><label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">预期效应量 d</label>';
+    html += '<input id="ss_effect" type="number" step="0.1" value="0.5" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px" placeholder="如：0.5（中等效应）">';
+    html += '<div style="font-size:10px;color:#94a3b8;margin-top:2px">小=0.2, 中=0.5, 大=0.8</div></div>';
+    html += '</div>';
+    
+    html += '<button onclick="propCalculateSampleSize()" style="width:100%;padding:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;margin-bottom:14px">📊 计算样本量</button>';
+    
+    html += '<div id="ss_result" style="display:none;padding:14px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0">';
+    html += '<div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:8px">✅ 样本量估算结果</div>';
+    html += '<div id="ss_result_content" style="font-size:12px;color:#14532d;line-height:1.8"></div>';
+    html += '</div>';
+    
+  } else if (propDesignStep === 4) {
+    // 完成 - 汇总
+    html += '<div style="text-align:center;padding:20px 0">';
+    html += '<div style="font-size:48px;margin-bottom:12px">🎉</div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:8px">研究设计完成！</div>';
+    html += '<div style="font-size:13px;color:#64748b;margin-bottom:16px">以下是你的研究设计汇总，可一键插入到计划书</div>';
+    html += '</div>';
+    
+    html += '<div id="design_summary" style="padding:14px;background:#f8fafc;border-radius:10px;font-size:12px;line-height:1.8;color:#475569;max-height:300px;overflow-y:auto">';
+    html += propGenerateDesignSummary();
+    html += '</div>';
+  }
+  
+  html += '</div>';
+  
+  // 底部按钮
+  html += '<div style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;gap:10px">';
+  if (propDesignStep > 0) {
+    html += '<button onclick="propDesignPrev()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">← 上一步</button>';
+  } else {
+    html += '<div></div>';
+  }
+  if (propDesignStep < 4) {
+    html += '<button onclick="propDesignNext()" style="padding:8px 16px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">下一步 →</button>';
+  } else {
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button onclick="propInsertDesign()" style="padding:8px 16px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">📥 插入到研究方法章节</button>';
+    html += '<button onclick="propCloseTopicModal()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">完成</button>';
+    html += '</div>';
+  }
+  html += '</div>';
+  
+  modalContent.innerHTML = html;
+}
+
+function propDesignNext() {
+  // 保存当前步骤数据
+  if (propDesignStep === 0) {
+    ['P','I','C','O'].forEach(k => {
+      const el = document.getElementById('pico_' + k);
+      if (el) propDesignData.pico[k] = el.value;
+    });
+  } else if (propDesignStep === 1) {
+    const el = document.getElementById('design_hypothesis');
+    if (el) propDesignData.hypothesis = el.value;
+  } else if (propDesignStep === 2) {
+    ['independent','dependent','control'].forEach(k => {
+      const el = document.getElementById('var_' + k);
+      if (el) propDesignData.variables[k] = el.value;
+    });
+  }
+  propDesignStep++;
+  propRenderDesignStep();
+}
+
+function propDesignPrev() {
+  propDesignStep--;
+  propRenderDesignStep();
+}
+
+function propCalculateSampleSize() {
+  const type = document.getElementById('ss_type').value;
+  const alpha = parseFloat(document.getElementById('ss_alpha').value);
+  const power = parseFloat(document.getElementById('ss_power').value);
+  const effect = parseFloat(document.getElementById('ss_effect').value) || 0.5;
+  
+  // Z值
+  const zAlpha = alpha === 0.05 ? 1.96 : 2.576;
+  const zBeta = power === 0.8 ? 0.84 : 1.28;
+  
+  let n = 0;
+  let formula = '';
+  let explanation = '';
+  
+  if (type === 'means') {
+    // 两均数比较：n = 2[(Zα/2 + Zβ)σ/δ]²
+    n = Math.ceil(2 * Math.pow((zAlpha + zBeta) / effect, 2));
+    formula = 'n = 2[(Zα/2 + Zβ)/d]² = 2[(' + zAlpha + ' + ' + zBeta + ')/' + effect + ']² = ' + n + ' 例/组';
+    explanation = '两独立样本均数比较，每组需 ' + n + ' 例，两组共需 ' + (n*2) + ' 例。考虑10%-20%脱落率，建议每组纳入 ' + Math.ceil(n*1.2) + ' 例，共 ' + Math.ceil(n*2.4) + ' 例。';
+  } else if (type === 'rates') {
+    // 两率比较：n = [(Zα/2 + Zβ)² × 2p(1-p)] / (p1-p2)²
+    const p = 0.5; // 假设合并率
+    n = Math.ceil(Math.pow(zAlpha + zBeta, 2) * 2 * p * (1-p) / Math.pow(effect*0.2, 2));
+    formula = 'n = [(Zα/2 + Zβ)² × 2p(1-p)] / Δ² ≈ ' + n + ' 例/组';
+    explanation = '两独立样本率比较，每组需 ' + n + ' 例，两组共需 ' + (n*2) + ' 例。考虑10%-20%脱落率，建议每组纳入 ' + Math.ceil(n*1.2) + ' 例。';
+  } else if (type === 'anova') {
+    // 多组比较：n = 2[(Zα/2 + Zβ)/d]² × (k+1)/2 (近似)
+    n = Math.ceil(2 * Math.pow((zAlpha + zBeta) / effect, 2) * 1.5);
+    formula = 'n ≈ 2[(Zα/2 + Zβ)/d]² × 1.5 = ' + n + ' 例/组';
+    explanation = '多组均数比较（假设3组），每组需 ' + n + ' 例，共需 ' + (n*3) + ' 例。考虑脱落率，建议每组纳入 ' + Math.ceil(n*1.2) + ' 例。';
+  } else if (type === 'correlation') {
+    // 相关性：n = [(Zα/2 + Zβ)/0.5×ln((1+r)/(1-r))]² + 3
+    const r = effect * 0.5; // 假设相关系数
+    const zr = 0.5 * Math.log((1+r)/(1-r));
+    n = Math.ceil(Math.pow((zAlpha + zBeta) / zr, 2) + 3);
+    formula = 'n = [(Zα/2 + Zβ)/Zr]² + 3 ≈ ' + n + ' 例';
+    explanation = '相关性分析，需 ' + n + ' 例。考虑脱落率，建议纳入 ' + Math.ceil(n*1.2) + ' 例。';
+  }
+  
+  propDesignData.sampleSize = {type, alpha, power, effect, n, formula, explanation};
+  
+  const resultDiv = document.getElementById('ss_result');
+  const resultContent = document.getElementById('ss_result_content');
+  if (resultDiv && resultContent) {
+    resultDiv.style.display = 'block';
+    resultContent.innerHTML = '<strong>计算公式：</strong><br>' + formula + '<br><br><strong>结果说明：</strong><br>' + explanation;
+  }
+}
+
+function propGenerateDesignSummary() {
+  const d = propDesignData;
+  let html = '';
+  
+  html += '<strong>【研究问题（PICO框架）】</strong><br>';
+  html += '• 研究对象(P)：' + (d.pico.P || '待补充') + '<br>';
+  html += '• 干预/暴露(I)：' + (d.pico.I || '待补充') + '<br>';
+  html += '• 对照/比较(C)：' + (d.pico.C || '待补充') + '<br>';
+  html += '• 结局指标(O)：' + (d.pico.O || '待补充') + '<br><br>';
+  
+  html += '<strong>【研究假设】</strong><br>';
+  html += (d.hypothesis || '待补充') + '<br><br>';
+  
+  html += '<strong>【变量定义】</strong><br>';
+  html += '• 自变量：' + (d.variables.independent || '待补充') + '<br>';
+  html += '• 因变量：' + (d.variables.dependent || '待补充') + '<br>';
+  html += '• 控制变量：' + (d.variables.control || '待补充') + '<br><br>';
+  
+  if (d.sampleSize && d.sampleSize.n) {
+    html += '<strong>【样本量估算】</strong><br>';
+    html += d.sampleSize.formula + '<br>';
+    html += d.sampleSize.explanation + '<br>';
+  }
+  
+  return html;
+}
+
+function propInsertDesign() {
+  if (!window.propState) return;
+  // 找到研究方法章节（第4章，index=3）
+  const methodIdx = window.propState.chapters.findIndex(c => c.id === 'methods');
+  const idx = methodIdx >= 0 ? methodIdx : window.propState.currentChapter;
+  
+  const summary = propGenerateDesignSummary().replace(/<br>/g, '\n').replace(/<strong>/g, '').replace(/<\/strong>/g, '');
+  
+  window.propState.currentChapter = idx;
+  window.propState.chapters[idx].content = (window.propState.chapters[idx].content || '') + '\n\n【研究设计】\n' + summary + '\n';
+  propAutoSave();
+  renderPhdProposal();
+  propCloseTopicModal();
+  alert('研究设计已插入到"研究方法与技术路线"章节！');
+}
+
+
+// ===== 经费预算生成器 =====
+function propShowBudgetGenerator() {
+  const modal = document.getElementById('propTopicModal');
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modal || !modalContent) return;
+  modal.style.display = 'flex';
+  
+  // 默认预算数据
+  if (!window.propBudgetData) {
+    window.propBudgetData = [
+      {category: '设备费', items: [{name: '运动心肺测试系统租用', amount: 8000}, {name: '体成分分析仪租用', amount: 3000}], note: '主要测试设备的租用或维护费用'},
+      {category: '材料费', items: [{name: '实验耗材（试管、试剂等）', amount: 5000}, {name: '运动装备（心率带、跑鞋等）', amount: 2000}], note: '实验所需的各种材料费用'},
+      {category: '测试化验加工费', items: [{name: '血液生化检测', amount: 6000}, {name: '分子生物学检测（qPCR/WB）', amount: 8000}], note: '委托外单位进行的检测费用'},
+      {category: '差旅费', items: [{name: '数据采集差旅', amount: 3000}, {name: '学术会议差旅', amount: 4000}], note: '调研、采集数据、参加会议的差旅费用'},
+      {category: '会议费', items: [{name: '参加国内学术会议', amount: 3000}], note: '参加学术会议的注册费等'},
+      {category: '出版/文献/信息传播费', items: [{name: '论文发表版面费', amount: 5000}, {name: '文献检索与下载', amount: 1000}], note: '论文发表、文献获取等费用'},
+      {category: '劳务费', items: [{name: '受试者补贴', amount: 6000}, {name: '学生助研劳务', amount: 4000}], note: '支付给受试者和助研学生的劳务费用'},
+      {category: '专家咨询费', items: [{name: '专家咨询费', amount: 2000}], note: '支付给咨询专家的费用'},
+      {category: '其他费用', items: [{name: '其他不可预见费用', amount: 3000}], note: '其他相关费用'}
+    ];
+  }
+  
+  propRenderBudget();
+}
+
+function propRenderBudget() {
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modalContent) return;
+  
+  const data = window.propBudgetData;
+  let total = 0;
+  data.forEach(cat => cat.items.forEach(item => total += item.amount));
+  
+  let html = '<div style="padding:20px 24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><h3 style="margin:0;font-size:18px;color:#1e293b">💰 经费预算生成器</h3><p style="margin:4px 0 0;font-size:13px;color:#64748b">根据研究内容自动生成预算表，可调整金额，一键插入计划书</p></div>';
+  html += '<button onclick="propCloseTopicModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;padding:0 8px">×</button>';
+  html += '</div>';
+  
+  html += '<div style="padding:16px 20px;max-height:55vh;overflow-y:auto">';
+  
+  data.forEach((cat, catIdx) => {
+    let catTotal = 0;
+    cat.items.forEach(item => catTotal += item.amount);
+    
+    html += '<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">';
+    html += '<div style="padding:10px 14px;background:#f8fafc;display:flex;justify-content:space-between;align-items:center">';
+    html += '<span style="font-size:13px;font-weight:700;color:#475569">' + cat.category + '</span>';
+    html += '<span style="font-size:13px;font-weight:700;color:#667eea">' + catTotal.toLocaleString() + ' 元</span>';
+    html += '</div>';
+    html += '<div style="padding:10px 14px">';
+    cat.items.forEach((item, itemIdx) => {
+      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">';
+      html += '<input type="text" value="' + item.name + '" onchange="propUpdateBudgetItem(' + catIdx + ',' + itemIdx + ',\'name\',this.value)" style="flex:1;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px">';
+      html += '<input type="number" value="' + item.amount + '" onchange="propUpdateBudgetItem(' + catIdx + ',' + itemIdx + ',\'amount\',parseInt(this.value)||0)" style="width:100px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;text-align:right">';
+      html += '<span style="font-size:12px;color:#94a3b8;width:30px">元</span>';
+      html += '<button onclick="propRemoveBudgetItem(' + catIdx + ',' + itemIdx + ')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px;padding:0 4px">×</button>';
+      html += '</div>';
+    });
+    html += '<button onclick="propAddBudgetItem(' + catIdx + ')" style="margin-top:4px;padding:4px 10px;background:#f1f5f9;border:none;border-radius:6px;cursor:pointer;font-size:11px;color:#64748b">+ 添加项目</button>';
+    html += '</div></div>';
+  });
+  
+  html += '</div>';
+  
+  // 合计
+  html += '<div style="padding:14px 20px;background:linear-gradient(135deg,#eff6ff,#eef2ff);border-top:1px solid #bfdbfe">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+  html += '<span style="font-size:14px;font-weight:700;color:#1e40af">经费预算合计</span>';
+  html += '<span style="font-size:20px;font-weight:800;color:#1d4ed8">' + total.toLocaleString() + ' 元</span>';
+  html += '</div>';
+  html += '<div style="font-size:11px;color:#64748b;margin-top:4px">参考标准：博士研究生科研经费一般为3-10万元，可根据实际情况调整</div>';
+  html += '</div>';
+  
+  html += '<div style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;justify-content:flex-end">';
+  html += '<button onclick="propInsertBudget()" style="padding:8px 16px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">📥 插入到经费预算章节</button>';
+  html += '<button onclick="propCloseTopicModal()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">关闭</button>';
+  html += '</div>';
+  
+  modalContent.innerHTML = html;
+}
+
+function propUpdateBudgetItem(catIdx, itemIdx, field, value) {
+  window.propBudgetData[catIdx].items[itemIdx][field] = value;
+  propRenderBudget();
+}
+
+function propAddBudgetItem(catIdx) {
+  window.propBudgetData[catIdx].items.push({name: '新项目', amount: 1000});
+  propRenderBudget();
+}
+
+function propRemoveBudgetItem(catIdx, itemIdx) {
+  window.propBudgetData[catIdx].items.splice(itemIdx, 1);
+  propRenderBudget();
+}
+
+function propInsertBudget() {
+  if (!window.propState) return;
+  const data = window.propBudgetData;
+  let total = 0;
+  data.forEach(cat => cat.items.forEach(item => total += item.amount));
+  
+  let text = '\n\n【经费预算】\n本研究经费预算共计 ' + total.toLocaleString() + ' 元，具体预算如下：\n\n';
+  data.forEach(cat => {
+    let catTotal = 0;
+    cat.items.forEach(item => catTotal += item.amount);
+    text += '1. ' + cat.category + '：' + catTotal.toLocaleString() + ' 元\n';
+    cat.items.forEach(item => {
+      text += '   （1）' + item.name + '：' + item.amount.toLocaleString() + ' 元\n';
+    });
+    text += '\n';
+  });
+  text += '以上经费预算将严格按照相关规定使用，确保经费使用的合理性和规范性。\n';
+  
+  // 找到经费预算章节（第6章，index=5）
+  const budgetIdx = window.propState.chapters.findIndex(c => c.id === 'schedule');
+  const idx = budgetIdx >= 0 ? budgetIdx : window.propState.currentChapter;
+  window.propState.currentChapter = idx;
+  window.propState.chapters[idx].content = (window.propState.chapters[idx].content || '') + text;
+  propAutoSave();
+  renderPhdProposal();
+  propCloseTopicModal();
+  alert('经费预算已插入到"研究进度与经费预算"章节！');
+}
+
+// ===== 甘特图生成器 =====
+function propShowGanttGenerator() {
+  const modal = document.getElementById('propTopicModal');
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modal || !modalContent) return;
+  modal.style.display = 'flex';
+  
+  if (!window.propHanttData) {
+    window.propHanttData = [
+      {task: '文献综述与选题', start: 1, duration: 3, phase: '准备阶段'},
+      {task: '研究设计与伦理审批', start: 3, duration: 2, phase: '准备阶段'},
+      {task: '预实验与方法建立', start: 4, duration: 2, phase: '准备阶段'},
+      {task: '受试者招募与数据采集', start: 6, duration: 12, phase: '实施阶段'},
+      {task: '实验干预实施', start: 8, duration: 10, phase: '实施阶段'},
+      {task: '样本检测与数据分析', start: 14, duration: 8, phase: '实施阶段'},
+      {task: '论文撰写与投稿', start: 20, duration: 8, phase: '总结阶段'},
+      {task: '学位论文撰写与修改', start: 26, duration: 6, phase: '总结阶段'},
+      {task: '答辩准备', start: 32, duration: 2, phase: '总结阶段'}
+    ];
+  }
+  
+  propRenderGantt();
+}
+
+function propRenderGantt() {
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modalContent) return;
+  
+  const data = window.propHanttData;
+  const totalMonths = 36; // 3年
+  
+  const phaseColors = {'准备阶段': '#667eea', '实施阶段': '#059669', '总结阶段': '#d97706'};
+  
+  let html = '<div style="padding:20px 24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><h3 style="margin:0;font-size:18px;color:#1e293b">📅 研究进度甘特图生成器</h3><p style="margin:4px 0 0;font-size:13px;color:#64748b">3年博士研究进度规划，可调整任务时间，一键插入计划书</p></div>';
+  html += '<button onclick="propCloseTopicModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;padding:0 8px">×</button>';
+  html += '</div>';
+  
+  html += '<div style="padding:16px 20px;max-height:55vh;overflow-y:auto">';
+  
+  // 图例
+  html += '<div style="display:flex;gap:16px;margin-bottom:14px">';
+  Object.keys(phaseColors).forEach(phase => {
+    html += '<div style="display:flex;align-items:center;gap:6px"><div style="width:14px;height:14px;border-radius:3px;background:' + phaseColors[phase] + '"></div><span style="font-size:11px;color:#64748b">' + phase + '</span></div>';
+  });
+  html += '</div>';
+  
+  // 甘特图
+  html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;overflow-x:auto">';
+  html += '<div style="min-width:700px">';
+  
+  // 时间轴
+  html += '<div style="display:flex;margin-bottom:8px;padding-left:180px">';
+  for (let i = 1; i <= totalMonths; i += 3) {
+    html += '<div style="flex:0 0 ' + (3/totalMonths*100) + '%;font-size:10px;color:#94a3b8;text-align:center;border-left:1px solid #f1f5f9">第' + i + '月</div>';
+  }
+  html += '</div>';
+  
+  // 任务行
+  data.forEach((task, idx) => {
+    const color = phaseColors[task.phase] || '#667eea';
+    html += '<div style="display:flex;align-items:center;margin-bottom:6px;height:28px">';
+    html += '<div style="width:180px;flex-shrink:0;font-size:11px;color:#475569;padding-right:10px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + task.task + '</div>';
+    html += '<div style="flex:1;position:relative;height:22px;background:#f8fafc;border-radius:4px">';
+    // 背景网格
+    for (let i = 1; i <= totalMonths; i += 3) {
+      html += '<div style="position:absolute;left:' + ((i-1)/totalMonths*100) + '%;top:0;bottom:0;width:1px;background:#f1f5f9"></div>';
+    }
+    // 任务条
+    const left = ((task.start - 1) / totalMonths * 100);
+    const width = (task.duration / totalMonths * 100);
+    html += '<div style="position:absolute;left:' + left + '%;width:' + width + '%;top:3px;bottom:3px;background:' + color + ';border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.1)">' + task.duration + '月</div>';
+    html += '</div></div>';
+  });
+  
+  html += '</div></div>';
+  
+  // 任务列表（可编辑）
+  html += '<div style="margin-top:14px"><div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px">任务列表（可调整开始月份和持续时间）</div>';
+  data.forEach((task, idx) => {
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
+    html += '<input type="text" value="' + task.task + '" onchange="propUpdateGanttTask(' + idx + ',\'task\',this.value)" style="flex:1;padding:5px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:11px">';
+    html += '<span style="font-size:11px;color:#94a3b8">开始</span>';
+    html += '<input type="number" value="' + task.start + '" min="1" max="36" onchange="propUpdateGanttTask(' + idx + ',\'start\',parseInt(this.value)||1)" style="width:50px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:11px">';
+    html += '<span style="font-size:11px;color:#94a3b8">持续</span>';
+    html += '<input type="number" value="' + task.duration + '" min="1" max="36" onchange="propUpdateGanttTask(' + idx + ',\'duration\',parseInt(this.value)||1)" style="width:50px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:11px">';
+    html += '<span style="font-size:11px;color:#94a3b8">月</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  
+  html += '</div>';
+  
+  html += '<div style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;justify-content:flex-end">';
+  html += '<button onclick="propInsertGantt()" style="padding:8px 16px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">📥 插入到研究进度章节</button>';
+  html += '<button onclick="propCloseTopicModal()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">关闭</button>';
+  html += '</div>';
+  
+  modalContent.innerHTML = html;
+}
+
+function propUpdateGanttTask(idx, field, value) {
+  window.propHanttData[idx][field] = value;
+  propRenderGantt();
+}
+
+function propInsertGantt() {
+  if (!window.propState) return;
+  const data = window.propHanttData;
+  
+  let text = '\n\n【研究进度安排】\n本研究计划用时3年（36个月），具体进度安排如下：\n\n';
+  
+  const phases = ['准备阶段', '实施阶段', '总结阶段'];
+  phases.forEach(phase => {
+    const phaseTasks = data.filter(t => t.phase === phase);
+    if (phaseTasks.length > 0) {
+      text += phase + '：\n';
+      phaseTasks.forEach(task => {
+        text += '  第' + task.start + '-' + (task.start + task.duration - 1) + '月：' + task.task + '\n';
+      });
+      text += '\n';
+    }
+  });
+  
+  text += '以上进度安排可根据实际研究进展进行适当调整。\n';
+  
+  // 找到研究进度章节（第6章，index=5）
+  const scheduleIdx = window.propState.chapters.findIndex(c => c.id === 'schedule');
+  const idx = scheduleIdx >= 0 ? scheduleIdx : window.propState.currentChapter;
+  window.propState.currentChapter = idx;
+  window.propState.chapters[idx].content = (window.propState.chapters[idx].content || '') + text;
+  propAutoSave();
+  renderPhdProposal();
+  propCloseTopicModal();
+  alert('研究进度已插入到"研究进度与经费预算"章节！');
+}
+
+
+// ===== 优秀计划书范例库 =====
+const PROP_EXAMPLES_LIBRARY = [
+  {
+    id: 1,
+    title: '有氧运动通过AMPK/PGC-1α通路改善2型糖尿病大鼠胰岛素抵抗的机制研究',
+    field: '运动生理学',
+    direction: '运动与代谢疾病',
+    level: '博士',
+    highlights: ['选题紧跟前沿，聚焦运动改善糖尿病的分子机制', '研究设计严谨，动物实验+细胞实验验证', '技术路线清晰，从整体到分子多层次验证', '创新性突出，揭示AMPK/PGC-1α通路的关键作用'],
+    scorePoints: ['研究意义明确，紧扣公共健康问题', '研究方法规范，动物模型构建标准', '指标选择全面，涵盖功能、蛋白、基因水平', '统计方法正确，数据分析深入'],
+    abstract: '本研究旨在探讨有氧运动改善2型糖尿病胰岛素抵抗的分子机制。采用高脂饮食联合STZ构建2型糖尿病大鼠模型，随机分为对照组、模型组、有氧运动组。有氧运动组进行8周中等强度跑台训练。检测各组大鼠血糖、胰岛素、HOMA-IR指数，骨骼肌中AMPK、p-AMPK、PGC-1α、GLUT4蛋白和mRNA表达，以及线粒体功能。结果表明，有氧运动显著降低血糖和胰岛素水平，改善胰岛素抵抗，其机制与激活AMPK/PGC-1α通路、促进GLUT4转位、改善线粒体功能有关。本研究为运动防治2型糖尿病提供了理论依据。'
+  },
+  {
+    id: 2,
+    title: '高强度间歇训练对肥胖青少年身体成分和心肺功能的影响及炎症机制研究',
+    field: '运动生理学',
+    direction: '运动与健康促进',
+    level: '博士',
+    highlights: ['关注青少年肥胖这一社会热点问题', 'HIIT vs 中等强度有氧运动的对比研究设计', '从身体成分到炎症因子的多层次分析', '具有重要的实践应用价值'],
+    scorePoints: ['研究对象选择合理，青少年肥胖人群具有代表性', '干预方案设计科学，HIIT和MICT等热量对比', '评价指标全面，涵盖形态、机能、生化指标', '研究结果对青少年肥胖干预具有指导意义'],
+    abstract: '本研究旨在比较高强度间歇训练（HIIT）与中等强度持续训练（MICT）对肥胖青少年身体成分、心肺功能及炎症因子的影响。选取60名肥胖青少年，随机分为HIIT组、MICT组和对照组，每组20人。HIIT组进行高强度间歇训练，MICT组进行等热量中等强度持续训练，每周3次，共12周。检测干预前后身体成分（BMI、体脂率、内脏脂肪面积）、心肺功能（VO2max、通气阈）、炎症因子（TNF-α、IL-6、CRP）。结果表明，HIIT在改善体脂率、内脏脂肪和VO2max方面优于MICT，两组均能显著降低炎症因子水平。本研究为青少年肥胖的运动干预提供了科学依据。'
+  },
+  {
+    id: 3,
+    title: '运动康复干预对膝关节前交叉韧带重建术后患者功能恢复的影响及神经肌肉控制机制研究',
+    field: '运动康复学',
+    direction: '运动损伤与康复',
+    level: '博士',
+    highlights: ['聚焦ACL重建术后康复这一临床难题', '神经肌肉控制机制的深入探讨', '运动康复方案的个体化设计', '具有重要的临床应用价值'],
+    scorePoints: ['研究问题明确，紧扣临床需求', '康复方案设计科学，循序渐进', '评价指标专业，包含等速肌力、平衡、神经肌肉控制', '研究结果对临床康复具有指导意义'],
+    abstract: '本研究旨在探讨个体化运动康复干预对前交叉韧带（ACL）重建术后患者功能恢复的影响及神经肌肉控制机制。选取40名单侧ACL重建术后患者，随机分为康复干预组和对照组，每组20人。康复干预组进行12周个体化运动康复训练，包括肌力训练、平衡训练、本体感觉训练和功能性训练。检测干预前后膝关节等速肌力（峰力矩、总功）、平衡能力（稳定指数）、神经肌肉控制（肌电潜伏期、共收缩指数）、膝关节功能评分（Lysholm、IKDC）。结果表明，康复干预组在肌力恢复、平衡能力和神经肌肉控制方面均优于对照组，膝关节功能评分显著提高。本研究为ACL重建术后康复提供了科学依据。'
+  },
+  {
+    id: 4,
+    title: '抗阻训练对老年肌少症患者肌肉质量和功能的影响及mTOR信号通路机制研究',
+    field: '运动生理学',
+    direction: '运动与衰老',
+    level: '博士',
+    highlights: ['关注老龄化社会的肌少症问题', '抗阻训练干预的随机对照试验设计', 'mTOR信号通路的分子机制探讨', '从分子到功能的多层次验证'],
+    scorePoints: ['研究意义重大，应对人口老龄化挑战', '研究设计严谨，随机对照试验', '指标选择全面，涵盖肌肉质量、功能、分子水平', '研究结果对老年肌少症防治具有指导意义'],
+    abstract: '本研究旨在探讨抗阻训练改善老年肌少症的效果及mTOR信号通路机制。选取60名老年肌少症患者，随机分为抗阻训练组和对照组，每组30人。抗阻训练组进行12周渐进性抗阻训练，每周3次。检测干预前后肌肉质量（四肢骨骼肌质量、肌纤维横截面积）、肌肉功能（握力、步速、起立行走时间）、mTOR信号通路相关蛋白（mTOR、p-mTOR、p70S6K、p-p70S6K、4E-BP1）表达。结果表明，抗阻训练显著增加肌肉质量和功能，其机制与激活mTOR/p70S6K/4E-BP1信号通路、促进蛋白质合成有关。本研究为老年肌少症的运动干预提供了理论依据。'
+  }
+];
+
+function propShowExamplesLibrary() {
+  const modal = document.getElementById('propTopicModal');
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modal || !modalContent) return;
+  modal.style.display = 'flex';
+  
+  let html = '<div style="padding:20px 24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><h3 style="margin:0;font-size:18px;color:#1e293b">📚 优秀计划书范例库</h3><p style="margin:4px 0 0;font-size:13px;color:#64748b">参考优秀计划书的结构和亮点，学习写作技巧（请勿直接抄袭）</p></div>';
+  html += '<button onclick="propCloseTopicModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;padding:0 8px">×</button>';
+  html += '</div>';
+  
+  // 分类筛选
+  html += '<div style="padding:14px 20px;border-bottom:1px solid #f1f5f9;display:flex;gap:8px;flex-wrap:wrap">';
+  const fields = ['全部', '运动生理学', '运动康复学', '运动解剖学', '体质健康'];
+  fields.forEach((f, idx) => {
+    html += '<button onclick=\'propFilterExamples("' + f + '")\' class="example-filter-btn" data-field="' + f + '" style="padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid ' + (idx === 0 ? '#667eea' : '#e2e8f0') + ';background:' + (idx === 0 ? '#667eea' : '#fff') + ';color:' + (idx === 0 ? '#fff' : '#64748b') + '">' + f + '</button>';
+  });
+  html += '</div>';
+  
+  html += '<div id="propExamplesList" style="padding:16px 20px;max-height:60vh;overflow-y:auto">';
+  
+  PROP_EXAMPLES_LIBRARY.forEach(ex => {
+    html += '<div class="example-card" data-field="' + ex.field + '" style="margin-bottom:14px;padding:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;cursor:pointer;transition:all 0.2s" onclick="propShowExampleDetail(' + ex.id + ')" onmouseover="this.style.borderColor=\'#667eea\';this.style.boxShadow=\'0 4px 12px rgba(102,126,234,0.1)\'" onmouseout="this.style.borderColor=\'#e2e8f0\';this.style.boxShadow=\'none\'">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+    html += '<div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1e293b;line-height:1.5;margin-bottom:4px">' + ex.title + '</div>';
+    html += '<div style="display:flex;gap:6px"><span style="font-size:10px;padding:2px 8px;border-radius:4px;background:#eff6ff;color:#2563eb;font-weight:600">' + ex.field + '</span><span style="font-size:10px;padding:2px 8px;border-radius:4px;background:#f0fdf4;color:#16a34a;font-weight:600">' + ex.direction + '</span><span style="font-size:10px;padding:2px 8px;border-radius:4px;background:#faf5ff;color:#9333ea;font-weight:600">' + ex.level + '</span></div></div>';
+    html += '<span style="font-size:18px;color:#c7d2fe;margin-left:10px">→</span>';
+    html += '</div>';
+    html += '<div style="font-size:12px;color:#64748b;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + ex.abstract + '</div>';
+    html += '</div>';
+  });
+  
+  html += '</div>';
+  
+  modalContent.innerHTML = html;
+}
+
+function propFilterExamples(field) {
+  const cards = document.querySelectorAll('.example-card');
+  const btns = document.querySelectorAll('.example-filter-btn');
+  btns.forEach(b => {
+    if (b.dataset.field === field) {
+      b.style.background = '#667eea';
+      b.style.color = '#fff';
+      b.style.borderColor = '#667eea';
+    } else {
+      b.style.background = '#fff';
+      b.style.color = '#64748b';
+      b.style.borderColor = '#e2e8f0';
+    }
+  });
+  cards.forEach(c => {
+    if (field === '全部' || c.dataset.field === field) {
+      c.style.display = '';
+    } else {
+      c.style.display = 'none';
+    }
+  });
+}
+
+function propShowExampleDetail(id) {
+  const ex = PROP_EXAMPLES_LIBRARY.find(e => e.id === id);
+  if (!ex) return;
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modalContent) return;
+  
+  let html = '<div style="padding:20px 24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><h3 style="margin:0;font-size:16px;color:#1e293b;max-width:500px">' + ex.title + '</h3><p style="margin:4px 0 0;font-size:12px;color:#64748b">' + ex.field + ' | ' + ex.direction + ' | ' + ex.level + '</p></div>';
+  html += '<button onclick="propShowExamplesLibrary()" style="background:#f1f5f9;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;color:#475569">← 返回列表</button>';
+  html += '</div>';
+  
+  html += '<div style="padding:16px 20px;max-height:65vh;overflow-y:auto">';
+  
+  // 摘要
+  html += '<div style="margin-bottom:16px;padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">';
+  html += '<div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px">📝 研究摘要</div>';
+  html += '<div style="font-size:12px;line-height:1.8;color:#64748b">' + ex.abstract + '</div>';
+  html += '</div>';
+  
+  // 亮点
+  html += '<div style="margin-bottom:16px;padding:14px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0">';
+  html += '<div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:8px">✨ 研究亮点</div>';
+  html += '<ul style="margin:0;padding-left:18px">';
+  ex.highlights.forEach(h => { html += '<li style="font-size:12px;color:#14532d;line-height:1.8;margin-bottom:2px">' + h + '</li>'; });
+  html += '</ul></div>';
+  
+  // 得分点
+  html += '<div style="margin-bottom:16px;padding:14px;background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe">';
+  html += '<div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:8px">🎯 得分点分析</div>';
+  html += '<ul style="margin:0;padding-left:18px">';
+  ex.scorePoints.forEach(s => { html += '<li style="font-size:12px;color:#1e3a8a;line-height:1.8;margin-bottom:2px">' + s + '</li>'; });
+  html += '</ul></div>';
+  
+  html += '<div style="padding:10px;background:#fffbeb;border-radius:8px;font-size:11px;color:#92400e;line-height:1.6">';
+  html += '⚠️ <strong>温馨提示：</strong>本范例仅供学习参考，请勿直接抄袭。请结合自己的研究方向和实际情况，撰写具有原创性的科研计划书。';
+  html += '</div>';
+  
+  html += '</div>';
+  
+  modalContent.innerHTML = html;
+}
+
+// ===== 院校要求数据库 =====
+const PROP_SCHOOL_REQUIREMENTS = [
+  {school: '上海体育大学', phdType: '普通招考/申请考核', wordCount: '8000-15000字', format: 'Word格式，宋体小四，1.5倍行距', deadline: '每年11-12月', special: '需包含研究背景、研究内容、研究方法、技术路线、预期成果、参考文献；需附个人简历和已发表论文'},
+  {school: '北京体育大学', phdType: '申请考核制', wordCount: '10000字以上', format: 'Word格式，具体格式见招生简章', deadline: '每年11月', special: '需包含选题依据、研究内容、研究方法、创新点、研究基础、参考文献；需有2名专家推荐'},
+  {school: '华东师范大学', phdType: '申请考核制', wordCount: '5000-10000字', format: 'Word格式，A4纸', deadline: '每年12月', special: '需包含研究背景、研究目标、研究内容、研究方法、研究计划、预期成果；需附攻读博士期间的研究计划'},
+  {school: '华南师范大学', phdType: '普通招考/申请考核', wordCount: '8000字左右', format: 'Word格式', deadline: '每年12月-次年1月', special: '需包含选题意义、国内外研究现状、研究内容、研究方法、技术路线、预期成果、参考文献'},
+  {school: '华中师范大学', phdType: '申请考核制', wordCount: '5000字以上', format: 'Word格式', deadline: '每年12月', special: '需包含研究背景、研究目标、研究内容、研究方法、研究计划、创新点、参考文献'},
+  {school: '河南大学', phdType: '普通招考', wordCount: '5000-8000字', format: 'Word格式', deadline: '每年3月', special: '需包含研究背景、研究内容、研究方法、技术路线、预期成果、研究进度、参考文献'},
+  {school: '河北师范大学', phdType: '普通招考/申请考核', wordCount: '8000字左右', format: 'Word格式', deadline: '每年12月', special: '需包含选题依据、研究内容、研究方法、创新点、研究计划、参考文献；需有副教授以上专家推荐'},
+  {school: '天津体育学院', phdType: '申请考核制', wordCount: '10000字左右', format: 'Word格式，具体见招生简章', deadline: '每年11-12月', special: '需包含研究背景、研究目标、研究内容、研究方法、技术路线、预期成果、研究基础、参考文献'}
+];
+
+function propShowSchoolRequirements() {
+  const modal = document.getElementById('propTopicModal');
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modal || !modalContent) return;
+  modal.style.display = 'flex';
+  
+  let html = '<div style="padding:20px 24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><h3 style="margin:0;font-size:18px;color:#1e293b">🏫 院校考博计划书要求数据库</h3><p style="margin:4px 0 0;font-size:13px;color:#64748b">各院校考博计划书的字数、格式、提交时间等要求（仅供参考，以当年招生简章为准）</p></div>';
+  html += '<button onclick="propCloseTopicModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;padding:0 8px">×</button>';
+  html += '</div>';
+  
+  html += '<div style="padding:16px 20px;max-height:65vh;overflow-y:auto">';
+  
+  PROP_SCHOOL_REQUIREMENTS.forEach(s => {
+    html += '<div style="margin-bottom:12px;padding:14px;background:#fff;border:1px solid #e2e8f0;border-radius:10px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#1e293b">' + s.school + '</div>';
+    html += '<span style="font-size:10px;padding:3px 10px;border-radius:10px;background:#eff6ff;color:#2563eb;font-weight:600">' + s.phdType + '</span>';
+    html += '</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+    html += '<div style="font-size:11px;color:#64748b"><strong style="color:#475569">字数要求：</strong>' + s.wordCount + '</div>';
+    html += '<div style="font-size:11px;color:#64748b"><strong style="color:#475569">提交时间：</strong>' + s.deadline + '</div>';
+    html += '<div style="font-size:11px;color:#64748b;grid-column:1/-1"><strong style="color:#475569">格式要求：</strong>' + s.format + '</div>';
+    html += '<div style="font-size:11px;color:#64748b;grid-column:1/-1;background:#fffbeb;padding:8px 10px;border-radius:6px"><strong style="color:#92400e">特殊要求：</strong>' + s.special + '</div>';
+    html += '</div></div>';
+  });
+  
+  html += '<div style="padding:10px;background:#fef2f2;border-radius:8px;font-size:11px;color:#991b1b;line-height:1.6">';
+  html += '⚠️ 以上信息仅供参考，具体要求以各院校当年发布的招生简章和导师要求为准。建议报考前仔细阅读目标院校的招生简章，并提前联系目标导师确认具体要求。';
+  html += '</div>';
+  
+  html += '</div>';
+  
+  modalContent.innerHTML = html;
+}
+
+
+// ===== 多版本管理 =====
+function propSaveVersion() {
+  if (!window.propState) {
+    alert('请先开始创作');
+    return;
+  }
+  propAutoSave();
+  
+  const versions = JSON.parse(localStorage.getItem('prop_versions') || '[]');
+  const totalWords = window.propState.chapters.reduce((sum, ch) => sum + (ch.content ? ch.content.length : 0), 0);
+  const confirmedCount = window.propState.chapters.filter(ch => ch.status === 'confirmed').length;
+  
+  const version = {
+    id: Date.now(),
+    name: '版本 ' + (versions.length + 1),
+    time: new Date().toLocaleString(),
+    timestamp: Date.now(),
+    meta: JSON.parse(JSON.stringify(window.propState.meta)),
+    chapters: JSON.parse(JSON.stringify(window.propState.chapters)),
+    totalWords: totalWords,
+    confirmedCount: confirmedCount,
+    note: ''
+  };
+  
+  versions.unshift(version);
+  // 最多保留10个版本
+  if (versions.length > 10) versions.pop();
+  
+  localStorage.setItem('prop_versions', JSON.stringify(versions));
+  alert('版本保存成功！当前共 ' + versions.length + ' 个版本');
+}
+
+function propShowVersionManager() {
+  const modal = document.getElementById('propTopicModal');
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modal || !modalContent) return;
+  modal.style.display = 'flex';
+  propRenderVersionList();
+}
+
+function propRenderVersionList() {
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modalContent) return;
+  
+  const versions = JSON.parse(localStorage.getItem('prop_versions') || '[]');
+  
+  let html = '<div style="padding:20px 24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><h3 style="margin:0;font-size:18px;color:#1e293b">📂 版本管理</h3><p style="margin:4px 0 0;font-size:13px;color:#64748b">保存和管理计划书的历史版本，可随时回滚（最多保留10个版本）</p></div>';
+  html += '<button onclick="propCloseTopicModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;padding:0 8px">×</button>';
+  html += '</div>';
+  
+  html += '<div style="padding:14px 20px;border-bottom:1px solid #f1f5f9;display:flex;gap:10px">';
+  html += '<button onclick="propSaveVersion();propRenderVersionList()" style="padding:8px 16px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">💾 保存当前版本</button>';
+  html += '<span style="font-size:12px;color:#94a3b8;align-self:center">当前共 ' + versions.length + ' 个版本</span>';
+  html += '</div>';
+  
+  html += '<div style="padding:16px 20px;max-height:60vh;overflow-y:auto">';
+  
+  if (versions.length === 0) {
+    html += '<div style="text-align:center;padding:40px 20px">';
+    html += '<div style="font-size:48px;margin-bottom:12px">📂</div>';
+    html += '<div style="font-size:14px;color:#64748b;margin-bottom:8px">暂无保存的版本</div>';
+    html += '<div style="font-size:12px;color:#94a3b8">点击上方"保存当前版本"按钮创建第一个版本快照</div>';
+    html += '</div>';
+  } else {
+    versions.forEach((v, idx) => {
+      const isLatest = idx === 0;
+      html += '<div style="margin-bottom:10px;padding:14px;background:#fff;border:1px solid ' + (isLatest ? '#667eea' : '#e2e8f0') + ';border-radius:10px;border-left:4px solid ' + (isLatest ? '#667eea' : '#cbd5e1') + '">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+      html += '<div><div style="font-size:13px;font-weight:700;color:#1e293b">' + v.name;
+      if (isLatest) html += ' <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:#667eea;color:#fff;margin-left:4px">最新</span>';
+      html += '</div>';
+      html += '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + v.time + '</div></div>';
+      html += '</div>';
+      
+      html += '<div style="display:flex;gap:16px;margin-bottom:10px">';
+      html += '<div style="font-size:11px;color:#64748b"><strong style="color:#475569">字数：</strong>' + v.totalWords.toLocaleString() + ' 字</div>';
+      html += '<div style="font-size:11px;color:#64748b"><strong style="color:#475569">已确认章节：</strong>' + v.confirmedCount + '/7</div>';
+      html += '<div style="font-size:11px;color:#64748b"><strong style="color:#475569">题目：</strong>' + (v.meta.title || '未设定').substring(0, 20) + '</div>';
+      html += '</div>';
+      
+      // 章节进度条
+      html += '<div style="display:flex;gap:2px;margin-bottom:10px">';
+      v.chapters.forEach(ch => {
+        const color = ch.status === 'confirmed' ? '#059669' : ch.content && ch.content.length > 50 ? '#f59e0b' : '#e2e8f0';
+        html += '<div style="flex:1;height:6px;background:' + color + ';border-radius:2px" title="' + ch.title + '"></div>';
+      });
+      html += '</div>';
+      
+      html += '<div style="display:flex;gap:8px">';
+      html += '<button onclick="propRestoreVersion(' + v.id + ')" style="padding:5px 12px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">↩️ 恢复此版本</button>';
+      html += '<button onclick="propDeleteVersion(' + v.id + ')" style="padding:5px 12px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">🗑️ 删除</button>';
+      html += '</div></div>';
+    });
+  }
+  
+  html += '</div>';
+  
+  html += '<div style="padding:12px 20px;background:#f8fafc;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8;line-height:1.6">';
+  html += '💡 提示：版本数据保存在浏览器本地（localStorage），清除浏览器数据会丢失版本。建议重要版本同时导出为文件备份。';
+  html += '</div>';
+  
+  modalContent.innerHTML = html;
+}
+
+function propRestoreVersion(id) {
+  if (!confirm('确定要恢复到此版本吗？当前未保存的内容将被覆盖。')) return;
+  
+  const versions = JSON.parse(localStorage.getItem('prop_versions') || '[]');
+  const version = versions.find(v => v.id === id);
+  if (!version) {
+    alert('版本不存在');
+    return;
+  }
+  
+  window.propState.meta = JSON.parse(JSON.stringify(version.meta));
+  window.propState.chapters = JSON.parse(JSON.stringify(version.chapters));
+  window.propState.mode = 'editing';
+  window.propState.currentChapter = 0;
+  
+  propAutoSave();
+  renderPhdProposal();
+  propCloseTopicModal();
+  alert('版本恢复成功！已恢复到：' + version.name + '（' + version.time + '）');
+}
+
+function propDeleteVersion(id) {
+  if (!confirm('确定要删除此版本吗？删除后不可恢复。')) return;
+  
+  let versions = JSON.parse(localStorage.getItem('prop_versions') || '[]');
+  versions = versions.filter(v => v.id !== id);
+  localStorage.setItem('prop_versions', JSON.stringify(versions));
+  propRenderVersionList();
 }
 
 
