@@ -46344,8 +46344,16 @@ function renderPhdAIMockInterview() {
     
     html += '</div>';
     
-    // 开始按钮
+    // 导师画像提示 + 开始按钮
     html += '<div style="text-align:center;margin-top:25px">';
+    if (state.config.mentorProfile) {
+      html += '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #ddd6fe;border-radius:10px;padding:12px 18px;margin-bottom:18px;text-align:left;display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
+      html += '<div style="font-size:24px">🎓</div>';
+      html += '<div style="flex:1;min-width:200px"><div style="font-size:14px;font-weight:700;color:#4c1d95">已选导师：' + state.config.mentorProfile.name + '</div>';
+      html += '<div style="font-size:12px;color:#6d28d9;margin-top:2px">' + state.config.mentorProfile.school + ' · 已按该导师风格预填院校与方向，可直接开面或调整下方配置</div></div>';
+      html += '<button onclick="quickBeginPhdMentorInterview()" style="padding:10px 24px;font-size:14px;font-weight:700;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;cursor:pointer;box-shadow:0 4px 12px rgba(124,58,237,0.35)">⚡ 立即开面</button>';
+      html += '</div>';
+    }
     html += '<button onclick="beginPhdAIMockInterview()" style="padding:14px 50px;font-size:16px;font-weight:600;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:10px;cursor:pointer;box-shadow:0 4px 15px rgba(102,126,234,0.4)">🎤 开始AI对话面试</button>';
     html += '<div style="margin-top:12px;font-size:12px;color:#999">面试过程中AI会根据你的回答进行追问，请认真作答</div>';
     html += '</div></div>';
@@ -46353,7 +46361,7 @@ function renderPhdAIMockInterview() {
   } else if (state.mode === 'chatting' || state.mode === 'ended') {
     // 对话界面
     html += '<div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border-radius:12px 12px 0 0;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">';
-    html += '<div><div style="font-size:16px;font-weight:700">🤖 AI面试官</div><div style="font-size:12px;opacity:0.9">' + state.config.targetSchool + ' | ' + state.config.major + ' | ' + state.config.interviewType + '</div></div>';
+    html += '<div><div style="font-size:16px;font-weight:700">🤖 AI面试官' + (state.config.mentorProfile ? ' <span style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px">🎓 ' + state.config.mentorProfile.name + '</span>' : '') + '</div><div style="font-size:12px;opacity:0.9">' + state.config.targetSchool + ' | ' + state.config.major + ' | ' + state.config.interviewType + '</div></div>';
     html += '<div style="text-align:right"><div style="font-size:13px">第 <strong>' + (state.questionIndex + 1) + '</strong> / ' + state.config.questionCount + ' 题</div>';
     if (state.startTime) {
       const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
@@ -46513,6 +46521,21 @@ async function hintAIInterviewAnswer() {
 }
 
 // 开始AI对话面试（从设置界面进入对话）
+// 导师画像一键开面（配置取state，不依赖手动设置）
+async function quickBeginPhdMentorInterview() {
+  const state = phdAIMockInterviewState;
+  try {
+    if (document.getElementById('aiInterviewCount')) state.config.questionCount = parseInt(document.getElementById('aiInterviewCount').value);
+    if (document.getElementById('aiInterviewTimeLimit')) state.answerTimeLimit = parseInt(document.getElementById('aiInterviewTimeLimit').value) || 0;
+  } catch (e) {}
+  state.mode = 'chatting';
+  state.startTime = Date.now();
+  state.questionIndex = 0;
+  state.conversation = [];
+  renderPhdAIMockInterview();
+  await generateNextAIInterviewQuestion(true);
+}
+
 async function beginPhdAIMockInterview() {
   const state = phdAIMockInterviewState;
   state.config.major = document.getElementById('aiInterviewMajor').value;
