@@ -40418,9 +40418,11 @@ function renderPhdProposal() {
     html += '</div>';
     // 底部操作
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px">';
-    html += '<div style="display:flex;gap:8px">';
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
     html += '<button onclick="propPrevChapter()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">← 上一章</button>';
     html += '<button onclick="propNextChapter()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">下一章 →</button>';
+    html += '<button onclick="propShowValidationResult()" style="padding:8px 16px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 内容校验</button>';
+    html += '<button onclick="propShowIterativePanel()" style="padding:8px 16px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔄 AI迭代优化</button>';
     html += '</div>';
     html += '<div style="font-size:12px;color:#94a3b8">每30秒自动保存 · 最后保存: <span id="propLastSave">未保存</span></div>';
     html += '</div></div></div>';
@@ -40816,6 +40818,8 @@ function propGenerateChapter() {
     chapter.status = 'editing';
     propAutoSave();
     renderPhdProposal();
+    // 生成完成后自动运行内容校验
+    setTimeout(() => propShowValidationResult(), 500);
   }).catch(err => {
     chapter.status = 'pending';
     renderPhdProposal();
@@ -42789,6 +42793,352 @@ function propSwitchAcTab(tab) {
   }
   
   content.innerHTML = html;
+}
+
+
+// ===== 多轮对话式AI生成（迭代优化） =====
+window.propIterativeHistory = [];
+
+function propShowIterativePanel() {
+  if (!window.propState) return;
+  const idx = window.propState.currentChapter;
+  const chapter = window.propState.chapters[idx];
+  const editor = document.getElementById('propChapterEditor');
+  if (editor) chapter.content = editor.value;
+  
+  // 重置历史
+  window.propIterativeHistory = [{role: 'original', content: chapter.content || ''}];
+  
+  let html = '<div id="propIterativeModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center">';
+  html += '<div style="background:#fff;border-radius:16px;width:90%;max-width:800px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column">';
+  // 头部
+  html += '<div style="padding:16px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><div style="font-size:16px;font-weight:800">🔄 AI迭代优化</div><div style="font-size:12px;opacity:0.9;margin-top:2px">当前章节：' + chapter.title + ' · 输入修改意见，AI帮您迭代优化</div></div>';
+  html += '<button onclick="document.getElementById(\'propIterativeModal\').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px">×</button>';
+  html += '</div>';
+  // 对话历史区
+  html += '<div id="propIterativeChat" style="flex:1;overflow-y:auto;padding:16px 20px;background:#f8fafc">';
+  html += '<div style="padding:12px 14px;background:#fff;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:12px">';
+  html += '<div style="font-size:11px;font-weight:700;color:#667eea;margin-bottom:6px">📄 当前内容（' + (chapter.content ? chapter.content.length : 0) + '字）</div>';
+  html += '<div id="propIterativeOriginal" style="font-size:12px;color:#64748b;line-height:1.8;max-height:150px;overflow-y:auto">' + (chapter.content ? chapter.content.substring(0, 500) + (chapter.content.length > 500 ? '...' : '') : '（暂无内容）') + '</div>';
+  html += '</div>';
+  html += '</div>';
+  // 快捷修改建议
+  html += '<div style="padding:10px 20px;background:#fff;border-top:1px solid #f1f5f9;display:flex;gap:6px;flex-wrap:wrap">';
+  html += '<span style="font-size:11px;color:#94a3b8;align-self:center">快捷建议：</span>';
+  const quickSuggestions = ['内容再详细一些', '增加具体数据和例子', '语言更学术化', '精简冗余内容', '增加引用标注', '逻辑结构再优化', '增加机制阐述'];
+  quickSuggestions.forEach(s => {
+    html += '<button onclick="document.getElementById(\'propIterativeInput\').value=\'' + s + '\'" style="padding:4px 10px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;cursor:pointer;font-size:11px;color:#475569" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#f1f5f9\'">' + s + '</button>';
+  });
+  html += '</div>';
+  // 输入区
+  html += '<div style="padding:14px 20px;background:#fff;border-top:1px solid #f1f5f9;display:flex;gap:10px">';
+  html += '<input type="text" id="propIterativeInput" placeholder="输入您的修改意见，如：第三段再详细一些，增加关于XX机制的论述..." style="flex:1;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#475569;outline:none" onfocus="this.style.borderColor=\'#667eea\'" onblur="this.style.borderColor=\'#e2e8f0\'" onkeypress="if(event.key===\'Enter\')propSubmitIterative()">';
+  html += '<button onclick="propSubmitIterative()" style="padding:10px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">发送</button>';
+  html += '</div></div></div>';
+  
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function propSubmitIterative() {
+  const input = document.getElementById('propIterativeInput');
+  const chat = document.getElementById('propIterativeChat');
+  if (!input || !chat || !window.propState) return;
+  
+  const userMessage = input.value.trim();
+  if (!userMessage) return;
+  
+  const idx = window.propState.currentChapter;
+  const chapter = window.propState.chapters[idx];
+  
+  // 添加用户消息到对话
+  chat.innerHTML += '<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><div style="max-width:70%;padding:10px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:12px 12px 2px 12px;font-size:13px;line-height:1.6">' + userMessage + '</div></div>';
+  
+  // 添加AI思考中
+  const thinkingId = 'propThinking_' + Date.now();
+  chat.innerHTML += '<div id="' + thinkingId + '" style="display:flex;justify-content:flex-start;margin-bottom:12px"><div style="padding:10px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:12px 12px 12px 2px;font-size:13px;color:#64748b"><span style="display:inline-block;animation:propBounce 1s infinite">●</span> <span style="display:inline-block;animation:propBounce 1s infinite 0.2s">●</span> <span style="display:inline-block;animation:propBounce 1s infinite 0.4s">●</span> AI正在优化...</div></div>';
+  chat.scrollTop = chat.scrollHeight;
+  
+  input.value = '';
+  input.disabled = true;
+  
+  // 获取当前最新内容
+  let currentContent = chapter.content || '';
+  if (window.propIterativeHistory.length > 0) {
+    const last = window.propIterativeHistory[window.propIterativeHistory.length - 1];
+    if (last.role === 'assistant') currentContent = last.content;
+  }
+  
+  const systemPrompt = '你是运动人体科学领域的学术写作专家。请根据用户的修改意见，对以下科研计划书章节内容进行修改优化。要求：1.严格按照用户的修改意见进行修改；2.保持其他内容不变，只修改用户提到的部分；3.保持学术规范和专业术语准确；4.直接输出修改后的完整内容，不要添加解释说明，不要使用Markdown格式。';
+  
+  const userPrompt = '【当前章节】' + chapter.title + '\n\n【修改意见】' + userMessage + '\n\n【当前内容】\n' + currentContent + '\n\n请根据修改意见，输出修改后的完整内容：';
+  
+  callDeepSeekAPI(systemPrompt, userPrompt, 4000, 'deepseek-chat').then(response => {
+    const newContent = response.trim();
+    window.propIterativeHistory.push({role: 'user', content: userMessage});
+    window.propIterativeHistory.push({role: 'assistant', content: newContent});
+    
+    // 移除思考中
+    const thinking = document.getElementById(thinkingId);
+    if (thinking) thinking.remove();
+    
+    // 添加AI回复
+    chat.innerHTML += '<div style="display:flex;justify-content:flex-start;margin-bottom:12px"><div style="max-width:85%;padding:12px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:12px 12px 12px 2px">';
+    chat.innerHTML += '<div style="font-size:11px;font-weight:700;color:#667eea;margin-bottom:6px">🤖 AI优化结果（' + newContent.length + '字）</div>';
+    chat.innerHTML += '<div style="font-size:12px;color:#475569;line-height:1.8;max-height:200px;overflow-y:auto">' + newContent.substring(0, 600) + (newContent.length > 600 ? '...' : '') + '</div>';
+    chat.innerHTML += '<div style="margin-top:10px;display:flex;gap:8px">';
+    chat.innerHTML += '<button onclick="propApplyIterativeContent(\'' + newContent.replace(/'/g, "\\'").replace(/\n/g, '\\n') + '\')" style="padding:6px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">✅ 应用修改</button>';
+    chat.innerHTML += '<button onclick="propCompareIterative()" style="padding:6px 14px;background:#f1f5f9;color:#475569;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">📊 对比差异</button>';
+    chat.innerHTML += '</div></div></div>';
+    chat.scrollTop = chat.scrollHeight;
+    
+    input.disabled = false;
+    input.focus();
+  }).catch(err => {
+    const thinking = document.getElementById(thinkingId);
+    if (thinking) thinking.remove();
+    chat.innerHTML += '<div style="padding:10px;background:#fef2f2;border-radius:8px;color:#dc2626;font-size:12px;margin-bottom:12px">❌ 优化失败：' + (err.message || '网络错误') + '，请重试</div>';
+    input.disabled = false;
+  });
+}
+
+function propApplyIterativeContent(content) {
+  if (!window.propState) return;
+  const idx = window.propState.currentChapter;
+  const chapter = window.propState.chapters[idx];
+  chapter.content = content;
+  chapter.status = 'editing';
+  propAutoSave();
+  renderPhdProposal();
+  document.getElementById('propIterativeModal').remove();
+  // 显示成功提示
+  setTimeout(() => {
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:12px 24px;border-radius:8px;z-index:20000;font-size:14px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+    toast.textContent = '✅ 已应用AI优化内容';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }, 300);
+}
+
+function propCompareIterative() {
+  if (!window.propState || window.propIterativeHistory.length < 2) return;
+  const idx = window.propState.currentChapter;
+  const chapter = window.propState.chapters[idx];
+  const original = window.propIterativeHistory[0].content || chapter.content || '';
+  const last = window.propIterativeHistory[window.propIterativeHistory.length - 1];
+  const modified = last.content || '';
+  
+  let html = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:11000;display:flex;align-items:center;justify-content:center">';
+  html += '<div style="background:#fff;border-radius:16px;width:90%;max-width:900px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column">';
+  html += '<div style="padding:14px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div style="font-size:15px;font-weight:700">📊 内容对比</div>';
+  html += '<button onclick="this.parentElement.parentElement.parentElement.remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">×</button>';
+  html += '</div>';
+  html += '<div style="flex:1;display:flex;overflow:hidden">';
+  html += '<div style="flex:1;padding:16px;border-right:1px solid #f1f5f9;overflow-y:auto"><div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:8px">📄 原文（' + original.length + '字）</div><div style="font-size:12px;color:#64748b;line-height:1.8">' + original.replace(/\n/g, '<br>') + '</div></div>';
+  html += '<div style="flex:1;padding:16px;overflow-y:auto"><div style="font-size:12px;font-weight:700;color:#16a34a;margin-bottom:8px">✨ 优化后（' + modified.length + '字，变化' + (modified.length - original.length) + '字）</div><div style="font-size:12px;color:#475569;line-height:1.8">' + modified.replace(/\n/g, '<br>') + '</div></div>';
+  html += '</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+
+// ===== 内容自动校验函数 =====
+const PROP_TERM_CORRECTIONS = [
+  {wrong: '最大吸氧', correct: '最大摄氧量', note: '规范术语为"最大摄氧量(VO2max)"'},
+  {wrong: '最大吸氧量', correct: '最大摄氧量', note: '规范术语为"最大摄氧量(VO2max)"'},
+  {wrong: '胰岛素不敏感', correct: '胰岛素抵抗', note: '规范术语为"胰岛素抵抗(IR)"'},
+  {wrong: '胰岛素敏感性下降', correct: '胰岛素抵抗', note: '可表述为"胰岛素抵抗"或"胰岛素敏感性降低"'},
+  {wrong: '无氧阈', correct: '乳酸阈/无氧阈', note: '运动生理学中"乳酸阈"和"无氧阈"概念相近，建议注明'},
+  {wrong: '延迟性肌肉疼痛', correct: '延迟性肌肉酸痛', note: '规范术语为"延迟性肌肉酸痛(DOMS)"'},
+  {wrong: '肌肉微损伤', correct: '肌纤维微损伤', note: '建议表述为"肌纤维微损伤"'},
+  {wrong: '氧化压力', correct: '氧化应激', note: '规范术语为"氧化应激"'},
+  {wrong: '发炎', correct: '炎症', note: '学术用语为"炎症"'},
+  {wrong: '脂肪燃烧', correct: '脂肪氧化', note: '学术用语为"脂肪氧化"或"脂代谢"'},
+  {wrong: '糖分', correct: '葡萄糖/糖原', note: '根据上下文使用"葡萄糖"或"糖原"'},
+  {wrong: '心肺功能', correct: '心肺耐力', note: '评价运动能力时建议用"心肺耐力"或"心肺适能"'},
+  {wrong: '运动能力', correct: '运动表现', note: '学术语境中常用"运动表现"'},
+  {wrong: '身体质量', correct: '体成分/身体成分', note: '建议用"身体成分"或"体成分"'},
+  {wrong: '减肥', correct: '减重/减脂', note: '学术用语为"减重"或"减脂"'},
+  {wrong: '增肌', correct: '肌肉肥大', note: '学术用语为"肌肉肥大"'},
+  {wrong: '疲劳堆积', correct: '疲劳累积', note: '规范表述为"疲劳累积"'},
+  {wrong: '恢复手段', correct: '恢复策略', note: '学术语境中常用"恢复策略"'},
+  {wrong: '训练方法', correct: '训练方案', note: '根据上下文可使用"训练方案"或"运动处方"'},
+  {wrong: '实验对象', correct: '受试者/实验动物', note: '人体实验用"受试者"，动物实验用"实验动物"'},
+  {wrong: '实验结果显示', correct: '结果表明', note: '学术写作中常用"结果表明"'},
+  {wrong: '我们发现', correct: '研究发现/本研究发现', note: '学术写作中避免第一人称，用"研究发现"'},
+  {wrong: '我认为', correct: '本研究认为', note: '学术写作中避免第一人称'},
+  {wrong: '大概', correct: '约/大约', note: '避免模糊表述，用"约"或"大约"'},
+  {wrong: '可能', correct: '可能（需注明依据）', note: '使用"可能"时需有依据或文献支持'},
+  {wrong: '很多', correct: '较多/大量', note: '避免口语化，用"较多"或"大量"'},
+  {wrong: '非常', correct: '显著', note: '学术写作中用"显著"而非"非常"'},
+  {wrong: '很好', correct: '良好', note: '学术写作中用"良好"'},
+  {wrong: '越来越', correct: '逐渐/日益', note: '学术写作中用"逐渐"或"日益"'},
+  {wrong: '所以', correct: '因此/因而', note: '学术写作中用"因此"或"因而"'},
+  {wrong: '但是', correct: '然而/但', note: '学术写作中用"然而"'},
+  {wrong: '而且', correct: '此外/并且', note: '学术写作中用"此外"或"并且"'}
+];
+
+function propValidateContent() {
+  if (!window.propState) return {issues: [], warnings: [], suggestions: []};
+  const idx = window.propState.currentChapter;
+  const chapter = window.propState.chapters[idx];
+  const text = chapter.content || '';
+  const result = {issues: [], warnings: [], suggestions: [], termChecks: [], refChecks: []};
+  
+  if (!text || text.length < 50) {
+    result.warnings.push({type: '内容不足', message: '本章内容较少（' + text.length + '字），建议补充更多内容。', severity: 'warning'});
+    return result;
+  }
+  
+  // 1. 专业术语校验
+  PROP_TERM_CORRECTIONS.forEach(tc => {
+    if (text.includes(tc.wrong)) {
+      result.termChecks.push({
+        wrong: tc.wrong,
+        correct: tc.correct,
+        note: tc.note,
+        count: (text.match(new RegExp(tc.wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length
+      });
+    }
+  });
+  
+  // 2. 引用格式检查
+  const refMatches = text.match(/\[(\d+)\]/g);
+  if (refMatches) {
+    const refNums = refMatches.map(m => parseInt(m.match(/\d+/)[0]));
+    const maxRef = Math.max(...refNums);
+    const uniqueRefs = [...new Set(refNums)].sort((a,b) => a-b);
+    // 检查引用编号是否连续
+    for (let i = 1; i <= maxRef; i++) {
+      if (!uniqueRefs.includes(i)) {
+        result.refChecks.push({type: '引用编号不连续', message: '引用编号[' + i + ']缺失，当前使用的引用编号：' + uniqueRefs.join(', '), severity: 'warning'});
+      }
+    }
+    result.refCount = uniqueRefs.length;
+  } else if (chapter.id !== 'refs' && text.length > 500) {
+    result.refChecks.push({type: '缺少引用', message: '本章内容超过500字但未发现引用标注[1][2]，建议在引用已有研究时标注引用。', severity: 'suggestion'});
+  }
+  
+  // 3. 字数检查
+  const chapterTargets = {bg: 1500, review: 2000, goals: 1200, methods: 2500, results: 1000, schedule: 800, refs: 500};
+  const target = chapterTargets[chapter.id] || 1500;
+  if (text.length < target * 0.6) {
+    result.warnings.push({type: '字数不足', message: '当前' + text.length + '字，建议目标' + target + '字，内容可能不够充实。', severity: 'warning'});
+  } else if (text.length > target * 1.5) {
+    result.suggestions.push({type: '内容过长', message: '当前' + text.length + '字，建议目标' + target + '字，可考虑精简或拆分。', severity: 'suggestion'});
+  }
+  
+  // 4. 口语化表达检查（已包含在术语校验中）
+  
+  // 5. 逻辑一致性提示
+  if (chapter.id === 'methods') {
+    if (!text.includes('样本') && !text.includes('受试者') && !text.includes('动物')) {
+      result.suggestions.push({type: '缺少样本描述', message: '研究方法章节建议明确说明研究对象（受试者/实验动物）的数量、分组、纳入排除标准。', severity: 'suggestion'});
+    }
+    if (!text.includes('统计') && !text.includes('分析')) {
+      result.suggestions.push({type: '缺少统计方法', message: '研究方法章节建议说明使用的统计分析方法（如t检验、方差分析、回归分析等）。', severity: 'suggestion'});
+    }
+  }
+  if (chapter.id === 'review') {
+    if (!text.includes('[') || !text.includes(']')) {
+      result.warnings.push({type: '文献综述缺少引用', message: '国内外研究现状章节应大量引用文献，建议增加[1][2]等引用标注。', severity: 'warning'});
+    }
+  }
+  if (chapter.id === 'results') {
+    if (!text.includes('创新')) {
+      result.suggestions.push({type: '缺少创新点说明', message: '预期成果与创新点章节建议明确说明研究的创新之处（理论创新、方法创新、应用创新）。', severity: 'suggestion'});
+    }
+  }
+  
+  // 6. 段落结构检查
+  const paragraphs = text.split(/\n\n+/).filter(p => p.trim().length > 0);
+  if (paragraphs.length < 3 && text.length > 500) {
+    result.suggestions.push({type: '段落结构', message: '建议将内容分为多个段落（当前仅' + paragraphs.length + '段），每段有明确的中心句。', severity: 'suggestion'});
+  }
+  
+  return result;
+}
+
+function propShowValidationResult() {
+  const result = propValidateContent();
+  const chapter = window.propState.chapters[window.propState.currentChapter];
+  
+  let html = '<div style="padding:14px 18px;background:#fff8f0;border-bottom:1px solid #fde68a">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+  html += '<div style="font-size:14px;font-weight:700;color:#92400e">🔍 内容智能校验结果</div>';
+  html += '<button onclick="this.parentElement.parentElement.parentElement.remove()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:0 4px">×</button>';
+  html += '</div></div>';
+  
+  html += '<div style="padding:14px 18px;max-height:300px;overflow-y:auto">';
+  
+  let issueCount = 0;
+  
+  // 专业术语问题
+  if (result.termChecks && result.termChecks.length > 0) {
+    issueCount += result.termChecks.length;
+    html += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:6px">⚠️ 专业术语规范（' + result.termChecks.length + '处）</div>';
+    result.termChecks.forEach(tc => {
+      html += '<div style="padding:8px 10px;background:#fef2f2;border-radius:6px;margin-bottom:4px;font-size:12px;line-height:1.6">';
+      html += '<span style="text-decoration:line-through;color:#dc2626">' + tc.wrong + '</span> → <span style="color:#16a34a;font-weight:600">' + tc.correct + '</span>';
+      html += ' <span style="color:#94a3b8">(' + tc.count + '处）</span>';
+      html += '<div style="color:#64748b;margin-top:2px;font-size:11px">' + tc.note + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  
+  // 引用格式问题
+  if (result.refChecks && result.refChecks.length > 0) {
+    issueCount += result.refChecks.length;
+    html += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#d97706;margin-bottom:6px">📝 引用格式（' + result.refChecks.length + '项）</div>';
+    result.refChecks.forEach(rc => {
+      html += '<div style="padding:8px 10px;background:#fffbeb;border-radius:6px;margin-bottom:4px;font-size:12px;color:#92400e;line-height:1.6">' + rc.message + '</div>';
+    });
+    html += '</div>';
+  }
+  
+  // 警告
+  if (result.warnings && result.warnings.length > 0) {
+    issueCount += result.warnings.length;
+    html += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#d97706;margin-bottom:6px">⚠️ 注意事项（' + result.warnings.length + '项）</div>';
+    result.warnings.forEach(w => {
+      html += '<div style="padding:8px 10px;background:#fffbeb;border-radius:6px;margin-bottom:4px;font-size:12px;color:#92400e;line-height:1.6">' + w.message + '</div>';
+    });
+    html += '</div>';
+  }
+  
+  // 建议
+  if (result.suggestions && result.suggestions.length > 0) {
+    html += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#2563eb;margin-bottom:6px">💡 优化建议（' + result.suggestions.length + '项）</div>';
+    result.suggestions.forEach(s => {
+      html += '<div style="padding:8px 10px;background:#eff6ff;border-radius:6px;margin-bottom:4px;font-size:12px;color:#1e40af;line-height:1.6">' + s.message + '</div>';
+    });
+    html += '</div>';
+  }
+  
+  if (issueCount === 0 && (!result.suggestions || result.suggestions.length === 0)) {
+    html += '<div style="padding:20px;text-align:center;color:#16a34a"><div style="font-size:32px;margin-bottom:8px">✅</div><div style="font-size:14px;font-weight:600">内容校验通过</div><div style="font-size:12px;color:#64748b;margin-top:4px">未发现明显问题，继续保持！</div></div>';
+  } else {
+    html += '<div style="padding:8px;background:#f8fafc;border-radius:6px;text-align:center;font-size:11px;color:#64748b">共发现 ' + issueCount + ' 个需注意的问题，' + (result.suggestions ? result.suggestions.length : 0) + ' 条优化建议</div>';
+  }
+  
+  html += '</div>';
+  
+  // 检查是否已有校验结果面板
+  let panel = document.getElementById('propValidationPanel');
+  if (panel) panel.remove();
+  
+  panel = document.createElement('div');
+  panel.id = 'propValidationPanel';
+  panel.style.cssText = 'margin-top:14px;background:#fff;border-radius:10px;border:1px solid #fde68a;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04)';
+  panel.innerHTML = html;
+  
+  // 插入到编辑器后面
+  const editArea = document.getElementById('propEditArea');
+  if (editArea && editArea.parentNode) {
+    editArea.parentNode.insertBefore(panel, editArea.nextSibling);
+  }
 }
 
 
