@@ -5009,6 +5009,7 @@ console.log('✅ 学习工具入口已加载');
   <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('proposal')"><span class="icon">🔬</span><span>科研计划书</span></div>
   <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('interview')"><span class="icon">🎤</span><span>面试模拟</span></div>
   <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('literature')"><span class="icon">📚</span><span>文献检索</span></div>
+          <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('taoci')"><span class="icon">✉️</span><span>套磁助手</span></div>
 
   <div class="nav-group">🛠️ 学习工具</div>
   <div class="nav-item" data-tab="plan"><span class="icon">📅</span><span>备考规划</span></div>
@@ -6969,6 +6970,11 @@ console.log('✅ 学习工具入口已加载');
       </div>
   <div class="phd-content" id="phdContent-schools">
     <div id="phdSchoolArea"></div>
+  </div>
+
+  <!-- 套磁助手内容 -->
+  <div class="phd-content" id="phdContent-taoci">
+    <div id="phdTaociArea"></div>
   </div>
 
   
@@ -36857,6 +36863,7 @@ function switchPhdTab(tabName) {
   if (tabName === 'schools' && typeof renderPhdSchools === 'function') renderPhdSchools();
   if (tabName === 'timeline' && typeof renderPhdTimeline === 'function') renderPhdTimeline();
   if (tabName === 'proposal' && typeof renderPhdProposal === 'function') renderPhdProposal();
+  if (tabName === 'taoci' && typeof renderPhdTaoci === 'function') renderPhdTaoci();
   // 更新标签样式
   document.querySelectorAll('.phd-tab').forEach(tab => {
     tab.classList.remove('active');
@@ -36881,7 +36888,8 @@ function updatePhdSectionHeader(tabName) {
     interview: { icon: '🎓', title: '面试与申请', desc: '面试技巧、申请材料、套磁指南、个人陈述撰写指导', statLabel: '指南' },
     schools: { icon: '🏫', title: '院校与导师', desc: '招收运动人体科学博士的院校信息、考试科目、博导介绍', statLabel: '院校' },
     timeline: { icon: '📅', title: '备考时间线', desc: '考博全年备考规划、关键节点提醒、材料准备清单', statLabel: '节点' },
-    proposal: { icon: '📝', title: '科研计划书', desc: '科研计划书AI辅助生成、模板库、写作指南、AI评审', statLabel: '模板' }
+    proposal: { icon: '📝', title: '科研计划书', desc: '科研计划书AI辅助生成、模板库、写作指南、AI评审', statLabel: '模板' },
+    taoci: { icon: '✉️', title: '套磁助手', desc: '体育考博套磁全流程指南、AI个性化套磁信生成、模板库与联系记录管理', statLabel: '模板' }
   };
   const info = sectionInfo[tabName] || sectionInfo.knowledge;
   const iconEl = document.getElementById('phdSectionIcon');
@@ -39491,6 +39499,7 @@ function showEmailSupProfile() {
   html += awards;
   if (sup.note) html += '<div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:12px;color:#64748b;line-height:1.7">💡 ' + sup.note + '</div>';
   if (sup.email) html += '<div style="margin-top:10px;font-size:12px;color:#3b82f6">✉️ 公开邮箱：' + sup.email + '（建议以学院官网最新信息为准）</div>';
+  html += '<div style="margin-top:8px"><button onclick="openTaociFromSup(' + PHD_SUPERVISORS.indexOf(sup) + ')" style="width:100%;padding:8px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">✉️ 用这位导师生成套磁信</button></div>';
   if (sup.source) html += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:3px">📋 数据来源</div><div style="font-size:11px;color:#64748b;line-height:1.6">' + sup.source + '</div></div>';
   html += '<div style="margin-top:12px;font-size:11px;color:#94a3b8">以上信息来源于院校官网及公开学术资料整理，供参考；招生名额与报考要求以当年招生简章为准。</div>';
   html += '<div style="margin-top:12px;text-align:right"><button onclick="renderPhdEmailResult(window._phdLastEmail,\'\',\'\',\'\')" style="padding:8px 18px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">← 返回邮件</button></div>';
@@ -40943,6 +40952,7 @@ function showPhdSupervisorDetail(idx) {
   html += awards;
   if (sup.note) html += '<div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:12px;color:#64748b;line-height:1.7">💡 ' + sup.note + '</div>';
   if (sup.email) html += '<div style="margin-top:10px;font-size:12px;color:#3b82f6">✉️ 公开邮箱：' + sup.email + '（建议以学院官网最新信息为准）</div>';
+  html += '<div style="margin-top:8px"><button onclick="openTaociFromSup(' + PHD_SUPERVISORS.indexOf(sup) + ')" style="width:100%;padding:8px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">✉️ 用这位导师生成套磁信</button></div>';
   if (sup.source) html += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:3px">📋 数据来源</div><div style="font-size:11px;color:#64748b;line-height:1.6">' + sup.source + '</div></div>';
   html += '<div style="margin-top:12px;font-size:11px;color:#94a3b8">以上信息来源于院校官网及公开学术资料整理，供参考；招生名额与报考要求以当年招生简章为准。</div>';
   html += '</div></div>';
@@ -41415,6 +41425,230 @@ function getPropDetails(topic) {
 }
 
 ;
+
+
+// ========== 套磁助手模块 ==========
+let phdTaociSubTab = 'guide';
+const TAOCI_TEMPLATES = [
+  {id:'t1', stage:'首次联系', style:'正式学术型', title:'首次联系-正式学术型', content:'尊敬的XX教授：\n\n您好！我是XX大学XX专业硕士研究生XXX，冒昧打扰您。我长期关注您在XX领域的研究，特别是您课题组在XX方面的工作（如XX论文/项目），深受启发。\n\n我硕士期间主要从事XX研究，在XX方面积累了一定基础（已发表XX论文/参与XX项目）。我计划报考202X年贵校XX专业博士研究生，研究方向与您高度契合，希望能有机会加入您的课题组。\n\n随信附上我的个人简历和科研计划书初稿，恳请您拨冗审阅。如蒙回复，不胜感激！\n\n祝您工作顺利，身体健康！\n\n学生：XXX\nXXXX年XX月XX日'},
+  {id:'t2', stage:'首次联系', style:'诚恳真挚型', title:'首次联系-诚恳真挚型', content:'尊敬的XX老师：\n\n您好！我是XX大学的XXX，一直非常敬仰您在XX领域的学术成就。您关于XX的研究（XX论文）让我对这个方向产生了浓厚兴趣，也坚定了我考博深造的决心。\n\n我硕士阶段在XX实验室学习，主要做XX方向，掌握了XX技术。虽然还有很多不足，但我对科研充满热情，也愿意踏实努力。我非常希望能在您的指导下攻读博士学位，在XX方向深入研究。\n\n附件是我的简历和研究兴趣说明，期待能有机会向您请教。无论结果如何，都非常感谢您抽出时间阅读这封邮件！\n\n祝好！\n\nXXX敬上\nXXXX年XX月XX日'},
+  {id:'t3', stage:'跟进提醒', style:'简洁干练型', title:'跟进-简洁干练型', content:'尊敬的XX教授：\n\n您好！我是XX大学的XXX，此前于XX月XX日曾给您发过一封套磁邮件，不知您是否收到。\n\n我仍非常希望能有机会加入您的课题组攻读博士学位。我的研究方向是XX，与您的XX研究高度契合。附件再次附上我的简历和科研计划书，供您参考。\n\n如您近期有时间，期待能得到您的回复。打扰之处，敬请谅解！\n\n祝工作顺利！\n\nXXX\nXXXX年XX月XX日'},
+  {id:'t4', stage:'回复后沟通', style:'深入交流型', title:'回复后-深入交流型', content:'尊敬的XX教授：\n\n感谢您的回复！非常荣幸能得到您的关注。\n\n关于您提到的XX问题，我做了进一步思考：（简要阐述对研究方向的理解和自己的研究基础）。我也查阅了您课题组近期的XX论文，对其中的XX方法很感兴趣，希望能在博士期间深入学习。\n\n如果方便，我希望能有机会与您进行一次线上交流，更详细地介绍我的研究经历和博士规划。您看XX时间是否方便？\n\n再次感谢您的时间！\n\nXXX\nXXXX年XX月XX日'},
+  {id:'t5', stage:'考前面谈', style:'礼貌预约型', title:'面谈预约-礼貌型', content:'尊敬的XX教授：\n\n您好！我是报考202X年贵校XX专业博士的XXX。感谢您之前的指导和回复。\n\n获悉贵校将于XX月XX日进行博士综合考核，我计划届时前往。如果您在考核前后有时间，我非常希望能当面向您请教，汇报我的研究经历和博士规划。不知您XX日下午或XX日上午是否方便？\n\n期待能有机会与您见面！\n\n祝好！\n\nXXX\nXXXX年XX月XX日'},
+  {id:'t6', stage:'致谢', style:'感恩型', title:'录取后致谢', content:'尊敬的XX教授：\n\n您好！我是XXX。非常荣幸能够被录取为您202X级博士研究生！\n\n感谢您在整个申请过程中给予我的指导和机会。我深知这是一份信任，也是一份责任。博士期间，我一定会踏实科研、努力学习，不辜负您的期望。\n\n在入学前的这段时间，我会提前阅读您推荐的文献，做好科研准备。如果有需要我提前学习的内容或参与的工作，请您随时告知。\n\n再次衷心感谢您！期待九月与您见面！\n\n学生：XXX\nXXXX年XX月XX日'},
+];
+
+function openTaociFromSup(idx){
+  closePhdDetail();
+  navigateToPhdSubTab('taoci');
+  setTimeout(function(){
+    phdTaociSubTab = 'ai';
+    renderPhdTaoci();
+    setTimeout(function(){
+      const sel = document.getElementById('taociSupSelect');
+      if(sel) sel.value = idx;
+    }, 200);
+  }, 300);
+}
+function renderPhdTaoci(){
+  const area = document.getElementById('phdTaociArea');
+  if(!area) return;
+  let html = '<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
+  const tabs = [['guide','📖 套磁指南'],['ai','🤖 AI套磁信生成'],['tpl','📋 模板库'],['record','📊 联系记录']];
+  tabs.forEach(t=>{
+    html += '<button onclick="switchPhdTaociTab(\''+t[0]+'\')" id="taociTab-'+t[0]+'" style="padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:1px solid '+(phdTaociSubTab===t[0]?'#3b82f6':'#e2e8f0')+';background:'+(phdTaociSubTab===t[0]?'linear-gradient(135deg,#3b82f6,#2563eb)':'#fff')+';color:'+(phdTaociSubTab===t[0]?'#fff':'#475569')+'">'+t[1]+'</button>';
+  });
+  html += '</div><div id="phdTaociContent"></div>';
+  area.innerHTML = html;
+  renderPhdTaociContent();
+}
+function switchPhdTaociTab(tab){ phdTaociSubTab=tab; renderPhdTaoci(); }
+
+function renderPhdTaociContent(){
+  const el = document.getElementById('phdTaociContent');
+  if(!el) return;
+  if(phdTaociSubTab==='guide') el.innerHTML = renderTaociGuide();
+  else if(phdTaociSubTab==='ai') el.innerHTML = renderTaociAI();
+  else if(phdTaociSubTab==='tpl') el.innerHTML = renderTaociTemplates();
+  else if(phdTaociSubTab==='record') el.innerHTML = renderTaociRecords();
+}
+
+function renderTaociGuide(){
+  return `
+  <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:12px;padding:20px;margin-bottom:16px">
+    <div style="font-size:18px;font-weight:700;color:#1e40af;margin-bottom:8px">🎯 什么是套磁？</div>
+    <div style="font-size:14px;color:#1e3a8a;line-height:1.8">套磁是考博申请者在正式报名前，通过邮件主动联系目标导师，介绍自己的研究背景和兴趣，了解导师招生意向的过程。套磁不是"走后门"，而是展示学术潜力、确认研究方向契合度的重要环节。体育学考博中，导师的选择权较大，套磁质量直接影响录取概率。</div>
+  </div>
+  <div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:12px">📅 套磁时间线（按报名时间倒推）</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:20px">
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;border-left:4px solid #10b981"><div style="font-size:14px;font-weight:700;color:#065f46;margin-bottom:6px">报名前6个月（4-6月）</div><div style="font-size:13px;color:#475569;line-height:1.7">初步调研：确定目标院校和导师名单，阅读导师近3年论文，准备CV初稿。可发送第一封"初步意向"邮件。</div></div>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;border-left:4px solid #3b82f6"><div style="font-size:14px;font-weight:700;color:#1e40af;margin-bottom:6px">报名前3个月（7-9月）</div><div style="font-size:13px;color:#475569;line-height:1.7">黄金套磁期：简章发布前后，发送正式套磁信（附CV+科研计划书初稿）。这是导师回复率最高的时段。</div></div>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;border-left:4px solid #f59e0b"><div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:6px">报名前1个月（10-11月）</div><div style="font-size:13px;color:#475569;line-height:1.7">跟进确认：对未回复的导师礼貌跟进一次；对已回复的导师深入沟通，确认招生意向，预约面谈。</div></div>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;border-left:4px solid #ef4444"><div style="font-size:14px;font-weight:700;color:#991b1b;margin-bottom:6px">报名后-考核前</div><div style="font-size:13px;color:#475569;line-height:1.7">保持联系：定期向导师汇报备考进展，考核前面谈预约，展示持续的兴趣和准备。</div></div>
+  </div>
+  <div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:12px">✉️ 套磁信黄金结构（6段式）</div>
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px;font-size:13px;color:#475569;line-height:2">
+    <div><b style="color:#3b82f6">① 邮件主题</b>：清晰明确，如"202X考博套磁-XXX-XX大学-XX专业"</div>
+    <div><b style="color:#3b82f6">② 称呼+自我介绍</b>：尊敬的XX教授，我是XX大学XX专业硕士研究生XXX</div>
+    <div><b style="color:#3b82f6">③ 为何选这位导师（核心）</b>：具体提及导师的某篇论文/某个项目/某个观点，说明受到的启发</div>
+    <div><b style="color:#3b82f6">④ 自己的研究基础</b>：硕士研究方向、掌握的技术、论文/项目成果，与导师方向的契合点</div>
+    <div><b style="color:#3b82f6">⑤ 附件+请求</b>：附上CV/科研计划书，希望能有机会加入课题组，恳请回复</div>
+    <div><b style="color:#3b82f6">⑥ 结尾</b>：祝工作顺利+姓名+日期</div>
+  </div>
+  <div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:12px">⚠️ 套磁避坑指南</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:13px;color:#991b1b;line-height:1.7">❌ <b>群发模板信</b>：导师一眼能看出，回复率极低。必须个性化，提及具体研究。</div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:13px;color:#991b1b;line-height:1.7">❌ <b>过度吹捧</b>："您是我最崇拜的科学家"显得虚伪，用具体学术评价代替。</div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:13px;color:#991b1b;line-height:1.7">❌ <b>附件过大</b>：CV控制在1-2页PDF，科研计划书初稿3-5页，总附件不超过5MB。</div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:13px;color:#991b1b;line-height:1.7">❌ <b>频繁打扰</b>：首封后7-10天未回复可跟进一次，再无回复就放弃，不要反复发。</div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:13px;color:#991b1b;line-height:1.7">❌ <b>同时联系同院多位导师</b>：同一学院最多联系1-2位，导师之间会交流，避免尴尬。</div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:13px;color:#991b1b;line-height:1.7">❌ <b>不读论文就套磁</b>：必须至少读导师近3年2-3篇代表作，能说出具体观点。</div>
+  </div>`;
+}
+
+function renderTaociAI(){
+  const supOptions = PHD_SUPERVISORS.map((s,i)=>'<option value="'+i+'">'+s.name+'（'+s.school+'）</option>').join('');
+  return `
+  <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:12px;padding:16px;margin-bottom:16px">
+    <div style="font-size:15px;font-weight:700;color:#166534;margin-bottom:4px">🤖 AI个性化套磁信生成</div>
+    <div style="font-size:13px;color:#15803d;line-height:1.6">选择目标导师（可从导师库一键带入），填写你的背景，AI根据导师研究方向生成个性化套磁信</div>
+  </div>
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px">
+    <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:12px">① 选择目标导师</div>
+    <select id="taociSupSelect" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;margin-bottom:16px">
+      <option value="">-- 请选择目标导师 --</option>${supOptions}
+    </select>
+    <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:12px">② 你的个人背景</div>
+    <textarea id="taociUserBg" rows="5" placeholder="例如：我是河南大学运动人体科学专业硕士研究生，硕士期间研究运动与脑健康，掌握Western Blot、qPCR等分子生物学技术，已发表中文核心论文1篇，英语六级520分，计划报考2027年博士。" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;resize:vertical;margin-bottom:16px"></textarea>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div><div style="font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">③ 语气风格</div>
+        <select id="taociStyle" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px">
+          <option value="正式学术型">正式学术型</option>
+          <option value="诚恳真挚型">诚恳真挚型</option>
+          <option value="简洁干练型">简洁干练型</option>
+        </select></div>
+      <div><div style="font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">④ 套磁阶段</div>
+        <select id="taociStage" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px">
+          <option value="首次联系">首次联系</option>
+          <option value="跟进提醒">跟进提醒</option>
+          <option value="回复后沟通">回复后深度沟通</option>
+          <option value="考前面谈">考前面谈预约</option>
+          <option value="致谢">录取后致谢</option>
+        </select></div>
+    </div>
+    <button onclick="generateTaociLetter()" id="taociGenBtn" style="width:100%;padding:12px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">✨ 生成套磁信</button>
+  </div>
+  <div id="taociResult" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:15px;font-weight:700;color:#1e293b">📄 生成的套磁信</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="copyTaociLetter()" style="padding:6px 14px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">📋 复制</button>
+        <button onclick="generateTaociLetter()" style="padding:6px 14px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">🔄 重新生成</button>
+      </div>
+    </div>
+    <pre id="taociLetterText" style="white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:2;color:#1e293b;background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0"></pre>
+  </div>`;
+}
+
+async function generateTaociLetter(){
+  const supIdx = document.getElementById('taociSupSelect').value;
+  const userBg = document.getElementById('taociUserBg').value.trim();
+  const style = document.getElementById('taociStyle').value;
+  const stage = document.getElementById('taociStage').value;
+  const btn = document.getElementById('taociGenBtn');
+  if(supIdx===''){ alert('请选择目标导师'); return; }
+  if(!userBg){ alert('请填写你的个人背景'); return; }
+  const sup = PHD_SUPERVISORS[supIdx];
+  btn.disabled = true; btn.textContent = '生成中...';
+  const supInfo = `导师姓名：${sup.name}\n院校：${sup.school}\n职称：${sup.title||'教授/博导'}\n研究方向：${(sup.directions&&sup.directions.length)?sup.directions.join('、'):sup.research}\n近期研究：${sup.timeline||sup.metrics||'详见导师详情'}\n招生：${sup.enrollment||''}`;
+  const systemPrompt = `你是一位体育学考博套磁信专家，擅长根据目标导师的研究方向和学生背景，撰写个性化、学术性、诚恳的套磁邮件。要求：1.必须提及导师的具体研究方向或成果，不能泛泛而谈；2.突出学生背景与导师方向的契合点；3.语气为${style}；4.套磁阶段为${stage}；5.邮件结构完整（主题/称呼/正文/结尾/署名）；6.用中文撰写，字数400-600字。`;
+  const userPrompt = `目标导师信息：\n${supInfo}\n\n学生背景：\n${userBg}\n\n请根据以上信息，生成一封${style}风格的${stage}套磁邮件。邮件主题要清晰明确。`;
+  try{
+    const result = await callDeepSeekAPI(systemPrompt, userPrompt, 1500, 'deepseek-chat');
+    document.getElementById('taociResult').style.display = 'block';
+    document.getElementById('taociLetterText').textContent = result;
+    document.getElementById('taociResult').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){
+    alert('生成失败：'+e.message+'\n请检查后端API是否正常。');
+  }
+  btn.disabled = false; btn.textContent = '✨ 生成套磁信';
+}
+function copyTaociLetter(){
+  const text = document.getElementById('taociLetterText').textContent;
+  navigator.clipboard.writeText(text).then(()=>alert('已复制到剪贴板！')).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('已复制！');
+  });
+}
+
+function renderTaociTemplates(){
+  let html = '<div style="font-size:14px;color:#64748b;margin-bottom:12px">点击模板卡片查看内容，可复制使用或作为AI生成的参考</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">';
+  TAOCI_TEMPLATES.forEach(t=>{
+    html += '<div onclick="showTaociTemplate(\''+t.id+'\')" style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor=\'#3b82f6\';this.style.boxShadow=\'0 4px 12px rgba(59,130,246,.15)\'" onmouseout="this.style.borderColor=\'#e2e8f0\';this.style.boxShadow=\'none\'">';
+    html += '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:6px">'+t.title+'</div>';
+    html += '<div style="display:flex;gap:6px;margin-bottom:8px"><span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px">'+t.stage+'</span><span style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px">'+t.style+'</span></div>';
+    html += '<div style="font-size:12px;color:#64748b;line-height:1.6">'+t.content.substring(0,60)+'...</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+function showTaociTemplate(id){
+  const t = TAOCI_TEMPLATES.find(x=>x.id===id);
+  if(!t) return;
+  const html = '<div style="max-height:75vh;overflow-y:auto"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:16px;font-weight:700;color:#1e293b">📋 '+t.title+'</div><button onclick="copyTaociTemplateContent()" style="padding:6px 14px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">📋 复制</button></div><pre id="taociTplContent" style="white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:2;color:#1e293b;background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0">'+t.content+'</pre></div>';
+  showPhdDetail(html);
+}
+function copyTaociTemplateContent(){
+  const text = document.getElementById('taociTplContent').textContent;
+  navigator.clipboard.writeText(text).then(()=>alert('已复制！')).catch(()=>alert('复制失败，请手动选择复制'));
+}
+
+// 套磁记录管理
+function getTaociRecords(){ return JSON.parse(localStorage.getItem('phdTaociRecords')||'[]'); }
+function saveTaociRecords(r){ localStorage.setItem('phdTaociRecords', JSON.stringify(r)); }
+function renderTaociRecords(){
+  const records = getTaociRecords();
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;color:#64748b">记录你的套磁联系情况，本地保存不丢失</div><button onclick="addTaociRecord()" style="padding:8px 16px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">➕ 添加记录</button></div>';
+  if(records.length===0){
+    html += '<div style="text-align:center;padding:40px;color:#94a3b8;background:#f8fafc;border-radius:10px">📊 暂无套磁记录<br><span style="font-size:12px">点击"添加记录"开始管理你的套磁联系</span></div>';
+    return html;
+  }
+  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f1f5f9"><th style="padding:10px;border:1px solid #e2e8f0;text-align:left">导师</th><th style="padding:10px;border:1px solid #e2e8f0;text-align:left">院校</th><th style="padding:10px;border:1px solid #e2e8f0;text-align:left">发送日期</th><th style="padding:10px;border:1px solid #e2e8f0;text-align:left">状态</th><th style="padding:10px;border:1px solid #e2e8f0;text-align:left">跟进日期</th><th style="padding:10px;border:1px solid #e2e8f0;text-align:left">备注</th><th style="padding:10px;border:1px solid #e2e8f0;text-align:center">操作</th></tr></thead><tbody>';
+  const statusColors = {'已回复积极':'#10b981','已回复中性':'#f59e0b','未回复':'#94a3b8','婉拒':'#ef4444','待定':'#8b5cf6','已录取':'#059669'};
+  records.forEach((r,i)=>{
+    html += '<tr><td style="padding:8px;border:1px solid #e2e8f0;font-weight:600">'+r.name+'</td><td style="padding:8px;border:1px solid #e2e8f0">'+r.school+'</td><td style="padding:8px;border:1px solid #e2e8f0">'+r.date+'</td><td style="padding:8px;border:1px solid #e2e8f0"><span style="background:'+(statusColors[r.status]||'#94a3b8')+';color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">'+r.status+'</span></td><td style="padding:8px;border:1px solid #e2e8f0">'+(r.followup||'—')+'</td><td style="padding:8px;border:1px solid #e2e8f0;font-size:12px;color:#64748b">'+(r.note||'')+'</td><td style="padding:8px;border:1px solid #e2e8f0;text-align:center"><button onclick="editTaociRecord('+i+')" style="padding:3px 8px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;font-size:11px;cursor:pointer;margin-right:4px">编辑</button><button onclick="deleteTaociRecord('+i+')" style="padding:3px 8px;background:#fef2f2;border:1px solid #fecaca;border-radius:4px;font-size:11px;cursor:pointer;color:#991b1b">删除</button></td></tr>';
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
+function addTaociRecord(){ showTaociRecordForm(-1); }
+function editTaociRecord(i){ showTaociRecordForm(i); }
+function showTaociRecordForm(idx){
+  const records = getTaociRecords();
+  const r = idx>=0 ? records[idx] : {name:'',school:'',date:new Date().toISOString().slice(0,10),status:'未回复',followup:'',note:''};
+  const supOptions = PHD_SUPERVISORS.map((s,i)=>'<option value="'+s.name+'|'+s.school+'" '+(r.name===s.name?'selected':'')+'>'+s.name+'（'+s.school+'）</option>').join('');
+  const html = '<div style="max-width:500px"><div style="font-size:16px;font-weight:700;margin-bottom:16px;color:#1e293b">'+(idx>=0?'编辑':'添加')+'套磁记录</div><div style="margin-bottom:12px"><label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:4px">导师</label><select id="trName" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px"><option value="">-- 选择导师 --</option>'+supOptions+'</select></div><div style="margin-bottom:12px"><label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:4px">发送日期</label><input type="date" id="trDate" value="'+r.date+'" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px"></div><div style="margin-bottom:12px"><label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:4px">状态</label><select id="trStatus" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px"><option '+(r.status==='未回复'?'selected':'')+'>未回复</option><option '+(r.status==='已回复积极'?'selected':'')+'>已回复积极</option><option '+(r.status==='已回复中性'?'selected':'')+'>已回复中性</option><option '+(r.status==='婉拒'?'selected':'')+'>婉拒</option><option '+(r.status==='待定'?'selected':'')+'>待定</option><option '+(r.status==='已录取'?'selected':'')+'>已录取</option></select></div><div style="margin-bottom:12px"><label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:4px">计划跟进日期</label><input type="date" id="trFollowup" value="'+(r.followup||'')+'" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px"></div><div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:4px">备注</label><textarea id="trNote" rows="2" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px">'+(r.note||'')+'</textarea></div><div style="display:flex;gap:10px"><button onclick="saveTaociRecordForm('+idx+')" style="flex:1;padding:10px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">保存</button><button onclick="closePhdDetail()" style="flex:1;padding:10px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;cursor:pointer;color:#475569">取消</button></div></div>';
+  showPhdDetail(html);
+}
+function saveTaociRecordForm(idx){
+  const nameSel = document.getElementById('trName').value;
+  if(!nameSel){ alert('请选择导师'); return; }
+  const [name, school] = nameSel.split('|');
+  const record = {name:name, school:school, date:document.getElementById('trDate').value, status:document.getElementById('trStatus').value, followup:document.getElementById('trFollowup').value, note:document.getElementById('trNote').value};
+  const records = getTaociRecords();
+  if(idx>=0) records[idx]=record; else records.push(record);
+  saveTaociRecords(records);
+  closePhdDetail();
+  renderPhdTaociContent();
+}
+function deleteTaociRecord(i){
+  if(!confirm('确定删除这条记录吗？')) return;
+  const records = getTaociRecords();
+  records.splice(i,1);
+  saveTaociRecords(records);
+  renderPhdTaociContent();
+}
 
 function renderPhdProposal() {
   let contentArea = document.getElementById('phdContent-proposal');
