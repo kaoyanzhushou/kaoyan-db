@@ -38726,13 +38726,13 @@ function renderPhdSchools() {
   
   let html = '';
   
-  // 子标签导航
-  html += '<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
-  html += '<button class="phd-sub-tab-btn" data-sub="schools" onclick="switchPhdSchoolSubTab(\'schools\')" style="' + (window.phdSchoolSubTab === 'schools' ? 'background:#667eea;color:#fff' : 'background:#f1f5f9;color:#475569') + '">🏫 院校列表</button>';
-  html += '<button class="phd-sub-tab-btn" data-sub="supervisors" onclick="switchPhdSchoolSubTab(\'supervisors\')" style="' + (window.phdSchoolSubTab === 'supervisors' ? 'background:#667eea;color:#fff' : 'background:#f1f5f9;color:#475569') + '">👨\u200d🏫 导师库</button>';
-  html += '<button class="phd-sub-tab-btn" data-sub="recommend" onclick="switchPhdSchoolSubTab(\'recommend\')" style="' + (window.phdSchoolSubTab === 'recommend' ? 'background:#667eea;color:#fff' : 'background:#f1f5f9;color:#475569') + '">🎯 智能推荐</button>';
-  html += '<button class="phd-sub-tab-btn" data-sub="compare" onclick="switchPhdSchoolSubTab(\'compare\')" style="' + (window.phdSchoolSubTab === 'compare' ? 'background:#667eea;color:#fff' : 'background:#f1f5f9;color:#475569') + '">⚖️ 院校对比</button>';
-  html += '<button class="phd-sub-tab-btn" data-sub="tools" onclick="switchPhdSchoolSubTab(\'tools\')" style="' + (window.phdSchoolSubTab === 'tools' ? 'background:#667eea;color:#fff' : 'background:#f1f5f9;color:#475569') + '">🛠️ 报考工具</button>';
+  // 子标签导航 - 现代化胶囊式设计
+  html += '<div style="display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap;background:#fff;padding:8px;border-radius:16px;box-shadow:0 2px 12px rgba(102,126,234,0.08);border:1px solid #eef2ff">';
+  const subTabs = [{key:'schools',icon:'🏫',label:'院校列表'},{key:'supervisors',icon:'👨‍🏫',label:'导师库'},{key:'recommend',icon:'🎯',label:'智能推荐'},{key:'compare',icon:'⚖️',label:'院校对比'},{key:'tools',icon:'🛠️',label:'报考工具'}];
+  subTabs.forEach(function(tab){
+    var active = window.phdSchoolSubTab === tab.key;
+    html += '<button class="phd-sub-tab-btn" data-sub="' + tab.key + '" onclick="switchPhdSchoolSubTab(\'' + tab.key + '\')" style="flex:1;min-width:100px;padding:12px 16px;border:none;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.25s ease;' + (active ? 'background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;box-shadow:0 4px 15px rgba(102,126,234,0.4);transform:translateY(-1px)' : 'background:transparent;color:#64748b') + '">' + tab.icon + ' ' + tab.label + '</button>';
+  });
   html += '</div>';
   
   // 预定义通用变量（修复作用域问题）
@@ -38741,19 +38741,24 @@ function renderPhdSchools() {
   
   if (window.phdSchoolSubTab === 'schools') {
     // 院校列表
-    html += '<div style="margin-bottom:16px;padding:12px 16px;background:#f0f7ff;border-radius:8px;border-left:4px solid #2196f3;font-size:13px;color:#1565c0">';
-    html += '🏫 收录 <strong>' + PHD_SCHOOLS.length + '</strong> 所招收运动人体科学博士的院校，含招生方向、考试科目、参考书目、导师介绍、报考建议';
+    html += '<div style="margin-bottom:20px;padding:16px 20px;background:linear-gradient(135deg,#eff6ff,#eef2ff);border-radius:14px;border:1px solid #dbeafe;display:flex;align-items:center;gap:12px">';
+    html += '<div style="font-size:28px">🏫</div>';
+    html += '<div style="flex:1"><div style="font-size:15px;font-weight:700;color:#1e40af;margin-bottom:2px">招收运动人体科学博士的院校</div>';
+    html += '<div style="font-size:13px;color:#3b82f6">共收录 <strong style="font-size:16px;color:#1d4ed8">' + PHD_SCHOOLS.length + '</strong> 所院校，含招生方向、考试科目、参考书目、导师介绍、报考建议</div></div>';
     html += '</div>';
     
-    // 多维度筛选
-    html += '<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
-    html += '<input type="text" id="phdSchoolSearch" class="phd-filter-select" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px" placeholder="🔍 搜索院校名称、研究方向、导师姓名..." oninput="filterPhdSchools()">';
-    html += '<select id="phdSchoolLocationFilter" class="phd-filter-select" onchange="filterPhdSchools()" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px">';
-    html += '<option value="">全部地区</option>';
+    // 多维度筛选 - 现代化设计
+    html += '<div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;background:#fff;padding:16px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9">';
+    html += '<div style="flex:1;min-width:220px;position:relative">';
+    html += '<input type="text" id="phdSchoolSearch" class="phd-filter-select" style="width:100%;padding:10px 14px 10px 38px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;transition:all 0.2s;box-sizing:border-box" placeholder="搜索院校名称、研究方向、导师姓名..." oninput="filterPhdSchools()" onfocus="this.style.borderColor=\'#667eea\';this.style.boxShadow=\'0 0 0 3px rgba(102,126,234,0.1)\'" onblur="this.style.borderColor=\'#e2e8f0\';this.style.boxShadow=\'none\'">';
+    html += '<span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px">🔍</span>';
+    html += '</div>';
+    html += '<select id="phdSchoolLocationFilter" class="phd-filter-select" onchange="filterPhdSchools()" style="padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;background:#fff;cursor:pointer;min-width:120px">';
+    html += '<option value="">📍 全部地区</option>';
     locations.forEach(l => { html += '<option value="' + l + '">' + l + '</option>'; });
     html += '</select>';
-    html += '<select id="phdSchoolLevelFilter" class="phd-filter-select" onchange="filterPhdSchools()" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px">';
-    html += '<option value="">全部层次</option><option value="双一流">双一流</option><option value="211">211</option><option value="普通">普通院校</option>';
+    html += '<select id="phdSchoolLevelFilter" class="phd-filter-select" onchange="filterPhdSchools()" style="padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;background:#fff;cursor:pointer;min-width:120px">';
+    html += '<option value="">🏆 全部层次</option><option value="双一流">双一流</option><option value="211">211</option><option value="普通">普通院校</option>';
     html += '</select>';
     html += '</div>';
     
