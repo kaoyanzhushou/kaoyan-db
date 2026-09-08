@@ -37471,35 +37471,72 @@ function renderPhdExam() {
   html += '<button class="phd-practice-btn secondary" onclick="showPhdExamStats()">📊 高频考点统计</button>';
   html += '</div>';
   
-  html += '<div id="phdExamList">';
+  html += '<div id="phdExamList" style="display:flex;flex-direction:column;gap:16px">';
   PHD_EXAMS.forEach((exam, idx) => {
-    html += '<div class="phd-exam-card" data-school="' + exam.school + '" data-year="' + exam.year + '" data-subject="' + exam.subject + '">';
-    html += '<div class="phd-exam-header">';
-    html += '<div class="phd-exam-school">' + exam.school + '</div>';
-    html += '<div class="phd-exam-meta"><span class="phd-exam-year">' + exam.year + '年</span><span class="phd-exam-subject">' + exam.subject + '</span><span class="phd-exam-type">' + exam.type + '</span></div>';
-    html += '</div>';
-    html += '<div class="phd-exam-questions">';
+    // 真题卡片 - 全新设计
+    html += '<div class="phd-exam-card" data-school="' + exam.school + '" data-year="' + exam.year + '" data-subject="' + exam.subject + '" style="background:#fff;border:1px solid #e8ecf4;border-radius:16px;padding:0;margin-bottom:0;box-shadow:0 2px 12px rgba(0,0,0,0.05);overflow:hidden;transition:all 0.3s ease">';
+    
+    // 卡片头部 - 渐变背景条
+    html += '<div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
+    html += '<div style="width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">🏛️</div>';
+    html += '<div>';
+    html += '<div style="font-size:16px;font-weight:800;color:#fff;line-height:1.3">' + exam.school + '</div>';
+    html += '<div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:2px">' + exam.subject + ' · ' + exam.type + '</div>';
+    html += '</div></div>';
+    html += '<div style="display:flex;gap:8px;align-items:center">';
+    html += '<span style="background:rgba(255,255,255,0.25);color:#fff;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;backdrop-filter:blur(4px)">📅 ' + exam.year + '年</span>';
+    html += '<span style="background:rgba(255,255,255,0.15);color:#fff;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600">📝 ' + exam.questions.length + '题</span>';
+    html += '</div></div>';
+    
+    // 题目列表区域
+    html += '<div style="padding:12px 16px 16px">';
     exam.questions.forEach((q, qidx) => {
       const qPoints = extractPhdExamPoints(q.q);
       const qDifficulty = q.q.length > 80 ? '⭐⭐⭐⭐' : '⭐⭐⭐';
-      html += '<div class="phd-question-item">';
-      html += '<div class="phd-question-title" onclick="togglePhdAnswer(' + idx + ',' + qidx + ')">';
-      html += '<span class="phd-question-num">' + (qidx+1) + '.</span> ' + q.q;
-      html += '<span class="phd-answer-toggle" id="phdToggle_' + idx + '_' + qidx + '">▼ 查看详情</span>';
+      const isShort = q.q.indexOf('简述') === 0 || q.q.indexOf('概念') === 0;
+      
+      // 单个题目卡片
+      html += '<div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:12px;margin-bottom:10px;overflow:hidden;transition:all 0.2s" onmouseover="this.style.borderColor=\'#c7d2fe\';this.style.background=\'#fafbff\'" onmouseout="this.style.borderColor=\'#f1f5f9\';this.style.background=\'#f8fafc\'">';
+      
+      // 题目标题行 - 可点击
+      html += '<div onclick="togglePhdAnswer(' + idx + ',' + qidx + ')" style="padding:14px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;user-select:none">';
+      
+      // 题号圆形标签
+      html += '<div style="flex-shrink:0;width:28px;height:28px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;margin-top:1px">' + (qidx+1) + '</div>';
+      
+      // 题目内容
+      html += '<div style="flex:1;min-width:0">';
+      html += '<div style="font-size:14px;line-height:1.7;color:#334155;font-weight:500">' + q.q + '</div>';
+      html += '<div style="display:flex;gap:6px;margin-top:8px;align-items:center">';
+      html += '<span style="font-size:11px;padding:2px 8px;border-radius:4px;background:' + (isShort ? '#dbeafe' : '#fce7f3') + ';color:' + (isShort ? '#1d4ed8' : '#be185d') + ';font-weight:600">' + (isShort ? '简答题' : '论述题') + '</span>';
+      html += '<span style="font-size:11px;color:#94a3b8">难度 ' + qDifficulty + '</span>';
+      html += '</div></div>';
+      
+      // 展开/收起按钮
+      html += '<div id="phdToggle_' + idx + '_' + qidx + '" style="flex-shrink:0;font-size:12px;color:#667eea;font-weight:700;background:#eef2ff;padding:6px 12px;border-radius:8px;white-space:nowrap;transition:all 0.2s;margin-top:2px">▼ 查看详情</div>';
       html += '</div>';
-      html += '<div class="phd-answer-content" id="phdAnswer_' + idx + '_' + qidx + '" style="display:none">';
-      html += '<div class="phd-question-meta">';
-      html += '<span class="phd-difficulty-tag">难度：' + qDifficulty + '</span>';
-      html += '<span class="phd-points-tag">考查知识点：' + qPoints + '</span>';
+      
+      // 答案内容区域
+      html += '<div id="phdAnswer_' + idx + '_' + qidx + '" style="display:none;border-top:1px solid #f1f5f9;padding:16px;background:#fff">';
+      
+      // 标签行
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">';
+      html += '<span style="background:#fef2f2;color:#dc2626;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700">📊 难度：' + qDifficulty + '</span>';
+      html += '<span style="background:#ecfdf5;color:#059669;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700">🎯 考查知识点：' + qPoints + '</span>';
       html += '</div>';
-      html += '<div class="phd-answer-label">📖 参考答案：</div>';
-      html += '<div class="phd-answer-text">' + q.a + '</div>';
-      html += '<div class="phd-ai-answer-section">';
-      html += '<button class="phd-ai-btn" onclick="generatePhdExamAIAnswer(' + idx + ',' + qidx + ',this)">🤖 AI生成详细答案与得分点</button>';
-      html += '<div class="phd-ai-answer-content" id="phdAIAnswer_' + idx + '_' + qidx + '" style="display:none"></div>';
+      
+      // 参考答案
+      html += '<div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px;display:flex;align-items:center;gap:6px">📖 参考答案：</div>';
+      html += '<div style="font-size:13px;line-height:1.9;color:#475569;background:#f8fafc;padding:14px 16px;border-radius:10px;border-left:3px solid #667eea;white-space:pre-wrap;margin-bottom:14px">' + q.a + '</div>';
+      
+      // AI答案区域
+      html += '<div style="padding-top:14px;border-top:1px dashed #e2e8f0">';
+      html += '<button onclick="generatePhdExamAIAnswer(' + idx + ',' + qidx + ',this)" style="width:100%;padding:11px 16px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;transition:all 0.2s" onmouseover="this.style.boxShadow=\'0 4px 14px rgba(102,126,234,0.4)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'none\';this.style.transform=\'none\'">🤖 AI生成详细答案与得分点</button>';
+      html += '<div id="phdAIAnswer_' + idx + '_' + qidx + '" style="display:none;margin-top:12px;padding:14px;background:linear-gradient(135deg,#f0f9ff,#faf5ff);border-radius:10px;border:1px solid #e0e7ff;font-size:13px;line-height:1.8;color:#334155;white-space:pre-wrap"></div>';
       html += '</div>';
-      html += '</div>';
-      html += '</div>';
+      
+      html += '</div></div>';
     });
     html += '</div></div>';
   });
