@@ -39057,6 +39057,7 @@ function renderPhdSchools() {
     html += '<input type="text" id="phdSupervisorSearch" class="phd-filter-select" style="flex:1;min-width:180px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px" placeholder="🔍 搜索导师姓名/院校..." oninput="filterPhdSupervisors()">';
     html += '<input type="text" id="phdMatchInput" style="flex:2;min-width:240px;padding:8px 12px;border:1px solid #3b82f6;border-radius:8px;font-size:13px;background:#eff6ff" placeholder="🎯 输入研究方向智能匹配导师（如：运动与脑健康、运动生物力学、运动康复）" oninput="filterPhdSupervisors()">';
     html += '<button onclick="document.getElementById(\'phdMatchInput\').value=\'\';filterPhdSupervisors()" style="padding:8px 14px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;cursor:pointer;color:#475569;white-space:nowrap">清除匹配</button>';
+    html += '<button onclick="showPhdFavList()" style="padding:8px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">⭐ 我的收藏</button>';
     html += '</div>';
     html += '<div id="phdMatchInfo" style="font-size:12px;color:#3b82f6;margin-bottom:8px;display:none;line-height:1.6"></div>';
     const supSchools = [...new Set(PHD_SUPERVISORS.map(s => s.school))];
@@ -40209,7 +40210,8 @@ function renderPhdSupervisorCards(supervisors) {
   let html = '';
   supervisors.forEach((sup, idx) => {
     const realIdx = PHD_SUPERVISORS.indexOf(sup);
-    html += '<div class="phd-knowledge-card" style="cursor:pointer" onclick="showPhdSupervisorDetail(' + realIdx + ')">';
+    html += '<div class="phd-knowledge-card" style="cursor:pointer;position:relative" onclick="showPhdSupervisorDetail(' + realIdx + ')">';
+    html += '<div onclick="togglePhdFav('+realIdx+',event)" style="position:absolute;top:8px;right:8px;font-size:16px;cursor:pointer;z-index:2;filter:grayscale('+(phdFavList.indexOf(realIdx)>-1?'0':'1')+')">⭐</div>';
     html += '<div class="phd-knowledge-card-header">';
     html += '<span class="phd-knowledge-card-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a)">👨\u200d🏫</span>';
     html += '<span class="phd-knowledge-card-title">' + sup.name + (sup.timeline ? ' <span style="font-size:9px;background:#ffedd5;color:#c2410c;padding:1px 6px;border-radius:8px;vertical-align:middle">📅 近期动态</span>' : '') + (sup._matchScore ? ' <span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:1px 6px;border-radius:8px;vertical-align:middle">🎯 匹配度'+sup._matchScore+'</span>' : '') + '</span>';
@@ -40316,6 +40318,65 @@ function filterPhdSupervisors() {
 
 // 院校对比功能
 if (typeof window.phdCompareList === 'undefined') window.phdCompareList = [];
+if (typeof window.phdFavList === 'undefined') window.phdFavList = JSON.parse(localStorage.getItem('phdFavList')||'[]');
+function togglePhdFav(idx, evt){
+  if(evt) evt.stopPropagation();
+  const i = phdFavList.indexOf(idx);
+  if(i>-1) phdFavList.splice(i,1); else phdFavList.push(idx);
+  localStorage.setItem('phdFavList', JSON.stringify(phdFavList));
+  filterPhdSupervisors();
+}
+function showPhdFavList(){
+  switchPhdSchoolSubTab('supervisors');
+  document.getElementById('phdSupervisorSearch').value='';
+  document.getElementById('phdMatchInput').value='';
+  const list = document.getElementById('phdSupervisorList');
+  if(phdFavList.length===0){ list.innerHTML='<div class="phd-empty">暂无收藏导师<br><span style="font-size:12px;color:#94a3b8">点击导师卡片右上角⭐收藏感兴趣的导师</span></div>'; return; }
+  const favSups = phdFavList.map(i=>PHD_SUPERVISORS[i]).filter(s=>s);
+  let html = '<div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px;font-weight:700;color:#1e293b">⭐ 我的收藏（'+favSups.length+'位）</div>';
+  if(favSups.length>=2) html += '<button onclick="showPhdCompare()" style="padding:6px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">📊 对比选中导师</button>';
+  html += '</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">';
+  favSups.forEach(s=>{
+    const realIdx = PHD_SUPERVISORS.indexOf(s);
+    html += '<div class="phd-knowledge-card" style="cursor:pointer;position:relative" onclick="showPhdSupervisorDetail('+realIdx+')">';
+    html += '<div onclick="togglePhdFav('+realIdx+',event)" style="position:absolute;top:8px;right:8px;font-size:18px;cursor:pointer;z-index:2">⭐</div>';
+    html += '<div class="phd-knowledge-card-header"><span class="phd-knowledge-card-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">👨‍🏫</span>';
+    html += '<span class="phd-knowledge-card-title">'+s.name+'</span></div>';
+    html += '<div style="font-size:12px;color:#64748b;margin-bottom:6px">'+s.school+' · '+s.title+'</div>';
+    html += '<div class="phd-knowledge-card-desc" style="font-size:12px;margin-bottom:8px">'+s.research+'</div>';
+    html += '<div style="font-size:12px;color:#f59e0b;font-weight:600">查看详情 →</div></div>';
+  });
+  html += '</div>';
+  list.innerHTML = html;
+}
+function showPhdCompare(){
+  const favSups = phdFavList.map(i=>PHD_SUPERVISORS[i]).filter(s=>s).slice(0,4);
+  if(favSups.length<2){ alert('请至少收藏2位导师进行对比'); return; }
+  let html = '<div style="max-height:80vh;overflow-y:auto"><div style="font-size:16px;font-weight:700;margin-bottom:12px;color:#1e293b">📊 导师对比（'+favSups.length+'位）</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f1f5f9"><th style="padding:8px;border:1px solid #e2e8f0;text-align:left;position:sticky;left:0;background:#f1f5f9;min-width:80px">对比项</th>';
+  favSups.forEach(s=>{ html += '<th style="padding:8px;border:1px solid #e2e8f0;text-align:center;min-width:140px;background:#dbeafe;color:#1e40af">'+s.name+'<br><span style="font-size:10px;font-weight:400;color:#64748b">'+s.school+'</span></th>'; });
+  html += '</tr></thead><tbody>';
+  const rows = [
+    ['职称', s=>s.title||'—'],
+    ['研究方向', s=>(s.directions&&s.directions.length)?s.directions.join('、'):(s.research||'—')],
+    ['招生名额', s=>s.enrollment||'—'],
+    ['代表性成果', s=>(s.papers&&s.papers.length)?s.papers.slice(0,2).join('；'):'—'],
+    ['科研项目', s=>(s.projects&&s.projects.length)?s.projects.slice(0,2).join('；'):'—'],
+    ['成果量化', s=>s.metrics||'—'],
+    ['课题组', s=>s.group||'—'],
+    ['近期动态', s=>s.timeline?'有（点击详情查看）':'—'],
+    ['邮箱', s=>s.email||'—'],
+    ['办公电话', s=>s.phone||'—'],
+  ];
+  rows.forEach(r=>{
+    html += '<tr><td style="padding:8px;border:1px solid #e2e8f0;font-weight:600;background:#f8fafc;position:sticky;left:0">'+r[0]+'</td>';
+    favSups.forEach(s=>{ html += '<td style="padding:8px;border:1px solid #e2e8f0;line-height:1.6;vertical-align:top">'+r[1](s)+'</td>'; });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  showPhdDetail(html);
+}
+
 
 function togglePhdCompare(idx, checked) {
   if (checked) {
