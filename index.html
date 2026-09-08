@@ -40399,12 +40399,15 @@ function renderPhdProposal() {
   html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">';
   const quickFuncs = [
     {icon:'💡', label:'AI选题推荐', action:'propShowTopicWorkshop()'},
+    {icon:'📚', label:'研究方法百科', action:'propShowMethodsLibrary()'},
     {icon:'📝', label:'生成当前章节', action:'propGenerateChapter()'},
     {icon:'✨', label:'润色当前章节', action:'propPolishChapter()'},
     {icon:'➕', label:'AI续写', action:'propAIContinue()'},
     {icon:'📊', label:'生成技术路线图', action:'propGenerateTechRoute()'},
+    {icon:'🎤', label:'模拟导师提问', action:'propSimulateSupervisorQuestions()'},
+    {icon:'📈', label:'统计方法助手', action:'propShowStatsHelper()'},
     {icon:'🔍', label:'AI多维度评审', action:'propAIReview()'},
-    {icon:'📚', label:'参考文献格式化', action:'propFormatRefs()'}
+    {icon:'📖', label:'参考文献格式化', action:'propFormatRefs()'}
   ];
   quickFuncs.forEach(f => {
     html += '<button onclick="' + f.action + '" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f8fafc;border:1px solid #f1f5f9;border-radius:8px;cursor:pointer;font-size:12px;color:#475569;text-align:left;transition:all 0.2s" onmouseover="this.style.background=\'#eef2ff\';this.style.borderColor=\'#c7d2fe\'" onmouseout="this.style.background=\'#f8fafc\';this.style.borderColor=\'#f1f5f9\'">';
@@ -40833,39 +40836,134 @@ function propAIReview() {
   
   const meta = window.propState.meta;
   let fullContent = '';
+  let chapterContents = [];
   window.propState.chapters.forEach(ch => {
-    if (ch.content) fullContent += '【' + ch.title + '】\n' + ch.content + '\n\n';
+    if (ch.content && ch.content.trim()) {
+      fullContent += '【' + ch.title + '】\n' + ch.content + '\n\n';
+      chapterContents.push({title: ch.title, content: ch.content});
+    }
   });
   
   if (!fullContent || fullContent.length < 200) {
-    alert('计划书内容太少，请先生成或输入内容');
+    alert('计划书内容太少（少于200字），请先生成或输入内容');
     return;
   }
   
-  const systemPrompt = '你是运动人体科学博士招生评审专家。请对以下科研计划书进行多维度评审，包括：1.选题价值（20分）；2.研究方法（25分）；3.创新性（20分）；4.可行性（20分）；5.写作规范（15分）。每个维度给出分数和详细点评，最后给出总分和总体评价，以及3-5条具体的改进建议。要求：评审要专业、严格、有建设性，符合运动人体科学博士评审标准。';
+  // 字数统计
+  const totalWords = fullContent.length;
+  const chapterCounts = chapterContents.map(c => ({title: c.title, count: c.content.length}));
   
   // 显示加载
   const area = document.getElementById('phdProposalArea');
   if (area) {
-    area.innerHTML = '<div style="text-align:center;padding:60px"><div style="font-size:48px;margin-bottom:16px">🔍</div><div style="font-size:16px;font-weight:600;color:#1e293b;margin-bottom:8px">AI正在多维度评审计划书...</div><div style="font-size:13px;color:#64748b">正在分析选题价值、研究方法、创新性、可行性、写作规范...<br>请稍候（约30-60秒）</div></div>' + area.innerHTML;
+    area.innerHTML = '<div style="text-align:center;padding:60px;background:#fff;border-radius:12px"><div style="font-size:48px;margin-bottom:16px">🔍</div><div style="font-size:16px;font-weight:600;color:#1e293b;margin-bottom:8px">AI正在多维度深度评审计划书...</div><div style="font-size:13px;color:#64748b">正在分析：选题价值、研究方法、创新性、可行性、写作规范、逐章点评...<br>请稍候（约30-60秒）</div><div style="width:240px;height:4px;background:#e2e8f0;border-radius:2px;margin:20px auto 0;overflow:hidden"><div style="width:0%;height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444);border-radius:2px;animation:loading 1.5s infinite"></div></div></div>' + area.innerHTML;
   }
   
-  callDeepSeekAPI(systemPrompt, '研究题目：' + (meta.title || '未设定') + '\n\n计划书内容：\n' + fullContent, 4000, 'deepseek-chat').then(response => {
+  const systemPrompt = '你是运动人体科学专业的资深博士生导师和科研计划书评审专家。请对以下博士科研计划书进行多维度深度评审。评审维度包括：1.选题价值（20分）：研究意义、理论价值、实践价值、前沿性；2.研究方法（25分）：方法适用性、设计严谨性、样本合理性、数据分析方法、可操作性；3.创新性（20分）：理论创新、方法创新、应用创新、与已有研究的区别；4.可行性（20分）：样本可获取性、技术可行性、经费合理性、时间安排、研究者能力；5.写作规范（15分）：逻辑结构、学术表达、格式规范、参考文献、字数结构。请给出每个维度的分数（0-100分，按权重折算）、详细点评（优点和问题），以及总体评价和3-5条具体的改进建议。同时对每一章进行逐章点评（优点、问题、改进建议）。输出格式为JSON，包含：scores（5个维度的分数和点评）、totalScore（总分）、grade（等级：优秀/良好/一般/需改进）、overallComment（总体评价）、improvements（改进建议数组）、chapterReviews（逐章点评数组，每章含title, strengths, issues, suggestions）。';
+  
+  callDeepSeekAPI(systemPrompt, '研究题目：' + (meta.title || '未设定') + (meta.supervisor ? '\n目标导师：' + meta.supervisor : '') + '\n总字数：' + totalWords + '字\n各章字数：' + JSON.stringify(chapterCounts) + '\n\n计划书内容：\n' + fullContent.substring(0, 4000), 5000, 'deepseek-chat').then(response => {
     renderPhdProposal();
-    // 在结果区域显示评审结果
-    setTimeout(() => {
-      const resultArea = document.createElement('div');
-      resultArea.style.cssText = 'margin-top:16px;padding:20px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9';
-      resultArea.innerHTML = '<div style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span>🔍</span><span>AI多维度评审报告</span></div>' +
-        '<div style="font-size:13px;line-height:1.9;color:#475569;white-space:pre-wrap">' + response + '</div>';
-      const mainArea = document.getElementById('phdProposalArea');
-      if (mainArea) mainArea.insertBefore(resultArea, mainArea.firstChild);
-    }, 100);
+    
+    try {
+      let review = null;
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) review = JSON.parse(jsonMatch[0]);
+      
+      setTimeout(() => {
+        const resultArea = document.createElement('div');
+        resultArea.style.cssText = 'margin-bottom:16px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9;overflow:hidden';
+        
+        let html = '';
+        
+        if (review) {
+          // 评分总览
+          const total = review.totalScore || 0;
+          const grade = review.grade || '待评定';
+          const gradeColor = total >= 85 ? '#059669' : total >= 70 ? '#2563eb' : total >= 60 ? '#d97706' : '#dc2626';
+          
+          html += '<div style="padding:20px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-bottom:1px solid #fcd34d">';
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">';
+          html += '<div><div style="font-size:18px;font-weight:800;color:#92400e;margin-bottom:4px">🔍 AI多维度深度评审报告</div>';
+          html += '<div style="font-size:13px;color:#78350f">总字数：' + totalWords + '字 | 评审时间：' + new Date().toLocaleString() + '</div></div>';
+          html += '<div style="text-align:center"><div style="font-size:36px;font-weight:800;color:' + gradeColor + '">' + total + '<span style="font-size:16px">分</span></div>';
+          html += '<div style="font-size:13px;font-weight:700;color:' + gradeColor + ';background:#fff;padding:4px 12px;border-radius:12px;margin-top:4px">' + grade + '</div></div>';
+          html += '</div></div>';
+          
+          // 5维度评分
+          if (review.scores) {
+            html += '<div style="padding:16px 20px"><div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:12px">📊 五维度评分</div>';
+            html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">';
+            const dims = [
+              {key:'选题价值', weight:20, color:'#059669'},
+              {key:'研究方法', weight:25, color:'#2563eb'},
+              {key:'创新性', weight:20, color:'#7c3aed'},
+              {key:'可行性', weight:20, color:'#d97706'},
+              {key:'写作规范', weight:15, color:'#db2777'}
+            ];
+            dims.forEach(d => {
+              const scoreData = review.scores[d.key] || review.scores[d.key + '（' + d.weight + '分）'] || {score: 0, comment: ''};
+              const score = typeof scoreData === 'object' ? (scoreData.score || 0) : (scoreData || 0);
+              const comment = typeof scoreData === 'object' ? (scoreData.comment || '') : '';
+              html += '<div style="padding:12px;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9">';
+              html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#475569">' + d.key + '</span><span style="font-size:16px;font-weight:800;color:' + d.color + '">' + score + '<span style="font-size:10px">/' + d.weight + '</span></span></div>';
+              html += '<div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:' + (score/d.weight*100) + '%;background:' + d.color + ';border-radius:3px"></div></div>';
+              if (comment) html += '<div style="font-size:11px;color:#64748b;line-height:1.5">' + comment.substring(0, 80) + (comment.length > 80 ? '...' : '') + '</div>';
+              html += '</div>';
+            });
+            html += '</div></div>';
+          }
+          
+          // 总体评价
+          if (review.overallComment) {
+            html += '<div style="padding:14px 20px;background:#f0fdf4;border-top:1px solid #bbf7d0"><div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:6px">💬 总体评价</div>';
+            html += '<div style="font-size:13px;line-height:1.8;color:#374151">' + review.overallComment + '</div></div>';
+          }
+          
+          // 改进建议
+          if (review.improvements && review.improvements.length > 0) {
+            html += '<div style="padding:14px 20px;background:#fef2f2;border-top:1px solid #fecaca"><div style="font-size:13px;font-weight:700;color:#991b1b;margin-bottom:8px">🎯 改进建议（' + review.improvements.length + '条）</div>';
+            html += '<ol style="margin:0;padding-left:20px">';
+            review.improvements.forEach((imp, i) => {
+              html += '<li style="font-size:13px;line-height:1.8;color:#7f1d1d;margin-bottom:4px">' + imp + '</li>';
+            });
+            html += '</ol></div>';
+          }
+          
+          // 逐章点评
+          if (review.chapterReviews && review.chapterReviews.length > 0) {
+            html += '<div style="padding:14px 20px;border-top:1px solid #f1f5f9"><div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px">📝 逐章点评</div>';
+            review.chapterReviews.forEach((cr, idx) => {
+              html += '<div style="margin-bottom:10px;padding:12px;background:#f8fafc;border-radius:8px;border-left:3px solid #667eea">';
+              html += '<div style="font-size:12px;font-weight:700;color:#4f46e5;margin-bottom:6px">' + (cr.title || ('第' + (idx+1) + '章')) + '</div>';
+              if (cr.strengths) html += '<div style="font-size:11px;color:#059669;margin-bottom:4px"><strong>✅ 优点：</strong>' + (Array.isArray(cr.strengths) ? cr.strengths.join('；') : cr.strengths) + '</div>';
+              if (cr.issues) html += '<div style="font-size:11px;color:#dc2626;margin-bottom:4px"><strong>❌ 问题：</strong>' + (Array.isArray(cr.issues) ? cr.issues.join('；') : cr.issues) + '</div>';
+              if (cr.suggestions) html += '<div style="font-size:11px;color:#2563eb"><strong>💡 建议：</strong>' + (Array.isArray(cr.suggestions) ? cr.suggestions.join('；') : cr.suggestions) + '</div>';
+              html += '</div>';
+            });
+            html += '</div>';
+          }
+        } else {
+          // 解析失败，显示原始文本
+          html += '<div style="padding:20px"><div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:12px">🔍 AI评审报告（原始文本）</div>';
+          html += '<div style="font-size:13px;line-height:1.9;color:#475569;white-space:pre-wrap;background:#f8fafc;padding:16px;border-radius:10px">' + response + '</div></div>';
+        }
+        
+        resultArea.innerHTML = html;
+        const mainArea = document.getElementById('phdProposalArea');
+        if (mainArea) mainArea.insertBefore(resultArea, mainArea.firstChild);
+      }, 100);
+    } catch(e) {
+      renderPhdProposal();
+      setTimeout(() => {
+        alert('评审结果解析失败，但已生成。请查看控制台或重试。');
+      }, 200);
+    }
   }).catch(err => {
     renderPhdProposal();
-    alert('评审失败: ' + err.message);
+    alert('AI评审失败: ' + err.message);
   });
 }
+
 
 function propFormatRefs() {
   if (!window.propState) return;
@@ -40918,6 +41016,622 @@ function propAIChatSend() {
     const lastAI = chatBox.querySelector('div:last-child');
     if (lastAI) lastAI.innerHTML = '<strong>AI：</strong>回答失败: ' + err.message;
   });
+}
+
+
+// ===== 运动人体科学研究方法百科 =====
+const PROP_METHODS_LIBRARY = {
+  '动物实验': {
+    icon: '🐭',
+    category: '实验法',
+   适用场景: '适用于机制研究、干预效果验证、病理模型构建等。如运动干预对糖尿病大鼠胰岛素信号通路的影响、运动性疲劳的中枢机制研究等。',
+    操作步骤: '1.实验动物选择与分组（品系、周龄、体重、性别、样本量估算）\n2.动物模型构建（如糖尿病模型、肥胖模型、运动损伤模型）\n3.运动干预方案制定（运动方式、强度、频率、持续时间）\n4.样本采集（血液、组织、器官）\n5.指标检测（分子、蛋白、组织学、功能学）\n6.数据统计与分析',
+    关键控制点: '•动物伦理审查必须通过\n•分组遵循随机化原则\n•运动强度要精准控制（跑台速度/坡度、游泳时间）\n•样本采集时间点要一致\n•检测方法要标准化\n•注意动物福利，减少应激',
+    常见错误: '•样本量不足导致统计效能低\n•分组不均衡（体重差异大）\n•运动强度描述模糊（"中等强度"无具体参数）\n•未设置假手术/安慰剂对照\n•指标检测缺少方法学描述\n•统计学方法选择不当',
+    数据分析: '•组间比较：独立样本t检验（2组）、单因素方差分析（≥3组）\n•重复测量：重复测量方差分析\n•相关性分析：Pearson/Spearman相关\n•多因素分析：双因素方差分析、多元回归\n•非参数检验：Mann-Whitney U、Kruskal-Wallis H',
+    撰写范例: '本研究采用SPF级雄性SD大鼠60只，8周龄，体重200-220g，购自XX实验动物中心。适应性饲养1周后，按体重随机分为4组：正常对照组（NC，n=15）、模型对照组（MC，n=15）、有氧运动干预组（AE，n=15）、高强度间歇训练组（HIIT，n=15）。除NC组外，其余各组采用高脂饮食联合链脲佐菌素（STZ，35mg/kg）腹腔注射构建2型糖尿病模型。建模成功后，AE组进行60%VO2max强度跑台训练，HIIT组进行高强度间歇训练，每周5次，共8周。干预结束后，禁食12h，腹腔注射10%水合氯醛（3ml/kg）麻醉，腹主动脉采血，分离血清；取骨骼肌、肝脏、心肌组织，部分液氮速冻，部分4%多聚甲醛固定。采用Western Blot检测胰岛素信号通路相关蛋白（IRS-1、PI3K、Akt、GLUT4）表达，qPCR检测相关mRNA表达，ELISA检测血清炎症因子（TNF-α、IL-6、IL-10）水平，HE染色观察组织形态学变化。所有数据以均数±标准差（x±s）表示，采用SPSS 26.0软件进行统计分析，组间比较采用单因素方差分析（One-way ANOVA），两两比较采用LSD法，P<0.05为差异有统计学意义。'
+  },
+  '人体实验': {
+    icon: '🏃',
+    category: '实验法',
+   适用场景: '适用于运动干预效果评价、生理功能测试、运动能力评估、健康促进研究等。如有氧运动对大学生心肺功能的影响、运动干预对中老年人群血糖控制的效果等。',
+    操作步骤: '1.研究对象招募与筛选（纳入标准、排除标准、样本量估算）\n2.知情同意书签署\n3.基线测试（身体成分、心肺功能、肌肉力量、血液生化）\n4.随机分组（干预组、对照组）\n5.运动干预实施（监督训练/家庭训练）\n6.中期/末期测试\n7.数据统计与分析',
+    关键控制点: '•人体伦理审查必须通过\n•知情同意书必须签署\n•随机分组方法要明确（随机数字表/计算机随机）\n•基线特征组间均衡性检验\n•干预依从性监控（训练日志、心率监测）\n•测试条件标准化（同一时间、同一设备、同一测试者）\n•脱落病例处理（意向性分析/符合方案分析）',
+    常见错误: '•样本量估算依据不充分\n•未说明随机分组方法\n•基线资料组间比较缺失\n•运动干预方案描述不具体（强度、频率、时长）\n•依从性监控缺失\n•未说明脱落情况及处理\n•测试信度检验缺失',
+    数据分析: '•组内前后比较：配对样本t检验\n•组间比较：独立样本t检验/协方差分析（ANCOVA）\n•重复测量：重复测量方差分析\n•相关性分析：Pearson相关\n•分类变量：卡方检验\n•多因素分析：多元回归、逻辑回归',
+    撰写范例: '本研究采用随机对照试验设计。选取某高校健康男性大学生40名，年龄18-22岁，纳入标准：（1）身体健康，无心血管疾病、代谢疾病史；（2）近3个月未进行规律运动训练；（3）知情同意并自愿参与本研究。排除标准：（1）有运动禁忌症；（2）正在服用影响代谢的药物；（3）吸烟、酗酒。采用随机数字表法将受试者分为有氧运动干预组（n=20）和对照组（n=20）。干预组进行12周中等强度有氧运动（60-70%最大心率，每周4次，每次45min，包括5min热身、35min跑步、5min放松），对照组保持日常生活习惯，不进行规律运动。所有受试者分别在干预前、干预12周后进行测试，测试时间统一安排在上午8:00-10:00，测试前24h避免剧烈运动，测试前2h禁食。测试指标包括：（1）身体成分：采用InBody 770人体成分分析仪测量体重、BMI、体脂率、瘦体重；（2）心肺功能：采用Monark 839E功率自行车进行递增负荷试验，测定最大摄氧量（VO2max）、通气阈（VT）；（3）血液生化：空腹肘静脉采血5ml，离心分离血清，采用全自动生化分析仪测定血糖、胰岛素、血脂（TC、TG、LDL-C、HDL-C），采用HOMA-IR公式计算胰岛素抵抗指数；（4）肌肉力量：采用等速肌力测试仪测定膝关节屈肌、伸肌峰力矩（PT）、总功（TW）。所有数据以均数±标准差（x±s）表示，采用SPSS 26.0软件进行统计分析。组内前后比较采用配对样本t检验，组间比较采用独立样本t检验，以干预前指标为协变量进行协方差分析（ANCOVA），P<0.05为差异有统计学意义。'
+  },
+  '细胞实验': {
+    icon: '🔬',
+    category: '实验法',
+   适用场景: '适用于分子机制研究、信号通路验证、药物/化合物筛选、细胞功能研究等。如运动诱导的肌细胞线粒体生物发生机制、炎症因子对软骨细胞的影响等。',
+    操作步骤: '1.细胞培养（细胞系/原代细胞，培养基、传代、冻存）\n2.细胞分组与处理（对照组、模型组、干预组）\n3.细胞功能检测（增殖、凋亡、分化、迁移、吞噬）\n4.分子生物学检测（qPCR、Western Blot、免疫荧光、流式细胞术）\n5.信号通路验证（抑制剂/激活剂、siRNA/过表达）\n6.数据统计与分析',
+    关键控制点: '•细胞状态要良好（无污染、活力高、传代次数适宜）\n•细胞接种密度要一致\n•处理浓度和时间要预实验确定\n•设置阳性对照和阴性对照\n•重复实验至少3次独立重复\n•蛋白样品要加蛋白酶抑制剂\n•内参选择要合适',
+    常见错误: '•细胞污染未及时发现\n•传代次数过多导致细胞特性改变\n•处理浓度过高导致细胞大量死亡\n•未设置独立重复（仅技术重复）\n•Western Blot内参不合适\n•qPCR未验证引物效率\n•统计学方法不当（用t检验比较多组）',
+    数据分析: '•多组比较：单因素方差分析\n•两组比较：独立样本t检验\n•剂量效应：趋势检验\n•时间效应：重复测量方差分析\n•相关性：Pearson相关\n•所有实验至少3次独立重复',
+    撰写范例: '本研究采用C2C12小鼠成肌细胞系（购自中国科学院细胞库），细胞培养于含10%胎牛血清（FBS）、1%青霉素-链霉素的DMEM高糖培养基中，置于37℃、5%CO2培养箱中培养，每2-3天传代一次。实验分为4组：（1）正常对照组（Control）：正常培养；（2）模型组（Model）：加入100μM棕榈酸（PA）诱导胰岛素抵抗；（3）运动模拟低剂量组（EX-L）：PA处理+1μM AICAR（AMPK激活剂，模拟运动效应）；（4）运动模拟高剂量组（EX-H）：PA处理+10μM AICAR。处理24h后，收集细胞进行检测。采用CCK-8法检测细胞活力；采用2-NBDG荧光探针检测细胞葡萄糖摄取能力；采用qPCR检测线粒体生物发生相关基因（PGC-1α、NRF1、TFAM、ND1、Cytb）mRNA表达；采用Western Blot检测AMPK、p-AMPK、PGC-1α、GLUT4蛋白表达；采用MitoTracker Red荧光探针检测线粒体含量；采用Seahorse XF细胞能量代谢分析仪测定细胞氧消耗率（OCR）和胞外酸化率（ECAR）。所有实验独立重复3次，每次设3个复孔。数据以均数±标准差（x±s）表示，采用单因素方差分析（One-way ANOVA）进行组间比较，两两比较采用LSD法，P<0.05为差异有统计学意义。'
+  },
+  '问卷调查': {
+    icon: '📋',
+    category: '调查法',
+   适用场景: '适用于现状调查、态度/认知评估、行为研究、影响因素分析等。如大学生体育锻炼行为现状调查、运动动机与锻炼坚持性的关系研究等。',
+    操作步骤: '1.研究设计（横断面调查/纵向调查）\n2.问卷设计/选择（自编问卷/成熟量表）\n3.问卷信效度检验（预调查）\n4.样本量估算\n5.抽样方法（随机抽样/方便抽样/分层抽样）\n6.问卷发放与回收（线上/线下）\n7.数据录入与清洗\n8.统计分析',
+    关键控制点: '•问卷要经过信效度检验（Cronbach\'s α≥0.7，内容效度/结构效度）\n•样本量要足够（一般为条目数的5-10倍）\n•抽样方法要明确\n•问卷回收率≥70%\n•无效问卷剔除标准要明确（规律性作答、缺失值过多、作答时间过短）\n•数据录入要双人核对\n•注意共同方法偏差检验',
+    常见错误: '•直接使用国外量表未汉化\n•未进行信效度检验\n•样本量不足\n•抽样方法描述不清\n•回收率低未说明原因\n•无效问卷剔除标准不明确\n•缺失值处理不当\n•未检验共同方法偏差',
+    数据分析: '•描述统计：频数、百分比、均数、标准差\n•组间比较：t检验、方差分析、卡方检验\n•相关性分析：Pearson/Spearman相关\n•影响因素分析：多元线性回归、逻辑回归\n•结构方程模型（SEM）：验证理论模型\n•中介效应/调节效应分析\n•聚类分析/因子分析',
+    撰写范例: '本研究采用横断面调查设计。采用方便抽样法，选取某省5所高校全日制本科生1200名作为研究对象。纳入标准：（1）全日制在校本科生；（2）知情同意并自愿参与；（3）能独立完成问卷。排除标准：（1）因疾病不能参加体育活动；（2）近期有重大生活事件影响情绪。调查问卷包括：（1）一般资料问卷：性别、年龄、年级、专业、生源地等；（2）体育锻炼等级量表（PARS-3）：评估锻炼强度、频率、时间；（3）运动动机量表（SMS）：包括内部动机、外部动机、无动机3个维度；（4）锻炼自我效能量表（ESES）：评估锻炼自信心；（5）心理健康量表（GHQ-20）：评估心理健康状况。问卷采用线上（问卷星）和线下相结合的方式发放，共发放问卷1200份，回收1156份，回收率96.3%，剔除无效问卷（规律性作答、缺失值>10%、作答时间<100s）89份，有效问卷1067份，有效率92.3%。采用SPSS 26.0和AMOS 24.0软件进行统计分析。计量资料以均数±标准差表示，计数资料以频数和百分比表示；组间比较采用独立样本t检验或单因素方差分析；相关性分析采用Pearson相关；影响因素分析采用多元线性回归；采用结构方程模型（SEM）验证运动动机→锻炼自我效能→锻炼行为→心理健康的中介模型，采用Bootstrap法检验中介效应。以P<0.05为差异有统计学意义。'
+  },
+  '体能测试': {
+    icon: '💪',
+    category: '测量法',
+   适用场景: '适用于体质健康评价、运动能力评估、训练效果监控、运动员选材等。如大学生体质健康测试、运动员体能评估、运动干预前后体能变化等。',
+    操作步骤: '1.测试指标选择（形态、机能、素质）\n2.测试方法标准化（仪器校准、测试流程、测试者培训）\n3.测试环境控制（温度、湿度、时间）\n4.热身活动\n5.正式测试（每项测试2-3次，取最佳值/平均值）\n6.数据记录与录入\n7.统计分析',
+    关键控制点: '•测试仪器要校准\n•测试方法要统一（同一仪器、同一测试者）\n•测试前要充分热身\n•测试顺序要合理（先非疲劳性测试，后疲劳性测试）\n•每次测试间隔要充分休息\n•测试条件要标准化（同一时间、同一环境）\n•测试者要经过培训\n•注意安全防护',
+    常见错误: '•仪器未校准\n•测试方法不统一（不同测试者、不同仪器）\n•测试顺序不合理（先测耐力后测力量）\n•未充分热身\n•测试间隔休息不足\n•测试环境不一致\n•数据记录错误\n•未说明测试信度',
+    数据分析: '•描述统计：均数、标准差、最大值、最小值\n•组间比较：独立样本t检验、方差分析\n•组内比较：配对样本t检验、重复测量方差分析\n•相关性分析：Pearson相关\n•因子分析：提取体能因子\n•聚类分析：体能分型\n•评价标准：百分位数法、标准分法',
+    撰写范例: '本研究测试指标包括身体形态、生理机能、身体素质三大类。（1）身体形态：身高（精确度0.1cm）、体重（精确度0.1kg）、BMI（体重/身高²）、体脂率（采用InBody 770生物电阻抗法）、腰围/臀围（精确度0.1cm）、腰臀比；（2）生理机能：肺活量（精确度10ml，测试3次取最大值）、台阶试验（评定指数）、安静心率（遥测心率带）、血压（电子血压计）；（3）身体素质：握力（握力计，测试2次取最大值）、坐位体前屈（精确度0.1cm，测试2次取最大值）、立定跳远（精确度1cm，测试3次取最大值）、50m跑（精确度0.01s，测试2次取最佳值）、1000m跑（男）/800m跑（女）（精确度0.1s）、引体向上（男）/1分钟仰卧起坐（女）。所有测试在恒温（22-24℃）、恒湿（40-60%）的室内场馆进行，测试时间统一安排在下午14:00-17:00。测试前进行10min标准化热身（慢跑+动态拉伸+专项准备活动）。测试顺序为：形态指标→机能指标（肺活量、台阶试验）→素质指标（握力、坐位体前屈、立定跳远、50m跑）→耐力指标（1000m/800m跑），每项测试间隔休息3-5min。测试仪器使用前均进行校准，测试者经过统一培训，测试过程严格按照《国家学生体质健康标准》测试规范执行。所有数据以均数±标准差（x±s）表示，采用SPSS 26.0软件进行统计分析，组间比较采用独立样本t检验，组内前后比较采用配对样本t检验，P<0.05为差异有统计学意义。'
+  },
+  '系统综述/Meta分析': {
+    icon: '📊',
+    category: '文献法',
+   适用场景: '适用于证据综合、疗效评价、影响因素合并、指南制定等。如运动干预对2型糖尿病患者血糖控制效果的Meta分析、运动预防骨质疏松效果的系统综述等。',
+    操作步骤: '1.提出研究问题（PICO原则：研究对象、干预措施、对照、结局指标）\n2.制定检索策略（数据库、检索词、检索式）\n3.文献检索（PubMed、Web of Science、CNKI等）\n4.文献筛选（题目摘要初筛→全文复筛）\n5.文献质量评价（随机对照试验用Cochrane偏倚风险评估，观察性研究用NOS量表）\n6.数据提取（研究特征、样本量、干预、结局指标、效应量）\n7.统计分析（异质性检验、合并效应量、敏感性分析、发表偏倚）\n8.结果报告（PRISMA规范）',
+    关键控制点: '•检索策略要全面（多数据库、手工检索、参考文献追溯）\n•文献筛选要双人独立进行，不一致时讨论或第三方裁决\n•纳入排除标准要明确\n•质量评价要双人独立进行\n•数据提取要标准化（提取表）\n•异质性检验（I²统计量）\n•根据异质性选择固定效应模型/随机效应模型\n•敏感性分析检验结果稳健性\n•漏斗图/Egger检验检测发表偏倚',
+    常见错误: '•检索数据库单一\n•检索式不全面（漏检）\n•文献筛选单人进行\n•纳入排除标准不明确\n•未进行文献质量评价\n•数据提取不规范\n•未进行异质性检验直接合并\n•未进行敏感性分析\n•未检测发表偏倚\n•结果报告不规范（无流程图）',
+    数据分析: '•二分类变量：相对危险度（RR）、比值比（OR）、风险差（RD），95%CI\n•连续变量：均数差（MD）、标准化均数差（SMD），95%CI\n•异质性检验：Q检验、I²统计量（I²<50%用固定效应，I²≥50%用随机效应）\n•亚组分析：按研究类型、干预剂量、干预时长、人群特征分层\n•敏感性分析：逐一剔除文献，检验结果稳健性\n•发表偏倚：漏斗图、Egger检验、Begg检验\n•Meta回归：探索异质性来源',
+    撰写范例: '本研究遵循PRISMA（Preferred Reporting Items for Systematic Reviews and Meta-Analyses）规范进行系统综述和Meta分析。检索数据库包括PubMed、Web of Science、Embase、Cochrane Library、CNKI、万方，检索时限为建库至2026年6月。英文检索词包括：exercise、physical activity、aerobic exercise、resistance training、high-intensity interval training、type 2 diabetes、glycemic control、HbA1c、fasting blood glucose、randomized controlled trial。中文检索词包括：运动、有氧运动、抗阻训练、高强度间歇训练、2型糖尿病、血糖控制、糖化血红蛋白、随机对照试验。同时手工检索纳入文献的参考文献。纳入标准：（1）研究类型：随机对照试验（RCT）；（2）研究对象：2型糖尿病患者（符合WHO或ADA诊断标准）；（3）干预措施：运动干预（有氧运动、抗阻训练、高强度间歇训练、联合训练），干预时长≥8周；（4）对照：常规护理/无运动干预；（5）结局指标：糖化血红蛋白（HbA1c）、空腹血糖（FBG）、餐后2小时血糖（2hPG）、胰岛素抵抗指数（HOMA-IR）。排除标准：（1）非随机对照试验；（2）1型糖尿病、妊娠糖尿病；（3）运动联合药物/饮食干预且无法分离运动效应；（4）数据不完整无法提取；（5）重复发表。由2名研究者独立进行文献筛选、质量评价和数据提取，不一致时讨论解决或由第3名研究者裁决。采用Cochrane偏倚风险评估工具（RoB 2.0）评价纳入RCT的方法学质量。采用RevMan 5.4和Stata 16.0软件进行Meta分析。二分类变量采用相对危险度（RR），连续变量采用均数差（MD）或标准化均数差（SMD），均以95%置信区间（CI）表示。采用Q检验和I²统计量评估异质性，若I²<50%且P>0.1，采用固定效应模型；若I²≥50%或P≤0.1，采用随机效应模型，并进行亚组分析和Meta回归探索异质性来源。采用逐一剔除文献法进行敏感性分析，采用漏斗图、Egger检验和Begg检验评估发表偏倚。以P<0.05为差异有统计学意义。'
+  }
+};
+
+// 研究方法百科弹窗
+function propShowMethodsLibrary() {
+  const modal = document.getElementById('propTopicModal');
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modal || !modalContent) return;
+  
+  modal.style.display = 'flex';
+  
+  let html = '<div style="padding:24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><h3 style="margin:0;font-size:18px;color:#1e293b">📚 运动人体科学研究方法百科</h3><p style="margin:4px 0 0;font-size:13px;color:#64748b">专业研究方法库，查看详情可一键插入计划书</p></div>';
+  html += '<button onclick="propCloseTopicModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;padding:0 8px">×</button>';
+  html += '</div>';
+  
+  html += '<div style="padding:20px">';
+  // 分类标签
+  html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
+  const categories = ['全部', '实验法', '调查法', '测量法', '文献法'];
+  categories.forEach((cat, idx) => {
+    html += '<button onclick=\'propFilterMethods("' + cat + '")\' class="method-cat-btn" data-cat="' + cat + '" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid ' + (idx === 0 ? '#667eea' : '#e2e8f0') + ';background:' + (idx === 0 ? '#667eea' : '#fff') + ';color:' + (idx === 0 ? '#fff' : '#64748b') + '">' + cat + '</button>';
+  });
+  html += '</div>';
+  
+  // 方法列表
+  html += '<div id="propMethodsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">';
+  Object.keys(PROP_METHODS_LIBRARY).forEach(name => {
+    const m = PROP_METHODS_LIBRARY[name];
+    html += '<div class="method-card" data-cat="' + m.category + '" style="padding:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;cursor:pointer;transition:all 0.2s" onclick=\'propShowMethodDetail("' + name + '")\' onmouseover="this.style.borderColor=\'#667eea\';this.style.boxShadow=\'0 4px 12px rgba(102,126,234,0.1)\'" onmouseout="this.style.borderColor=\'#e2e8f0\';this.style.boxShadow=\'none\'">';
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
+    html += '<span style="font-size:24px">' + m.icon + '</span>';
+    html += '<div><div style="font-size:14px;font-weight:700;color:#1e293b">' + name + '</div>';
+    html += '<div style="font-size:11px;color:#94a3b8">' + m.category + '</div></div></div>';
+    html += '<div style="font-size:12px;color:#64748b;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + m.适用场景 + '</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+  
+  modalContent.innerHTML = html;
+}
+
+function propFilterMethods(cat) {
+  const cards = document.querySelectorAll('.method-card');
+  const btns = document.querySelectorAll('.method-cat-btn');
+  btns.forEach(b => {
+    if (b.dataset.cat === cat) {
+      b.style.background = '#667eea';
+      b.style.color = '#fff';
+      b.style.borderColor = '#667eea';
+    } else {
+      b.style.background = '#fff';
+      b.style.color = '#64748b';
+      b.style.borderColor = '#e2e8f0';
+    }
+  });
+  cards.forEach(c => {
+    if (cat === '全部' || c.dataset.cat === cat) {
+      c.style.display = '';
+    } else {
+      c.style.display = 'none';
+    }
+  });
+}
+
+function propShowMethodDetail(name) {
+  const m = PROP_METHODS_LIBRARY[name];
+  if (!m) return;
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modalContent) return;
+  
+  let html = '<div style="padding:24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div style="display:flex;align-items:center;gap:12px"><span style="font-size:32px">' + m.icon + '</span><div><h3 style="margin:0;font-size:18px;color:#1e293b">' + name + '</h3><p style="margin:2px 0 0;font-size:13px;color:#64748b">' + m.category + '</p></div></div>';
+  html += '<button onclick="propShowMethodsLibrary()" style="background:#f1f5f9;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;color:#475569">← 返回列表</button>';
+  html += '</div>';
+  
+  html += '<div style="padding:20px;max-height:60vh;overflow-y:auto">';
+  
+  const sections = [
+    {title: '🎯 适用场景', content: m.适用场景, color: '#059669', bg: '#ecfdf5'},
+    {title: '📋 操作步骤', content: m.操作步骤, color: '#2563eb', bg: '#eff6ff'},
+    {title: '⚠️ 关键控制点', content: m.关键控制点, color: '#d97706', bg: '#fffbeb'},
+    {title: '❌ 常见错误', content: m.常见错误, color: '#dc2626', bg: '#fef2f2'},
+    {title: '📊 数据分析方法', content: m.数据分析, color: '#7c3aed', bg: '#f5f3ff'}
+  ];
+  
+  sections.forEach(s => {
+    html += '<div style="margin-bottom:16px;padding:14px 16px;background:' + s.bg + ';border-radius:10px;border-left:3px solid ' + s.color + '">';
+    html += '<div style="font-size:13px;font-weight:700;color:' + s.color + ';margin-bottom:8px">' + s.title + '</div>';
+    html += '<div style="font-size:13px;line-height:1.8;color:#475569;white-space:pre-wrap">' + s.content + '</div>';
+    html += '</div>';
+  });
+  
+  // 撰写范例
+  html += '<div style="margin-bottom:16px;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">';
+  html += '<div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">📝 计划书撰写范例（可一键插入）</div>';
+  html += '<div style="font-size:12px;line-height:1.8;color:#64748b;white-space:pre-wrap;max-height:200px;overflow-y:auto;background:#fff;padding:12px;border-radius:8px;border:1px solid #e2e8f0">' + m.撰写范例 + '</div>';
+  html += '</div>';
+  
+  html += '</div>';
+  
+  // 底部操作
+  html += '<div style="padding:16px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;justify-content:flex-end">';
+  html += '<button onclick=\'propInsertMethod("' + name + '")\' style="padding:10px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📥 插入到当前章节</button>';
+  html += '<button onclick="propCloseTopicModal()" style="padding:10px 20px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">关闭</button>';
+  html += '</div>';
+  
+  modalContent.innerHTML = html;
+}
+
+function propInsertMethod(name) {
+  const m = PROP_METHODS_LIBRARY[name];
+  if (!m || !window.propState) return;
+  const idx = window.propState.currentChapter;
+  const editor = document.getElementById('propChapterEditor');
+  if (editor) {
+    const insertText = '\n\n【' + name + '】\n' + m.撰写范例 + '\n';
+    editor.value = (editor.value || '') + insertText;
+    window.propState.chapters[idx].content = editor.value;
+    propAutoSave();
+    renderPhdProposal();
+  }
+  propCloseTopicModal();
+  alert('已将"' + name + '"撰写范例插入到当前章节！');
+}
+
+
+// ===== 模拟导师提问功能 =====
+function propSimulateSupervisorQuestions() {
+  if (!window.propState) return;
+  propAutoSave();
+  
+  const meta = window.propState.meta;
+  let fullContent = '';
+  window.propState.chapters.forEach(ch => {
+    if (ch.content) fullContent += '【' + ch.title + '】\n' + ch.content + '\n\n';
+  });
+  
+  if (!fullContent || fullContent.length < 200) {
+    alert('计划书内容太少，请先生成或输入内容');
+    return;
+  }
+  
+  const modal = document.getElementById('propTopicModal');
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modal || !modalContent) return;
+  modal.style.display = 'flex';
+  
+  modalContent.innerHTML = '<div style="padding:40px;text-align:center"><div style="font-size:48px;margin-bottom:16px">🎤</div><div style="font-size:16px;font-weight:600;color:#1e293b;margin-bottom:8px">AI正在模拟导师生成面试问题...</div><div style="font-size:13px;color:#64748b">基于你的研究计划书内容，生成可能的面试问题和参考答案要点<br>请稍候（约20-40秒）</div></div>';
+  
+  const systemPrompt = '你是运动人体科学专业的博士生导师，正在对考生的科研计划书进行面试提问。请基于以下科研计划书内容，生成12-15个可能的面试问题，并给出每个问题的参考答案要点和评分标准。问题类型要涵盖：1.研究意义类（为什么选这个题目）；2.研究方法类（方法是否可行、为什么选这个方法）；3.创新性类（创新点在哪里）；4.可行性类（样本、经费、时间是否可行）；5.延伸讨论类（如果结果不理想怎么办、未来研究方向）；6.基础专业知识类（相关领域的基础概念）。每个问题包含：问题、参考答案要点（3-5条）、评分标准（优秀/良好/一般的表现）。输出格式为JSON数组，每个元素包含question, answerPoints, scoringCriteria, type四个字段。';
+  
+  callDeepSeekAPI(systemPrompt, '研究题目：' + (meta.title || '未设定') + (meta.supervisor ? '\n目标导师：' + meta.supervisor : '') + '\n\n计划书内容：\n' + fullContent.substring(0, 3000), 4000, 'deepseek-chat').then(response => {
+    try {
+      let questions = [];
+      const jsonMatch = response.match(/\[[\s\S]*\]/);
+      if (jsonMatch) questions = JSON.parse(jsonMatch[0]);
+      if (!questions || questions.length === 0) {
+        modalContent.innerHTML = '<div style="padding:20px"><h3>生成结果</h3><div style="white-space:pre-wrap;font-size:13px;line-height:1.8">' + response + '</div></div>';
+        return;
+      }
+      
+      window.propSupervisorQuestions = questions;
+      
+      let html = '<div style="padding:24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+      html += '<div><h3 style="margin:0;font-size:18px;color:#1e293b">🎤 模拟导师面试问题</h3><p style="margin:4px 0 0;font-size:13px;color:#64748b">基于你的计划书生成 ' + questions.length + ' 个面试问题，点击展开查看参考答案</p></div>';
+      html += '<button onclick="propCloseTopicModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;padding:0 8px">×</button>';
+      html += '</div>';
+      
+      html += '<div style="padding:20px;max-height:65vh;overflow-y:auto">';
+      const typeColors = {'研究意义类':'#059669','研究方法类':'#2563eb','创新性类':'#7c3aed','可行性类':'#d97706','延伸讨论类':'#db2777','基础专业知识类':'#0891b2'};
+      questions.forEach((q, idx) => {
+        const typeColor = typeColors[q.type] || '#64748b';
+        html += '<div style="margin-bottom:14px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">';
+        html += '<div onclick="propToggleQuestion(' + idx + ')" style="padding:14px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:10px;background:#f8fafc">';
+        html += '<span style="flex-shrink:0;width:26px;height:26px;background:' + typeColor + ';color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">' + (idx+1) + '</span>';
+        html += '<div style="flex:1"><div style="font-size:13px;font-weight:600;color:#1e293b;line-height:1.6">' + q.question + '</div>';
+        html += '<div style="margin-top:6px"><span style="font-size:11px;padding:2px 8px;border-radius:4px;background:' + typeColor + '15;color:' + typeColor + ';font-weight:600">' + (q.type || '综合') + '</span></div></div>';
+        html += '<span id="qToggle_' + idx + '" style="flex-shrink:0;font-size:12px;color:#667eea;font-weight:600">▼ 展开</span>';
+        html += '</div>';
+        html += '<div id="qContent_' + idx + '" style="display:none;padding:14px 16px;background:#fff;border-top:1px solid #f1f5f9">';
+        if (q.answerPoints) {
+          html += '<div style="font-size:12px;font-weight:700;color:#059669;margin-bottom:8px">✅ 参考答案要点：</div>';
+          html += '<ul style="margin:0 0 12px;padding-left:20px">';
+          if (Array.isArray(q.answerPoints)) {
+            q.answerPoints.forEach(p => { html += '<li style="font-size:12px;color:#475569;line-height:1.8;margin-bottom:2px">' + p + '</li>'; });
+          } else {
+            html += '<li style="font-size:12px;color:#475569;line-height:1.8">' + q.answerPoints + '</li>';
+          }
+          html += '</ul>';
+        }
+        if (q.scoringCriteria) {
+          html += '<div style="font-size:12px;font-weight:700;color:#d97706;margin-bottom:8px">📊 评分标准：</div>';
+          html += '<div style="font-size:12px;color:#64748b;line-height:1.8;background:#fffbeb;padding:10px 12px;border-radius:8px">' + q.scoringCriteria + '</div>';
+        }
+        html += '</div></div>';
+      });
+      html += '</div>';
+      
+      html += '<div style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;justify-content:flex-end">';
+      html += '<button onclick="propExportQuestions()" style="padding:8px 16px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">📥 导出问题清单</button>';
+      html += '<button onclick="propCloseTopicModal()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">关闭</button>';
+      html += '</div>';
+      
+      modalContent.innerHTML = html;
+    } catch(e) {
+      modalContent.innerHTML = '<div style="padding:20px"><h3>解析失败，原始回复：</h3><div style="white-space:pre-wrap;font-size:13px;line-height:1.8">' + response + '</div></div>';
+    }
+  }).catch(err => {
+    modalContent.innerHTML = '<div style="padding:40px;text-align:center"><div style="font-size:48px;margin-bottom:16px">❌</div><div style="font-size:16px;color:#dc2626">生成失败: ' + err.message + '</div></div>';
+  });
+}
+
+function propToggleQuestion(idx) {
+  const content = document.getElementById('qContent_' + idx);
+  const toggle = document.getElementById('qToggle_' + idx);
+  if (!content || !toggle) return;
+  if (content.style.display === 'none') {
+    content.style.display = 'block';
+    toggle.textContent = '▲ 收起';
+  } else {
+    content.style.display = 'none';
+    toggle.textContent = '▼ 展开';
+  }
+}
+
+function propExportQuestions() {
+  if (!window.propSupervisorQuestions) return;
+  let text = '模拟导师面试问题清单\n\n';
+  window.propSupervisorQuestions.forEach((q, idx) => {
+    text += (idx+1) + '. [' + (q.type || '综合') + '] ' + q.question + '\n\n';
+    if (q.answerPoints) {
+      text += '参考答案要点：\n';
+      if (Array.isArray(q.answerPoints)) {
+        q.answerPoints.forEach(p => { text += '  - ' + p + '\n'; });
+      } else {
+        text += '  ' + q.answerPoints + '\n';
+      }
+    }
+    if (q.scoringCriteria) text += '\n评分标准：' + q.scoringCriteria + '\n';
+    text += '\n' + '='.repeat(50) + '\n\n';
+  });
+  const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '模拟导师面试问题清单.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+
+// ===== 统计方法决策助手 =====
+function propShowStatsHelper() {
+  const modal = document.getElementById('propTopicModal');
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modal || !modalContent) return;
+  modal.style.display = 'flex';
+  propStatsStep = 0;
+  propStatsAnswers = {};
+  propRenderStatsStep();
+}
+
+let propStatsStep = 0;
+let propStatsAnswers = {};
+
+const STATS_DECISION_TREE = [
+  {
+    step: 0,
+    question: '你的研究数据类型是什么？',
+    options: [
+      {label: '连续型数据（身高、体重、血压、血糖等）', value: 'continuous'},
+      {label: '分类数据（性别、是否患病、等级评分等）', value: 'categorical'},
+      {label: '生存数据（随访时间、事件发生）', value: 'survival'},
+      {label: '相关性分析（两个变量的关系）', value: 'correlation'}
+    ]
+  },
+  {
+    step: 1,
+    condition: (a) => a.dataType === 'continuous',
+    question: '比较几组数据？',
+    options: [
+      {label: '2组比较', value: '2groups'},
+      {label: '3组及以上比较', value: '3groups'},
+      {label: '同一组前后比较（配对）', value: 'paired'}
+    ]
+  },
+  {
+    step: 2,
+    condition: (a) => a.dataType === 'continuous' && a.groups === '2groups',
+    question: '数据是否符合正态分布？',
+    options: [
+      {label: '符合正态分布（参数检验）', value: 'normal'},
+      {label: '不符合正态分布（非参数检验）', value: 'nonnormal'}
+    ],
+    result: (a) => a.distribution === 'normal' ? {
+      method: '独立样本t检验（Independent t-test）',
+      formula: 't = (x̄₁ - x̄₂) / √(s₁²/n₁ + s₂²/n₂)',
+      use: '用于两组独立样本均数的比较，要求数据符合正态分布、方差齐性。',
+      assumptions: '①独立性；②正态性；③方差齐性（方差不齐用Welch t检验）',
+      report: '采用独立样本t检验比较两组间差异，以P<0.05为差异有统计学意义。'
+    } : {
+      method: 'Mann-Whitney U检验（秩和检验）',
+      formula: 'U = n₁n₂ + n₁(n₁+1)/2 - R₁',
+      use: '用于两组独立样本的非参数检验，不要求正态分布，适用于偏态分布、等级资料。',
+      assumptions: '①独立性；②数据至少为有序分类',
+      report: '采用Mann-Whitney U检验比较两组间差异，以P<0.05为差异有统计学意义。'
+    }
+  },
+  {
+    step: 2,
+    condition: (a) => a.dataType === 'continuous' && a.groups === '3groups',
+    question: '数据是否符合正态分布？',
+    options: [
+      {label: '符合正态分布（参数检验）', value: 'normal'},
+      {label: '不符合正态分布（非参数检验）', value: 'nonnormal'}
+    ],
+    result: (a) => a.distribution === 'normal' ? {
+      method: '单因素方差分析（One-way ANOVA）',
+      formula: 'F = MS组间 / MS组内',
+      use: '用于3组及以上独立样本均数的比较，要求正态分布、方差齐性。',
+      assumptions: '①独立性；②正态性；③方差齐性',
+      posthoc: '若总体差异有统计学意义，需进行两两比较：LSD法（事先有假设）、SNK法（探索性）、Bonferroni法（保守）、Dunnett法（与对照组比较）。',
+      report: '采用单因素方差分析（One-way ANOVA）比较多组间差异，两两比较采用LSD法，以P<0.05为差异有统计学意义。'
+    } : {
+      method: 'Kruskal-Wallis H检验（秩和检验）',
+      formula: 'H = [12/(n(n+1))] Σ(Rᵢ²/nᵢ) - 3(n+1)',
+      use: '用于3组及以上独立样本的非参数检验，不要求正态分布。',
+      assumptions: '①独立性；②数据至少为有序分类',
+      posthoc: '若总体差异有统计学意义，需进行两两比较：Nemenyi检验、Bonferroni校正的Mann-Whitney U检验。',
+      report: '采用Kruskal-Wallis H检验比较多组间差异，两两比较采用Nemenyi检验，以P<0.05为差异有统计学意义。'
+    }
+  },
+  {
+    step: 2,
+    condition: (a) => a.dataType === 'continuous' && a.groups === 'paired',
+    question: '数据是否符合正态分布？',
+    options: [
+      {label: '符合正态分布（参数检验）', value: 'normal'},
+      {label: '不符合正态分布（非参数检验）', value: 'nonnormal'}
+    ],
+    result: (a) => a.distribution === 'normal' ? {
+      method: '配对样本t检验（Paired t-test）',
+      formula: 't = d̄ / (sd/√n)',
+      use: '用于同一组对象前后测量或配对设计的两组数据比较，要求差值符合正态分布。',
+      assumptions: '①配对设计；②差值符合正态分布',
+      report: '采用配对样本t检验比较干预前后差异，以P<0.05为差异有统计学意义。'
+    } : {
+      method: 'Wilcoxon符号秩检验',
+      formula: 'T = min(T₊, T₋)',
+      use: '用于配对设计的非参数检验，不要求差值正态分布。',
+      assumptions: '①配对设计；②差值至少为有序分类',
+      report: '采用Wilcoxon符号秩检验比较干预前后差异，以P<0.05为差异有统计学意义。'
+    }
+  },
+  {
+    step: 1,
+    condition: (a) => a.dataType === 'categorical',
+    question: '比较什么？',
+    options: [
+      {label: '两个率/构成比的比较', value: '2rates'},
+      {label: '多个率/构成比的比较', value: '3rates'},
+      {label: '配对设计的二分类资料（ McNemar）', value: 'paired_cat'},
+      {label: '等级资料的比较', value: 'ordinal'}
+    ]
+  },
+  {
+    step: 2,
+    condition: (a) => a.dataType === 'categorical' && a.cmpType === '2rates',
+    result: () => ({
+      method: '卡方检验（Chi-square test / Pearson χ²）',
+      formula: 'χ² = Σ[(A-T)²/T]',
+      use: '用于两个或多个样本率（构成比）的比较，要求理论频数T≥5，总例数n≥40。',
+      conditions: '①n≥40且所有T≥5：普通卡方检验；②n≥40但有1≤T<5：校正卡方检验；③n<40或有T<1：Fisher精确检验。',
+      report: '采用卡方检验比较两组率的差异，以P<0.05为差异有统计学意义。'
+    })
+  },
+  {
+    step: 1,
+    condition: (a) => a.dataType === 'correlation',
+    question: '数据类型？',
+    options: [
+      {label: '两个连续变量（双变量正态）', value: 'pearson'},
+      {label: '不满足正态或等级资料', value: 'spearman'}
+    ],
+    result: (a) => a.corrType === 'pearson' ? {
+      method: 'Pearson相关分析',
+      formula: 'r = Σ(x-x̄)(y-ȳ) / √[Σ(x-x̄)²Σ(y-ȳ)²]',
+      use: '用于分析两个连续变量之间的线性相关关系，要求双变量正态分布。',
+      assumptions: '①双变量正态分布；②线性关系；③无异常值',
+      report: '采用Pearson相关分析评价两变量的相关性，以P<0.05为相关有统计学意义。'
+    } : {
+      method: 'Spearman秩相关分析',
+      formula: 'rs = 1 - 6Σdᵢ²/[n(n²-1)]',
+      use: '用于不满足正态分布的资料或等级资料的相关性分析，属于非参数方法。',
+      assumptions: '①变量至少为有序分类；②单调关系',
+      report: '采用Spearman秩相关分析评价两变量的相关性，以P<0.05为相关有统计学意义。'
+    }
+  },
+  {
+    step: 1,
+    condition: (a) => a.dataType === 'survival',
+    result: () => ({
+      method: 'Kaplan-Meier生存分析 + Log-rank检验',
+      formula: 'S(t) = Π[(nᵢ-dᵢ)/nᵢ]',
+      use: '用于生存资料的分析，估计生存率曲线，比较两组或多组生存率差异。',
+      assumptions: '①删失机制为非信息删失；②各组风险比例满足（Cox回归）',
+      report: '采用Kaplan-Meier法绘制生存曲线，组间生存率比较采用Log-rank检验，以P<0.05为差异有统计学意义。多因素分析采用Cox比例风险回归模型。'
+    })
+  }
+];
+
+function propRenderStatsStep() {
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modalContent) return;
+  
+  const currentStep = STATS_DECISION_TREE.find(s => s.step === propStatsStep);
+  if (!currentStep) return;
+  
+  // 检查是否满足条件
+  if (currentStep.condition && !currentStep.condition(propStatsAnswers)) {
+    // 跳过这一步，找下一步
+    propStatsStep++;
+    propRenderStatsStep();
+    return;
+  }
+  
+  // 如果是结果页
+  if (currentStep.result) {
+    const result = currentStep.result(propStatsAnswers);
+    let html = '<div style="padding:24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+    html += '<div><h3 style="margin:0;font-size:18px;color:#1e293b">📊 统计方法推荐</h3><p style="margin:4px 0 0;font-size:13px;color:#64748b">根据你的研究设计，推荐以下统计方法</p></div>';
+    html += '<button onclick="propCloseTopicModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;padding:0 8px">×</button>';
+    html += '</div>';
+    
+    html += '<div style="padding:20px;max-height:65vh;overflow-y:auto">';
+    
+    // 已选条件
+    html += '<div style="margin-bottom:16px;padding:12px;background:#f0f9ff;border-radius:10px;font-size:12px;color:#0369a1;line-height:1.8">';
+    html += '<strong>你的选择：</strong><br>';
+    Object.keys(propStatsAnswers).forEach(k => {
+      const labels = {dataType:'数据类型', groups:'比较组数', distribution:'分布类型', cmpType:'比较类型', corrType:'相关类型'};
+      html += (labels[k] || k) + '：' + propStatsAnswers[k] + '<br>';
+    });
+    html += '</div>';
+    
+    // 推荐方法
+    html += '<div style="padding:16px;background:linear-gradient(135deg,#eff6ff,#eef2ff);border-radius:12px;border:1px solid #bfdbfe;margin-bottom:14px">';
+    html += '<div style="font-size:11px;font-weight:700;color:#1d4ed8;margin-bottom:4px">✅ 推荐统计方法</div>';
+    html += '<div style="font-size:16px;font-weight:800;color:#1e40af;margin-bottom:8px">' + result.method + '</div>';
+    html += '<div style="font-size:12px;color:#475569;line-height:1.7">' + result.use + '</div>';
+    html += '</div>';
+    
+    // 计算公式
+    if (result.formula) {
+      html += '<div style="margin-bottom:14px;padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">';
+      html += '<div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px">📐 计算公式</div>';
+      html += '<div style="font-size:13px;color:#334155;font-family:monospace;background:#fff;padding:10px;border-radius:6px;border:1px solid #e2e8f0">' + result.formula + '</div>';
+      html += '</div>';
+    }
+    
+    // 应用条件
+    if (result.assumptions) {
+      html += '<div style="margin-bottom:14px;padding:14px;background:#fffbeb;border-radius:10px;border:1px solid #fde68a">';
+      html += '<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ 应用条件</div>';
+      html += '<div style="font-size:12px;color:#78350f;line-height:1.7">' + result.assumptions + '</div>';
+      html += '</div>';
+    }
+    
+    // 特殊情况
+    if (result.conditions) {
+      html += '<div style="margin-bottom:14px;padding:14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca">';
+      html += '<div style="font-size:12px;font-weight:700;color:#991b1b;margin-bottom:6px">❗ 特殊情况处理</div>';
+      html += '<div style="font-size:12px;color:#7f1d1d;line-height:1.7">' + result.conditions + '</div>';
+      html += '</div>';
+    }
+    
+    // 事后检验
+    if (result.posthoc) {
+      html += '<div style="margin-bottom:14px;padding:14px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0">';
+      html += '<div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:6px">🔬 事后多重比较</div>';
+      html += '<div style="font-size:12px;color:#14532d;line-height:1.7">' + result.posthoc + '</div>';
+      html += '</div>';
+    }
+    
+    // 报告撰写范例
+    if (result.report) {
+      html += '<div style="margin-bottom:14px;padding:14px;background:#faf5ff;border-radius:10px;border:1px solid #e9d5ff">';
+      html += '<div style="font-size:12px;font-weight:700;color:#6b21a8;margin-bottom:6px">📝 计划书/论文报告范例（可一键插入）</div>';
+      html += '<div style="font-size:12px;color:#581c87;line-height:1.7;background:#fff;padding:10px;border-radius:6px;border:1px solid #e9d5ff">' + result.report + '</div>';
+      window.propStatsResult = {method: result.method, report: result.report};
+      html += '<button onclick="propInsertStatsReport()" style="margin-top:8px;padding:6px 14px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">📥 插入到当前章节</button>';
+      html += '</div>';
+    }
+    
+    html += '</div>';
+    
+    html += '<div style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;justify-content:space-between">';
+    html += '<button onclick="propStatsStep=0;propStatsAnswers={};propRenderStatsStep()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">🔄 重新选择</button>';
+    html += '<button onclick="propCloseTopicModal()" style="padding:8px 16px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">完成</button>';
+    html += '</div>';
+    
+    modalContent.innerHTML = html;
+    return;
+  }
+  
+  // 问题页
+  let html = '<div style="padding:24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><h3 style="margin:0;font-size:18px;color:#1e293b">📊 统计方法决策助手</h3><p style="margin:4px 0 0;font-size:13px;color:#64748b">第 ' + (propStatsStep+1) + ' 步，回答以下问题</p></div>';
+  html += '<button onclick="propCloseTopicModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;padding:0 8px">×</button>';
+  html += '</div>';
+  
+  html += '<div style="padding:20px">';
+  html += '<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px">' + currentStep.question + '</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:10px">';
+  currentStep.options.forEach(opt => {
+    html += '<button onclick=\'propStatsSelect("' + opt.value + '")\' style="padding:14px 16px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:13px;color:#475569;text-align:left;transition:all 0.2s" onmouseover="this.style.borderColor=\'#667eea\';this.style.background=\'#fafbff\'" onmouseout="this.style.borderColor=\'#e2e8f0\';this.style.background=\'#fff\'">' + opt.label + '</button>';
+  });
+  html += '</div></div>';
+  
+  modalContent.innerHTML = html;
+}
+
+function propStatsSelect(value) {
+  const currentStep = STATS_DECISION_TREE.find(s => s.step === propStatsStep);
+  if (!currentStep) return;
+  
+  // 记录答案
+  if (propStatsStep === 0) propStatsAnswers.dataType = value;
+  else if (propStatsStep === 1 && propStatsAnswers.dataType === 'continuous') propStatsAnswers.groups = value;
+  else if (propStatsStep === 1 && propStatsAnswers.dataType === 'categorical') propStatsAnswers.cmpType = value;
+  else if (propStatsStep === 1 && propStatsAnswers.dataType === 'correlation') propStatsAnswers.corrType = value;
+  else if (propStatsStep === 2) propStatsAnswers.distribution = value;
+  
+  propStatsStep++;
+  propRenderStatsStep();
+}
+
+function propInsertStatsReport() {
+  if (!window.propState || !window.propStatsResult) return;
+  const method = window.propStatsResult.method;
+  const report = window.propStatsResult.report;
+  const idx = window.propState.currentChapter;
+  const editor = document.getElementById('propChapterEditor');
+  if (editor) {
+    editor.value = (editor.value || '') + '\n\n【统计方法】\n采用' + method + '。' + report + '\n';
+    window.propState.chapters[idx].content = editor.value;
+    propAutoSave();
+    renderPhdProposal();
+  }
+  propCloseTopicModal();
+  alert('已将统计方法报告插入到当前章节！');
 }
 
 
