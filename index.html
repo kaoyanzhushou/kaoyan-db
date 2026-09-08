@@ -39092,28 +39092,173 @@ function showPhdEmailHelper() {
   if (!area) return;
   
   let html = '<div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-top:16px">';
-  html += '<h4 style="margin:0 0 16px;color:#1e293b">✉️ 导师套磁邮件助手</h4>';
-  html += '<p style="font-size:13px;color:#64748b;margin-bottom:20px">填写以下信息，AI将为你生成一封个性化的导师套磁邮件，可直接复制使用</p>';
+  html += '<h4 style="margin:0 0 6px;color:#1e293b">✉️ 导师套磁邮件助手</h4>';
+  html += '<p style="font-size:13px;color:#64748b;margin-bottom:20px">AI根据场景与导师信息个性化生成套磁邮件，支持多版本、润色与导出</p>';
   
-  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:20px">';
-  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">选择导师</label><select id="emailSupervisor" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px"><option value="">请选择</option>';
+  // 邮件场景 + 语气风格
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:20px">';
+  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">📮 邮件场景</label><select id="emailScene" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px"><option value="first">首封套磁（首次联系导师）</option><option value="follow">跟进套磁（首封后跟进）</option><option value="pre">复试前套磁（已进入复试）</option><option value="thanks">录取后致谢（拟录取后）</option></select></div>';
+  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">🎭 语气风格</label><select id="emailTone" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px"><option value="humble">谦逊诚恳型</option><option value="confident">自信专业型</option><option value="concise">简洁干练型</option></select></div>';
+  html += '</div>';
+  
+  // 导师选择（含自定义）
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:20px">';
+  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">👨\u200d🏫 选择导师</label><select id="emailSupervisor" onchange="toggleCustomEmailSupervisor()" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px"><option value="">请选择</option>';
   PHD_SUPERVISORS.forEach(s => { html += '<option value="' + s.id + '">' + s.name + ' - ' + s.school + '</option>'; });
+  html += '<option value="custom">✍️ 自定义导师</option>';
   html += '</select></div>';
   html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">你的姓名</label><input type="text" id="emailName" placeholder="张三" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
   html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">本科/硕士院校</label><input type="text" id="emailSchool" placeholder="XX大学" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
   html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">专业</label><input type="text" id="emailMajor" placeholder="运动人体科学" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
   html += '</div>';
   
+  // 自定义导师（默认隐藏）
+  html += '<div id="customEmailSupervisorWrap" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px;margin-bottom:20px">';
+  html += '<div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:10px">✍️ 自定义导师信息</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">';
+  html += '<div><input type="text" id="emailCustomSupName" placeholder="导师姓名（如：王教授）" style="width:100%;padding:10px;border:1px solid #bfdbfe;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
+  html += '<div><input type="text" id="emailCustomSupSchool" placeholder="导师所在院校（如：上海体育大学）" style="width:100%;padding:10px;border:1px solid #bfdbfe;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
+  html += '<div style="grid-column:span 2"><input type="text" id="emailCustomSupDir" placeholder="导师研究方向（如：运动与骨骼肌适应机制）" style="width:100%;padding:10px;border:1px solid #bfdbfe;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
+  html += '</div></div>';
+  
+  // 联系信息
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">';
+  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">📧 联系邮箱</label><input type="text" id="emailAddress" placeholder="your@email.com" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
+  html += '<div><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">📱 联系电话（选填）</label><input type="text" id="emailPhone" placeholder="138XXXXXXXX" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
+  html += '</div>';
+  
   html += '<div style="margin-bottom:20px"><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">感兴趣的研究方向（结合导师方向）</label><textarea id="emailInterest" rows="3" placeholder="例如：我对运动与心血管健康、运动干预慢性病机制等方向非常感兴趣，阅读了您关于XX的论文，深受启发..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea></div>';
   
   html += '<div style="margin-bottom:20px"><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#475569">个人优势/科研经历（选填）</label><textarea id="emailAdvantage" rows="2" placeholder="例如：曾参与XX科研项目，发表XX论文，英语六级550分..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea></div>';
   
-  html += '<button onclick="generatePhdEmail()" style="width:100%;padding:12px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600">✉️ 生成套磁邮件</button>';
+  html += '<button onclick="generatePhdEmail()" style="width:100%;padding:12px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600">✨ AI生成套磁邮件</button>';
   
   html += '<div id="emailResult" style="margin-top:20px"></div>';
+  
+  // 草稿润色
+  html += '<div style="margin-top:20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px">';
+  html += '<div style="font-size:14px;font-weight:600;color:#1e293b;margin-bottom:8px">🔄 已有草稿？让AI润色</div>';
+  html += '<textarea id="emailDraft" rows="4" placeholder="粘贴你已写好的套磁邮件草稿，AI将优化措辞、结构与专业性..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>';
+  html += '<div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">';
+  html += '<button onclick="polishPhdEmailDraft()" style="padding:9px 20px;background:#0ea5e9;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 AI润色草稿</button>';
+  html += '<button onclick="polishPhdEmailDraft(true)" style="padding:9px 20px;background:#f59e0b;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📈 润色并补充</button>';
+  html += '</div></div>';
+  
+  // 发送前检查清单
+  html += '<div style="margin-top:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px">';
+  html += '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">✅ 发送前检查清单</div>';
+  html += '<div style="font-size:12px;color:#78350f;line-height:1.9">① 称呼与职称准确（教授/研究员，不要写错性别）② 附件：简历PDF+成绩单+代表作（如有）③ 邮件标题简洁明确（博士申请-姓名-学校-方向）④ 正文无错别字、格式统一 ⑤ 落款含全名+邮箱+电话 ⑥ 发送时间选工作日上午</div>';
+  html += '</div>';
+  
   html += '</div>';
   
   area.innerHTML = html;
+}
+
+function toggleCustomEmailSupervisor() {
+  const sel = document.getElementById('emailSupervisor');
+  const wrap = document.getElementById('customEmailSupervisorWrap');
+  if (wrap) wrap.style.display = sel && sel.value === 'custom' ? 'block' : 'none';
+}
+
+async function generatePhdEmail() {
+  const supId = document.getElementById('emailSupervisor').value;
+  const name = document.getElementById('emailName').value.trim() || '同学';
+  const school = document.getElementById('emailSchool').value.trim() || 'XX大学';
+  const major = document.getElementById('emailMajor').value.trim() || '运动人体科学';
+  const interest = document.getElementById('emailInterest').value.trim();
+  const advantage = document.getElementById('emailAdvantage').value.trim();
+  const scene = document.getElementById('emailScene').value;
+  const tone = document.getElementById('emailTone').value;
+  const emailAddr = document.getElementById('emailAddress').value.trim() || 'your@email.com';
+  const phone = document.getElementById('emailPhone').value.trim() || '138XXXXXXXX';
+  
+  if (!supId) { alert('请选择导师（或选择自定义导师并填写信息）'); return; }
+  
+  let supInfo = '';
+  if (supId === 'custom') {
+    const cName = document.getElementById('emailCustomSupName').value.trim();
+    const cSchool = document.getElementById('emailCustomSupSchool').value.trim();
+    const cDir = document.getElementById('emailCustomSupDir').value.trim();
+    if (!cName) { alert('请填写自定义导师姓名'); return; }
+    supInfo = { name: cName, school: cSchool || '目标院校', research: cDir || '运动人体科学相关领域', directions: cDir ? [cDir] : [] };
+  } else {
+    const sup = PHD_SUPERVISORS.find(s => s.id === supId);
+    if (!sup) { alert('导师信息不存在'); return; }
+    supInfo = sup;
+  }
+  
+  const sceneMap = {
+    'first': '首封套磁信：首次联系导师，重点展示身份背景、研究兴趣与导师方向的契合点，表达攻读博士的诚意，附简历说明，结尾礼貌请求进一步交流。',
+    'follow': '跟进套磁信：导师此前已回复或已过一段时间未回，礼貌提醒并补充新的进展（如新的成果、已报名），体现坚持但不打扰。',
+    'pre': '复试前套磁信：已进入复试阶段，向导师表明已认真备考、期待复试见面，可简述复试准备情况与对导师团队的期待。',
+    'thanks': '录取后致谢信：已拟录取，表达对导师接受与指导的感谢，表明入学前的准备计划与科研决心。'
+  };
+  const toneMap = {
+    'humble': '语气谦逊诚恳，多用敬语，体现对导师的尊重与学习的真诚，不过度自贬。',
+    'confident': '语气自信专业，清晰展示自身优势与学术潜力，用词干练有力量感。',
+    'concise': '简洁干练，篇幅精炼，直奔主题，避免冗余客套。'
+  };
+  const dirText = supInfo.directions && supInfo.directions.length ? supInfo.directions.join('、') : (supInfo.research || '相关领域');
+  
+  const systemPrompt = '你是一位资深的考博申请文书专家，擅长撰写高回复率的导师套磁邮件。请根据用户提供的场景与信息，撰写一封完整、专业、得体的套磁邮件。\n\n写作要求：\n1. 邮件结构：Subject（邮件标题，简洁明确，如「博士申请-姓名-学校-方向」）→ 称呼（尊敬的XX教授）→ 正文 → 落款（姓名+联系邮箱+电话+日期）\n2. ' + sceneMap[scene] + '\n3. ' + toneMap[tone] + '\n4. 正文要体现对导师研究的具体了解（可引用其研究方向关键词），展现真诚而非群发模板\n5. 个人优势融入正文而非罗列，控制全文300-450字（不含标题落款）\n6. 不要编造用户未提供的信息；未提供的细节用合理中性表述\n7. 直接输出完整邮件文本，格式用换行分段，不要加解释说明';
+  
+  const userPrompt = '【邮件场景】' + sceneMap[scene] + '\n【导师信息】姓名：' + supInfo.name + '；院校：' + (supInfo.school || '') + '；研究方向：' + dirText + '\n【考生信息】姓名：' + name + '；毕业/在读院校：' + school + '；专业：' + major + '；联系邮箱：' + emailAddr + '；电话：' + phone + '\n【研究方向兴趣】' + (interest || '对该方向有浓厚兴趣，希望深入系统研究') + '\n【个人优势/科研经历】' + (advantage || '（无，可省略或中性带过）') + '\n\n请按以上要求撰写完整套磁邮件。';
+  
+  const result = document.getElementById('emailResult');
+  result.innerHTML = '<div style="text-align:center;color:#64748b;padding:30px;font-size:14px">🤔 AI正在根据场景与导师信息撰写邮件…（约10-20秒）</div>';
+  
+  try {
+    const email = await callDeepSeekAPI(systemPrompt, userPrompt, 2200, 'deepseek-chat');
+    if (!email || email.trim().length < 50) throw new Error('生成内容过短');
+    window._phdLastEmail = email;
+    renderPhdEmailResult(email, name, emailAddr, phone);
+  } catch (e) {
+    result.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;color:#dc2626;font-size:14px">生成失败：' + e.message + '<br><button onclick="generatePhdEmail()" style="margin-top:12px;padding:8px 20px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer">🔄 重试</button></div>';
+  }
+}
+
+function renderPhdEmailResult(email, name, emailAddr, phone) {
+  const result = document.getElementById('emailResult');
+  const words = (email || '').length;
+  result.innerHTML = '<div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">' +
+    '<div style="background:#f8fafc;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;gap:8px">' +
+    '<span style="font-size:14px;font-weight:600;color:#1e293b">📧 套磁邮件 <span style="font-size:12px;color:#94a3b8;font-weight:400">约' + words + '字</span></span>' +
+    '<span style="display:flex;gap:6px;flex-wrap:wrap">' +
+    '<button onclick="copyPhdEmail()" style="padding:6px 14px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📋 复制全文</button>' +
+    '<button onclick="generatePhdEmail()" style="padding:6px 14px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">🔄 再生成一版</button>' +
+    '<button onclick="downloadPhdEmail()" style="padding:6px 14px;background:#10b981;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">📥 下载txt</button>' +
+    '</span></div>' +
+    '<textarea id="phdEmailText" rows="22" style="width:100%;padding:16px;border:none;font-size:13px;line-height:1.8;color:#334155;box-sizing:border-box;resize:vertical;font-family:inherit">' + email + '</textarea></div>' +
+    '<div style="margin-top:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1e40af">💡 发送前记得：修改联系邮箱/电话为真实信息，核对导师姓名职称，附上简历PDF，标题按「博士申请-姓名-学校-方向」格式。</div>';
+}
+
+async function polishPhdEmailDraft(withExpand) {
+  const draft = document.getElementById('emailDraft').value.trim();
+  if (!draft) { alert('请先粘贴你的邮件草稿'); return; }
+  const result = document.getElementById('emailResult');
+  result.innerHTML = '<div style="text-align:center;color:#64748b;padding:30px;font-size:14px">🔍 AI正在润色你的草稿…</div>';
+  const systemPrompt = '你是一位资深的考博套磁邮件润色专家。请优化用户提供的套磁邮件草稿：\n1. 修正语病、错别字与不地道的表达\n2. 优化段落结构与逻辑顺序\n3. 让语气更' + (withExpand ? '饱满充实（在不失真的前提下适当补充得体表述，使内容更丰富）' : '专业得体') + '\n4. 保留用户原有的关键信息（姓名、院校、成果等），不要编造新事实\n5. 输出优化后的完整邮件（含Subject标题），直接输出文本，不要解释';
+  try {
+    const polished = await callDeepSeekAPI(systemPrompt, '【我的草稿】\n' + draft, 2200, 'deepseek-chat');
+    if (!polished || polished.trim().length < 30) throw new Error('润色结果异常');
+    renderPhdEmailResult(polished, '', '', '');
+  } catch (e) {
+    result.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;color:#dc2626;font-size:14px">润色失败：' + e.message + '</div>';
+  }
+}
+
+function downloadPhdEmail() {
+  const text = document.getElementById('phdEmailText').value;
+  if (!text) { alert('暂无内容'); return; }
+  const blob = new Blob(['\ufeff' + text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '套磁邮件_' + new Date().toISOString().slice(0, 10) + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
 }
 
 function generatePhdEmail() {
@@ -39166,7 +39311,7 @@ function copyPhdEmail() {
   const text = document.getElementById('phdEmailText');
   text.select();
   document.execCommand('copy');
-  alert('已复制到剪贴板！请粘贴到邮件客户端中，并修改联系邮箱和电话。');
+  alert('已复制到剪贴板！请粘贴到邮件客户端，核对导师姓名职称、附件与落款信息后再发送。');
 }
 
 // 我的收藏
