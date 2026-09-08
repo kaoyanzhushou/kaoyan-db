@@ -44492,6 +44492,117 @@ function switchPhdKitTab(tab) {
   if (area) area.innerHTML = kitContent(tab);
 }
 
+const PHD_MENTOR_PROFILES = [
+  { id: 'sus_rehab', school: '上海体育大学', direction: '运动康复', name: '运动康复·科研型导师', focus: '慢性病运动康复、康复评定、运动处方、临床康复实践', style: '注重研究设计科学性与临床转化，常追问样本量计算、分组依据、指标选择与安全性把控', qTypes: ['研究设计题', '康复应用题', '机制分析题'], tips: '回答体现「评估-干预-再评估」临床思维，主动说明干预的可行性与安全性' },
+  { id: 'sus_physio', school: '上海体育大学', direction: '运动生理学', name: '运动适应机制·导师', focus: '运动适应机制、运动性疲劳、训练监控、分子信号通路', style: '重视机制链完整性与文献依据，常追问「到什么层面」「证据来源」，喜欢深挖分子/细胞机制', qTypes: ['机制分析题', '前沿进展题', '实验设计题'], tips: '回答要层层递进：现象→机制→信号通路→证据→应用，引用经典文献更佳' },
+  { id: 'sus_anatomy', school: '上海体育大学', direction: '运动解剖学', name: '动作结构分析·导师', focus: '运动动作的解剖学分析、神经肌肉解剖、运动损伤解剖学基础', style: '注重结构描述的精确性，常给出动作让考生做解剖学分析，考察空间思维与术语规范', qTypes: ['动作分析题', '概念辨析题', '损伤解剖题'], tips: '分析动作时按「关节-肌肉-神经支配-运动学」顺序展开，术语必须准确' },
+  { id: 'bsu_physio', school: '北京体育大学', direction: '运动生理学', name: '高水平训练生理·导师', focus: '高水平运动员训练生理基础、高原训练、力量与耐力适应', style: '偏重基础理论深度与竞技实践结合，常以优秀运动员案例提问，重视跨学科视野', qTypes: ['综合应用题', '前沿进展题', '机制分析题'], tips: '回答时联系竞技训练实际，展现对高水平运动实践的理解' },
+  { id: 'bsu_rehab', school: '北京体育大学', direction: '运动康复', name: '运动损伤防护·导师', focus: '运动损伤机制与防护、康复训练方案、功能评估', style: '重视损伤机制-评估-康复训练的逻辑闭环，常让考生设计完整康复方案', qTypes: ['方案设计题', '损伤机制题', '应用分析题'], tips: '康复方案按「评估→分期→训练→重返运动」完整呈现，注意分期原则' },
+  { id: 'cupes_physio', school: '首都体育学院', direction: '运动人体科学', name: '体质健康·导师', focus: '体质测评、健康促进、运动干预、体医融合', style: '注重基础概念准确性与研究规范，常考体质测评标准与运动处方制定', qTypes: ['概念题', '处方制定题', '研究设计题'], tips: '处方制定要给出FITT原则各要素，体现体医融合思维' },
+  { id: 'henu_bio', school: '河南大学', direction: '运动人体科学', name: '运动生化营养·导师', focus: '运动生物化学、运动营养、代谢适应', style: '兼顾基础理论与研究规范，常考生化指标意义、能量代谢途径，注重文献依据', qTypes: ['生化机制题', '营养应用题', '逻辑结构题'], tips: '涉及生化指标要说明检测意义与正常范围，能量代谢按途径分步阐述' },
+  { id: 'zzu_health', school: '郑州大学', direction: '体质健康与运动干预', name: '慢性病运动干预·导师', focus: '慢性病运动干预、体质健康测评、体医融合实践', style: '注重应用型问题，常结合临床案例提问运动处方的制定与效果评价', qTypes: ['应用分析题', '方案设计题', '综合题'], tips: '结合具体慢性病（如糖尿病、高血压）给出个性化干预方案' },
+  { id: 'hebtu_physio', school: '河北师范大学', direction: '运动人体科学', name: '运动与代谢·导师', focus: '运动与糖脂代谢、肥胖干预、教学科研结合', style: '师范传统：重视基础概念、答题条理与知识覆盖面，问题层次分明', qTypes: ['概念题', '机制分析题', '教学结合题'], tips: '答题分点清晰，先总后分，概念界定准确' },
+  { id: 'scnu_health', school: '华南师范大学', direction: '体质健康', name: '体适能与健康促进·导师', focus: '体适能测评、运动与慢性病预防、健康行为干预', style: '关注研究热点与新技术（可穿戴设备、大数据），常考测评方法选择与数据解读', qTypes: ['方法题', '数据解读题', '研究设计题'], tips: '体现对智能穿戴、运动处方数字化的理解' },
+  { id: 'ecnu_physio', school: '华东师范大学', direction: '运动生理与神经科学', name: '运动神经科学·导师', focus: '运动与脑可塑性、神经肌肉控制、认知功能', style: '偏重理论深度与学术前沿，常考脑科学研究方法与运动认知交叉问题', qTypes: ['前沿进展题', '方法设计题', '交叉学科题'], tips: '展示对fMRI、TMS、EEG等神经科学方法的基本理解' },
+  { id: 'generic_design', school: '通用', direction: '科研方法', name: '研究设计型导师', focus: '科研选题、实验设计、统计分析、学术规范', style: '不问知识背记，专考研究设计：选题依据、对象分组、干预对照、统计方法、可行性', qTypes: ['研究设计题', '统计分析题', '逻辑思辨题'], tips: '按「假设→设计→方法→预期→创新点」完整框架回答' }
+];
+
+function showPhdMentorLibrary() {
+  const body = document.getElementById('phdInterviewBody');
+  let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">🎓 模拟导师库</div>';
+  html += '<button class="phd-quiz-btn" style="font-size:12px;padding:6px 12px" onclick="showPhdInterviewHome()">← 返回</button></div>';
+  html += '<div style="margin-bottom:20px;font-size:14px;color:#666;line-height:1.7">按目标院校与方向选择「导师画像」，AI将模拟该风格导师的提问与追问；也可自定义模拟某位心仪导师（输入姓名+方向）。画像综合自各校该方向导师团队的公开风格，仅供参考。</div>';
+
+  // 自定义导师区
+  html += '<div style="background:linear-gradient(135deg,#eff6ff,#e0f2fe);border:1px solid #bae6fd;border-radius:12px;padding:18px;margin-bottom:20px">';
+  html += '<div style="font-size:15px;font-weight:700;color:#0369a1;margin-bottom:12px">🎯 自定义模拟导师</div>';
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap">';
+  html += '<input id="mentorCustomName" class="phd-quiz-textarea" style="flex:1;min-width:180px;min-height:auto;padding:9px 12px" placeholder="导师姓名（如：张教授）">';
+  html += '<input id="mentorCustomSchool" class="phd-quiz-textarea" style="flex:1;min-width:180px;min-height:auto;padding:9px 12px" placeholder="院校（如：上海体育大学）">';
+  html += '<input id="mentorCustomDir" class="phd-quiz-textarea" style="flex:2;min-width:220px;min-height:auto;padding:9px 12px" placeholder="研究方向/关注重点（如：运动与骨骼肌线粒体适应）">';
+  html += '<button class="phd-quiz-btn primary" style="flex:0 0 auto;padding:9px 20px" onclick="startCustomMentorInterview()">开始模拟</button>';
+  html += '</div>';
+  html += '<div style="font-size:12px;color:#0c4a6e;margin-top:8px">💡 信息越具体，AI模拟越贴近该导师的真实提问风格（可补充其近年论文主题）</div>';
+  html += '</div>';
+
+  // 院校筛选
+  html += '<div style="display:flex;gap:10px;align-items:center;margin-bottom:15px;flex-wrap:wrap">';
+  html += '<select id="mentorSchoolFilter" class="phd-quiz-textarea" style="min-height:auto;padding:8px 12px;font-size:13px;max-width:220px" onchange="renderMentorCards()">';
+  html += '<option value="">全部院校</option>';
+  const schools = [];
+  PHD_MENTOR_PROFILES.forEach(p => { if (schools.indexOf(p.school) < 0) schools.push(p.school); });
+  schools.forEach(s => { html += '<option value="' + s + '">' + s + '</option>'; });
+  html += '</select>';
+  html += '<div style="font-size:13px;color:#888">共 <span id="mentorCount">' + PHD_MENTOR_PROFILES.length + '</span> 个导师画像</div>';
+  html += '</div>';
+
+  html += '<div id="mentorCardList"></div>';
+
+  body.innerHTML = html;
+  openPhdInterviewOverlay();
+  renderMentorCards();
+}
+
+function renderMentorCards() {
+  const list = document.getElementById('mentorCardList');
+  if (!list) return;
+  const filter = document.getElementById('mentorSchoolFilter').value;
+  const listArr = PHD_MENTOR_PROFILES.filter(p => !filter || p.school === filter);
+  const countEl = document.getElementById('mentorCount');
+  if (countEl) countEl.textContent = listArr.length;
+
+  let html = '';
+  listArr.forEach(p => {
+    html += '<div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:18px;margin-bottom:14px;border-left:4px solid #667eea">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">';
+    html += '<div><div style="font-size:15px;font-weight:700;color:#1e293b">🎓 ' + p.name + '</div>';
+    html += '<div style="font-size:12px;color:#667eea;font-weight:600;margin:4px 0">' + p.school + ' · ' + p.direction + '</div></div>';
+    html += '<button class="phd-quiz-btn primary" style="font-size:12px;padding:7px 16px" onclick="startPhdMentorInterview(\'' + p.id + '\')">🎤 开始模拟</button>';
+    html += '</div>';
+    html += '<div style="margin-top:10px;font-size:13px;line-height:1.9;color:#475569">';
+    html += '<div>🔬 <strong>关注方向：</strong>' + p.focus + '</div>';
+    html += '<div>🗣️ <strong>提问风格：</strong>' + p.style + '</div>';
+    html += '<div>📋 <strong>常出题型：</strong>' + p.qTypes.join(' / ') + '</div>';
+    html += '<div style="background:#f0fdf4;border-radius:6px;padding:8px 10px;margin-top:8px;color:#166534">💡 ' + p.tips + '</div>';
+    html += '</div></div>';
+  });
+  if (listArr.length === 0) html = '<div style="text-align:center;color:#888;padding:40px;font-size:14px">该院校暂无画像，可用上方「自定义模拟导师」</div>';
+  list.innerHTML = html;
+}
+
+function startPhdMentorInterview(profileId) {
+  const profile = PHD_MENTOR_PROFILES.find(p => p.id === profileId);
+  if (!profile) { alert('画像不存在'); return; }
+  startPhdAIMockInterview();
+  const state = phdAIMockInterviewState;
+  state.config.major = profile.direction === '运动康复' ? '运动康复' : profile.direction === '运动解剖学' ? '运动解剖学' : '运动生理学';
+  state.config.targetSchool = profile.school === '通用' ? '上海体育大学' : profile.school;
+  state.config.mentorProfile = {
+    name: profile.name,
+    school: profile.school,
+    fullDesc: '你正在模拟「' + profile.name + '」的面试风格（' + profile.school + '·' + profile.direction + '方向）。该导师关注：' + profile.focus + '。提问风格：' + profile.style + '。常出题型：' + profile.qTypes.join('、') + '。给考生的建议：' + profile.tips + '。请全程以该导师的身份提问，问题要体现其关注重点与风格。'
+  };
+  renderPhdAIMockInterview();
+  document.getElementById('phdInterviewArea').scrollIntoView({ behavior: 'smooth' });
+}
+
+function startCustomMentorInterview() {
+  const name = (document.getElementById('mentorCustomName').value || '').trim();
+  const school = (document.getElementById('mentorCustomSchool').value || '').trim();
+  const dir = (document.getElementById('mentorCustomDir').value || '').trim();
+  if (!name && !dir) { alert('请至少填写导师姓名或研究方向'); return; }
+  startPhdAIMockInterview();
+  const state = phdAIMockInterviewState;
+  if (school) state.config.targetSchool = school;
+  state.config.mentorProfile = {
+    name: name || '目标导师',
+    school: school || '目标院校',
+    fullDesc: '你正在模拟「' + (name || '目标导师') + '」的面试风格（' + (school || '目标院校') + '）。该导师的研究方向/关注重点：' + (dir || '运动人体科学相关方向') + '。请以该导师的视角提问：问题要贴合其研究方向，体现其学术关注点与提问习惯；若信息有限，可基于其方向合理推测其关注点。'
+  };
+  renderPhdAIMockInterview();
+  document.getElementById('phdInterviewArea').scrollIntoView({ behavior: 'smooth' });
+}
+
 function showPhdLearningAnalytics() {
   const body = document.getElementById('phdInterviewBody');
   let history = [];
@@ -46451,11 +46562,14 @@ async function generateNextAIInterviewQuestion(isFirst) {
       '其他院校': '【院校特色】按体育学与运动人体科学博士研究生通用标准出题，注重基础理论、研究设计与学术潜力。'
     };
     const schoolInstr = schoolMap[state.config.targetSchool] || schoolMap['其他院校'];
+    const mentorInstr = state.config.mentorProfile ? state.config.mentorProfile.fullDesc : '';
     const systemPrompt = `你是一位资深的${state.config.targetSchool}${state.config.major}专业的博士研究生面试考官，拥有20年以上的面试经验和丰富的学术背景。你正在进行一场${state.config.interviewType}，面试难度为${state.config.difficulty}。
 
 ${personaInstr}
 
 ${schoolInstr}
+
+${mentorInstr}
 
 面试要求：
 1. 问题要专业、有深度，符合${state.config.major}博士研究生的学术水平
@@ -47261,6 +47375,7 @@ function renderPhdInterview() {
   html += '<button class="phd-practice-btn" style="color:#0e7490;background:#ecfeff;border:1px solid #a5f3fc" onclick="showPhdSchoolGuides()">🏫 院校面试指南</button>';
   html += '<button class="phd-practice-btn" style="color:#be185d;background:#fdf2f8;border:1px solid #fbcfe8" onclick="startPhdSelfIntro()">📝 自我介绍AI生成</button>';
   html += '<button class="phd-practice-btn" style="color:#0891b2;background:#ecfeff;border:1px solid #a5f3fc" onclick="showPhdLearningAnalytics()">📊 学习分析</button>';
+  html += '<button class="phd-practice-btn" style="color:#4c1d95;background:#f5f3ff;border:1px solid #ddd6fe" onclick="showPhdMentorLibrary()">🎓 模拟导师库</button>';
   html += '<button class="phd-practice-btn" style="color:#fff;background:linear-gradient(135deg,#667eea,#764ba2);border:none" onclick="startPhdAIMockInterview()">🤖 AI实时对话面试（推荐）</button>';
   html += '<button class="phd-practice-btn secondary" onclick="showPhdInterviewHistory()">📋 面试记录</button>';
   html += '<button class="phd-practice-btn secondary" onclick="showPhdWrongBook()">📒 错题本/收藏</button>';
