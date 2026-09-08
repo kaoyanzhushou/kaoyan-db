@@ -40259,114 +40259,667 @@ function renderPhdProposal() {
   const area = document.getElementById('phdProposalArea');
   if (!area) return;
   
+  // 初始化全局状态
+  if (typeof window.propState === 'undefined') {
+    window.propState = {
+      mode: 'welcome', // welcome / editing
+      currentChapter: 0,
+      meta: { title: '', field: '', topic: '', supervisor: '', duration: '24个月' },
+      chapters: [
+        { id: 'bg', title: '一、研究背景与意义', content: '', status: 'pending' },
+        { id: 'review', title: '二、国内外研究现状', content: '', status: 'pending' },
+        { id: 'goals', title: '三、研究目标与内容', content: '', status: 'pending' },
+        { id: 'methods', title: '四、研究方法与技术路线', content: '', status: 'pending' },
+        { id: 'results', title: '五、预期成果与创新点', content: '', status: 'pending' },
+        { id: 'schedule', title: '六、研究进度与经费预算', content: '', status: 'pending' },
+        { id: 'refs', title: '七、参考文献', content: '', status: 'pending' }
+      ],
+      aiHistory: []
+    };
+  }
+  
   let html = '';
   
-  // 顶部说明
-  html += '<div style="margin-bottom:20px;padding:15px;background:#fff3e0;border-radius:8px;border-left:4px solid #ff9800">';
-  html += '<strong style="color:#e65100;font-size:16px">科研计划书AI辅助生成系统</strong>';
-  html += '<div style="margin-top:8px;font-size:13px;color:#666;line-height:1.6">';
-  html += '填写研究信息，AI自动生成完整科研计划书框架。支持在线编辑、多版本保存、章节导航、一键导出。';
-  html += '</div></div>';
-  
-  // 输入区域
-  html += '<div style="background:white;border:1px solid #e0e0e0;border-radius:10px;padding:20px;margin-bottom:20px">';
-  html += '<div style="font-weight:600;font-size:15px;margin-bottom:15px;color:#333;border-bottom:2px solid #ff9800;padding-bottom:8px">研究信息填写</div>';
-  
-  // 第一行：领域+方向
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px">';
-  html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究领域 <span style="color:red">*</span></label>';
-  html += '<select id="propField" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px" onchange="updatePropTopics()">';
-  PHD_PROPOSAL_FIELDS.forEach(function(f) { html += '<option value="' + f + '">' + f + '</option>'; });
-  html += '</select></div>';
-  
-  html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究方向 <span style="color:red">*</span></label>';
-  html += '<select id="propTopic" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px"></select></div>';
+  // 顶部工具栏
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding:12px 16px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9;flex-wrap:wrap;gap:10px">';
+  html += '<div style="display:flex;align-items:center;gap:10px">';
+  html += '<span style="font-size:18px">🔬</span>';
+  html += '<span style="font-size:16px;font-weight:800;color:#1e293b">科研计划书AI助手</span>';
+  html += '<span id="propWordCountTotal" style="font-size:12px;color:#94a3b8;background:#f1f5f9;padding:3px 10px;border-radius:10px">0字</span>';
   html += '</div>';
-  
-  // 研究题目
-  html += '<div style="margin-bottom:15px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究题目（可选，不填则AI自动生成）</label>';
-  html += '<input type="text" id="propTitle" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px" placeholder="例如：有氧运动对2型糖尿病大鼠骨骼肌胰岛素信号通路的影响及机制研究"></div>';
-  
-  // 研究对象
-  html += '<div style="margin-bottom:15px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究对象/样本</label>';
-  html += '<input type="text" id="propSubject" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px" placeholder="例如：SPF级C57BL/6雄性小鼠，8周龄，体重20-25g，随机分为对照组、模型组、运动干预组，每组15只"></div>';
-  
-  // 研究方法
-  html += '<div style="margin-bottom:15px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究方法（用逗号分隔，可点击下方推荐方法快速添加）</label>';
-  html += '<input type="text" id="propMethods" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px" placeholder="例如：动物实验, Western Blot, qPCR, 免疫组化, 流式细胞术">';
-  html += '<div id="propMethodTags" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div></div>';
-  
-  // 第三行：周期+模板风格
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px">';
-  html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">研究周期</label>';
-  html += '<select id="propDuration" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px">';
-  html += '<option value="24个月">24个月（标准）</option>';
-  html += '<option value="36个月">36个月（详细）</option>';
-  html += '<option value="18个月">18个月（紧凑）</option>';
-  html += '</select></div>';
-  
-  html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">内容详细程度</label>';
-  html += '<select id="propStyle" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px">';
-  html += '<option value="detailed">详细型（推荐，内容充实）</option>';
-  html += '<option value="standard">标准型（框架+要点）</option>';
-  html += '<option value="concise">简洁型（仅框架）</option>';
-  html += '</select></div>';
-  html += '</div>';
-  
-  // 按钮组
-  html += '<div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap">';
-  html += '<button class="phd-quiz-btn primary" onclick="generatePropProposal()" style="padding:10px 24px;font-size:14px">📝 模板快速生成</button>';
-  html += '<button class="phd-quiz-btn" onclick="generatePropProposalAI()" style="padding:10px 24px;font-size:14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer">🤖 AI深度生成（推荐）</button>';
-  html += '<button class="phd-quiz-btn secondary" onclick="showPropGuide()" style="padding:10px 20px;font-size:14px">写作指南</button>';
-  html += '<button class="phd-quiz-btn secondary" onclick="showPropChecklist()" style="padding:10px 20px;font-size:14px">自查清单</button>';
-  html += '<button class="phd-quiz-btn secondary" onclick="showPropSaved()" style="padding:10px 20px;font-size:14px">我的保存(' + getPropSavedCount() + ')</button>';
-  html += '</div></div>';
-  
-  // AI生成加载状态
-  html += '<div id="propAILoading" style="display:none;text-align:center;padding:40px;background:white;border:1px solid #e0e0e0;border-radius:10px;margin-bottom:20px">';
-  html += '<div style="font-size:48px;margin-bottom:16px">🤖</div>';
-  html += '<div style="font-size:16px;font-weight:600;color:#333;margin-bottom:8px">AI正在深度生成科研计划书...</div>';
-  html += '<div style="font-size:13px;color:#999;margin-bottom:16px">正在分析研究方向、构建学术框架、生成专业内容，请稍候（约30-60秒）</div>';
-  html += '<div style="width:200px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto;overflow:hidden"><div id="propAIProgress" style="width:0%;height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:2px;transition:width 0.5s"></div></div>';
-  html += '</div>';
-  
-  // 结果区域
-  html += '<div id="propResult" style="display:none">';
-  html += '<div style="background:white;border:1px solid #e0e0e0;border-radius:10px;padding:20px;margin-bottom:20px">';
-  
-  // 工具栏
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;flex-wrap:wrap;gap:10px">';
-  html += '<div><strong style="font-size:16px;color:#333">科研计划书</strong>';
-  html += '<span id="propWordCount" style="margin-left:10px;font-size:12px;color:#999">0字</span></div>';
   html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-  html += '<button class="phd-quiz-btn secondary" style="padding:6px 12px;font-size:12px" onclick="togglePropEdit()" id="propEditBtn">编辑</button>';
-  html += '<button class="phd-quiz-btn secondary" style="padding:6px 12px;font-size:12px" onclick="savePropProposal()">保存</button>';
-  html += '<button class="phd-quiz-btn secondary" style="padding:6px 12px;font-size:12px" onclick="copyPropProposal()">复制</button>';
-  html += '<button class="phd-quiz-btn success" style="padding:6px 12px;font-size:12px" onclick="exportPropProposal(\'txt\')">导出TXT</button>';
-  html += '<button class="phd-quiz-btn success" style="padding:6px 12px;font-size:12px" onclick="exportPropProposal(\'md\')">导出MD</button>';
-  html += '<button class="phd-quiz-btn" style="padding:6px 12px;font-size:12px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;border:none;border-radius:6px;cursor:pointer" onclick="reviewPropProposalAI()">🔍 AI评审</button>';
+  html += '<button onclick="propShowTopicWorkshop()" style="padding:8px 16px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">💡 AI选题</button>';
+  html += '<button onclick="propAutoSave()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">💾 保存</button>';
+  html += '<button onclick="propExportMenu()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📤 导出</button>';
+  html += '<button onclick="propAIReview()" style="padding:8px 16px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 AI评审</button>';
   html += '</div></div>';
   
-  // AI评审结果区域
-  html += '<div id="propAIReviewResult" style="display:none;margin-bottom:20px"></div>';
+  // 主体三栏布局
+  html += '<div style="display:flex;gap:16px;align-items:flex-start">';
   
-  // 章节导航
-  html += '<div id="propNav" style="margin-bottom:15px;padding:10px;background:#f5f5f5;border-radius:8px;display:flex;flex-wrap:wrap;gap:6px"></div>';
+  // ===== 左侧：章节导航 =====
+  html += '<div style="width:220px;flex-shrink:0;position:sticky;top:16px">';
+  html += '<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9;overflow:hidden">';
+  html += '<div style="padding:12px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:13px;font-weight:700">📑 章节目录</div>';
+  html += '<div id="propChapterNav" style="padding:8px">';
+  window.propState.chapters.forEach((ch, idx) => {
+    const statusIcon = ch.status === 'confirmed' ? '✅' : ch.status === 'editing' ? '✏️' : ch.status === 'generating' ? '⏳' : '⬜';
+    const isActive = window.propState.currentChapter === idx;
+    html += '<div onclick="propSwitchChapter(' + idx + ')" style="padding:10px 12px;margin-bottom:4px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;transition:all 0.2s;' + (isActive ? 'background:#eef2ff;color:#4f46e5;font-weight:700' : 'color:#64748b:hover:background:#f8fafc') + '">';
+    html += '<span style="flex-shrink:0">' + statusIcon + '</span>';
+    html += '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + ch.title + '</span>';
+    html += '<span id="propChapterCount_' + idx + '" style="font-size:11px;color:#94a3b8;flex-shrink:0">' + (ch.content ? ch.content.length : 0) + '</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  // 进度条
+  const confirmedCount = window.propState.chapters.filter(c => c.status === 'confirmed').length;
+  const progress = Math.round((confirmedCount / window.propState.chapters.length) * 100);
+  html += '<div style="padding:12px 14px;border-top:1px solid #f1f5f9">';
+  html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:6px"><span>完成进度</span><span>' + confirmedCount + '/' + window.propState.chapters.length + '章</span></div>';
+  html += '<div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + progress + '%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:3px;transition:width 0.3s"></div></div>';
+  html += '</div></div></div>';
   
-  // 内容区
-  html += '<div id="propContent" style="font-size:14px;line-height:1.8;color:#333;max-height:600px;overflow-y:auto;padding:20px;background:#fafafa;border-radius:8px;border:1px solid #eee"></div>';
+  // ===== 中间：编辑区 =====
+  html += '<div style="flex:1;min-width:0">';
   
-  // 编辑区（默认隐藏）
-  html += '<textarea id="propEditText" style="display:none;width:100%;min-height:500px;border:2px solid #667eea;border-radius:8px;padding:12px;font-size:13px;line-height:1.6;font-family:inherit"></textarea>';
+  if (window.propState.mode === 'welcome') {
+    // 欢迎页
+    html += '<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9;padding:40px;text-align:center">';
+    html += '<div style="font-size:56px;margin-bottom:20px">🔬</div>';
+    html += '<h2 style="margin:0 0 12px;color:#1e293b;font-size:22px">科研计划书AI助手</h2>';
+    html += '<p style="margin:0 0 30px;color:#64748b;font-size:14px;line-height:1.7">AI驱动的科研计划书创作平台<br>从选题到完稿，AI全程辅助，分章节生成，专业级编辑</p>';
+    html += '<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">';
+    html += '<button onclick="propShowTopicWorkshop()" style="padding:14px 28px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-weight:700;box-shadow:0 4px 12px rgba(16,185,129,0.3)">💡 AI选题推荐</button>';
+    html += '<button onclick="propStartBlank()" style="padding:14px 28px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-weight:700;box-shadow:0 4px 12px rgba(102,126,234,0.3)">📝 直接开始创作</button>';
+    html += '<button onclick="propLoadSaved()" style="padding:14px 28px;background:#f1f5f9;color:#475569;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-weight:600">📂 加载已有计划书</button>';
+    html += '</div>';
+    // 功能亮点
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:40px;text-align:left">';
+    const features = [
+      {icon:'🤖', title:'AI分章生成', desc:'逐章深度生成，质量更高'},
+      {icon:'✏️', title:'AI润色续写', desc:'选中即可润色、改写、续写'},
+      {icon:'📊', title:'技术路线图', desc:'AI自动生成Mermaid流程图'},
+      {icon:'🔍', title:'AI多维评审', desc:'5维度评分+逐段点评'},
+      {icon:'📚', title:'参考文献管理', desc:'自动格式化+引用检查'},
+      {icon:'📤', title:'多格式导出', desc:'Word/PDF/Markdown/TXT'}
+    ];
+    features.forEach(f => {
+      html += '<div style="padding:16px;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9">';
+      html += '<div style="font-size:24px;margin-bottom:8px">' + f.icon + '</div>';
+      html += '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:4px">' + f.title + '</div>';
+      html += '<div style="font-size:12px;color:#64748b;line-height:1.5">' + f.desc + '</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  } else {
+    // 编辑模式
+    const cur = window.propState.chapters[window.propState.currentChapter];
+    html += '<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9;overflow:hidden">';
+    // 章节头部
+    html += '<div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
+    html += '<span style="font-size:16px">' + (cur.status === 'confirmed' ? '✅' : cur.status === 'editing' ? '✏️' : '⬜') + '</span>';
+    html += '<span style="font-size:16px;font-weight:800;color:#1e293b">' + cur.title + '</span>';
+    html += '<span id="propCurChapterCount" style="font-size:12px;color:#94a3b8;background:#f1f5f9;padding:3px 10px;border-radius:10px">' + (cur.content ? cur.content.length : 0) + '字</span>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html += '<button onclick="propGenerateChapter()" style="padding:7px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">🤖 AI生成</button>';
+    html += '<button onclick="propPolishChapter()" style="padding:7px 14px;background:#f1f5f9;color:#475569;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">✨ AI润色</button>';
+    html += '<button onclick="propConfirmChapter()" style="padding:7px 14px;background:#10b981;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">✅ 确认本章</button>';
+    html += '</div></div>';
+    // 编辑区
+    html += '<div style="padding:18px">';
+    html += '<textarea id="propChapterEditor" oninput="propOnEditorInput()" placeholder="在此输入或粘贴本章内容...\n\n提示：点击上方「AI生成」按钮，AI将根据研究方向自动生成本章内容。" style="width:100%;min-height:400px;border:1px solid #e2e8f0;border-radius:10px;padding:16px;font-size:14px;line-height:1.9;color:#334155;font-family:inherit;resize:vertical;box-sizing:border-box;transition:border-color 0.2s" onfocus="this.style.borderColor=\'#667eea\';this.style.boxShadow=\'0 0 0 3px rgba(102,126,234,0.1)\'" onblur="this.style.borderColor=\'#e2e8f0\';this.style.boxShadow=\'none\'">' + (cur.content || '') + '</textarea>';
+    // 底部操作
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px">';
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button onclick="propPrevChapter()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">← 上一章</button>';
+    html += '<button onclick="propNextChapter()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">下一章 →</button>';
+    html += '</div>';
+    html += '<div style="font-size:12px;color:#94a3b8">每30秒自动保存 · 最后保存: <span id="propLastSave">未保存</span></div>';
+    html += '</div></div></div>';
+  }
   
-  html += '</div></div>';
+  html += '</div>';
+  
+  // ===== 右侧：AI助手面板 =====
+  html += '<div style="width:280px;flex-shrink:0;position:sticky;top:16px">';
+  html += '<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9;overflow:hidden">';
+  html += '<div style="padding:12px 14px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px"><span>🤖</span><span>AI助手</span></div>';
+  html += '<div style="padding:14px">';
+  // 元信息
+  html += '<div style="margin-bottom:14px;padding:10px;background:#f8fafc;border-radius:8px;font-size:12px">';
+  html += '<div style="font-weight:700;color:#475569;margin-bottom:6px">📋 当前项目</div>';
+  html += '<div style="color:#64748b;line-height:1.6">题目：' + (window.propState.meta.title || '未设定') + '<br>领域：' + (window.propState.meta.field || '未设定') + '<br>周期：' + window.propState.meta.duration + '</div>';
+  html += '<button onclick="propEditMeta()" style="margin-top:8px;width:100%;padding:6px;background:#eef2ff;color:#4f46e5;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">✏️ 编辑项目信息</button>';
+  html += '</div>';
+  // 快捷AI功能
+  html += '<div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px">⚡ 快捷功能</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">';
+  const quickFuncs = [
+    {icon:'💡', label:'AI选题推荐', action:'propShowTopicWorkshop()'},
+    {icon:'📝', label:'生成当前章节', action:'propGenerateChapter()'},
+    {icon:'✨', label:'润色当前章节', action:'propPolishChapter()'},
+    {icon:'➕', label:'AI续写', action:'propAIContinue()'},
+    {icon:'📊', label:'生成技术路线图', action:'propGenerateTechRoute()'},
+    {icon:'🔍', label:'AI多维度评审', action:'propAIReview()'},
+    {icon:'📚', label:'参考文献格式化', action:'propFormatRefs()'}
+  ];
+  quickFuncs.forEach(f => {
+    html += '<button onclick="' + f.action + '" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f8fafc;border:1px solid #f1f5f9;border-radius:8px;cursor:pointer;font-size:12px;color:#475569;text-align:left;transition:all 0.2s" onmouseover="this.style.background=\'#eef2ff\';this.style.borderColor=\'#c7d2fe\'" onmouseout="this.style.background=\'#f8fafc\';this.style.borderColor=\'#f1f5f9\'">';
+    html += '<span style="flex-shrink:0">' + f.icon + '</span><span>' + f.label + '</span>';
+    html += '</button>';
+  });
+  html += '</div>';
+  // AI对话
+  html += '<div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px">💬 问AI</div>';
+  html += '<div id="propAIChatBox" style="max-height:200px;overflow-y:auto;margin-bottom:8px;padding:8px;background:#f8fafc;border-radius:8px;font-size:12px;color:#64748b;line-height:1.6">输入问题，AI基于当前计划书回答...</div>';
+  html += '<div style="display:flex;gap:6px">';
+  html += '<input type="text" id="propAIChatInput" placeholder="问AI..." style="flex:1;min-width:0;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;box-sizing:border-box" onkeydown="if(event.key===\'Enter\')propAIChatSend()">';
+  html += '<button onclick="propAIChatSend()" style="padding:8px 12px;background:#8b5cf6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">发送</button>';
+  html += '</div></div></div></div>';
+  
+  html += '</div>'; // 三栏布局结束
+  
+  // 选题工坊弹窗
+  html += '<div id="propTopicModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px">';
+  html += '<div id="propTopicModalContent" style="background:#fff;border-radius:16px;max-width:900px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)"></div>';
+  html += '</div>';
   
   area.innerHTML = html;
   
-  // 初始化
-  updatePropTopics();
-  updatePropMethodTags();
+  // 启动自动保存
+  if (window.propAutoSaveTimer) clearInterval(window.propAutoSaveTimer);
+  window.propAutoSaveTimer = setInterval(function() { propAutoSave(); }, 30000);
 }
+
+// ===== 科研计划书助手 - 基础功能函数 =====
+
+function propSwitchChapter(idx) {
+  if (!window.propState) return;
+  // 保存当前章节内容
+  const editor = document.getElementById('propChapterEditor');
+  if (editor && window.propState.currentChapter !== undefined) {
+    window.propState.chapters[window.propState.currentChapter].content = editor.value;
+  }
+  window.propState.currentChapter = idx;
+  if (window.propState.mode !== 'editing') window.propState.mode = 'editing';
+  renderPhdProposal();
+}
+
+function propStartBlank() {
+  if (!window.propState) return;
+  window.propState.mode = 'editing';
+  window.propState.currentChapter = 0;
+  renderPhdProposal();
+}
+
+function propLoadSaved() {
+  try {
+    const saved = localStorage.getItem('phdProposalSaved');
+    if (!saved) { alert('暂无保存的计划书'); return; }
+    const data = JSON.parse(saved);
+    if (data.chapters) {
+      window.propState.chapters = data.chapters;
+      window.propState.meta = data.meta || window.propState.meta;
+      window.propState.mode = 'editing';
+      window.propState.currentChapter = 0;
+      renderPhdProposal();
+      alert('加载成功！');
+    }
+  } catch(e) {
+    alert('加载失败: ' + e.message);
+  }
+}
+
+function propOnEditorInput() {
+  if (!window.propState) return;
+  const editor = document.getElementById('propChapterEditor');
+  if (!editor) return;
+  const idx = window.propState.currentChapter;
+  window.propState.chapters[idx].content = editor.value;
+  if (window.propState.chapters[idx].status === 'pending') {
+    window.propState.chapters[idx].status = 'editing';
+  }
+  // 更新字数显示
+  const countEl = document.getElementById('propCurChapterCount');
+  if (countEl) countEl.textContent = editor.value.length + '字';
+  const navCountEl = document.getElementById('propChapterCount_' + idx);
+  if (navCountEl) navCountEl.textContent = editor.value.length;
+  // 更新总字数
+  const total = window.propState.chapters.reduce((sum, c) => sum + (c.content ? c.content.length : 0), 0);
+  const totalEl = document.getElementById('propWordCountTotal');
+  if (totalEl) totalEl.textContent = total + '字';
+}
+
+function propAutoSave() {
+  if (!window.propState || window.propState.mode !== 'editing') return;
+  try {
+    const editor = document.getElementById('propChapterEditor');
+    if (editor) {
+      window.propState.chapters[window.propState.currentChapter].content = editor.value;
+    }
+    const data = {
+      meta: window.propState.meta,
+      chapters: window.propState.chapters,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem('phdProposalAutoSave', JSON.stringify(data));
+    const lastSaveEl = document.getElementById('propLastSave');
+    if (lastSaveEl) {
+      const now = new Date();
+      lastSaveEl.textContent = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+    }
+  } catch(e) {
+    console.error('自动保存失败', e);
+  }
+}
+
+function propPrevChapter() {
+  if (!window.propState) return;
+  if (window.propState.currentChapter > 0) {
+    propSwitchChapter(window.propState.currentChapter - 1);
+  }
+}
+
+function propNextChapter() {
+  if (!window.propState) return;
+  if (window.propState.currentChapter < window.propState.chapters.length - 1) {
+    propSwitchChapter(window.propState.currentChapter + 1);
+  }
+}
+
+function propConfirmChapter() {
+  if (!window.propState) return;
+  const idx = window.propState.currentChapter;
+  const editor = document.getElementById('propChapterEditor');
+  if (editor) window.propState.chapters[idx].content = editor.value;
+  if (!window.propState.chapters[idx].content || window.propState.chapters[idx].content.length < 50) {
+    if (!confirm('本章内容较少（少于50字），确定要确认吗？')) return;
+  }
+  window.propState.chapters[idx].status = 'confirmed';
+  propAutoSave();
+  renderPhdProposal();
+}
+
+function propEditMeta() {
+  if (!window.propState) return;
+  const title = prompt('研究题目：', window.propState.meta.title || '');
+  if (title === null) return;
+  const field = prompt('研究领域：', window.propState.meta.field || '运动人体科学');
+  if (field === null) return;
+  const topic = prompt('研究方向：', window.propState.meta.topic || '');
+  if (topic === null) return;
+  const supervisor = prompt('目标导师（可选）：', window.propState.meta.supervisor || '');
+  if (supervisor === null) return;
+  window.propState.meta = { title, field, topic, supervisor, duration: window.propState.meta.duration || '24个月' };
+  propAutoSave();
+  renderPhdProposal();
+}
+
+function propExportMenu() {
+  if (!window.propState) return;
+  propAutoSave();
+  const choice = prompt('选择导出格式：\n1. TXT纯文本\n2. Markdown\n3. Word(.doc)\n\n请输入数字（1/2/3）：', '2');
+  if (!choice) return;
+  
+  // 生成全文
+  let fullText = '';
+  if (window.propState.meta.title) {
+    fullText += window.propState.meta.title + '\n\n';
+  }
+  window.propState.chapters.forEach(ch => {
+    if (ch.content) {
+      fullText += ch.title + '\n\n' + ch.content + '\n\n';
+    }
+  });
+  
+  if (choice === '1') {
+    // TXT
+    const blob = new Blob([fullText], {type: 'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '科研计划书.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  } else if (choice === '2') {
+    // Markdown
+    let md = '';
+    if (window.propState.meta.title) md += '# ' + window.propState.meta.title + '\n\n';
+    window.propState.chapters.forEach(ch => {
+      if (ch.content) {
+        md += '## ' + ch.title + '\n\n' + ch.content + '\n\n';
+      }
+    });
+    const blob = new Blob([md], {type: 'text/markdown;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '科研计划书.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  } else if (choice === '3') {
+    // Word (HTML格式，.doc扩展名)
+    let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">';
+    html += '<head><meta charset="utf-8"><title>科研计划书</title></head><body>';
+    if (window.propState.meta.title) html += '<h1 style="text-align:center">' + window.propState.meta.title + '</h1>';
+    window.propState.chapters.forEach(ch => {
+      if (ch.content) {
+        html += '<h2>' + ch.title + '</h2>';
+        html += '<p style="line-height:1.8;text-indent:2em">' + ch.content.replace(/\n/g, '</p><p style="line-height:1.8;text-indent:2em">') + '</p>';
+      }
+    });
+    html += '</body></html>';
+    const blob = new Blob(['\ufeff' + html], {type: 'application/msword'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '科研计划书.doc';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+
+// ===== 科研计划书助手 - AI核心功能 =====
+
+function propShowTopicWorkshop() {
+  const modal = document.getElementById('propTopicModal');
+  const modalContent = document.getElementById('propTopicModalContent');
+  if (!modal || !modalContent) return;
+  
+  modal.style.display = 'flex';
+  
+  let html = '<div style="padding:24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><h3 style="margin:0;font-size:18px;color:#1e293b">💡 AI选题推荐</h3><p style="margin:4px 0 0;font-size:13px;color:#64748b">基于研究领域和最新文献热点，AI推荐选题方向</p></div>';
+  html += '<button onclick="propCloseTopicModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94a3b8;padding:0 8px">×</button>';
+  html += '</div>';
+  
+  html += '<div style="padding:20px">';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">';
+  html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#475569">研究领域 <span style="color:red">*</span></label>';
+  html += '<select id="topicWorkshopField" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px">';
+  const fields = ['运动人体科学', '运动康复学', '体育教育训练学', '运动生物力学', '运动生物化学', '运动心理学', '运动免疫学'];
+  fields.forEach(f => { html += '<option value="' + f + '"' + (f === '运动人体科学' ? ' selected' : '') + '>' + f + '</option>'; });
+  html += '</select></div>';
+  html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#475569">目标导师（可选）</label>';
+  html += '<input type="text" id="topicWorkshopSupervisor" placeholder="例如：上海体育大学 张三教授" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box"></div>';
+  html += '</div>';
+  html += '<div style="margin-bottom:16px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#475569">你的研究兴趣/背景（可选）</label>';
+  html += '<textarea id="topicWorkshopInterest" rows="2" placeholder="例如：对运动与心血管健康、运动干预慢性病机制感兴趣，有动物实验基础..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea></div>';
+  html += '<button onclick="propGenerateTopics()" style="width:100%;padding:12px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700">🤖 AI生成选题推荐</button>';
+  html += '<div id="topicWorkshopResult" style="margin-top:20px"></div>';
+  html += '</div>';
+  
+  modalContent.innerHTML = html;
+}
+
+function propCloseTopicModal() {
+  const modal = document.getElementById('propTopicModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function propGenerateTopics() {
+  const field = document.getElementById('topicWorkshopField').value;
+  const supervisor = document.getElementById('topicWorkshopSupervisor').value;
+  const interest = document.getElementById('topicWorkshopInterest').value;
+  const resultEl = document.getElementById('topicWorkshopResult');
+  
+  resultEl.innerHTML = '<div style="text-align:center;padding:40px"><div style="font-size:36px;margin-bottom:12px">🤖</div><div style="font-size:14px;color:#64748b">AI正在分析研究热点、生成选题推荐...<br>请稍候（约20-40秒）</div></div>';
+  
+  const systemPrompt = '你是运动人体科学领域的资深教授和科研选题专家。请基于用户提供的研究领域、目标导师和个人兴趣，推荐10个具体的博士科研选题方向。每个选题需要包含：选题名称、研究意义（理论+实践）、可行性分析、创新点（1-3个）。选题要具体、可操作，符合运动人体科学博士研究水平，避免过于宽泛。输出格式为JSON数组，每个元素包含title, significance, feasibility, innovation四个字段。';
+  
+  const userPrompt = '研究领域：' + field + (supervisor ? '\n目标导师：' + supervisor : '') + (interest ? '\n个人兴趣/背景：' + interest : '') + '\n\n请推荐10个具体的博士科研选题方向。';
+  
+  callDeepSeekAPI(systemPrompt, userPrompt, 4000, 'deepseek-chat').then(response => {
+    try {
+      // 尝试解析JSON
+      let topics = [];
+      const jsonMatch = response.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        topics = JSON.parse(jsonMatch[0]);
+      }
+      if (!topics || topics.length === 0) {
+        // 如果解析失败，直接显示文本
+        resultEl.innerHTML = '<div style="padding:16px;background:#f8fafc;border-radius:10px;font-size:13px;line-height:1.8;color:#475569;white-space:pre-wrap">' + response + '</div>';
+        return;
+      }
+      
+      let html = '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:14px">🎯 为你推荐 ' + topics.length + ' 个选题方向（点击可使用）</div>';
+      topics.forEach((t, idx) => {
+        html += '<div onclick="propUseTopic(' + idx + ')" style="padding:16px;margin-bottom:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor=\'#667eea\';this.style.boxShadow=\'0 4px 12px rgba(102,126,234,0.1)\'" onmouseout="this.style.borderColor=\'#e2e8f0\';this.style.boxShadow=\'none\'">';
+        html += '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px">';
+        html += '<span style="flex-shrink:0;width:24px;height:24px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">' + (idx+1) + '</span>';
+        html += '<span style="font-size:14px;font-weight:700;color:#1e293b;line-height:1.5">' + (t.title || '未命名选题') + '</span>';
+        html += '</div>';
+        if (t.significance) html += '<div style="font-size:12px;color:#64748b;line-height:1.7;margin-bottom:6px;padding-left:34px"><strong style="color:#059669">研究意义：</strong>' + t.significance + '</div>';
+        if (t.feasibility) html += '<div style="font-size:12px;color:#64748b;line-height:1.7;margin-bottom:6px;padding-left:34px"><strong style="color:#2563eb">可行性：</strong>' + t.feasibility + '</div>';
+        if (t.innovation) html += '<div style="font-size:12px;color:#64748b;line-height:1.7;padding-left:34px"><strong style="color:#dc2626">创新点：</strong>' + t.innovation + '</div>';
+        html += '</div>';
+      });
+      
+      // 保存选题数据供使用
+      window.propTopicResults = topics;
+      resultEl.innerHTML = html;
+    } catch(e) {
+      resultEl.innerHTML = '<div style="padding:16px;background:#fef2f2;border-radius:10px;font-size:13px;color:#dc2626">解析失败，原始回复：<br><br>' + response + '</div>';
+    }
+  }).catch(err => {
+    resultEl.innerHTML = '<div style="padding:16px;background:#fef2f2;border-radius:10px;font-size:13px;color:#dc2626">生成失败: ' + err.message + '<br><br>请稍后重试，或检查网络连接。</div>';
+  });
+}
+
+function propUseTopic(idx) {
+  if (!window.propTopicResults || !window.propTopicResults[idx]) return;
+  const topic = window.propTopicResults[idx];
+  if (!window.propState) return;
+  window.propState.meta.title = topic.title;
+  window.propState.mode = 'editing';
+  window.propState.currentChapter = 0;
+  propCloseTopicModal();
+  propAutoSave();
+  renderPhdProposal();
+  alert('已使用选题：' + topic.title + '\n\n请点击「AI生成」按钮逐章生成内容。');
+}
+
+function propGenerateChapter() {
+  if (!window.propState) return;
+  const idx = window.propState.currentChapter;
+  const chapter = window.propState.chapters[idx];
+  const editor = document.getElementById('propChapterEditor');
+  if (editor) chapter.content = editor.value;
+  
+  if (chapter.content && chapter.content.length > 100) {
+    if (!confirm('本章已有内容，AI生成将覆盖当前内容。确定继续吗？')) return;
+  }
+  
+  chapter.status = 'generating';
+  renderPhdProposal();
+  
+  const meta = window.propState.meta;
+  const systemPrompt = '你是运动人体科学领域的资深教授和科研计划书写作专家。请为博士科研计划书的"' + chapter.title + '"章节撰写详细、专业、学术化的内容。要求：1.内容充实，逻辑清晰，学术表达规范；2.结合运动人体科学专业特点；3.字数不少于800字；4.不要使用Markdown格式，直接输出正文内容，段落之间用空行分隔。';
+  
+  let userPrompt = '研究题目：' + (meta.title || '未设定') + '\n研究领域：' + (meta.field || '运动人体科学') + '\n研究方向：' + (meta.topic || '') + (meta.supervisor ? '\n目标导师：' + meta.supervisor : '') + '\n\n请撰写"' + chapter.title + '"章节的详细内容。';
+  if (chapter.content) userPrompt += '\n\n参考已有内容（可在此基础上扩展优化）：\n' + chapter.content.substring(0, 500);
+  
+  callDeepSeekAPI(systemPrompt, userPrompt, 3000, 'deepseek-chat').then(response => {
+    chapter.content = response.trim();
+    chapter.status = 'editing';
+    propAutoSave();
+    renderPhdProposal();
+  }).catch(err => {
+    chapter.status = 'pending';
+    renderPhdProposal();
+    alert('AI生成失败: ' + err.message);
+  });
+}
+
+function propPolishChapter() {
+  if (!window.propState) return;
+  const idx = window.propState.currentChapter;
+  const chapter = window.propState.chapters[idx];
+  const editor = document.getElementById('propChapterEditor');
+  if (editor) chapter.content = editor.value;
+  
+  if (!chapter.content || chapter.content.length < 50) {
+    alert('本章内容太少，请先输入或生成内容');
+    return;
+  }
+  
+  const originalContent = chapter.content;
+  
+  const systemPrompt = '你是学术写作润色专家。请对以下科研计划书内容进行学术化润色，要求：1.提升学术表达的规范性和专业性；2.优化逻辑结构和段落衔接；3.保持原意不变，不改变核心观点；4.运动人体科学专业术语要准确；5.直接输出润色后的正文，不要添加解释说明。';
+  
+  callDeepSeekAPI(systemPrompt, '请润色以下内容：\n\n' + chapter.content, 3000, 'deepseek-chat').then(response => {
+    chapter.content = response.trim();
+    propAutoSave();
+    renderPhdProposal();
+    alert('润色完成！\n\n原文字数: ' + originalContent.length + '\n润色后字数: ' + chapter.content.length);
+  }).catch(err => {
+    alert('润色失败: ' + err.message);
+  });
+}
+
+function propAIContinue() {
+  if (!window.propState) return;
+  const idx = window.propState.currentChapter;
+  const chapter = window.propState.chapters[idx];
+  const editor = document.getElementById('propChapterEditor');
+  if (editor) chapter.content = editor.value;
+  
+  const systemPrompt = '你是运动人体科学领域的科研写作专家。请根据以下上下文，继续撰写后续内容，要求：1.与前文逻辑连贯，风格一致；2.内容充实，学术表达规范；3.直接输出续写的内容，不要重复前文，不要添加解释。';
+  
+  const context = chapter.content ? chapter.content.substring(chapter.content.length - 500) : '';
+  
+  callDeepSeekAPI(systemPrompt, '请基于以下上下文继续撰写：\n\n...' + context, 2000, 'deepseek-chat').then(response => {
+    chapter.content = (chapter.content || '') + '\n\n' + response.trim();
+    propAutoSave();
+    renderPhdProposal();
+  }).catch(err => {
+    alert('续写失败: ' + err.message);
+  });
+}
+
+function propGenerateTechRoute() {
+  if (!window.propState) return;
+  const idx = window.propState.currentChapter;
+  const chapter = window.propState.chapters[idx];
+  
+  const meta = window.propState.meta;
+  const systemPrompt = '你是运动人体科学科研方法专家。请根据研究题目和内容，生成一个详细的技术路线图，用Mermaid flowchart语法输出。要求：1.包含研究准备→实验设计→数据采集→数据分析→结论输出的完整流程；2.节点描述要具体，符合运动人体科学研究特点；3.使用graph TD格式；4.只输出Mermaid代码，不要添加其他解释。';
+  
+  callDeepSeekAPI(systemPrompt, '研究题目：' + (meta.title || '未设定') + '\n研究内容：' + (chapter.content || '').substring(0, 500), 1500, 'deepseek-chat').then(response => {
+    // 提取mermaid代码
+    let mermaid = response;
+    const codeMatch = response.match(/```mermaid\n?([\s\S]*?)```/);
+    if (codeMatch) mermaid = codeMatch[1];
+    const graphMatch = mermaid.match(/graph\s+TD[\s\S]*/);
+    if (graphMatch) mermaid = graphMatch[0];
+    
+    chapter.content = (chapter.content || '') + '\n\n【技术路线图】\n```mermaid\n' + mermaid.trim() + '\n```';
+    propAutoSave();
+    renderPhdProposal();
+    alert('技术路线图已生成并添加到本章末尾！\n\n（提示：技术路线图以Mermaid代码形式保存，导出Markdown后可在支持Mermaid的编辑器中渲染）');
+  }).catch(err => {
+    alert('生成失败: ' + err.message);
+  });
+}
+
+function propAIReview() {
+  if (!window.propState) return;
+  propAutoSave();
+  
+  const meta = window.propState.meta;
+  let fullContent = '';
+  window.propState.chapters.forEach(ch => {
+    if (ch.content) fullContent += '【' + ch.title + '】\n' + ch.content + '\n\n';
+  });
+  
+  if (!fullContent || fullContent.length < 200) {
+    alert('计划书内容太少，请先生成或输入内容');
+    return;
+  }
+  
+  const systemPrompt = '你是运动人体科学博士招生评审专家。请对以下科研计划书进行多维度评审，包括：1.选题价值（20分）；2.研究方法（25分）；3.创新性（20分）；4.可行性（20分）；5.写作规范（15分）。每个维度给出分数和详细点评，最后给出总分和总体评价，以及3-5条具体的改进建议。要求：评审要专业、严格、有建设性，符合运动人体科学博士评审标准。';
+  
+  // 显示加载
+  const area = document.getElementById('phdProposalArea');
+  if (area) {
+    area.innerHTML = '<div style="text-align:center;padding:60px"><div style="font-size:48px;margin-bottom:16px">🔍</div><div style="font-size:16px;font-weight:600;color:#1e293b;margin-bottom:8px">AI正在多维度评审计划书...</div><div style="font-size:13px;color:#64748b">正在分析选题价值、研究方法、创新性、可行性、写作规范...<br>请稍候（约30-60秒）</div></div>' + area.innerHTML;
+  }
+  
+  callDeepSeekAPI(systemPrompt, '研究题目：' + (meta.title || '未设定') + '\n\n计划书内容：\n' + fullContent, 4000, 'deepseek-chat').then(response => {
+    renderPhdProposal();
+    // 在结果区域显示评审结果
+    setTimeout(() => {
+      const resultArea = document.createElement('div');
+      resultArea.style.cssText = 'margin-top:16px;padding:20px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9';
+      resultArea.innerHTML = '<div style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span>🔍</span><span>AI多维度评审报告</span></div>' +
+        '<div style="font-size:13px;line-height:1.9;color:#475569;white-space:pre-wrap">' + response + '</div>';
+      const mainArea = document.getElementById('phdProposalArea');
+      if (mainArea) mainArea.insertBefore(resultArea, mainArea.firstChild);
+    }, 100);
+  }).catch(err => {
+    renderPhdProposal();
+    alert('评审失败: ' + err.message);
+  });
+}
+
+function propFormatRefs() {
+  if (!window.propState) return;
+  const idx = window.propState.currentChapter;
+  const chapter = window.propState.chapters[idx];
+  const editor = document.getElementById('propChapterEditor');
+  if (editor) chapter.content = editor.value;
+  
+  if (!chapter.content || chapter.content.length < 20) {
+    alert('请先输入参考文献内容');
+    return;
+  }
+  
+  const systemPrompt = '你是参考文献格式专家。请将以下参考文献整理为GB/T 7714-2015标准格式。要求：1.按作者姓氏拼音排序；2.期刊论文格式：作者.题名[J].刊名,年,卷(期):起止页码.；3.专著格式：作者.书名[M].出版地:出版社,年:起止页码.；4.直接输出格式化后的参考文献列表，不要添加解释。';
+  
+  callDeepSeekAPI(systemPrompt, '请格式化以下参考文献：\n\n' + chapter.content, 2000, 'deepseek-chat').then(response => {
+    chapter.content = response.trim();
+    propAutoSave();
+    renderPhdProposal();
+    alert('参考文献格式化完成！');
+  }).catch(err => {
+    alert('格式化失败: ' + err.message);
+  });
+}
+
+function propAIChatSend() {
+  const input = document.getElementById('propAIChatInput');
+  const chatBox = document.getElementById('propAIChatBox');
+  if (!input || !chatBox || !input.value.trim()) return;
+  
+  const question = input.value.trim();
+  input.value = '';
+  
+  chatBox.innerHTML += '<div style="margin-bottom:8px;padding:8px;background:#eef2ff;border-radius:8px;color:#4f46e5;font-size:12px"><strong>你：</strong>' + question + '</div>';
+  chatBox.innerHTML += '<div style="margin-bottom:8px;padding:8px;background:#f8fafc;border-radius:8px;color:#64748b;font-size:12px"><strong>AI：</strong>思考中...</div>';
+  chatBox.scrollTop = chatBox.scrollHeight;
+  
+  const meta = window.propState.meta;
+  const curChapter = window.propState.chapters[window.propState.currentChapter];
+  
+  const systemPrompt = '你是运动人体科学科研助手。请基于用户当前的科研计划书内容，回答用户的问题。回答要专业、简洁、有建设性。如果问题与当前计划书内容相关，请结合内容回答。';
+  
+  const userPrompt = '研究题目：' + (meta.title || '未设定') + '\n当前章节：' + (curChapter ? curChapter.title : '') + '\n当前章节内容摘要：' + (curChapter && curChapter.content ? curChapter.content.substring(0, 300) : '无') + '\n\n用户问题：' + question;
+  
+  callDeepSeekAPI(systemPrompt, userPrompt, 1500, 'deepseek-chat').then(response => {
+    const lastAI = chatBox.querySelector('div:last-child');
+    if (lastAI) lastAI.innerHTML = '<strong>AI：</strong>' + response;
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }).catch(err => {
+    const lastAI = chatBox.querySelector('div:last-child');
+    if (lastAI) lastAI.innerHTML = '<strong>AI：</strong>回答失败: ' + err.message;
+  });
+}
+
 
 function updatePropTopics() {
   const field = document.getElementById('propField').value;
