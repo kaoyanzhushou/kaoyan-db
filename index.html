@@ -45012,7 +45012,8 @@ let phdAIMockInterviewState = {
     targetSchool: '上海体育大学',
     interviewType: '专业面试',
     questionCount: 8,
-    difficulty: '中等'
+    difficulty: '中等',
+    interviewerStyle: '学术严谨型'
   },
   conversation: [], // {role: 'interviewer'|'candidate', content: string, timestamp: number}
   currentQuestion: '',
@@ -45030,6 +45031,25 @@ const AI_INTERVIEW_SCHOOLS = ['上海体育大学', '北京体育大学', '河�
 const AI_INTERVIEW_TYPES = ['专业面试', '综合面试', '英语面试', '压力面试', '导师面谈'];
 const AI_INTERVIEW_DIFFICULTIES = ['简单', '中等', '困难', '专家级'];
 
+// 面试官人设
+const AI_INTERVIEW_PERSONAS = [
+  { name: '学术严谨型', icon: '🎓', desc: '紧盯概念、机制，高频追问细节，考察基本功' },
+  { name: '温和引导型', icon: '💡', desc: '会提示鼓励，卡壳时给予引导，适合初次练习' },
+  { name: '压力挑战型', icon: '🔥', desc: '质疑反驳、制造紧张感，考察应变与心理素质' },
+  { name: '实践应用型', icon: '🏥', desc: '偏向临床与训练实例，考察知识应用能力' },
+  { name: '英文面试型', icon: '🌍', desc: '全程英文提问与追问，考察学术英语能力' }
+];
+
+// 更新面试官风格描述
+function updateInterviewStyleDesc() {
+  const sel = document.getElementById('aiInterviewStyle');
+  const desc = document.getElementById('aiInterviewStyleDesc');
+  if (sel && desc) {
+    const p = AI_INTERVIEW_PERSONAS.find(x => x.name === sel.value);
+    if (p) desc.textContent = p.desc;
+  }
+}
+
 // 开始AI对话面试（显示设置界面）
 function startPhdAIMockInterview() {
   phdAIMockInterviewState = {
@@ -45039,7 +45059,8 @@ function startPhdAIMockInterview() {
       targetSchool: '上海体育大学',
       interviewType: '专业面试',
       questionCount: 8,
-      difficulty: '中等'
+      difficulty: '中等',
+      interviewerStyle: '学术严谨型'
     },
     conversation: [],
     currentQuestion: '',
@@ -45092,6 +45113,13 @@ function renderPhdAIMockInterview() {
     html += '<select id="aiInterviewDifficulty" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px">';
     AI_INTERVIEW_DIFFICULTIES.forEach(d => { html += '<option value="' + d + '"' + (state.config.difficulty === d ? ' selected' : '') + '>' + d + '</option>'; });
     html += '</select></div>';
+
+    // 面试官人设
+    html += '<div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">面试官风格</label>';
+    html += '<select id="aiInterviewStyle" class="phd-quiz-textarea" style="min-height:auto;padding:8px 10px;font-size:13px" onchange="updateInterviewStyleDesc()">';
+    AI_INTERVIEW_PERSONAS.forEach(p => { html += '<option value="' + p.name + '"' + (state.config.interviewerStyle === p.name ? ' selected' : '') + '>' + p.icon + ' ' + p.name + '</option>'; });
+    html += '</select>';
+    html += '<div id="aiInterviewStyleDesc" style="font-size:11px;color:#888;margin-top:4px">' + (AI_INTERVIEW_PERSONAS.find(p => p.name === state.config.interviewerStyle) || AI_INTERVIEW_PERSONAS[0]).desc + '</div></div>';
     
     // 题目数量
     html += '<div style="grid-column:span 2"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#333">题目数量：<span id="aiInterviewCountLabel" style="color:#667eea;font-weight:700">' + state.config.questionCount + '</span> 题</label>';
@@ -45177,6 +45205,7 @@ async function beginPhdAIMockInterview() {
   state.config.targetSchool = document.getElementById('aiInterviewSchool').value;
   state.config.interviewType = document.getElementById('aiInterviewType').value;
   state.config.difficulty = document.getElementById('aiInterviewDifficulty').value;
+  state.config.interviewerStyle = document.getElementById('aiInterviewStyle') ? document.getElementById('aiInterviewStyle').value : '学术严谨型';
   state.config.questionCount = parseInt(document.getElementById('aiInterviewCount').value);
   
   state.mode = 'chatting';
@@ -45197,7 +45226,18 @@ async function generateNextAIInterviewQuestion(isFirst) {
   renderPhdAIMockInterview();
   
   try {
+    // 面试官人设指令
+    const personaMap = {
+      '学术严谨型': '【人设】你是学术严谨型考官：紧盯概念定义和机制细节，喜欢追问到底，对模糊表述零容忍。提问侧重概念辨析、机制阐释、数据依据，可连续追问考生回答中的漏洞。',
+      '温和引导型': '【人设】你是温和引导型考官：语气和蔼、善于启发。考生回答卡壳或偏离时先给予适当提示引导再深入，提问循序渐进，注意保护考生信心，但仍保持专业性。',
+      '压力挑战型': '【人设】你是压力挑战型考官：会质疑考生的回答，抛出反例或反驳观点，故意制造紧张氛围，考察考生在压力下的应变能力和心理素质。提问犀利、直接，可打断或施压。',
+      '实践应用型': '【人设】你是实践应用型考官：注重知识的实际应用，喜欢结合运动训练、临床康复等真实场景提问，考察考生用理论解决实际问题的能力。',
+      '英文面试型': '【人设】你是英文面试型考官：全程使用英文提问和追问，考察考生的学术英语表达能力和专业词汇掌握。所有问题必须用英文输出。'
+    };
+    const personaInstr = personaMap[state.config.interviewerStyle] || personaMap['学术严谨型'];
     const systemPrompt = `你是一位资深的${state.config.targetSchool}${state.config.major}专业的博士研究生面试考官，拥有20年以上的面试经验和丰富的学术背景。你正在进行一场${state.config.interviewType}，面试难度为${state.config.difficulty}。
+
+${personaInstr}
 
 面试要求：
 1. 问题要专业、有深度，符合${state.config.major}博士研究生的学术水平
@@ -45333,7 +45373,16 @@ async function endPhdAIMockInterview() {
   renderPhdAIMockInterview();
   
   try {
-    const systemPrompt = `你是一位资深的${state.config.targetSchool}${state.config.major}专业的博士研究生面试评审专家，具有15年以上面试评审经验。请根据以下面试对话记录，对考生的表现进行全面、客观、专业、严格的评审。
+    // 面试官人设提示（评分时参考人设侧重）
+    const personaHintMap = {
+      '学术严谨型': '（本场面试官为学术严谨型，评分时尤其关注概念准确性与机制阐述的严谨度）',
+      '温和引导型': '（本场面试官为温和引导型，评分时同时关注考生在引导下的学习吸收能力）',
+      '压力挑战型': '（本场面试官为压力挑战型，评分时关注考生在压力下的应变能力与心理素质）',
+      '实践应用型': '（本场面试官为实践应用型，评分时关注考生解决实际问题的能力）',
+      '英文面试型': '（本场面试官为英文面试型，评分时同时评估考生的学术英语表达能力）'
+    };
+    const personaHint = personaHintMap[state.config.interviewerStyle] || '';
+    const systemPrompt = `你是一位资深的${state.config.targetSchool}${state.config.major}专业的博士研究生面试评审专家，具有15年以上面试评审经验。${personaHint}请根据以下面试对话记录，对考生的表现进行全面、客观、专业、严格的评审。
 
 【评分铁律】
 1. 空回答零分：如果某题考生未回答或回答少于20字，该题得分必须为0分，不得给同情分。
@@ -45356,8 +45405,9 @@ async function endPhdAIMockInterview() {
 1. 本题得分（满分按题目权重分配，专业题权重高）
 2. 关键词命中情况：列出该题的核心关键词，标注考生命中了哪些（用✅/❌）
 3. 逐句诊断：对考生回答中的关键句子，用🟢正确精彩/🟡不够深入/🔴概念错误/⚪废话偏题标记
-4. 本题评语：具体指出本题答得好的地方和不足的地方
-5. 改进建议：针对本题给出具体的改进方向
+4. 参考答案要点：给出该题完整的答题要点（3-5个要点，简明列出），供考生对照学习
+5. 本题评语：具体指出本题答得好的地方和不足的地方
+6. 改进建议：针对本题给出具体的改进方向
 
 【整体评审要求】
 1. 八维度各给具体分数和评分理由（引用考生回答中的具体内容）
@@ -45384,6 +45434,7 @@ async function endPhdAIMockInterview() {
 - 本题得分：X/X分
 - 关键词命中：✅关键词1 ❌关键词2 ...
 - 逐句诊断：🟢"正确的句子" 🟡"不够深入的句子" 🔴"错误的句子"
+- 参考答案要点：1.要点1 2.要点2 3.要点3
 - 本题评语：...
 - 改进建议：...
 （后续每题以此类推）
@@ -45449,6 +45500,8 @@ ${questionRefs}
     
     // 保存到历史记录
     saveAIMockInterviewToHistory(state);
+    // 自动收录低分题到错题本
+    autoAddWrongBookFromReview(state);
     
   } catch (error) {
     console.error('AI评审失败:', error);
@@ -45501,15 +45554,21 @@ function extractPerQuestionReview(text, questionCount) {
     const scoreMatch = qContent.match(/本题得分[：:]\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/);
     // 提取关键词命中
     const kwMatch = qContent.match(/关键词命中[：:]([\s\S]*?)(?=逐句诊断|本题评语|改进建议|$)/);
+    // 提取逐句诊断
+    const diagMatch = qContent.match(/逐句诊断[：:]([\s\S]*?)(?=本题评语|改进建议|$)/);
     // 提取本题评语
     const commentMatch = qContent.match(/本题评语[：:]([\s\S]*?)(?=改进建议|$)/);
+    // 提取改进建议
+    const sugMatch = qContent.match(/改进建议[：:]([\s\S]*?)(?=本题评语|$)/);
     reviews.push({
       num: qNum,
       content: qContent.trim(),
       score: scoreMatch ? parseFloat(scoreMatch[1]) : null,
       maxScore: scoreMatch ? parseFloat(scoreMatch[2]) : null,
       keywords: kwMatch ? kwMatch[1].trim() : '',
-      comment: commentMatch ? commentMatch[1].trim() : ''
+      diagnosis: diagMatch ? diagMatch[1].trim() : '',
+      comment: commentMatch ? commentMatch[1].trim() : '',
+      suggestion: sugMatch ? sugMatch[1].trim() : ''
     });
   }
   return reviews;
@@ -45519,22 +45578,40 @@ function extractPerQuestionReview(text, questionCount) {
 function renderAIMockInterviewReport(state) {
   let html = '<div style="background:white;border:1px solid #e0e0e0;border-radius:12px;margin-top:20px;overflow:hidden">';
   
-  // 报告标题
-  html += '<div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px;text-align:center"><div style="font-size:24px;font-weight:700">📊 AI面试评分报告</div><div style="font-size:13px;opacity:0.9;margin-top:6px">' + state.config.targetSchool + ' | ' + state.config.major + ' | ' + state.config.interviewType + '</div></div>';
+  // ===== 报告标题 =====
+  html += '<div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px 20px 16px;text-align:center"><div style="font-size:24px;font-weight:700">📊 AI面试评分报告</div><div style="font-size:13px;opacity:0.9;margin-top:6px">' + state.config.targetSchool + ' | ' + state.config.major + ' | ' + state.config.interviewType + '</div></div>';
+  
+  // ===== 面试概况 =====
+  const stats = getAIMockInterviewStats(state);
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;padding:15px 20px;background:#f8f9ff;border-bottom:1px solid #e5e7eb">';
+  const statItems = [
+    ['🎯 题目数量', stats.questionCount + ' 题'],
+    ['⏱️ 面试用时', stats.durationText],
+    ['📝 回答字数', stats.totalWords + ' 字'],
+    ['📊 平均每题', stats.avgWords + ' 字'],
+    ['🎭 面试官', state.config.interviewerStyle || '学术严谨型'],
+    ['📶 难度', state.config.difficulty]
+  ];
+  statItems.forEach(function(s) {
+    html += '<div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;text-align:center"><div style="font-size:11px;color:#888;margin-bottom:3px">' + s[0] + '</div><div style="font-size:14px;font-weight:700;color:#333">' + s[1] + '</div></div>';
+  });
+  html += '</div>';
   
   html += '<div style="padding:20px">';
   
-  // 总分
+  // ===== 总分 =====
   const totalScore = state.scores.total || 0;
   const scoreColor = totalScore >= 80 ? '#22c55e' : totalScore >= 60 ? '#f59e0b' : '#ef4444';
-  const scoreLevel = totalScore >= 80 ? '优秀' : totalScore >= 70 ? '良好' : totalScore >= 60 ? '合格' : '需加强';
-  
+  const scoreLevel = totalScore >= 85 ? '优秀' : totalScore >= 75 ? '良好' : totalScore >= 60 ? '合格' : '需加强';
   html += '<div style="text-align:center;margin-bottom:25px"><div style="font-size:14px;color:#999;margin-bottom:8px">综合评分</div><div style="font-size:56px;font-weight:800;color:' + scoreColor + '">' + totalScore + '<span style="font-size:24px;color:#999">/100</span></div><div style="display:inline-block;padding:4px 16px;background:' + scoreColor + '20;color:' + scoreColor + ';border-radius:20px;font-size:14px;font-weight:600;margin-top:8px">' + scoreLevel + '</div></div>';
   
-  // 各维度评分（八维度）
+  // ===== 八维度评分（雷达图 + 条形图） =====
   html += '<div style="margin-bottom:25px"><div style="font-weight:600;font-size:15px;color:#333;margin-bottom:15px">📈 八维度评分</div>';
   const dims = state.scores.dimensions || {};
-  Object.keys(dims).forEach(name => {
+  html += '<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center">';
+  html += '<div style="flex:0 0 280px;text-align:center"><canvas id="aiMockRadarChart" width="280" height="250" style="max-width:100%"></canvas></div>';
+  html += '<div style="flex:1;min-width:280px">';
+  Object.keys(dims).forEach(function(name) {
     const dimData = dims[name];
     const score = typeof dimData === 'object' ? dimData.score : dimData;
     const maxScore = typeof dimData === 'object' ? dimData.max : 20;
@@ -45542,38 +45619,72 @@ function renderAIMockInterviewReport(state) {
     const threshold = maxScore * 0.8;
     const midThreshold = maxScore * 0.6;
     const color = score >= threshold ? '#22c55e' : score >= midThreshold ? '#f59e0b' : '#ef4444';
-    html += '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="color:#333;font-weight:500">' + name + '</span><span style="color:' + color + ';font-weight:700">' + score + '/' + maxScore + '</span></div><div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden"><div style="height:100%;width:' + percent + '%;background:linear-gradient(90deg,' + color + '88,' + color + ');border-radius:4px;transition:width 0.8s"></div></div></div>';
+    html += '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px"><span style="color:#333;font-weight:500">' + name + '</span><span style="color:' + color + ';font-weight:700">' + score + '/' + maxScore + '</span></div><div style="height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden"><div style="height:100%;width:' + percent + '%;background:linear-gradient(90deg,' + color + '88,' + color + ');border-radius:4px"></div></div></div>';
   });
-  html += '</div>';
+  html += '</div></div></div>';
   
-  // 逐题评审（如果有）
+  // ===== 逐题详细评审 =====
   const perQuestionReviews = state.scores.perQuestionReviews || [];
+  const interviewMsgs = state.conversation.filter(function(m){ return m.role === 'interviewer'; });
+  const answerMsgs = state.conversation.filter(function(m){ return m.role === 'candidate'; });
   if (perQuestionReviews.length > 0) {
-    html += '<div style="margin-bottom:25px"><div style="font-weight:600;font-size:15px;color:#333;margin-bottom:15px">📝 逐题评审</div>';
-    perQuestionReviews.forEach(review => {
+    html += '<div style="margin-bottom:25px"><div style="font-weight:600;font-size:15px;color:#333;margin-bottom:15px">📝 逐题详细评审</div>';
+    perQuestionReviews.forEach(function(review) {
       const qScore = review.score !== null ? review.score : '-';
       const qMax = review.maxScore !== null ? review.maxScore : '-';
       const qColor = review.score !== null && review.maxScore > 0 ? (review.score / review.maxScore >= 0.8 ? '#22c55e' : review.score / review.maxScore >= 0.6 ? '#f59e0b' : '#ef4444') : '#999';
-      html += '<div style="margin-bottom:15px;padding:14px;background:#fafafa;border:1px solid #e5e7eb;border-radius:8px">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:600;font-size:13px;color:#333">第' + review.num + '题</span><span style="font-weight:700;font-size:14px;color:' + qColor + '">' + qScore + '/' + qMax + '</span></div>';
+      const qIdx = review.num - 1;
+      const qText = interviewMsgs[qIdx] ? interviewMsgs[qIdx].content : '';
+      const aText = answerMsgs[qIdx] ? answerMsgs[qIdx].content : '（未回答）';
+      // 每题用时
+      let qTime = '';
+      if (interviewMsgs[qIdx] && answerMsgs[qIdx]) {
+        const secs = Math.max(0, Math.round((answerMsgs[qIdx].timestamp - interviewMsgs[qIdx].timestamp) / 1000));
+        qTime = Math.floor(secs / 60) + '分' + (secs % 60) + '秒';
+      }
+      const rContent = review.content || '';
+      const diagMatch = rContent.match(/逐句诊断[：:]([\s\S]*?)(?=参考答案要点|本题评语|改进建议|$)/);
+      const refMatch = rContent.match(/参考答案要点[：:]([\s\S]*?)(?=本题评语|改进建议|$)/);
+      const sugMatch = rContent.match(/改进建议[：:]([\s\S]*?)(?=本题评语|$)/);
+      
+      html += '<div style="margin-bottom:15px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#fafafa;border-bottom:1px solid #e5e7eb"><span style="font-weight:600;font-size:13px;color:#333">第' + review.num + '题' + (qTime ? ' · ⏱️ ' + qTime : '') + '</span><span style="font-weight:700;font-size:15px;color:' + qColor + '">' + qScore + '/' + qMax + ' 分</span></div>';
+      if (qText) {
+        html += '<div style="padding:10px 14px;background:#f0f4ff;border-bottom:1px solid #eef2ff"><div style="font-size:11px;color:#667eea;font-weight:600;margin-bottom:3px">❓ 题目</div><div style="font-size:13px;color:#333;line-height:1.6">' + qText + '</div></div>';
+      }
+      html += '<div style="padding:10px 14px;background:#fffbeb;border-bottom:1px solid #fef3c7"><div style="font-size:11px;color:#d97706;font-weight:600;margin-bottom:3px">💬 你的回答</div><div style="font-size:13px;color:#333;line-height:1.6;max-height:120px;overflow-y:auto">' + aText + '</div></div>';
       if (review.keywords) {
-        html += '<div style="font-size:12px;color:#666;margin-bottom:6px"><strong>关键词：</strong>' + review.keywords + '</div>';
+        html += '<div style="padding:8px 14px;font-size:12px;color:#555;border-bottom:1px solid #f3f4f6"><strong>🎯 关键词命中：</strong>' + review.keywords + '</div>';
+      }
+      if (refMatch && refMatch[1].trim()) {
+        html += '<div style="padding:8px 14px;font-size:12px;color:#065f46;background:#ecfdf5;border-bottom:1px solid #d1fae5"><strong>✅ 参考答案要点：</strong><div style="line-height:1.7;margin-top:3px;white-space:pre-wrap">' + refMatch[1].trim() + '</div></div>';
+      }
+      if (diagMatch && diagMatch[1].trim()) {
+        html += '<div style="padding:8px 14px;font-size:12px;color:#444;border-bottom:1px solid #f3f4f6"><strong>🔬 逐句诊断：</strong><div style="line-height:1.7;margin-top:3px">' + diagMatch[1].trim() + '</div></div>';
       }
       if (review.comment) {
-        html += '<div style="font-size:12px;color:#555;line-height:1.6"><strong>评语：</strong>' + review.comment + '</div>';
+        html += '<div style="padding:8px 14px;font-size:12px;color:#555;border-bottom:1px solid #f3f4f6"><strong>📌 本题评语：</strong>' + review.comment + '</div>';
       }
+      if (sugMatch && sugMatch[1].trim()) {
+        html += '<div style="padding:8px 14px;font-size:12px;color:#1e40af;background:#eff6ff"><strong>💡 改进建议：</strong>' + sugMatch[1].trim() + '</div>';
+      }
+      html += '<div style="padding:8px 14px;display:flex;gap:8px;background:#fff">';
+      html += '<button onclick="addInterviewQuestionToFavorites(' + review.num + ')" style="padding:5px 12px;font-size:12px;background:#fef3c7;color:#b45309;border:1px solid #fcd34d;border-radius:5px;cursor:pointer">⭐ 收藏本题</button>';
+      html += '<button onclick="addInterviewQuestionToWrongBook(' + review.num + ')" style="padding:5px 12px;font-size:12px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:5px;cursor:pointer">📒 加入错题本</button>';
+      html += '</div>';
       html += '</div>';
     });
     html += '</div>';
   }
   
-  // AI详细评审内容
+  // ===== AI详细评审 =====
+  const rawText = state.scores.raw || '';
   html += '<div style="margin-bottom:20px"><div style="font-weight:600;font-size:15px;color:#333;margin-bottom:12px">🔍 AI详细评审</div>';
-  html += '<div style="background:#f8f9ff;border:1px solid #e0e7ff;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto;font-size:13px;line-height:1.8;color:#334155;white-space:pre-wrap">' + (state.scores.raw || '暂无评审内容') + '</div></div>';
+  html += '<div style="background:#f8f9ff;border:1px solid #e0e7ff;border-radius:8px;padding:16px;max-height:400px;overflow-y:auto;font-size:13px;line-height:1.8;color:#334155;white-space:pre-wrap">' + rawText + '</div></div>';
   
-  // 面试回放
+  // ===== 面试对话回放 =====
   html += '<div style="margin-bottom:20px"><div style="font-weight:600;font-size:15px;color:#333;margin-bottom:12px">💬 面试对话回放</div>';
-  state.conversation.forEach((msg, idx) => {
+  state.conversation.forEach(function(msg) {
     if (msg.role === 'interviewer') {
       html += '<div style="margin-bottom:12px;padding:10px 14px;background:#f0f4ff;border-radius:8px;border-left:3px solid #667eea"><div style="font-size:11px;color:#667eea;font-weight:600;margin-bottom:4px">面试官' + (msg.questionNum ? '（第' + msg.questionNum + '题）' : '') + '</div><div style="font-size:13px;color:#333;line-height:1.6">' + msg.content + '</div></div>';
     } else {
@@ -45582,15 +45693,277 @@ function renderAIMockInterviewReport(state) {
   });
   html += '</div>';
   
-  // 操作按钮
+  // ===== 操作按钮 =====
   html += '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding-top:15px;border-top:1px solid #e5e7eb">';
   html += '<button onclick="startPhdAIMockInterview()" style="padding:10px 24px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🔄 再来一次</button>';
   html += '<button onclick="exportAIMockInterviewReport()" style="padding:10px 24px;background:#22c55e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px">📥 导出报告</button>';
+  html += '<button onclick="showPhdWrongBook()" style="padding:10px 24px;background:#f59e0b;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px">📒 错题本/收藏</button>';
   html += '<button onclick="renderPhdInterview()" style="padding:10px 24px;background:#e5e7eb;color:#374151;border:none;border-radius:8px;cursor:pointer;font-size:14px">← 返回面试首页</button>';
   html += '</div>';
   
   html += '</div></div>';
+  
+  // 渲染后绘制雷达图
+  setTimeout(function() {
+    try { drawAIMockRadarChart('aiMockRadarChart', dims); } catch(e) { console.error('雷达图绘制失败:', e); }
+  }, 50);
+  
   return html;
+}
+
+// 面试统计
+function getAIMockInterviewStats(state) {
+  const interviewMsgs = state.conversation.filter(function(m){ return m.role === 'interviewer'; });
+  const answerMsgs = state.conversation.filter(function(m){ return m.role === 'candidate'; });
+  const durationSecs = state.endTime && state.startTime ? Math.max(0, Math.round((state.endTime - state.startTime) / 1000)) : 0;
+  const totalWords = answerMsgs.reduce(function(s, m){ return s + (m.content || '').length; }, 0);
+  return {
+    questionCount: interviewMsgs.length,
+    durationSecs: durationSecs,
+    durationText: Math.floor(durationSecs / 60) + '分' + (durationSecs % 60) + '秒',
+    totalWords: totalWords,
+    avgWords: interviewMsgs.length > 0 ? Math.round(totalWords / interviewMsgs.length) : 0
+  };
+}
+
+// 雷达图绘制
+function drawAIMockRadarChart(canvasId, dimensions) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !dimensions) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const keys = Object.keys(dimensions);
+  if (keys.length === 0) return;
+  const cx = W / 2, cy = H / 2 + 5;
+  const radius = Math.min(W, H) / 2 - 48;
+  const angleStep = (Math.PI * 2) / keys.length;
+  
+  // 背景网格（5层）
+  for (let level = 1; level <= 5; level++) {
+    ctx.beginPath();
+    for (let i = 0; i <= keys.length; i++) {
+      const angle = -Math.PI / 2 + i * angleStep;
+      const r = radius * level / 5;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = 'rgba(102,126,234,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  
+  // 轴线
+  for (let i = 0; i < keys.length; i++) {
+    const angle = -Math.PI / 2 + i * angleStep;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle));
+    ctx.strokeStyle = 'rgba(102,126,234,0.2)';
+    ctx.stroke();
+  }
+  
+  // 数据多边形
+  ctx.beginPath();
+  for (let i = 0; i < keys.length; i++) {
+    const dim = dimensions[keys[i]];
+    const score = typeof dim === 'object' ? dim.score : dim;
+    const max = typeof dim === 'object' ? dim.max : 20;
+    const ratio = max > 0 ? Math.max(0, Math.min(1, score / max)) : 0;
+    const angle = -Math.PI / 2 + i * angleStep;
+    const x = cx + radius * ratio * Math.cos(angle);
+    const y = cy + radius * ratio * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(102,126,234,0.5)');
+  grad.addColorStop(1, 'rgba(118,75,162,0.35)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.strokeStyle = '#667eea';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // 数据点
+  for (let i = 0; i < keys.length; i++) {
+    const dim = dimensions[keys[i]];
+    const score = typeof dim === 'object' ? dim.score : dim;
+    const max = typeof dim === 'object' ? dim.max : 20;
+    const ratio = max > 0 ? Math.max(0, Math.min(1, score / max)) : 0;
+    const angle = -Math.PI / 2 + i * angleStep;
+    const x = cx + radius * ratio * Math.cos(angle);
+    const y = cy + radius * ratio * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#764ba2';
+    ctx.fill();
+  }
+  
+  // 维度标签
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#555';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < keys.length; i++) {
+    const dim = dimensions[keys[i]];
+    const score = typeof dim === 'object' ? dim.score : dim;
+    const max = typeof dim === 'object' ? dim.max : 20;
+    const ratio = max > 0 ? Math.max(0, Math.min(1, score / max)) : 0;
+    const angle = -Math.PI / 2 + i * angleStep;
+    const labelR = radius + 16;
+    const x = cx + labelR * Math.cos(angle);
+    const y = cy + labelR * Math.sin(angle);
+    ctx.fillText(keys[i] + '\n' + score + '/' + max, x, y);
+  }
+}
+
+// ===== 错题本 & 收藏夹（localStorage持久化） =====
+function getWrongBook() {
+  try { return JSON.parse(localStorage.getItem('phd_ai_wrongbook') || '[]'); } catch(e) { return []; }
+}
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem('phd_ai_favorites') || '[]'); } catch(e) { return []; }
+}
+function saveWrongBook(list) { try { localStorage.setItem('phd_ai_wrongbook', JSON.stringify(list)); } catch(e) {} }
+function saveFavorites(list) { try { localStorage.setItem('phd_ai_favorites', JSON.stringify(list)); } catch(e) {} }
+
+// 收藏本题
+function addInterviewQuestionToFavorites(num) {
+  const state = phdAIMockInterviewState;
+  const interviewMsgs = state.conversation.filter(function(m){ return m.role === 'interviewer'; });
+  const answerMsgs = state.conversation.filter(function(m){ return m.role === 'candidate'; });
+  const q = interviewMsgs[num - 1];
+  if (!q) { alert('未找到该题'); return; }
+  const item = {
+    id: Date.now() + '_' + num,
+    q: q.content,
+    myAnswer: answerMsgs[num - 1] ? answerMsgs[num - 1].content : '',
+    category: state.config.major,
+    date: new Date().toLocaleString()
+  };
+  const list = getFavorites();
+  if (list.some(function(x){ return x.q === item.q; })) { alert('本题已在收藏夹中'); return; }
+  list.unshift(item);
+  saveFavorites(list);
+  alert('✅ 已收藏本题！可在面试首页"错题本/收藏"中查看');
+}
+
+// 加入错题本
+function addInterviewQuestionToWrongBook(num) {
+  const state = phdAIMockInterviewState;
+  const interviewMsgs = state.conversation.filter(function(m){ return m.role === 'interviewer'; });
+  const answerMsgs = state.conversation.filter(function(m){ return m.role === 'candidate'; });
+  const q = interviewMsgs[num - 1];
+  if (!q) { alert('未找到该题'); return; }
+  const item = {
+    id: Date.now() + '_' + num,
+    q: q.content,
+    myAnswer: answerMsgs[num - 1] ? answerMsgs[num - 1].content : '',
+    category: state.config.major,
+    date: new Date().toLocaleString()
+  };
+  const list = getWrongBook();
+  if (list.some(function(x){ return x.q === item.q; })) { alert('本题已在错题本中'); return; }
+  list.unshift(item);
+  saveWrongBook(list);
+  alert('📒 已加入错题本！可在面试首页"错题本/收藏"中复习');
+}
+
+// 移除错题
+function removeWrongBookItem(id) {
+  let list = getWrongBook();
+  list = list.filter(function(x){ return x.id !== id; });
+  saveWrongBook(list);
+  renderPhdWrongBook();
+}
+
+// 移除收藏
+function removeFavoriteItem(id) {
+  let list = getFavorites();
+  list = list.filter(function(x){ return x.id !== id; });
+  saveFavorites(list);
+  renderPhdWrongBook();
+}
+
+// 显示错题本+收藏夹
+function showPhdWrongBook() {
+  renderPhdWrongBook();
+}
+
+// 渲染错题本+收藏夹
+function renderPhdWrongBook() {
+  const area = document.getElementById('phdInterviewArea');
+  if (!area) return;
+  const wrongList = getWrongBook();
+  const favList = getFavorites();
+  let html = '<div style="background:white;border:1px solid #e0e0e0;border-radius:12px;padding:25px;margin-bottom:20px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">';
+  html += '<div><div style="font-size:20px;font-weight:700;color:#333">📒 错题本 & 收藏夹</div><div style="font-size:12px;color:#999;margin-top:4px">自动保存到本地，复习时随时查看</div></div>';
+  html += '<button onclick="renderPhdInterview()" style="padding:8px 18px;background:#e5e7eb;color:#374151;border:none;border-radius:6px;cursor:pointer;font-size:13px">← 返回面试首页</button>';
+  html += '</div>';
+  
+  // 错题
+  html += '<div style="font-weight:600;font-size:15px;color:#b91c1c;margin-bottom:12px">❌ 错题本（' + wrongList.length + '）</div>';
+  if (wrongList.length === 0) {
+    html += '<div style="padding:20px;background:#fafafa;border:1px dashed #e5e7eb;border-radius:8px;text-align:center;color:#999;font-size:13px;margin-bottom:20px">暂无错题。在面试报告中点击"📒 加入错题本"即可收录复习。</div>';
+  } else {
+    wrongList.forEach(function(item) {
+      html += '<div style="margin-bottom:12px;border:1px solid #fecaca;border-radius:8px;overflow:hidden">';
+      html += '<div style="padding:10px 14px;background:#fef2f2;border-bottom:1px solid #fecaca;display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:13px;color:#b91c1c;font-weight:600">' + item.category + ' · ' + item.date + '</span><button onclick="removeWrongBookItem(\'' + item.id + '\')" style="padding:4px 10px;font-size:11px;background:#fff;color:#b91c1c;border:1px solid #fecaca;border-radius:4px;cursor:pointer">删除</button></div>';
+      html += '<div style="padding:10px 14px;background:#fff"><div style="font-size:13px;color:#333;font-weight:500;margin-bottom:6px">❓ ' + item.q + '</div>';
+      html += '<div style="font-size:12px;color:#666;background:#fafafa;padding:8px 10px;border-radius:6px;line-height:1.6"><strong>你的回答：</strong>' + (item.myAnswer || '（未回答）') + '</div></div>';
+      html += '</div>';
+    });
+  }
+  
+  // 收藏
+  html += '<div style="font-weight:600;font-size:15px;color:#b45309;margin:20px 0 12px">⭐ 收藏夹（' + favList.length + '）</div>';
+  if (favList.length === 0) {
+    html += '<div style="padding:20px;background:#fafafa;border:1px dashed #e5e7eb;border-radius:8px;text-align:center;color:#999;font-size:13px">暂无收藏。在面试报告中点击"⭐ 收藏本题"即可加入。</div>';
+  } else {
+    favList.forEach(function(item) {
+      html += '<div style="margin-bottom:12px;border:1px solid #fcd34d;border-radius:8px;overflow:hidden">';
+      html += '<div style="padding:10px 14px;background:#fffbeb;border-bottom:1px solid #fcd34d;display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:13px;color:#b45309;font-weight:600">' + item.category + ' · ' + item.date + '</span><button onclick="removeFavoriteItem(\'' + item.id + '\')" style="padding:4px 10px;font-size:11px;background:#fff;color:#b45309;border:1px solid #fcd34d;border-radius:4px;cursor:pointer">删除</button></div>';
+      html += '<div style="padding:10px 14px;background:#fff"><div style="font-size:13px;color:#333;font-weight:500;margin-bottom:6px">❓ ' + item.q + '</div>';
+      html += '<div style="font-size:12px;color:#666;background:#fafafa;padding:8px 10px;border-radius:6px;line-height:1.6"><strong>你的回答：</strong>' + (item.myAnswer || '（未回答）') + '</div></div>';
+      html += '</div>';
+    });
+  }
+  
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+// 自动收录低分题到错题本
+function autoAddWrongBookFromReview(state) {
+  try {
+    const reviews = state.scores && state.scores.perQuestionReviews ? state.scores.perQuestionReviews : [];
+    const interviewMsgs = state.conversation.filter(function(m){ return m.role === 'interviewer'; });
+    const answerMsgs = state.conversation.filter(function(m){ return m.role === 'candidate'; });
+    if (reviews.length === 0) return;
+    const list = getWrongBook();
+    let added = 0;
+    reviews.forEach(function(rv) {
+      if (rv.score !== null && rv.maxScore > 0 && (rv.score / rv.maxScore) < 0.6) {
+        const q = interviewMsgs[rv.num - 1];
+        if (!q) return;
+        const item = {
+          id: Date.now() + '_' + rv.num,
+          q: q.content,
+          myAnswer: answerMsgs[rv.num - 1] ? answerMsgs[rv.num - 1].content : '',
+          category: state.config.major,
+          date: new Date().toLocaleString()
+        };
+        if (!list.some(function(x){ return x.q === item.q; })) {
+          list.unshift(item);
+          added++;
+        }
+      }
+    });
+    if (added > 0) saveWrongBook(list);
+  } catch(e) { console.error('自动收录错题失败:', e); }
 }
 
 // 保存AI面试记录到历史
@@ -45617,23 +45990,29 @@ function saveAIMockInterviewToHistory(state) {
 // 导出AI面试报告
 function exportAIMockInterviewReport() {
   const state = phdAIMockInterviewState;
-  let text = 'AI对话面试评分报告\n';
+  const stats = getAIMockInterviewStats(state);
+  let text = '📊 AI面试评分报告\n';
   text += '='.repeat(50) + '\n\n';
-  text += '面试配置：\n';
+  text += '【面试配置】\n';
   text += '- 专业方向：' + state.config.major + '\n';
   text += '- 目标院校：' + state.config.targetSchool + '\n';
   text += '- 面试类型：' + state.config.interviewType + '\n';
   text += '- 面试难度：' + state.config.difficulty + '\n';
-  text += '- 题目数量：' + state.questionIndex + '\n';
-  text += '- 面试时长：' + Math.round((state.endTime - state.startTime) / 60000) + '分钟\n\n';
-  text += '综合评分：' + (state.scores?.total || 0) + '/100分\n\n';
-  text += '各维度评分：\n';
-  Object.entries(state.scores?.dimensions || {}).forEach(([k, v]) => {
-    text += '- ' + k + '：' + v + '/20分\n';
+  text += '- 面试官风格：' + (state.config.interviewerStyle || '学术严谨型') + '\n';
+  text += '- 题目数量：' + stats.questionCount + ' 题\n';
+  text += '- 面试用时：' + stats.durationText + '\n';
+  text += '- 回答总字数：' + stats.totalWords + ' 字（平均每题 ' + stats.avgWords + ' 字）\n\n';
+  text += '【综合评分】' + (state.scores?.total || 0) + '/100分\n\n';
+  text += '【八维度评分】\n';
+  Object.entries(state.scores?.dimensions || {}).forEach(function(entry) {
+    const k = entry[0], v = entry[1];
+    const score = typeof v === 'object' ? v.score : v;
+    const max = typeof v === 'object' ? v.max : 20;
+    text += '- ' + k + '：' + score + '/' + max + '分\n';
   });
-  text += '\nAI详细评审：\n' + (state.scores?.raw || '') + '\n\n';
-  text += '面试对话回放：\n' + '='.repeat(50) + '\n';
-  state.conversation.forEach(m => {
+  text += '\n【AI详细评审】\n' + (state.scores?.raw || '') + '\n\n';
+  text += '【面试对话回放】\n' + '='.repeat(50) + '\n';
+  state.conversation.forEach(function(m) {
     text += '\n【' + (m.role === 'interviewer' ? '面试官' : '考生') + '】\n' + m.content + '\n';
   });
   
@@ -45656,6 +46035,7 @@ function renderPhdInterview() {
   html += '<button class="phd-practice-btn" style="color:#f5576c" onclick="startPhdMockInterview()">🎯 题库模拟面试</button>';
   html += '<button class="phd-practice-btn" style="color:#fff;background:linear-gradient(135deg,#667eea,#764ba2);border:none" onclick="startPhdAIMockInterview()">🤖 AI实时对话面试（推荐）</button>';
   html += '<button class="phd-practice-btn secondary" onclick="showPhdInterviewHistory()">📋 面试记录</button>';
+  html += '<button class="phd-practice-btn secondary" onclick="showPhdWrongBook()">📒 错题本/收藏</button>';
   html += '</div>';
   
   // AI实时对话面试说明
@@ -45664,7 +46044,7 @@ function renderPhdInterview() {
   html += '<ul style="margin:0;padding-left:20px;font-size:13px;line-height:1.8;color:#475569">';
   html += '<li>AI扮演真实面试官，根据你的回答进行<strong>多轮追问和深入提问</strong></li>';
   html += '<li>支持<strong>专业知识深度挖掘</strong>，识别你的薄弱点并针对性提问</li>';
-  html += '<li>面试结束后生成<strong>综合评分报告</strong>，含5维度评分和详细改进建议</li>';
+  html += '<li>面试结束后生成<strong>综合评分报告</strong>，含八维度评分雷达图、逐题详细评审和改进建议</li>';
   html += '<li>支持<strong>面试回放</strong>，可查看完整对话记录和每题反馈</li>';
   html += '</ul></div>';
   
