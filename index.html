@@ -41516,34 +41516,50 @@ function renderTaociAI(){
   return `
   <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:12px;padding:16px;margin-bottom:16px">
     <div style="font-size:15px;font-weight:700;color:#166534;margin-bottom:4px">🤖 AI个性化套磁信生成</div>
-    <div style="font-size:13px;color:#15803d;line-height:1.6">选择目标导师（可从导师库一键带入），填写你的背景，AI根据导师研究方向生成个性化套磁信</div>
+    <div style="font-size:13px;color:#15803d;line-height:1.6">填写详细信息，AI根据导师研究方向与你的背景生成高度个性化的套磁邮件，支持多版本、AI评分与优化</div>
   </div>
   <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px">
-    <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:12px">① 选择目标导师</div>
-    <select id="taociSupSelect" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;margin-bottom:16px">
+    <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:12px">🎯 目标导师</div>
+    <select id="taociSupSelect" onchange="onTaociSupChange()" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;margin-bottom:10px">
       <option value="">-- 请选择目标导师 --</option>${supOptions}
+      <option value="custom">✍️ 自定义导师（不在列表中）</option>
     </select>
-    <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:12px">② 你的个人背景</div>
-    <textarea id="taociUserBg" rows="5" placeholder="例如：我是河南大学运动人体科学专业硕士研究生，硕士期间研究运动与脑健康，掌握Western Blot、qPCR等分子生物学技术，已发表中文核心论文1篇，英语六级520分，计划报考2027年博士。" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;resize:vertical;margin-bottom:16px"></textarea>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      <div><div style="font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">③ 语气风格</div>
-        <select id="taociStyle" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px">
-          <option value="正式学术型">正式学术型</option>
-          <option value="诚恳真挚型">诚恳真挚型</option>
-          <option value="简洁干练型">简洁干练型</option>
-        </select></div>
-      <div><div style="font-size:13px;font-weight:600;color:#475569;margin-bottom:6px">④ 套磁阶段</div>
-        <select id="taociStage" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px">
-          <option value="首次联系">首次联系</option>
-          <option value="跟进提醒">跟进提醒</option>
-          <option value="回复后沟通">回复后深度沟通</option>
-          <option value="考前面谈">考前面谈预约</option>
-          <option value="致谢">录取后致谢</option>
-        </select></div>
+    <div id="taociSupHint" style="display:none;margin-bottom:12px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:10px 14px;font-size:12px;color:#3730a3;line-height:1.8"></div>
+    <div id="taociCustomSupWrap" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:10px">✍️ 自定义导师信息</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <input type="text" id="taociCustomSupName" placeholder="导师姓名（如：王教授）" style="padding:8px;border:1px solid #bfdbfe;border-radius:6px;font-size:13px">
+        <input type="text" id="taociCustomSupSchool" placeholder="所在院校（如：上海体育大学）" style="padding:8px;border:1px solid #bfdbfe;border-radius:6px;font-size:13px">
+        <input type="text" id="taociCustomSupTitle" placeholder="职称（如：教授/博导）" style="padding:8px;border:1px solid #bfdbfe;border-radius:6px;font-size:13px">
+        <input type="text" id="taociCustomSupDir" placeholder="研究方向（如：运动与骨骼肌适应）" style="padding:8px;border:1px solid #bfdbfe;border-radius:6px;font-size:13px">
+      </div>
     </div>
-    <button onclick="generateTaociLetter()" id="taociGenBtn" style="width:100%;padding:12px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">✨ 生成套磁信</button>
+
+    <div style="font-size:14px;font-weight:700;color:#1e293b;margin:16px 0 12px">👤 你的基本信息</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">你的姓名 *</label><input type="text" id="taociName" placeholder="张三" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;box-sizing:border-box"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">本科/硕士院校 *</label><input type="text" id="taociSchool" placeholder="XX大学" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;box-sizing:border-box"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">专业 *</label><input type="text" id="taociMajor" placeholder="运动人体科学" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;box-sizing:border-box"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">学历层次</label><select id="taociDegree" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px"><option value="硕士在读">硕士在读</option><option value="硕士毕业">硕士毕业</option><option value="本科毕业">本科毕业（直博）</option><option value="在职人员">在职人员</option></select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">📧 联系邮箱 *</label><input type="text" id="taociEmail" placeholder="your@email.com" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;box-sizing:border-box"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">📱 联系电话（选填）</label><input type="text" id="taociPhone" placeholder="138XXXXXXXX" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;box-sizing:border-box"></div>
+    </div>
+
+    <div style="font-size:14px;font-weight:700;color:#1e293b;margin:16px 0 12px">🔬 学术背景与研究兴趣</div>
+    <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">感兴趣的研究方向（结合导师方向）*</label><textarea id="taociResearchDir" rows="2" placeholder="例如：我对运动与心血管健康、运动干预慢性病机制等方向非常感兴趣，阅读了您关于XX的论文，深受启发..." style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;resize:vertical;box-sizing:border-box"></textarea></div>
+    <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">个人优势 / 科研经历（选填）</label><textarea id="taociAdvantage" rows="3" placeholder="例如：曾参与XX科研项目，发表XX论文（SCI/中文核心），掌握Western Blot/qPCR/动物实验等技术，英语六级550分..." style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;resize:vertical;box-sizing:border-box"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">🎭 语气风格</label><select id="taociStyle" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px"><option value="谦逊诚恳型">谦逊诚恳型</option><option value="自信专业型">自信专业型</option><option value="简洁干练型">简洁干练型</option></select></div>
+      <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">📮 套磁阶段</label><select id="taociStage" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px"><option value="首次联系">首封套磁（首次联系导师）</option><option value="跟进提醒">跟进套磁（首封后跟进）</option><option value="回复后沟通">回复后深度沟通</option><option value="考前面谈">考前面谈预约</option><option value="致谢">录取后致谢</option></select></div>
+    </div>
+    <div style="margin-bottom:16px;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#854d0e;line-height:1.7">
+      💡 <b>提示</b>：信息越详细，生成的套磁信越个性化。研究方向和科研经历是核心，建议认真填写。生成后可使用"AI评分"功能优化。
+    </div>
+    <button onclick="generateTaociLetter()" id="taociGenBtn" style="width:100%;padding:13px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,.3)">✨ AI生成套磁邮件</button>
   </div>
-  <div id="taociResult" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px">
+  <div id="taociResult" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div style="font-size:15px;font-weight:700;color:#1e293b">📄 生成的套磁信</div>
       <div style="display:flex;gap:8px">
@@ -41552,33 +41568,94 @@ function renderTaociAI(){
         <button onclick="generateTaociLetter()" style="padding:6px 14px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">🔄 重新生成</button>
       </div>
     </div>
-    <pre id="taociLetterText" style="white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:2;color:#1e293b;background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0"></pre>
+    <pre id="taociLetterText" style="white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:2;color:#1e293b;background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;max-height:500px;overflow-y:auto"></pre>
     <div id="taociScorePanel" style="display:none;margin-top:16px"></div>
   </div>`;
+}
+function onTaociSupChange(){
+  const sel = document.getElementById('taociSupSelect');
+  const hint = document.getElementById('taociSupHint');
+  const customWrap = document.getElementById('taociCustomSupWrap');
+  if(sel.value === 'custom'){
+    hint.style.display = 'none';
+    customWrap.style.display = 'block';
+  } else if(sel.value !== ''){
+    customWrap.style.display = 'none';
+    const sup = PHD_SUPERVISORS[sel.value];
+    const dirs = (sup.directions && sup.directions.length) ? sup.directions.join('、') : sup.research;
+    hint.innerHTML = '🎯 <b>'+sup.name+'</b>（'+sup.school+'·'+(sup.title||'教授/博导')+'）<br>研究方向：'+dirs+'<br>建议在"感兴趣的研究方向"中结合以上方向填写';
+    hint.style.display = 'block';
+  } else {
+    hint.style.display = 'none';
+    customWrap.style.display = 'none';
+  }
 }
 
 async function generateTaociLetter(){
   const supIdx = document.getElementById('taociSupSelect').value;
-  const userBg = document.getElementById('taociUserBg').value.trim();
+  const name = document.getElementById('taociName').value.trim();
+  const school = document.getElementById('taociSchool').value.trim();
+  const major = document.getElementById('taociMajor').value.trim();
+  const degree = document.getElementById('taociDegree').value;
+  const email = document.getElementById('taociEmail').value.trim();
+  const phone = document.getElementById('taociPhone').value.trim();
+  const researchDir = document.getElementById('taociResearchDir').value.trim();
+  const advantage = document.getElementById('taociAdvantage').value.trim();
   const style = document.getElementById('taociStyle').value;
   const stage = document.getElementById('taociStage').value;
   const btn = document.getElementById('taociGenBtn');
+
   if(supIdx===''){ alert('请选择目标导师'); return; }
-  if(!userBg){ alert('请填写你的个人背景'); return; }
-  const sup = PHD_SUPERVISORS[supIdx];
-  btn.disabled = true; btn.textContent = '生成中...';
-  const supInfo = `导师姓名：${sup.name}\n院校：${sup.school}\n职称：${sup.title||'教授/博导'}\n研究方向：${(sup.directions&&sup.directions.length)?sup.directions.join('、'):sup.research}\n近期研究：${sup.timeline||sup.metrics||'详见导师详情'}\n招生：${sup.enrollment||''}`;
-  const systemPrompt = `你是一位体育学考博套磁信专家，擅长根据目标导师的研究方向和学生背景，撰写个性化、学术性、诚恳的套磁邮件。要求：1.必须提及导师的具体研究方向或成果，不能泛泛而谈；2.突出学生背景与导师方向的契合点；3.语气为${style}；4.套磁阶段为${stage}；5.邮件结构完整（主题/称呼/正文/结尾/署名）；6.用中文撰写，字数400-600字。`;
-  const userPrompt = `目标导师信息：\n${supInfo}\n\n学生背景：\n${userBg}\n\n请根据以上信息，生成一封${style}风格的${stage}套磁邮件。邮件主题要清晰明确。`;
+  if(!name){ alert('请填写你的姓名'); return; }
+  if(!school){ alert('请填写本科/硕士院校'); return; }
+  if(!major){ alert('请填写专业'); return; }
+  if(!email){ alert('请填写联系邮箱'); return; }
+  if(!researchDir){ alert('请填写感兴趣的研究方向'); return; }
+
+  // 组装导师信息
+  let supName, supSchool, supTitle, supDirs, supRecent;
+  if(supIdx === 'custom'){
+    supName = document.getElementById('taociCustomSupName').value.trim() || 'XX教授';
+    supSchool = document.getElementById('taociCustomSupSchool').value.trim() || 'XX大学';
+    supTitle = document.getElementById('taociCustomSupTitle').value.trim() || '教授/博导';
+    supDirs = document.getElementById('taociCustomSupDir').value.trim() || '体育学相关方向';
+    supRecent = '自定义导师';
+  } else {
+    const sup = PHD_SUPERVISORS[supIdx];
+    supName = sup.name;
+    supSchool = sup.school;
+    supTitle = sup.title || '教授/博导';
+    supDirs = (sup.directions && sup.directions.length) ? sup.directions.join('、') : sup.research;
+    supRecent = sup.timeline || sup.metrics || (sup.papers && sup.papers.length ? '代表论文：'+sup.papers.slice(0,2).join('；') : '详见导师详情页');
+  }
+
+  btn.disabled = true; btn.textContent = 'AI生成中，请稍候...';
+
+  const supInfo = `导师姓名：${supName}\n院校：${supSchool}\n职称：${supTitle}\n研究方向：${supDirs}\n近期研究/成果：${supRecent}`;
+  const userInfo = `姓名：${name}\n院校：${school}\n专业：${major}\n学历：${degree}\n邮箱：${email}${phone?'\n电话：'+phone:''}\n感兴趣的研究方向：${researchDir}${advantage?'\n个人优势/科研经历：'+advantage:''}`;
+
+  const systemPrompt = `你是一位体育学考博套磁信专家，擅长根据目标导师的研究方向和学生详细背景，撰写高度个性化、学术性、诚恳的套磁邮件。
+
+写作要求：
+1. 必须在邮件中自然提及导师的具体研究方向或代表性成果，不能泛泛而谈，让导师感受到你认真读过他的研究
+2. 突出学生背景与导师研究方向的契合点，说明为什么适合加入该课题组
+3. 邮件结构完整：清晰的邮件主题 → 称呼 → 自我介绍（1段）→ 为何选这位导师（1-2段，核心）→ 自身研究基础与优势（1段）→ 附件说明与请求 → 结尾祝福 → 署名（含邮箱）
+4. 语气风格为${style}，套磁阶段为${stage}
+5. 用中文撰写，字数400-700字，语言流畅自然，避免模板化表达
+6. 邮件主题格式："202X考博套磁-姓名-本科院校-专业"或根据阶段调整
+7. 不要编造学生没有的经历，只基于提供的信息撰写，未提供的信息不要虚构`;
+
+  const userPrompt = `【目标导师信息】\n${supInfo}\n\n【学生详细信息】\n${userInfo}\n\n请根据以上信息，生成一封${style}风格的${stage}套磁邮件。要求邮件主题清晰，正文自然融入学生背景与导师方向的契合点。`;
+
   try{
-    const result = await callDeepSeekAPI(systemPrompt, userPrompt, 1500, 'deepseek-chat');
+    const result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000, 'deepseek-chat');
     document.getElementById('taociResult').style.display = 'block';
     document.getElementById('taociLetterText').textContent = result;
     document.getElementById('taociResult').scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){
     alert('生成失败：'+e.message+'\n请检查后端API是否正常。');
   }
-  btn.disabled = false; btn.textContent = '✨ 生成套磁信';
+  btn.disabled = false; btn.textContent = '✨ AI生成套磁邮件';
 }
 function copyTaociLetter(){
   const text = document.getElementById('taociLetterText').textContent;
