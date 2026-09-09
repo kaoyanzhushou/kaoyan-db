@@ -39707,7 +39707,7 @@ function showPubTool(tool) {
     });
     html += '</div></div>';
     html += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><label style="font-size:12px;color:#075985;font-weight:600">论文内容</label><div style="display:flex;gap:8px;align-items:center"><input type="file" id="fmtFileUpload" accept=".docx,.txt" style="display:none" onchange="handleFmtFileUpload(this)"><button onclick="document.getElementById(\'fmtFileUpload\').click()" style="background:#0284c7;color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">上传Word/TXT</button><span style="font-size:10px;color:#64748b">支持.docx/.txt，表格自动转换</span></div></div><textarea id="fmtContent" rows="14" placeholder="粘贴论文全文，或点击上方"上传Word/TXT"按钮上传文档..." oninput="document.getElementById(\'fmtCharCount\').textContent=this.value.length+\' 字符\'" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;resize:vertical;font-family:Consolas,monospace;line-height:1.8"></textarea><div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px"><span id="fmtFileInfo" style="font-size:10px;color:#0284c7"></span><span style="font-size:10px;color:#64748b"><span id="fmtCharCount">0 字符</span></span></div></div>';
-    html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="font-size:11px;font-weight:600;color:#075985;margin-bottom:6px">文档图片（<span id="fmtImgCount">0</span>张，AI无法分析图片内容，请手动检查图片格式）</div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px"></div></div>';
+    html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#075985">文档图片（<span id="fmtImgCount">0</span>张）</div><div style="display:flex;gap:6px"><button onclick="detectAllImageFormats()" style="background:#0284c7;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检测图片格式</button><button onclick="checkFigureCaptions()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检查标题与引用</button></div></div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div><div id="fmtImageDetectResults" style="margin-top:10px"></div><div id="fmtCaptionCheckResult" style="margin-top:10px"></div></div>';
     html += '<div style="display:flex;gap:10px;margin-bottom:16px"><button onclick="checkPaperFormat()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI检查格式问题</button><button onclick="autoFixPaperFormat()" style="background:#075985;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">一键检查并修改</button></div>';
     html += '<div id="fmtResult"></div>';
     // 快捷工具区
@@ -39827,13 +39827,16 @@ function htmlToFormattedText(html) {
 }
 
 // 提取Word文档中的图片
+// 全局图片元数据
+var fmtImagesMeta = [];
+
 async function extractDocxImages(arrayBuffer) {
   try {
     var JSZip = await loadJSZip();
     var zip = await JSZip.loadAsync(arrayBuffer);
     var imgFiles = [];
     zip.forEach(function(path, file) {
-      if (path.match(/word\/media\/image\d+\.(png|jpg|jpeg|gif|bmp)/i)) {
+      if (path.match(/word\/media\/image\d+\.(png|jpg|jpeg|gif|bmp|tiff|tif)/i)) {
         imgFiles.push({path: path, file: file});
       }
     });
@@ -39843,18 +39846,37 @@ async function extractDocxImages(arrayBuffer) {
       return;
     }
     
+    fmtImagesMeta = [];
     document.getElementById('fmtImagesArea').style.display = 'block';
     document.getElementById('fmtImgCount').textContent = imgFiles.length;
     var grid = document.getElementById('fmtImagesGrid');
     grid.innerHTML = '';
+    document.getElementById('fmtImageDetectResults').innerHTML = '';
+    document.getElementById('fmtCaptionCheckResult').innerHTML = '';
     
     for (var i = 0; i < imgFiles.length; i++) {
       var blob = await imgFiles[i].file.async('blob');
       var url = URL.createObjectURL(blob);
       var ext = imgFiles[i].path.split('.').pop().toLowerCase();
+      var fileSize = blob.size;
+      // 保存元数据
+      var meta = {index: i+1, url: url, ext: ext, fileSize: fileSize, width: 0, height: 0, loaded: false};
+      fmtImagesMeta.push(meta);
+      // 加载图片获取尺寸
+      (function(m, imgUrl) {
+        var img = new Image();
+        img.onload = function() {
+          m.width = img.naturalWidth;
+          m.height = img.naturalHeight;
+          m.loaded = true;
+        };
+        img.src = imgUrl;
+      })(meta, url);
+      
       var div = document.createElement('div');
-      div.style.cssText = 'border:1px solid #bae6fd;border-radius:6px;padding:6px;background:#fff;text-align:center';
-      div.innerHTML = '<img src="' + url + '" style="max-width:100%;max-height:100px;object-fit:contain;border-radius:4px"><div style="font-size:10px;color:#64748b;margin-top:4px">图' + (i+1) + ' (' + ext.toUpperCase() + ')</div>';
+      div.id = 'fmtImgCard_' + (i+1);
+      div.style.cssText = 'border:1px solid #bae6fd;border-radius:8px;padding:8px;background:#fff;text-align:center';
+      div.innerHTML = '<img src="' + url + '" style="max-width:100%;max-height:120px;object-fit:contain;border-radius:4px"><div style="font-size:10px;color:#64748b;margin-top:4px;font-weight:600">图' + (i+1) + ' (' + ext.toUpperCase() + ', ' + (fileSize/1024).toFixed(1) + 'KB)</div><div id="fmtImgMeta_' + (i+1) + '" style="font-size:9px;color:#94a3b8;margin-top:2px"></div>';
       grid.appendChild(div);
     }
   } catch (e) {
@@ -39862,6 +39884,234 @@ async function extractDocxImages(arrayBuffer) {
     document.getElementById('fmtImagesArea').style.display = 'none';
   }
 }
+
+// 检测所有图片格式
+function detectAllImageFormats() {
+  if (fmtImagesMeta.length === 0) { alert('请先上传含图片的Word文档'); return; }
+  var resultsEl = document.getElementById('fmtImageDetectResults');
+  var html = '<div style="background:#f0f9ff;border:1px solid #7dd3fc;border-radius:8px;padding:12px">';
+  html += '<div style="font-size:12px;font-weight:700;color:#075985;margin-bottom:10px">图片格式检测结果</div>';
+  
+  var allOk = true;
+  fmtImagesMeta.forEach(function(img) {
+    if (!img.loaded) return;
+    var issues = [];
+    var suggestions = [];
+    
+    // 1. 像素尺寸检查
+    var minWidth = 800; // 单栏最小宽度
+    if (img.width < minWidth) {
+      issues.push('宽度' + img.width + 'px < ' + minWidth + 'px（单栏最低）');
+      suggestions.push('建议宽度≥800px（单栏）或≥1600px（双栏跨页）');
+    }
+    
+    // 2. 估算DPI（假设印刷宽度8.5cm=3.35英寸，单栏）
+    var dpiSingle = Math.round(img.width / 3.35);
+    var dpiDouble = Math.round(img.width / 7.0); // 双栏17.8cm=7英寸
+    var dpiStatus = '';
+    if (img.ext === 'png' || img.ext === 'tiff' || img.ext === 'tif') {
+      // 线图要求更高
+      if (dpiSingle < 600) {
+        issues.push('线图估算DPI=' + dpiSingle + '（单栏），建议≥600dpi');
+        suggestions.push('线图/组合图建议≥1000dpi，当前' + dpiSingle + 'dpi偏低');
+      }
+      dpiStatus = '线图DPI≈' + dpiSingle + '（单栏）/' + dpiDouble + '（双栏）';
+    } else {
+      // 照片
+      if (dpiSingle < 300) {
+        issues.push('照片估算DPI=' + dpiSingle + '（单栏），建议≥300dpi');
+        suggestions.push('照片/灰度图建议≥300dpi，当前' + dpiSingle + 'dpi偏低');
+      }
+      dpiStatus = '照片DPI≈' + dpiSingle + '（单栏）/' + dpiDouble + '（双栏）';
+    }
+    
+    // 3. 文件大小检查
+    var sizeKB = img.fileSize / 1024;
+    if (sizeKB > 10240) {
+      issues.push('文件大小' + (sizeKB/1024).toFixed(1) + 'MB > 10MB');
+      suggestions.push('建议压缩至≤5MB，可使用JPG格式降低质量');
+    }
+    
+    // 4. 格式检查
+    var formatOk = ['png','jpg','jpeg','tiff','tif'].indexOf(img.ext) >= 0;
+    if (!formatOk) {
+      issues.push('格式' + img.ext.toUpperCase() + '不常见，建议转换为PNG/JPG/TIFF');
+    }
+    if (img.ext === 'gif') {
+      issues.push('GIF格式不适合学术论文，建议转换为PNG或JPG');
+    }
+    if (img.ext === 'bmp') {
+      issues.push('BMP格式文件过大，建议转换为PNG或TIFF');
+    }
+    
+    // 5. 宽高比
+    var ratio = (img.width / img.height).toFixed(2);
+    if (img.width > img.height * 2.5) {
+      suggestions.push('图片过宽（宽高比' + ratio + ':1），建议调整布局或拆分');
+    }
+    
+    if (issues.length > 0) allOk = false;
+    
+    var statusColor = issues.length > 0 ? '#dc2626' : '#059669';
+    var statusText = issues.length > 0 ? '需改进（' + issues.length + '项）' : '合格';
+    
+    html += '<div style="border:1px solid ' + (issues.length > 0 ? '#fca5a5' : '#86efac') + ';border-radius:6px;padding:10px;margin-bottom:8px;background:' + (issues.length > 0 ? '#fef2f2' : '#f0fdf4') + '">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:#1e293b">图' + img.index + '</span><span style="font-size:10px;font-weight:600;color:' + statusColor + '">' + statusText + '</span></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:10px;color:#475569;margin-bottom:6px">';
+    html += '<div>尺寸: ' + img.width + '×' + img.height + 'px</div>';
+    html += '<div>大小: ' + sizeKB.toFixed(1) + 'KB</div>';
+    html += '<div>格式: ' + img.ext.toUpperCase() + '</div>';
+    html += '<div>宽高比: ' + ratio + ':1</div>';
+    html += '<div style="grid-column:1/-1">' + dpiStatus + '</div>';
+    html += '</div>';
+    if (issues.length > 0) {
+      html += '<div style="font-size:10px;color:#991b1b;line-height:1.6">⚠️ ' + issues.join('；') + '</div>';
+    }
+    if (suggestions.length > 0) {
+      html += '<div style="font-size:10px;color:#92400e;line-height:1.6;margin-top:2px">💡 ' + suggestions.join('；') + '</div>';
+    }
+    html += '</div>';
+  });
+  
+  if (allOk) {
+    html += '<div style="text-align:center;padding:10px;color:#059669;font-size:12px;font-weight:600">所有图片格式合格</div>';
+  }
+  html += '<div style="font-size:9px;color:#94a3b8;margin-top:8px;border-top:1px solid #bae6fd;padding-top:6px">注：DPI按印刷尺寸估算（单栏8.5cm/双栏17.8cm），实际以期刊要求为准。线图建议≥600-1000dpi，照片建议≥300dpi。</div>';
+  html += '</div>';
+  resultsEl.innerHTML = html;
+}
+
+// 检查图片标题与引用
+async function checkFigureCaptions() {
+  var content = document.getElementById('fmtContent').value;
+  if (!content) { alert('请先输入或上传论文内容'); return; }
+  var resultEl = document.getElementById('fmtCaptionCheckResult');
+  resultEl.innerHTML = '<div style="padding:12px;text-align:center;color:#7c3aed;font-size:12px">正在检查图片标题与引用...</div>';
+  
+  try {
+    // 规则检查
+    var ruleResults = ruleCheckFigureCaptions(content);
+    
+    // AI检查标题质量
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var captionsText = ruleResults.captions.map(function(c) { return c.text; }).join('\n');
+    var aiSuggestions = '';
+    if (captionsText) {
+      var systemPrompt = '你是学术论文格式编辑专家。请检查以下图片标题的学术规范性。检查内容：1.标题是否过于简短（应包含研究对象、条件、关键指标）；2.是否包含冗余词（如"图片显示"、"如图所示"）；3.缩写是否在首次出现时定义；4.统计信息标注是否规范（n=, P值, mean±SD）；5.子图标注（A/B/C）是否在标题中说明。输出：每条标题的问题和修改建议。使用中文。';
+      aiSuggestions = await callDeepSeekAPI(systemPrompt, captionsText, 1500, model);
+    }
+    
+    // 渲染结果
+    var html = '<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;padding:12px">';
+    html += '<div style="font-size:12px;font-weight:700;color:#5b21b6;margin-bottom:10px">图片标题与引用检查</div>';
+    
+    // 统计
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">';
+    html += '<div style="text-align:center;padding:8px;background:#fff;border-radius:6px"><div style="font-size:18px;font-weight:700;color:#5b21b6">' + ruleResults.captions.length + '</div><div style="font-size:9px;color:#6b7280">图片标题数</div></div>';
+    html += '<div style="text-align:center;padding:8px;background:#fff;border-radius:6px"><div style="font-size:18px;font-weight:700;color:' + (ruleResults.issues.length > 0 ? '#dc2626' : '#059669') + '">' + ruleResults.issues.length + '</div><div style="font-size:9px;color:#6b7280">规则问题</div></div>';
+    html += '<div style="text-align:center;padding:8px;background:#fff;border-radius:6px"><div style="font-size:18px;font-weight:700;color:#0284c7">' + ruleResults.citations.length + '</div><div style="font-size:9px;color:#6b7280">正文引用数</div></div>';
+    html += '<div style="text-align:center;padding:8px;background:#fff;border-radius:6px"><div style="font-size:18px;font-weight:700;color:' + (fmtImagesMeta.length > 0 ? '#7c3aed' : '#94a3b8') + '">' + fmtImagesMeta.length + '</div><div style="font-size:9px;color:#6b7280">文档图片数</div></div>';
+    html += '</div>';
+    
+    // 规则问题
+    if (ruleResults.issues.length > 0) {
+      html += '<div style="font-size:11px;font-weight:600;color:#991b1b;margin-bottom:6px">⚠️ 规则检查问题</div>';
+      ruleResults.issues.forEach(function(iss) {
+        html += '<div style="font-size:11px;color:#b91c1c;line-height:1.8;padding:4px 8px;background:#fef2f2;border-radius:4px;margin-bottom:4px">• ' + iss + '</div>';
+      });
+    } else {
+      html += '<div style="font-size:11px;color:#059669;padding:6px 8px;background:#f0fdf4;border-radius:4px;margin-bottom:10px">✅ 编号连续性、引用对应检查通过</div>';
+    }
+    
+    // 图片标题列表
+    if (ruleResults.captions.length > 0) {
+      html += '<div style="font-size:11px;font-weight:600;color:#5b21b6;margin:10px 0 6px">检测到的图片标题</div>';
+      ruleResults.captions.forEach(function(cap) {
+        html += '<div style="font-size:10px;color:#475569;line-height:1.6;padding:4px 8px;background:#fff;border:1px solid #ddd6fe;border-radius:4px;margin-bottom:3px"><span style="font-weight:600;color:#5b21b6">' + cap.num + '</span> ' + cap.text.substring(0, 120) + (cap.text.length > 120 ? '...' : '') + '</div>';
+      });
+    }
+    
+    // AI建议
+    if (aiSuggestions) {
+      html += '<div style="font-size:11px;font-weight:600;color:#5b21b6;margin:10px 0 6px">AI标题质量建议</div>';
+      html += '<div class="md-content" style="font-size:11px;line-height:1.8;color:#1e293b;background:#fff;border:1px solid #ddd6fe;border-radius:6px;padding:10px">' + renderMarkdown(aiSuggestions) + '</div>';
+    }
+    
+    html += '</div>';
+    resultEl.innerHTML = html;
+  } catch (e) {
+    resultEl.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:10px">检查失败：' + e.message + '</div>';
+  }
+}
+
+// 规则检查图片标题与引用
+function ruleCheckFigureCaptions(content) {
+  var result = {captions: [], citations: [], issues: []};
+  
+  // 提取图片标题（图1/Figure 1/Fig. 1 开头的行）
+  var captionPattern = /(?:^|\n)(?:图|Figure|Fig\.?)\s*(\d+)[\.、:：\s]*(.+?)(?=\n|$)/gi;
+  var match;
+  var captionNums = [];
+  while ((match = captionPattern.exec(content)) !== null) {
+    var num = parseInt(match[1]);
+    var text = match[2].trim();
+    if (text.length > 2) {
+      result.captions.push({num: num, text: '图' + num + ' ' + text});
+      captionNums.push(num);
+    }
+  }
+  
+  // 检查编号连续性
+  if (captionNums.length > 0) {
+    var sorted = captionNums.sort(function(a,b){return a-b;});
+    var maxNum = sorted[sorted.length-1];
+    for (var i = 1; i <= maxNum; i++) {
+      if (sorted.indexOf(i) < 0) {
+        result.issues.push('图片编号不连续：缺少图' + i);
+      }
+    }
+    // 检查重复
+    var duplicates = sorted.filter(function(item, pos) { return sorted.indexOf(item) !== pos; });
+    if (duplicates.length > 0) {
+      result.issues.push('图片编号重复：图' + [...new Set(duplicates)].join('、图'));
+    }
+  }
+  
+  // 提取正文引用（见图X、如图X所示、(图X)、Figure X等）
+  var citePattern = /(?:见图|如图|图\s*\(|\(图|Figure\s*|Fig\.\s*)(\d+)/gi;
+  var citeNums = [];
+  while ((match = citePattern.exec(content)) !== null) {
+    var cnum = parseInt(match[1]);
+    result.citations.push(cnum);
+    citeNums.push(cnum);
+  }
+  
+  // 检查引用与标题对应
+  if (captionNums.length > 0 && citeNums.length > 0) {
+    captionNums.forEach(function(n) {
+      if (citeNums.indexOf(n) < 0) {
+        result.issues.push('图' + n + '有标题但正文未引用');
+      }
+    });
+    citeNums.forEach(function(n) {
+      if (captionNums.indexOf(n) < 0) {
+        result.issues.push('正文引用了图' + n + '但无对应图片标题');
+      }
+    });
+  }
+  
+  // 检查文档图片数与标题数是否一致
+  if (fmtImagesMeta.length > 0 && result.captions.length > 0) {
+    if (fmtImagesMeta.length !== result.captions.length) {
+      result.issues.push('文档中有' + fmtImagesMeta.length + '张图片，但检测到' + result.captions.length + '个图片标题，数量不一致（可能有图片缺少标题或标题格式不规范）');
+    }
+  }
+  
+  return result;
+}
+
+
+// 动态加载脚本
 
 // 动态加载脚本
 function loadScript(src) {
