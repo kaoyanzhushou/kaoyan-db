@@ -6902,6 +6902,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('publish')" id="paperTab-publish" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿中心</button>
       <button onclick="switchPaperSubTab('sports')" id="paperTab-sports" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">体育学特色</button>
       <button onclick="switchPaperSubTab('assist')" id="paperTab-assist" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">研究辅助</button>
+      <button onclick="switchPaperSubTab('check')" id="paperTab-check" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">论文查重</button>
     </div>
 
     <!-- 我的论文页面 -->
@@ -7509,6 +7510,84 @@ console.log('✅ 学习工具入口已加载');
       </div>
 
       <div id="sportsDetailModal" style="display:none;margin-top:16px"></div>
+    </div>
+
+    <!-- 论文查重页面 -->
+    <div id="paperContent-check" style="display:none">
+      <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:700;color:#92400e;margin-bottom:4px">🔍 论文查重与重复率检测</div>
+        <div style="font-size:13px;color:#b45309">本地快速查重（基于N-gram指纹比对）+ 专业查重平台引导 + AI智能降重建议</div>
+      </div>
+
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:320px">
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:16px">
+            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">待查论文内容</div>
+            <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+              <button onclick="loadPaperForPlagCheck()" style="background:#d97706;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">从项目加载</button>
+              <button onclick="document.getElementById('plagCheckText').value='';document.getElementById('plagResult').innerHTML='';document.getElementById('plagStats').innerHTML='';" style="background:#f3f4f6;color:#374151;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px">清空</button>
+              <span id="plagWordCount" style="font-size:11px;color:#9ca3af;align-self:center">0字</span>
+            </div>
+            <textarea id="plagCheckText" placeholder="粘贴或输入需要查重的论文内容..." style="width:100%;height:300px;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;line-height:1.8;resize:vertical;font-family:inherit" oninput="updatePlagWordCount()"></textarea>
+            <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+              <button onclick="runPlagCheck()" style="background:#d97706;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;flex:1;min-width:120px">🔍 开始查重</button>
+              <select id="plagNgramSize" style="padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
+                <option value="6">6-gram（标准）</option>
+                <option value="8">8-gram（严格）</option>
+                <option value="5">5-gram（宽松）</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px">
+            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:12px">🏢 专业查重平台（官方入口）</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <a href="https://www.cnki.net/" target="_blank" style="display:block;padding:12px;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;color:inherit;transition:all .2s" onmouseover="this.style.borderColor='#d97706';this.style.background='#fffbeb'" onmouseout="this.style.borderColor='#e5e7eb';this.style.background='#fff'">
+                <div style="font-size:13px;font-weight:600;color:#1f2937">知网 CNKI</div>
+                <div style="font-size:11px;color:#6b7280;margin-top:2px">硕博论文/期刊检测</div>
+              </a>
+              <a href="https://www.wanfangdata.com.cn/" target="_blank" style="display:block;padding:12px;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;color:inherit;transition:all .2s" onmouseover="this.style.borderColor='#d97706';this.style.background='#fffbeb'" onmouseout="this.style.borderColor='#e5e7eb';this.style.background='#fff'">
+                <div style="font-size:13px;font-weight:600;color:#1f2937">万方数据</div>
+                <div style="font-size:11px;color:#6b7280;margin-top:2px">论文相似性检测</div>
+              </a>
+              <a href="https://www.cqvip.com/" target="_blank" style="display:block;padding:12px;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;color:inherit;transition:all .2s" onmouseover="this.style.borderColor='#d97706';this.style.background='#fffbeb'" onmouseout="this.style.borderColor='#e5e7eb';this.style.background='#fff'">
+                <div style="font-size:13px;font-weight:600;color:#1f2937">维普 VIP</div>
+                <div style="font-size:11px;color:#6b7280;margin-top:2px">论文查重系统</div>
+              </a>
+              <a href="https://www.gezida.com/" target="_blank" style="display:block;padding:12px;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;color:inherit;transition:all .2s" onmouseover="this.style.borderColor='#d97706';this.style.background='#fffbeb'" onmouseout="this.style.borderColor='#e5e7eb';this.style.background='#fff'">
+                <div style="font-size:13px;font-weight:600;color:#1f2937">格子达</div>
+                <div style="font-size:11px;color:#6b7280;margin-top:2px">免费论文查重</div>
+              </a>
+            </div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:10px;line-height:1.6">⚠️ 本地查重结果仅供参考，正式提交前请以学校指定平台为准</div>
+          </div>
+        </div>
+
+        <div style="flex:1;min-width:320px">
+          <div id="plagStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+            <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;text-align:center">
+              <div style="font-size:28px;font-weight:700;color:#9ca3af" id="plagTotalRate">--</div>
+              <div style="font-size:12px;color:#6b7280;margin-top:4px">总重复率</div>
+            </div>
+            <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;text-align:center">
+              <div style="font-size:28px;font-weight:700;color:#9ca3af" id="plagDupCount">--</div>
+              <div style="font-size:12px;color:#6b7280;margin-top:4px">重复片段</div>
+            </div>
+            <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;text-align:center">
+              <div style="font-size:28px;font-weight:700;color:#9ca3af" id="plagUniqueRate">--</div>
+              <div style="font-size:12px;color:#6b7280;margin-top:4px">原创率</div>
+            </div>
+          </div>
+
+          <div id="plagResult" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;min-height:300px">
+            <div style="text-align:center;padding:60px 20px;color:#9ca3af">
+              <div style="font-size:48px;margin-bottom:16px">📋</div>
+              <div style="font-size:15px;margin-bottom:8px">等待查重</div>
+              <div style="font-size:12px">在左侧输入论文内容，点击「开始查重」</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -27704,7 +27783,7 @@ function exportFormatReport() {
 
 function switchPaperSubTab(subTab) {
   paperCurrentSubTab = subTab;
-  ['projects','editor','format','literature','design','assist','polish','publish','sports'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check'].forEach(function(t) {
     var btn = document.getElementById('paperTab-' + t);
     var content = document.getElementById('paperContent-' + t);
     if (btn) { btn.style.background = (t === subTab) ? '#16a34a' : '#fff'; btn.style.color = (t === subTab) ? '#fff' : '#16a34a'; }
@@ -29932,6 +30011,211 @@ if(sb) sb.classList.remove('show');
 if(ov) ov.classList.remove('show');
 }
 }
+
+
+// ========== 论文工作台 - 论文查重 ==========
+var PLAG_COMMON_PHRASES = [
+  "随着社会经济的发展", "近年来", "研究表明", "综上所述", "由此可见",
+  "在一定程度上", "具有重要的理论意义和实践价值", "本文采用文献资料法",
+  "运用问卷调查法", "通过实验法", "采用数理统计法", "研究结果显示",
+  "结果表明", "分析认为", "探讨了", "旨在", "以期为",
+  "提供理论依据", "提供参考", "具有重要意义", "存在显著差异",
+  "具有非常显著性差异", "不具有显著性差异", "呈正相关", "呈负相关",
+  "运动能力", "身体素质", "生理机能", "心理状态", "训练效果",
+  "运动损伤", "康复训练", "有氧能力", "无氧能力", "最大摄氧量",
+  "心率", "血压", "血乳酸", "肌酸激酶", "皮质醇",
+  "睾酮", "生长激素", "胰岛素样生长因子", "线粒体", "骨骼肌",
+  "心肌", "神经系统", "内分泌系统", "免疫系统", "消化系统",
+  "呼吸系统", "循环系统", "运动系统", "感觉系统", "泌尿系统",
+  "文献资料法", "问卷调查法", "实验法", "测试法", "观察法",
+  "访谈法", "案例分析法", "比较分析法", "逻辑分析法", "数理统计法",
+  "研究对象", "研究方法", "研究结果", "分析与讨论", "结论与建议",
+  "摘要", "关键词", "引言", "前言", "研究对象与方法",
+  "结果与分析", "讨论", "结论", "参考文献", "致谢",
+  "体育学", "运动人体科学", "运动生理学", "运动解剖学", "运动生物化学",
+  "运动生物力学", "运动心理学", "运动康复学", "体育教育训练学", "民族传统体育学",
+  "体育人文社会学", "体育管理学", "体育经济学", "体育法学", "体育史学",
+  "奥林匹克运动", "大众体育", "学校体育", "竞技体育", "社会体育",
+  "健康中国", "全民健身", "体育强国", "体教融合", "体医融合",
+  "运动处方", "体质健康", "健康促进", "慢性病预防", "老年体育",
+  "青少年体育", "幼儿体育", "女性体育", "残疾人体育", "特殊体育"
+];
+
+function updatePlagWordCount() {
+  var text = document.getElementById('plagCheckText');
+  var count = document.getElementById('plagWordCount');
+  if (text && count) count.textContent = text.value.length + '字';
+}
+
+function loadPaperForPlagCheck() {
+  var projects = [];
+  try { projects = JSON.parse(localStorage.getItem('kaoyan_paper_projects') || '[]'); } catch(e) {}
+  if (projects.length === 0) { alert('暂无论文项目，请先在「我的论文」中创建'); return; }
+  var current = projects.find(function(p){ return p.id === localStorage.getItem('kaoyan_current_paper'); });
+  if (!current) current = projects[0];
+  var text = document.getElementById('plagCheckText');
+  if (text) {
+    var content = current.title ? ('题目：' + current.title + '\n\n') : '';
+    if (current.chapters && current.chapters.length > 0) {
+      current.chapters.forEach(function(ch) {
+        if (ch.title) content += (ch.title + '\n');
+        if (ch.content) content += (ch.content + '\n\n');
+      });
+    } else if (current.content) {
+      content += current.content;
+    }
+    text.value = content;
+    updatePlagWordCount();
+  }
+}
+
+function generateNgrams(text, n) {
+  var clean = text.replace(/\s+/g, '').replace(/[，。、；：！？""''（）【】《》\n\r\t]/g, '');
+  var grams = {};
+  for (var i = 0; i <= clean.length - n; i++) {
+    var gram = clean.substring(i, i + n);
+    if (!grams[gram]) grams[gram] = [];
+    grams[gram].push(i);
+  }
+  return grams;
+}
+
+function runPlagCheck() {
+  var textEl = document.getElementById('plagCheckText');
+  var resultEl = document.getElementById('plagResult');
+  var text = textEl ? textEl.value.trim() : '';
+  if (text.length < 50) { alert('请输入至少50字的论文内容'); return; }
+
+  var n = parseInt(document.getElementById('plagNgramSize').value) || 6;
+  resultEl.innerHTML = '<div style="text-align:center;padding:40px;color:#6b7280"><div style="font-size:32px;margin-bottom:12px">⏳</div><div>正在查重分析中...</div></div>';
+
+  setTimeout(function() {
+    try {
+      var sentences = text.split(/[。！？\n]/).filter(function(s){ return s.trim().length > 5; });
+      var dupSentences = [];
+      var totalChars = text.replace(/\s+/g, '').length;
+      var dupChars = 0;
+
+      sentences.forEach(function(sentence, idx) {
+        var s = sentence.trim();
+        var sClean = s.replace(/\s+/g, '');
+        var isDup = false;
+        var matchPhrase = '';
+
+        for (var p = 0; p < PLAG_COMMON_PHRASES.length; p++) {
+          var phrase = PLAG_COMMON_PHRASES[p];
+          if (sClean.indexOf(phrase) >= 0 && phrase.length >= 4) {
+            isDup = true;
+            matchPhrase = phrase;
+            break;
+          }
+        }
+
+        if (!isDup && sClean.length >= n) {
+          var grams = generateNgrams(s, n);
+          var gramKeys = Object.keys(grams);
+          var commonCount = 0;
+          gramKeys.forEach(function(g) {
+            if (PLAG_COMMON_PHRASES.some(function(p){ return p.indexOf(g) >= 0 || g.indexOf(p) >= 0; })) {
+              commonCount++;
+            }
+          });
+          if (gramKeys.length > 0 && commonCount / gramKeys.length > 0.3) {
+            isDup = true;
+            matchPhrase = '常用学术句式';
+          }
+        }
+
+        if (isDup) {
+          dupSentences.push({index: idx, text: s, match: matchPhrase});
+          dupChars += sClean.length;
+        }
+      });
+
+      var dupRate = totalChars > 0 ? (dupChars / totalChars * 100) : 0;
+      var uniqueRate = 100 - dupRate;
+
+      var rateEl = document.getElementById('plagTotalRate');
+      var countEl = document.getElementById('plagDupCount');
+      var uniqueEl = document.getElementById('plagUniqueRate');
+      if (rateEl) {
+        rateEl.textContent = dupRate.toFixed(1) + '%';
+        rateEl.style.color = dupRate > 30 ? '#dc2626' : dupRate > 15 ? '#f59e0b' : '#16a34a';
+      }
+      if (countEl) countEl.textContent = dupSentences.length;
+      if (uniqueEl) {
+        uniqueEl.textContent = uniqueRate.toFixed(1) + '%';
+        uniqueEl.style.color = uniqueRate > 70 ? '#16a34a' : uniqueRate > 50 ? '#f59e0b' : '#dc2626';
+      }
+
+      var level = dupRate > 30 ? '高重复' : dupRate > 15 ? '中等重复' : dupRate > 8 ? '轻度重复' : '基本原创';
+      var levelColor = dupRate > 30 ? '#dc2626' : dupRate > 15 ? '#f59e0b' : dupRate > 8 ? '#3b82f6' : '#16a34a';
+
+      var html = '<div style="margin-bottom:16px;padding:14px;background:' + levelColor + '10;border-radius:8px;border-left:4px solid ' + levelColor + '">' +
+        '<div style="font-size:15px;font-weight:700;color:' + levelColor + ';margin-bottom:4px">' + level + '</div>' +
+        '<div style="font-size:12px;color:#6b7280">总字数 ' + totalChars + ' 字，重复 ' + dupChars + ' 字，检测句子 ' + sentences.length + ' 句</div>' +
+      '</div>';
+
+      if (dupSentences.length > 0) {
+        html += '<div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">⚠️ 重复片段（' + dupSentences.length + '处）</div>';
+        html += '<div style="max-height:400px;overflow-y:auto">';
+        dupSentences.forEach(function(d, i) {
+          html += '<div style="padding:10px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;margin-bottom:8px">' +
+            '<div style="font-size:11px;color:#dc2626;font-weight:600;margin-bottom:4px">重复片段 ' + (i+1) + ' · 匹配：' + d.match + '</div>' +
+            '<div style="font-size:13px;color:#374151;line-height:1.7">' + d.text + '</div>' +
+            '<button onclick="aiRewriteSentence(' + i + ')" style="margin-top:8px;background:#d97706;color:#fff;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">✨ AI降重改写</button>' +
+            '<div id="rewriteResult-' + i + '" style="margin-top:8px;display:none"></div>' +
+          '</div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div style="text-align:center;padding:30px;color:#16a34a"><div style="font-size:32px;margin-bottom:8px">✅</div><div style="font-size:14px">未检测到明显重复片段</div></div>';
+      }
+
+      html += '<div style="margin-top:16px;padding:12px;background:#f9fafb;border-radius:8px;font-size:11px;color:#9ca3af;line-height:1.6">' +
+        '📌 本地查重基于N-gram指纹与学术常用句式库比对，结果仅供参考。' +
+        '正式查重请使用知网/万方/维普/格子达等专业平台。' +
+      '</div>';
+
+      resultEl.innerHTML = html;
+      window.__plagDupSentences = dupSentences;
+    } catch(e) {
+      resultEl.innerHTML = '<div style="text-align:center;padding:40px;color:#dc2626">查重失败：' + e.message + '</div>';
+      console.error('查重错误:', e);
+    }
+  }, 300);
+}
+
+function aiRewriteSentence(idx) {
+  var sentences = window.__plagDupSentences || [];
+  var sentence = sentences[idx];
+  if (!sentence) return;
+  var resultEl = document.getElementById('rewriteResult-' + idx);
+  if (!resultEl) return;
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="font-size:12px;color:#6b7280;padding:8px">⏳ AI正在生成降重建议...</div>';
+
+  var systemPrompt = '你是体育学论文写作专家。请对以下重复率较高的句子进行降重改写，保持原意不变，改变句式结构和用词，使表达更加学术化和原创化。只输出改写后的句子，不要解释。';
+  var userPrompt = '原句：' + sentence.text + '\n\n改写后：';
+
+  if (typeof callDeepSeekAPI === 'function') {
+    callDeepSeekAPI(systemPrompt, userPrompt, 300, 'deepseek-chat').then(function(result) {
+      if (result && result.trim()) {
+        resultEl.innerHTML = '<div style="padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px">' +
+          '<div style="font-size:11px;color:#166534;font-weight:600;margin-bottom:4px">✨ AI降重建议</div>' +
+          '<div style="font-size:13px;color:#14532d;line-height:1.7">' + result.trim() + '</div>' +
+        '</div>';
+      } else {
+        resultEl.innerHTML = '<div style="font-size:12px;color:#dc2626;padding:8px">AI生成失败，请重试</div>';
+      }
+    }).catch(function(e) {
+      resultEl.innerHTML = '<div style="font-size:12px;color:#dc2626;padding:8px">AI调用失败：' + e.message + '</div>';
+    });
+  } else {
+    resultEl.innerHTML = '<div style="font-size:12px;color:#6b7280;padding:8px">AI功能暂不可用，请手动改写</div>';
+  }
+}
+
 
 function showEnglishKnowledge(id) {
 
