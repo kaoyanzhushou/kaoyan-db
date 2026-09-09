@@ -52740,13 +52740,36 @@ function renderMermaidGraph(code, containerId) {
   }
 }
 
+// 将foreignObject转换为SVG text（避免canvas污染），保留label文字与位置
+function svgSanitizeForCanvas(svg) {
+  var clone = svg.cloneNode(true);
+  var ns = 'http://www.w3.org/2000/svg';
+  clone.querySelectorAll('foreignObject').forEach(function(fo) {
+    var x = parseFloat(fo.getAttribute('x')) || 0;
+    var y = parseFloat(fo.getAttribute('y')) || 0;
+    var w = parseFloat(fo.getAttribute('width')) || 100;
+    var h = parseFloat(fo.getAttribute('height')) || 20;
+    var txt = (fo.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!txt) { fo.remove(); return; }
+    var text = document.createElementNS(ns, 'text');
+    text.setAttribute('x', (x + w / 2).toFixed(1));
+    text.setAttribute('y', (y + h / 2 + 5).toFixed(1));
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('font-size', '14');
+    text.setAttribute('font-family', '"Microsoft YaHei","PingFang SC",Arial,sans-serif');
+    text.setAttribute('fill', '#333');
+    text.textContent = txt;
+    fo.parentNode.replaceChild(text, fo);
+  });
+  return clone;
+}
 function exportMermaidPNG(containerId, filename) {
   var container = document.getElementById(containerId);
   if (!container) return;
   var svg = container.querySelector('svg');
   if (!svg) { alert('没有可导出的图表'); return; }
   try {
-    var svgData = new XMLSerializer().serializeToString(svg);
+    var svgData = new XMLSerializer().serializeToString(svgSanitizeForCanvas(svg));
     var canvas = document.createElement('canvas');
     var svgSize = svg.getBoundingClientRect();
     canvas.width = svgSize.width * 2;
