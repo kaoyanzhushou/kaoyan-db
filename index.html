@@ -28040,7 +28040,12 @@ function validateTechRoute(phases, type) {
   (tmpl.required || []).forEach(function(req) {
     let found = false;
     allSteps.forEach(function(st) {
-      if (st.indexOf(req) >= 0 || req.indexOf(st) >= 0) found = true;
+      // 精确双包含
+      if (st.indexOf(req) >= 0 || req.indexOf(st) >= 0) { found = true; return; }
+      // 核心词匹配（取需求词前2-3字，如"伦理"匹配"伦理委员会审批"、"统计"匹配"数据统计分析"）
+      for (var cl = Math.min(3, req.length); cl >= 2; cl--) {
+        if (st.indexOf(req.substring(0, cl)) >= 0) { found = true; return; }
+      }
     });
     if (!found) missing.push(req);
   });
