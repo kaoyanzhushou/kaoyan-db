@@ -7532,10 +7532,20 @@ console.log('✅ 学习工具入口已加载');
             <textarea id="plagCheckText" placeholder="粘贴或输入需要查重的论文内容..." style="width:100%;height:300px;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;line-height:1.8;resize:vertical;font-family:inherit" oninput="updatePlagWordCount()"></textarea>
             <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
               <button onclick="runPlagCheck()" style="background:#d97706;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;flex:1;min-width:120px">🔍 开始查重</button>
+              <button onclick="aiPlagCheck()" id="aiPlagBtn" style="background:#7c3aed;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;flex:1;min-width:120px">🤖 AI智能查重</button>
               <select id="plagNgramSize" style="padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
                 <option value="6">6-gram（标准）</option>
                 <option value="8">8-gram（严格）</option>
                 <option value="5">5-gram（宽松）</option>
+              </select>
+              <select id="aiPlagModel" style="padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px" title="选择AI查重模型">
+                <option value="deepseek-chat">DeepSeek V3（推荐）</option>
+                <option value="deepseek-v4-pro">DeepSeek V4 Pro（最强推理）</option>
+                <option value="deepseek-v4-flash">DeepSeek V4 Flash（快速）</option>
+                <option value="glm-5.3">智谱 GLM-5.3（中文）</option>
+                <option value="kimi-k3">Kimi K3（长文本）</option>
+                <option value="hy3">腾讯混元 hy3</option>
+                <option value="hy4-preview">腾讯混元 hy4</option>
               </select>
             </div>
           </div>
@@ -7596,9 +7606,10 @@ console.log('✅ 学习工具入口已加载');
             <div style="text-align:center;padding:60px 20px;color:#9ca3af">
               <div style="font-size:48px;margin-bottom:16px">📋</div>
               <div style="font-size:15px;margin-bottom:8px">等待查重</div>
-              <div style="font-size:12px">在左侧输入论文内容，点击「开始查重」</div>
+              <div style="font-size:12px">在左侧输入论文内容，点击「开始查重」或「AI智能查重」</div>
             </div>
           </div>
+          <div id="aiPlagResult" style="display:none"></div>
         </div>
       </div>
     </div>
@@ -30260,6 +30271,182 @@ function aiRewriteSentence(idx) {
   } else {
     resultEl.innerHTML = '<div style="font-size:12px;color:#6b7280;padding:8px">AI功能暂不可用，请手动改写</div>';
   }
+}
+
+// ========== 论文查重 - AI智能查重（语义级） ==========
+var __aiPlagRunning = false;
+
+function aiPlagCheck() {
+  if (__aiPlagRunning) { alert('AI查重正在进行中，请稍候完成'); return; }
+  var textEl = document.getElementById('plagCheckText');
+  var text = textEl ? textEl.value.trim() : '';
+  if (text.length < 50) { alert('请输入至少50字的论文内容'); return; }
+
+  var resultEl = document.getElementById('aiPlagResult');
+  if (!resultEl) return;
+
+  // 分句（按句号/问号/感叹号/分号/换行）
+  var sentences = text.split(/[。！？；;\n]/).map(function(s){return s.trim();}).filter(function(s){ return s.length > 8; });
+  if (sentences.length === 0) { alert('未检测到有效句子，请检查输入内容'); return; }
+  var totalSentences = sentences.length;
+  if (sentences.length > 24) {
+    sentences = sentences.slice(0, 24);
+  }
+
+  var modelEl = document.getElementById('aiPlagModel');
+  var model = modelEl ? modelEl.value : 'deepseek-chat';
+
+  __aiPlagRunning = true;
+  var btn = document.getElementById('aiPlagBtn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280">' +
+    '<div style="font-size:28px;margin-bottom:8px">🤖</div>' +
+    '<div style="font-size:13px;margin-bottom:6px">AI正在逐句语义分析' + (sentences.length < totalSentences ? ' ' + sentences.length + '/' + totalSentences + '句' : ' ' + totalSentences + '个句子') + '...（分批调用大模型，请耐心等待）</div>' +
+    '<div id="aiPlagProgress" style="font-size:12px;color:#7c3aed;font-weight:600"></div>' +
+    '<div style="width:100%;max-width:300px;height:6px;background:#ede9fe;border-radius:3px;margin:12px auto 0;overflow:hidden"><div id="aiPlagBar" style="height:100%;width:0%;background:#7c3aed;border-radius:3px;transition:width .3s"></div></div>' +
+  '</div>';
+
+  var batchSize = 4;
+  var batches = [];
+  for (var i = 0; i < sentences.length; i += batchSize) {
+    batches.push(sentences.slice(i, i + batchSize));
+  }
+
+  var allResults = [];
+  var batchIndex = 0;
+
+  function processBatch() {
+    if (batchIndex >= batches.length) {
+      renderAiPlagResult(allResults, sentences, totalSentences);
+      __aiPlagRunning = false;
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      return;
+    }
+    var batch = batches[batchIndex];
+    var pEl = document.getElementById('aiPlagProgress');
+    var barEl = document.getElementById('aiPlagBar');
+    var pct = Math.round(batchIndex / batches.length * 100);
+    if (pEl) pEl.textContent = '正在分析第 ' + (batchIndex * batchSize + 1) + '-' + Math.min((batchIndex+1)*batchSize, sentences.length) + ' 句（批次 ' + (batchIndex+1) + '/' + batches.length + '）';
+    if (barEl) barEl.style.width = pct + '%';
+
+    var sys = '你是体育学学术论文查重专家，精通运动人体科学、运动训练学、体育教育训练学、运动康复等领域的学术写作规范。' +
+      '用户给你一批论文中的句子，请逐句判断其语义重复风险：' +
+      '1) level：高/中/低/无 —— 判断该句是否与学术惯用表述高度雷同（包括换词不换意、同义替换等隐性重复），' +
+      '2) type：语义重复（与学术惯用表述雷同）/ 学术套话（模板化、缺乏实质信息）/ 原创表达（有自己的数据和观点）' +
+      '3) suggestion：若为高或中重复，给出不超过25字的具体改写建议；若为低或无重复，给出空字符串。' +
+      '严格只输出JSON数组，格式：[{"idx":0,"level":"高","type":"语义重复","suggestion":"改写建议"}]，不要输出任何其他文字或代码块标记。';
+
+    var user = batch.map(function(s, j) { return '[' + (batchIndex*batchSize+j) + '] ' + s; }).join('\n');
+
+    callDeepSeekAPI(sys, user, 1200, model).then(function(resp) {
+      var parsed = parseAiPlagResponse(resp, batchIndex * batchSize, batch.length);
+      allResults = allResults.concat(parsed);
+      batchIndex++;
+      processBatch();
+    }).catch(function(e) {
+      allResults.push({idx: batchIndex*batchSize, level: '?', type: 'AI调用失败', suggestion: (e.message || '未知错误').substring(0, 40)});
+      batchIndex++;
+      processBatch();
+    });
+  }
+
+  processBatch();
+}
+
+function parseAiPlagResponse(resp, startIdx, count) {
+  var results = [];
+  try {
+    var cleaned = (resp || '').replace(/```json/gi, '').replace(/```/g, '').trim();
+    var m = cleaned.match(/\[[\s\S]*\]/);
+    if (m) {
+      var arr = JSON.parse(m[0]);
+      if (Array.isArray(arr)) {
+        arr.forEach(function(item) {
+          results.push({
+            idx: startIdx + (parseInt(item.idx, 10) || 0),
+            level: (item.level || '无'),
+            type: (item.type || '原创'),
+            suggestion: (item.suggestion || '')
+          });
+        });
+      }
+    }
+  } catch(e) {
+    results.push({idx: startIdx, level: '?', type: '解析失败', suggestion: (resp || '').substring(0, 60)});
+  }
+  // 补齐缺失条目
+  var present = {};
+  results.forEach(function(r) { present[r.idx] = true; });
+  for (var k = 0; k < count; k++) {
+    if (!present[startIdx + k]) {
+      results.push({idx: startIdx + k, level: '无', type: '原创表达', suggestion: ''});
+    }
+  }
+  return results;
+}
+
+function renderAiPlagResult(results, sentences, totalSentences) {
+  var resultEl = document.getElementById('aiPlagResult');
+  if (!resultEl) return;
+
+  // 按idx排序
+  results.sort(function(a, b) { return a.idx - b.idx; });
+  var high = 0, mid = 0, low = 0, none = 0, fail = 0;
+  results.forEach(function(r) {
+    if (r.level === '高') high++;
+    else if (r.level === '中') mid++;
+    else if (r.level === '低') low++;
+    else if (r.level === '?') fail++;
+    else none++;
+  });
+  var judged = results.length - fail;
+  var riskRate = judged > 0 ? Math.round((high + mid) / judged * 100) : 0;
+  var riskColor = riskRate > 50 ? '#dc2626' : riskRate > 25 ? '#f59e0b' : '#16a34a';
+
+  var html = '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-top:16px">';
+  html += '<div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:2px">🤖 AI智能查重结果（语义级）</div>';
+  html += '<div style="font-size:11px;color:#6b7280;margin-bottom:12px">基于大模型语义理解，识别换词不换意的隐性重复与学术套话' + (totalSentences > sentences.length ? '（已分析前' + sentences.length + '句，共' + totalSentences + '句）' : '') + '</div>';
+
+  html += '<div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">';
+  html += '<div style="padding:8px 14px;background:' + riskColor + '10;border-radius:8px;border-left:3px solid ' + riskColor + '">' +
+    '<div style="font-size:11px;color:#6b7280">语义风险率</div><div style="font-size:18px;font-weight:700;color:' + riskColor + '">' + riskRate + '%</div></div>';
+  html += '<div style="padding:8px 14px;background:#fef2f2;border-radius:8px;border-left:3px solid #dc2626"><div style="font-size:11px;color:#6b7280">🔴 高重复</div><div style="font-size:18px;font-weight:700;color:#dc2626">' + high + '句</div></div>';
+  html += '<div style="padding:8px 14px;background:#fffbeb;border-radius:8px;border-left:3px solid #f59e0b"><div style="font-size:11px;color:#6b7280">🟠 中重复</div><div style="font-size:18px;font-weight:700;color:#f59e0b">' + mid + '句</div></div>';
+  html += '<div style="padding:8px 14px;background:#eff6ff;border-radius:8px;border-left:3px solid #3b82f6"><div style="font-size:11px;color:#6b7280">🔵 低重复</div><div style="font-size:18px;font-weight:700;color:#3b82f6">' + low + '句</div></div>';
+  html += '<div style="padding:8px 14px;background:#f0fdf4;border-radius:8px;border-left:3px solid #16a34a"><div style="font-size:11px;color:#6b7280">✅ 原创</div><div style="font-size:18px;font-weight:700;color:#16a34a">' + none + '句</div></div>';
+  html += '</div>';
+
+  html += '<div style="max-height:520px;overflow-y:auto">';
+  var shown = 0;
+  results.forEach(function(r) {
+    var text = sentences[r.idx] || '';
+    var lv = r.level || '无';
+    var color = lv === '高' ? '#dc2626' : lv === '中' ? '#f59e0b' : lv === '低' ? '#3b82f6' : lv === '?' ? '#6b7280' : '#16a34a';
+    var bg = lv === '高' ? '#fef2f2' : lv === '中' ? '#fffbeb' : lv === '低' ? '#eff6ff' : lv === '?' ? '#f9fafb' : '#f0fdf4';
+    var icon = lv === '高' ? '🔴' : lv === '中' ? '🟠' : lv === '低' ? '🔵' : lv === '?' ? '❓' : '✅';
+    var lvText = lv === '?' ? '未判定' : lv + '重复';
+    shown++;
+    html += '<div style="padding:10px 12px;background:' + bg + ';border:1px solid ' + color + '33;border-radius:6px;margin-bottom:8px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+      '<span style="font-size:11px;font-weight:700;color:' + color + '">' + icon + ' ' + lvText + ' · ' + (r.type || '') + '</span>' +
+      '<span style="font-size:10px;color:#9ca3af">#' + shown + '</span></div>' +
+      '<div style="font-size:13px;color:#374151;line-height:1.7;margin-bottom:4px">' + text + '</div>' +
+      (r.suggestion ? '<div style="font-size:12px;color:#6b7280;background:#fff;padding:6px 8px;border-radius:4px;border:1px dashed #d1d5db">💡 ' + r.suggestion + '</div>' : '') +
+    '</div>';
+  });
+  html += '</div>';
+
+  if (fail > 0) {
+    html += '<div style="margin-top:8px;font-size:11px;color:#dc2626">⚠️ 有' + fail + '个句子AI调用失败，可点击「重新查重」重试</div>';
+  }
+
+  html += '<div style="margin-top:12px;padding:10px;background:#f9fafb;border-radius:8px;font-size:11px;color:#9ca3af;line-height:1.6">' +
+    '📌 AI语义查重基于大模型语义理解，可发现换词不换意等隐性重复；正式查重结果仍以知网 / 格子达等专业平台报告为准。</div>';
+  html += '</div>';
+
+  resultEl.innerHTML = html;
+  resultEl.scrollIntoView({behavior: 'smooth', block: 'nearest'});
 }
 
 
