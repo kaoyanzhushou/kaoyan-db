@@ -39707,7 +39707,7 @@ function showPubTool(tool) {
     });
     html += '</div></div>';
     html += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><label style="font-size:12px;color:#075985;font-weight:600">论文内容</label><div style="display:flex;gap:8px;align-items:center"><input type="file" id="fmtFileUpload" accept=".docx,.txt" style="display:none" onchange="handleFmtFileUpload(this)"><button onclick="document.getElementById(\'fmtFileUpload\').click()" style="background:#0284c7;color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">上传Word/TXT</button><span style="font-size:10px;color:#64748b">支持.docx/.txt，表格自动转换</span></div></div><textarea id="fmtContent" rows="14" placeholder="粘贴论文全文，或点击上方"上传Word/TXT"按钮上传文档..." oninput="document.getElementById(\'fmtCharCount\').textContent=this.value.length+\' 字符\'" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;resize:vertical;font-family:Consolas,monospace;line-height:1.8"></textarea><div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px"><span id="fmtFileInfo" style="font-size:10px;color:#0284c7"></span><span style="font-size:10px;color:#64748b"><span id="fmtCharCount">0 字符</span></span></div></div>';
-    html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#075985">文档图片（<span id="fmtImgCount">0</span>张）</div><div style="display:flex;gap:6px"><button onclick="detectAllImageFormats()" style="background:#0284c7;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检测图片格式</button><button onclick="checkFigureCaptions()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检查标题与引用</button><button onclick="toggleImageTool()" style="background:#d97706;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">图片处理工具</button></div></div><div id="fmtImageToolPanel" style="display:none;margin-bottom:10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px">图片压缩与格式转换</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标格式</label><select id="imgToolFormat" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;background:#fff;color:#92400e;cursor:pointer"><option value="image/jpeg">JPG（照片，体积小）</option><option value="image/png">PNG（线图，无损）</option><option value="image/webp">WebP（高压缩率）</option></select></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">质量（JPG/WebP）: <span id="imgToolQualityVal">85</span></label><input type="range" id="imgToolQuality" min="10" max="100" value="85" oninput="document.getElementById(\'imgToolQualityVal\').textContent=this.value" style="width:100%;accent-color:#d97706"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标宽度（px，0=不缩放）</label><input type="number" id="imgToolWidth" value="0" min="0" max="5000" placeholder="如1600" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标DPI（用于计算尺寸，0=不使用）</label><input type="number" id="imgToolDPI" value="0" min="0" max="1200" placeholder="如300" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">印刷宽度（cm，配合DPI使用）</label><input type="number" id="imgToolPrintWidth" value="8.5" min="1" max="30" step="0.5" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onclick="processAllImages()" style="background:#d97706;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">批量处理并下载ZIP</button><button onclick="processImagesPreview()" style="background:#92400e;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">预览处理效果</button><span style="font-size:10px;color:#92400e">提示：DPI+印刷宽度会自动计算目标像素宽度</span></div><div id="imgToolProgress" style="display:none;margin-top:10px"><div style="font-size:10px;color:#92400e;margin-bottom:4px">处理进度: <span id="imgToolProgressText">0/0</span></div><div style="background:#fef3c7;border-radius:4px;height:8px;overflow:hidden"><div id="imgToolProgressBar" style="background:#d97706;height:100%;width:0%;transition:width .3s"></div></div></div><div id="imgToolResults" style="margin-top:10px"></div></div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div><div id="fmtImageDetectResults" style="margin-top:10px"></div><div id="fmtCaptionCheckResult" style="margin-top:10px"></div></div>';
+    html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#075985">文档图片（<span id="fmtImgCount">0</span>张）</div><div style="display:flex;gap:6px"><button onclick="detectAllImageFormats()" style="background:#0284c7;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检测图片格式</button><button onclick="checkFigureCaptions()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检查标题与引用</button><button onclick="toggleImageTool()" style="background:#d97706;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">图片处理工具</button><button onclick="analyzeAllImagesAI()" style="background:#0891b2;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">AI分析图片</button><button onclick="ocrAllImages()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">OCR文字检查</button></div></div><div id="fmtAIAnalysisResults" style="margin-top:10px"></div><div id="fmtOCRResults" style="margin-top:10px"></div><div id="fmtImageToolPanel" style="display:none;margin-bottom:10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px">图片压缩与格式转换</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标格式</label><select id="imgToolFormat" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;background:#fff;color:#92400e;cursor:pointer"><option value="image/jpeg">JPG（照片，体积小）</option><option value="image/png">PNG（线图，无损）</option><option value="image/webp">WebP（高压缩率）</option></select></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">质量（JPG/WebP）: <span id="imgToolQualityVal">85</span></label><input type="range" id="imgToolQuality" min="10" max="100" value="85" oninput="document.getElementById(\'imgToolQualityVal\').textContent=this.value" style="width:100%;accent-color:#d97706"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标宽度（px，0=不缩放）</label><input type="number" id="imgToolWidth" value="0" min="0" max="5000" placeholder="如1600" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标DPI（用于计算尺寸，0=不使用）</label><input type="number" id="imgToolDPI" value="0" min="0" max="1200" placeholder="如300" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">印刷宽度（cm，配合DPI使用）</label><input type="number" id="imgToolPrintWidth" value="8.5" min="1" max="30" step="0.5" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onclick="processAllImages()" style="background:#d97706;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">批量处理并下载ZIP</button><button onclick="processImagesPreview()" style="background:#92400e;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">预览处理效果</button><span style="font-size:10px;color:#92400e">提示：DPI+印刷宽度会自动计算目标像素宽度</span></div><div id="imgToolProgress" style="display:none;margin-top:10px"><div style="font-size:10px;color:#92400e;margin-bottom:4px">处理进度: <span id="imgToolProgressText">0/0</span></div><div style="background:#fef3c7;border-radius:4px;height:8px;overflow:hidden"><div id="imgToolProgressBar" style="background:#d97706;height:100%;width:0%;transition:width .3s"></div></div></div><div id="imgToolResults" style="margin-top:10px"></div></div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div><div id="fmtImageDetectResults" style="margin-top:10px"></div><div id="fmtCaptionCheckResult" style="margin-top:10px"></div></div>';
     html += '<div style="display:flex;gap:10px;margin-bottom:16px"><button onclick="checkPaperFormat()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI检查格式问题</button><button onclick="autoFixPaperFormat()" style="background:#075985;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">一键检查并修改</button></div>';
     html += '<div id="fmtResult"></div>';
     // 快捷工具区
@@ -40282,6 +40282,171 @@ async function processAllImages() {
   }
   
   setTimeout(function() { progressEl.style.display = 'none'; }, 2000);
+}
+
+
+// 层次4：多模态AI分析图片
+async function analyzeAllImagesAI() {
+  if (fmtImagesMeta.length === 0) { alert('请先上传含图片的Word文档'); return; }
+  var resultsEl = document.getElementById('fmtAIAnalysisResults');
+  resultsEl.innerHTML = '<div style="padding:12px;text-align:center;color:#0891b2;font-size:12px">AI正在分析图片内容（' + fmtImagesMeta.length + '张），请稍候...</div>';
+  
+  try {
+    var html = '<div style="background:#ecfeff;border:1px solid #67e8f9;border-radius:8px;padding:12px">';
+    html += '<div style="font-size:12px;font-weight:700;color:#0e7490;margin-bottom:10px">AI图片内容分析（混元视觉模型）</div>';
+    
+    for (var i = 0; i < fmtImagesMeta.length; i++) {
+      var img = fmtImagesMeta[i];
+      html += '<div id="aiAnalysis_' + img.index + '" style="border:1px solid #a5f3fc;border-radius:6px;padding:10px;margin-bottom:8px;background:#fff">';
+      html += '<div style="font-size:11px;font-weight:600;color:#0e7490;margin-bottom:6px">图' + img.index + ' <span style="font-weight:400;color:#94a3b8">分析中...</span></div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    resultsEl.innerHTML = html;
+    
+    // 逐张分析
+    for (var i = 0; i < fmtImagesMeta.length; i++) {
+      var img = fmtImagesMeta[i];
+      try {
+        var analysis = await analyzeSingleImageAI(img);
+        var cardEl = document.getElementById('aiAnalysis_' + img.index);
+        if (cardEl) {
+          cardEl.innerHTML = '<div style="font-size:11px;font-weight:600;color:#0e7490;margin-bottom:6px">图' + img.index + ' <span style="font-weight:400;color:#059669">分析完成</span></div>' +
+            '<div class="md-content" style="font-size:11px;line-height:1.8;color:#1e293b">' + renderMarkdown(analysis) + '</div>';
+        }
+      } catch (e) {
+        var cardEl = document.getElementById('aiAnalysis_' + img.index);
+        if (cardEl) {
+          cardEl.innerHTML = '<div style="font-size:11px;font-weight:600;color:#dc2626;margin-bottom:4px">图' + img.index + ' 分析失败</div><div style="font-size:10px;color:#6b7280">' + e.message + '</div>';
+        }
+      }
+    }
+  } catch (e) {
+    resultsEl.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:10px">AI分析失败：' + e.message + '</div>';
+  }
+}
+
+// 单张图片AI分析
+async function analyzeSingleImageAI(imgMeta) {
+  // 将图片转base64
+  var base64 = await imageToBase64(imgMeta.url);
+  
+  var systemPrompt = '你是学术论文图片格式审查专家。请仔细分析这张学术论文图片，从以下维度给出评价和修改建议：\n1. 图片清晰度：是否清晰可辨，有无模糊、锯齿、压缩痕迹\n2. 标注完整性：标题、坐标轴标签、单位、图例、误差线是否完整\n3. 子图标注：如果是组合图（A/B/C），子图标注是否清晰可见\n4. 文字可读性：图片中的文字大小是否合适，是否清晰可读\n5. 配色合理性：配色是否专业，是否考虑色盲友好，对比度是否足够\n6. 内容相关性：图片内容是否与体育学研究相关，数据呈现是否合理\n7. 整体质量评分：1-10分，并说明理由\n输出格式：先给总体评分，然后分维度给出具体问题和修改建议。使用中文，简洁专业。';
+  
+  // 调用混元视觉模型（OpenAI兼容接口）
+  var apiKey = 'sk-iMyJwehcFe0Y0oVIZb7V7IIk6xfC5PgIdb1StqajV0eD3JbJ';
+  var response = await fetch('https://api.hunyuan.cloud.tencent.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey
+    },
+    body: JSON.stringify({
+      model: 'hunyuan-vision',
+      messages: [
+        {role: 'system', content: systemPrompt},
+        {role: 'user', content: [
+          {type: 'text', text: '请分析这张学术论文图片的格式质量'},
+          {type: 'image_url', image_url: {url: base64}}
+        ]}
+      ],
+      temperature: 0.3,
+      max_tokens: 1500
+    })
+  });
+  
+  if (!response.ok) {
+    var errText = await response.text();
+    throw new Error('API错误 ' + response.status + ': ' + errText.substring(0, 100));
+  }
+  
+  var data = await response.json();
+  return data.choices[0].message.content;
+}
+
+// 图片转base64
+function imageToBase64(url) {
+  return new Promise(function(resolve, reject) {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      try {
+        var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        resolve(dataUrl);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    img.onerror = function() { reject(new Error('图片加载失败')); };
+    img.src = url;
+  });
+}
+
+// 层次5：OCR文字检查
+async function ocrAllImages() {
+  if (fmtImagesMeta.length === 0) { alert('请先上传含图片的Word文档'); return; }
+  var resultsEl = document.getElementById('fmtOCRResults');
+  resultsEl.innerHTML = '<div style="padding:12px;text-align:center;color:#7c3aed;font-size:12px">正在加载OCR引擎并识别图片文字，请稍候（首次加载较慢）...</div>';
+  
+  try {
+    // 加载Tesseract.js
+    if (typeof Tesseract === 'undefined') {
+      await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    }
+    
+    var html = '<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;padding:12px">';
+    html += '<div style="font-size:12px;font-weight:700;color:#5b21b6;margin-bottom:10px">OCR文字识别与检查（Tesseract.js）</div>';
+    
+    for (var i = 0; i < fmtImagesMeta.length; i++) {
+      var img = fmtImagesMeta[i];
+      html += '<div id="ocrResult_' + img.index + '" style="border:1px solid #ddd6fe;border-radius:6px;padding:10px;margin-bottom:8px;background:#fff">';
+      html += '<div style="font-size:11px;font-weight:600;color:#5b21b6;margin-bottom:6px">图' + img.index + ' <span style="font-weight:400;color:#94a3b8">识别中...</span></div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    resultsEl.innerHTML = html;
+    
+    // 逐张OCR
+    for (var i = 0; i < fmtImagesMeta.length; i++) {
+      var img = fmtImagesMeta[i];
+      try {
+        var result = await Tesseract.recognize(img.url, 'chi_sim+eng', {
+          logger: function(m) {}
+        });
+        var text = result.data.text.trim();
+        var confidence = result.data.confidence;
+        
+        var cardEl = document.getElementById('ocrResult_' + img.index);
+        if (cardEl) {
+          var issues = [];
+          if (confidence < 70) issues.push('识别置信度低（' + confidence.toFixed(0) + '%），图片文字可能不清晰');
+          if (text.length < 5) issues.push('未识别到明显文字，可能是纯图片或文字过小');
+          
+          // 检查常见问题
+          if (text.match(/[a-z]/) && text.match(/[A-Z]/)) {
+            // 有英文，检查是否有拼写问题（简单检查）
+          }
+          
+          cardEl.innerHTML = '<div style="font-size:11px;font-weight:600;color:#5b21b6;margin-bottom:6px">图' + img.index + ' <span style="font-weight:400;color:' + (confidence >= 70 ? '#059669' : '#d97706') + '">置信度 ' + confidence.toFixed(0) + '%</span></div>' +
+            (issues.length > 0 ? '<div style="font-size:10px;color:#d97706;margin-bottom:6px">⚠️ ' + issues.join('；') + '</div>' : '') +
+            '<div style="font-size:10px;color:#374151;line-height:1.7;background:#f8fafc;padding:8px;border-radius:4px;max-height:150px;overflow-y:auto;font-family:Consolas,monospace;white-space:pre-wrap">' + (text || '（未识别到文字）') + '</div>' +
+            '<div style="font-size:9px;color:#94a3b8;margin-top:4px">识别文字仅供参考，用于检查图片中文字是否清晰可读</div>';
+        }
+      } catch (e) {
+        var cardEl = document.getElementById('ocrResult_' + img.index);
+        if (cardEl) {
+          cardEl.innerHTML = '<div style="font-size:11px;font-weight:600;color:#dc2626">图' + img.index + ' OCR失败：' + e.message + '</div>';
+        }
+      }
+    }
+  } catch (e) {
+    resultsEl.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:10px">OCR失败：' + e.message + '</div>';
+  }
 }
 
 
