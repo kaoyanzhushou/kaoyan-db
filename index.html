@@ -31561,27 +31561,28 @@ const USERS_KEY = 'kaoyan_users';
 const CURRENT_USER_KEY = 'kaoyan_current_user';
 function getUsers(){
 try{
-  var users = JSON.parse(localStorage.getItem(USERS_KEY)) || {};
+  var KEY = 'kaoyan_users';
+  var users = JSON.parse(localStorage.getItem(KEY)) || {};
   if(!users['admin']){
     users['admin'] = {username:'admin',password:btoa('admin123'),registerTime:new Date().toISOString(),invitedBy:'system',inviteCodeUsed:'DEFAULT',studyData:{},isDefault:true};
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    localStorage.setItem(KEY, JSON.stringify(users));
   }
   return users;
 }
 catch(e){ return {}; }
 }
 function saveUsers(users){
-localStorage.setItem(USERS_KEY, JSON.stringify(users));
+localStorage.setItem('kaoyan_users', JSON.stringify(users));
 }
 function getCurrentUser(){
-try{ return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)); }
+try{ return JSON.parse(localStorage.getItem('kaoyan_current_user')); }
 catch(e){ return null; }
 }
 function setCurrentUser(user){
-localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+localStorage.setItem('kaoyan_current_user', JSON.stringify(user));
 }
 function clearCurrentUser(){
-localStorage.removeItem(CURRENT_USER_KEY);
+localStorage.removeItem('kaoyan_current_user');
 }
 function switchLoginTab(tab){
 document.getElementById('tabLogin').classList.toggle('active', tab==='login');
