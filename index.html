@@ -48102,7 +48102,36 @@ function downloadPhdEmailWord() {
   const htmlContent = '<html xmlns:o=\'urn:schemas-microsoft-com:office:office\' xmlns:w=\'urn:schemas-microsoft-com:office:word\' xmlns=\'http://www.w3.org/TR/REC-html40\'>' +
     '<head><meta charset=\'utf-8\'><title>套磁邮件</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->' +
     '<style>body{font-family:SimSun,serif;font-size:12pt;line-height:1.8;color:#333;padding:30px}pre{white-space:pre-wrap;font-family:SimSun,serif;font-size:12pt}</style></head>' +
-    '<body><pre>' + text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre></body></html>';
+    '<body><pre>' + text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre><script>
+// 延迟自动登录检查：确保所有函数定义后再执行
+(function(){
+  function tryAutoLogin(){
+    try {
+      if(typeof getCurrentUser === 'function' && getCurrentUser()){
+        if(typeof unlockContent === 'function') unlockContent();
+        if(typeof updateUserUI === 'function') updateUserUI();
+        console.log('[AutoLogin] 自动登录成功');
+        return true;
+      }
+    } catch(e) {
+      console.warn('[AutoLogin] 自动登录检查失败:', e);
+    }
+    return false;
+  }
+  // 立即尝试一次
+  if(!tryAutoLogin()){
+    // 如果失败，延迟100ms再试（最多重试5次）
+    var attempts = 0;
+    var interval = setInterval(function(){
+      attempts++;
+      if(tryAutoLogin() || attempts >= 5){
+        clearInterval(interval);
+      }
+    }, 100);
+  }
+})();
+</script>
+</body></html>';
   const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
