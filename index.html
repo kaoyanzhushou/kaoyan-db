@@ -38980,10 +38980,11 @@ function renderPubAnalytics() {
   // 期刊命中率排行
   html += '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:10px">期刊投稿记录与命中率</div>';
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
-  html += '<thead><tr style="background:#f9fafb"><th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e5e7eb;color:#374151">期刊</th><th style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;color:#374151">投稿次数</th><th style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;color:#374151">录用</th><th style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;color:#374151">拒稿</th><th style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;color:#374151">修回中</th><th style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;color:#374151">录用率</th></tr></thead><tbody>';
+  html += '<thead><tr style="background:#f9fafb"><th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e5e7eb;color:#374151">期刊</th><th style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;color:#374151">投稿次数</th><th style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;color:#374151">录用</th><th style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;color:#374151">拒稿</th><th style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;color:#374151">修回中</th><th style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;color:#374151">录用率</th><th style="padding:8px 12px;text-align:center;border-bottom:1px solid #e5e7eb;color:#374151">操作</th></tr></thead><tbody>';
   journalList.forEach(function(j) {
     var rateColor = j.rate >= 50 ? '#059669' : j.rate >= 20 ? '#d97706' : '#dc2626';
-    html += '<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px 12px;color:#1e293b;font-weight:500">' + j.name + '</td><td style="padding:8px 12px;text-align:center;color:#6b7280">' + j.total + '</td><td style="padding:8px 12px;text-align:center;color:#059669">' + j.accepted + '</td><td style="padding:8px 12px;text-align:center;color:#dc2626">' + j.rejected + '</td><td style="padding:8px 12px;text-align:center;color:#d97706">' + j.revision + '</td><td style="padding:8px 12px;text-align:center;font-weight:600;color:' + rateColor + '">' + j.rate + '%</td></tr>';
+    html += '<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:8px 12px;color:#1e293b;font-weight:500">' + j.name + '</td><td style="padding:8px 12px;text-align:center;color:#6b7280">' + j.total + '</td><td style="padding:8px 12px;text-align:center;color:#059669">' + j.accepted + '</td><td style="padding:8px 12px;text-align:center;color:#dc2626">' + j.rejected + '</td><td style="padding:8px 12px;text-align:center;color:#d97706">' + j.revision + '</td><td style="padding:8px 12px;text-align:center;font-weight:600;color:' + rateColor + '">' + j.rate + '%</td><td style="padding:8px 12px;text-align:center"><button onclick="toggleJournalHistory(\'' + j.name.replace(/'/g, "\\'") + '\')" style="font-size:11px;color:#7c3aed;background:#ede9fe;border:none;padding:3px 10px;border-radius:4px;cursor:pointer">查看历史</button></td></tr>';
+    html += '<tr id="journalHist_' + j.name.replace(/[^a-zA-Z0-9]/g, '_') + '" style="display:none"><td colspan="7" style="padding:0"><div id="journalHistContent_' + j.name.replace(/[^a-zA-Z0-9]/g, '_') + '" style="padding:12px 16px;background:#f9fafb"></div></td></tr>';
   });
   html += '</tbody></table></div>';
 
@@ -39358,9 +39359,11 @@ function showExportMenu() {
     menu.style.display = 'none';
     return;
   }
-  menu.innerHTML = '<div onclick="exportPubData(\'csv\')" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#374151;hover;background:#f9fafb" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'#fff\'">导出为 CSV（表格）</div>'
+  menu.innerHTML = '<div onclick="exportPubData(\'csv\')" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#374151" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'#fff\'">导出为 CSV（表格）</div>'
     + '<div onclick="exportPubData(\'text\')" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#374151" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'#fff\'">导出为文本（详细）</div>'
-    + '<div onclick="exportPubData(\'json\')" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#374151;border-top:1px solid #f3f4f6" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'#fff\'">导出为 JSON（备份）</div>';
+    + '<div onclick="exportPubData(\'json\')" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#374151" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'#fff\'">导出为 JSON（备份）</div>'
+    + '<div onclick="triggerImportFile()" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#059669;border-top:1px solid #f3f4f6;font-weight:600" onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\'#fff\'">📥 导入数据（恢复备份）</div>'
+    + '<input type="file" id="pubImportFile" accept=".json" style="display:none" onchange="handleImportFile(event)">';
   menu.style.display = 'block';
   // 点击外部关闭
   setTimeout(function() {
@@ -39369,6 +39372,181 @@ function showExportMenu() {
     });
   }, 10);
 }
+
+// 数据导入相关
+function triggerImportFile() {
+  document.getElementById('pubExportMenu').style.display = 'none';
+  var input = document.getElementById('pubImportFile');
+  if (input) input.click();
+}
+
+function handleImportFile(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  if (!file.name.endsWith('.json')) { alert('请选择 JSON 格式的备份文件'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('数据格式错误：不是数组');
+      // 验证数据
+      var validPapers = data.filter(function(p) { return p && p.title && Array.isArray(p.submissions); });
+      if (validPapers.length === 0) throw new Error('没有找到有效的论文数据');
+      showImportPreview(validPapers);
+    } catch (err) {
+      alert('导入失败：' + err.message + '\n请确保文件是从本系统导出的 JSON 备份。');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function showImportPreview(importPapers) {
+  var currentPapers = getPubPapers();
+  var totalSubs = 0, totalComments = 0;
+  importPapers.forEach(function(p) {
+    if (p.submissions) {
+      totalSubs += p.submissions.length;
+      p.submissions.forEach(function(s) {
+        if (s.reviewers) s.reviewers.forEach(function(r) { if (r.comments) totalComments += r.comments.length; });
+      });
+    }
+  });
+
+  // 检查重复
+  var duplicateCount = 0;
+  importPapers.forEach(function(ip) {
+    if (currentPapers.some(function(cp) { return cp.title === ip.title; })) duplicateCount++;
+  });
+
+  var area = document.getElementById('pubManageDetail');
+  if (!area) return;
+  area.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;max-width:600px;margin:0 auto">'
+    + '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:16px;text-align:center">数据导入预览</div>'
+    + '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px;margin-bottom:16px">'
+    + '<div style="font-size:13px;font-weight:600;color:#065f46;margin-bottom:10px">将导入以下数据：</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">'
+    + '<div><div style="font-size:22px;font-weight:700;color:#059669">' + importPapers.length + '</div><div style="font-size:11px;color:#047857">篇论文</div></div>'
+    + '<div><div style="font-size:22px;font-weight:700;color:#059669">' + totalSubs + '</div><div style="font-size:11px;color:#047857">条投稿记录</div></div>'
+    + '<div><div style="font-size:22px;font-weight:700;color:#059669">' + totalComments + '</div><div style="font-size:11px;color:#047857">条审稿意见</div></div>'
+    + '</div></div>'
+    + (duplicateCount > 0 ? '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px;margin-bottom:16px"><div style="font-size:12px;color:#92400e"><b>注意：</b>检测到 ' + duplicateCount + ' 篇论文标题与现有数据重复，选择"合并"将跳过重复论文，选择"覆盖"将删除全部现有数据。</div></div>' : '')
+    + '<div style="margin-bottom:16px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:8px">导入方式：</label>'
+    + '<label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:8px;cursor:pointer"><input type="radio" name="importMode" value="merge" checked style="accent-color:#7c3aed"><span style="font-size:12px;color:#374151"><b>合并导入</b>（推荐）：保留现有数据，跳过标题重复的论文，添加新论文</span></label>'
+    + '<label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;background:#fef2f2"><input type="radio" name="importMode" value="overwrite" style="accent-color:#dc2626"><span style="font-size:12px;color:#991b1b"><b>覆盖导入</b>：删除全部现有数据，仅保留导入的数据（不可恢复，请先备份）</span></label>'
+    + '</div>'
+    + '<div style="display:flex;gap:10px;justify-content:center">'
+    + '<button onclick="confirmImport(' + importPapers.length + ')" style="background:#7c3aed;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">确认导入</button>'
+    + '<button onclick="document.getElementById(\'pubManageDetail\').innerHTML=\'\'" style="background:#f3f4f6;color:#374151;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px">取消</button>'
+    + '</div></div>';
+  // 暂存导入数据
+  window._pubImportData = importPapers;
+  area.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+function confirmImport(paperCount) {
+  var mode = document.querySelector('input[name="importMode"]:checked').value;
+  var importPapers = window._pubImportData || [];
+  if (importPapers.length === 0) { alert('没有可导入的数据'); return; }
+
+  if (mode === 'overwrite') {
+    if (!confirm('确定要覆盖全部现有数据吗？此操作不可恢复！\n建议先导出当前数据作为备份。')) return;
+    savePubPapers(importPapers);
+    alert('导入成功！已覆盖现有数据，共导入 ' + importPapers.length + ' 篇论文。');
+  } else {
+    var currentPapers = getPubPapers();
+    var existingTitles = currentPapers.map(function(p) { return p.title; });
+    var newPapers = importPapers.filter(function(p) { return existingTitles.indexOf(p.title) === -1; });
+    var merged = currentPapers.concat(newPapers);
+    savePubPapers(merged);
+    alert('导入成功！新增 ' + newPapers.length + ' 篇论文，跳过 ' + (importPapers.length - newPapers.length) + ' 篇重复论文。\n当前共 ' + merged.length + ' 篇论文。');
+  }
+  window._pubImportData = null;
+  renderPubManage();
+}
+
+
+// 期刊投稿历史汇总
+function toggleJournalHistory(journalName) {
+  var safeName = journalName.replace(/[^a-zA-Z0-9]/g, '_');
+  var row = document.getElementById('journalHist_' + safeName);
+  if (!row) return;
+  if (row.style.display === 'none') {
+    row.style.display = 'table-row';
+    renderJournalHistory(journalName, safeName);
+  } else {
+    row.style.display = 'none';
+  }
+}
+
+function renderJournalHistory(journalName, safeName) {
+  var contentEl = document.getElementById('journalHistContent_' + safeName);
+  if (!contentEl) return;
+  var papers = getPubPapers();
+  var records = [];
+  papers.forEach(function(p) {
+    if (p.submissions) p.submissions.forEach(function(s) {
+      if (s.journal === journalName) {
+        var reviewDays = '';
+        if (s.submitDate && s.resultDate) {
+          var d1 = new Date(s.submitDate);
+          var d2 = new Date(s.resultDate);
+          reviewDays = Math.ceil((d2 - d1) / (1000*60*60*24)) + '天';
+        }
+        var totalCmt = 0, doneCmt = 0;
+        if (s.reviewers) s.reviewers.forEach(function(r) { if (r.comments) { totalCmt += r.comments.length; r.comments.forEach(function(c) { if (c.status === 'done') doneCmt++; }); } });
+        records.push({
+          paper: p,
+          sub: s,
+          reviewDays: reviewDays,
+          totalCmt: totalCmt,
+          doneCmt: doneCmt
+        });
+      }
+    });
+  });
+
+  if (records.length === 0) {
+    contentEl.innerHTML = '<div style="text-align:center;padding:20px;color:#9ca3af;font-size:12px">暂无该期刊的投稿记录</div>';
+    return;
+  }
+
+  // 汇总统计
+  var accepted = records.filter(function(r) { return r.sub.status === 'accepted' || r.sub.status === 'published'; }).length;
+  var rejected = records.filter(function(r) { return r.sub.status === 'rejected'; }).length;
+  var revision = records.filter(function(r) { return r.sub.status === 'minor_revision' || r.sub.status === 'major_revision'; }).length;
+  var avgDays = '--';
+  var daysList = records.filter(function(r) { return r.reviewDays; }).map(function(r) { return parseInt(r.reviewDays); });
+  if (daysList.length > 0) avgDays = Math.round(daysList.reduce(function(a,b){return a+b;},0) / daysList.length) + '天';
+
+  var html = '<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">' + journalName + ' - 投稿历史汇总（' + records.length + '次）</div>';
+  html += '<div style="display:flex;gap:16px;font-size:11px;color:#6b7280;flex-wrap:wrap">';
+  html += '<span>录用：<b style="color:#059669">' + accepted + '</b></span>';
+  html += '<span>拒稿：<b style="color:#dc2626">' + rejected + '</b></span>';
+  html += '<span>修回中：<b style="color:#d97706">' + revision + '</b></span>';
+  html += '<span>录用率：<b style="color:#7c3aed">' + (records.length > 0 ? ((accepted/records.length)*100).toFixed(0) : 0) + '%</b></span>';
+  html += '<span>平均审稿周期：<b style="color:#7c3aed">' + avgDays + '</b></span>';
+  html += '</div></div>';
+
+  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">';
+  html += '<thead><tr style="background:#fff"><th style="padding:6px 8px;text-align:left;border-bottom:1px solid #e5e7eb;color:#6b7280">论文标题</th><th style="padding:6px 8px;text-align:center;border-bottom:1px solid #e5e7eb;color:#6b7280">投稿日期</th><th style="padding:6px 8px;text-align:center;border-bottom:1px solid #e5e7eb;color:#6b7280">状态</th><th style="padding:6px 8px;text-align:center;border-bottom:1px solid #e5e7eb;color:#6b7280">结果日期</th><th style="padding:6px 8px;text-align:center;border-bottom:1px solid #e5e7eb;color:#6b7280">审稿周期</th><th style="padding:6px 8px;text-align:center;border-bottom:1px solid #e5e7eb;color:#6b7280">意见处理</th><th style="padding:6px 8px;text-align:center;border-bottom:1px solid #e5e7eb;color:#6b7280">操作</th></tr></thead><tbody>';
+  records.forEach(function(r) {
+    var si = getStatusInfo(r.sub.status);
+    html += '<tr style="border-bottom:1px solid #f3f4f6">';
+    html += '<td style="padding:6px 8px;color:#374151;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + r.paper.title + '">' + r.paper.title + '</td>';
+    html += '<td style="padding:6px 8px;text-align:center;color:#6b7280">' + (r.sub.submitDate || '-') + '</td>';
+    html += '<td style="padding:6px 8px;text-align:center"><span style="background:' + si.bg + ';color:' + si.color + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + si.label + '</span></td>';
+    html += '<td style="padding:6px 8px;text-align:center;color:#6b7280">' + (r.sub.resultDate || '-') + '</td>';
+    html += '<td style="padding:6px 8px;text-align:center;color:#6b7280">' + (r.reviewDays || '-') + '</td>';
+    html += '<td style="padding:6px 8px;text-align:center;color:#6b7280">' + r.doneCmt + '/' + r.totalCmt + '</td>';
+    html += '<td style="padding:6px 8px;text-align:center"><button onclick="showPaperDetail(\'' + r.paper.id + '\')" style="font-size:10px;color:#7c3aed;background:none;border:none;cursor:pointer;text-decoration:underline">查看详情</button></td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+
+  contentEl.innerHTML = html;
+}
+
 
 // 批量操作模式相关
 var pubBatchMode = false;
