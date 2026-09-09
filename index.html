@@ -738,6 +738,9 @@ body.focus-mode .focus-mode-exit{display:flex}
 .phd-list-item-btn{padding:5px 12px;border-radius:4px;font-size:12px;cursor:pointer;border:none;background:#667eea;color:white}
 .phd-list-item-btn.danger{background:#e74c3c}
 .phd-empty{text-align:center;padding:40px;color:#999;font-size:14px}
+.hover-card{transition:box-shadow .2s,transform .2s}
+.hover-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08);transform:translateY(-2px)}
+.ck-item-label:hover{background:#f0f9ff}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -37950,6 +37953,7 @@ function renderPhdPublish() {
   html += '<button onclick="switchPublishTab(\'library\')" id="pubTab-library" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">期刊信息库 <span style="background:#7c3aed;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">' + PHD_JOURNALS.length + '</span></button>';
   html += '<button onclick="switchPublishTab(\'compare\')" id="pubTab-compare" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">选刊对比</button>';
   html += '<button onclick="switchPublishTab(\'tools\')" id="pubTab-tools" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿工具</button>';
+  html += '<button onclick="switchPublishTab(\'manage\')" id="pubTab-manage" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿管理</button>';
   html += '</div>';
   // 智能选刊Tab
   html += '<div id="pubContent-recommend">';
@@ -37995,6 +37999,13 @@ function renderPhdPublish() {
   html += '<div onclick="showPubTool(\'response\')" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">💬</div><div style="font-size:15px;font-weight:700;color:#991b1b;margin-bottom:4px">审稿意见回复</div><div style="font-size:12px;color:#b91c1c">AI分析审稿意见并生成逐条回复</div></div>';
   html += '</div>';
   html += '<div id="pubToolContent" style="margin-top:20px"></div>';
+  html += '</div>';
+  // 投稿管理Tab
+  html += '<div id="pubContent-manage" style="display:none">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div>';
+  html += '<div id="pubManageStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px"></div>';
+  html += '<div id="pubManageList"></div>';
+  html += '<div id="pubManageDetail" style="margin-top:20px"></div>';
   html += '</div>';
   area.innerHTML = html;
   // 默认渲染期刊库列表
@@ -38579,6 +38590,453 @@ async function generateResponseLetter() {
   } catch (error) {
     resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">生成失败：' + error.message + '</div>';
   }
+}
+
+
+// ========== 投稿管理 P2 ==========
+var PUB_PAPERS_KEY = 'phd_publish_papers';
+
+function getPubPapers() {
+  try { return JSON.parse(localStorage.getItem(PUB_PAPERS_KEY)) || []; } catch(e) { return []; }
+}
+function savePubPapers(papers) {
+  localStorage.setItem(PUB_PAPERS_KEY, JSON.stringify(papers));
+}
+function genId(prefix) { return prefix + '_' + Date.now() + '_' + Math.random().toString(36).substr(2,5); }
+
+function getStatusInfo(status) {
+  var map = {
+    'preparing': {label:'准备中', color:'#6b7280', bg:'#f3f4f6'},
+    'submitted': {label:'已投稿', color:'#2563eb', bg:'#dbeafe'},
+    'under_review': {label:'审稿中', color:'#d97706', bg:'#fef3c7'},
+    'minor_revision': {label:'小修', color:'#059669', bg:'#dcfce7'},
+    'major_revision': {label:'大修', color:'#dc2626', bg:'#fee2e2'},
+    'accepted': {label:'已录用', color:'#059669', bg:'#dcfce7'},
+    'rejected': {label:'已拒稿', color:'#dc2626', bg:'#fee2e2'},
+    'withdrawn': {label:'已撤稿', color:'#6b7280', bg:'#f3f4f6'},
+    'published': {label:'已发表', color:'#7c3aed', bg:'#ede9fe'}
+  };
+  return map[status] || {label:status, color:'#6b7280', bg:'#f3f4f6'};
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  var target = new Date(dateStr);
+  var now = new Date();
+  now.setHours(0,0,0,0);
+  return Math.ceil((target - now) / (1000*60*60*24));
+}
+
+function renderPubManage() {
+  var papers = getPubPapers();
+  var statsEl = document.getElementById('pubManageStats');
+  var listEl = document.getElementById('pubManageList');
+  var detailEl = document.getElementById('pubManageDetail');
+  if (detailEl) detailEl.innerHTML = '';
+
+  // 统计
+  var total = papers.length;
+  var active = 0, accepted = 0, rejected = 0, revision = 0;
+  papers.forEach(function(p) {
+    if (p.submissions && p.submissions.length > 0) {
+      var latest = p.submissions[p.submissions.length - 1];
+      if (latest.status === 'accepted' || latest.status === 'published') accepted++;
+      else if (latest.status === 'rejected') rejected++;
+      else if (latest.status === 'minor_revision' || latest.status === 'major_revision') revision++;
+      else active++;
+    } else {
+      active++;
+    }
+  });
+  if (statsEl) {
+    statsEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:700;color:#1e293b">' + total + '</div><div style="font-size:12px;color:#6b7280;margin-top:4px">论文总数</div></div>'
+      + '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:700;color:#2563eb">' + active + '</div><div style="font-size:12px;color:#6b7280;margin-top:4px">进行中</div></div>'
+      + '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:700;color:#f59e0b">' + revision + '</div><div style="font-size:12px;color:#6b7280;margin-top:4px">待修回</div></div>'
+      + '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:700;color:#059669">' + accepted + '</div><div style="font-size:12px;color:#6b7280;margin-top:4px">已录用</div></div>';
+  }
+
+  // 论文列表
+  if (!listEl) return;
+  if (papers.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#9ca3af"><div style="font-size:48px;margin-bottom:12px">📄</div><div style="font-size:14px;margin-bottom:8px">还没有添加论文</div><div style="font-size:12px">点击右上角"添加论文"开始跟踪你的投稿进度</div></div>';
+    return;
+  }
+  var html = '';
+  papers.forEach(function(p) {
+    var latest = p.submissions && p.submissions.length > 0 ? p.submissions[p.submissions.length - 1] : null;
+    var statusInfo = latest ? getStatusInfo(latest.status) : getStatusInfo('preparing');
+    var deadlineHtml = '';
+    if (latest && latest.revisionDeadline && (latest.status === 'minor_revision' || latest.status === 'major_revision')) {
+      var days = daysUntil(latest.revisionDeadline);
+      if (days !== null) {
+        var color = days < 0 ? '#dc2626' : days <= 3 ? '#dc2626' : days <= 7 ? '#f59e0b' : '#059669';
+        var text = days < 0 ? '已逾期' + Math.abs(days) + '天' : '剩余' + days + '天';
+        deadlineHtml = '<span style="background:' + color + ';color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:8px">修回' + text + '</span>';
+      }
+    }
+    html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:12px;cursor:pointer;transition:box-shadow .2s" class="hover-card" onclick="showPaperDetail(\'' + p.id + '\')">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+    html += '<div style="font-size:14px;font-weight:600;color:#1e293b;flex:1;margin-right:12px">' + p.title + '</div>';
+    html += '<span style="background:' + statusInfo.bg + ';color:' + statusInfo.color + ';padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap">' + statusInfo.label + '</span>';
+    html += '</div>';
+    html += '<div style="font-size:12px;color:#6b7280;margin-bottom:6px">' + (p.authors || '未填写作者') + ' | ' + (p.type || '未分类') + (latest ? ' | 最新投稿：' + latest.journal + ' (' + latest.submitDate + ')' : ' | 尚未投稿') + deadlineHtml + '</div>';
+    html += '<div style="display:flex;gap:8px;margin-top:10px">';
+    html += '<span style="font-size:11px;color:#6b7280">投稿次数：' + (p.submissions ? p.submissions.length : 0) + '</span>';
+    if (latest && latest.reviewers) {
+      var totalCmt = 0, doneCmt = 0;
+      latest.reviewers.forEach(function(r) { if (r.comments) { totalCmt += r.comments.length; r.comments.forEach(function(c) { if (c.status === 'done') doneCmt++; }); } });
+      html += '<span style="font-size:11px;color:#6b7280">审稿意见：' + doneCmt + '/' + totalCmt + ' 已处理</span>';
+    }
+    html += '<button onclick="event.stopPropagation();deletePaper(\'' + p.id + '\')" style="margin-left:auto;font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer">删除</button>';
+    html += '</div></div>';
+  });
+  listEl.innerHTML = html;
+}
+
+function showAddPaperForm() {
+  var detailEl = document.getElementById('pubManageDetail');
+  if (!detailEl) return;
+  detailEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px">'
+    + '<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px">添加新论文</div>'
+    + '<div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">论文标题 *</label><input type="text" id="newPaperTitle" placeholder="输入论文标题" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">作者</label><input type="text" id="newPaperAuthors" placeholder="如：张三, 李四" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">文章类型</label><select id="newPaperType" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;background:#fff"><option>原创研究</option><option>综述/Meta分析</option><option>病例报告</option><option>实验研究</option><option>调查研究</option><option>理论论文</option></select></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:10px"><button onclick="addPaper()" style="background:#7c3aed;color:#fff;border:none;padding:9px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">添加</button><button onclick="document.getElementById(\'pubManageDetail\').innerHTML=\'\'" style="background:#f3f4f6;color:#374151;border:none;padding:9px 20px;border-radius:6px;cursor:pointer;font-size:13px">取消</button></div>'
+    + '</div>';
+}
+
+function addPaper() {
+  var title = document.getElementById('newPaperTitle').value.trim();
+  if (!title) { alert('请输入论文标题'); return; }
+  var authors = document.getElementById('newPaperAuthors').value.trim();
+  var type = document.getElementById('newPaperType').value;
+  var papers = getPubPapers();
+  papers.unshift({ id: genId('paper'), title: title, authors: authors, type: type, submissions: [], createdAt: new Date().toISOString() });
+  savePubPapers(papers);
+  renderPubManage();
+  alert('论文添加成功！');
+}
+
+function deletePaper(paperId) {
+  if (!confirm('确定删除这篇论文及其所有投稿记录？')) return;
+  var papers = getPubPapers().filter(function(p) { return p.id !== paperId; });
+  savePubPapers(papers);
+  renderPubManage();
+}
+
+function showPaperDetail(paperId) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var detailEl = document.getElementById('pubManageDetail');
+  if (!detailEl) return;
+
+  var html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px"><div><div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:4px">' + paper.title + '</div><div style="font-size:12px;color:#6b7280">' + (paper.authors || '') + ' | ' + (paper.type || '') + '</div></div>';
+  html += '<button onclick="showAddSubmissionForm(\'' + paper.id + '\')" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">+ 添加投稿记录</button></div>';
+
+  // 投稿记录
+  if (paper.submissions && paper.submissions.length > 0) {
+    html += '<div style="font-size:14px;font-weight:600;color:#1e293b;margin:16px 0 12px">投稿记录（' + paper.submissions.length + '次）</div>';
+    paper.submissions.forEach(function(sub, idx) {
+      var si = getStatusInfo(sub.status);
+      html += '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:10px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:13px;font-weight:600;color:#1e293b">#' + (idx+1) + ' ' + sub.journal + '</div><span style="background:' + si.bg + ';color:' + si.color + ';padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600">' + si.label + '</span></div>';
+      html += '<div style="font-size:12px;color:#6b7280;margin-bottom:8px">投稿日期：' + sub.submitDate + (sub.resultDate ? ' | 结果日期：' + sub.resultDate : '') + (sub.revisionDeadline ? ' | 修回截止：' + sub.revisionDeadline : '') + '</div>';
+      // 修回倒计时
+      if (sub.revisionDeadline && (sub.status === 'minor_revision' || sub.status === 'major_revision')) {
+        var days = daysUntil(sub.revisionDeadline);
+        if (days !== null) {
+          var pct = Math.min(100, Math.max(0, (days / 30) * 100));
+          var barColor = days < 0 ? '#dc2626' : days <= 3 ? '#dc2626' : days <= 7 ? '#f59e0b' : '#059669';
+          html += '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-bottom:4px"><span>修回倒计时</span><span style="color:' + barColor + ';font-weight:600">' + (days < 0 ? '已逾期' + Math.abs(days) + '天' : '剩余' + days + '天') + '</span></div><div style="height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:3px;transition:width .3s"></div></div></div>';
+        }
+      }
+      // 操作按钮
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">';
+      html += '<button onclick="showSubmissionDetail(\'' + paper.id + '\', \'' + sub.id + '\')" style="font-size:11px;color:#7c3aed;background:#ede9fe;border:none;padding:5px 12px;border-radius:4px;cursor:pointer">审稿意见管理</button>';
+      html += '<button onclick="showUpdateStatusForm(\'' + paper.id + '\', \'' + sub.id + '\')" style="font-size:11px;color:#2563eb;background:#dbeafe;border:none;padding:5px 12px;border-radius:4px;cursor:pointer">更新状态</button>';
+      html += '<button onclick="showTimeline(\'' + paper.id + '\', \'' + sub.id + '\')" style="font-size:11px;color:#059669;background:#dcfce7;border:none;padding:5px 12px;border-radius:4px;cursor:pointer">投稿时间线</button>';
+      html += '<button onclick="deleteSubmission(\'' + paper.id + '\', \'' + sub.id + '\')" style="font-size:11px;color:#dc2626;background:#fee2e2;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;margin-left:auto">删除</button>';
+      html += '</div></div>';
+    });
+  } else {
+    html += '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px">还没有投稿记录，点击上方"添加投稿记录"开始跟踪</div>';
+  }
+  html += '</div>';
+  html += '<div id="submissionDetailArea"></div>';
+  detailEl.innerHTML = html;
+}
+
+function showAddSubmissionForm(paperId) {
+  var area = document.getElementById('submissionDetailArea');
+  if (!area) return;
+  var journalOptions = PHD_JOURNALS.map(function(j) { return '<option value="' + j.name + '">' + j.name + '</option>'; }).join('');
+  area.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-top:16px">'
+    + '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:14px">添加投稿记录</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">目标期刊 *</label><select id="newSubJournal" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;background:#fff"><option value="">请选择</option>' + journalOptions + '</select></div>'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">投稿日期 *</label><input type="date" id="newSubDate" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">当前状态</label><select id="newSubStatus" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;background:#fff"><option value="submitted">已投稿</option><option value="under_review">审稿中</option><option value="minor_revision">小修</option><option value="major_revision">大修</option><option value="accepted">已录用</option><option value="rejected">已拒稿</option><option value="published">已发表</option></select></div>'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">修回截止日期</label><input type="date" id="newSubDeadline" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">结果日期</label><input type="date" id="newSubResultDate" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:10px"><button onclick="addSubmission(\'' + paperId + '\')" style="background:#7c3aed;color:#fff;border:none;padding:9px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">添加</button><button onclick="document.getElementById(\'submissionDetailArea\').innerHTML=\'\'" style="background:#f3f4f6;color:#374151;border:none;padding:9px 20px;border-radius:6px;cursor:pointer;font-size:13px">取消</button></div>'
+    + '</div>';
+}
+
+function addSubmission(paperId) {
+  var journal = document.getElementById('newSubJournal').value;
+  var date = document.getElementById('newSubDate').value;
+  if (!journal || !date) { alert('请填写期刊和投稿日期'); return; }
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  if (!paper.submissions) paper.submissions = [];
+  paper.submissions.push({
+    id: genId('sub'),
+    journal: journal,
+    submitDate: date,
+    status: document.getElementById('newSubStatus').value,
+    revisionDeadline: document.getElementById('newSubDeadline').value || '',
+    resultDate: document.getElementById('newSubResultDate').value || '',
+    reviewers: [],
+    timeline: [{ date: date, event: '投稿', note: '投稿至 ' + journal }]
+  });
+  savePubPapers(papers);
+  showPaperDetail(paperId);
+  alert('投稿记录添加成功！');
+}
+
+function deleteSubmission(paperId, subId) {
+  if (!confirm('确定删除这条投稿记录？')) return;
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper || !paper.submissions) return;
+  paper.submissions = paper.submissions.filter(function(s) { return s.id !== subId; });
+  savePubPapers(papers);
+  showPaperDetail(paperId);
+}
+
+function showUpdateStatusForm(paperId, subId) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub) return;
+  var area = document.getElementById('submissionDetailArea');
+  if (!area) return;
+  area.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-top:16px">'
+    + '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:14px">更新投稿状态 - ' + sub.journal + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">新状态</label><select id="updateStatus" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;background:#fff"><option value="preparing">准备中</option><option value="submitted">已投稿</option><option value="under_review">审稿中</option><option value="minor_revision">小修</option><option value="major_revision">大修</option><option value="accepted">已录用</option><option value="rejected">已拒稿</option><option value="withdrawn">已撤稿</option><option value="published">已发表</option></select></div>'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">状态变更日期</label><input type="date" id="updateStatusDate" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>'
+    + '</div>'
+    + '<div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">修回截止日期（修回时填写）</label><input type="date" id="updateDeadline" value="' + (sub.revisionDeadline || '') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>'
+    + '<div style="margin-bottom:14px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">备注（编辑决定内容等）</label><textarea id="updateNote" rows="2" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;resize:vertical"></textarea></div>'
+    + '<div style="display:flex;gap:10px"><button onclick="updateSubmissionStatus(\'' + paperId + '\', \'' + subId + '\')" style="background:#7c3aed;color:#fff;border:none;padding:9px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">更新</button><button onclick="document.getElementById(\'submissionDetailArea\').innerHTML=\'\'" style="background:#f3f4f6;color:#374151;border:none;padding:9px 20px;border-radius:6px;cursor:pointer;font-size:13px">取消</button></div>'
+    + '</div>';
+  document.getElementById('updateStatus').value = sub.status;
+}
+
+function updateSubmissionStatus(paperId, subId) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub) return;
+  var newStatus = document.getElementById('updateStatus').value;
+  var statusDate = document.getElementById('updateStatusDate').value || new Date().toISOString().split('T')[0];
+  var note = document.getElementById('updateNote').value.trim();
+  sub.status = newStatus;
+  sub.revisionDeadline = document.getElementById('updateDeadline').value || '';
+  if (newStatus === 'accepted' || newStatus === 'rejected' || newStatus === 'published') sub.resultDate = statusDate;
+  if (!sub.timeline) sub.timeline = [];
+  var statusLabel = getStatusInfo(newStatus).label;
+  sub.timeline.push({ date: statusDate, event: '状态更新：' + statusLabel, note: note });
+  savePubPapers(papers);
+  showPaperDetail(paperId);
+  alert('状态已更新为：' + statusLabel);
+}
+
+function showSubmissionDetail(paperId, subId) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub) return;
+  var area = document.getElementById('submissionDetailArea');
+  if (!area) return;
+
+  var html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-top:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:700;color:#1e293b">审稿意见管理 - ' + sub.journal + '</div><button onclick="showAddReviewerForm(\'' + paperId + '\', \'' + subId + '\')" style="background:#7c3aed;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">+ 添加审稿人</button></div>';
+
+  if (!sub.reviewers || sub.reviewers.length === 0) {
+    html += '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px">还没有添加审稿人意见，点击上方"添加审稿人"开始管理</div>';
+  } else {
+    sub.reviewers.forEach(function(r, ri) {
+      var total = r.comments ? r.comments.length : 0;
+      var done = r.comments ? r.comments.filter(function(c) { return c.status === 'done'; }).length : 0;
+      html += '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:12px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:600;color:#1e293b">' + (r.name || '审稿人' + (ri+1)) + '</div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:#6b7280">' + done + '/' + total + ' 已处理</span><button onclick="deleteReviewer(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\')" style="font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer">删除</button></div></div>';
+      if (r.comments && r.comments.length > 0) {
+        r.comments.forEach(function(cmt, ci) {
+          var statusColors = { pending: '#f59e0b', in_progress: '#2563eb', done: '#059669', disputed: '#dc2626' };
+          var statusLabels = { pending: '待处理', in_progress: '修改中', done: '已完成', disputed: '已反驳' };
+          html += '<div style="background:#f9fafb;border-radius:6px;padding:10px;margin-bottom:8px;border-left:3px solid ' + (statusColors[cmt.status] || '#9ca3af') + '">';
+          html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><div style="font-size:12px;color:#374151;flex:1;margin-right:10px;line-height:1.6">' + cmt.text + '</div><select onchange="updateCommentStatus(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\', this.value)" style="font-size:11px;padding:3px 6px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;white-space:nowrap"><option value="pending"' + (cmt.status==='pending'?' selected':'') + '>待处理</option><option value="in_progress"' + (cmt.status==='in_progress'?' selected':'') + '>修改中</option><option value="done"' + (cmt.status==='done'?' selected':'') + '>已完成</option><option value="disputed"' + (cmt.status==='disputed'?' selected':'') + '>已反驳</option></select></div>';
+          if (cmt.response) html += '<div style="font-size:11px;color:#059669;background:#f0fdf4;padding:6px 10px;border-radius:4px;margin-top:6px;line-height:1.6"><b>回复：</b>' + cmt.response + '</div>';
+          html += '<div style="display:flex;gap:6px;margin-top:6px"><button onclick="editCommentResponse(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\')" style="font-size:10px;color:#7c3aed;background:none;border:none;cursor:pointer;padding:2px 6px">编辑回复</button><button onclick="deleteComment(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\')" style="font-size:10px;color:#dc2626;background:none;border:none;cursor:pointer;padding:2px 6px">删除意见</button></div>';
+          html += '</div>';
+        });
+      }
+      html += '<button onclick="showAddCommentForm(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\')" style="font-size:11px;color:#7c3aed;background:#ede9fe;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;margin-top:4px">+ 添加意见</button>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function showAddReviewerForm(paperId, subId) {
+  var name = prompt('请输入审稿人名称（如：审稿人1、Reviewer #1）：', '审稿人' + (Date.now() % 100));
+  if (!name) return;
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub) return;
+  if (!sub.reviewers) sub.reviewers = [];
+  sub.reviewers.push({ id: genId('rv'), name: name, comments: [] });
+  savePubPapers(papers);
+  showSubmissionDetail(paperId, subId);
+}
+
+function deleteReviewer(paperId, subId, reviewerId) {
+  if (!confirm('确定删除该审稿人及其所有意见？')) return;
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper || !paper.submissions) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub || !sub.reviewers) return;
+  sub.reviewers = sub.reviewers.filter(function(r) { return r.id !== reviewerId; });
+  savePubPapers(papers);
+  showSubmissionDetail(paperId, subId);
+}
+
+function showAddCommentForm(paperId, subId, reviewerId) {
+  var text = prompt('请输入审稿意见内容：');
+  if (!text || !text.trim()) return;
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub || !sub.reviewers) return;
+  var reviewer = sub.reviewers.find(function(r) { return r.id === reviewerId; });
+  if (!reviewer) return;
+  if (!reviewer.comments) reviewer.comments = [];
+  reviewer.comments.push({ id: genId('cmt'), text: text.trim(), status: 'pending', response: '' });
+  savePubPapers(papers);
+  showSubmissionDetail(paperId, subId);
+}
+
+function updateCommentStatus(paperId, subId, reviewerId, commentId, newStatus) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub || !sub.reviewers) return;
+  var reviewer = sub.reviewers.find(function(r) { return r.id === reviewerId; });
+  if (!reviewer || !reviewer.comments) return;
+  var comment = reviewer.comments.find(function(c) { return c.id === commentId; });
+  if (!comment) return;
+  comment.status = newStatus;
+  savePubPapers(papers);
+  showPaperDetail(paperId);
+  showSubmissionDetail(paperId, subId);
+}
+
+function editCommentResponse(paperId, subId, reviewerId, commentId) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub || !sub.reviewers) return;
+  var reviewer = sub.reviewers.find(function(r) { return r.id === reviewerId; });
+  if (!reviewer || !reviewer.comments) return;
+  var comment = reviewer.comments.find(function(c) { return c.id === commentId; });
+  if (!comment) return;
+  var response = prompt('请输入对该意见的回复：', comment.response || '');
+  if (response === null) return;
+  comment.response = response;
+  if (response.trim()) comment.status = 'done';
+  savePubPapers(papers);
+  showSubmissionDetail(paperId, subId);
+}
+
+function deleteComment(paperId, subId, reviewerId, commentId) {
+  if (!confirm('确定删除这条审稿意见？')) return;
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper || !paper.submissions) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub || !sub.reviewers) return;
+  var reviewer = sub.reviewers.find(function(r) { return r.id === reviewerId; });
+  if (!reviewer || !reviewer.comments) return;
+  reviewer.comments = reviewer.comments.filter(function(c) { return c.id !== commentId; });
+  savePubPapers(papers);
+  showSubmissionDetail(paperId, subId);
+}
+
+function showTimeline(paperId, subId) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub) return;
+  var area = document.getElementById('submissionDetailArea');
+  if (!area) return;
+  var timeline = sub.timeline || [];
+  var html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-top:16px">';
+  html += '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:16px">投稿时间线 - ' + sub.journal + '</div>';
+  if (timeline.length === 0) {
+    html += '<div style="text-align:center;padding:20px;color:#9ca3af;font-size:13px">暂无时间线记录</div>';
+  } else {
+    html += '<div style="position:relative;padding-left:24px">';
+    html += '<div style="position:absolute;left:7px;top:0;bottom:0;width:2px;background:#e5e7eb"></div>';
+    timeline.forEach(function(t, i) {
+      var isLast = i === timeline.length - 1;
+      html += '<div style="position:relative;margin-bottom:16px">';
+      html += '<div style="position:absolute;left:-21px;top:2px;width:12px;height:12px;border-radius:50%;background:' + (isLast ? '#7c3aed' : '#c4b5fd') + ';border:2px solid #fff;box-shadow:0 0 0 2px ' + (isLast ? '#7c3aed' : '#c4b5fd') + '"></div>';
+      html += '<div style="font-size:12px;color:#6b7280;margin-bottom:2px">' + t.date + '</div>';
+      html += '<div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:2px">' + t.event + '</div>';
+      if (t.note) html += '<div style="font-size:12px;color:#6b7280;line-height:1.6">' + t.note + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '<div style="margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb"><button onclick="addTimelineEvent(\'' + paperId + '\', \'' + subId + '\')" style="font-size:12px;color:#7c3aed;background:#ede9fe;border:none;padding:7px 14px;border-radius:6px;cursor:pointer">+ 添加时间线事件</button></div>';
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function addTimelineEvent(paperId, subId) {
+  var event = prompt('请输入事件名称（如：收到审稿意见、提交修回稿、编辑询问进度等）：');
+  if (!event || !event.trim()) return;
+  var note = prompt('请输入备注（可选）：', '') || '';
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub) return;
+  if (!sub.timeline) sub.timeline = [];
+  sub.timeline.push({ date: new Date().toISOString().split('T')[0], event: event.trim(), note: note.trim() });
+  savePubPapers(papers);
+  showTimeline(paperId, subId);
 }
 
 
