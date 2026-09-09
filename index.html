@@ -7672,6 +7672,9 @@ console.log('✅ 学习工具入口已加载');
             <div style="font-size:14px;font-weight:600;color:#1f2937;margin:18px 0 4px">📊 研究方案总览</div>
             <div style="font-size:11px;color:#059669;margin-bottom:10px">各阶段研究方法、产出物与预计时长</div>
             <div id="routePlanCards" style="font-size:12px;color:#6b7280;line-height:1.8">生成后自动展示各阶段方案详情</div>
+            <div style="font-size:14px;font-weight:600;color:#1f2937;margin:18px 0 4px">📝 研究方案说明</div>
+            <div style="font-size:11px;color:#059669;margin-bottom:10px">AI 为每个阶段生成详细方法说明（可直接粘贴论文「研究方法」部分）</div>
+            <div id="routePlanDetail" style="font-size:12px;color:#6b7280;line-height:1.8">生成技术路线图后可点击预览区「📝 方案说明」生成</div>
           </div>
         </div>
 
@@ -7684,6 +7687,10 @@ console.log('✅ 学习工具入口已加载');
                 <button onclick="exportRoutePNG()" style="background:#2563eb;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">导出PNG</button>
                 <button onclick="exportRouteMD()" style="background:#059669;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">导出Markdown</button>
                 <button onclick="exportRouteSVG()" style="background:#7c3aed;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">导出SVG</button>
+                <button onclick="switchRouteFlow()" id="routeFlowBtn" style="background:#059669;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔄 流程图</button>
+                <button onclick="switchRouteGantt()" id="routeGanttBtn" style="background:#f3f4f6;color:#374151;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">📅 甘特图</button>
+                <button onclick="generateRouteDetail()" style="background:#7c3aed;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📝 方案说明</button>
+                <button onclick="exportRouteWord()" style="background:#dc2626;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📄 导出Word</button>
                 <button onclick="copyRouteSource()" style="background:#f3f4f6;color:#374151;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">复制源码</button>
                 <button onclick="insertRouteToPaper()" style="background:#0891b2;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📥 插入论文</button>
               </div>
@@ -28133,6 +28140,91 @@ function clearRouteHistory() {
   localStorage.removeItem('kaoyan_route_history');
   renderRouteHistory();
 }
+// ===== P2：甘特图时间轴 =====
+let routeViewMode = 'flow';
+function durationToDays(dur) {
+  const m = String(dur || '').match(/(\d+(?:\.\d+)?)/);
+  const n = m ? parseFloat(m[1]) : 4;
+  if (/周/.test(dur)) return Math.round(n * 7);
+  if (/月/.test(dur)) return Math.round(n * 30);
+  if (/天|日/.test(dur)) return Math.round(n);
+  if (/年/.test(dur)) return Math.round(n * 365);
+  return Math.round(n * 30);
+}
+function buildRouteGantt(phases, title) {
+  const lines = ['gantt', '  dateFormat YYYY-MM-DD', '  title ' + (title || '研究时间轴')];
+  let cur = new Date();
+  (phases || []).forEach(function(ph, pi) {
+    if (!ph || !ph.steps || !ph.steps.length) return;
+    lines.push('  section ' + (ph.name || '阶段' + (pi + 1)));
+    const perStep = Math.max(1, Math.round(durationToDays(ph.duration) / Math.max(1, ph.steps.length)));
+    (ph.steps || []).forEach(function(st) {
+      const start = cur.toISOString().slice(0, 10);
+      lines.push('  ' + String(st).replace(/:/g, '：') + ' : ' + start + ', ' + perStep + 'd');
+      cur = new Date(cur.getTime() + perStep * 86400000);
+    });
+  });
+  return lines.join('\n');
+}
+function switchRouteGantt() {
+  const d = window._routeData;
+  if (!d || !d.phases) { alert('请先生成技术路线图'); return; }
+  routeViewMode = 'gantt';
+  renderMermaidGraph(buildRouteGantt(d.phases, d.title), 'routeGraph');
+  const fb = document.getElementById('routeFlowBtn'), gb = document.getElementById('routeGanttBtn');
+  if (fb) { fb.style.background = '#f3f4f6'; fb.style.color = '#374151'; }
+  if (gb) { gb.style.background = '#059669'; gb.style.color = '#fff'; }
+}
+function switchRouteFlow() {
+  const src = document.getElementById('routeSource');
+  if (!src || !src.value.trim()) { alert('请先生成技术路线图'); return; }
+  routeViewMode = 'flow';
+  renderMermaidGraph(src.value.trim(), 'routeGraph');
+  const fb = document.getElementById('routeFlowBtn'), gb = document.getElementById('routeGanttBtn');
+  if (fb) { fb.style.background = '#059669'; fb.style.color = '#fff'; }
+  if (gb) { gb.style.background = '#f3f4f6'; gb.style.color = '#374151'; }
+}
+// ===== P2：研究方案说明生成 =====
+function generateRouteDetail() {
+  const d = window._routeData;
+  if (!d || !d.phases) { alert('请先生成技术路线图'); return; }
+  const box = document.getElementById('routePlanDetail');
+  box.innerHTML = '<div style="color:#7c3aed;font-size:12.5px">⏳ AI 正在生成各阶段方案说明（每阶段300-500字）...</div>';
+  const sys = '你是运动人体科学领域的科研方法与论文写作专家。请为给定研究的每个阶段撰写详细方案说明，用于论文"研究方法"部分。要求：\n1. 每阶段300-500字，说明本阶段研究目的、核心方法原理、具体操作要点、注意事项。\n2. 使用专业学术语言，避免口语化。\n3. 按阶段分段输出，格式：\n【阶段1】阶段名\n（说明正文）\n【阶段2】阶段名\n（说明正文）\n以此类推。';
+  const usr = '研究题目：' + d.title + '\n研究类型：' + d.type + '\n技术路线：\n' + (d.phases || []).map(function(ph, i) { return (i + 1) + '.' + (ph.name || '') + '（方法：' + (ph.method || '—') + '；产出：' + (ph.deliverable || '—') + '；时长：' + (ph.duration || '—') + '）：' + (ph.steps || []).join('→'); }).join('\n');
+  callDeepSeekAPI(sys, usr, 3000, 'deepseek-chat').then(function(resp) {
+    const txt = String(resp || '').trim();
+    if (!txt) { box.innerHTML = '<div style="color:#b45309;font-size:12.5px">⚠️ 未返回有效内容，请重试</div>'; return; }
+    box.innerHTML = '<div style="white-space:pre-wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;color:#1f2937;font-size:12.5px;line-height:1.9">' + routeEscape(txt) + '</div>';
+  }).catch(function() {
+    box.innerHTML = '<div style="color:#dc2626;font-size:12.5px">❌ 生成失败，请点击「📝 方案说明」重试</div>';
+  });
+}
+// ===== P2：导出Word（路线图+方案总览+方案说明） =====
+function exportRouteWord() {
+  const d = window._routeData;
+  const src = document.getElementById('routeSource');
+  if (!d || !src || !src.value.trim()) { alert('请先生成技术路线图'); return; }
+  const detail = document.getElementById('routePlanDetail');
+  let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>技术路线图</title></head><body>';
+  html += '<h1 style="text-align:center;font-size:16pt">' + routeEscape(d.title || '研究课题') + '——技术路线图</h1>';
+  html += '<h2 style="font-size:13pt">一、Mermaid技术路线图源码</h2><pre style="font-size:9pt;background:#f5f5f5;padding:10px;border:1px solid #ddd">' + routeEscape(src.value.trim()) + '</pre>';
+  html += '<h2 style="font-size:13pt">二、研究方案总览</h2>';
+  (d.phases || []).forEach(function(ph, i) {
+    html += '<h3 style="font-size:11pt">' + (i + 1) + '. ' + routeEscape(ph.name || '') + '</h3>';
+    html += '<p style="font-size:10.5pt;line-height:1.7">方法：' + routeEscape(ph.method || '—') + '<br>产出：' + routeEscape(ph.deliverable || '—') + '<br>时长：' + routeEscape(ph.duration || '—') + '<br>步骤：' + routeEscape((ph.steps || []).join(' → ')) + '</p>';
+  });
+  if (detail && detail.textContent && detail.textContent.indexOf('生成技术路线图后可点击') < 0 && detail.textContent.indexOf('⏳') < 0 && detail.textContent.indexOf('未返回') < 0) {
+    html += '<h2 style="font-size:13pt">三、各阶段方案说明</h2><p style="white-space:pre-wrap;font-size:10.5pt;line-height:1.8">' + routeEscape(detail.textContent) + '</p>';
+  }
+  html += '</body></html>';
+  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '技术路线图_' + (d.title || '研究') + '.doc';
+  document.body.appendChild(a); a.click();
+  setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 200);
+}
 function validateTechRoute(phases, type) {
   const allSteps = [];
   phases.forEach(function(ph) {
@@ -28163,7 +28255,14 @@ function validateTechRoute(phases, type) {
   // 重复检查
   const seen = {}; const dups = [];
   allSteps.forEach(function(s) { if (seen[s]) dups.push(s); seen[s] = true; });
-  return { allSteps: allSteps, missing: missing, orderWarns: orderWarns, dups: dups };
+  // 画法规范检查：节点文字长度（≤20字）、阶段命名（含"阶段"）
+  const nodeTooLong = [];
+  allSteps.forEach(function(st) { if (st.length > 20) nodeTooLong.push(st); });
+  const phaseNamingWarns = [];
+  (phases || []).forEach(function(ph) {
+    if (ph.name && ph.name.indexOf('阶段') < 0) phaseNamingWarns.push(ph.name);
+  });
+  return { allSteps: allSteps, missing: missing, orderWarns: orderWarns, dups: dups, nodeTooLong: nodeTooLong, phaseNamingWarns: phaseNamingWarns };
 }
 function renderRouteValidation(v) {
   const box = document.getElementById('routeValidation');
@@ -28184,6 +28283,12 @@ function renderRouteValidation(v) {
     }
     if (v.dups.length) {
       html += '<div style="padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;color:#92400e"><span style="font-weight:600">⚠️ 重复环节：</span>' + v.dups.join('、') + '</div>';
+    }
+    if (v.nodeTooLong && v.nodeTooLong.length) {
+      html += '<div style="padding:10px 12px;background:#fefce8;border:1px solid #fde047;border-radius:8px;margin-bottom:8px;color:#854d0e"><span style="font-weight:600">✏️ 节点文字过长（建议≤20字）：</span>' + v.nodeTooLong.map(routeEscape).join('；') + '</div>';
+    }
+    if (v.phaseNamingWarns && v.phaseNamingWarns.length) {
+      html += '<div style="padding:10px 12px;background:#fefce8;border:1px solid #fde047;border-radius:8px;color:#854d0e"><span style="font-weight:600">📌 阶段命名建议含"阶段"（如：准备阶段）：</span>' + v.phaseNamingWarns.map(routeEscape).join('、') + '</div>';
     }
   }
   box.innerHTML = html;
@@ -28233,7 +28338,7 @@ function generatePaperTechRoute() {
   btn.disabled = true; btn.textContent = '⏳ 生成中...';
   status.innerHTML = '<div style="padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:12.5px;color:#1d4ed8">🤖 AI 正在按「' + type + '」专业模板生成结构化技术路线...</div>';
   const tmpl = TECH_ROUTE_TEMPLATES[type] || TECH_ROUTE_TEMPLATES['实验法'];
-  const sys = '你是运动人体科学领域的科研方法专家，精通课题设计与技术路线图绘制。你严格遵循结构化输出：只输出一个JSON对象，不输出任何其他文字、不做解释。\n\nJSON格式如下（phases为3-5个阶段，每个阶段steps为3-6个具体步骤）：\n{"title":"研究题目","type":"研究类型","phases":[{"name":"阶段名（如：准备阶段）","steps":["具体步骤1","具体步骤2"],"method":"本阶段主要方法","deliverable":"本阶段产出物","duration":"预计时长"}]}\n\n【专业要求】\n1. 研究类型为实验法时，流程必须覆盖：选题→文献综述→研究假设→伦理审批→样本量估算→预实验→随机分组→基线测试→运动干预→指标检测→数据采集→统计分析→结果讨论。\n2. 使用运动人体科学专业术语（随机分组、基线测试、运动干预、最大摄氧量、Western Blot、qPCR、重复测量方差分析等）。\n3. 阶段划分合理：准备阶段、实验/实施阶段、数据与分析阶段、总结阶段。\n4. steps按先后逻辑顺序排列，不得颠倒。\n5. 若研究设计含纳入/排除、分组筛选等逻辑，可在相应阶段的JSON对象中添加可选的"branches"数组字段，格式：[{"condition":"纳入标准是否满足?","yes":"随机分组","no":"排除并记录"}]，前端会渲染为菱形决策节点。';
+  const sys = '你是运动人体科学领域的科研方法专家，精通课题设计与技术路线图绘制。你严格遵循结构化输出：只输出一个JSON对象，不输出任何其他文字、不做解释。\n\nJSON格式如下（phases为3-5个阶段，每个阶段steps为3-6个具体步骤）：\n{"title":"研究题目","type":"研究类型","phases":[{"name":"阶段名（如：准备阶段）","steps":["具体步骤1","具体步骤2"],"method":"本阶段主要方法","deliverable":"本阶段产出物","duration":"预计时长"}]}\n\n【专业要求】\n1. 研究类型为实验法时，流程必须覆盖：选题→文献综述→研究假设→伦理审批→样本量估算→预实验→随机分组→基线测试→运动干预→指标检测→数据采集→统计分析→结果讨论。\n2. 使用运动人体科学专业术语（随机分组、基线测试、运动干预、最大摄氧量、Western Blot、qPCR、重复测量方差分析等）。\n3. 阶段划分合理：准备阶段、实验/实施阶段、数据与分析阶段、总结阶段。\n4. steps按先后逻辑顺序排列，不得颠倒。\n【技术路线图画法规范（必须严格遵守）】\n5. 节点命名规范：使用"动词+宾语"短语（如"选题与文献综述""随机分组与基线测试"），同一阶段内节点句式保持一致；单个节点文字不超过20字，超长内容拆分或精简。\n6. 阶段划分规范：按"准备阶段 → 实施阶段（实验/实施阶段） → 数据分析阶段 → 总结阶段"的顺序与命名（可微调但阶段名必须含"阶段"二字）。\n7. 连线规范：仅连接存在直接先后逻辑的相邻节点，箭头自上而下；先整体规划流程再填充细节，避免连线交叉。\n8. 决策节点规范：仅在纳入/排除、分组筛选等分支处使用"branches"字段（格式：[{"condition":"是否满足纳入标准?","yes":"随机分组","no":"排除并记录"}]），条件用疑问句，前端渲染为菱形节点并标注是/否。\n9. 专业术语规范：使用运动人体科学规范术语（随机分组、基线测试、运动干预、最大摄氧量、重复测量方差分析等），英文缩写首次出现可加中文注释。';
   const usr = '研究题目：' + topic + '\n研究类型：' + type + '\n研究对象/样本：' + (subject || '未指定') + '\n补充说明：' + (note || '无') + '\n\n参考本类型必经环节：' + (tmpl.required || []).join('、') + '\n\n请输出JSON：';
   callDeepSeekAPI(sys, usr, 3000, model).then(function(resp) {
     const parsed = parseRouteJSON(resp);
