@@ -746,6 +746,8 @@ body.focus-mode .focus-mode-exit{display:flex}
 .ck-item-label:hover{background:#f0f9ff}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>if(window.mermaid){mermaid.initialize({startOnLoad:false,theme:'default',securityLevel:'loose',flowchart:{useMaxWidth:true,curve:'basis'}});}</script>
 <script>window.onerror = function(msg, url, lineNo, columnNo, error) {
 console.error('全局错误:', msg, '行:', lineNo, '列:', columnNo);
 return false;
@@ -4926,6 +4928,7 @@ console.log('✅ 学习工具入口已加载');
   };
 })();
 </script>
+
 <style>
 .md-content h3{font-size:16px;font-weight:700;color:#5b21b6;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #ede9fe}
 .md-content h3:first-child{margin-top:0}
@@ -6924,10 +6927,56 @@ console.log('✅ 学习工具入口已加载');
 
     <!-- 格式检查页面 -->
     <div id="paperContent-format" style="display:none">
-      <div style="text-align:center;padding:60px 20px;color:#9ca3af">
-        <div style="font-size:48px;margin-bottom:16px">🔍</div>
-        <div style="font-size:16px;margin-bottom:8px">格式检查功能</div>
-        <div style="font-size:13px">请先在「我的论文」中选择一篇论文，然后使用格式检查</div>
+      <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:700;color:#1e40af;margin-bottom:4px">🔍 AI 论文格式检查</div>
+        <div style="font-size:13px;color:#3b82f6">多维度智能检测：参考文献格式、引用编号、图表编号、标题层级、缩写定义、单位格式、语言规范、时态一致、段落结构</div>
+      </div>
+      
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <!-- 左侧：输入区 -->
+        <div style="flex:1;min-width:300px">
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:16px">
+            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">论文内容</div>
+            <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+              <button onclick="loadPaperForFormatCheck()" style="background:#2563eb;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">从项目加载</button>
+              <button onclick="document.getElementById('formatCheckText').value=''" style="background:#f3f4f6;color:#374151;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px">清空</button>
+              <span id="formatCheckWordCount" style="font-size:11px;color:#9ca3af;align-self:center">0字</span>
+            </div>
+            <textarea id="formatCheckText" placeholder="粘贴或输入论文内容（建议包含参考文献部分）..." style="width:100%;height:300px;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;line-height:1.6;resize:vertical;outline:none;font-family:Consolas,Monaco,monospace" oninput="updateFormatWordCount()"></textarea>
+          </div>
+          
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:16px">
+            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">检查维度</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer"><input type="checkbox" class="formatCheckDim" value="references" checked> 参考文献格式</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer"><input type="checkbox" class="formatCheckDim" value="citations" checked> 引用编号</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer"><input type="checkbox" class="formatCheckDim" value="figures" checked> 图表编号</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer"><input type="checkbox" class="formatCheckDim" value="headings" checked> 标题层级</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer"><input type="checkbox" class="formatCheckDim" value="abbreviations" checked> 缩写定义</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer"><input type="checkbox" class="formatCheckDim" value="units" checked> 单位格式</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer"><input type="checkbox" class="formatCheckDim" value="language" checked> 语言规范</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer"><input type="checkbox" class="formatCheckDim" value="tense" checked> 时态一致</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer"><input type="checkbox" class="formatCheckDim" value="structure" checked> 段落结构</label>
+            </div>
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6">
+              <label style="font-size:12px;color:#374151;display:block;margin-bottom:6px">目标期刊格式（可选）</label>
+              <input type="text" id="formatCheckJournal" placeholder="如：体育科学、中国运动医学杂志、Journal of Sport and Health Science" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;outline:none">
+            </div>
+          </div>
+          
+          <button onclick="runFormatCheck()" id="formatCheckBtn" style="width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;padding:14px;border-radius:10px;cursor:pointer;font-size:15px;font-weight:700;box-shadow:0 4px 12px rgba(37,99,235,0.3)">开始 AI 格式检查</button>
+        </div>
+        
+        <!-- 右侧：结果区 -->
+        <div style="flex:1;min-width:300px">
+          <div id="formatCheckResult" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:20px;min-height:400px">
+            <div style="text-align:center;padding:60px 20px;color:#9ca3af">
+              <div style="font-size:48px;margin-bottom:16px">📋</div>
+              <div style="font-size:15px;margin-bottom:8px">检查结果将显示在这里</div>
+              <div style="font-size:12px">输入论文内容，选择检查维度，点击「开始 AI 格式检查」</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -26975,6 +27024,201 @@ function getPaperProjects() {
 
 function savePaperProjects(projects) {
   localStorage.setItem('paper_projects', JSON.stringify(projects));
+}
+
+
+// ========== 格式检查功能 ==========
+function updateFormatWordCount() {
+  var text = document.getElementById('formatCheckText').value;
+  document.getElementById('formatCheckWordCount').textContent = text.length + '字';
+}
+
+function loadPaperForFormatCheck() {
+  if (!window.paperProjects || window.paperProjects.length === 0) {
+    alert('暂无论文项目，请先在「我的论文」中创建');
+    return;
+  }
+  var project = window.paperProjects[0];
+  var content = '';
+  if (project.chapters) {
+    project.chapters.forEach(function(ch) {
+      if (ch.content && ch.content.trim()) {
+        content += '【' + ch.title + '】\n' + ch.content + '\n\n';
+      }
+    });
+  }
+  if (!content) content = project.abstract || project.content || '';
+  document.getElementById('formatCheckText').value = content;
+  updateFormatWordCount();
+  alert('已加载论文：' + project.title + '（' + content.length + '字）');
+}
+
+function runFormatCheck() {
+  var text = document.getElementById('formatCheckText').value.trim();
+  if (!text) { alert('请先输入或加载论文内容'); return; }
+  if (text.length < 100) { alert('论文内容太少（少于100字），请输入更多内容'); return; }
+  
+  var dims = [];
+  document.querySelectorAll('.formatCheckDim:checked').forEach(function(cb) { dims.push(cb.value); });
+  if (dims.length === 0) { alert('请至少选择一个检查维度'); return; }
+  
+  var journal = document.getElementById('formatCheckJournal').value.trim();
+  
+  var btn = document.getElementById('formatCheckBtn');
+  btn.disabled = true;
+  btn.textContent = 'AI 正在检查中...';
+  btn.style.opacity = '0.7';
+  
+  var resultArea = document.getElementById('formatCheckResult');
+  resultArea.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:16px;animation:spin 1s linear infinite">⏳</div><div style="font-size:15px;color:#2563eb;margin-bottom:8px">AI 正在多维度检查论文格式...</div><div style="font-size:12px;color:#64748b">正在分析：' + dims.length + '个维度，请稍候（约20-40秒）</div></div>';
+  
+  var dimNames = {references:'参考文献格式',citations:'引用编号',figures:'图表编号',headings:'标题层级',abbreviations:'缩写定义',units:'单位格式',language:'语言规范',tense:'时态一致',structure:'段落结构'};
+  var dimList = dims.map(function(d) { return dimNames[d] || d; }).join('、');
+  
+  var systemPrompt = '你是体育学学术论文格式审查专家，具有10年以上期刊编辑和论文格式审查经验。请对以下论文进行多维度格式检查，检查要专业、严谨、具体，指出的问题要有明确的位置和修改建议。\n\n【检查维度】' + dimList + '\n\n【输出要求】\n1.【问题分类】按维度分类列出问题，每个问题包含：问题类型、具体位置（章节/段落）、原文片段、问题说明、修改建议。\n2.【严重程度】每个问题标注严重程度：严重（必须修改）、一般（建议修改）、轻微（可选修改）。\n3.【统计汇总】给出各维度的问题数量统计，以及总体评分（0-100分）。\n4.【修改示例】对严重问题给出具体的修改示例，格式为"原文：...→建议改为：..."。\n5.【格式规范】如果指定了目标期刊，按该期刊的格式要求检查。\n\n【输出格式】JSON，包含：\n- totalScore：总体评分（0-100）\n- grade：等级（优秀/良好/一般/需改进）\n- summary：总体评价\n- dimensions：各维度检查结果，每个含name, score, issues(问题数组，每个含type, severity, location, original, description, suggestion, example)\n- statistics：各维度问题数量统计\n- topIssues：最严重的5个问题\n- overallSuggestions：整体改进建议（5-8条）';
+  
+  callDeepSeekAPI(systemPrompt, (journal ? '目标期刊：' + journal + '\n' : '') + '检查维度：' + dimList + '\n论文总字数：' + text.length + '字\n\n论文内容：\n' + text.substring(0, 8000), 6000).then(function(response) {
+    btn.disabled = false;
+    btn.textContent = '开始 AI 格式检查';
+    btn.style.opacity = '1';
+    
+    try {
+      var jsonMatch = response.match(/\{[\s\S]*\}/);
+      var result = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+      renderFormatCheckResult(result, response);
+    } catch(e) {
+      resultArea.innerHTML = '<div style="padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px"><div style="font-size:14px;font-weight:600;color:#dc2626;margin-bottom:8px">解析失败，显示原始结果</div><pre style="font-size:12px;color:#374151;white-space:pre-wrap;word-break:break-all;max-height:500px;overflow-y:auto">' + response + '</pre></div>';
+    }
+  }).catch(function(err) {
+    btn.disabled = false;
+    btn.textContent = '开始 AI 格式检查';
+    btn.style.opacity = '1';
+    resultArea.innerHTML = '<div style="padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px"><div style="font-size:14px;font-weight:600;color:#dc2626">检查失败：' + err.message + '</div></div>';
+  });
+}
+
+function renderFormatCheckResult(result, rawText) {
+  var area = document.getElementById('formatCheckResult');
+  if (!result) {
+    area.innerHTML = '<div style="padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px"><div style="font-size:14px;font-weight:600;color:#dc2626;margin-bottom:8px">无法解析结果，显示原始内容</div><pre style="font-size:12px;color:#374151;white-space:pre-wrap;word-break:break-all;max-height:500px;overflow-y:auto">' + rawText + '</pre></div>';
+    return;
+  }
+  
+  var total = result.totalScore || 0;
+  var grade = result.grade || '待评定';
+  var gradeColor = total >= 85 ? '#059669' : total >= 70 ? '#2563eb' : total >= 60 ? '#d97706' : '#dc2626';
+  
+  var html = '';
+  // 评分总览
+  html += '<div style="padding:16px;background:linear-gradient(135deg,' + (total >= 70 ? '#ecfdf5,#d1fae5' : '#fef3c7,#fde68a') + ');border-radius:10px;margin-bottom:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">';
+  html += '<div><div style="font-size:16px;font-weight:700;color:' + gradeColor + '">格式检查报告</div>';
+  html += '<div style="font-size:12px;color:#64748b;margin-top:2px">' + (result.summary || '') + '</div></div>';
+  html += '<div style="text-align:center"><div style="font-size:32px;font-weight:800;color:' + gradeColor + '">' + total + '<span style="font-size:14px">分</span></div>';
+  html += '<div style="font-size:12px;color:' + gradeColor + ';font-weight:600">' + grade + '</div></div>';
+  html += '</div></div>';
+  
+  // 各维度统计
+  if (result.dimensions && result.dimensions.length > 0) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">各维度评分</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+    result.dimensions.forEach(function(dim) {
+      var score = dim.score || 0;
+      var color = score >= 85 ? '#059669' : score >= 70 ? '#2563eb' : score >= 60 ? '#d97706' : '#dc2626';
+      var issueCount = (dim.issues || []).length;
+      html += '<div style="background:#f9fafb;border-radius:8px;padding:10px;border:1px solid #e5e7eb">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+      html += '<span style="font-size:12px;font-weight:600;color:#374151">' + dim.name + '</span>';
+      html += '<span style="font-size:13px;font-weight:700;color:' + color + '">' + score + '分</span></div>';
+      html += '<div style="width:100%;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden"><div style="width:' + score + '%;height:100%;background:' + color + ';border-radius:2px"></div></div>';
+      html += '<div style="font-size:10px;color:#9ca3af;margin-top:4px">' + issueCount + '个问题</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+  
+  // 问题列表
+  var allIssues = [];
+  if (result.dimensions) {
+    result.dimensions.forEach(function(dim) {
+      (dim.issues || []).forEach(function(issue) {
+        issue.dimName = dim.name;
+        allIssues.push(issue);
+      });
+    });
+  }
+  
+  if (allIssues.length > 0) {
+    // 按严重程度排序
+    var severityOrder = {严重: 0, 一般: 1, 轻微: 2};
+    allIssues.sort(function(a, b) { return (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3); });
+    
+    html += '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">问题列表（共' + allIssues.length + '个，按严重程度排序）</div>';
+    html += '<div style="max-height:400px;overflow-y:auto">';
+    allIssues.forEach(function(issue, idx) {
+      var sevColor = issue.severity === '严重' ? '#dc2626' : issue.severity === '一般' ? '#d97706' : '#6b7280';
+      var sevBg = issue.severity === '严重' ? '#fef2f2' : issue.severity === '一般' ? '#fffbeb' : '#f9fafb';
+      html += '<div style="background:' + sevBg + ';border-left:3px solid ' + sevColor + ';border-radius:0 8px 8px 0;padding:12px;margin-bottom:8px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+      html += '<span style="font-size:12px;font-weight:700;color:' + sevColor + '">[' + issue.dimName + '] ' + (issue.type || '格式问题') + '</span>';
+      html += '<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:' + sevColor + ';color:#fff;font-weight:600">' + (issue.severity || '一般') + '</span></div>';
+      if (issue.location) html += '<div style="font-size:11px;color:#64748b;margin-bottom:4px">位置：' + issue.location + '</div>';
+      if (issue.original) html += '<div style="font-size:11px;color:#374151;background:#fff;padding:6px 8px;border-radius:4px;margin-bottom:4px;border:1px solid #e5e7eb">原文：' + issue.original + '</div>';
+      if (issue.description) html += '<div style="font-size:11px;color:#374151;margin-bottom:4px">说明：' + issue.description + '</div>';
+      if (issue.suggestion) html += '<div style="font-size:11px;color:#059669;margin-bottom:4px">建议：' + issue.suggestion + '</div>';
+      if (issue.example) html += '<div style="font-size:11px;color:#7c3aed;background:#faf5ff;padding:6px 8px;border-radius:4px;border:1px solid #e9d5ff">示例：' + issue.example + '</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+  
+  // 整体改进建议
+  if (result.overallSuggestions && result.overallSuggestions.length > 0) {
+    html += '<div style="background:#f0f9ff;border-radius:10px;padding:14px;border:1px solid #bae6fd">';
+    html += '<div style="font-size:14px;font-weight:600;color:#0369a1;margin-bottom:10px">整体改进建议</div>';
+    html += '<ol style="margin:0;padding-left:20px">';
+    result.overallSuggestions.forEach(function(s) {
+      html += '<li style="font-size:12px;color:#0c4a6e;margin-bottom:6px;line-height:1.6">' + s + '</li>';
+    });
+    html += '</ol></div>';
+  }
+  
+  // 导出按钮
+  html += '<div style="margin-top:16px;text-align:center"><button onclick="exportFormatReport()" style="background:#2563eb;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">导出格式检查报告</button></div>';
+  
+  area.innerHTML = html;
+  window._lastFormatResult = result;
+}
+
+function exportFormatReport() {
+  var result = window._lastFormatResult;
+  if (!result) { alert('暂无检查报告可导出'); return; }
+  var text = '论文格式检查报告\n';
+  text += '====================\n\n';
+  text += '总体评分：' + (result.totalScore || 0) + '分（' + (result.grade || '') + '）\n';
+  text += '总体评价：' + (result.summary || '') + '\n\n';
+  if (result.dimensions) {
+    result.dimensions.forEach(function(dim) {
+      text += '【' + dim.name + '】' + (dim.score || 0) + '分\n';
+      (dim.issues || []).forEach(function(issue) {
+        text += '  - [' + (issue.severity || '') + '] ' + (issue.type || '') + '\n';
+        if (issue.location) text += '    位置：' + issue.location + '\n';
+        if (issue.description) text += '    说明：' + issue.description + '\n';
+        if (issue.suggestion) text += '    建议：' + issue.suggestion + '\n';
+      });
+      text += '\n';
+    });
+  }
+  if (result.overallSuggestions) {
+    text += '【整体改进建议】\n';
+    result.overallSuggestions.forEach(function(s, i) { text += (i+1) + '. ' + s + '\n'; });
+  }
+  var blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '格式检查报告_' + new Date().toISOString().slice(0,10) + '.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function switchPaperSubTab(subTab) {
@@ -49626,6 +49870,63 @@ function propAIContinue() {
   });
 }
 
+
+// ========== Mermaid技术路线图渲染 ==========
+function renderMermaidGraph(code, containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  if (!window.mermaid) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:#64748b;font-size:13px">Mermaid库加载中，请稍候刷新页面...</div>';
+    return;
+  }
+  try {
+    var cleanCode = code.trim();
+    var codeMatch = cleanCode.match(/```mermaid\n?([\s\S]*?)```/);
+    if (codeMatch) cleanCode = codeMatch[1];
+    var graphMatch = cleanCode.match(/graph\s+(TD|LR|TB|BT|RL)[\s\S]*/);
+    if (graphMatch) cleanCode = graphMatch[0];
+    
+    var graphId = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+    container.innerHTML = '<div class="mermaid" id="' + graphId + '">' + cleanCode + '</div>';
+    
+    mermaid.run({ querySelector: '#' + graphId }).catch(function(err) {
+      container.innerHTML = '<div style="padding:16px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px"><div style="font-size:13px;font-weight:600;color:#dc2626;margin-bottom:8px">Mermaid渲染失败，显示原始代码</div><pre style="font-size:11px;color:#374151;white-space:pre-wrap;word-break:break-all;background:#f9fafb;padding:12px;border-radius:6px;max-height:300px;overflow-y:auto">' + cleanCode + '</pre></div>';
+    });
+  } catch(e) {
+    container.innerHTML = '<div style="padding:16px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px"><div style="font-size:13px;font-weight:600;color:#dc2626;margin-bottom:8px">渲染异常</div><pre style="font-size:11px;color:#374151;white-space:pre-wrap">' + e.message + '</pre></div>';
+  }
+}
+
+function exportMermaidPNG(containerId, filename) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  var svg = container.querySelector('svg');
+  if (!svg) { alert('没有可导出的图表'); return; }
+  try {
+    var svgData = new XMLSerializer().serializeToString(svg);
+    var canvas = document.createElement('canvas');
+    var svgSize = svg.getBoundingClientRect();
+    canvas.width = svgSize.width * 2;
+    canvas.height = svgSize.height * 2;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+    var img = new Image();
+    var svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+    var url = URL.createObjectURL(svgBlob);
+    img.onload = function() {
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      var link = document.createElement('a');
+      link.download = (filename || '技术路线图') + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    };
+    img.src = url;
+  } catch(e) {
+    alert('导出失败: ' + e.message);
+  }
+}
+
 function propGenerateTechRoute() {
   if (!window.propState) return;
   const idx = window.propState.currentChapter;
@@ -49645,7 +49946,21 @@ function propGenerateTechRoute() {
     chapter.content = (chapter.content || '') + '\n\n【技术路线图】\n```mermaid\n' + mermaid.trim() + '\n```';
     propAutoSave();
     renderPhdProposal();
-    alert('技术路线图已生成并添加到本章末尾！\n\n（提示：技术路线图以Mermaid代码形式保存，导出Markdown后可在支持Mermaid的编辑器中渲染）');
+    // 直接渲染显示技术路线图
+    var techRouteArea = document.getElementById('phdTechRouteDisplay');
+    if (!techRouteArea) {
+      // 创建显示区域
+      var area = document.getElementById('phdProposalArea');
+      if (area) {
+        var displayDiv = document.createElement('div');
+        displayDiv.id = 'phdTechRouteDisplay';
+        displayDiv.style.cssText = 'margin-bottom:16px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9;overflow:hidden';
+        displayDiv.innerHTML = '<div style="padding:16px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-bottom:1px solid #bfdbfe"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:700;color:#1d4ed8">技术路线图</div><div style="display:flex;gap:8px"><button onclick="exportMermaidPNG(\'phdTechRouteDisplay\',\'技术路线图\')" style="background:#2563eb;color:#fff;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">导出PNG</button><button onclick="document.getElementById(\'phdTechRouteDisplay\').remove()" style="background:#f3f4f6;color:#374151;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px">关闭</button></div></div></div><div id="phdTechRouteGraph" style="padding:20px;overflow-x:auto"></div>';
+        area.insertBefore(displayDiv, area.firstChild);
+      }
+    }
+    setTimeout(function() { renderMermaidGraph(mermaid.trim(), 'phdTechRouteGraph'); }, 200);
+    alert('技术路线图已生成！已在页面顶部显示，可导出为PNG图片。同时已保存到计划书中。');
   }).catch(err => {
     alert('生成失败: ' + err.message);
   });
@@ -57702,6 +58017,72 @@ async function aiGenerateMockQuestions() {
 // 初始化AI模拟题
 if (typeof initMockExam === "function") { setTimeout(initMockExam, 500); }
 </script>
+<!-- 全局AI模型选择器 -->
+<div id="globalModelSelector" style="position:fixed;bottom:20px;right:20px;z-index:99999;font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif">
+  <button onclick="toggleGlobalModelPanel()" id="globalModelBtn" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:10px 16px;border-radius:24px;cursor:pointer;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(124,58,237,0.4);display:flex;align-items:center;gap:6px">
+    <span style="font-size:16px">🤖</span>
+    <span id="globalModelBtnText">AI模型</span>
+  </button>
+  <div id="globalModelPanel" style="display:none;position:absolute;bottom:55px;right:0;width:320px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);border:1px solid #e5e7eb;overflow:hidden">
+    <div style="padding:14px 16px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff">
+      <div style="font-size:14px;font-weight:700;margin-bottom:2px">AI 模型选择</div>
+      <div style="font-size:11px;opacity:0.85">切换后所有AI功能立即生效</div>
+    </div>
+    <div id="globalModelList" style="max-height:360px;overflow-y:auto;padding:8px"></div>
+    <div style="padding:10px 16px;border-top:1px solid #f3f4f6;background:#f9fafb;font-size:10px;color:#9ca3af;text-align:center;line-height:1.5">
+      深度推理用V4 Pro，快速响应用V4 Flash，中文写作用GLM-5.3，长文档用Kimi K3
+    </div>
+  </div>
+</div>
+<script>
+function renderGlobalModelList() {
+  var list = document.getElementById('globalModelList');
+  if (!list) return;
+  var html = '';
+  for (var i = 0; i < AI_MODELS.length; i++) {
+    var m = AI_MODELS[i];
+    var isActive = currentAiModel === m.value;
+    html += '<div class="global-model-item" data-model="' + m.value + '" style="padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;' + (isActive ? 'background:#faf5ff;border:1px solid #c4b5fd' : 'border:1px solid transparent') + '">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+    html += '<div style="font-size:13px;font-weight:600;color:' + (isActive ? '#7c3aed' : '#1f2937') + '">' + m.label + (isActive ? ' ✓' : '') + '</div>';
+    html += '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:' + (isActive ? '#7c3aed' : '#f3f4f6') + ';color:' + (isActive ? '#fff' : '#6b7280') + '">' + m.tag + '</span>';
+    html += '</div>';
+    html += '<div style="font-size:10px;color:#9ca3af;margin-top:2px">' + m.provider + '</div>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
+  var items = list.querySelectorAll('.global-model-item');
+  for (var j = 0; j < items.length; j++) {
+    items[j].addEventListener('click', function() {
+      selectGlobalModel(this.getAttribute('data-model'));
+    });
+  }
+}
+function toggleGlobalModelPanel() {
+  var panel = document.getElementById('globalModelPanel');
+  if (panel.style.display === 'none' || !panel.style.display) {
+    panel.style.display = 'block';
+    renderGlobalModelList();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+function selectGlobalModel(model) {
+  setAiModel(model);
+  var modelInfo = AI_MODELS.find(function(m) { return m.value === model; });
+  var btnText = document.getElementById('globalModelBtnText');
+  if (btnText && modelInfo) btnText.textContent = modelInfo.label.split('（')[0];
+  document.getElementById('globalModelPanel').style.display = 'none';
+}
+document.addEventListener('DOMContentLoaded', function() {
+  var modelInfo = AI_MODELS.find(function(m) { return m.value === currentAiModel; });
+  if (modelInfo) document.getElementById('globalModelBtnText').textContent = modelInfo.label.split('（')[0];
+});
+document.addEventListener('click', function(e) {
+  var selector = document.getElementById('globalModelSelector');
+  if (selector && !selector.contains(e.target)) document.getElementById('globalModelPanel').style.display = 'none';
+});
+</script>
 
 <div class="admin-overlay" id="adminOverlay">
   <div class="admin-panel">
@@ -58151,5 +58532,4 @@ if (typeof initMockExam === "function") { setTimeout(initMockExam, 500); }
 
 </div>
 
-</body>
-</html>
+
