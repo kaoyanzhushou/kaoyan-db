@@ -59806,3 +59806,53 @@ document.addEventListener('click', function(e) {
 </div>
 
 
+
+
+<script>
+// 直接自动登录：直接操作DOM和localStorage，不依赖外部函数
+(function(){
+  function doAutoLogin(){
+    try {
+      var currentUser = null;
+      try {
+        currentUser = JSON.parse(localStorage.getItem('kaoyan_current_user'));
+      } catch(e) { currentUser = null; }
+      
+      if(currentUser && currentUser.username){
+        var overlay = document.getElementById('loginOverlay');
+        if(overlay){
+          overlay.style.display = 'none';
+          overlay.classList.add('hidden');
+        }
+        var app = document.querySelector('.app');
+        if(app){
+          app.style.filter = '';
+          app.style.pointerEvents = '';
+        }
+        var userInfo = document.getElementById('userInfo');
+        if(userInfo) userInfo.style.display = 'flex';
+        var userName = document.getElementById('userName');
+        if(userName) userName.textContent = currentUser.username;
+        var userAvatar = document.getElementById('userAvatar');
+        if(userAvatar) userAvatar.textContent = currentUser.username.charAt(0).toUpperCase();
+        console.log('[directAutoLogin] 自动登录成功:', currentUser.username);
+        return true;
+      }
+    } catch(e) {
+      console.warn('[directAutoLogin] 失败:', e);
+    }
+    return false;
+  }
+  // 立即执行
+  if(!doAutoLogin()){
+    // 重试
+    var attempts = 0;
+    var interval = setInterval(function(){
+      attempts++;
+      if(doAutoLogin() || attempts >= 15){
+        clearInterval(interval);
+      }
+    }, 200);
+  }
+})();
+</script>
