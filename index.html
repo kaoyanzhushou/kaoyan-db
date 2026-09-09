@@ -6946,8 +6946,9 @@ console.log('✅ 学习工具入口已加载');
           <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
             <span style="font-size:12px;color:#6b21a8;font-weight:600">数据库：</span>
             <button onclick="setLitDB('pubmed')" id="litDBpubmed" style="padding:5px 14px;border-radius:6px;border:1px solid #7c3aed;background:#7c3aed;color:#fff;cursor:pointer;font-size:12px">PubMed</button>
+            <button onclick="setLitDB('europepmc')" id="litDBeuropepmc" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">Europe PMC</button>
             <button onclick="setLitDB('semantic')" id="litDBsemantic" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">Semantic Scholar</button>
-            <button onclick="setLitDB('mixed')" id="litDBmixed" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">中英文混合</button>
+            <button onclick="setLitDB('mixed')" id="litDBmixed" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">多库混合</button>
           </div>
           <div style="display:flex;gap:10px;margin-bottom:12px">
             <input type="text" id="phdLitSearchInput" placeholder="输入研究方向或关键词，如：exercise intervention chronic pain" style="flex:1;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none">
@@ -36220,7 +36221,7 @@ function switchLitTab(tab) {
 // 数据库选择
 function setLitDB(db) {
   phdLitCurrentDB = db;
-  ['pubmed', 'semantic', 'mixed'].forEach(function(d) {
+  ['pubmed', 'europepmc', 'semantic', 'mixed'].forEach(function(d) {
     var btn = document.getElementById('litDB' + d);
     if (btn) {
       btn.style.background = (d === db) ? '#7c3aed' : '#fff';
@@ -36242,18 +36243,21 @@ async function searchPhdLiterature() {
   try {
     var articles = [];
     if (phdLitCurrentDB === 'pubmed') {
-      statusDiv.innerHTML = '正在PubMed检索...';
+      statusDiv.innerHTML = '正在PubMed检索（多代理+Europe PMC兜底）...';
       articles = await searchPubMed(query, count);
+    } else if (phdLitCurrentDB === 'europepmc') {
+      statusDiv.innerHTML = '正在Europe PMC检索...';
+      articles = await searchEuropePMC(query, count);
     } else if (phdLitCurrentDB === 'semantic') {
       statusDiv.innerHTML = '正在Semantic Scholar检索...';
       articles = await searchSemanticScholar(query, count);
     } else {
-      statusDiv.innerHTML = '正在多数据库混合检索（PubMed + Semantic Scholar）...';
-      var [pubmedArts, semanticArts] = await Promise.all([
-        searchPubMed(query, Math.ceil(count/2)),
+      statusDiv.innerHTML = '正在多库混合检索（Europe PMC + Semantic Scholar）...';
+      var [epmcArts, semanticArts] = await Promise.all([
+        searchEuropePMC(query, Math.ceil(count/2)),
         searchSemanticScholar(query, Math.ceil(count/2))
       ]);
-      articles = pubmedArts.concat(semanticArts);
+      articles = epmcArts.concat(semanticArts);
       // 去重（按标题）
       var seen = {};
       articles = articles.filter(function(a) {
@@ -36295,7 +36299,43 @@ async function fetchViaProxy(url) {
 }
 
 async function searchPubMed(query, count) {
-  // 使用Europe PMC API（欧洲版PubMed，数据同源，原生支持CORS）
+  // 真正的PubMed API，多代理轮询，全部失败时fallback到Europe PMC
+  var proxies = [
+    function(u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
+    function(u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); },
+    function(u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); }
+  ];
+  async function fetchPubmed(url) {
+    var lastErr = null;
+    for (var i = 0; i < proxies.length; i++) {
+      try {
+        var resp = await fetch(proxies[i](url));
+        if (resp.ok) return resp;
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error('所有PubMed代理均失败');
+  }
+  try {
+    var searchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=' +
+      encodeURIComponent(query) + '&retmax=' + count + '&retmode=json&sort=relevance';
+    var searchResp = await fetchPubmed(searchUrl);
+    var searchData = await searchResp.json();
+    var idList = searchData.esearchresult.idlist;
+    if (!idList || idList.length === 0) return [];
+    var fetchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=' +
+      idList.join(',') + '&rettype=abstract&retmode=json';
+    var fetchResp = await fetchPubmed(fetchUrl);
+    var fetchData = await fetchResp.json();
+    return parsePubmedArticles(fetchData);
+  } catch (e) {
+    // PubMed全部失败，fallback到Europe PMC（数据同源）
+    console.warn('PubMed检索失败，切换Europe PMC兜底:', e.message);
+    return await searchEuropePMC(query, count);
+  }
+}
+
+// Europe PMC检索（欧洲版PubMed，原生支持CORS）
+async function searchEuropePMC(query, count) {
   var url = 'https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=' +
     encodeURIComponent(query) + '&resultType=core&pageSize=' + count + '&format=json';
   var response = await fetch(url);
@@ -36308,14 +36348,13 @@ async function searchPubMed(query, count) {
     } else if (p.authors && p.authors.author) {
       authors = p.authors.author.map(function(a) { return a.fullName || (a.firstName + ' ' + a.lastName); }).join(', ');
     }
-    var journal = p.journalTitle || p.journalInfo && p.journalInfo.journal.title || 'Europe PMC';
+    var journal = p.journalTitle || (p.journalInfo && p.journalInfo.journal && p.journalInfo.journal.title) || 'Europe PMC';
     var pubdate = p.pubYear || p.firstPublicationDate || '未知';
     var doi = p.doi || '';
     var pmid = p.pmid || '';
     var cited = p.citedByCount || 0;
     var abstract = p.abstractText || '无摘要';
-    var paperUrl = 'https://europepmc.org/article/MED/' + pmid;
-    if (!pmid && doi) paperUrl = 'https://doi.org/' + doi;
+    var paperUrl = pmid ? 'https://europepmc.org/article/MED/' + pmid : (doi ? 'https://doi.org/' + doi : '');
     return {
       pmid: pmid,
       title: p.title || '无标题',
@@ -36326,7 +36365,7 @@ async function searchPubMed(query, count) {
       doi: doi,
       citationCount: cited,
       url: paperUrl,
-      source: 'PubMed'
+      source: 'Europe PMC'
     };
   });
 }
