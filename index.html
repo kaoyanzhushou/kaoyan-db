@@ -7557,249 +7557,7 @@ console.log('✅ 学习工具入口已加载');
   </div>
 </div>
 
-<div id="tab-phd" class="tab-content">
-  <div class="phd-container">
-    <!-- 头部 -->
-    <div class="phd-header">
-      <h2>🎓 体育考博备考系统</h2>
-      <p>专注体育学与运动人体科学方向博士研究生考试备考，涵盖专业知识深化、考博真题、科研能力培养、面试与申请材料四大核心模块。不涉及体育人文社会学、运动训练学、民族传统体育专业。</p>
-      <div class="phd-badges">
-        <span class="phd-badge">📚 专业知识深化</span>
-        <span class="phd-badge">📝 各校考博真题</span>
-        <span class="phd-badge">🔬 科研能力培养</span>
-        <span class="phd-badge">🎓 面试申请指导</span>
-      </div>
-    </div>
 
-    <!-- 考博AI咨询助手 -->
-    <div class="phd-ai-assistant-card" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px;padding:24px;margin-bottom:20px;color:#fff;box-shadow:0 8px 32px rgba(102,126,234,0.3)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div>
-          <h3 style="margin:0;font-size:20px">🤖 考博AI咨询助手</h3>
-          <p style="margin:4px 0 0 0;font-size:13px;opacity:0.9">你的专属体育考博顾问，解答院校选择、专业课复习、报名流程、导师选择、面试准备等问题</p>
-        </div>
-        <button onclick="togglePhdAIChat()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;backdrop-filter:blur(10px)">
-          💬 开始咨询
-        </button>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <span onclick="askPhdAIQuick('上体运动人体科学考博科目有哪些？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">🏫 院校选择</span>
-        <span onclick="askPhdAIQuick('运动生理学考博重点复习哪些章节？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">📚 专业课复习</span>
-        <span onclick="askPhdAIQuick('考博报名需要准备哪些材料？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">📝 报名流程</span>
-        <span onclick="askPhdAIQuick('如何选择博导？套磁邮件怎么写？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">👨‍🏫 导师选择</span>
-        <span onclick="askPhdAIQuick('考博面试常见问题有哪些？如何准备？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">🎤 面试准备</span>
-        <span onclick="showPhdSchoolRecommend()" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">🎯 个性化院校推荐</span>
-      </div>
-    </div>
-
-    <!-- 考博AI咨询对话界面（默认隐藏） -->
-    <div id="phdAIChatPanel" style="display:none;background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:1px solid #e5e7eb">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e5e7eb">
-        <h4 style="margin:0;color:#374151">💬 考博AI咨询对话</h4>
-        <button onclick="togglePhdAIChat()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px">✕</button>
-      </div>
-      <div id="phdAIChatMessages" style="height:400px;overflow-y:auto;padding:16px;background:#f9fafb;border-radius:12px;margin-bottom:16px">
-        <div style="text-align:center;color:#9ca3af;font-size:13px;padding:20px">
-          👋 你好！我是考博AI咨询助手，有什么问题尽管问我～
-        </div>
-      </div>
-      <div style="display:flex;gap:10px">
-        <input type="text" id="phdAIInput" placeholder="输入你的考博问题，例如：上体运动人体科学考博科目？" style="flex:1;padding:12px 16px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;outline:none" onkeypress="if(event.key==='Enter')sendPhdAIMessage()">
-        <select id="phdAIModelSelect" style="padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:13px;outline:none;background:#fff;cursor:pointer;color:#374151">
-          <option value="deepseek-chat">DeepSeek V3</option>
-          <option value="deepseek-v4-pro">DeepSeek V4 Pro（最强推理）</option>
-          <option value="deepseek-v4-flash">DeepSeek V4 Flash（快速）</option>
-          <option value="glm-5.3">智谱 GLM-5.3（中文优秀）</option>
-          <option value="kimi-k3">Kimi K3（长文本）</option>
-          <option value="hy3">腾讯混元 hy3</option>
-          <option value="hy4-preview">腾讯混元 hy4</option>
-        </select>
-        <button onclick="sendPhdAIMessage()" style="background:#667eea;color:#fff;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600">发送</button>
-        <button onclick="clearPhdAIChat()" style="background:#fff;color:#6b7280;border:1px solid #d1d5db;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px" title="清空对话记录">🗑️ 清空</button>
-        <button onclick="exportPhdChat()" style="background:#fff;color:#6b7280;border:1px solid #d1d5db;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px" title="导出对话记录为Markdown">📥 导出</button>
-        <button onclick="document.getElementById('phdDocUpload').click()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600" title="上传科研计划书/简历/个人陈述，AI自动评审">📄 AI评审</button>
-        <button onclick="showPhdLiteratureSearch()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600" title="输入研究方向，自动检索PubMed文献并生成综述">📚 文献检索</button>
-        <button onclick="showPhdWebSearch()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600" title="智能生成搜索关键词，一键跳转百度/谷歌/知乎搜索最新信息">🔍 联网搜索</button>
-        <input type="file" id="phdDocUpload" style="display:none" accept=".txt,.md,.docx" onchange="handlePhdDocUpload(this)">
-      </div>
-      
-      <!-- 联网搜索面板 -->
-      <div id="phdWebSearchPanel" style="display:none;margin-top:16px;padding:20px;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <h4 style="margin:0;color:#92400e;font-size:16px">🔍 联网搜索增强</h4>
-          <button onclick="document.getElementById('phdWebSearchPanel').style.display='none'" style="background:none;border:none;color:#d97706;cursor:pointer;font-size:18px">×</button>
-        </div>
-        <div style="font-size:13px;color:#78350f;margin-bottom:12px">AI智能生成搜索关键词，一键跳转各大搜索引擎获取最新招生简章、导师信息、院校动态</div>
-        <div style="display:flex;gap:10px;margin-bottom:16px">
-          <input type="text" id="phdWebSearchInput" placeholder="输入要搜索的内容，或点击下方AI推荐关键词" style="flex:1;padding:10px 14px;border:1px solid #fcd34d;border-radius:8px;font-size:13px;outline:none">
-          <button onclick="doPhdWebSearch()" style="background:#d97706;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 搜索</button>
-        </div>
-        <div id="phdWebSearchSuggestions" style="font-size:13px;color:#78350f"></div>
-        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #fcd34d">
-          <div style="font-size:12px;color:#92400e;margin-bottom:8px;font-weight:600">选择搜索引擎：</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button onclick="setPhdSearchEngine('baidu')" id="phdEngineBaidu" style="padding:6px 14px;border-radius:6px;border:1px solid #d97706;background:#d97706;color:#fff;cursor:pointer;font-size:12px">百度</button>
-            <button onclick="setPhdSearchEngine('google')" id="phdEngineGoogle" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">谷歌</button>
-            <button onclick="setPhdSearchEngine('bing')" id="phdEngineBing" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">必应</button>
-            <button onclick="setPhdSearchEngine('zhihu')" id="phdEngineZhihu" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">知乎</button>
-            <button onclick="setPhdSearchEngine('weixin')" id="phdEngineWeixin" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">微信</button>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 文献检索面板（第一阶段增强） -->
-      <div id="phdLiteraturePanel" style="display:none;margin-top:16px;padding:20px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <h4 style="margin:0;color:#5b21b6;font-size:16px">文献检索与管理</h4>
-          <button onclick="document.getElementById('phdLiteraturePanel').style.display='none'" style="background:none;border:none;color:#7c3aed;cursor:pointer;font-size:18px">×</button>
-        </div>
-        <!-- Tab切换 -->
-        <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:2px solid #ddd6fe;padding-bottom:0">
-          <button id="litTabSearch" onclick="switchLitTab('search')" style="padding:8px 18px;border:none;background:#7c3aed;color:#fff;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">文献检索</button>
-          <button id="litTabMentor" onclick="switchLitTab('mentor')" style="padding:8px 18px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">导师文献追踪</button>
-          <button id="litTabFav" onclick="switchLitTab('fav')" style="padding:8px 18px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">我的收藏 <span id="litFavCount" style="background:#7c3aed;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">0</span></button>
-        </div>
-        <!-- 文献检索Tab -->
-        <div id="litTabContent-search">
-          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
-            <span style="font-size:12px;color:#6b21a8;font-weight:600">数据库：</span>
-            <button onclick="setLitDB('pubmed')" id="litDBpubmed" style="padding:5px 14px;border-radius:6px;border:1px solid #7c3aed;background:#7c3aed;color:#fff;cursor:pointer;font-size:12px">PubMed</button>
-            <button onclick="setLitDB('europepmc')" id="litDBeuropepmc" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">Europe PMC</button>
-            <button onclick="setLitDB('semantic')" id="litDBsemantic" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">Semantic Scholar</button>
-            <button onclick="setLitDB('mixed')" id="litDBmixed" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">多库混合</button>
-          </div>
-          <div style="display:flex;gap:10px;margin-bottom:12px">
-            <input type="text" id="phdLitSearchInput" placeholder="输入研究方向或关键词，如：exercise intervention chronic pain" style="flex:1;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none">
-            <select id="phdLitCount" style="padding:10px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none;background:#fff;cursor:pointer;color:#5b21b6">
-              <option value="5">5篇</option>
-              <option value="10" selected>10篇</option>
-              <option value="20">20篇</option>
-            </select>
-            <button onclick="searchPhdLiterature()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">检索</button>
-            <button id="litAdvancedBtn" onclick="toggleLitAdvanced()" style="background:#fff;color:#7c3aed;border:1px solid #c4b5fd;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px">高级检索</button>
-          </div>
-          <!-- 高级检索面板 -->
-          <div id="litAdvancedPanel" style="display:none;margin-bottom:12px;padding:14px;background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px">
-            <div style="font-size:12px;color:#5b21b6;font-weight:600;margin-bottom:10px">高级检索条件（PubMed语法）</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-              <input type="text" id="litAdvAuthor" placeholder="作者（如：Zhang S）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
-              <input type="text" id="litAdvJournal" placeholder="期刊名（如：Medicine & Science in Sports）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
-              <input type="text" id="litAdvYearFrom" placeholder="起始年份（如：2020）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
-              <input type="text" id="litAdvYearTo" placeholder="结束年份（如：2026）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
-            </div>
-            <div style="display:flex;gap:10px;align-items:center">
-              <span style="font-size:12px;color:#6b21a8">关键词逻辑：</span>
-              <select id="litAdvLogic" style="padding:6px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer">
-                <option value="AND">AND（同时包含）</option>
-                <option value="OR">OR（任一包含）</option>
-                <option value="NOT">NOT（排除）</option>
-              </select>
-              <button onclick="advancedLitSearch()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">应用条件检索</button>
-            </div>
-          </div>
-          <!-- 工具按钮行 -->
-          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-            <button onclick="generateLitMetrics()" style="font-size:12px;color:#fff;background:linear-gradient(135deg,#0ea5e9,#0284c7);border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:600">文献计量分析</button>
-            <button onclick="exportCurrentLiterature('bibtex')" style="font-size:12px;color:#1e40af;background:#dbeafe;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">导出BibTeX</button>
-            <button onclick="exportCurrentLiterature('csv')" style="font-size:12px;color:#166534;background:#dcfce7;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">导出CSV</button>
-            <button onclick="exportCurrentLiterature('txt')" style="font-size:12px;color:#92400e;background:#fef3c7;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">导出文本</button>
-          </div>
-          <div id="litMetricsResult" style="display:none;margin-bottom:16px"></div>
-          <div id="phdLitSearchStatus" style="font-size:13px;color:#6b21a8;margin-bottom:10px"></div>
-          <div id="phdLitResults"></div>
-        </div>
-        <!-- 导师文献追踪Tab -->
-        <div id="litTabContent-mentor" style="display:none">
-          <div style="font-size:13px;color:#6b21a8;margin-bottom:10px">输入导师姓名，自动检索其近年发表的文献，了解研究方向与最新成果</div>
-          <div style="display:flex;gap:10px;margin-bottom:12px">
-            <input type="text" id="litMentorName" placeholder="导师姓名，如：Zhang San" style="flex:1;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none">
-            <input type="text" id="litMentorAffil" placeholder="院校（可选），如：Shanghai University of Sport" style="flex:1;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none">
-            <button onclick="searchMentorPapers()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">追踪</button>
-          </div>
-          <div id="litMentorStatus" style="font-size:13px;color:#6b21a8;margin-bottom:10px"></div>
-          <div id="litMentorResults"></div>
-          <div id="litInterviewQResult" style="display:none;margin-top:16px"></div>
-          <div id="litInterviewQBar" style="display:none;margin-top:12px">
-            <button onclick="generateInterviewLitQuestions()" style="font-size:12px;color:#fff;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-weight:600">生成面试文献问题</button>
-            <span style="font-size:11px;color:#92400e;margin-left:8px">基于导师文献生成面试可能问到的问题清单</span>
-          </div>
-        </div>
-        <!-- 我的收藏Tab -->
-        <div id="litTabContent-fav" style="display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <div style="font-size:13px;color:#6b21a8">收藏的文献保存在本地浏览器，可随时查看和导出</div>
-            <button onclick="exportFavLiterature()" style="background:#7c3aed;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">导出为文本</button>
-          </div>
-          <div id="litFavResults"></div>
-        </div>
-      </div>
-      
-      <!-- 文档评审结果面板 -->
-      <div id="phdDocReviewPanel" style="display:none;margin-top:16px;padding:20px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <h4 style="margin:0;color:#065f46;font-size:16px">📄 AI文档评审报告</h4>
-          <button onclick="document.getElementById('phdDocReviewPanel').style.display='none'" style="background:none;border:none;color:#059669;cursor:pointer;font-size:18px">×</button>
-        </div>
-        <div id="phdDocReviewContent" style="font-size:14px;color:#064e3b;line-height:1.8"></div>
-      </div>
-    </div>
-
-    <!-- 当前模块标题区 -->
-    <div class="phd-section-header" id="phdSectionHeader">
-      <div class="phd-section-icon" id="phdSectionIcon">📚</div>
-      <div class="phd-section-info">
-        <h3 class="phd-section-title" id="phdSectionTitle">专业知识库</h3>
-        <p class="phd-section-desc" id="phdSectionDesc">运动人体科学与运动康复考博核心知识点系统梳理</p>
-      </div>
-      <div class="phd-section-stats" id="phdSectionStats">
-        <div class="phd-stat-item"><span class="phd-stat-num" id="phdStatNum">0</span><span class="phd-stat-label">知识点</span></div>
-      </div>
-    </div>
-
-    <!-- 专业知识库内容 -->
-    <div class="phd-content active" id="phdContent-knowledge">
-      <div id="phdKnowledgeArea">
-        <div style="text-align:center;padding:40px;color:#999">📚 专业知识库加载中...</div>
-      </div>
-    </div>
-
-    <!-- 考博真题内容 -->
-    <div class="phd-content" id="phdContent-exam">
-      <div id="phdExamArea">
-        <div style="text-align:center;padding:40px;color:#999">📝 考博真题加载中...</div>
-      </div>
-    </div>
-
-    <!-- 科研能力内容 -->
-    <div class="phd-content" id="phdContent-research">
-      <div id="phdResearchArea">
-        <div style="text-align:center;padding:40px;color:#999">🔬 科研能力培养加载中...</div>
-      </div>
-    </div>
-
-    <!-- 面试申请内容 -->
-    <div class="phd-content" id="phdContent-interview">
-      <div id="phdInterviewArea">
-        <div style="text-align:center;padding:40px;color:#999">🎓 面试与申请材料加载中...</div>
-      </div>
-    </div>
-  <div class="phd-content" id="phdContent-schools">
-    <div id="phdSchoolArea"></div>
-  </div>
-
-  <!-- 套磁助手内容 -->
-  <div class="phd-content" id="phdContent-taoci">
-    <div id="phdTaociArea"></div>
-  </div>
-
-  <!-- 投稿模式内容 -->
-  <div class="phd-content" id="phdContent-publish">
-    <div id="phdPublishArea"></div>
-  </div>
-
-  
-  </div>
-</div>
 
 <!-- 考博知识点详情弹窗 -->
 
@@ -9229,6 +8987,7 @@ console.log('✅ 学习工具入口已加载');
   </div>
 </div>
 
+</div>
 <div id="tab-mock-exam" class="tab-content">
   <div class="mock-exam-container">
     <div class="mock-exam-header">
@@ -9320,6 +9079,250 @@ console.log('✅ 学习工具入口已加载');
     </div>
   </div>
 </div>
+<div id="tab-phd" class="tab-content">
+  <div class="phd-container">
+    <!-- 头部 -->
+    <div class="phd-header">
+      <h2>🎓 体育考博备考系统</h2>
+      <p>专注体育学与运动人体科学方向博士研究生考试备考，涵盖专业知识深化、考博真题、科研能力培养、面试与申请材料四大核心模块。不涉及体育人文社会学、运动训练学、民族传统体育专业。</p>
+      <div class="phd-badges">
+        <span class="phd-badge">📚 专业知识深化</span>
+        <span class="phd-badge">📝 各校考博真题</span>
+        <span class="phd-badge">🔬 科研能力培养</span>
+        <span class="phd-badge">🎓 面试申请指导</span>
+      </div>
+    </div>
+
+    <!-- 考博AI咨询助手 -->
+    <div class="phd-ai-assistant-card" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px;padding:24px;margin-bottom:20px;color:#fff;box-shadow:0 8px 32px rgba(102,126,234,0.3)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div>
+          <h3 style="margin:0;font-size:20px">🤖 考博AI咨询助手</h3>
+          <p style="margin:4px 0 0 0;font-size:13px;opacity:0.9">你的专属体育考博顾问，解答院校选择、专业课复习、报名流程、导师选择、面试准备等问题</p>
+        </div>
+        <button onclick="togglePhdAIChat()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;backdrop-filter:blur(10px)">
+          💬 开始咨询
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span onclick="askPhdAIQuick('上体运动人体科学考博科目有哪些？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">🏫 院校选择</span>
+        <span onclick="askPhdAIQuick('运动生理学考博重点复习哪些章节？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">📚 专业课复习</span>
+        <span onclick="askPhdAIQuick('考博报名需要准备哪些材料？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">📝 报名流程</span>
+        <span onclick="askPhdAIQuick('如何选择博导？套磁邮件怎么写？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">👨‍🏫 导师选择</span>
+        <span onclick="askPhdAIQuick('考博面试常见问题有哪些？如何准备？')" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">🎤 面试准备</span>
+        <span onclick="showPhdSchoolRecommend()" style="background:rgba(255,255,255,0.15);padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;backdrop-filter:blur(10px)">🎯 个性化院校推荐</span>
+      </div>
+    </div>
+
+    <!-- 考博AI咨询对话界面（默认隐藏） -->
+    <div id="phdAIChatPanel" style="display:none;background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:1px solid #e5e7eb">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e5e7eb">
+        <h4 style="margin:0;color:#374151">💬 考博AI咨询对话</h4>
+        <button onclick="togglePhdAIChat()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px">✕</button>
+      </div>
+      <div id="phdAIChatMessages" style="height:400px;overflow-y:auto;padding:16px;background:#f9fafb;border-radius:12px;margin-bottom:16px">
+        <div style="text-align:center;color:#9ca3af;font-size:13px;padding:20px">
+          👋 你好！我是考博AI咨询助手，有什么问题尽管问我～
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <input type="text" id="phdAIInput" placeholder="输入你的考博问题，例如：上体运动人体科学考博科目？" style="flex:1;padding:12px 16px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;outline:none" onkeypress="if(event.key==='Enter')sendPhdAIMessage()">
+        <select id="phdAIModelSelect" style="padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:13px;outline:none;background:#fff;cursor:pointer;color:#374151">
+          <option value="deepseek-chat">DeepSeek V3</option>
+          <option value="deepseek-v4-pro">DeepSeek V4 Pro（最强推理）</option>
+          <option value="deepseek-v4-flash">DeepSeek V4 Flash（快速）</option>
+          <option value="glm-5.3">智谱 GLM-5.3（中文优秀）</option>
+          <option value="kimi-k3">Kimi K3（长文本）</option>
+          <option value="hy3">腾讯混元 hy3</option>
+          <option value="hy4-preview">腾讯混元 hy4</option>
+        </select>
+        <button onclick="sendPhdAIMessage()" style="background:#667eea;color:#fff;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600">发送</button>
+        <button onclick="clearPhdAIChat()" style="background:#fff;color:#6b7280;border:1px solid #d1d5db;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px" title="清空对话记录">🗑️ 清空</button>
+        <button onclick="exportPhdChat()" style="background:#fff;color:#6b7280;border:1px solid #d1d5db;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px" title="导出对话记录为Markdown">📥 导出</button>
+        <button onclick="document.getElementById('phdDocUpload').click()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600" title="上传科研计划书/简历/个人陈述，AI自动评审">📄 AI评审</button>
+        <button onclick="showPhdLiteratureSearch()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600" title="输入研究方向，自动检索PubMed文献并生成综述">📚 文献检索</button>
+        <button onclick="showPhdWebSearch()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:12px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600" title="智能生成搜索关键词，一键跳转百度/谷歌/知乎搜索最新信息">🔍 联网搜索</button>
+        <input type="file" id="phdDocUpload" style="display:none" accept=".txt,.md,.docx" onchange="handlePhdDocUpload(this)">
+      </div>
+      
+      <!-- 联网搜索面板 -->
+      <div id="phdWebSearchPanel" style="display:none;margin-top:16px;padding:20px;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h4 style="margin:0;color:#92400e;font-size:16px">🔍 联网搜索增强</h4>
+          <button onclick="document.getElementById('phdWebSearchPanel').style.display='none'" style="background:none;border:none;color:#d97706;cursor:pointer;font-size:18px">×</button>
+        </div>
+        <div style="font-size:13px;color:#78350f;margin-bottom:12px">AI智能生成搜索关键词，一键跳转各大搜索引擎获取最新招生简章、导师信息、院校动态</div>
+        <div style="display:flex;gap:10px;margin-bottom:16px">
+          <input type="text" id="phdWebSearchInput" placeholder="输入要搜索的内容，或点击下方AI推荐关键词" style="flex:1;padding:10px 14px;border:1px solid #fcd34d;border-radius:8px;font-size:13px;outline:none">
+          <button onclick="doPhdWebSearch()" style="background:#d97706;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 搜索</button>
+        </div>
+        <div id="phdWebSearchSuggestions" style="font-size:13px;color:#78350f"></div>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #fcd34d">
+          <div style="font-size:12px;color:#92400e;margin-bottom:8px;font-weight:600">选择搜索引擎：</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="setPhdSearchEngine('baidu')" id="phdEngineBaidu" style="padding:6px 14px;border-radius:6px;border:1px solid #d97706;background:#d97706;color:#fff;cursor:pointer;font-size:12px">百度</button>
+            <button onclick="setPhdSearchEngine('google')" id="phdEngineGoogle" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">谷歌</button>
+            <button onclick="setPhdSearchEngine('bing')" id="phdEngineBing" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">必应</button>
+            <button onclick="setPhdSearchEngine('zhihu')" id="phdEngineZhihu" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">知乎</button>
+            <button onclick="setPhdSearchEngine('weixin')" id="phdEngineWeixin" style="padding:6px 14px;border-radius:6px;border:1px solid #fcd34d;background:#fff;color:#92400e;cursor:pointer;font-size:12px">微信</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 文献检索面板（第一阶段增强） -->
+      <div id="phdLiteraturePanel" style="display:none;margin-top:16px;padding:20px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h4 style="margin:0;color:#5b21b6;font-size:16px">文献检索与管理</h4>
+          <button onclick="document.getElementById('phdLiteraturePanel').style.display='none'" style="background:none;border:none;color:#7c3aed;cursor:pointer;font-size:18px">×</button>
+        </div>
+        <!-- Tab切换 -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:2px solid #ddd6fe;padding-bottom:0">
+          <button id="litTabSearch" onclick="switchLitTab('search')" style="padding:8px 18px;border:none;background:#7c3aed;color:#fff;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">文献检索</button>
+          <button id="litTabMentor" onclick="switchLitTab('mentor')" style="padding:8px 18px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">导师文献追踪</button>
+          <button id="litTabFav" onclick="switchLitTab('fav')" style="padding:8px 18px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">我的收藏 <span id="litFavCount" style="background:#7c3aed;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">0</span></button>
+        </div>
+        <!-- 文献检索Tab -->
+        <div id="litTabContent-search">
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+            <span style="font-size:12px;color:#6b21a8;font-weight:600">数据库：</span>
+            <button onclick="setLitDB('pubmed')" id="litDBpubmed" style="padding:5px 14px;border-radius:6px;border:1px solid #7c3aed;background:#7c3aed;color:#fff;cursor:pointer;font-size:12px">PubMed</button>
+            <button onclick="setLitDB('europepmc')" id="litDBeuropepmc" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">Europe PMC</button>
+            <button onclick="setLitDB('semantic')" id="litDBsemantic" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">Semantic Scholar</button>
+            <button onclick="setLitDB('mixed')" id="litDBmixed" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">多库混合</button>
+          </div>
+          <div style="display:flex;gap:10px;margin-bottom:12px">
+            <input type="text" id="phdLitSearchInput" placeholder="输入研究方向或关键词，如：exercise intervention chronic pain" style="flex:1;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none">
+            <select id="phdLitCount" style="padding:10px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none;background:#fff;cursor:pointer;color:#5b21b6">
+              <option value="5">5篇</option>
+              <option value="10" selected>10篇</option>
+              <option value="20">20篇</option>
+            </select>
+            <button onclick="searchPhdLiterature()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">检索</button>
+            <button id="litAdvancedBtn" onclick="toggleLitAdvanced()" style="background:#fff;color:#7c3aed;border:1px solid #c4b5fd;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px">高级检索</button>
+          </div>
+          <!-- 高级检索面板 -->
+          <div id="litAdvancedPanel" style="display:none;margin-bottom:12px;padding:14px;background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px">
+            <div style="font-size:12px;color:#5b21b6;font-weight:600;margin-bottom:10px">高级检索条件（PubMed语法）</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <input type="text" id="litAdvAuthor" placeholder="作者（如：Zhang S）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
+              <input type="text" id="litAdvJournal" placeholder="期刊名（如：Medicine & Science in Sports）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
+              <input type="text" id="litAdvYearFrom" placeholder="起始年份（如：2020）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
+              <input type="text" id="litAdvYearTo" placeholder="结束年份（如：2026）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <span style="font-size:12px;color:#6b21a8">关键词逻辑：</span>
+              <select id="litAdvLogic" style="padding:6px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer">
+                <option value="AND">AND（同时包含）</option>
+                <option value="OR">OR（任一包含）</option>
+                <option value="NOT">NOT（排除）</option>
+              </select>
+              <button onclick="advancedLitSearch()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">应用条件检索</button>
+            </div>
+          </div>
+          <!-- 工具按钮行 -->
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <button onclick="generateLitMetrics()" style="font-size:12px;color:#fff;background:linear-gradient(135deg,#0ea5e9,#0284c7);border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:600">文献计量分析</button>
+            <button onclick="exportCurrentLiterature('bibtex')" style="font-size:12px;color:#1e40af;background:#dbeafe;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">导出BibTeX</button>
+            <button onclick="exportCurrentLiterature('csv')" style="font-size:12px;color:#166534;background:#dcfce7;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">导出CSV</button>
+            <button onclick="exportCurrentLiterature('txt')" style="font-size:12px;color:#92400e;background:#fef3c7;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">导出文本</button>
+          </div>
+          <div id="litMetricsResult" style="display:none;margin-bottom:16px"></div>
+          <div id="phdLitSearchStatus" style="font-size:13px;color:#6b21a8;margin-bottom:10px"></div>
+          <div id="phdLitResults"></div>
+        </div>
+        <!-- 导师文献追踪Tab -->
+        <div id="litTabContent-mentor" style="display:none">
+          <div style="font-size:13px;color:#6b21a8;margin-bottom:10px">输入导师姓名，自动检索其近年发表的文献，了解研究方向与最新成果</div>
+          <div style="display:flex;gap:10px;margin-bottom:12px">
+            <input type="text" id="litMentorName" placeholder="导师姓名，如：Zhang San" style="flex:1;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none">
+            <input type="text" id="litMentorAffil" placeholder="院校（可选），如：Shanghai University of Sport" style="flex:1;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none">
+            <button onclick="searchMentorPapers()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">追踪</button>
+          </div>
+          <div id="litMentorStatus" style="font-size:13px;color:#6b21a8;margin-bottom:10px"></div>
+          <div id="litMentorResults"></div>
+          <div id="litInterviewQResult" style="display:none;margin-top:16px"></div>
+          <div id="litInterviewQBar" style="display:none;margin-top:12px">
+            <button onclick="generateInterviewLitQuestions()" style="font-size:12px;color:#fff;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-weight:600">生成面试文献问题</button>
+            <span style="font-size:11px;color:#92400e;margin-left:8px">基于导师文献生成面试可能问到的问题清单</span>
+          </div>
+        </div>
+        <!-- 我的收藏Tab -->
+        <div id="litTabContent-fav" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:13px;color:#6b21a8">收藏的文献保存在本地浏览器，可随时查看和导出</div>
+            <button onclick="exportFavLiterature()" style="background:#7c3aed;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">导出为文本</button>
+          </div>
+          <div id="litFavResults"></div>
+        </div>
+      </div>
+      
+      <!-- 文档评审结果面板 -->
+      <div id="phdDocReviewPanel" style="display:none;margin-top:16px;padding:20px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h4 style="margin:0;color:#065f46;font-size:16px">📄 AI文档评审报告</h4>
+          <button onclick="document.getElementById('phdDocReviewPanel').style.display='none'" style="background:none;border:none;color:#059669;cursor:pointer;font-size:18px">×</button>
+        </div>
+        <div id="phdDocReviewContent" style="font-size:14px;color:#064e3b;line-height:1.8"></div>
+      </div>
+    </div>
+
+    <!-- 当前模块标题区 -->
+    <div class="phd-section-header" id="phdSectionHeader">
+      <div class="phd-section-icon" id="phdSectionIcon">📚</div>
+      <div class="phd-section-info">
+        <h3 class="phd-section-title" id="phdSectionTitle">专业知识库</h3>
+        <p class="phd-section-desc" id="phdSectionDesc">运动人体科学与运动康复考博核心知识点系统梳理</p>
+      </div>
+      <div class="phd-section-stats" id="phdSectionStats">
+        <div class="phd-stat-item"><span class="phd-stat-num" id="phdStatNum">0</span><span class="phd-stat-label">知识点</span></div>
+      </div>
+    </div>
+
+    <!-- 专业知识库内容 -->
+    <div class="phd-content active" id="phdContent-knowledge">
+      <div id="phdKnowledgeArea">
+        <div style="text-align:center;padding:40px;color:#999">📚 专业知识库加载中...</div>
+      </div>
+    </div>
+
+    <!-- 考博真题内容 -->
+    <div class="phd-content" id="phdContent-exam">
+      <div id="phdExamArea">
+        <div style="text-align:center;padding:40px;color:#999">📝 考博真题加载中...</div>
+      </div>
+    </div>
+
+    <!-- 科研能力内容 -->
+    <div class="phd-content" id="phdContent-research">
+      <div id="phdResearchArea">
+        <div style="text-align:center;padding:40px;color:#999">🔬 科研能力培养加载中...</div>
+      </div>
+    </div>
+
+    <!-- 面试申请内容 -->
+    <div class="phd-content" id="phdContent-interview">
+      <div id="phdInterviewArea">
+        <div style="text-align:center;padding:40px;color:#999">🎓 面试与申请材料加载中...</div>
+      </div>
+    </div>
+  <div class="phd-content" id="phdContent-schools">
+    <div id="phdSchoolArea"></div>
+  </div>
+
+  <!-- 套磁助手内容 -->
+  <div class="phd-content" id="phdContent-taoci">
+    <div id="phdTaociArea"></div>
+  </div>
+
+  <!-- 投稿模式内容 -->
+  <div class="phd-content" id="phdContent-publish">
+    <div id="phdPublishArea"></div>
+  </div>
+
+  
+  </div>
+</div>
+
 
 <div class="tab-content" id="tab-flashcard">
   <div class="flashcard-container">
@@ -9724,6 +9727,8 @@ console.log('✅ 学习工具入口已加载');
     </div>
   </footer>
 </div>
+
+
 
   
 
