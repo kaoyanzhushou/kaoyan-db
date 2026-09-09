@@ -6903,6 +6903,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('sports')" id="paperTab-sports" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">体育学特色</button>
       <button onclick="switchPaperSubTab('assist')" id="paperTab-assist" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">研究辅助</button>
       <button onclick="switchPaperSubTab('check')" id="paperTab-check" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">论文查重</button>
+      <button onclick="switchPaperSubTab('route')" id="paperTab-route" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">技术路线图</button>
     </div>
 
     <!-- 我的论文页面 -->
@@ -7629,6 +7630,79 @@ console.log('✅ 学习工具入口已加载');
     </div>
   </div>
 </div>
+
+    <!-- 技术路线图（AI生成·四层保障） -->
+    <div id="paperContent-route" style="display:none">
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">🧭 AI 技术路线图生成（四层保障）</div>
+        <div style="font-size:13px;color:#059669">研究类型模板骨架 → 结构化JSON生成 → 必经环节自动校验 → AI二次审查，输出专业、可导出、可编辑的技术路线图</div>
+      </div>
+
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <!-- 左侧：输入与校验 -->
+        <div style="flex:1;min-width:300px">
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:16px">
+            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">📝 研究信息</div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">研究题目 <span style="color:#dc2626">*</span></label>
+            <input id="routeTopic" placeholder="如：高强度间歇训练对青少年足球运动员有氧能力的影响" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;font-family:inherit">
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">研究类型</label>
+            <select id="routeType" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-bottom:10px;background:#fff;font-family:inherit">
+              <option value="实验法">实验法（动物/人体/细胞）</option>
+              <option value="调查法">调查法（问卷/访谈）</option>
+              <option value="文献综述">文献综述法</option>
+              <option value="案例法">案例法</option>
+            </select>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">研究对象 / 样本（可选）</label>
+            <input id="routeSubject" placeholder="如：16-18岁男性足球运动员60名，随机分2组" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;font-family:inherit">
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">补充说明（可选）</label>
+            <textarea id="routeNote" rows="3" placeholder="如：主要指标为最大摄氧量、血乳酸、肌酸激酶；采用随机对照试验设计" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-bottom:12px;resize:vertical;box-sizing:border-box;font-family:inherit;line-height:1.6"></textarea>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button id="routeGenBtn" onclick="generatePaperTechRoute()" style="flex:1;min-width:160px;background:#059669;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🤖 AI 生成技术路线图</button>
+              <select id="routeModel" title="选择生成模型" style="padding:9px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;background:#fff;font-family:inherit;max-width:200px"></select>
+            </div>
+            <div id="routeStatus" style="margin-top:10px"></div>
+          </div>
+
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px">
+            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:4px">📋 必经环节校验</div>
+            <div style="font-size:11px;color:#059669;margin-bottom:10px">按所选研究类型的专业模板，自动检查流程完整性与逻辑顺序</div>
+            <div id="routeValidation" style="font-size:12px;color:#6b7280;line-height:1.8">生成后自动校验研究流程的完整性与逻辑顺序</div>
+          </div>
+        </div>
+
+        <!-- 右侧：渲染与审查 -->
+        <div style="flex:2;min-width:400px">
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:600;color:#1f2937">🗺️ 技术路线图预览</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button onclick="exportRoutePNG()" style="background:#2563eb;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">导出PNG</button>
+                <button onclick="exportRouteMD()" style="background:#059669;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">导出Markdown</button>
+                <button onclick="exportRouteSVG()" style="background:#7c3aed;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">导出SVG</button>
+                <button onclick="copyRouteSource()" style="background:#f3f4f6;color:#374151;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">复制源码</button>
+              </div>
+            </div>
+            <div id="routeGraph" style="padding:20px;overflow-x:auto;background:#fafbfc;border:1px solid #e5e7eb;border-radius:8px;min-height:220px"><div style="text-align:center;padding:60px 20px;color:#9ca3af">输入研究信息后点击「AI 生成技术路线图」</div></div>
+          </div>
+
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+              <div style="font-size:14px;font-weight:600;color:#1f2937">🔍 AI 二次审查（逻辑链 / 术语 / 可行性）</div>
+              <button onclick="runRouteReviewAgain()" style="background:#f3f4f6;color:#374151;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">重新审查</button>
+            </div>
+            <div id="routeReview" style="font-size:13px;color:#6b7280;line-height:1.8">生成后 AI 将自查逻辑链完整性、专业术语准确性、研究可行性</div>
+          </div>
+
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+              <div style="font-size:14px;font-weight:600;color:#1f2937">✏️ Mermaid 源码（可直接编辑，改后重新渲染）</div>
+              <button onclick="applyRouteSourceEdit()" style="background:#059669;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">重新渲染</button>
+            </div>
+            <textarea id="routeSource" placeholder="生成后将自动填入Mermaid源码，也可手动编写..." style="width:100%;height:160px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;resize:vertical;box-sizing:border-box;font-family:Consolas,monospace;line-height:1.6"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
 
 <!-- 添加文献弹窗 -->
 <div id="addLitModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
@@ -27822,7 +27896,7 @@ function exportFormatReport() {
 
 function switchPaperSubTab(subTab) {
   paperCurrentSubTab = subTab;
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route'].forEach(function(t) {
     var btn = document.getElementById('paperTab-' + t);
     var content = document.getElementById('paperContent-' + t);
     if (btn) { btn.style.background = (t === subTab) ? '#16a34a' : '#fff'; btn.style.color = (t === subTab) ? '#fff' : '#16a34a'; }
@@ -27832,6 +27906,212 @@ function switchPaperSubTab(subTab) {
   if (subTab === 'publish' && typeof renderPaperPublish === 'function') renderPaperPublish();
   if (subTab === 'sports' && typeof renderSportsTerms === 'function') renderSportsTerms();
   window.scrollTo(0, 0);
+}
+
+// ========== 论文工作台 - 技术路线图（AI生成·四层保障） ==========
+const TECH_ROUTE_TEMPLATES = {
+  '实验法': { required: ['选题','文献综述','研究假设','伦理审批','样本量估算','预实验','随机分组','基线测试','运动干预','指标检测','数据采集','统计分析','结果讨论'], label: '实验法（动物/人体/细胞）' },
+  '调查法': { required: ['选题','文献综述','问卷设计','专家效度检验','预调查','正式调查','数据回收','统计分析','结果讨论'], label: '调查法（问卷/访谈）' },
+  '文献综述': { required: ['选题','文献检索','文献筛选','文献质量评价','信息提取','主题综合','理论框架','结论展望'], label: '文献综述法' },
+  '案例法': { required: ['选题','文献综述','案例选择','伦理审批','资料收集','数据分析','三角验证','结果讨论'], label: '案例法' }
+};
+function renderPaperRoute() {
+  const ms = document.getElementById('routeModel');
+  if (ms && !ms.dataset.inited) {
+    ms.dataset.inited = '1';
+    (typeof AI_MODELS !== 'undefined' ? AI_MODELS : []).forEach(function(m) {
+      if (m.value === 'glm-5.3' || m.value === 'kimi-k3') return;
+      const opt = document.createElement('option');
+      opt.value = m.value; opt.textContent = m.label;
+      const cur = (typeof currentAiModel !== 'undefined') ? currentAiModel : 'deepseek-chat';
+      if (m.value === cur) opt.selected = true;
+      ms.appendChild(opt);
+    });
+  }
+}
+function routeEscape(text) {
+  return String(text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function parseRouteJSON(resp) {
+  let text = String(resp || '');
+  const codeMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeMatch) text = codeMatch[1];
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start < 0 || end <= start) return null;
+  try { return JSON.parse(text.substring(start, end + 1)); } catch (e) { return null; }
+}
+function buildMermaidFromPhases(phases, title) {
+  const lines = ['graph TD'];
+  let nodeId = 0;
+  lines.push('  T0["' + routeEscape(title || '研究技术路线') + '"]');
+  phases.forEach(function(ph, pi) {
+    if (!ph || !ph.steps || !ph.steps.length) return;
+    const phaseName = ph.name || ('阶段' + (pi + 1));
+    lines.push('  subgraph S' + pi + '["' + routeEscape(phaseName) + '"]');
+    ph.steps.forEach(function(st) {
+      lines.push('    N' + nodeId + '["' + routeEscape(st) + '"]');
+      if (nodeId === 0) {
+        lines.push('  T0 --> N0');
+      } else {
+        lines.push('    N' + (nodeId - 1) + ' --> N' + nodeId);
+      }
+      nodeId++;
+    });
+    lines.push('  end');
+  });
+  return lines.join('\n');
+}
+function validateTechRoute(phases, type) {
+  const allSteps = [];
+  phases.forEach(function(ph) {
+    (ph.steps || []).forEach(function(st) { allSteps.push(String(st).trim()); });
+  });
+  const tmpl = TECH_ROUTE_TEMPLATES[type] || TECH_ROUTE_TEMPLATES['实验法'];
+  const missing = [];
+  (tmpl.required || []).forEach(function(req) {
+    let found = false;
+    allSteps.forEach(function(st) {
+      if (st.indexOf(req) >= 0 || req.indexOf(st) >= 0) found = true;
+    });
+    if (!found) missing.push(req);
+  });
+  // 顺序检查：伦理审批应在预实验前
+  const orderChecks = [['伦理审批','预实验'],['预实验','随机分组'],['随机分组','统计分析'],['统计分析','结果讨论']];
+  const orderWarns = [];
+  orderChecks.forEach(function(pair) {
+    const ia = allSteps.findIndex(function(s){ return s.indexOf(pair[0]) >= 0; });
+    const ib = allSteps.findIndex(function(s){ return s.indexOf(pair[1]) >= 0; });
+    if (ia >= 0 && ib >= 0 && ia > ib) orderWarns.push(pair[0] + ' 应早于 ' + pair[1] + '，当前顺序有误');
+  });
+  // 重复检查
+  const seen = {}; const dups = [];
+  allSteps.forEach(function(s) { if (seen[s]) dups.push(s); seen[s] = true; });
+  return { allSteps: allSteps, missing: missing, orderWarns: orderWarns, dups: dups };
+}
+function renderRouteValidation(v) {
+  const box = document.getElementById('routeValidation');
+  if (!box) return;
+  let html = '';
+  if (v.missing.length === 0 && v.orderWarns.length === 0 && v.dups.length === 0) {
+    html += '<div style="padding:10px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#065f46;font-weight:600">✅ 校验通过：必经环节完整、逻辑顺序正确</div>';
+  } else {
+    if (v.missing.length) {
+      html += '<div style="padding:10px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;margin-bottom:8px"><span style="font-weight:600;color:#dc2626">⚠️ 建议补充环节：</span><span style="color:#b91c1c">' + v.missing.join('、') + '</span><div style="font-size:11px;color:#991b1b;margin-top:4px">可点击下方「重新生成」或编辑源码手动补充</div></div>';
+    }
+    if (v.orderWarns.length) {
+      html += '<div style="padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin-bottom:8px;color:#92400e"><span style="font-weight:600">⚠️ 顺序提醒：</span>' + v.orderWarns.join('；') + '</div>';
+    }
+    if (v.dups.length) {
+      html += '<div style="padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;color:#92400e"><span style="font-weight:600">⚠️ 重复环节：</span>' + v.dups.join('、') + '</div>';
+    }
+  }
+  box.innerHTML = html;
+}
+function runRouteReview(phases, type, topic, model) {
+  const box = document.getElementById('routeReview');
+  if (!box) return;
+  box.innerHTML = '<div style="color:#7c3aed;font-size:13px">⏳ AI 正在二次审查（逻辑链 / 专业术语 / 可行性）...</div>';
+  const stepsText = phases.map(function(ph, i) { return (i + 1) + '.' + (ph.name || '') + '：' + ((ph.steps || []).join('→')); }).join('\n');
+  const sys = '你是运动人体科学领域资深科研评审专家。请对给定的研究技术路线进行二次审查，重点检查：1)逻辑链完整性（是否存在步骤缺失或因果断裂）；2)专业术语准确性（是否符合运动人体科学规范）；3)研究可行性（样本、伦理、方法是否合理）。只输出审查结论，用以下格式：\n【逻辑链】\n✔/⚠ + 说明\n【专业术语】\n✔/⚠ + 说明\n【可行性】\n✔/⚠ + 说明\n【优化建议】\n1-3条具体可操作建议。';
+  const usr = '研究题目：' + topic + '\n研究类型：' + type + '\n技术路线：\n' + stepsText;
+  callDeepSeekAPI(sys, usr, 1500, model).then(function(resp) {
+    box.innerHTML = '<div style="white-space:pre-wrap;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px;color:#4c1d95;font-size:12.5px;line-height:1.8">' + routeEscape(String(resp).trim()) + '</div>';
+  }).catch(function() {
+    box.innerHTML = '<div style="color:#dc2626;font-size:12px">⚠️ 二次审查失败（不影响已生成的路线图），可稍后点击「重新审查」</div>';
+  });
+}
+function runRouteReviewAgain() {
+  const d = window._routeData;
+  if (!d || !d.phases) { alert('请先生成技术路线图'); return; }
+  const model = document.getElementById('routeModel') ? document.getElementById('routeModel').value : 'deepseek-chat';
+  runRouteReview(d.phases, d.type, d.title, model);
+}
+function generatePaperTechRoute() {
+  const topic = (document.getElementById('routeTopic').value || '').trim();
+  const type = document.getElementById('routeType').value || '实验法';
+  const subject = (document.getElementById('routeSubject').value || '').trim();
+  const note = (document.getElementById('routeNote').value || '').trim();
+  if (!topic) { alert('请先输入研究题目'); return; }
+  const model = document.getElementById('routeModel') ? document.getElementById('routeModel').value : 'deepseek-chat';
+  const btn = document.getElementById('routeGenBtn');
+  const status = document.getElementById('routeStatus');
+  btn.disabled = true; btn.textContent = '⏳ 生成中...';
+  status.innerHTML = '<div style="padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:12.5px;color:#1d4ed8">🤖 AI 正在按「' + type + '」专业模板生成结构化技术路线...</div>';
+  const tmpl = TECH_ROUTE_TEMPLATES[type] || TECH_ROUTE_TEMPLATES['实验法'];
+  const sys = '你是运动人体科学领域的科研方法专家，精通课题设计与技术路线图绘制。你严格遵循结构化输出：只输出一个JSON对象，不输出任何其他文字、不做解释。\n\nJSON格式如下（phases为3-5个阶段，每个阶段steps为3-6个具体步骤）：\n{"title":"研究题目","type":"研究类型","phases":[{"name":"阶段名（如：准备阶段）","steps":["具体步骤1","具体步骤2"],"method":"本阶段主要方法","deliverable":"本阶段产出物","duration":"预计时长"}]}\n\n【专业要求】\n1. 研究类型为实验法时，流程必须覆盖：选题→文献综述→研究假设→伦理审批→样本量估算→预实验→随机分组→基线测试→运动干预→指标检测→数据采集→统计分析→结果讨论。\n2. 使用运动人体科学专业术语（随机分组、基线测试、运动干预、最大摄氧量、Western Blot、qPCR、重复测量方差分析等）。\n3. 阶段划分合理：准备阶段、实验/实施阶段、数据与分析阶段、总结阶段。\n4. steps按先后逻辑顺序排列，不得颠倒。';
+  const usr = '研究题目：' + topic + '\n研究类型：' + type + '\n研究对象/样本：' + (subject || '未指定') + '\n补充说明：' + (note || '无') + '\n\n参考本类型必经环节：' + (tmpl.required || []).join('、') + '\n\n请输出JSON：';
+  callDeepSeekAPI(sys, usr, 3000, model).then(function(resp) {
+    const parsed = parseRouteJSON(resp);
+    if (!parsed || !parsed.phases || !parsed.phases.length) {
+      throw new Error('AI未返回有效的结构化JSON');
+    }
+    window._routeData = { phases: parsed.phases, type: type, title: topic, raw: resp };
+    const code = buildMermaidFromPhases(parsed.phases, topic);
+    renderMermaidGraph(code, 'routeGraph');
+    const src = document.getElementById('routeSource');
+    if (src) src.value = code;
+    status.innerHTML = '<div style="padding:12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;font-size:12.5px;color:#065f46">✅ 生成成功！已自动校验并开始二次审查</div>';
+    const v = validateTechRoute(parsed.phases, type);
+    renderRouteValidation(v);
+    runRouteReview(parsed.phases, type, topic, model);
+    btn.disabled = false; btn.textContent = '🔄 重新生成';
+  }).catch(function(e) {
+    status.innerHTML = '<div style="padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:12.5px;color:#dc2626">❌ 生成失败：' + routeEscape(e.message || '未知错误') + '，可重试或切换模型</div>';
+    btn.disabled = false; btn.textContent = '🔄 重新生成';
+  });
+}
+function exportRoutePNG() {
+  const d = window._routeData;
+  if (typeof exportMermaidPNG === 'function') {
+    exportMermaidPNG('routeGraph', '技术路线图_' + (d ? d.title : '论文'));
+  } else {
+    alert('PNG导出组件加载中，请刷新页面后重试');
+  }
+}
+function exportRouteMD() {
+  const src = document.getElementById('routeSource');
+  const d = window._routeData;
+  if (!src || !src.value.trim()) { alert('请先生成技术路线图'); return; }
+  const content = '# 技术路线图：' + (d ? d.title : '') + '\n\n```mermaid\n' + src.value.trim() + '\n```\n';
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '技术路线图_' + (d ? d.title : '论文') + '.md';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+}
+function exportRouteSVG() {
+  const g = document.getElementById('routeGraph');
+  if (!g) return;
+  const svg = g.querySelector('svg');
+  if (!svg) { alert('请先生成技术路线图'); return; }
+  const xml = new XMLSerializer().serializeToString(svg);
+  const blob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '技术路线图.svg';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+}
+function copyRouteSource() {
+  const src = document.getElementById('routeSource');
+  if (!src || !src.value.trim()) { alert('请先生成技术路线图'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(src.value).then(function(){ alert('✅ Mermaid源码已复制到剪贴板'); });
+  } else {
+    src.select(); document.execCommand('copy'); alert('✅ Mermaid源码已复制到剪贴板');
+  }
+}
+function applyRouteSourceEdit() {
+  const src = document.getElementById('routeSource');
+  if (!src || !src.value.trim()) { alert('请填写Mermaid源码'); return; }
+  renderMermaidGraph(src.value.trim(), 'routeGraph');
+}
+// 体育考博侧入口跳转技术路线图
+function navigateToPaperRoute() {
+  switchTab('paper');
+  setTimeout(function() { switchPaperSubTab('route'); }, 150);
 }
 
 function navigateToPaperSubTab(subTab) {
