@@ -7159,11 +7159,14 @@ console.log('✅ 学习工具入口已加载');
 
       <div style="display:flex;gap:10px;margin-bottom:16px">
         <button onclick="startPolish()" style="flex:1;background:#7c3aed;color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:700">开始AI润色</button>
+        <button onclick="startJournalPolish()" style="background:#0284c7;color:#fff;border:none;padding:12px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">期刊适配润色</button>
+        <button onclick="savePolishToProject()" style="background:#16a34a;color:#fff;border:none;padding:12px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">保存到论文项目</button>
         <button onclick="clearPolish()" style="background:#f3f4f6;color:#374151;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-size:14px">清空</button>
       </div>
 
       <div id="polishResult"></div>
       <div id="polishHistory" style="margin-top:16px"></div>
+    <div id="polishVersions" style="margin-top:16px"></div>
     </div>
 
     <!-- 投稿中心页面 -->
@@ -27804,6 +27807,17 @@ async function startPolish() {
     '</div>';
     window._currentPolishResult = result;
     
+    // P1: 添加逐句接受/拒绝
+    var sentenceDiff = renderSentenceDiff(content, result);
+    resultEl.innerHTML += sentenceDiff;
+    
+    // P1: 添加润色报告
+    var report = generatePolishReport(content, result, modeType);
+    resultEl.innerHTML += report;
+    
+    // P1: 保存版本
+    savePolishVersion(content, result, modeLabels[modeType] || '', chapterLabels[chapter] || '');
+    
     renderPolishHistory();
   } catch(e) {
     resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;color:#dc2626;font-size:14px">润色失败：' + e.message + '</div>';
@@ -27875,6 +27889,420 @@ function loadPolishHistory(id) {
   window._currentPolishResult = r.polished;
   document.getElementById('polishResult').innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px"><div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">历史润色结果（' + r.time + '）</div><div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;white-space:pre-wrap">' + r.polished + '</div></div>';
 }
+
+// ========== 论文润色 P1+P2 增强 ==========
+var polishVersions = []; // 多版本管理
+var currentPolishVersion = 0;
+
+// 体育学专业术语保护列表（润色时不修改这些术语）
+var PROTECTED_TERMS = [
+  'VO2max','VO2 max','lactate threshold','mitochondrial','PGC-1α','PGC-1alpha',
+  'cardiac output','stroke volume','heart rate variability','HRV','erythropoietin','EPO',
+  'oxidative stress','reactive oxygen species','ROS','antioxidant',
+  '肌纤维','快肌纤维','慢肌纤维','肌球蛋白','肌动蛋白','肌浆网','钙离子',
+  '最大摄氧量','乳酸阈','乳酸阈值','通气阈','无氧阈','代谢当量','MET',
+  '基础代谢率','BMR','静息代谢率','RMR','能量消耗','EE',
+  '运动性肌肉损伤','EIMD','延迟性肌肉酸痛','DOMS','肌酸激酶','CK',
+  '离心收缩','向心收缩','等长收缩','等张收缩','等速收缩',
+  '原动肌','对抗肌','协同肌','固定肌','运动单位','运动神经元',
+  '本体感觉','proprioception','筋膜','fascia','运动链','kinetic chain',
+  '地面反作用力','GRF','质心','COM','center of mass','转动惯量','角动量',
+  '关节力矩','joint torque','运动学','kinematics','动力学','kinetics',
+  'FITT','periodization','overtraining','tapering','progressive overload',
+  '周期化训练','过度训练','赛前减量','渐进超负荷','专门性原则',
+  '关节活动度','ROM','range of motion','本体感觉神经肌肉促进法','PNF',
+  '闭链运动','open kinetic chain','OKC','closed kinetic chain','CKC',
+  '重返运动','return to play','RTP','功能性动作筛查','FMS',
+  '自我效能感','self-efficacy','成就目标定向','attention focus','mental imagery',
+  '心理表象','burnout','倦怠','运动动机','运动焦虑','状态焦虑','特质焦虑',
+  '随机对照试验','RCT','randomized controlled trial','Meta分析','meta-analysis',
+  '系统综述','systematic review','效应量','effect size','置信区间','CI',
+  '统计功效','statistical power','P值','p-value','显著性水平',
+  '受试者工作特征曲线','ROC','受试者内设计','受试者间设计',
+  '交叉设计','crossover design','区组设计','block design',
+  '重复测量方差分析','repeated measures ANOVA','协方差分析','ANCOVA',
+  '多元方差分析','MANOVA','线性回归','logistic回归','结构方程模型','SEM',
+  '主成分分析','PCA','因子分析','factor analysis','聚类分析','cluster analysis',
+  '相关系数','Pearson','Spearman','组内相关系数','ICC',
+  'Cronbach α','Cronbach alpha','信度','效度','灵敏度','特异度',
+  '运动处方','exercise prescription','运动强度','exercise intensity',
+  '靶心率','target heart rate','THR','心率储备','HRR','heart rate reserve',
+  '摄氧量储备','VO2R','代谢当量','METs','自觉劳累分级','RPE',
+  'Borg量表','最大心率','HRmax','储备心率法','Karvonen公式',
+  '有氧训练','aerobic training','无氧训练','anaerobic training',
+  '间歇训练','interval training','HIIT','持续训练','continuous training',
+  '抗阻训练','resistance training','力量训练','strength training',
+  '爆发力训练','power training','速度训练','speed training',
+  '灵敏训练','agility training','柔韧训练','flexibility training',
+  '平衡训练','balance training','核心训练','core training',
+  '超量恢复','supercompensation','训练适应','training adaptation',
+  '急性适应','acute adaptation','慢性适应','chronic adaptation',
+  '交叉效应','cross effect','交叉转移','cross transfer',
+  '运动性贫血','sports anemia','运动性蛋白尿','exercise-induced proteinuria',
+  '运动性血尿','exercise-induced hematuria','运动性闭经','exercise-induced amenorrhea',
+  '女运动员三联征','female athlete triad','相对能量缺乏','RED-S',
+  '运动性胃肠综合征','exercise-induced gastrointestinal syndrome',
+  '热痉挛','heat cramps','热衰竭','heat exhaustion','热射病','heat stroke',
+  '运动性低血钠','exercise-associated hyponatremia','EAH',
+  '高原训练','altitude training','高住低练','HiLo','live high train low',
+  '低住高练','LoHi','live low train high','间歇性低氧训练','IHT',
+  '血液回输','blood doping','促红细胞生成素','EPO','人类生长激素','HGH',
+  '合成代谢类固醇','anabolic steroids','兴奋剂','doping','反兴奋剂','anti-doping',
+  '世界反兴奋剂机构','WADA','治疗用药豁免','TUE','therapeutic use exemption',
+  '运动营养学','sports nutrition','碳水化合物','carbohydrate','蛋白质','protein',
+  '支链氨基酸','BCAA','必需氨基酸','EAA','肌酸','creatine','一水肌酸','creatine monohydrate',
+  '咖啡因','caffeine','β-丙氨酸','beta-alanine','硝酸盐','nitrate','甜菜根汁','beetroot juice',
+  '运动饮料','sports drink','能量胶','energy gel','补液','rehydration',
+  '运动康复','sports rehabilitation','运动损伤','sports injury','急性损伤','acute injury',
+  '慢性损伤','chronic injury','过度使用损伤','overuse injury','劳损','strain','扭伤','sprain',
+  '脱位','dislocation','骨折','fracture','肌腱炎','tendinitis','肌腱病','tendinopathy',
+  '滑囊炎','bursitis','滑膜炎','synovitis','关节炎','arthritis',
+  '前交叉韧带','ACL','anterior cruciate ligament','后交叉韧带','PCL',
+  '内侧副韧带','MCL','外侧副韧带','LCL','半月板','meniscus',
+  '跟腱','Achilles tendon','跟腱炎','Achilles tendinitis','足底筋膜炎','plantar fasciitis',
+  '胫骨应力综合征','shin splints','medial tibial stress syndrome','MTSS',
+  '应力性骨折','stress fracture','疲劳性骨折','fatigue fracture',
+  '肩关节脱位','shoulder dislocation','肩袖损伤','rotator cuff injury',
+  '网球肘','tennis elbow','肱骨外上髁炎','lateral epicondylitis',
+  '高尔夫球肘','golfer elbow','肱骨内上髁炎','medial epicondylitis',
+  '腕管综合征','carpal tunnel syndrome','CTS',
+  '腰椎间盘突出','lumbar disc herniation','腰肌劳损','lumbar muscle strain',
+  '颈椎劳损','cervical strain','梨状肌综合征','piriformis syndrome',
+  '冰敷','ice therapy','冷疗','cryotherapy','热敷','heat therapy','热疗','thermotherapy',
+  '超声波治疗','ultrasound therapy','电刺激','electrical stimulation','TENS',
+  '经皮神经电刺激','transcutaneous electrical nerve stimulation',
+  '按摩','massage','软组织松解','soft tissue mobilization',
+  '关节松动术','joint mobilization','关节松动','mobilization',
+  '神经松动术','neural mobilization','神经动力学','neurodynamics',
+  '运动疗法','exercise therapy','运动治疗','therapeutic exercise',
+  '渐进性抗阻训练','progressive resistance exercise','PRE',
+  '闭链训练','closed chain exercise','开链训练','open chain exercise',
+  '本体感觉训练','proprioceptive training','平衡训练','balance training',
+  '功能性训练','functional training','功能性动作','functional movement',
+  '运动心理学','sports psychology','运动动机','sports motivation',
+  '成就目标理论','achievement goal theory','自我决定理论','self-determination theory',
+  '自我效能理论','self-efficacy theory','社会认知理论','social cognitive theory',
+  '计划行为理论','theory of planned behavior','跨理论模型','transtheoretical model',
+  '健康信念模型','health belief model','阶段变化模型','stages of change',
+  '运动依赖','exercise dependence','运动成瘾','exercise addiction',
+  '运动焦虑','sports anxiety','竞赛焦虑','competitive anxiety',
+  '状态-特质焦虑问卷','STAI','State-Trait Anxiety Inventory',
+  '运动竞赛焦虑量表','SCAT','Sports Competition Anxiety Test',
+  '心理技能训练','psychological skills training','PST',
+  '表象训练','imagery training','心理表象','mental imagery',
+  '放松训练','relaxation training','渐进性肌肉放松','progressive muscle relaxation','PMR',
+  '自生训练','autogenic training','深呼吸','deep breathing','腹式呼吸','diaphragmatic breathing',
+  '正念训练','mindfulness training','正念冥想','mindfulness meditation',
+  '注意控制训练','attention control training','聚焦注意','attentional focus',
+  '内部注意','internal focus','外部注意','external focus',
+  '目标设置','goal setting','SMART原则','SMART goals',
+  '过程目标','process goal','结果目标','outcome goal','表现目标','performance goal',
+  '自我谈话','self-talk','积极自我谈话','positive self-talk',
+  '归因训练','attribution training','归因方式','attributional style',
+  '团队凝聚力','team cohesion','群体凝聚力','group cohesion',
+  '领导行为','leadership behavior','教练行为','coaching behavior',
+  '运动员倦怠','athlete burnout','运动员退役','athlete retirement',
+  '运动损伤心理反应','psychological response to injury',
+  '运动心理学咨询','sports psychology counseling',
+  '体育人文社会学','sports humanities and sociology',
+  '体育哲学','philosophy of sport','体育伦理学','sports ethics',
+  '体育史学','sports history','体育社会学','sports sociology',
+  '体育经济学','sports economics','体育管理学','sports management',
+  '体育法学','sports law','体育传播学','sports communication',
+  '体育文化学','sports culture','体育人类学','sports anthropology',
+  '体育政治学','sports politics','体育政策','sports policy',
+  '群众体育','mass sports','社会体育','social sports','全民健身','national fitness',
+  '竞技体育','competitive sports','学校体育','school physical education',
+  '体育产业','sports industry','体育消费','sports consumption',
+  '体育赛事','sports event','体育旅游','sports tourism',
+  '体育媒体','sports media','体育营销','sports marketing',
+  '体育赞助','sports sponsorship','体育品牌','sports brand',
+  '奥林匹克运动','Olympic movement','奥林匹克主义','Olympism',
+  '残疾人体育','disability sports','特殊奥林匹克','Special Olympics',
+  '女性体育','women in sports','性别平等','gender equality',
+  '体育权利','right to sports','体育公平','sports equity',
+  '兴奋剂问题','doping issue','体育暴力','sports violence',
+  '体育腐败','sports corruption','体育治理','sports governance',
+  '体育公共服务','sports public service','体育均等化','sports equalization',
+  '体育社会组织','sports social organization','体育社团','sports association',
+  '体育志愿者','sports volunteer','社会体育指导员','social sports instructor',
+  '体质健康','physical fitness and health','国民体质监测','national physical fitness monitoring',
+  '健康促进','health promotion','健康中国','Healthy China',
+  '慢性病预防','chronic disease prevention','运动是良医','Exercise is Medicine',
+  '体医融合','integration of sports and medicine','体教融合','integration of sports and education',
+  '运动处方师','exercise prescriptionist','健康管理师','health manager',
+  '运动人体科学','sports human science','运动生理学','exercise physiology',
+  '运动解剖学','exercise anatomy','运动生物化学','sports biochemistry',
+  '运动生物力学','sports biomechanics','运动心理学','sports psychology',
+  '体育教育训练学','physical education and sports training',
+  '民族传统体育学','ethnic traditional sports',
+  '体育人文社会学','sports humanities and sociology',
+  '运动康复学','sports rehabilitation','运动医学','sports medicine',
+  '体育硕士','Master of Sports','体育博士','Doctor of Sports',
+  '教育学博士','Doctor of Education','EdD','哲学博士','Doctor of Philosophy','PhD',
+  '理学博士','Doctor of Science','DSc','医学博士','Doctor of Medicine','MD'
+];
+
+// 检查文本中是否包含受保护术语
+function containsProtectedTerm(text) {
+  for (var i = 0; i < PROTECTED_TERMS.length; i++) {
+    if (text.indexOf(PROTECTED_TERMS[i]) !== -1) return true;
+  }
+  return false;
+}
+
+// P1: 逐句接受/拒绝润色结果
+function renderSentenceDiff(original, polished) {
+  var origSentences = original.split(/([。！？.!?\n])/).filter(function(s) { return s.trim(); });
+  var polSentences = polished.split(/([。！？.!?\n])/).filter(function(s) { return s.trim(); });
+  
+  var html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html += '<div style="font-size:14px;font-weight:700;color:#1f2937">逐句接受/拒绝</div>';
+  html += '<div style="display:flex;gap:8px">';
+  html += '<button onclick="acceptAllSentences()" style="background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">全部接受</button>';
+  html += '<button onclick="rejectAllSentences()" style="background:#ef4444;color:#fff;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">全部拒绝</button>';
+  html += '<button onclick="applySentenceChoices()" style="background:#7c3aed;color:#fff;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">应用选择</button>';
+  html += '</div></div>';
+  
+  var maxLen = Math.max(origSentences.length, polSentences.length);
+  window._sentenceChoices = [];
+  
+  for (var i = 0; i < maxLen; i++) {
+    var orig = origSentences[i] || '';
+    var pol = polSentences[i] || '';
+    var isProtected = containsProtectedTerm(orig);
+    var isChanged = orig.trim() !== pol.trim();
+    
+    window._sentenceChoices.push({original: orig, polished: pol, accepted: isChanged, protected: isProtected});
+    
+    html += '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:8px;' + (isProtected ? 'background:#fef3c7;border-color:#fcd34d' : '') + '">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+    html += '<span style="font-size:11px;font-weight:600;color:#6b7280">第' + (i+1) + '句' + (isProtected ? ' · 含专业术语（建议保留）' : '') + (isChanged ? ' · 有修改' : ' · 无修改') + '</span>';
+    if (isChanged && !isProtected) {
+      html += '<div style="display:flex;gap:6px">';
+      html += '<button onclick="toggleSentence(' + i + ', true)" id="sentAccept' + i + '" style="background:#16a34a;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px">接受</button>';
+      html += '<button onclick="toggleSentence(' + i + ', false)" id="sentReject' + i + '" style="background:#f3f4f6;color:#374151;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px">拒绝</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<div style="font-size:12px;color:#6b7280;text-decoration:line-through;margin-bottom:4px">' + orig + '</div>';
+    if (isChanged) {
+      html += '<div style="font-size:12px;color:#16a34a;font-weight:500">' + pol + '</div>';
+    }
+    html += '</div>';
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+function toggleSentence(idx, accept) {
+  if (!window._sentenceChoices || !window._sentenceChoices[idx]) return;
+  window._sentenceChoices[idx].accepted = accept;
+  var acceptBtn = document.getElementById('sentAccept' + idx);
+  var rejectBtn = document.getElementById('sentReject' + idx);
+  if (acceptBtn) { acceptBtn.style.background = accept ? '#16a34a' : '#f3f4f6'; acceptBtn.style.color = accept ? '#fff' : '#374151'; }
+  if (rejectBtn) { rejectBtn.style.background = accept ? '#f3f4f6' : '#ef4444'; rejectBtn.style.color = accept ? '#374151' : '#fff'; }
+}
+
+function acceptAllSentences() {
+  if (!window._sentenceChoices) return;
+  window._sentenceChoices.forEach(function(s, i) {
+    if (s && s.original.trim() !== s.polished.trim() && !s.protected) {
+      s.accepted = true;
+      toggleSentence(i, true);
+    }
+  });
+}
+
+function rejectAllSentences() {
+  if (!window._sentenceChoices) return;
+  window._sentenceChoices.forEach(function(s, i) {
+    if (s && s.original.trim() !== s.polished.trim() && !s.protected) {
+      s.accepted = false;
+      toggleSentence(i, false);
+    }
+  });
+}
+
+function applySentenceChoices() {
+  if (!window._sentenceChoices) return;
+  var result = window._sentenceChoices.map(function(s) {
+    return s.accepted ? s.polished : s.original;
+  }).join('');
+  window._currentPolishResult = result;
+  var editor = document.getElementById('polishContent');
+  if (editor) {
+    editor.value = result;
+    document.getElementById('polishCharCount').textContent = result.length + ' 字符';
+  }
+  alert('已应用逐句选择结果到编辑器');
+}
+
+// P1: 润色报告
+function generatePolishReport(original, polished, mode) {
+  var origSentences = original.split(/[。！？.!?]/).filter(function(s) { return s.trim(); }).length;
+  var polSentences = polished.split(/[。！？.!?]/).filter(function(s) { return s.trim(); }).length;
+  var origWords = original.replace(/\s/g, '').length;
+  var polWords = polished.replace(/\s/g, '').length;
+  var wordDiff = polWords - origWords;
+  var wordDiffPercent = origWords > 0 ? ((wordDiff / origWords) * 100).toFixed(1) : 0;
+  
+  // 简单的修改类型统计
+  var changes = 0;
+  var origLines = original.split('\n');
+  var polLines = polished.split('\n');
+  for (var i = 0; i < Math.min(origLines.length, polLines.length); i++) {
+    if (origLines[i].trim() !== polLines[i].trim()) changes++;
+  }
+  
+  var report = '<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:10px;padding:16px;margin-top:16px">';
+  report += '<div style="font-size:15px;font-weight:700;color:#075985;margin-bottom:12px">润色报告</div>';
+  report += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">';
+  report += '<div style="background:#fff;border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#0284c7">' + origSentences + '</div><div style="font-size:11px;color:#64748b">原文句数</div></div>';
+  report += '<div style="background:#fff;border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#16a34a">' + polSentences + '</div><div style="font-size:11px;color:#64748b">润色后句数</div></div>';
+  report += '<div style="background:#fff;border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:' + (wordDiff >= 0 ? '#16a34a' : '#ef4444') + '">' + (wordDiff >= 0 ? '+' : '') + wordDiff + '</div><div style="font-size:11px;color:#64748b">字数变化（' + wordDiffPercent + '%）</div></div>';
+  report += '<div style="background:#fff;border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#f59e0b">' + changes + '</div><div style="font-size:11px;color:#64748b">修改段落数</div></div>';
+  report += '</div>';
+  
+  // 润色建议
+  report += '<div style="background:#fff;border-radius:8px;padding:12px;margin-bottom:10px">';
+  report += '<div style="font-size:13px;font-weight:600;color:#075985;margin-bottom:8px">润色建议</div>';
+  report += '<ul style="margin:0;padding-left:18px;font-size:12px;color:#374151;line-height:1.8">';
+  if (mode === 'light') {
+    report += '<li>本次为轻度润色，仅修正明显错误。如需深度优化，建议使用中度或深度润色模式</li>';
+  } else if (mode === 'medium') {
+    report += '<li>本次为中度润色，已优化表达和逻辑。如需全面重构，建议使用深度润色模式</li>';
+  } else if (mode === 'deep') {
+    report += '<li>本次为深度润色，已全面重构表达。建议仔细核对修改内容，确保原意未被改变</li>';
+  } else if (mode === 'journal') {
+    report += '<li>本次为期刊适配润色。建议对照目标期刊的作者指南，确认格式符合要求</li>';
+  } else {
+    report += '<li>本次为母语化润色。建议朗读润色后的内容，确认表达自然流畅</li>';
+  }
+  if (containsProtectedTerm(original)) {
+    report += '<li>原文包含体育学专业术语，已在逐句接受/拒绝中标注，建议保留专业术语的准确性</li>';
+  }
+  if (wordDiff < -50) {
+    report += '<li>润色后字数减少较多，建议检查是否有重要内容被删除</li>';
+  } else if (wordDiff > 100) {
+    report += '<li>润色后字数增加较多，建议检查是否有冗余表达</li>';
+  }
+  report += '<li>建议使用逐句接受/拒绝功能，逐条核对修改内容</li>';
+  report += '<li>润色结果仅供参考，最终内容请作者自行确认</li>';
+  report += '</ul></div>';
+  report += '</div>';
+  
+  return report;
+}
+
+// P1: 多版本管理
+function savePolishVersion(original, polished, mode, chapter) {
+  var version = {
+    id: 'v_' + Date.now(),
+    time: new Date().toLocaleString('zh-CN'),
+    mode: mode,
+    chapter: chapter,
+    original: original,
+    polished: polished
+  };
+  polishVersions.unshift(version);
+  if (polishVersions.length > 5) polishVersions = polishVersions.slice(0, 5);
+  currentPolishVersion = 0;
+  renderPolishVersions();
+}
+
+function renderPolishVersions() {
+  var container = document.getElementById('polishVersions');
+  if (!container) return;
+  if (polishVersions.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:16px">' +
+    '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">润色版本（最近' + polishVersions.length + '个）</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+    polishVersions.map(function(v, i) {
+      return '<button onclick="loadPolishVersion(' + i + ')" style="padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px;border:1px solid ' + (i === currentPolishVersion ? '#7c3aed' : '#d1d5db') + ';background:' + (i === currentPolishVersion ? '#faf5ff' : '#fff') + ';color:' + (i === currentPolishVersion ? '#7c3aed' : '#374151') + '">V' + (polishVersions.length - i) + ' · ' + v.mode + '<br><span style="font-size:10px;color:#9ca3af">' + v.time + '</span></button>';
+    }).join('') +
+    '</div></div>';
+}
+
+function loadPolishVersion(idx) {
+  var v = polishVersions[idx];
+  if (!v) return;
+  currentPolishVersion = idx;
+  window._currentPolishResult = v.polished;
+  document.getElementById('polishContent').value = v.original;
+  document.getElementById('polishCharCount').textContent = v.original.length + ' 字符';
+  document.getElementById('polishResult').innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px"><div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">版本 V' + (polishVersions.length - idx) + '（' + v.time + '）</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><div><div style="font-size:12px;font-weight:600;color:#6b7280;margin-bottom:6px">原文</div><div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;max-height:400px;overflow-y:auto;white-space:pre-wrap">' + v.original + '</div></div><div><div style="font-size:12px;font-weight:600;color:#7c3aed;margin-bottom:6px">润色后</div><div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;max-height:400px;overflow-y:auto;white-space:pre-wrap">' + v.polished + '</div></div></div></div>';
+  renderPolishVersions();
+}
+
+// P2: 期刊适配润色
+async function startJournalPolish() {
+  var content = (document.getElementById('polishContent') || {}).value || '';
+  if (!content.trim()) { alert('请输入需要润色的内容'); return; }
+  
+  var journal = prompt('请输入目标期刊名称（如：Medicine & Science in Sports & Exercise、Journal of Sport and Health Science、中国运动医学杂志）：');
+  if (!journal) return;
+  
+  var resultEl = document.getElementById('polishResult');
+  resultEl.innerHTML = '<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:24px;text-align:center;color:#7c3aed;font-size:14px"><div style="font-size:28px;margin-bottom:8px">📰</div>正在根据《' + journal + '》的风格进行期刊适配润色...</div>';
+  
+  try {
+    var systemPrompt = '你是一位资深的体育学期刊编辑，熟悉各类体育学SCI/SSCI/中文核心期刊的投稿要求和写作风格。你了解每本期刊的栏目设置、论文结构要求、摘要格式、参考文献格式、语言风格等。';
+    var userPrompt = '请根据目标期刊《' + journal + '》的写作风格和投稿要求，对以下论文内容进行期刊适配润色：\n\n原文：\n' + content + '\n\n润色要求：\n1. 根据该期刊的常见论文结构调整内容组织\n2. 优化摘要结构（如果该期刊要求结构化摘要）\n3. 规范结果部分的统计表述（符合该期刊惯例）\n4. 提升讨论部分的深度，与该期刊发表的论文风格一致\n5. 统一专业术语使用\n6. 保持核心观点和研究内容不变\n7. 输出润色后的完整内容\n\n如果不确定该期刊的具体要求，请按照体育学高水平期刊的通用标准进行润色。';
+    
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+    
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+        '<div style="font-size:16px;font-weight:700;color:#1f2937">期刊适配润色（《' + journal + '》）</div>' +
+        '<div style="display:flex;gap:8px">' +
+          '<button onclick="copyPolishResult()" style="background:#7c3aed;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">复制结果</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;max-height:500px;overflow-y:auto;white-space:pre-wrap">' + result + '</div>' +
+    '</div>';
+    window._currentPolishResult = result;
+    savePolishVersion(content, result, '期刊适配:' + journal, '全文');
+  } catch(e) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;color:#dc2626;font-size:14px">润色失败：' + e.message + '</div>';
+  }
+}
+
+// P2: 与论文项目深度联动 - 保存润色结果到论文项目
+function savePolishToProject() {
+  var projects = getPaperProjects();
+  if (projects.length === 0) { alert('还没有论文项目，请先在「我的论文」中创建'); return; }
+  
+  var result = window._currentPolishResult;
+  if (!result) { alert('没有可保存的润色结果'); return; }
+  
+  var names = projects.map(function(p, i) { return (i+1) + '. ' + p.title; }).join('\n');
+  var idx = prompt('选择要保存到的论文项目（输入序号）：\n\n' + names);
+  if (!idx) return;
+  var p = projects[parseInt(idx) - 1];
+  if (!p) { alert('无效的序号'); return; }
+  
+  var chapter = (document.getElementById('polishChapter') || {}).value || 'full';
+  var chapterMap = {full:'full', abstract:'abstract', introduction:'introduction', literature:'literature', methods:'methods', results:'results', discussion:'discussion', conclusion:'conclusion'};
+  var key = chapterMap[chapter] || 'full';
+  
+  if (key === 'full') {
+    p.content.full = result;
+  } else {
+    p.content[key] = result;
+  }
+  p.updatedAt = new Date().toISOString();
+  
+  localStorage.setItem('paper_projects', JSON.stringify(projects));
+  alert('润色结果已保存到论文项目《' + p.title + '》的' + (chapter === 'full' ? '全文' : key) + '部分');
+}
+
+
 
 // ========== 论文工作台 - 投稿中心 ==========
 function goToPublishTab(tab) {
