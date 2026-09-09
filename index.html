@@ -38155,6 +38155,228 @@ async function aiRecommendJournals() {
   }
 }
 
+// 从推荐结果获取文章信息
+function getRecommendArticleInfo() {
+  return {
+    title: document.getElementById('pubTitle')?.value.trim() || '',
+    abstract: document.getElementById('pubAbstract')?.value.trim() || '',
+    type: document.getElementById('pubType')?.value || '',
+    direction: document.getElementById('pubDirection')?.value || '',
+    authorLevel: document.getElementById('pubAuthorLevel')?.value || '博士生',
+    hasFund: document.getElementById('pubHasFund')?.value || '无'
+  };
+}
+
+// 显示生成结果弹窗
+function showGenResultModal(title, content, loading) {
+  var modal = document.getElementById('pubGenModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'pubGenModal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML = '<div id="pubGenModalBox" style="background:#fff;border-radius:16px;max-width:700px;width:100%;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3)"></div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function(e) { if (e.target === modal) modal.style.display = 'none'; });
+  }
+  var box = document.getElementById('pubGenModalBox');
+  box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e5e7eb;background:#fafafa"><div style="font-size:15px;font-weight:700;color:#1e293b">' + title + '</div><button onclick="document.getElementById(\'pubGenModal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;color:#9ca3af;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background=\'#f3f4f6\'" onmouseout="this.style.background=\'none\'">&times;</button></div><div id="pubGenModalContent" style="flex:1;overflow-y:auto;padding:20px"></div>';
+  var contentEl = document.getElementById('pubGenModalContent');
+  if (loading) {
+    contentEl.innerHTML = '<div style="text-align:center;padding:40px;color:#7c3aed;font-size:14px">AI正在生成中，请稍候...</div>';
+  } else {
+    contentEl.innerHTML = content;
+  }
+  modal.style.display = 'flex';
+}
+
+// 针对特定期刊生成Cover Letter
+async function genCoverLetterForJournal(journalName) {
+  var info = getRecommendArticleInfo();
+  if (!info.title && !info.abstract) { alert('请先填写文章标题或摘要'); return; }
+  var journal = PHD_JOURNALS.find(function(j) { return j.name === journalName; });
+  showGenResultModal('Cover Letter - ' + journalName, '', true);
+  try {
+    var systemPrompt = '你是一位体育学/运动科学领域的资深学者，擅长撰写专业的英文Cover Letter。请根据文章信息和目标期刊，撰写一封结构完整、语言地道的Cover Letter。要求：1.开头说明投稿意图和文章标题 2.简述研究背景和创新点 3.说明为什么适合这本期刊（结合期刊收稿范围）4.说明作者贡献和通讯作者信息 5.声明无利益冲突、未一稿多投 6.结尾致谢。使用正式学术英语，约300-400词。';
+    var userPrompt = '目标期刊：' + journalName + (journal ? '（收稿范围：' + journal.scope + '）' : '') + '\n\n文章标题：' + info.title + '\n摘要：' + info.abstract + '\n研究类型：' + info.type + '\n研究方向：' + info.direction + '\n作者身份：' + info.authorLevel + '\n基金情况：' + info.hasFund;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 1500, model);
+    var html = '<div style="font-size:13px;line-height:1.9;color:#1e293b;white-space:pre-wrap;font-family:Georgia,serif">' + response + '</div>';
+    html += '<div style="margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb;display:flex;gap:10px"><button onclick="navigator.clipboard.writeText(document.querySelector(\'#pubGenModalContent div\').textContent).then(function(){alert(\'已复制到剪贴板\')})" style="background:#7c3aed;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">复制全文</button></div>';
+    document.getElementById('pubGenModalContent').innerHTML = html;
+  } catch (e) {
+    document.getElementById('pubGenModalContent').innerHTML = '<div style="color:#dc2626;padding:20px">生成失败：' + e.message + '</div>';
+  }
+}
+
+// 针对特定期刊生成Highlights
+async function genHighlightsForJournal(journalName) {
+  var info = getRecommendArticleInfo();
+  if (!info.title && !info.abstract) { alert('请先填写文章标题或摘要'); return; }
+  showGenResultModal('Highlights - ' + journalName, '', true);
+  try {
+    var systemPrompt = '你是一位体育学期刊编辑，请根据文章内容提取3-5条Highlights。要求：1.每条不超过85个字符（含空格和标点）2.用动词开头，简洁有力 3.突出研究的核心发现和创新点 4.使用bullet points格式，每条前面加- 5.不要使用完整句子，用短语形式。';
+    var userPrompt = '目标期刊：' + journalName + '\n文章标题：' + info.title + '\n摘要：' + info.abstract + '\n研究方向：' + info.direction;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 800, model);
+    var html = '<div style="font-size:13px;line-height:2;color:#1e293b;white-space:pre-wrap">' + response + '</div>';
+    html += '<div style="margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb"><div style="font-size:11px;color:#6b7280;margin-bottom:8px">字符数检查（每条应≤85字符）：</div>';
+    var lines = response.split('\n').filter(function(l) { return l.trim().startsWith('-') || l.trim().match(/^\d+\./); });
+    lines.forEach(function(line, i) {
+      var text = line.replace(/^[-\d.\s]+/, '').trim();
+      var len = text.length;
+      var ok = len <= 85;
+      html += '<div style="font-size:11px;padding:4px 0;color:' + (ok ? '#059669' : '#dc2626') + '">第' + (i+1) + '条：' + len + '字符 ' + (ok ? '✓' : '✗ 超出' + (len-85) + '字符') + '</div>';
+    });
+    html += '</div>';
+    html += '<div style="margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb"><button onclick="navigator.clipboard.writeText(document.querySelector(\'#pubGenModalContent div\').textContent).then(function(){alert(\'已复制到剪贴板\')})" style="background:#059669;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">复制Highlights</button></div>';
+    document.getElementById('pubGenModalContent').innerHTML = html;
+  } catch (e) {
+    document.getElementById('pubGenModalContent').innerHTML = '<div style="color:#dc2626;padding:20px">生成失败：' + e.message + '</div>';
+  }
+}
+
+// 针对特定期刊生成投稿检查清单
+async function genChecklistForJournal(journalName) {
+  var info = getRecommendArticleInfo();
+  var journal = PHD_JOURNALS.find(function(j) { return j.name === journalName; });
+  showGenResultModal('投稿检查清单 - ' + journalName, '', true);
+  try {
+    var systemPrompt = '你是一位体育学期刊的资深编辑，请针对目标期刊生成一份详细的投稿前检查清单。要求：1.分为5大类：稿件格式、内容完整性、伦理与合规、投稿材料、期刊特定要求 2.每类下列出5-8个具体检查项 3.针对该期刊的特定要求（如字数限制、格式要求、伦理审查等）重点标注 4.使用checkbox格式，每项前面加[ ] 5.最后给出投稿成功率评估和改进建议。';
+    var userPrompt = '目标期刊：' + journalName + (journal ? '\n期刊信息：IF=' + journal.if + ', ' + journal.jcr + ', 审稿周期=' + journal.reviewDays + '天, 录用率=' + journal.acceptRate + '%, OA=' + journal.oa + '\n收稿范围：' + journal.scope + '\n注意事项：' + (journal.pitfalls || '') : '') + '\n\n文章标题：' + info.title + '\n摘要：' + info.abstract + '\n研究类型：' + info.type + '\n作者身份：' + info.authorLevel + '\n基金情况：' + info.hasFund;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 2000, model);
+    var html = '<div style="font-size:13px;line-height:1.9;color:#1e293b;white-space:pre-wrap">' + response.replace(/\[ \]/g, '☐') + '</div>';
+    html += '<div style="margin-top:16px;padding-top:16px;border-top:1px solid #e5e7eb"><button onclick="navigator.clipboard.writeText(document.querySelector(\'#pubGenModalContent div\').textContent).then(function(){alert(\'已复制到剪贴板\')})" style="background:#d97706;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">复制清单</button></div>';
+    document.getElementById('pubGenModalContent').innerHTML = html;
+  } catch (e) {
+    document.getElementById('pubGenModalContent').innerHTML = '<div style="color:#dc2626;padding:20px">生成失败：' + e.message + '</div>';
+  }
+}
+
+// 文章深度质量分析
+async function deepAnalyzeArticle() {
+  var info = getRecommendArticleInfo();
+  if (!info.title && !info.abstract) { alert('请先填写文章标题或摘要'); return; }
+  showGenResultModal('AI文章质量深度分析', '', true);
+  try {
+    var systemPrompt = `你是一位体育学/运动科学领域的资深审稿人，拥有10年以上SCI期刊审稿经验。请对用户提供的文章进行深度质量评估。
+
+【评估结构】
+一、创新点分析（逐条列出文章的创新点，评估每个创新点的强度：强/中/弱，说明理由）
+二、研究质量评估（研究设计是否合理、样本量是否充分、方法是否科学、统计分析是否恰当、结论是否有数据支撑）
+三、写作质量评估（结构是否完整、逻辑是否清晰、语言是否规范、图表是否充分、参考文献是否恰当）
+四、优势与亮点（列出3-5个主要优势）
+五、不足与改进建议（列出3-5个主要不足，每条给出具体改进建议）
+六、期刊档次建议（根据文章质量，建议投什么IF区间的期刊，冲刺/稳妥/保底各建议什么档次）
+
+【要求】
+1. 评估要客观、具体，不要泛泛而谈
+2. 每条建议都要可操作
+3. 如果文章信息不足，明确指出需要补充什么信息
+4. 使用中文回答，结构清晰`;
+    var userPrompt = '文章标题：' + info.title + '\n\n摘要/研究内容：' + info.abstract + '\n\n研究类型：' + info.type + '\n研究方向：' + info.direction + '\n作者身份：' + info.authorLevel + '\n基金情况：' + info.hasFund;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 3000, model);
+    var html = '<div class="md-content" style="font-size:13px;line-height:1.9;color:#1e293b">' + renderMarkdown(response) + '</div>';
+    document.getElementById('pubGenModalContent').innerHTML = html;
+  } catch (e) {
+    document.getElementById('pubGenModalContent').innerHTML = '<div style="color:#dc2626;padding:20px">分析失败：' + e.message + '</div>';
+  }
+}
+
+// 期刊匹配度详细分析
+async function deepAnalyzeMatch(journalName) {
+  var info = getRecommendArticleInfo();
+  if (!info.title && !info.abstract) { alert('请先填写文章标题或摘要'); return; }
+  var journal = PHD_JOURNALS.find(function(j) { return j.name === journalName; });
+  showGenResultModal('匹配度详细分析 - ' + journalName, '', true);
+  try {
+    var systemPrompt = `你是一位体育学期刊的资深编辑，请详细分析这篇文章与目标期刊的匹配度。
+
+【分析结构】
+一、收稿范围匹配度（逐条对比文章研究内容与期刊收稿范围，说明哪些方面契合、哪些方面有偏差，评分0-100）
+二、文章类型匹配（文章类型是否在期刊接收范围内，是否需要调整文章类型）
+三、研究方法匹配（期刊偏好的研究方法是什么，文章使用的方法是否符合期刊偏好）
+四、创新点契合度（文章的创新点是否符合期刊关注的热点方向）
+五、潜在拒稿风险（列出3-5个可能导致拒稿的风险点，每个给出应对建议）
+六、投稿策略建议（是否建议投这本期刊，如果投需要做哪些针对性修改，Cover Letter应强调什么）
+七、如果不适合，推荐2-3本更匹配的替代期刊
+
+【要求】
+1. 分析要具体，结合文章内容和期刊收稿范围逐条说明
+2. 不要只给分数，要给出理由
+3. 使用中文回答`;
+    var userPrompt = '目标期刊：' + journalName + (journal ? '\n期刊IF：' + journal.if + '\nJCR分区：' + journal.jcr + '\n收稿范围：' + journal.scope + '\n接收类型：' + (journal.types||[]).join(', ') + '\n期刊优势：' + (journal.strengths||'') + '\n注意事项：' + (journal.pitfalls||'') + '\n审稿周期：' + journal.reviewDays + '天\n录用率：' + journal.acceptRate + '%' : '') + '\n\n文章标题：' + info.title + '\n摘要：' + info.abstract + '\n研究类型：' + info.type + '\n研究方向：' + info.direction;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 2500, model);
+    var html = '<div class="md-content" style="font-size:13px;line-height:1.9;color:#1e293b">' + renderMarkdown(response) + '</div>';
+    document.getElementById('pubGenModalContent').innerHTML = html;
+  } catch (e) {
+    document.getElementById('pubGenModalContent').innerHTML = '<div style="color:#dc2626;padding:20px">分析失败：' + e.message + '</div>';
+  }
+}
+
+
+// 将期刊加入投稿管理
+function addJournalToManage(journalName) {
+  var info = getRecommendArticleInfo();
+  if (!info.title) { alert('请先填写文章标题'); return; }
+  var papers = getPubPapers();
+  // 检查是否已存在同名论文
+  var existing = papers.find(function(p) { return p.title === info.title; });
+  if (existing) {
+    // 检查是否已有该期刊的投稿记录
+    var hasSub = existing.submissions && existing.submissions.some(function(s) { return s.journal === journalName; });
+    if (hasSub) {
+      if (confirm('该论文已存在对《' + journalName + '》的投稿记录。是否跳转到投稿管理查看？')) {
+        switchPublishTab('manage');
+        setTimeout(function() { showPaperDetail(existing.id); }, 300);
+      }
+      return;
+    }
+    // 添加新的投稿记录
+    if (!existing.submissions) existing.submissions = [];
+    existing.submissions.push({
+      id: genId(),
+      journal: journalName,
+      submitDate: new Date().toISOString().split('T')[0],
+      status: 'preparing',
+      revisionDeadline: '',
+      resultDate: '',
+      reviewers: [],
+      timeline: [{date: new Date().toISOString().split('T')[0], event: '创建投稿计划', note: '从AI选刊推荐中添加'}]
+    });
+    savePubPapers(papers);
+    alert('已将《' + journalName + '》添加到论文《' + info.title + '》的投稿管理中！\n\n当前状态：准备投稿\n请在投稿管理中完善信息并更新状态。');
+  } else {
+    // 创建新论文
+    var newPaper = {
+      id: genId(),
+      title: info.title,
+      authors: '',
+      type: info.type,
+      submissions: [{
+        id: genId(),
+        journal: journalName,
+        submitDate: new Date().toISOString().split('T')[0],
+        status: 'preparing',
+        revisionDeadline: '',
+        resultDate: '',
+        reviewers: [],
+        timeline: [{date: new Date().toISOString().split('T')[0], event: '创建投稿计划', note: '从AI选刊推荐中添加'}]
+      }],
+      createdAt: new Date().toISOString()
+    };
+    papers.push(newPaper);
+    savePubPapers(papers);
+    alert('已创建论文《' + info.title + '》并添加《' + journalName + '》到投稿管理！\n\n当前状态：准备投稿\n请在投稿管理中完善作者信息并更新投稿状态。');
+  }
+  if (confirm('是否跳转到投稿管理查看？')) {
+    switchPublishTab('manage');
+  }
+}
+
+
 // 渲染AI推荐结果（解析纯文本格式）
 function renderAIRecommendResult(response, candidates) {
   var html = '<div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:16px">AI期刊推荐结果</div>';
@@ -38181,7 +38403,8 @@ function renderAIRecommendResult(response, candidates) {
       html += '</div>';
     }
     var evalMatch = qText.match(/综合评价[:：]\s*(.+)/);
-    if (evalMatch) html += '<div style="font-size:12px;color:#78350f;line-height:1.7;background:#fffbeb;padding:8px 12px;border-radius:6px">' + evalMatch[1].trim() + '</div>';
+    if (evalMatch) html += '<div style="font-size:12px;color:#78350f;line-height:1.7;background:#fffbeb;padding:8px 12px;border-radius:6px;margin-bottom:10px">' + evalMatch[1].trim() + '</div>';
+    html += '<button onclick="deepAnalyzeArticle()" style="font-size:11px;color:#92400e;background:#fef3c7;border:1px solid #fcd34d;padding:5px 14px;border-radius:5px;cursor:pointer;font-weight:600;transition:background .15s" onmouseover="this.style.background=\'#fde68a\'" onmouseout="this.style.background=\'#fef3c7\'">AI深度质量分析</button>';
     html += '</div>';
   }
 
@@ -38235,7 +38458,16 @@ function renderAIRecommendResult(response, candidates) {
 
       if (reasonMatch) html += '<div style="font-size:12px;color:#374151;line-height:1.7;margin-bottom:6px"><b style="color:' + tier.color + '">推荐理由：</b>' + reasonMatch[1].trim().replace(/\n/g, ' ') + '</div>';
       if (noteMatch) html += '<div style="font-size:11px;color:#6b7280;line-height:1.6;margin-bottom:4px"><b>注意事项：</b>' + noteMatch[1].trim().replace(/\n/g, ' ') + '</div>';
-      if (riskMatch && riskMatch[1].trim()) html += '<div style="font-size:11px;color:#dc2626;line-height:1.6;background:#fef2f2;padding:6px 10px;border-radius:4px"><b>风险提示：</b>' + riskMatch[1].trim().replace(/\n/g, ' ') + '</div>';
+      if (riskMatch && riskMatch[1].trim()) html += '<div style="font-size:11px;color:#dc2626;line-height:1.6;background:#fef2f2;padding:6px 10px;border-radius:4px;margin-bottom:8px"><b>风险提示：</b>' + riskMatch[1].trim().replace(/\n/g, ' ') + '</div>';
+      // 快捷工具按钮
+      var safeJName = journalName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb">';
+      html += '<button onclick="genCoverLetterForJournal(\'' + safeJName + '\')" style="font-size:11px;color:#7c3aed;background:#ede9fe;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-weight:500;transition:background .15s" onmouseover="this.style.background=\'#ddd6fe\'" onmouseout="this.style.background=\'#ede9fe\'">Cover Letter</button>';
+      html += '<button onclick="genHighlightsForJournal(\'' + safeJName + '\')" style="font-size:11px;color:#059669;background:#d1fae5;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-weight:500;transition:background .15s" onmouseover="this.style.background=\'#a7f3d0\'" onmouseout="this.style.background=\'#d1fae5\'">Highlights</button>';
+      html += '<button onclick="genChecklistForJournal(\'' + safeJName + '\')" style="font-size:11px;color:#d97706;background:#fef3c7;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-weight:500;transition:background .15s" onmouseover="this.style.background=\'#fde68a\'" onmouseout="this.style.background=\'#fef3c7\'">投稿检查</button>';
+      html += '<button onclick="deepAnalyzeMatch(\'' + safeJName + '\')" style="font-size:11px;color:#0891b2;background:#cffafe;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-weight:500;transition:background .15s" onmouseover="this.style.background=\'#a5f3fc\'" onmouseout="this.style.background=\'#cffafe\'">匹配度详析</button>';
+      html += '<button onclick="addJournalToManage(\'' + safeJName + '\')" style="font-size:11px;color:#2563eb;background:#dbeafe;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-weight:500;transition:background .15s" onmouseover="this.style.background=\'#bfdbfe\'" onmouseout="this.style.background=\'#dbeafe\'">加入投稿管理</button>';
+      html += '</div>';
       html += '</div>';
     });
     html += '</div>';
