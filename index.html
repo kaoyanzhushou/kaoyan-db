@@ -38189,6 +38189,226 @@ function showGenResultModal(title, content, loading) {
   modal.style.display = 'flex';
 }
 
+// 获取选中的格式检查项
+function getFmtChecks() {
+  var checks = [];
+  var ids = ['fmtRef','fmtCite','fmtFig','fmtHead','fmtAbbr','fmtUnit','fmtLang','fmtTense','fmtStructure'];
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.checked) checks.push(el.parentElement.textContent.trim());
+  });
+  return checks;
+}
+
+// AI检查论文格式问题
+async function checkPaperFormat() {
+  var content = document.getElementById('fmtContent').value.trim();
+  if (!content) { alert('请粘贴论文内容'); return; }
+  if (content.length < 100) { alert('论文内容过短，请粘贴更多内容'); return; }
+  var journal = document.getElementById('fmtJournal').value;
+  var refStyle = document.getElementById('fmtRefStyle').value;
+  var checks = getFmtChecks();
+  var resultDiv = document.getElementById('fmtResult');
+  resultDiv.innerHTML = '<div style="padding:30px;text-align:center;color:#0284c7;font-size:14px">AI正在检查论文格式问题...<br><span style="font-size:12px;color:#94a3b8">检查项目：' + checks.join('、') + '</span></div>';
+  try {
+    var systemPrompt = `你是一位资深的学术论文格式编辑，拥有10年以上SCI期刊排版经验。请仔细检查用户提供的论文内容，找出所有格式问题。
+
+【检查范围】
+- 参考文献格式：是否符合` + refStyle + `标准，作者名、年份、期刊名、卷期页码格式是否正确
+- 引用编号：正文引用[1][2]是否连续，是否有引用但参考文献列表中缺失，或参考文献列表中有但正文未引用
+- 图表编号：图1/表1编号是否连续，正文中是否有"如图1所示"的引用，图表标题格式是否规范
+- 标题层级：一级/二级/三级标题格式是否一致，编号是否连续
+- 缩写定义：专业缩写首次出现时是否给出全称定义
+- 单位格式：计量单位是否规范，是否使用国际标准单位
+- 语言润色：学术英语表达是否地道，是否有中式英语，连接词使用是否恰当
+- 时态一致：摘要用过去时，结论用现在时，方法用过去时，是否一致
+- 段落结构：段落是否过长或过短，逻辑是否清晰
+
+【输出格式 - 严格遵守】
+===格式检查报告===
+总问题数: X
+严重: X | 警告: X | 建议: X
+
+===问题列表===
+[问题1]
+类型: 参考文献格式
+严重程度: 警告
+位置: 参考文献第3条
+原文: [3] Wang Y, Li M. Exercise study. J Sport. 2021;5:100-110
+问题: 作者名格式不正确，期刊名缩写不规范，缺少卷号
+修改建议: 作者名应姓在前名缩写在后，期刊名使用标准缩写，添加卷号
+修改后: [3] Wang Y, Li M, Zhang H. Effects of exercise on health. J Sports Sci. 2021;39(5):100-110.
+
+[问题2]
+...（每条问题按以上格式）
+
+===总体评价===
+（一段话总结论文格式整体情况，给出改进建议）
+
+【要求】
+1. 只报告确实存在的问题，不要编造
+2. 每条问题必须给出"原文"和"修改后"的具体文本
+3. 严重程度分级：严重（影响投稿/学术不端风险）、警告（格式错误需修改）、建议（优化建议）
+4. 如果某类问题没有，不要编造
+5. 使用中文回答`;
+    var userPrompt = '目标期刊：' + (journal || '通用学术格式') + '\n参考文献格式标准：' + refStyle + '\n检查项目：' + checks.join('、') + '\n\n论文内容：\n' + content;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 4000, model);
+    resultDiv.innerHTML = renderFormatCheckResult(response, content);
+  } catch (e) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">检查失败：' + e.message + '</div>';
+  }
+}
+
+// 一键检查并修改
+async function autoFixPaperFormat() {
+  var content = document.getElementById('fmtContent').value.trim();
+  if (!content) { alert('请粘贴论文内容'); return; }
+  var journal = document.getElementById('fmtJournal').value;
+  var refStyle = document.getElementById('fmtRefStyle').value;
+  var checks = getFmtChecks();
+  var resultDiv = document.getElementById('fmtResult');
+  resultDiv.innerHTML = '<div style="padding:30px;text-align:center;color:#059669;font-size:14px">AI正在检查并修改论文格式...<br><span style="font-size:12px;color:#94a3b8">这可能需要30-60秒，请耐心等待</span></div>';
+  try {
+    var systemPrompt = `你是一位资深的学术论文格式编辑。请检查并修改用户提供的论文内容，确保格式规范。
+
+【修改要求】
+1. 参考文献格式统一为` + refStyle + `标准
+2. 修正引用编号不连续、缺失等问题
+3. 规范图表编号和引用
+4. 统一标题层级格式
+5. 补充缩写首次出现的全称定义
+6. 规范计量单位
+7. 润色学术英语表达，修正中式英语
+8. 保持原文内容和学术观点不变，只修改格式和语言表达
+9. 不要删减原文内容，不要添加新的研究内容
+
+【输出格式】
+===修改报告===
+修改问题数: X
+严重: X | 警告: X | 建议: X
+
+===主要修改说明===
+1. 修改了什么（简要列出5-10条主要修改）
+2. ...
+
+===修改后全文===
+（输出修改后的完整论文内容，保持原文结构）
+
+【要求】
+1. 修改后全文必须完整，不能遗漏任何部分
+2. 保持原文的段落结构和内容
+3. 只修改格式和语言，不改变学术观点和研究内容
+4. 使用中文写修改说明，修改后全文保持原文语言（英文论文保持英文）`;
+    var userPrompt = '目标期刊：' + (journal || '通用学术格式') + '\n参考文献格式：' + refStyle + '\n检查项目：' + checks.join('、') + '\n\n论文内容：\n' + content;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 6000, model);
+    resultDiv.innerHTML = renderFormatFixResult(response);
+  } catch (e) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">修改失败：' + e.message + '</div>';
+  }
+}
+
+// 渲染格式检查结果
+function renderFormatCheckResult(response, originalContent) {
+  var html = '<div style="font-size:16px;font-weight:700;color:#075985;margin-bottom:16px">格式检查报告</div>';
+
+  // 统计
+  var totalMatch = response.match(/总问题数[:：]\s*(\d+)/);
+  var sevMatch = response.match(/严重[:：]\s*(\d+)/);
+  var warnMatch = response.match(/警告[:：]\s*(\d+)/);
+  var sugMatch = response.match(/建议[:：]\s*(\d+)/);
+  if (totalMatch) {
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">';
+    html += '<div style="background:#f0f9ff;border:1px solid #7dd3fc;border-radius:10px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:#0284c7">' + totalMatch[1] + '</div><div style="font-size:11px;color:#0369a1">总问题数</div></div>';
+    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:#dc2626">' + (sevMatch?sevMatch[1]:'0') + '</div><div style="font-size:11px;color:#b91c1c">严重</div></div>';
+    html += '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:#d97706">' + (warnMatch?warnMatch[1]:'0') + '</div><div style="font-size:11px;color:#b45309">警告</div></div>';
+    html += '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:#059669">' + (sugMatch?sugMatch[1]:'0') + '</div><div style="font-size:11px;color:#047857">建议</div></div>';
+    html += '</div>';
+  }
+
+  // 问题列表
+  var issuesSection = response.match(/===问题列表===([\s\S]*?)===总体评价===/);
+  if (issuesSection) {
+    var issuesText = issuesSection[1];
+    var issueBlocks = issuesText.split(/\[问题\d+\]/).filter(function(b) { return b.trim(); });
+    html += '<div style="font-size:14px;font-weight:700;color:#075985;margin-bottom:12px">问题详情（' + issueBlocks.length + '条）</div>';
+    issueBlocks.forEach(function(block, i) {
+      var typeMatch = block.match(/类型[:：]\s*(.+)/);
+      var sevMatch2 = block.match(/严重程度[:：]\s*(.+)/);
+      var locMatch = block.match(/位置[:：]\s*(.+)/);
+      var origMatch = block.match(/原文[:：]\s*([\s\S]*?)(?=问题[:：]|修改建议|修改后|$)/);
+      var probMatch = block.match(/问题[:：]\s*([\s\S]*?)(?=修改建议|修改后|$)/);
+      var fixMatch = block.match(/修改建议[:：]\s*([\s\S]*?)(?=修改后|$)/);
+      var afterMatch = block.match(/修改后[:：]\s*([\s\S]*?)$/);
+
+      var sev = sevMatch2 ? sevMatch2[1].trim() : '建议';
+      var sevColor = sev.indexOf('严重') >= 0 ? '#dc2626' : sev.indexOf('警告') >= 0 ? '#d97706' : '#059669';
+      var sevBg = sev.indexOf('严重') >= 0 ? '#fef2f2' : sev.indexOf('警告') >= 0 ? '#fffbeb' : '#f0fdf4';
+
+      html += '<div style="background:' + sevBg + ';border:1px solid ' + sevColor + '33;border-left:4px solid ' + sevColor + ';border-radius:8px;padding:14px;margin-bottom:12px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:13px;font-weight:700;color:#1e293b">问题 ' + (i+1) + '：' + (typeMatch?typeMatch[1].trim():'') + '</div><span style="background:' + sevColor + ';color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600">' + sev + '</span></div>';
+      if (locMatch) html += '<div style="font-size:11px;color:#6b7280;margin-bottom:6px">位置：' + locMatch[1].trim() + '</div>';
+      if (probMatch) html += '<div style="font-size:12px;color:#374151;line-height:1.7;margin-bottom:8px"><b>问题：</b>' + probMatch[1].trim().replace(/\n/g, ' ') + '</div>';
+      if (origMatch && origMatch[1].trim()) html += '<div style="font-size:11px;color:#dc2626;background:#fff;padding:6px 10px;border-radius:4px;margin-bottom:6px;line-height:1.6"><b>原文：</b>' + origMatch[1].trim().substring(0, 200) + '</div>';
+      if (afterMatch && afterMatch[1].trim()) html += '<div style="font-size:11px;color:#059669;background:#fff;padding:6px 10px;border-radius:4px;margin-bottom:6px;line-height:1.6"><b>修改后：</b>' + afterMatch[1].trim().substring(0, 200) + '</div>';
+      if (fixMatch && fixMatch[1].trim()) html += '<div style="font-size:11px;color:#6b7280;line-height:1.6"><b>修改建议：</b>' + fixMatch[1].trim().replace(/\n/g, ' ') + '</div>';
+      html += '</div>';
+    });
+  }
+
+  // 总体评价
+  var evalMatch = response.match(/===总体评价===([\s\S]*)$/);
+  if (evalMatch) {
+    html += '<div style="background:#f0f9ff;border:1px solid #7dd3fc;border-radius:10px;padding:16px;margin-top:16px">';
+    html += '<div style="font-size:13px;font-weight:700;color:#075985;margin-bottom:8px">总体评价与改进建议</div>';
+    html += '<div style="font-size:12px;color:#0c4a6e;line-height:1.9">' + evalMatch[1].trim().replace(/\n/g, '<br>') + '</div>';
+    html += '</div>';
+  }
+
+  // 一键修改按钮
+  html += '<div style="margin-top:16px;text-align:center"><button onclick="autoFixPaperFormat()" style="background:#059669;color:#fff;border:none;padding:12px 32px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">一键修改所有格式问题</button></div>';
+
+  return html;
+}
+
+// 渲染格式修改结果
+function renderFormatFixResult(response) {
+  var html = '<div style="font-size:16px;font-weight:700;color:#059669;margin-bottom:16px">格式修改完成</div>';
+
+  // 修改统计
+  var countMatch = response.match(/修改问题数[:：]\s*(\d+)/);
+  if (countMatch) {
+    html += '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:16px;margin-bottom:16px;text-align:center">';
+    html += '<div style="font-size:32px;font-weight:700;color:#059669">' + countMatch[1] + '</div>';
+    html += '<div style="font-size:12px;color:#047857">处格式问题已修改</div>';
+    html += '</div>';
+  }
+
+  // 主要修改说明
+  var changesMatch = response.match(/===主要修改说明===([\s\S]*?)===修改后全文===/);
+  if (changesMatch) {
+    html += '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:16px;margin-bottom:16px">';
+    html += '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px">主要修改说明</div>';
+    html += '<div style="font-size:12px;color:#78350f;line-height:1.9">' + changesMatch[1].trim().replace(/\n/g, '<br>') + '</div>';
+    html += '</div>';
+  }
+
+  // 修改后全文
+  var fullMatch = response.match(/===修改后全文===([\s\S]*)$/);
+  if (fullMatch) {
+    var fixedText = fullMatch[1].trim();
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    html += '<div style="font-size:13px;font-weight:700;color:#1e293b">修改后全文（' + fixedText.length + ' 字符）</div>';
+    html += '<button onclick="navigator.clipboard.writeText(document.getElementById(\'fmtFixedText\').textContent).then(function(){alert(\'已复制到剪贴板\')})" style="background:#0284c7;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">复制全文</button>';
+    html += '</div>';
+    html += '<div id="fmtFixedText" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;font-size:12px;line-height:1.9;color:#1e293b;white-space:pre-wrap;max-height:500px;overflow-y:auto;font-family:Consolas,monospace">' + fixedText + '</div>';
+  }
+
+  return html;
+}
+
+
 // 针对特定期刊生成Cover Letter
 async function genCoverLetterForJournal(journalName) {
   var info = getRecommendArticleInfo();
