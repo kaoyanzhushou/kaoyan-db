@@ -38262,6 +38262,326 @@ async function aiCompareAdvice() {
 }
 
 
+// 显示投稿工具
+function showPubTool(tool) {
+  var container = document.getElementById('pubToolContent');
+  if (!container) return;
+  var html = '';
+  if (tool === 'coverletter') {
+    html = '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px">';
+    html += '<div style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:12px">Cover Letter 智能生成</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">';
+    html += '<div><label style="font-size:12px;color:#065f46;font-weight:600;display:block;margin-bottom:4px">论文标题</label><input type="text" id="clTitle" placeholder="输入论文标题" style="width:100%;padding:9px 12px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none"></div>';
+    html += '<div><label style="font-size:12px;color:#065f46;font-weight:600;display:block;margin-bottom:4px">目标期刊</label><select id="clJournal" style="width:100%;padding:9px 12px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#065f46;cursor:pointer"><option value="">请选择期刊</option>' + PHD_JOURNALS.map(function(j) { return '<option value="' + j.name + '">' + j.name + '</option>'; }).join('') + '</select></div>';
+    html += '</div>';
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#065f46;font-weight:600;display:block;margin-bottom:4px">核心发现（3点，每行一点）</label><textarea id="clFindings" rows="3" placeholder="1. 发现了...&#10;2. 证实了...&#10;3. 提出了..." style="width:100%;padding:9px 12px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none;resize:vertical"></textarea></div>';
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#065f46;font-weight:600;display:block;margin-bottom:4px">研究意义/创新点</label><textarea id="clSignificance" rows="2" placeholder="简述研究的理论价值和实践意义" style="width:100%;padding:9px 12px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none;resize:vertical"></textarea></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">';
+    html += '<div><label style="font-size:12px;color:#065f46;font-weight:600;display:block;margin-bottom:4px">通讯作者</label><input type="text" id="clAuthor" placeholder="姓名" style="width:100%;padding:9px 12px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none"></div>';
+    html += '<div><label style="font-size:12px;color:#065f46;font-weight:600;display:block;margin-bottom:4px">单位</label><input type="text" id="clAffil" placeholder="所属单位" style="width:100%;padding:9px 12px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none"></div>';
+    html += '<div><label style="font-size:12px;color:#065f46;font-weight:600;display:block;margin-bottom:4px">语气风格</label><select id="clTone" style="width:100%;padding:9px 12px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#065f46;cursor:pointer"><option value="正式学术">正式学术</option><option value="简洁干练">简洁干练</option><option value="突出创新">突出创新</option><option value="谦逊诚恳">谦逊诚恳</option></select></div>';
+    html += '</div>';
+    html += '<button onclick="generateCoverLetter()" style="background:#059669;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">生成 Cover Letter</button>';
+    html += '</div><div id="clResult" style="margin-top:16px"></div>';
+  } else if (tool === 'checklist') {
+    html = '<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-radius:12px;padding:20px">';
+    html += '<div style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:12px">投稿前检查清单</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">';
+    html += '<div><label style="font-size:12px;color:#1e40af;font-weight:600;display:block;margin-bottom:4px">目标期刊</label><select id="ckJournal" onchange="generateChecklist()" style="width:100%;padding:9px 12px;border:1px solid #93c5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#1e40af;cursor:pointer"><option value="">请选择期刊</option>' + PHD_JOURNALS.map(function(j) { return '<option value="' + j.name + '">' + j.name + '</option>'; }).join('') + '</select></div>';
+    html += '<div><label style="font-size:12px;color:#1e40af;font-weight:600;display:block;margin-bottom:4px">文章类型</label><select id="ckType" onchange="generateChecklist()" style="width:100%;padding:9px 12px;border:1px solid #93c5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#1e40af;cursor:pointer"><option value="原创研究">原创研究</option><option value="综述">综述/Meta分析</option><option value="病例报告">病例报告</option><option value="实验研究">实验研究</option><option value="调查研究">调查/问卷研究</option></select></div>';
+    html += '</div>';
+    html += '<div id="ckResult"></div>';
+    html += '</div>';
+  } else if (tool === 'title') {
+    html = '<div style="background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:1px solid #f0abfc;border-radius:12px;padding:20px">';
+    html += '<div style="font-size:16px;font-weight:700;color:#86198f;margin-bottom:12px">标题 / 摘要 / 关键词 AI优化</div>';
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#86198f;font-weight:600;display:block;margin-bottom:4px">当前标题</label><input type="text" id="optTitle" placeholder="输入当前论文标题" style="width:100%;padding:9px 12px;border:1px solid #f0abfc;border-radius:6px;font-size:12px;outline:none"></div>';
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#86198f;font-weight:600;display:block;margin-bottom:4px">当前摘要</label><textarea id="optAbstract" rows="5" placeholder="粘贴当前摘要" style="width:100%;padding:9px 12px;border:1px solid #f0abfc;border-radius:6px;font-size:12px;outline:none;resize:vertical"></textarea></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">';
+    html += '<div><label style="font-size:12px;color:#86198f;font-weight:600;display:block;margin-bottom:4px">优化方向</label><select id="optDirection" style="width:100%;padding:9px 12px;border:1px solid #f0abfc;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#86198f;cursor:pointer"><option value="学术化">学术化表达</option><option value="突出创新">突出创新点</option value="简洁">精简字数</option value="逻辑">优化逻辑结构</option><option value="全面">全面优化</option></select></div>';
+    html += '<div><label style="font-size:12px;color:#86198f;font-weight:600;display:block;margin-bottom:4px">目标字数</label><select id="optWords" style="width:100%;padding:9px 12px;border:1px solid #f0abfc;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#86198f;cursor:pointer"><option value="200">200字以内</option><option value="250">250字以内</option><option value="300">300字以内</option><option value="350">350字以内</option><option value="不限">不限</option></select></div>';
+    html += '</div>';
+    html += '<button onclick="optimizeTitleAbstract()" style="background:#a21caf;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI 优化标题与摘要</button>';
+    html += '</div><div id="optResult" style="margin-top:16px"></div>';
+  } else if (tool === 'reviewer') {
+    html = '<div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:12px;padding:20px">';
+    html += '<div style="font-size:16px;font-weight:700;color:#92400e;margin-bottom:12px">审稿人智能推荐</div>';
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#92400e;font-weight:600;display:block;margin-bottom:4px">研究主题/关键词</label><input type="text" id="rvTopic" placeholder="输入研究主题，如：运动干预对慢性疼痛的影响" style="width:100%;padding:9px 12px;border:1px solid #fcd34d;border-radius:6px;font-size:12px;outline:none"></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">';
+    html += '<div><label style="font-size:12px;color:#92400e;font-weight:600;display:block;margin-bottom:4px">研究方向</label><select id="rvDirection" style="width:100%;padding:9px 12px;border:1px solid #fcd34d;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#92400e;cursor:pointer"><option value="运动医学">运动医学/运动损伤</option><option value="运动康复">运动康复</option><option value="运动生理学">运动生理学</option><option value="运动生物力学">运动生物力学</option><option value="运动心理学">运动心理学</option><option value="体育教育">体育教育</option><option value="体育人文">体育人文社会学</option><option value="公共卫生">公共卫生/身体活动</option><option value="运动营养">运动营养</option><option value="运动训练">运动训练/体能</option></select></div>';
+    html += '<div><label style="font-size:12px;color:#92400e;font-weight:600;display:block;margin-bottom:4px">推荐数量</label><select id="rvCount" style="width:100%;padding:9px 12px;border:1px solid #fcd34d;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#92400e;cursor:pointer"><option value="5">5位</option><option value="8">8位</option><option value="10">10位</option></select></div>';
+    html += '</div>';
+    html += '<button onclick="recommendReviewers()" style="background:#d97706;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI 推荐审稿人</button>';
+    html += '</div><div id="rvResult" style="margin-top:16px"></div>';
+  } else if (tool === 'highlights') {
+    html = '<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px">';
+    html += '<div style="font-size:16px;font-weight:700;color:#075985;margin-bottom:12px">Highlights 研究亮点生成</div>';
+    html += '<div style="font-size:12px;color:#0369a1;margin-bottom:12px;background:#fff;padding:10px;border-radius:6px;border-left:3px solid #0ea5e9">适用于Elsevier等期刊要求的Highlights（3-5条，每条不超过85字符，含最大85字符的空格）。用简短的句子说明研究的核心发现和意义。</div>';
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:4px">论文标题</label><input type="text" id="hlTitle" placeholder="输入论文标题" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none"></div>';
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:4px">摘要 / 研究内容</label><textarea id="hlAbstract" rows="4" placeholder="粘贴摘要或简述研究内容" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;resize:vertical"></textarea></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">';
+    html += '<div><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:4px">条数</label><select id="hlCount" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#075985;cursor:pointer"><option value="3">3条</option><option value="4">4条</option><option value="5">5条</option></select></div>';
+    html += '<div><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:4px">语言</label><select id="hlLang" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#075985;cursor:pointer"><option value="英文">英文</option><option value="中文">中文</option></select></div>';
+    html += '</div>';
+    html += '<button onclick="generateHighlights()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">生成 Highlights</button>';
+    html += '</div><div id="hlResult" style="margin-top:16px"></div>';
+  } else if (tool === 'response') {
+    html = '<div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:12px;padding:20px">';
+    html += '<div style="font-size:16px;font-weight:700;color:#991b1b;margin-bottom:12px">审稿意见回复助手</div>';
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#991b1b;font-weight:600;display:block;margin-bottom:4px">论文标题</label><input type="text" id="rpTitle" placeholder="输入论文标题" style="width:100%;padding:9px 12px;border:1px solid #fca5a5;border-radius:6px;font-size:12px;outline:none"></div>';
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#991b1b;font-weight:600;display:block;margin-bottom:4px">审稿意见（编辑+所有审稿人，逐条粘贴）</label><textarea id="rpComments" rows="8" placeholder="粘贴审稿意见，例如：&#10;&#10;审稿人1：&#10;1. 样本量较小，建议增加样本量或进行统计功效分析。&#10;2. 讨论部分没有与XX研究进行对比。&#10;&#10;审稿人2：&#10;1. 图2的标注不清晰..." style="width:100%;padding:9px 12px;border:1px solid #fca5a5;border-radius:6px;font-size:12px;outline:none;resize:vertical"></textarea></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">';
+    html += '<div><label style="font-size:12px;color:#991b1b;font-weight:600;display:block;margin-bottom:4px">修回类型</label><select id="rpType" style="width:100%;padding:9px 12px;border:1px solid #fca5a5;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#991b1b;cursor:pointer"><option value="小修">小修（Minor Revision）</option><option value="大修">大修（Major Revision）</option><option value="申诉">被拒后申诉</option></select></div>';
+    html += '<div><label style="font-size:12px;color:#991b1b;font-weight:600;display:block;margin-bottom:4px">回复语气</label><select id="rpTone" style="width:100%;padding:9px 12px;border:1px solid #fca5a5;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#991b1b;cursor:pointer"><option value="诚恳接受">诚恳接受</option><option value="有理有据">有理有据（可反驳）</option><option value="简洁专业">简洁专业</option></select></div>';
+    html += '</div>';
+    html += '<button onclick="generateResponseLetter()" style="background:#dc2626;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">生成逐条回复信</button>';
+    html += '</div><div id="rpResult" style="margin-top:16px"></div>';
+  }
+  container.innerHTML = html;
+}
+
+// 生成Cover Letter
+async function generateCoverLetter() {
+  var title = document.getElementById('clTitle').value.trim();
+  var journal = document.getElementById('clJournal').value;
+  var findings = document.getElementById('clFindings').value.trim();
+  var significance = document.getElementById('clSignificance').value.trim();
+  var author = document.getElementById('clAuthor').value.trim() || '[通讯作者姓名]';
+  var affil = document.getElementById('clAffil').value.trim() || '[所属单位]';
+  var tone = document.getElementById('clTone').value;
+  var resultDiv = document.getElementById('clResult');
+  if (!title) { alert('请输入论文标题'); return; }
+  if (!journal) { alert('请选择目标期刊'); return; }
+  resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#059669;font-size:14px">AI正在生成Cover Letter...</div>';
+  try {
+    var journalInfo = PHD_JOURNALS.find(function(j) { return j.name === journal; });
+    var journalScope = journalInfo ? journalInfo.scope : '该期刊';
+    var systemPrompt = `你是一位资深的学术论文投稿顾问，擅长撰写专业、有说服力的Cover Letter（投稿信）。请根据以下信息为用户撰写一封专业的Cover Letter。
+
+Cover Letter结构要求：
+1. 开头：日期、编辑称呼、投稿声明（论文标题、文章类型、声明未一稿多投、所有作者同意投稿）
+2. 研究背景与意义（1-2句，说明研究领域的重要性和未解决的问题）
+3. 核心发现（3点，用bullet points清晰列出，每点一句话）
+4. 为什么适合该期刊（结合期刊的收稿范围和定位，说明本文为什么适合投这本期刊，而不是其他期刊）
+5. 作者贡献声明（CRediT分类，简要说明各作者贡献）
+6. 利益冲突声明（声明无利益冲突，或说明具体利益冲突）
+7. 数据可用性声明（说明数据是否可获取）
+8. 推荐审稿人（可选，说明推荐2-3位审稿人或声明无特定推荐）
+9. 结尾：感谢编辑考虑，期待回复，通讯作者联系方式
+
+语气风格：` + tone + `
+要求：语言专业、简洁、有说服力，不超过500词，使用正式学术英语。
+
+目标期刊收稿范围：` + journalScope;
+    var userPrompt = '论文标题：' + title + '\n目标期刊：' + journal + '\n核心发现：\n' + findings + '\n研究意义：' + significance + '\n通讯作者：' + author + '\n单位：' + affil;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 1500, model);
+    resultDiv.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:15px;font-weight:700;color:#065f46">Cover Letter（' + tone + '）</div><button onclick="copyText(\'clResultText\')" style="font-size:12px;color:#fff;background:#059669;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">复制全文</button></div><div id="clResultText" class="md-content" style="padding:20px;background:#fff;border:1px solid #86efac;border-radius:10px;font-size:13px;line-height:1.9;color:#1e293b;white-space:pre-wrap;font-family:Georgia,serif">' + response + '</div>';
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">生成失败：' + error.message + '</div>';
+  }
+}
+
+// 复制文本工具函数
+function copyText(elementId) {
+  var el = document.getElementById(elementId);
+  if (!el) return;
+  var text = el.innerText || el.textContent;
+  var textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try { document.execCommand('copy'); alert('已复制到剪贴板'); } catch(e) { alert('复制失败，请手动复制'); }
+  document.body.removeChild(textarea);
+}
+
+// 生成投稿检查清单
+function generateChecklist() {
+  var journal = document.getElementById('ckJournal').value;
+  var type = document.getElementById('ckType').value;
+  var resultDiv = document.getElementById('ckResult');
+  if (!journal) { resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">请选择目标期刊生成检查清单</div>'; return; }
+  var journalInfo = PHD_JOURNALS.find(function(j) { return j.name === journal; });
+  var items = [
+    {cat: '稿件基本信息', items: ['论文标题符合期刊字数要求', '所有作者姓名、单位、邮箱准确', '通讯作者标注正确', '摘要字数符合期刊限制（通常200-300词）', '关键词数量符合要求（通常3-6个）', '正文字数/页数符合期刊限制']},
+    {cat: '格式规范', items: ['参考文献格式符合期刊要求（Vancouver/APA/Harvard等）', '参考文献数量在期刊建议范围内', '图表编号连续、引用正确', '图表分辨率符合要求（通常300dpi以上）', '图表大小符合排版要求', '表格使用三线表格式（如期刊要求）', '补充材料已准备并标注']},
+    {cat: '伦理与声明', items: ['伦理审批声明已添加（涉及人体/动物实验）', '知情同意声明已添加（涉及人体研究）', '利益冲突声明已添加', '作者贡献声明（CRediT分类）已添加', '数据可用性声明已添加', '基金项目资助信息已标注', '未一稿多投声明']},
+    {cat: '投稿系统材料', items: ['Cover Letter已准备', 'Highlights已准备（如期刊要求）', 'Graphical Abstract已准备（如期刊要求）', '推荐审稿人名单已准备（3-5位，含邮箱和单位）', '回避审稿人名单已准备（如有）', '作者贡献表已填写', '版权转让协议/开源协议已了解']},
+    {cat: '语言与质量', items: ['英文论文已进行语言润色（母语者或专业润色）', '全文拼写和语法检查完成', '专业术语使用一致', '缩写首次出现时已定义', '数字和单位格式规范', '参考文献已核实准确（作者、年份、期刊、卷期页）']}
+  ];
+  if (type === '综述' || type === 'Meta分析') {
+    items.push({cat: '综述/Meta分析专项', items: ['文献检索策略已详细描述（数据库、检索词、时间范围）', '纳入/排除标准明确', 'PRISMA流程图已准备（Meta分析）', '质量评估方法已说明', '异质性分析已完成（Meta分析）', '发表偏倚评估已完成（如适用）']});
+  }
+  if (type === '实验研究' || type === '原创研究') {
+    items.push({cat: '实验研究专项', items: ['样本量计算/统计功效分析已完成', '统计方法描述准确', '对照组设置合理', '随机化/盲法已说明（如适用）', '实验重复次数已标注', '原始数据可获取声明']});
+  }
+  var html = '<div style="margin-top:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:#1e40af">' + journal + ' 投稿检查清单</div><div style="font-size:12px;color:#6b7280"><span id="ckDone">0</span>/' + items.reduce(function(s, c) { return s + c.items.length; }, 0) + ' 已完成</div></div>';
+  var totalIdx = 0;
+  items.forEach(function(cat, ci) {
+    html += '<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:600;color:#1e40af;margin-bottom:8px;background:#dbeafe;padding:6px 12px;border-radius:6px">' + cat.cat + '</div>';
+    cat.items.forEach(function(item, ii) {
+      totalIdx++;
+      html += '<label style="display:flex;align-items:flex-start;gap:8px;padding:6px 12px;cursor:pointer;border-radius:4px;transition:background .15s" class="ck-item-label"><input type="checkbox" id="ckItem' + totalIdx + '" onchange="updateCkProgress()" style="margin-top:3px;accent-color:#2563eb"><span style="font-size:12px;color:#374151;line-height:1.6">' + item + '</span></label>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  resultDiv.innerHTML = html;
+}
+
+// 更新检查清单进度
+function updateCkProgress() {
+  var total = document.querySelectorAll('[id^="ckItem"]').length;
+  var done = document.querySelectorAll('[id^="ckItem"]:checked').length;
+  var el = document.getElementById('ckDone');
+  if (el) el.textContent = done;
+}
+
+// 标题摘要优化
+async function optimizeTitleAbstract() {
+  var title = document.getElementById('optTitle').value.trim();
+  var abstract = document.getElementById('optAbstract').value.trim();
+  var direction = document.getElementById('optDirection').value;
+  var words = document.getElementById('optWords').value;
+  var resultDiv = document.getElementById('optResult');
+  if (!title && !abstract) { alert('请输入标题或摘要'); return; }
+  resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#a21caf;font-size:14px">AI正在优化标题与摘要...</div>';
+  try {
+    var systemPrompt = `你是一位体育学/运动科学领域的资深学术编辑，擅长优化论文标题和摘要，使其更具吸引力和学术严谨性。
+
+请对以下论文标题和摘要进行优化，优化方向：` + direction + `
+目标字数：摘要` + words + `
+
+输出要求：
+1. 优化后的标题（提供3个版本：学术严谨版、突出创新版、简洁吸引版），每个版本附字数和关键词分析
+2. 优化后的摘要（提供2个版本：精简版和详细版），保持学术严谨性，逻辑清晰，结构完整（目的-方法-结果-结论）
+3. 推荐关键词（5-8个，标注哪些是MeSH术语）
+4. 优化说明：说明做了哪些改进，为什么这样改
+
+使用Markdown格式，语言专业。`;
+    var userPrompt = '当前标题：' + title + '\n\n当前摘要：\n' + abstract;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 2000, model);
+    resultDiv.innerHTML = '<div style="font-size:15px;font-weight:700;color:#86198f;margin-bottom:12px">标题与摘要优化结果</div><div class="md-content" style="padding:20px;background:#fff;border:1px solid #f0abfc;border-radius:10px;font-size:13px;line-height:1.9;color:#1e293b">' + renderMarkdown(response) + '</div>';
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">优化失败：' + error.message + '</div>';
+  }
+}
+
+// 审稿人推荐
+async function recommendReviewers() {
+  var topic = document.getElementById('rvTopic').value.trim();
+  var direction = document.getElementById('rvDirection').value;
+  var count = document.getElementById('rvCount').value;
+  var resultDiv = document.getElementById('rvResult');
+  if (!topic) { alert('请输入研究主题'); return; }
+  resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#d97706;font-size:14px">AI正在推荐审稿人...</div>';
+  try {
+    var systemPrompt = `你是一位体育学/运动科学领域的资深期刊编辑，擅长根据研究主题推荐合适的审稿人。请根据以下研究主题，推荐` + count + `位潜在审稿人。
+
+每位审稿人需包含：
+1. 姓名（英文）
+2. 所属单位和国家
+3. 研究方向（与主题的匹配点）
+4. 代表性成果（1-2篇高被引论文标题）
+5. 推荐理由（为什么适合审这篇稿子）
+6. 可能的邮箱（如有，格式为name@university.edu，标注为"推测邮箱"）
+
+注意：
+- 优先推荐活跃在该领域、近年有相关发表的研究者
+- 避免推荐与作者同单位或近期有合作的研究者
+- 推荐的审稿人应具有副高及以上职称或丰富的审稿经验
+- 研究方向：` + direction + `
+
+使用Markdown格式，每位审稿人用### 标题。`;
+    var userPrompt = '研究主题：' + topic + '\n研究方向：' + direction;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 2000, model);
+    resultDiv.innerHTML = '<div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:12px">审稿人推荐（' + count + '位）</div><div class="md-content" style="padding:20px;background:#fff;border:1px solid #fcd34d;border-radius:10px;font-size:13px;line-height:1.9;color:#1e293b">' + renderMarkdown(response) + '</div>';
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">推荐失败：' + error.message + '</div>';
+  }
+}
+
+// 生成Highlights
+async function generateHighlights() {
+  var title = document.getElementById('hlTitle').value.trim();
+  var abstract = document.getElementById('hlAbstract').value.trim();
+  var count = document.getElementById('hlCount').value;
+  var lang = document.getElementById('hlLang').value;
+  var resultDiv = document.getElementById('hlResult');
+  if (!title && !abstract) { alert('请输入标题或摘要'); return; }
+  resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#0284c7;font-size:14px">AI正在生成Highlights...</div>';
+  try {
+    var systemPrompt = `你是一位Elsevier期刊的资深编辑，擅长撰写符合期刊要求的Highlights（研究亮点）。
+
+请根据以下论文内容，生成` + count + `条Highlights。
+
+要求：
+1. 每条不超过85个字符（含空格），这是Elsevier的硬性要求
+2. 用简短的句子说明研究的核心发现和意义
+3. 不要使用标题式的短语，要用完整的句子
+4. 每条以动词开头，说明研究做了什么、发现了什么
+5. 语言：` + lang + `
+6. 生成后，在每条后面标注字符数，确保不超过85
+
+输出格式：
+- [亮点1内容]（XX字符）
+- [亮点2内容]（XX字符）
+...`;
+    var userPrompt = '论文标题：' + title + '\n\n摘要/研究内容：\n' + abstract;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 800, model);
+    resultDiv.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:15px;font-weight:700;color:#075985">Highlights（' + lang + '，' + count + '条）</div><button onclick="copyText(\'hlResultText\')" style="font-size:12px;color:#fff;background:#0284c7;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">复制</button></div><div id="hlResultText" class="md-content" style="padding:20px;background:#fff;border:1px solid #7dd3fc;border-radius:10px;font-size:13px;line-height:2;color:#1e293b">' + renderMarkdown(response) + '</div>';
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">生成失败：' + error.message + '</div>';
+  }
+}
+
+// 生成审稿意见回复信
+async function generateResponseLetter() {
+  var title = document.getElementById('rpTitle').value.trim();
+  var comments = document.getElementById('rpComments').value.trim();
+  var type = document.getElementById('rpType').value;
+  var tone = document.getElementById('rpTone').value;
+  var resultDiv = document.getElementById('rpResult');
+  if (!comments) { alert('请输入审稿意见'); return; }
+  resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#dc2626;font-size:14px">AI正在分析审稿意见并生成回复信...</div>';
+  try {
+    var systemPrompt = `你是一位体育学/运动科学领域的资深学术编辑，擅长处理审稿意见和撰写专业的回复信（Response Letter）。请根据以下审稿意见，生成一份逐条回复信。
+
+修回类型：` + type + `
+回复语气：` + tone + `
+
+回复信结构要求：
+1. 开头：感谢编辑和审稿人的宝贵意见，说明已根据意见进行修改
+2. 逐条回复（按审稿人分类，每条意见编号）：
+   - 引用审稿人意见原文
+   - 我们的回应（感谢意见 + 说明做了什么修改 / 补充说明 / 合理反驳）
+   - 具体修改内容（引用修改后原文，标注修改位置）
+3. 结尾：再次感谢，说明所有修改已用高亮标注在修改稿中
+
+注意事项：
+- 对于合理的修改建议，要诚恳接受并说明具体修改
+- 对于有争议的意见，可以有理有据地反驳，但语气要专业、尊重
+- 对于需要补充实验或数据的意见，要说明补充了什么，或说明为什么无法补充及替代方案
+- 每条回复要具体、可操作，不要空泛地说"已修改"
+- 使用Markdown格式，审稿人意见用引用格式，回复用正常格式
+
+论文标题：` + title;
+    var userPrompt = '审稿意见：\n\n' + comments;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 3000, model);
+    resultDiv.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:15px;font-weight:700;color:#991b1b">审稿意见逐条回复信（' + type + '）</div><button onclick="copyText(\'rpResultText\')" style="font-size:12px;color:#fff;background:#dc2626;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">复制全文</button></div><div id="rpResultText" class="md-content" style="padding:20px;background:#fff;border:1px solid #fca5a5;border-radius:10px;font-size:13px;line-height:1.9;color:#1e293b">' + renderMarkdown(response) + '</div>';
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">生成失败：' + error.message + '</div>';
+  }
+}
+
+
 // 切换投稿模式子Tab
 function switchPublishTab(tab) {
   publishCurrentSubTab = tab;
