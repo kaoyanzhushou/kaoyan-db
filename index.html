@@ -30862,7 +30862,7 @@ function aiInterpretPlagReport() {
       '要求：1) 基于给定数据客观分析，严禁编造报告中不存在的数字；2) 结合硕博学位论文常见重复率要求（博士一般<10-15%，硕士<15-20%，以学校规定为准）；' +
       '3) 对【每条重复片段】单独分析：判断其所属类别（引言套话/方法模板/文献综述/讨论表述/数据描述/概念定义/其他）与严重度（高/中/低），并给出针对该片段的改写成句建议；' +
       '4) 对严重度最高的3处片段，额外提供完整改写示范（原句改写为新句，保留专业术语）；' +
-      '5) 只输出严格JSON，不要任何其他文字或代码块标记。JSON格式：' +
+      '5) 只输出严格JSON，不要任何其他文字或代码块标记；segments数组必须对每一处重复片段都输出一条（no/ category/ severity/ advice齐全）。JSON格式：' +
       '{"overall":"整体评估，2-3句话","level":"达标|接近临界|超标","metrics":[{"name":"指标名","value":"数值","judge":"判定","advice":"建议"},{"name":"指标名2","value":"数值","judge":"判定","advice":"建议"}],"segments":[{"no":1,"category":"类别","severity":"高|中|低","advice":"该片段改写成句建议","rewrite":"（仅最严重3处填写）原句改写为新句"},{"no":2,"category":"类别","severity":"高|中|低","advice":"建议"}],"weakPoints":["薄弱点1","薄弱点2","薄弱点3"],"riskAlerts":["风险1","风险2"],"rewriteStrategy":"总体改写策略，100字内","priority":["优先项1","优先项2","优先项3"],"prediction":"达标预测与建议，60字内","checklist":["逐条复核清单1","逐条复核清单2","逐条复核清单3"]}';
     var segText = '';
     if (data.dupSegments && data.dupSegments.length) {
@@ -30982,6 +30982,50 @@ function finishInterpret(results, models, threshold) {
       if (parsedList[li].model.value === 'deepseek-v4-pro') { lead = parsedList[li]; break; }
     }
     if (!lead) lead = parsedList[0];
+
+    // ---- 本地确定性兜底：AI未返回新结构时，自动生成细粒度数据 ----
+    var rd = window.__plagReportData || {};
+    if (lead && (!lead.data.metrics || !lead.data.metrics.length)) {
+      var localMetrics = [];
+      if (rd.rate !== null) {
+        var thr = threshold !== null ? threshold : 15;
+        localMetrics.push({
+          name: '总重复率', value: rd.rate.toFixed(1) + '%',
+          judge: rd.rate > thr ? '超标' + (rd.rate - thr).toFixed(1) + '个百分点' : '达标',
+          advice: rd.rate > thr ? '需对重复片段集中改写，优先处理高严重度片段' : '保持当前降重成果，注意新增内容避免引入重复'
+        });
+      }
+      ['去除本人','去除引用','单篇最大'].forEach(function(k) {
+        if (rd.auxRates && rd.auxRates[k] !== undefined) {
+          var v = rd.auxRates[k];
+          localMetrics.push({
+            name: k + '复制比', value: v.toFixed(1) + '%',
+            judge: v > 10 ? '偏高' : '正常',
+            advice: v > 10 ? (k === '单篇最大' ? '存在单篇集中重复风险，优先排查对应文献来源' : '规范引用格式，减少非必要直接引用') : '该指标在安全范围内'
+          });
+        }
+      });
+      lead.data.metrics = localMetrics;
+    }
+
+    if (lead && (!lead.data.segments || !lead.data.segments.length) && rd.dupSegments && rd.dupSegments.length) {
+      var localSegs = rd.dupSegments.map(function(s, i) {
+        var cat = '其他';
+        if (/引言|背景|目的/.test(s) || /近年来|随着|受到广泛关注/.test(s)) cat = '引言套话';
+        else if (/实验|方法|样本|随机|测量|仪器|数据采集/.test(s)) cat = '方法模板';
+        else if (/研究|文献|学者|报道/.test(s) && s.length > 20) cat = '文献综述';
+        else if (/结果|表明|显示|显著|差异/.test(s)) cat = '结果描述';
+        else if (/是指|定义为|包括|分为|指/.test(s)) cat = '概念定义';
+        var sev = s.length > 40 ? '高' : (s.length > 18 ? '中' : '低');
+        var adv = '';
+        if (sev === '高') adv = '该片段较长且重复度高，建议重组句式结构（拆分长句、调整语序），融入个人研究数据或具体场景，保留专业术语';
+        else if (sev === '中') adv = '建议替换高频套话为具体表述，调整主被动语态或增补限定语（如时间、对象、条件）降低相似度';
+        else adv = '轻微重复，微调用词或句式即可，注意避免与上下文其他片段形成连续重复';
+        return { no: i + 1, category: cat, severity: sev, advice: adv, rewrite: '' };
+      });
+      lead.data.segments = localSegs;
+    }
+
     if (lead && lead.data.overall) {
       html += '<div style="padding:12px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;margin-bottom:12px">' +
         '<div style="font-size:11px;font-weight:700;color:#6d28d9;margin-bottom:4px">📌 综合评估（主审：' + lead.model.label + '）</div>' +
