@@ -7685,6 +7685,7 @@ console.log('✅ 学习工具入口已加载');
                 <button onclick="exportRouteMD()" style="background:#059669;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">导出Markdown</button>
                 <button onclick="exportRouteSVG()" style="background:#7c3aed;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">导出SVG</button>
                 <button onclick="copyRouteSource()" style="background:#f3f4f6;color:#374151;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">复制源码</button>
+                <button onclick="insertRouteToPaper()" style="background:#0891b2;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📥 插入论文</button>
               </div>
             </div>
             <div id="routeGraph" style="padding:20px;overflow-x:auto;background:#fafbfc;border:1px solid #e5e7eb;border-radius:8px;min-height:220px"><div style="text-align:center;padding:60px 20px;color:#9ca3af">输入研究信息后点击「AI 生成技术路线图」</div></div>
@@ -7704,6 +7705,17 @@ console.log('✅ 学习工具入口已加载');
               <button onclick="applyRouteSourceEdit()" style="background:#059669;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">重新渲染</button>
             </div>
             <textarea id="routeSource" placeholder="生成后将自动填入Mermaid源码，也可手动编写..." style="width:100%;height:160px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;resize:vertical;box-sizing:border-box;font-family:Consolas,monospace;line-height:1.6"></textarea>
+          </div>
+
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:#1f2937">🕘 生成历史</div>
+                <div style="font-size:11px;color:#059669">最近10次生成记录，点击恢复查看</div>
+              </div>
+              <button onclick="clearRouteHistory()" style="background:#f3f4f6;color:#374151;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px">清空</button>
+            </div>
+            <div id="routeHistoryList" style="font-size:12px;color:#6b7280">加载中...</div>
           </div>
         </div>
       </div>
@@ -27935,6 +27947,7 @@ function renderPaperRoute() {
       ms.appendChild(opt);
     });
   }
+  renderRouteHistory();
 }
 function routeEscape(text) {
   return String(text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -28030,6 +28043,96 @@ function renderRoutePlanCards(phases) {
   html += '</div>';
   box.innerHTML = html;
 }
+// 一键补入缺失环节
+function addMissingStep(step) {
+  const src = document.getElementById('routeSource');
+  const d = window._routeData;
+  if (!src || !src.value.trim()) { alert('请先生成技术路线图'); return; }
+  let newSrc = src.value.trim();
+  const id = 'M' + Date.now().toString().slice(-6);
+  const lines = newSrc.split('\n');
+  let lastId = null;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const m = lines[i].match(/^\s*(N\d+)(?:\[|\{)/);
+    if (m) { lastId = m[1]; break; }
+  }
+  if (!lastId) lastId = 'N0';
+  newSrc += '\n  subgraph ' + id + 's["补充环节"]\n    ' + id + '["' + routeEscape(step) + '"]\n    click ' + id + ' editRouteNode "' + id + '"\n    ' + lastId + ' --> ' + id + '\n  end';
+  src.value = newSrc;
+  renderMermaidGraph(newSrc, 'routeGraph');
+  if (d && d.phases) {
+    const lastPh = d.phases[d.phases.length - 1];
+    if (lastPh && lastPh.steps) lastPh.steps.push(step);
+    renderRouteValidation(validateTechRoute(d.phases, d.type));
+    renderRoutePlanCards(d.phases);
+  }
+}
+// 插入论文项目（与"我的论文"联动）
+function insertRouteToPaper() {
+  const d = window._routeData;
+  const src = document.getElementById('routeSource');
+  if (!d || !src || !src.value.trim()) { alert('请先生成技术路线图'); return; }
+  const projects = getPaperProjects();
+  if (!projects.length) { alert('暂无论文项目，请先在「我的论文」创建'); return; }
+  const project = projects[0];
+  if (!project.chapters) project.chapters = [];
+  let ch = null;
+  project.chapters.forEach(function(x) {
+    if (x.title && (x.title.indexOf('研究设计') >= 0 || x.title.indexOf('研究方法') >= 0 || x.title.indexOf('技术路线') >= 0)) ch = x;
+  });
+  const scheme = (d.phases || []).map(function(ph, i) {
+    return (i + 1) + '.' + (ph.name || '') + '（方法：' + (ph.method || '—') + '；产出：' + (ph.deliverable || '—') + '；时长：' + (ph.duration || '—') + '）：' + (ph.steps || []).join('→');
+  }).join('\n');
+  const insertText = '\n\n【技术路线图】\n```mermaid\n' + src.value.trim() + '\n```\n\n【研究方案总览】\n' + scheme;
+  if (ch) {
+    ch.content = (ch.content || '') + insertText;
+  } else {
+    project.chapters.push({ title: '技术路线图', content: '【' + (d.title || '研究课题') + '】' + insertText });
+  }
+  savePaperProjects(projects);
+  window.paperProjects = projects;
+  alert('✅ 已插入论文《' + project.title + '》的「' + (ch ? ch.title : '技术路线图') + '」章节，可在「我的论文」中查看');
+}
+// 生成历史记录（最多10条）
+function saveRouteHistory(d, src) {
+  try {
+    const h = JSON.parse(localStorage.getItem('kaoyan_route_history') || '[]');
+    h.unshift({ title: d.title, type: d.type, time: new Date().toLocaleString('zh-CN', { hour12: false }), phases: d.phases, src: src });
+    if (h.length > 10) h.length = 10;
+    localStorage.setItem('kaoyan_route_history', JSON.stringify(h));
+  } catch (e) {}
+}
+function renderRouteHistory() {
+  const box = document.getElementById('routeHistoryList');
+  if (!box) return;
+  let h = [];
+  try { h = JSON.parse(localStorage.getItem('kaoyan_route_history') || '[]'); } catch (e) {}
+  if (!h.length) { box.innerHTML = '<div style="font-size:12px;color:#9ca3af">暂无生成记录</div>'; return; }
+  box.innerHTML = h.map(function(item, i) {
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;cursor:pointer" onclick="restoreRouteHistory(' + i + ')">' +
+      '<div style="min-width:0">' +
+      '<div style="font-size:12px;font-weight:600;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px">' + routeEscape(item.title) + '</div>' +
+      '<div style="font-size:11px;color:#6b7280">' + routeEscape(item.type) + ' · ' + routeEscape(item.time) + '</div></div>' +
+      '<div style="font-size:11px;color:#059669;flex-shrink:0">查看</div></div>';
+  }).join('');
+}
+function restoreRouteHistory(i) {
+  let h = [];
+  try { h = JSON.parse(localStorage.getItem('kaoyan_route_history') || '[]'); } catch (e) {}
+  const item = h[i];
+  if (!item) return;
+  window._routeData = { phases: item.phases, type: item.type, title: item.title, raw: '' };
+  renderMermaidGraph(item.src, 'routeGraph');
+  const src = document.getElementById('routeSource');
+  if (src) src.value = item.src;
+  renderRoutePlanCards(item.phases);
+  renderRouteValidation(validateTechRoute(item.phases, item.type));
+  window.scrollTo(0, 0);
+}
+function clearRouteHistory() {
+  localStorage.removeItem('kaoyan_route_history');
+  renderRouteHistory();
+}
 function validateTechRoute(phases, type) {
   const allSteps = [];
   phases.forEach(function(ph) {
@@ -28070,7 +28173,11 @@ function renderRouteValidation(v) {
     html += '<div style="padding:10px 12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#065f46;font-weight:600">✅ 校验通过：必经环节完整、逻辑顺序正确</div>';
   } else {
     if (v.missing.length) {
-      html += '<div style="padding:10px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;margin-bottom:8px"><span style="font-weight:600;color:#dc2626">⚠️ 建议补充环节：</span><span style="color:#b91c1c">' + v.missing.join('、') + '</span><div style="font-size:11px;color:#991b1b;margin-top:4px">可点击下方「重新生成」或编辑源码手动补充</div></div>';
+      var missHtml = '';
+      v.missing.forEach(function(ms) {
+        missHtml += '<span style="display:inline-flex;align-items:center;gap:6px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:3px 8px;margin:0 4px 4px 0;font-size:12px;color:#b91c1c">' + routeEscape(ms) + '<button onclick="addMissingStep(\'' + ms.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + '\')" style="background:#dc2626;color:#fff;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:11px;font-weight:600">＋补入</button></span>';
+      });
+      html += '<div style="padding:10px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;margin-bottom:8px"><div style="font-weight:600;color:#dc2626;margin-bottom:6px">⚠️ 建议补充环节（点击一键补入）：</div><div>' + missHtml + '</div></div>';
     }
     if (v.orderWarns.length) {
       html += '<div style="padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin-bottom:8px;color:#92400e"><span style="font-weight:600">⚠️ 顺序提醒：</span>' + v.orderWarns.join('；') + '</div>';
@@ -28137,6 +28244,8 @@ function generatePaperTechRoute() {
     window.prevRouteNode = null;
     const code = buildMermaidFromPhases(parsed.phases, topic);
     renderRoutePlanCards(parsed.phases);
+    saveRouteHistory({ title: topic, type: type, phases: parsed.phases }, code);
+    renderRouteHistory();
     renderMermaidGraph(code, 'routeGraph');
     const src = document.getElementById('routeSource');
     if (src) src.value = code;
