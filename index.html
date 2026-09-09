@@ -30875,8 +30875,20 @@ function aiInterpretPlagReport() {
   }
 
   var p = buildPrompt();
+  function callReportModel(m, retries) {
+    return callDeepSeekAPI(p.sys, p.user, 2600, m.value).catch(function(e) {
+      if (retries > 0) {
+        return new Promise(function(resolve, reject) {
+          setTimeout(function() {
+            callReportModel(m, retries - 1).then(resolve).catch(reject);
+          }, 3000);
+        });
+      }
+      throw e;
+    });
+  }
   models.forEach(function(m) {
-    callDeepSeekAPI(p.sys, p.user, 2600, m.value).then(function(resp) {
+    callReportModel(m, 1).then(function(resp) {
       results.push({ model: m, raw: resp, ok: true });
       done++;
       updateProgress();
