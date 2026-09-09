@@ -38003,7 +38003,7 @@ function renderPhdPublish() {
   // 投稿管理Tab
   html += '<div id="pubContent-manage" style="display:none">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div>';
-  html += '<div id="pubManageStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px"></div>';
+  html += '<div id="pubManageStats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px"></div>';
   html += '<div id="pubManageList"></div>';
   html += '<div id="pubManageDetail" style="margin-top:20px"></div>';
   html += '</div>';
@@ -38652,13 +38652,25 @@ function renderPubManage() {
     statsEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:700;color:#1e293b">' + total + '</div><div style="font-size:12px;color:#6b7280;margin-top:4px">论文总数</div></div>'
       + '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:700;color:#2563eb">' + active + '</div><div style="font-size:12px;color:#6b7280;margin-top:4px">进行中</div></div>'
       + '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:700;color:#f59e0b">' + revision + '</div><div style="font-size:12px;color:#6b7280;margin-top:4px">待修回</div></div>'
-      + '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:700;color:#059669">' + accepted + '</div><div style="font-size:12px;color:#6b7280;margin-top:4px">已录用</div></div>';
+      + '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:700;color:#059669">' + accepted + '</div><div style="font-size:12px;color:#6b7280;margin-top:4px">已录用</div></div>'
+  + '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center"><div style="font-size:24px;font-weight:700;color:#dc2626">' + rejected + '</div><div style="font-size:12px;color:#6b7280;margin-top:4px">已拒稿</div></div>';
   }
 
   // 论文列表
   if (!listEl) return;
   if (papers.length === 0) {
-    listEl.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#9ca3af"><div style="font-size:48px;margin-bottom:12px">📄</div><div style="font-size:14px;margin-bottom:8px">还没有添加论文</div><div style="font-size:12px">点击右上角"添加论文"开始跟踪你的投稿进度</div></div>';
+    listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#9ca3af"><div style="font-size:48px;margin-bottom:12px">📄</div><div style="font-size:14px;margin-bottom:16px">还没有添加论文</div>'
+  + '<div style="max-width:520px;margin:0 auto;text-align:left;background:#f9fafb;border-radius:10px;padding:20px;border:1px solid #e5e7eb">'
+  + '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px">使用流程：</div>'
+  + '<div style="font-size:12px;color:#6b7280;line-height:2.2">'
+  + '<div>1. 点击右上角<b style="color:#7c3aed">"添加论文"</b>，填写论文标题、作者、类型</div>'
+  + '<div>2. 点击论文卡片进入详情，或点击卡片上的<b style="color:#7c3aed">"+投稿"</b>快速添加投稿记录</div>'
+  + '<div>3. 在论文详情中点击<b style="color:#7c3aed">"添加投稿记录"</b>，选择目标期刊（45本期刊库）和投稿日期</div>'
+  + '<div>4. 收到审稿意见后，点击<b style="color:#7c3aed">"审稿意见管理"</b>，按审稿人逐条录入，跟踪每条意见的处理状态（待处理/修改中/已完成/已反驳）</div>'
+  + '<div>5. 状态变化时点击<b style="color:#7c3aed">"更新状态"</b>（9种状态），自动记录到投稿时间线</div>'
+  + '<div>6. 小修/大修状态自动显示<b style="color:#dc2626">修回倒计时</b>（进度条+颜色提醒）</div>'
+  + '<div>7. 点击<b style="color:#7c3aed">"投稿时间线"</b>查看完整投稿历程</div>'
+  + '</div></div></div>';
     return;
   }
   var html = '';
@@ -38687,6 +38699,7 @@ function renderPubManage() {
       latest.reviewers.forEach(function(r) { if (r.comments) { totalCmt += r.comments.length; r.comments.forEach(function(c) { if (c.status === 'done') doneCmt++; }); } });
       html += '<span style="font-size:11px;color:#6b7280">审稿意见：' + doneCmt + '/' + totalCmt + ' 已处理</span>';
     }
+    html += '<button onclick="event.stopPropagation();showPaperDetail(\'' + p.id + '\');setTimeout(function(){showAddSubmissionForm(\'' + p.id + '\')},100)" style="font-size:11px;color:#7c3aed;background:#ede9fe;border:none;padding:3px 10px;border-radius:4px;cursor:pointer">+投稿</button>';
     html += '<button onclick="event.stopPropagation();deletePaper(\'' + p.id + '\')" style="margin-left:auto;font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer">删除</button>';
     html += '</div></div>';
   });
