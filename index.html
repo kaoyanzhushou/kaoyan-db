@@ -5034,6 +5034,9 @@ console.log('✅ 学习工具入口已加载');
   <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('literature')"><span class="icon">📚</span><span>文献管理</span></div>
   <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('design')"><span class="icon">🧪</span><span>研究设计</span></div>
   <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('assist')"><span class="icon">💡</span><span>研究辅助</span></div>
+  <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('polish')"><span class="icon">✨</span><span>论文润色</span></div>
+  <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('publish')"><span class="icon">📤</span><span>投稿中心</span></div>
+  <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('sports')"><span class="icon">🏃</span><span>体育学特色</span></div>
 
   <div class="nav-group">🛠️ 学习工具</div>
   <div class="nav-item" data-tab="plan"><span class="icon">📅</span><span>备考规划</span></div>
@@ -6887,6 +6890,9 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('format')" id="paperTab-format" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">格式检查</button>
       <button onclick="switchPaperSubTab('literature')" id="paperTab-literature" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">文献管理</button>
       <button onclick="switchPaperSubTab('design')" id="paperTab-design" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">研究设计</button>
+      <button onclick="switchPaperSubTab('polish')" id="paperTab-polish" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">论文润色</button>
+      <button onclick="switchPaperSubTab('publish')" id="paperTab-publish" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿中心</button>
+      <button onclick="switchPaperSubTab('sports')" id="paperTab-sports" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">体育学特色</button>
       <button onclick="switchPaperSubTab('assist')" id="paperTab-assist" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">研究辅助</button>
     </div>
 
@@ -7081,6 +7087,181 @@ console.log('✅ 学习工具入口已加载');
         </div>
         <div id="chartResult"></div>
       </div>
+    </div>
+
+    <!-- 论文润色页面（优化版） -->
+    <div id="paperContent-polish" style="display:none">
+      <div style="background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:1px solid #e9d5ff;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:18px;font-weight:700;color:#7c3aed;margin-bottom:4px">论文润色（专业版）</div>
+            <div style="font-size:13px;color:#8b5cf6">多模式润色 · 分章节精准处理 · 润色前后对比 · 多版本管理</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="polishModel" style="padding:8px 12px;border:1px solid #d8b4fe;border-radius:6px;font-size:12px;background:#fff;color:#7c3aed;outline:none">
+              <option value="">默认模型</option>
+              <option value="deepseek-v4-pro">DeepSeek V4 Pro（深度润色推荐）</option>
+              <option value="deepseek-v4-flash">DeepSeek V4 Flash（快速润色）</option>
+              <option value="deepseek-chat">DeepSeek V3</option>
+              <option value="glm-5.3">GLM-5.3</option>
+              <option value="kimi-k3">Kimi K3（英文润色推荐）</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+        <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">润色模式</label>
+          <select id="polishModeType" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff">
+            <option value="light">轻度润色（仅修正明显错误）</option>
+            <option value="medium" selected>中度润色（优化表达+逻辑+术语）</option>
+            <option value="deep">深度润色（全面重构+学术化提升）</option>
+            <option value="journal">期刊适配（根据目标期刊风格）</option>
+            <option value="native">母语化（中式英语→地道学术英语）</option>
+          </select>
+        </div>
+        <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">润色章节</label>
+          <select id="polishChapter" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff">
+            <option value="full">全文润色</option>
+            <option value="abstract">摘要</option>
+            <option value="introduction">引言</option>
+            <option value="literature">文献综述</option>
+            <option value="methods">研究方法</option>
+            <option value="results">研究结果</option>
+            <option value="discussion">讨论</option>
+            <option value="conclusion">结论</option>
+          </select>
+        </div>
+        <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">专业领域</label>
+          <select id="polishField" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff">
+            <option value="general">通用学术</option>
+            <option value="physiology">运动生理学</option>
+            <option value="anatomy">运动解剖学</option>
+            <option value="biomechanics">运动生物力学</option>
+            <option value="training">体育教育训练学</option>
+            <option value="rehab">运动康复学</option>
+            <option value="psychology">体育心理学</option>
+            <option value="humanities">体育人文社会学</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:700;color:#1f2937">论文内容</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="loadPaperForPolish()" style="background:#f3f4f6;color:#374151;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px">从我的论文加载</button>
+            <span id="polishCharCount" style="font-size:11px;color:#9ca3af;align-self:center">0 字符</span>
+          </div>
+        </div>
+        <textarea id="polishContent" rows="12" placeholder="粘贴需要润色的论文内容..." oninput="document.getElementById('polishCharCount').textContent=this.value.length+' 字符'" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;line-height:1.8;outline:none;resize:vertical;font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif"></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <button onclick="startPolish()" style="flex:1;background:#7c3aed;color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:700">开始AI润色</button>
+        <button onclick="clearPolish()" style="background:#f3f4f6;color:#374151;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-size:14px">清空</button>
+      </div>
+
+      <div id="polishResult"></div>
+      <div id="polishHistory" style="margin-top:16px"></div>
+    </div>
+
+    <!-- 投稿中心页面 -->
+    <div id="paperContent-publish" style="display:none">
+      <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:700;color:#1d4ed8;margin-bottom:4px">投稿中心</div>
+        <div style="font-size:13px;color:#3b82f6">从选题到发表，全流程投稿辅助。点击下方功能卡片进入对应模块。</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
+        <button onclick="goToPublishTab('recommend')" style="background:#fff;border:2px solid #e5e7eb;border-radius:12px;padding:20px;cursor:pointer;text-align:center;transition:all .2s" onmouseover="this.style.borderColor='#3b82f6';this.style.boxShadow='0 4px 12px rgba(59,130,246,0.15)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div style="font-size:32px;margin-bottom:8px">🎯</div>
+          <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:4px">AI智能选刊</div>
+          <div style="font-size:11px;color:#6b7280">根据论文内容推荐合适期刊</div>
+        </button>
+        <button onclick="goToPublishTab('library')" style="background:#fff;border:2px solid #e5e7eb;border-radius:12px;padding:20px;cursor:pointer;text-align:center;transition:all .2s" onmouseover="this.style.borderColor='#3b82f6';this.style.boxShadow='0 4px 12px rgba(59,130,246,0.15)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div style="font-size:32px;margin-bottom:8px">📚</div>
+          <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:4px">期刊信息库</div>
+          <div style="font-size:11px;color:#6b7280">50+体育学期刊详细信息</div>
+        </button>
+        <button onclick="goToPublishTab('compare')" style="background:#fff;border:2px solid #e5e7eb;border-radius:12px;padding:20px;cursor:pointer;text-align:center;transition:all .2s" onmouseover="this.style.borderColor='#3b82f6';this.style.boxShadow='0 4px 12px rgba(59,130,246,0.15)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div style="font-size:32px;margin-bottom:8px">⚖️</div>
+          <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:4px">选刊对比</div>
+          <div style="font-size:11px;color:#6b7280">多期刊横向对比分析</div>
+        </button>
+        <button onclick="goToPublishTab('tools')" style="background:#fff;border:2px solid #e5e7eb;border-radius:12px;padding:20px;cursor:pointer;text-align:center;transition:all .2s" onmouseover="this.style.borderColor='#3b82f6';this.style.boxShadow='0 4px 12px rgba(59,130,246,0.15)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div style="font-size:32px;margin-bottom:8px">🛠️</div>
+          <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:4px">投稿工具</div>
+          <div style="font-size:11px;color:#6b7280">Cover Letter/Highlights/审稿回复</div>
+        </button>
+        <button onclick="goToPublishTab('manage')" style="background:#fff;border:2px solid #e5e7eb;border-radius:12px;padding:20px;cursor:pointer;text-align:center;transition:all .2s" onmouseover="this.style.borderColor='#3b82f6';this.style.boxShadow='0 4px 12px rgba(59,130,246,0.15)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div style="font-size:32px;margin-bottom:8px">📋</div>
+          <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:4px">投稿管理</div>
+          <div style="font-size:11px;color:#6b7280">投稿记录跟踪与状态管理</div>
+        </button>
+        <button onclick="switchPaperSubTab('polish')" style="background:#fff;border:2px solid #e9d5ff;border-radius:12px;padding:20px;cursor:pointer;text-align:center;transition:all .2s" onmouseover="this.style.borderColor='#8b5cf6';this.style.boxShadow='0 4px 12px rgba(139,92,246,0.15)'" onmouseout="this.style.borderColor='#e9d5ff';this.style.boxShadow='none'">
+          <div style="font-size:32px;margin-bottom:8px">✨</div>
+          <div style="font-size:14px;font-weight:700;color:#7c3aed;margin-bottom:4px">论文润色</div>
+          <div style="font-size:11px;color:#8b5cf6">专业版多模式AI润色（新）</div>
+        </button>
+      </div>
+
+      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:16px">
+        <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px">投稿流程建议</div>
+        <div style="font-size:12px;color:#78350f;line-height:1.8">
+          1. 完成论文写作和润色 → 2. 使用AI智能选刊确定目标期刊 → 3. 查看期刊信息库了解投稿要求 → 4. 使用投稿工具准备Cover Letter/Highlights等材料 → 5. 投稿管理跟踪状态 → 6. 收到审稿意见后使用审稿意见回复工具
+        </div>
+      </div>
+    </div>
+
+    <!-- 体育学特色页面 -->
+    <div id="paperContent-sports" style="display:none">
+      <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:700;color:#166534;margin-bottom:4px">体育学论文写作特色工具</div>
+        <div style="font-size:13px;color:#16a34a">针对体育学各二级学科的专业模板、术语库、方法指南</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:16px">
+        <!-- 论文模板库 -->
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:12px">📄 体育学论文模板库</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button onclick="showSportsTemplate('experiment')" style="text-align:left;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;font-size:13px;color:#166534;font-weight:500">实验研究论文模板（运动人体科学）</button>
+            <button onclick="showSportsTemplate('survey')" style="text-align:left;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;font-size:13px;color:#166534;font-weight:500">调查研究论文模板（体育人文社会学）</button>
+            <button onclick="showSportsTemplate('review')" style="text-align:left;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;font-size:13px;color:#166534;font-weight:500">综述论文模板（系统综述/Meta分析）</button>
+            <button onclick="showSportsTemplate('thesis')" style="text-align:left;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;cursor:pointer;font-size:13px;color:#166534;font-weight:500">学位论文模板（博士/硕士）</button>
+          </div>
+        </div>
+
+        <!-- 专业术语库 -->
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:12px">📖 体育学专业术语库</div>
+          <div style="margin-bottom:10px">
+            <select id="sportsTermCategory" onchange="renderSportsTerms()" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff">
+              <option value="physiology">运动生理学</option>
+              <option value="anatomy">运动解剖学</option>
+              <option value="biomechanics">运动生物力学</option>
+              <option value="training">体育教育训练学</option>
+              <option value="rehab">运动康复学</option>
+              <option value="psychology">体育心理学</option>
+            </select>
+          </div>
+          <div id="sportsTermsList" style="max-height:200px;overflow-y:auto;font-size:12px;line-height:1.8;color:#374151"></div>
+        </div>
+      </div>
+
+      <!-- 研究方法指南 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+        <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:12px">🔬 体育学研究方法指南</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          <button onclick="showSportsMethod('experiment')" style="padding:14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;cursor:pointer;text-align:center"><div style="font-size:24px;margin-bottom:4px">🧪</div><div style="font-size:12px;font-weight:600;color:#166534">实验法</div></button>
+          <button onclick="showSportsMethod('survey')" style="padding:14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;cursor:pointer;text-align:center"><div style="font-size:24px;margin-bottom:4px">📋</div><div style="font-size:12px;font-weight:600;color:#166534">调查法</div></button>
+          <button onclick="showSportsMethod('test')" style="padding:14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;cursor:pointer;text-align:center"><div style="font-size:24px;margin-bottom:4px">📊</div><div style="font-size:12px;font-weight:600;color:#166534">测试测量法</div></button>
+          <button onclick="showSportsMethod('case')" style="padding:14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;cursor:pointer;text-align:center"><div style="font-size:24px;margin-bottom:4px">🔍</div><div style="font-size:12px;font-weight:600;color:#166534">案例研究法</div></button>
+        </div>
+      </div>
+
+      <div id="sportsDetailModal" style="display:none;margin-top:16px"></div>
     </div>
   </div>
 </div>
@@ -26830,7 +27011,7 @@ function savePaperProjects(projects) {
 
 function switchPaperSubTab(subTab) {
   paperCurrentSubTab = subTab;
-  ['projects','editor','format','literature','design','assist'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports'].forEach(function(t) {
     var btn = document.getElementById('paperTab-' + t);
     var content = document.getElementById('paperContent-' + t);
     if (btn) { btn.style.background = (t === subTab) ? '#16a34a' : '#fff'; btn.style.color = (t === subTab) ? '#fff' : '#16a34a'; }
@@ -27549,6 +27730,284 @@ function copyChartCode() {
   document.body.removeChild(textarea);
   alert('已复制到剪贴板');
 }
+
+
+// ========== 论文工作台 - 论文润色（专业版） ==========
+var polishHistory = [];
+
+async function startPolish() {
+  var content = (document.getElementById('polishContent') || {}).value || '';
+  if (!content.trim()) { alert('请输入需要润色的内容'); return; }
+  
+  var modeType = (document.getElementById('polishModeType') || {}).value || 'medium';
+  var chapter = (document.getElementById('polishChapter') || {}).value || 'full';
+  var field = (document.getElementById('polishField') || {}).value || 'general';
+  var model = (document.getElementById('polishModel') || {}).value || '';
+  
+  var modeLabels = {light:'轻度润色', medium:'中度润色', deep:'深度润色', journal:'期刊适配', native:'母语化润色'};
+  var chapterLabels = {full:'全文', abstract:'摘要', introduction:'引言', literature:'文献综述', methods:'研究方法', results:'研究结果', discussion:'讨论', conclusion:'结论'};
+  var fieldLabels = {general:'通用学术', physiology:'运动生理学', anatomy:'运动解剖学', biomechanics:'运动生物力学', training:'体育教育训练学', rehab:'运动康复学', psychology:'体育心理学', humanities:'体育人文社会学'};
+  
+  var resultEl = document.getElementById('polishResult');
+  resultEl.innerHTML = '<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:24px;text-align:center;color:#7c3aed;font-size:14px"><div style="font-size:28px;margin-bottom:8px">✨</div>AI正在进行' + (modeLabels[modeType] || '') + '，请稍候...</div>';
+  
+  try {
+    var systemPrompt = '你是一位资深的体育学学术论文润色专家，拥有10年以上体育学论文润色和英文论文母语化修改经验。你熟悉运动生理学、运动解剖学、运动生物力学、体育教育训练学、运动康复学、体育心理学、体育人文社会学等各方向的学术写作规范和专业术语。';
+    var userPrompt = '请对以下论文内容进行' + (modeLabels[modeType] || '') + '：\n\n润色章节：' + (chapterLabels[chapter] || '') + '\n专业领域：' + (fieldLabels[field] || '') + '\n\n原文：\n' + content + '\n\n润色要求：\n';
+    
+    if (modeType === 'light') {
+      userPrompt += '1. 仅修正明显的语法错误、拼写错误、标点错误\n2. 不改变原文的表达方式和句子结构\n3. 保持原意不变\n4. 输出润色后的完整内容';
+    } else if (modeType === 'medium') {
+      userPrompt += '1. 修正语法、拼写、标点错误\n2. 优化学术表达，提升语言流畅度\n3. 统一专业术语，确保术语使用准确\n4. 优化段落间逻辑和过渡\n5. 保持原意不变，不改变核心观点\n6. 输出润色后的完整内容';
+    } else if (modeType === 'deep') {
+      userPrompt += '1. 全面重构句子结构，提升学术性和专业性\n2. 深入优化逻辑结构和论证链条\n3. 统一并规范专业术语使用\n4. 提升语言表达的多样性和精准度\n5. 增强学术语气和正式度\n6. 保持核心观点和研究内容不变\n7. 输出润色后的完整内容';
+    } else if (modeType === 'journal') {
+      userPrompt += '1. 根据目标期刊的学术风格调整表达方式\n2. 优化摘要结构（目的/方法/结果/结论）\n3. 规范结果部分的统计表述\n4. 提升讨论部分的深度和学术性\n5. 统一专业术语\n6. 输出润色后的完整内容';
+    } else {
+      userPrompt += '1. 将中式英语表达改为地道的学术英语\n2. 修正冠词、介词、时态等常见中式英语错误\n3. 使用英语学术论文常用句型和表达\n4. 提升语言的自然度和流畅度\n5. 保持原意不变\n6. 输出润色后的完整内容';
+    }
+    
+    userPrompt += '\n\n使用中文说明（如有），润色内容使用原文语言。';
+    
+    var result;
+    if (model) {
+      result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000, model);
+    } else {
+      result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+    }
+    
+    // 保存到历史
+    var record = {
+      id: 'polish_' + Date.now(),
+      time: new Date().toLocaleString('zh-CN'),
+      mode: modeLabels[modeType] || '',
+      chapter: chapterLabels[chapter] || '',
+      original: content,
+      polished: result,
+      model: model || '默认'
+    };
+    polishHistory.unshift(record);
+    if (polishHistory.length > 10) polishHistory = polishHistory.slice(0, 10);
+    
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+        '<div style="font-size:16px;font-weight:700;color:#1f2937">润色结果（' + (modeLabels[modeType] || '') + ' · ' + (chapterLabels[chapter] || '') + '）</div>' +
+        '<div style="display:flex;gap:8px">' +
+          '<button onclick="copyPolishResult()" style="background:#7c3aed;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">复制润色结果</button>' +
+          '<button onclick="applyPolishToEditor()" style="background:#16a34a;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">应用到论文</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
+        '<div><div style="font-size:12px;font-weight:600;color:#6b7280;margin-bottom:6px">原文</div><div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;color:#374151;max-height:500px;overflow-y:auto;white-space:pre-wrap">' + content + '</div></div>' +
+        '<div><div style="font-size:12px;font-weight:600;color:#7c3aed;margin-bottom:6px">润色后</div><div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;color:#1f2937;max-height:500px;overflow-y:auto;white-space:pre-wrap">' + result + '</div></div>' +
+      '</div>' +
+    '</div>';
+    window._currentPolishResult = result;
+    
+    renderPolishHistory();
+  } catch(e) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;color:#dc2626;font-size:14px">润色失败：' + e.message + '</div>';
+  }
+}
+
+function copyPolishResult() {
+  if (!window._currentPolishResult) return;
+  var textarea = document.createElement('textarea');
+  textarea.value = window._currentPolishResult;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  alert('已复制润色结果到剪贴板');
+}
+
+function applyPolishToEditor() {
+  if (!window._currentPolishResult) return;
+  var editor = document.getElementById('polishContent');
+  if (editor) {
+    editor.value = window._currentPolishResult;
+    document.getElementById('polishCharCount').textContent = editor.value.length + ' 字符';
+    alert('已将润色结果应用到编辑器');
+  }
+}
+
+function clearPolish() {
+  var editor = document.getElementById('polishContent');
+  if (editor) editor.value = '';
+  document.getElementById('polishCharCount').textContent = '0 字符';
+  document.getElementById('polishResult').innerHTML = '';
+}
+
+function loadPaperForPolish() {
+  var projects = getPaperProjects();
+  if (projects.length === 0) { alert('还没有论文项目，请先在「我的论文」中创建'); return; }
+  var names = projects.map(function(p, i) { return (i+1) + '. ' + p.title; }).join('\n');
+  var idx = prompt('选择要加载的论文（输入序号）：\n\n' + names);
+  if (!idx) return;
+  var p = projects[parseInt(idx) - 1];
+  if (!p) { alert('无效的序号'); return; }
+  var content = Object.values(p.content || {}).filter(function(t) { return t && t.trim(); }).join('\n\n');
+  if (!content.trim()) { alert('该论文还没有内容'); return; }
+  document.getElementById('polishContent').value = content;
+  document.getElementById('polishCharCount').textContent = content.length + ' 字符';
+  alert('已加载论文《' + p.title + '》的内容');
+}
+
+function renderPolishHistory() {
+  var container = document.getElementById('polishHistory');
+  if (!container || polishHistory.length === 0) return;
+  container.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">' +
+    '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">润色历史（最近' + Math.min(polishHistory.length, 10) + '条）</div>' +
+    polishHistory.map(function(r) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px">' +
+        '<div><span style="font-weight:600;color:#7c3aed">' + r.mode + '</span> · ' + r.chapter + ' · ' + r.time + '</div>' +
+        '<button onclick="loadPolishHistory(\'' + r.id + '\')" style="background:#f3f4f6;color:#374151;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px">查看</button>' +
+        '</div>';
+    }).join('') +
+    '</div>';
+}
+
+function loadPolishHistory(id) {
+  var r = polishHistory.find(function(x) { return x.id === id; });
+  if (!r) return;
+  document.getElementById('polishContent').value = r.original;
+  document.getElementById('polishCharCount').textContent = r.original.length + ' 字符';
+  window._currentPolishResult = r.polished;
+  document.getElementById('polishResult').innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px"><div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">历史润色结果（' + r.time + '）</div><div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;white-space:pre-wrap">' + r.polished + '</div></div>';
+}
+
+// ========== 论文工作台 - 投稿中心 ==========
+function goToPublishTab(tab) {
+  // 跳转到体育考博的投稿模式对应标签
+  if (typeof navigateToPhdSubTab === 'function') {
+    navigateToPhdSubTab('publish');
+    setTimeout(function() {
+      if (typeof switchPublishTab === 'function') switchPublishTab(tab);
+    }, 300);
+  }
+}
+
+// ========== 论文工作台 - 体育学特色 ==========
+var SPORTS_TERMS = {
+  physiology: [
+    {en:'VO2max', zh:'最大摄氧量', desc:'人体在进行最大强度运动时，每分钟所能摄取和利用的最大氧量'},
+    {en:'lactate threshold', zh:'乳酸阈', desc:'运动中血乳酸浓度开始急剧上升的运动强度点'},
+    {en:'mitochondrial biogenesis', zh:'线粒体生物发生', desc:'细胞内线粒体数量和功能增加的过程，受PGC-1α等因子调控'},
+    {en:'exercise-induced muscle damage', zh:'运动性肌肉损伤', desc:'大强度或不习惯运动导致的肌肉纤维微损伤，表现为延迟性肌肉酸痛'},
+    {en:'cardiac output', zh:'心输出量', desc:'心脏每分钟泵出的血液量，等于心率乘以每搏输出量'},
+    {en:'oxygen uptake kinetics', zh:'摄氧量动力学', desc:'运动开始后摄氧量从稳态上升到新稳态的时间过程'},
+    {en:'erythropoietin', zh:'促红细胞生成素', desc:'刺激红细胞生成的激素，可提高血液携氧能力'},
+    {en:'oxidative stress', zh:'氧化应激', desc:'运动中活性氧产生超过抗氧化能力，导致细胞损伤的状态'}
+  ],
+  anatomy: [
+    {en:'origin and insertion', zh:'起点和止点', desc:'肌肉附着在骨骼上的两个端点，起点相对固定，止点相对移动'},
+    {en:'agonist and antagonist', zh:'原动肌和对抗肌', desc:'完成动作时收缩发力的肌肉和被拉伸放松的肌肉'},
+    {en:'kinetic chain', zh:'运动链', desc:'人体运动中多个关节和节段依次参与运动的链条式结构'},
+    {en:'proprioception', zh:'本体感觉', desc:'人体对自身位置、运动和力量的感觉，感受器位于肌肉、肌腱和关节囊'},
+    {en:'fascia', zh:'筋膜', desc:'包裹肌肉、骨骼和器官的结缔组织，在运动传递和力量传导中起重要作用'},
+    {en:'motor unit', zh:'运动单位', desc:'一个运动神经元及其支配的所有肌纤维，是肌肉收缩的基本功能单位'}
+  ],
+  biomechanics: [
+    {en:'ground reaction force', zh:'地面反作用力', desc:'人体对地面施加力时，地面对人体产生的大小相等、方向相反的力'},
+    {en:'center of mass', zh:'质心', desc:'物体质量分布的平均位置，人体运动中质心轨迹是分析运动的重要参数'},
+    {en:'moment of inertia', zh:'转动惯量', desc:'物体绕轴转动时惯性的量度，与质量分布和转轴位置有关'},
+    {en:'angular momentum', zh:'角动量', desc:'物体转动时的动量，等于转动惯量乘以角速度，空中运动时角动量守恒'},
+    {en:'joint torque', zh:'关节力矩', desc:'作用在关节上的转动力矩，等于肌肉力乘以力臂，是分析运动发力的关键指标'},
+    {en:'kinematics and kinetics', zh:'运动学和动力学', desc:'运动学研究运动的空间和时间特征（位置/速度/加速度），动力学研究力与运动的关系'}
+  ],
+  training: [
+    {en:'FITT principle', zh:'FITT原则', desc:'运动处方的四要素：频率(Frequency)、强度(Intensity)、时间(Time)、类型(Type)'},
+    {en:'periodization', zh:'周期化训练', desc:'将训练过程划分为不同周期，系统安排训练量和强度，实现竞技状态的最佳调控'},
+    {en:'overreaching and overtraining', zh:'过度训练和过度训练综合征', desc:'短期训练负荷过大导致的运动能力下降（过度训练），长期累积导致的持续疲劳和能力下降（过度训练综合征）'},
+    {en:'tapering', zh:'赛前减量', desc:'比赛前逐渐减少训练量，保持训练强度，促进恢复和超量恢复，提高竞技状态'},
+    {en:'progressive overload', zh:'渐进超负荷', desc:'逐渐增加训练负荷（量/强度/密度），刺激机体产生适应性变化，是训练效果的基本原则'},
+    {en:'specificity', zh:'专门性原则', desc:'训练效果具有专门性，训练内容应与比赛项目的需求和特征高度一致'}
+  ],
+  rehab: [
+    {en:'range of motion', zh:'关节活动度', desc:'关节运动时所能达到的最大活动范围，是康复评定的基本指标'},
+    {en:'proprioceptive neuromuscular facilitation', zh:'本体感觉神经肌肉促进法', desc:'通过刺激本体感受器促进神经肌肉系统反应的康复治疗技术，常用于增加关节活动度'},
+    {en:'closed kinetic chain exercise', zh:'闭链运动', desc:'肢体远端固定的运动（如深蹲、俯卧撑），对关节稳定性和功能恢复更有帮助'},
+    {en:'return to play', zh:'重返运动', desc:'运动损伤后康复到能够安全返回运动训练和比赛的标准和过程'},
+    {en:'functional movement screen', zh:'功能性动作筛查', desc:'通过7个基本动作筛查人体基本运动功能障碍和不对称性的评估工具'}
+  ],
+  psychology: [
+    {en:'self-efficacy', zh:'自我效能感', desc:'个体对自己能否完成某项任务的信念和信心，是影响运动表现和坚持性的重要心理因素'},
+    {en:'achievement goal orientation', zh:'成就目标定向', desc:'个体在成就情境中对成功的定义和追求目标的倾向，分为任务定向和自我定向'},
+    {en:'attention focus', zh:'注意焦点', desc:'运动中注意力的指向，分为内部注意（关注身体动作）和外部注意（关注动作效果）'},
+    {en:'mental imagery', zh:'心理表象', desc:'在头脑中模拟或重现运动动作的心理训练方法，可促进技能学习和表现提升'},
+    {en:'burnout', zh:'倦怠', desc:'长期压力导致的情绪耗竭、去个性化和成就感降低的心理状态，在运动员中较为常见'}
+  ]
+};
+
+function renderSportsTerms() {
+  var category = (document.getElementById('sportsTermCategory') || {}).value || 'physiology';
+  var terms = SPORTS_TERMS[category] || [];
+  var container = document.getElementById('sportsTermsList');
+  if (!container) return;
+  container.innerHTML = terms.map(function(t) {
+    return '<div style="padding:6px 0;border-bottom:1px solid #f3f4f6"><div style="font-weight:600;color:#166534">' + t.en + ' <span style="color:#374151;font-weight:400">（' + t.zh + '）</span></div><div style="font-size:11px;color:#6b7280;margin-top:2px">' + t.desc + '</div></div>';
+  }).join('');
+}
+
+function showSportsTemplate(type) {
+  var templates = {
+    experiment: {title:'实验研究论文模板（运动人体科学）', content:'题目：XX运动对XX指标的影响及其机制研究\n\n摘要（结构化）：\n目的：探讨XX对XX的影响。\n方法：选取XX名受试者，随机分为实验组和对照组。实验组进行XX周XX运动干预，对照组保持正常生活。干预前后分别测定XX指标。\n结果：实验组XX指标显著变化（P<0.05），对照组无显著变化。\n结论：XX运动可显著改善XX，其机制可能与XX有关。\n\n1 引言\n1.1 研究背景\n1.2 研究目的与意义\n1.3 研究假设\n\n2 研究对象与方法\n2.1 研究对象（纳入/排除标准、样本量计算）\n2.2 研究设计（随机分组、盲法）\n2.3 运动干预方案（FITT原则）\n2.4 测量指标与方法\n2.5 统计学分析\n\n3 研究结果\n3.1 受试者基本特征\n3.2 XX指标变化\n3.3 相关性分析\n\n4 讨论\n4.1 主要发现\n4.2 与前人研究对比\n4.3 机制探讨\n4.4 研究局限\n4.5 实践意义\n\n5 结论\n\n参考文献'},
+    survey: {title:'调查研究论文模板（体育人文社会学）', content:'题目：XX现状调查与影响因素分析——以XX为例\n\n摘要：\n目的：了解XX现状，分析其影响因素。\n方法：采用问卷调查法，对XX名对象进行调查。运用描述统计、卡方检验、Logistic回归等方法分析数据。\n结果：XX发生率为XX%，影响因素包括XX、XX、XX。\n结论：XX现状不容乐观，应针对影响因素采取干预措施。\n\n1 引言\n2 研究对象与方法\n2.1 研究对象\n2.2 研究工具（问卷设计、信效度检验）\n2.3 调查实施\n2.4 统计学分析\n3 研究结果\n3.1 调查对象基本特征\n3.2 XX现状描述\n3.3 影响因素分析\n4 讨论\n5 结论与建议\n参考文献'},
+    review: {title:'综述论文模板（系统综述/Meta分析）', content:'题目：XX在XX中的应用研究进展\n\n摘要：\n目的：系统评价XX在XX中的应用效果。\n方法：检索PubMed、Web of Science、CNKI等数据库，纳入符合标准的随机对照试验。采用Cochrane偏倚风险评估工具评价文献质量，使用RevMan软件进行Meta分析。\n结果：共纳入XX项研究，XX名受试者。Meta分析显示XX组在XX指标上显著优于对照组（SMD=XX，95%CI: XX-XX，P<0.05）。\n结论：XX在XX中具有积极作用，但受纳入研究质量和数量限制，仍需更多高质量研究验证。\n\n1 引言\n2 资料与方法\n2.1 文献检索策略\n2.2 纳入与排除标准\n2.3 文献筛选与数据提取\n2.4 方法学质量评价\n2.5 统计学分析\n3 结果\n3.1 文献筛选流程\n3.2 纳入研究基本特征\n3.3 方法学质量评价\n3.4 Meta分析结果\n3.5 发表偏倚检测\n4 讨论\n5 结论\n参考文献'},
+    thesis: {title:'学位论文模板（博士/硕士）', content:'题目：XX\n\n摘要（中英文）\n关键词（中英文）\n\n第1章 绪论\n1.1 研究背景\n1.2 研究目的与意义\n1.3 研究内容与思路\n1.4 研究创新点\n\n第2章 文献综述\n2.1 XX研究现状\n2.2 XX理论基础\n2.3 研究空白与本文定位\n\n第3章 研究对象与方法\n3.1 研究对象\n3.2 研究方法\n3.3 研究工具\n3.4 研究流程\n3.5 数据处理\n\n第4章 研究结果\n4.1 ...\n\n第5章 分析与讨论\n5.1 ...\n\n第6章 结论与建议\n6.1 主要结论\n6.2 实践建议\n6.3 研究局限与展望\n\n参考文献\n附录\n致谢\n攻读学位期间发表的学术论文'}
+  };
+  var t = templates[type];
+  if (!t) return;
+  var modal = document.getElementById('sportsDetailModal');
+  modal.style.display = 'block';
+  modal.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1)">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+      '<div style="font-size:16px;font-weight:700;color:#1f2937">' + t.title + '</div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button onclick="copySportsContent()" style="background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">复制模板</button>' +
+        '<button onclick="document.getElementById(\'sportsDetailModal\').style.display=\'none\'" style="background:#f3f4f6;color:#374151;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px">关闭</button>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;font-size:13px;line-height:1.9;color:#374151;max-height:500px;overflow-y:auto;white-space:pre-wrap">' + t.content + '</div>' +
+    '</div>';
+  window._sportsTemplateContent = t.content;
+}
+
+function copySportsContent() {
+  if (!window._sportsTemplateContent) return;
+  var textarea = document.createElement('textarea');
+  textarea.value = window._sportsTemplateContent;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  alert('已复制模板到剪贴板');
+}
+
+function showSportsMethod(type) {
+  var methods = {
+    experiment: {title:'实验法在体育学研究中的应用', content:'实验法是体育学研究中最常用的方法之一，通过控制自变量，观察因变量的变化，揭示变量间的因果关系。\n\n一、实验法的类型\n1. 实验室实验：在实验室环境中进行，控制条件严格，如运动生理学实验（测定运动前后生理指标变化）\n2. 现场实验：在真实运动场景中进行，生态效度高，如教学实验（对比两种教学方法的效果）\n3. 动物实验：以动物为研究对象，可进行侵入性操作，如运动干预对大鼠心肌的影响\n\n二、实验设计的基本要素\n1. 自变量：研究者操纵的变量，如运动强度、运动时间、训练方法\n2. 因变量：研究者测量的变量，如VO2max、心率、运动成绩\n3. 控制变量：需要保持恒定的变量，如受试者年龄、性别、训练水平\n4. 实验组：接受实验处理的组\n5. 对照组：不接受实验处理的组\n\n三、常用实验设计方案\n1. 完全随机设计：将受试者随机分配到各组，适用于组间比较\n2. 随机区组设计：先按某个特征分区组，再在区组内随机分配，控制个体差异\n3. 交叉设计：每个受试者先后接受两种处理，可控制个体差异，但有遗留效应问题\n4. 重复测量设计：同一受试者在不同时间点多次测量，适用于运动干预前后比较\n\n四、实验法的实施步骤\n1. 提出研究假设\n2. 确定自变量和因变量\n3. 选择实验设计方案\n4. 计算样本量\n5. 招募和筛选受试者\n6. 随机分组\n7. 实施实验处理\n8. 测量因变量\n9. 数据分析\n10. 得出结论\n\n五、注意事项\n1. 伦理审查：人体实验必须通过伦理审查，签署知情同意书\n2. 盲法：尽可能采用单盲或双盲设计，减少主观偏倚\n3. 控制混杂变量：识别并控制可能影响结果的其他因素\n4. 样本量：根据效应量和检验效能计算所需样本量\n5. 数据质量：确保测量工具的信效度，规范测量流程'},
+    survey: {title:'调查法在体育学研究中的应用', content:'调查法是通过问卷、访谈等方式收集数据，了解现状、态度、行为等的研究方法，在体育人文社会学研究中广泛应用。\n\n一、调查法的类型\n1. 问卷调查：通过结构化问卷收集数据，适合大样本调查\n2. 访谈调查：通过面对面或电话访谈收集深入信息，适合小样本深度研究\n3. 实地观察：在自然场景中观察记录行为，适合了解真实行为表现\n\n二、问卷设计\n1. 确定调查目的和内容\n2. 设计维度和题目\n3. 题目类型：单选题、多选题、量表题（Likert 5点/7点）、开放题\n4. 问卷结构：标题、说明、基本信息、主体题目、致谢\n5. 信效度检验：预调查，计算Cronbach α系数（>0.7为可接受），进行探索性因子分析\n\n三、抽样方法\n1. 概率抽样：简单随机抽样、系统抽样、分层抽样、整群抽样\n2. 非概率抽样：方便抽样、目的抽样、滚雪球抽样\n3. 样本量：根据总体大小和误差要求确定，一般调查至少300份\n\n四、调查实施\n1. 预调查：小范围测试问卷，修改完善\n2. 正式调查：线上（问卷星/微信）或线下发放\n3. 质量控制：设置测谎题、逻辑检验题，控制答题时间\n4. 数据回收与清洗：剔除无效问卷\n\n五、数据分析\n1. 描述统计：频数、百分比、均值、标准差\n2. 差异分析：t检验、ANOVA、卡方检验\n3. 相关分析：Pearson相关、Spearman相关\n4. 回归分析：线性回归、Logistic回归\n5. 结构方程模型：验证理论模型\n\n六、注意事项\n1. 问卷设计要科学合理，避免诱导性问题\n2. 抽样要有代表性，避免样本偏差\n3. 回收率：线上调查回收率一般较低，需扩大发放量\n4. 伦理：匿名调查，保护受访者隐私'},
+    test: {title:'测试测量法在体育学研究中的应用', content:'测试测量法是通过标准化测试工具和仪器，测量人体形态、机能、素质等指标的研究方法，是运动人体科学研究的基础。\n\n一、常用测试指标\n1. 形态指标：身高、体重、体脂率、围度（胸围/腰围/臀围）、骨密度\n2. 机能指标：VO2max、心率、血压、肺活量、血乳酸、心率变异性\n3. 素质指标：力量（最大力量/爆发力/力量耐力）、耐力（有氧/无氧）、速度、灵敏、柔韧、平衡\n4. 技术指标：动作技术参数（运动学/动力学）、技术评价\n\n二、测试工具与仪器\n1. 形态：身高计、体重秤、体成分分析仪（InBody）、皮褶厚度计\n2. 心肺：心肺功能测试仪（Cosmed/K4b2）、心率带、血压计、肺功能仪\n3. 生化：血乳酸仪、血糖仪、血红蛋白仪\n4. 力量：等速肌力测试仪（Biodex/Cybex）、力量架、手持测力计\n5. 运动学：三维动作捕捉系统（Vicon/OptiTrack）、高速摄像机、加速度计\n6. 动力学：测力台（Kistler/AMTI）、足底压力板\n\n三、测试流程规范\n1. 测试前准备：仪器校准、受试者告知、热身\n2. 测试顺序：先安静指标后运动指标，先无创后有创\n3. 测试次数：一般测试2-3次取最佳值或平均值\n4. 测试间隔：同一指标测试间隔30秒-2分钟，避免疲劳影响\n5. 数据记录：实时记录，双人核对\n\n四、信效度\n1. 信度：测试结果的稳定性和一致性，用ICC（组内相关系数）评价，>0.8为优秀\n2. 效度：测试结果的准确性和有效性，包括内容效度、结构效度、效标效度\n3. 灵敏度：测试工具能检测出微小变化的能力\n\n五、注意事项\n1. 仪器校准：每次测试前必须校准仪器\n2. 标准化：测试条件（时间、环境、设备）保持一致\n3. 受试者状态：测试前24小时避免剧烈运动，测试前2小时避免进食\n4. 安全：运动测试需有医务监督，准备急救设备\n5. 数据质量：剔除异常值，记录测试条件'},
+    case: {title:'案例研究法在体育学研究中的应用', content:'案例研究法是对单个或少数案例进行深入、全面、长期的研究，揭示现象的复杂性和独特性的研究方法，适合研究罕见现象或深入分析典型案例。\n\n一、案例研究的类型\n1. 单案例研究：深入研究一个典型案例，如优秀运动员的训练案例\n2. 多案例研究：研究多个案例，进行跨案例比较分析\n3. 探索性案例研究：为后续研究提出假设\n4. 描述性案例研究：详细描述案例的特征和过程\n5. 解释性案例研究：分析案例中的因果关系\n\n二、案例选择\n1. 典型性：案例能代表某一类现象\n2. 极端性：案例具有特殊或罕见的特征\n3. 关键性：案例能验证或挑战现有理论\n4. 便利性：研究者能够接触和深入研究\n\n三、数据收集方法\n1. 深度访谈：与案例相关人员进行半结构化访谈\n2. 观察：参与式观察或非参与式观察\n3. 文档分析：训练日记、比赛记录、媒体报道等\n4. 实物分析：装备、数据记录等\n5. 三角验证：多种方法和来源相互验证\n\n四、数据分析\n1. 案例内分析：深入分析单个案例的特征、过程、机制\n2. 跨案例分析：多案例研究中比较案例间的异同\n3. 编码分析：开放式编码、主轴编码、选择性编码\n4. 主题分析：提炼核心主题和模式\n5. 时间线分析：梳理事件发展过程\n\n五、研究质量\n1. 可信度：通过三角验证、同行审查、参与者确认提高可信度\n2. 可转移性：详细描述案例背景，提高研究结果的可迁移性\n3. 可靠性：详细记录研究过程和决策，提高研究的可重复性\n4. 可确认性：保持研究的客观性和中立性\n\n六、注意事项\n1. 案例选择要有明确的理论依据\n2. 数据收集要全面、深入、长期\n3. 分析要基于数据，避免主观臆断\n4. 要明确研究的局限性（推广性有限）\n5. 伦理：保护案例相关人员的隐私和匿名性'}
+  };
+  var m = methods[type];
+  if (!m) return;
+  var modal = document.getElementById('sportsDetailModal');
+  modal.style.display = 'block';
+  modal.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1)">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+      '<div style="font-size:16px;font-weight:700;color:#1f2937">' + m.title + '</div>' +
+      '<button onclick="document.getElementById(\'sportsDetailModal\').style.display=\'none\'" style="background:#f3f4f6;color:#374151;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;font-size:12px">关闭</button>' +
+    '</div>' +
+    '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;font-size:13px;line-height:1.9;color:#374151;max-height:500px;overflow-y:auto;white-space:pre-wrap">' + m.content + '</div>' +
+    '</div>';
+}
+
+// 页面加载时渲染术语
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof renderSportsTerms === 'function') renderSportsTerms();
+});
 
 
 function switchTab(tabName){
