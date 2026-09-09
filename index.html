@@ -41173,16 +41173,27 @@ function switchPhdTab(tabName) {
   if (searchPanel) searchPanel.style.display = 'none';
   var reviewPanel = document.getElementById('phdAIReviewPanel');
   if (reviewPanel) reviewPanel.style.display = 'none';
-  // 懒加载渲染对应模块内容
-  if (tabName === 'knowledge' && typeof renderPhdKnowledge === 'function') renderPhdKnowledge();
-  if (tabName === 'exam' && typeof renderPhdExam === 'function') renderPhdExam();
-  if (tabName === 'research' && typeof renderPhdResearch === 'function') renderPhdResearch();
-  if (tabName === 'interview' && typeof renderPhdInterview === 'function') renderPhdInterview();
-  if (tabName === 'schools' && typeof renderPhdSchools === 'function') renderPhdSchools();
-  if (tabName === 'timeline' && typeof renderPhdTimeline === 'function') renderPhdTimeline();
-  if (tabName === 'proposal' && typeof renderPhdProposal === 'function') renderPhdProposal();
-  if (tabName === 'taoci' && typeof renderPhdTaoci === 'function') renderPhdTaoci();
-  if (tabName === 'publish') { if (typeof resetPhdPublish === 'function') resetPhdPublish(); else if (typeof renderPhdPublish === 'function') renderPhdPublish(); }
+  // 懒加载渲染对应模块内容（TDZ保护：常量未初始化时延迟执行）
+  try {
+    if (tabName === 'knowledge' && typeof renderPhdKnowledge === 'function') renderPhdKnowledge();
+    if (tabName === 'exam' && typeof renderPhdExam === 'function') renderPhdExam();
+    if (tabName === 'research' && typeof renderPhdResearch === 'function') renderPhdResearch();
+    if (tabName === 'interview' && typeof renderPhdInterview === 'function') renderPhdInterview();
+    if (tabName === 'schools' && typeof renderPhdSchools === 'function') renderPhdSchools();
+    if (tabName === 'timeline' && typeof renderPhdTimeline === 'function') renderPhdTimeline();
+    if (tabName === 'proposal' && typeof renderPhdProposal === 'function') renderPhdProposal();
+    if (tabName === 'taoci' && typeof renderPhdTaoci === 'function') renderPhdTaoci();
+    if (tabName === 'publish') { if (typeof resetPhdPublish === 'function') resetPhdPublish(); else if (typeof renderPhdPublish === 'function') renderPhdPublish(); }
+  } catch(e) {
+    if (e.message && e.message.indexOf('before initialization') >= 0) {
+      // 常量还在TDZ状态，延迟100ms重试
+      console.warn('PHD常量未初始化，延迟渲染:', tabName);
+      var tn = tabName;
+      setTimeout(function(){ switchPhdTab(tn); }, 100);
+      return;
+    }
+    console.error('switchPhdTab渲染错误:', e);
+  }
   // 更新标签样式
   document.querySelectorAll('.phd-tab').forEach(tab => {
     tab.classList.remove('active');
