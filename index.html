@@ -31118,6 +31118,8 @@ function finishInterpret(results, models, threshold) {
 
     html += '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
       '<button onclick="copyAiReport()" style="background:#2563eb;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📋 复制解读报告</button>' +
+      '<button onclick="exportAiReportPdf()" style="background:#dc2626;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📄 导出PDF</button>' +
+      '<button onclick="downloadAiReportTxt()" style="background:#0891b2;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">💾 下载报告</button>' +
       '</div>';
   }
 
@@ -31577,6 +31579,65 @@ function copyAiReport() {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function(){ alert('已复制解读报告'); }).catch(function(){ fallbackCopy(text); });
   } else fallbackCopy(text);
+}
+
+// 导出解读报告为PDF（浏览器打印另存为PDF，支持中文与完整布局）
+function exportAiReportPdf() {
+  var el = document.getElementById('aiReportResult');
+  if (!el || !el.textContent.trim()) { alert('请先完成AI解读'); return; }
+  // 展开所有模型详情，确保PDF内容完整
+  var details = document.querySelectorAll('[id^="aiModelDetail-"]');
+  details.forEach(function(d){ d.style.display = 'block'; });
+  var data = window.__plagReportData || {};
+  var thresholdEl = document.getElementById('aiReportThreshold');
+  var threshold = thresholdEl && thresholdEl.value ? thresholdEl.value : '未设置';
+  var now = new Date();
+  var timeStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  var header = '<div style="border-bottom:2px solid #6d28d9;padding-bottom:10px;margin-bottom:14px">' +
+    '<div style="font-size:18px;font-weight:700;color:#1f2937">🤖 AI多模型查重报告解读</div>' +
+    '<div style="font-size:11px;color:#6b7280;margin-top:4px">报告文件：' + (data.filename||'未命名') + ' · 总重复率：' + (data.rate!==null?data.rate.toFixed(1)+'%':'未识别') + ' · 学校阈值：' + threshold + '% · 生成时间：' + timeStr + '</div>' +
+    '</div>';
+  var printWin = window.open('', '_blank', 'width=860,height=1000');
+  if (!printWin) { alert('请允许弹出窗口以导出PDF'); return; }
+  printWin.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI查重解读报告</title>' +
+    '<style>' +
+    'body{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;padding:28px;color:#1f2937;max-width:780px;margin:0 auto}' +
+    '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
+    'div{page-break-inside:avoid}' +
+    'button{display:none}' +
+    '</style></head><body>' + header + el.innerHTML + '</body></html>');
+  printWin.document.close();
+  printWin.focus();
+  setTimeout(function(){ printWin.print(); }, 600);
+}
+
+// 下载解读报告为TXT文件
+function downloadAiReportTxt() {
+  var el = document.getElementById('aiReportResult');
+  if (!el || !el.textContent.trim()) { alert('请先完成AI解读'); return; }
+  var data = window.__plagReportData || {};
+  var thresholdEl = document.getElementById('aiReportThreshold');
+  var threshold = thresholdEl && thresholdEl.value ? thresholdEl.value : '未设置';
+  var now = new Date();
+  var timeStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  var lines = [];
+  lines.push('========================================');
+  lines.push('  AI多模型查重报告解读');
+  lines.push('========================================');
+  lines.push('报告文件：' + (data.filename||'未命名'));
+  lines.push('总重复率：' + (data.rate!==null?data.rate.toFixed(1)+'%':'未识别'));
+  lines.push('学校阈值：' + threshold + '%');
+  lines.push('生成时间：' + timeStr);
+  lines.push('========================================');
+  lines.push('');
+  lines.push(el.innerText.replace(/\n+/g, '\n'));
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'AI查重解读报告_' + (data.filename||'未命名').replace(/\.html?$/i, '') + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 200);
 }
 
 
