@@ -41454,7 +41454,7 @@ function renderPhdTaoci(){
   const area = document.getElementById('phdTaociArea');
   if(!area) return;
   let html = '<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
-  const tabs = [['guide','📖 套磁指南'],['ai','🤖 AI套磁信生成'],['tpl','📋 模板库'],['record','📊 联系记录']];
+  const tabs = [['guide','📖 套磁指南'],['ai','🤖 AI套磁信生成'],['tpl','📋 模板库'],['record','📊 联系记录'],['attach','📎 附件准备']];
   tabs.forEach(t=>{
     html += '<button onclick="switchPhdTaociTab(\''+t[0]+'\')" id="taociTab-'+t[0]+'" style="padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:1px solid '+(phdTaociSubTab===t[0]?'#3b82f6':'#e2e8f0')+';background:'+(phdTaociSubTab===t[0]?'linear-gradient(135deg,#3b82f6,#2563eb)':'#fff')+';color:'+(phdTaociSubTab===t[0]?'#fff':'#475569')+'">'+t[1]+'</button>';
   });
@@ -41471,6 +41471,7 @@ function renderPhdTaociContent(){
   else if(phdTaociSubTab==='ai') el.innerHTML = renderTaociAI();
   else if(phdTaociSubTab==='tpl') el.innerHTML = renderTaociTemplates();
   else if(phdTaociSubTab==='record') el.innerHTML = renderTaociRecords();
+  else if(phdTaociSubTab==='attach') el.innerHTML = renderTaociAttach();
 }
 
 function renderTaociGuide(){
@@ -41543,10 +41544,12 @@ function renderTaociAI(){
       <div style="font-size:15px;font-weight:700;color:#1e293b">📄 生成的套磁信</div>
       <div style="display:flex;gap:8px">
         <button onclick="copyTaociLetter()" style="padding:6px 14px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">📋 复制</button>
+        <button onclick="scoreTaociLetter()" style="padding:6px 14px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">📊 AI评分</button>
         <button onclick="generateTaociLetter()" style="padding:6px 14px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">🔄 重新生成</button>
       </div>
     </div>
     <pre id="taociLetterText" style="white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:2;color:#1e293b;background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0"></pre>
+    <div id="taociScorePanel" style="display:none;margin-top:16px"></div>
   </div>`;
 }
 
@@ -41599,6 +41602,182 @@ function showTaociTemplate(id){
   const html = '<div style="max-height:75vh;overflow-y:auto"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:16px;font-weight:700;color:#1e293b">📋 '+t.title+'</div><button onclick="copyTaociTemplateContent()" style="padding:6px 14px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">📋 复制</button></div><pre id="taociTplContent" style="white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:2;color:#1e293b;background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0">'+t.content+'</pre></div>';
   showPhdDetail(html);
 }
+
+async function scoreTaociLetter(){
+  const letter = document.getElementById('taociLetterText').textContent;
+  if(!letter || letter.length<20){ alert('请先生成套磁信再评分'); return; }
+  const supIdx = document.getElementById('taociSupSelect').value;
+  const userBg = document.getElementById('taociUserBg').value.trim();
+  const sup = supIdx!=='' ? PHD_SUPERVISORS[supIdx] : null;
+  const panel = document.getElementById('taociScorePanel');
+  panel.style.display = 'block';
+  panel.innerHTML = '<div style="text-align:center;padding:20px;color:#8b5cf6"><div style="font-size:20px;margin-bottom:8px">📊</div>AI评分中，请稍候...</div>';
+  const supInfo = sup ? `导师：${sup.name}（${sup.school}），研究方向：${(sup.directions&&sup.directions.length)?sup.directions.join('、'):sup.research}` : '导师信息未提供';
+  const systemPrompt = `你是一位体育学考博套磁信评审专家。请从以下5个维度对套磁信进行评分（每项满分20分，总分100分），并给出具体修改建议和优化版套磁信。
+5个维度：
+1. 个性化程度（是否提及导师具体研究、是否避免模板化）
+2. 学术专业性（术语是否准确、研究背景描述是否专业）
+3. 表达规范性（邮件格式、语法、措辞是否规范得体）
+4. 吸引力（是否突出学生亮点、是否让导师产生兴趣）
+5. 附件合理性（是否提及附件、附件描述是否恰当）
+
+请严格按以下格式输出（不要输出其他内容）：
+【总分】XX分
+【个性化】XX分 - 评语
+【学术性】XX分 - 评语
+【规范性】XX分 - 评语
+【吸引力】XX分 - 评语
+【附件】XX分 - 评语
+【修改建议】
+1. ...
+2. ...
+3. ...
+【优化版】
+（优化后的完整套磁信）`;
+  const userPrompt = `目标导师：${supInfo}\n学生背景：${userBg||'未提供'}\n\n待评分套磁信：\n${letter}`;
+  try{
+    const result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000, 'deepseek-chat');
+    panel.innerHTML = renderTaociScoreResult(result);
+    panel.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){
+    panel.innerHTML = '<div style="padding:16px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#991b1b;font-size:13px">评分失败：'+e.message+'</div>';
+  }
+}
+function renderTaociScoreResult(text){
+  let html = '<div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:1px solid #ddd6fe;border-radius:12px;padding:16px;margin-bottom:12px">';
+  html += '<div style="font-size:15px;font-weight:700;color:#5b21b6;margin-bottom:10px">📊 AI评分报告</div>';
+  // 解析总分
+  const totalMatch = text.match(/【总分】\s*(\d+)\s*分/);
+  if(totalMatch){
+    const total = parseInt(totalMatch[1]);
+    const color = total>=80?'#10b981':total>=60?'#f59e0b':'#ef4444';
+    const level = total>=90?'优秀':total>=80?'良好':total>=70?'中等':total>=60?'及格':'需改进';
+    html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px"><div style="font-size:36px;font-weight:800;color:'+color+'">'+total+'</div><div><div style="font-size:14px;font-weight:600;color:#1e293b">'+level+'</div><div style="font-size:12px;color:#64748b">满分100分</div></div></div>';
+  }
+  // 5维度
+  const dims = [['个性化','个性化程度'],['学术性','学术专业性'],['规范性','表达规范性'],['吸引力','吸引力'],['附件','附件合理性']];
+  dims.forEach(d=>{
+    const m = text.match(new RegExp('【'+d[0]+'】\\s*(\\d+)\\s*分\\s*-?\\s*(.+)'));
+    if(m){
+      const score = parseInt(m[1]);
+      const comment = m[2].trim();
+      const w = (score/20)*100;
+      const barColor = score>=16?'#10b981':score>=12?'#f59e0b':'#ef4444';
+      html += '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="font-weight:600;color:#475569">'+d[1]+'</span><span style="color:'+barColor+';font-weight:700">'+score+'/20</span></div><div style="height:6px;background:#e9d5ff;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+barColor+';border-radius:3px"></div></div><div style="font-size:11px;color:#64748b;margin-top:3px">'+comment+'</div></div>';
+    }
+  });
+  html += '</div>';
+  // 修改建议
+  const sugMatch = text.match(/【修改建议】([\s\S]*?)(?=【优化版】|$)/);
+  if(sugMatch){
+    html += '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:8px">💡 修改建议</div><div style="font-size:13px;color:#78350f;line-height:1.8;white-space:pre-wrap">'+sugMatch[1].trim()+'</div></div>';
+  }
+  // 优化版
+  const optMatch = text.match(/【优化版】([\s\S]*)$/);
+  if(optMatch){
+    html += '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:14px;font-weight:700;color:#166534">✨ 优化版套磁信</div><button onclick="copyTaociOptimized()" style="padding:4px 10px;background:#10b981;color:#fff;border:none;border-radius:5px;font-size:11px;cursor:pointer">📋 复制优化版</button></div><pre id="taociOptimizedText" style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:2;color:#14532d;background:#fff;padding:12px;border-radius:8px;border:1px solid #bbf7d0;max-height:400px;overflow-y:auto">'+optMatch[1].trim()+'</pre></div>';
+  }
+  return html;
+}
+function copyTaociOptimized(){
+  const text = document.getElementById('taociOptimizedText').textContent;
+  navigator.clipboard.writeText(text).then(()=>alert('优化版已复制！')).catch(()=>alert('复制失败，请手动选择'));
+}
+
+function renderTaociAttach(){
+  return `
+  <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:12px;padding:16px;margin-bottom:16px">
+    <div style="font-size:15px;font-weight:700;color:#1e40af;margin-bottom:4px">📎 套磁附件材料准备指南</div>
+    <div style="font-size:13px;color:#1e3a8a;line-height:1.6">套磁信附件是导师了解你的第一手材料，质量直接影响回复率。以下是各类附件的准备要点。</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;border-top:4px solid #3b82f6">
+      <div style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:10px">📄 学术CV（1-2页）</div>
+      <div style="font-size:13px;color:#475569;line-height:1.9">
+        <b style="color:#1e293b">必备结构：</b><br>
+        ① 个人信息（姓名/电话/邮箱/本科硕士院校）<br>
+        ② 教育背景（时间/学校/专业/学位/GPA/排名）<br>
+        ③ 研究经历（课题名称/角色/方法/成果）<br>
+        ④ 论文成果（已发表/在投/会议，标注作者位次）<br>
+        ⑤ 专业技能（实验技术/数据分析软件/编程语言）<br>
+        ⑥ 获奖荣誉（奖学金/竞赛/学术奖项）<br>
+        ⑦ 英语水平（六级/雅思/托福分数）<br><br>
+        <b style="color:#dc2626">要点：</b>控制在1-2页A4，用PDF格式，研究经历用动词开头（设计/实施/分析），量化成果（发表X篇/影响因子X/主持X项目）。
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;border-top:4px solid #10b981">
+      <div style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:10px">📝 科研计划书初稿（3-5页）</div>
+      <div style="font-size:13px;color:#475569;line-height:1.9">
+        <b style="color:#1e293b">必备结构：</b><br>
+        ① 选题背景与研究意义（为什么做这个题）<br>
+        ② 国内外研究现状（文献综述，指出研究空白）<br>
+        ③ 研究内容与目标（3-4个具体研究问题）<br>
+        ④ 研究方法与技术路线（实验设计/样本/指标）<br>
+        ⑤ 创新点（理论/方法/应用创新）<br>
+        ⑥ 预期成果与研究计划（3年时间安排）<br>
+        ⑦ 参考文献（15-20篇，近5年为主）<br><br>
+        <b style="color:#dc2626">要点：</b>选题必须与目标导师方向高度契合，技术路线要具体可操作，创新点要明确不夸大。套磁时附"初稿"即可，正式报名时再完善。
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;border-top:4px solid #f59e0b">
+      <div style="font-size:16px;font-weight:700;color:#92400e;margin-bottom:10px">🌐 英语材料</div>
+      <div style="font-size:13px;color:#475569;line-height:1.9">
+        <b style="color:#1e293b">英语成绩：</b><br>
+        多数院校要求六级≥425，部分985要求≥480或雅思6.0/托福80。体育学考博英语是单独命题，难度约六级水平。<br><br>
+        <b style="color:#1e293b">英文CV（可选）：</b><br>
+        申请有海外合作导师或英文项目时需要。注意学术英文表达，用过去式描述已完成工作。<br><br>
+        <b style="color:#1e293b">英文自我介绍：</b><br>
+        面试可能要求英文自我介绍1-2分钟，提前准备。内容：教育背景+研究兴趣+为什么考博+职业规划。<br><br>
+        <b style="color:#dc2626">要点：</b>英语成绩在CV中明确标注分数，不要只写"通过六级"。
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;border-top:4px solid #8b5cf6">
+      <div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:10px">✉️ 推荐信（2封）</div>
+      <div style="font-size:13px;color:#475569;line-height:1.9">
+        <b style="color:#1e293b">推荐人选择：</b><br>
+        ① 硕士导师（最重要，了解你的科研能力）<br>
+        ② 任课老师/实习导师/合作教授（了解你的学习或实践能力）<br>
+        如有副教授以上职称的推荐人更佳。<br><br>
+        <b style="color:#1e293b">推荐信内容要点：</b><br>
+        ① 推荐人与你的关系及认识时间<br>
+        ② 你的学术能力/科研潜力评价（具体事例）<br>
+        ③ 你的个人品质（勤奋/创新/团队合作）<br>
+        ④ 与同期学生相比的排名（如前10%）<br>
+        ⑤ 明确推荐态度（强烈推荐/推荐）<br><br>
+        <b style="color:#dc2626">要点：</b>提前1-2个月联系推荐人，提供你的CV和研究方向供参考。推荐信需密封签字或通过官方邮箱发送。
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;border-top:4px solid #ef4444">
+      <div style="font-size:16px;font-weight:700;color:#991b1b;margin-bottom:10px">📚 论文与作品集</div>
+      <div style="font-size:13px;color:#475569;line-height:1.9">
+        <b style="color:#1e293b">已发表论文：</b><br>
+        将已发表论文的PDF整理好，命名格式"姓名-期刊名-年份.pdf"。如有SCI/SSCI论文，这是重大加分项。<br><br>
+        <b style="color:#1e293b">在投/在写论文：</b><br>
+        可附摘要或初稿，标注"在投"状态，展示科研产出能力。<br><br>
+        <b style="color:#1e293b">项目证明：</b><br>
+        参与/主持的科研项目立项书、结题报告（如有），证明科研经历真实性。<br><br>
+        <b style="color:#1e293b">获奖证书：</b><br>
+        重要奖学金、竞赛获奖、学术会议报告证明等扫描件。<br><br>
+        <b style="color:#dc2626">要点：</b>套磁时附件不要超过3个（CV+计划书+论文代表作），总大小不超过5MB。其他材料报名时再提交。
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;border-top:4px solid #06b6d4">
+      <div style="font-size:16px;font-weight:700;color:#155e75;margin-bottom:10px">✅ 附件检查清单</div>
+      <div style="font-size:13px;color:#475569;line-height:2">
+        <div style="padding:4px 0;border-bottom:1px dashed #e2e8f0">☐ CV为PDF格式，1-2页，无错别字</div>
+        <div style="padding:4px 0;border-bottom:1px dashed #e2e8f0">☐ CV中研究经历量化（论文数/项目数/获奖）</div>
+        <div style="padding:4px 0;border-bottom:1px dashed #e2e8f0">☐ 科研计划书选题与目标导师方向契合</div>
+        <div style="padding:4px 0;border-bottom:1px dashed #e2e8f0">☐ 计划书技术路线具体可操作</div>
+        <div style="padding:4px 0;border-bottom:1px dashed #e2e8f0">☐ 论文代表作PDF命名规范</div>
+        <div style="padding:4px 0;border-bottom:1px dashed #e2e8f0">☐ 附件总数≤3个，总大小≤5MB</div>
+        <div style="padding:4px 0;border-bottom:1px dashed #e2e8f0">☐ 邮件正文中提及附件名称</div>
+        <div style="padding:4px 0;border-bottom:1px dashed #e2e8f0">☐ 推荐信已提前联系推荐人</div>
+        <div style="padding:4px 0">☐ 所有材料文件名包含姓名</div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function copyTaociTemplateContent(){
   const text = document.getElementById('taociTplContent').textContent;
   navigator.clipboard.writeText(text).then(()=>alert('已复制！')).catch(()=>alert('复制失败，请手动选择复制'));
