@@ -38206,6 +38206,7 @@ function toggleQuickTool(toolId) {
   else if (toolId === 'qtAbstract') renderAbstractTool(area);
   else if (toolId === 'qtTitle') renderTitleTool(area);
   else if (toolId === 'qtFigure') renderFigureTool(area);
+  else if (toolId === 'qtAuthor') renderAuthorTool(area);
 }
 
 // 工具1：参考文献批量格式化
@@ -38583,6 +38584,232 @@ async function figureFormatAdvice() {
 }
 
 
+// 工具7：作者信息与基金项目格式检查
+function renderAuthorTool(area) {
+  area.innerHTML = '<div style="background:#f0fdfa;border:1px solid #5eead4;border-radius:10px;padding:16px">'
+    + '<div style="font-size:13px;font-weight:700;color:#0f766e;margin-bottom:10px">作者信息与基金项目格式检查</div>'
+    + '<div style="margin-bottom:10px"><label style="font-size:11px;color:#0f766e;font-weight:600;display:block;margin-bottom:3px">粘贴作者信息、单位、基金项目、致谢、利益冲突声明</label><textarea id="qtAuthorInput" rows="6" placeholder="例如：&#10;张三1,2，李四1，王五1&#10;1. XX大学体育学院，北京 100084&#10;2. XX研究院，上海 200000&#10;通信作者：李四，email：lisi@xxx.edu.cn&#10;基金项目：国家自然科学基金（编号：12345678）&#10;利益冲突：作者声明不存在利益冲突。" style="width:100%;padding:8px 10px;border:1px solid #5eead4;border-radius:5px;font-size:11px;outline:none;resize:vertical;font-family:Consolas,monospace"></textarea></div>'
+    + '<div style="display:flex;gap:8px"><button onclick="checkAuthorFormat()" style="background:#14b8a6;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">检查格式</button><button onclick="aiCheckAuthorFormat()" style="background:#0d9488;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">AI深度检查+修改建议</button></div>'
+    + '<div id="qtAuthorResult" style="margin-top:12px"></div></div>';
+}
+
+function checkAuthorFormat() {
+  var text = document.getElementById('qtAuthorInput').value.trim();
+  var resultEl = document.getElementById('qtAuthorResult');
+  if (!text) { alert('请粘贴作者信息'); return; }
+
+  var issues = [];
+  var good = [];
+
+  // 邮箱格式检查
+  var emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  if (emailMatch) good.push('邮箱格式正确：' + emailMatch[0]);
+  else issues.push({type:'缺少邮箱',severity:'warning',msg:'未检测到通讯作者邮箱'});
+
+  // ORCID检查
+  var orcidMatch = text.match(/\d{4}-\d{4}-\d{4}-\d{3}[0-9X]/);
+  if (orcidMatch) good.push('ORCID格式正确：' + orcidMatch[0]);
+
+  // 基金编号检查
+  var fundMatch = text.match(/(?:基金|项目|资助|Grant|Project|Fund)[^\n]*(?:编号|No\.?|号|Number)?[:：]?\s*([A-Z]*\d+[A-Z0-9-]*)/i);
+  if (fundMatch) good.push('检测到基金编号：' + fundMatch[1]);
+  else issues.push({type:'缺少基金编号',severity:'suggestion',msg:'未检测到基金项目编号（如果有基金项目，请标注编号）'});
+
+  // 利益冲突声明检查
+  var coiMatch = text.match(/(?:利益冲突|冲突|Competing|Conflict|COI)/i);
+  if (coiMatch) good.push('包含利益冲突声明');
+  else issues.push({type:'缺少利益冲突声明',severity:'suggestion',msg:'未检测到利益冲突声明，建议添加"作者声明不存在利益冲突"'});
+
+  // 通讯作者标注检查
+  var corrMatch = text.match(/(?:通讯作者|通信作者|Corresponding|Correspondence|\*)/);
+  if (corrMatch) good.push('包含通讯作者标注');
+  else issues.push({type:'缺少通讯作者标注',severity:'warning',msg:'未检测到通讯作者标注，建议明确标注通讯作者及邮箱'});
+
+  // 单位标注检查
+  var affMatch = text.match(/(?:大学|学院|研究院|研究所|医院|中心|University|College|Institute|Hospital|Center)/);
+  if (affMatch) good.push('包含作者单位信息');
+  else issues.push({type:'缺少单位',severity:'warning',msg:'未检测到作者单位信息'});
+
+  // 作者数量检查（粗略）
+  var authorLines = text.split('\n')[0];
+  var commaCount = (authorLines.match(/[，,]/g) || []).length;
+  if (commaCount > 0) good.push('检测到约' + (commaCount+1) + '位作者');
+
+  var html = '<div style="background:#fff;border:1px solid #5eead4;border-radius:6px;padding:12px">';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">';
+  html += '<div style="text-align:center;padding:8px;background:#f0fdfa;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#14b8a6">' + good.length + '</div><div style="font-size:10px;color:#6b7280">通过项</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#fef2f2;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#dc2626">' + issues.length + '</div><div style="font-size:10px;color:#6b7280">待改进项</div></div>';
+  html += '</div>';
+  if (good.length > 0) {
+    html += '<div style="font-size:11px;font-weight:600;color:#059669;margin-bottom:4px">✅ 已通过</div>';
+    good.forEach(function(g) { html += '<div style="font-size:11px;color:#047857;line-height:1.8">• ' + g + '</div>'; });
+  }
+  if (issues.length > 0) {
+    html += '<div style="font-size:11px;font-weight:600;color:#dc2626;margin:8px 0 4px">⚠️ 待改进</div>';
+    issues.forEach(function(i) {
+      var color = i.severity === 'warning' ? '#d97706' : '#6b7280';
+      html += '<div style="font-size:11px;color:' + color + ';line-height:1.8">• [' + i.type + '] ' + i.msg + '</div>';
+    });
+  }
+  html += '</div>';
+  resultEl.innerHTML = html;
+}
+
+async function aiCheckAuthorFormat() {
+  var text = document.getElementById('qtAuthorInput').value.trim();
+  var resultEl = document.getElementById('qtAuthorResult');
+  if (!text) { alert('请粘贴作者信息'); return; }
+  resultEl.innerHTML = '<div style="padding:16px;text-align:center;color:#0d9488;font-size:12px">AI正在深度检查...</div>';
+  try {
+    var systemPrompt = '你是学术论文格式编辑专家。请检查用户提供的作者信息、单位、基金项目、致谢、利益冲突声明的格式规范性。检查内容：1.作者署名格式（姓名顺序、上标编号、通讯作者标注）；2.单位标注格式（编号、地址、邮编）；3.邮箱格式；4.ORCID格式（如有）；5.基金项目格式（项目名称、编号、标注位置）；6.致谢格式；7.利益冲突声明格式；8.作者贡献声明（如有）。输出：问题清单（每条含问题描述+修改建议+修改后示例）+ 总体评价。使用中文。';
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, text, 2000, model);
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #5eead4;border-radius:6px;padding:12px"><div style="font-size:12px;font-weight:600;color:#0f766e;margin-bottom:8px">AI深度检查结果</div><div class="md-content" style="font-size:12px;line-height:1.9;color:#1e293b">' + renderMarkdown(response) + '</div></div>';
+  } catch (e) {
+    resultEl.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:10px">检查失败：' + e.message + '</div>';
+  }
+}
+
+// ========== 修改前后对比视图 ==========
+function showDiffView(original, modified) {
+  var area = document.getElementById('fmtResult');
+  if (!area) return;
+  // 简单的逐行diff
+  var origLines = original.split('\n');
+  var modLines = modified.split('\n');
+  var maxLen = Math.max(origLines.length, modLines.length);
+  var html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:#1e293b">修改前后对比</div><button onclick="document.getElementById(\'fmtDiffView\').style.display=\'none\'" style="font-size:11px;color:#6b7280;background:#f3f4f6;border:none;padding:4px 12px;border-radius:4px;cursor:pointer">关闭对比</button></div>';
+  html += '<div id="fmtDiffView" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+  html += '<div><div style="font-size:11px;font-weight:600;color:#dc2626;margin-bottom:6px;padding:4px 8px;background:#fef2f2;border-radius:4px">原文（' + origLines.length + '行）</div><div style="max-height:500px;overflow-y:auto;border:1px solid #fecaca;border-radius:6px">';
+  for (var i = 0; i < maxLen; i++) {
+    var oLine = origLines[i] !== undefined ? origLines[i] : '';
+    var mLine = modLines[i] !== undefined ? modLines[i] : '';
+    var isChanged = oLine !== mLine;
+    var isDeleted = oLine && !mLine;
+    var isAdded = !oLine && mLine;
+    var bg = isDeleted ? '#fef2f2' : isChanged ? '#fffbeb' : 'transparent';
+    html += '<div style="padding:2px 8px;font-size:10px;line-height:1.6;background:' + bg + ';color:' + (isDeleted?'#dc2626':isChanged?'#92400e':'#374151') + ';font-family:Consolas,monospace;white-space:pre-wrap;word-break:break-all"><span style="color:#9ca3af;margin-right:6px">' + (i+1) + '</span>' + (oLine || ' ') + '</div>';
+  }
+  html += '</div></div>';
+  html += '<div><div style="font-size:11px;font-weight:600;color:#059669;margin-bottom:6px;padding:4px 8px;background:#f0fdf4;border-radius:4px">修改后（' + modLines.length + '行）</div><div style="max-height:500px;overflow-y:auto;border:1px solid #86efac;border-radius:6px">';
+  for (var i = 0; i < maxLen; i++) {
+    var oLine = origLines[i] !== undefined ? origLines[i] : '';
+    var mLine = modLines[i] !== undefined ? modLines[i] : '';
+    var isChanged = oLine !== mLine;
+    var isAdded = !oLine && mLine;
+    var bg = isAdded ? '#f0fdf4' : isChanged ? '#f0fdf4' : 'transparent';
+    html += '<div style="padding:2px 8px;font-size:10px;line-height:1.6;background:' + bg + ';color:' + (isAdded?'#059669':isChanged?'#047857':'#374151') + ';font-family:Consolas,monospace;white-space:pre-wrap;word-break:break-all"><span style="color:#9ca3af;margin-right:6px">' + (i+1) + '</span>' + (mLine || ' ') + '</div>';
+  }
+  html += '</div></div>';
+  html += '</div>';
+  // 图例
+  html += '<div style="margin-top:10px;display:flex;gap:16px;font-size:10px;color:#6b7280"><span><span style="display:inline-block;width:12px;height:12px;background:#fef2f2;border:1px solid #fecaca;vertical-align:middle;margin-right:4px"></span>删除/修改行</span><span><span style="display:inline-block;width:12px;height:12px;background:#f0fdf4;border:1px solid #86efac;vertical-align:middle;margin-right:4px"></span>新增/修改行</span></div>';
+  html += '</div>';
+  // 插入到结果区域顶部
+  area.innerHTML = html + area.innerHTML;
+}
+
+// ========== 多版本管理 ==========
+var FMT_VERSIONS_KEY = 'phd_fmt_versions';
+var FMT_MAX_VERSIONS = 10;
+
+function getFmtVersions() {
+  try {
+    return JSON.parse(localStorage.getItem(FMT_VERSIONS_KEY) || '[]');
+  } catch(e) { return []; }
+}
+
+function saveFmtVersion(original, modified, summary) {
+  var versions = getFmtVersions();
+  versions.unshift({
+    id: Date.now(),
+    time: new Date().toLocaleString('zh-CN'),
+    original: original.substring(0, 2000),
+    modified: modified.substring(0, 2000),
+    summary: summary || '',
+    origLength: original.length,
+    modLength: modified.length
+  });
+  if (versions.length > FMT_MAX_VERSIONS) versions = versions.slice(0, FMT_MAX_VERSIONS);
+  localStorage.setItem(FMT_VERSIONS_KEY, JSON.stringify(versions));
+}
+
+function renderFmtVersions() {
+  var versions = getFmtVersions();
+  var html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:#1e293b">历史版本（' + versions.length + '/' + FMT_MAX_VERSIONS + '）</div>';
+  if (versions.length > 0) html += '<button onclick="clearFmtVersions()" style="font-size:11px;color:#dc2626;background:#fef2f2;border:none;padding:4px 12px;border-radius:4px;cursor:pointer">清空全部</button>';
+  html += '</div>';
+  if (versions.length === 0) {
+    html += '<div style="text-align:center;padding:20px;color:#9ca3af;font-size:12px">暂无历史版本。使用"一键检查并修改"后会自动保存版本。</div>';
+  } else {
+    versions.forEach(function(v, idx) {
+      html += '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:8px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#1e293b">版本 ' + (idx+1) + ' · ' + v.time + '</div>';
+      html += '<div style="display:flex;gap:6px"><button onclick="viewFmtVersion(' + v.id + ')" style="font-size:10px;color:#2563eb;background:#eff6ff;border:none;padding:3px 8px;border-radius:3px;cursor:pointer">查看</button><button onclick="restoreFmtVersion(' + v.id + ')" style="font-size:10px;color:#059669;background:#f0fdf4;border:none;padding:3px 8px;border-radius:3px;cursor:pointer">恢复原文</button><button onclick="deleteFmtVersion(' + v.id + ')" style="font-size:10px;color:#dc2626;background:#fef2f2;border:none;padding:3px 8px;border-radius:3px;cursor:pointer">删除</button></div></div>';
+      html += '<div style="font-size:10px;color:#6b7280;line-height:1.6">原文 ' + v.origLength + ' 字符 → 修改后 ' + v.modLength + ' 字符' + (v.summary ? ' · ' + v.summary.substring(0,80) : '') + '</div>';
+      html += '<div id="fmtVer_' + v.id + '" style="display:none;margin-top:8px"></div>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+  return html;
+}
+
+function viewFmtVersion(id) {
+  var versions = getFmtVersions();
+  var v = versions.find(function(x) { return x.id === id; });
+  if (!v) return;
+  var el = document.getElementById('fmtVer_' + id);
+  if (el.style.display === 'block') { el.style.display = 'none'; return; }
+  el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div style="font-size:10px;font-weight:600;color:#dc2626;margin-bottom:4px">原文</div><div style="font-size:10px;line-height:1.6;color:#374151;background:#fef2f2;padding:8px;border-radius:4px;max-height:200px;overflow-y:auto;white-space:pre-wrap;font-family:Consolas,monospace">' + v.original + '</div></div><div><div style="font-size:10px;font-weight:600;color:#059669;margin-bottom:4px">修改后</div><div style="font-size:10px;line-height:1.6;color:#374151;background:#f0fdf4;padding:8px;border-radius:4px;max-height:200px;overflow-y:auto;white-space:pre-wrap;font-family:Consolas,monospace">' + v.modified + '</div></div></div>';
+  el.style.display = 'block';
+}
+
+function restoreFmtVersion(id) {
+  var versions = getFmtVersions();
+  var v = versions.find(function(x) { return x.id === id; });
+  if (!v) return;
+  if (!confirm('确定将原文恢复到编辑器吗？当前内容将被替换。')) return;
+  document.getElementById('fmtContent').value = v.original;
+  document.getElementById('fmtCharCount').textContent = v.original.length + ' 字符';
+  alert('已恢复原文到编辑器');
+}
+
+function deleteFmtVersion(id) {
+  if (!confirm('确定删除这个版本吗？')) return;
+  var versions = getFmtVersions().filter(function(x) { return x.id !== id; });
+  localStorage.setItem(FMT_VERSIONS_KEY, JSON.stringify(versions));
+  // 重新渲染
+  var area = document.getElementById('fmtResult');
+  if (area) {
+    var verHtml = renderFmtVersions();
+    // 移除旧的版本区域并重新添加
+    var oldVer = area.querySelector('#fmtVersionsArea');
+    if (oldVer) oldVer.remove();
+    var wrapper = document.createElement('div');
+    wrapper.id = 'fmtVersionsArea';
+    wrapper.innerHTML = verHtml;
+    area.appendChild(wrapper);
+  }
+}
+
+function clearFmtVersions() {
+  if (!confirm('确定清空全部历史版本吗？此操作不可恢复。')) return;
+  localStorage.removeItem(FMT_VERSIONS_KEY);
+  var area = document.getElementById('fmtResult');
+  if (area) {
+    var oldVer = area.querySelector('#fmtVersionsArea');
+    if (oldVer) oldVer.remove();
+    var wrapper = document.createElement('div');
+    wrapper.id = 'fmtVersionsArea';
+    wrapper.innerHTML = renderFmtVersions();
+    area.appendChild(wrapper);
+  }
+}
+
+
 // 获取选中的格式检查项
 function getFmtChecks() {
   var checks = [];
@@ -38792,12 +39019,20 @@ function renderFormatFixResult(response) {
   var fullMatch = response.match(/===修改后全文===([\s\S]*)$/);
   if (fullMatch) {
     var fixedText = fullMatch[1].trim();
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">';
     html += '<div style="font-size:13px;font-weight:700;color:#1e293b">修改后全文（' + fixedText.length + ' 字符）</div>';
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button onclick="showDiffView(document.getElementById(\'fmtContent\').value, document.getElementById(\'fmtFixedText\').textContent)" style="background:#6366f1;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">对比视图</button>';
     html += '<button onclick="navigator.clipboard.writeText(document.getElementById(\'fmtFixedText\').textContent).then(function(){alert(\'已复制到剪贴板\')})" style="background:#0284c7;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">复制全文</button>';
-    html += '</div>';
+    html += '</div></div>';
     html += '<div id="fmtFixedText" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;font-size:12px;line-height:1.9;color:#1e293b;white-space:pre-wrap;max-height:500px;overflow-y:auto;font-family:Consolas,monospace">' + fixedText + '</div>';
+    // 自动保存版本
+    var countMatch = response.match(/修改问题数[:：]\s*(\d+)/);
+    saveFmtVersion(document.getElementById('fmtContent').value, fixedText, countMatch ? '修改了' + countMatch[1] + '处问题' : '');
   }
+
+  // 历史版本区域
+  html += '<div id="fmtVersionsArea">' + renderFmtVersions() + '</div>';
 
   return html;
 }
