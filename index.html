@@ -52740,7 +52740,7 @@ function renderMermaidGraph(code, containerId) {
   }
 }
 
-// 将foreignObject转换为SVG text（避免canvas污染），保留label文字与位置（用getBBox取真实坐标）
+// 将foreignObject转换为SVG text（避免canvas污染），保留label文字与位置（getBBox取真实坐标+动态字号+自动换行）
 function svgSanitizeForCanvas(svg) {
   var clone = svg.cloneNode(true);
   var ns = 'http://www.w3.org/2000/svg';
@@ -52755,15 +52755,32 @@ function svgSanitizeForCanvas(svg) {
     if (!txt) { fo.remove(); return; }
     var cx = bb ? (bb.x + bb.width / 2) : 0;
     var cy = bb ? (bb.y + bb.height / 2) : 0;
+    var w = bb ? bb.width : 100;
+    var fontSize = w < 50 ? 9 : w < 70 ? 10 : w < 90 ? 12 : 14;
     var text = document.createElementNS(ns, 'text');
-    text.setAttribute('x', cx.toFixed(1));
-    text.setAttribute('y', cy.toFixed(1));
+    var charsPerLine = Math.max(2, Math.floor(w / (fontSize * 1.05)));
+    if (txt.length > charsPerLine) {
+      var lines = [];
+      for (var li = 0; li < txt.length; li += charsPerLine) lines.push(txt.substring(li, li + charsPerLine));
+      text.setAttribute('x', cx.toFixed(1));
+      text.setAttribute('y', (cy - (lines.length - 1) * fontSize * 0.6).toFixed(1));
+      lines.forEach(function(ln, idx) {
+        var ts = document.createElementNS(ns, 'tspan');
+        ts.setAttribute('x', cx.toFixed(1));
+        if (idx > 0) ts.setAttribute('dy', (fontSize * 1.2).toFixed(1));
+        ts.textContent = ln;
+        text.appendChild(ts);
+      });
+    } else {
+      text.setAttribute('x', cx.toFixed(1));
+      text.setAttribute('y', cy.toFixed(1));
+      text.textContent = txt;
+    }
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
-    text.setAttribute('font-size', '14');
+    text.setAttribute('font-size', fontSize);
     text.setAttribute('font-family', '"Microsoft YaHei","PingFang SC",Arial,sans-serif');
     text.setAttribute('fill', '#333');
-    text.textContent = txt;
     fo.parentNode.replaceChild(text, fo);
   });
   return clone;
