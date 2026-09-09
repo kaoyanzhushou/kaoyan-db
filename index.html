@@ -748,8 +748,11 @@ body.focus-mode .focus-mode-exit{display:flex}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script>if(window.mermaid){mermaid.initialize({startOnLoad:false,theme:'default',securityLevel:'loose',flowchart:{useMaxWidth:true,curve:'basis'}});}</script>
-<script>window.onerror = function(msg, url, lineNo, columnNo, error) {
-window.__lastError={msg:msg,line:lineNo,column:columnNo,stack:error?error.stack:null};
+<script>window.__allErrors = [];
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+var err = {msg:msg,line:lineNo,column:columnNo,stack:error?error.stack:null,time:new Date().toISOString()};
+window.__allErrors.push(err);
+window.__lastError = err;
 console.error('全局错误:', msg, '行:', lineNo, '列:', columnNo);
 return false;
 };
