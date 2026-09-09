@@ -38903,7 +38903,8 @@ function showSubmissionDetail(paperId, subId) {
           html += '<div style="background:#f9fafb;border-radius:6px;padding:10px;margin-bottom:8px;border-left:3px solid ' + (statusColors[cmt.status] || '#9ca3af') + '">';
           html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><div style="font-size:12px;color:#374151;flex:1;margin-right:10px;line-height:1.6">' + cmt.text + '</div><select onchange="updateCommentStatus(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\', this.value)" style="font-size:11px;padding:3px 6px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;white-space:nowrap"><option value="pending"' + (cmt.status==='pending'?' selected':'') + '>待处理</option><option value="in_progress"' + (cmt.status==='in_progress'?' selected':'') + '>修改中</option><option value="done"' + (cmt.status==='done'?' selected':'') + '>已完成</option><option value="disputed"' + (cmt.status==='disputed'?' selected':'') + '>已反驳</option></select></div>';
           if (cmt.response) html += '<div style="font-size:11px;color:#059669;background:#f0fdf4;padding:6px 10px;border-radius:4px;margin-top:6px;line-height:1.6"><b>回复：</b>' + cmt.response + '</div>';
-          html += '<div style="display:flex;gap:6px;margin-top:6px"><button onclick="editCommentResponse(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\')" style="font-size:10px;color:#7c3aed;background:none;border:none;cursor:pointer;padding:2px 6px">编辑回复</button><button onclick="deleteComment(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\')" style="font-size:10px;color:#dc2626;background:none;border:none;cursor:pointer;padding:2px 6px">删除意见</button></div>';
+          html += '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><button onclick="aiGenerateCommentResponse(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\')" style="font-size:10px;color:#fff;background:#7c3aed;border:none;padding:3px 10px;border-radius:4px;cursor:pointer">AI生成回复</button><button onclick="editCommentResponse(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\')" style="font-size:10px;color:#7c3aed;background:#ede9fe;border:none;padding:3px 10px;border-radius:4px;cursor:pointer">编辑回复</button><button onclick="deleteComment(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\')" style="font-size:10px;color:#dc2626;background:#fee2e2;border:none;padding:3px 10px;border-radius:4px;cursor:pointer">删除意见</button></div>';
+          html += '<div id="aiResp_' + cmt.id + '" style="margin-top:8px"></div>';
           html += '</div>';
         });
       }
@@ -38990,6 +38991,82 @@ function editCommentResponse(paperId, subId, reviewerId, commentId) {
   savePubPapers(papers);
   showSubmissionDetail(paperId, subId);
 }
+
+// AI生成审稿意见回复
+async function aiGenerateCommentResponse(paperId, subId, reviewerId, commentId) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub || !sub.reviewers) return;
+  var reviewer = sub.reviewers.find(function(r) { return r.id === reviewerId; });
+  if (!reviewer || !reviewer.comments) return;
+  var comment = reviewer.comments.find(function(c) { return c.id === commentId; });
+  if (!comment) return;
+
+  var respEl = document.getElementById('aiResp_' + commentId);
+  if (!respEl) return;
+  respEl.innerHTML = '<div style="padding:10px;background:#f5f3ff;border-radius:6px;font-size:12px;color:#7c3aed;text-align:center">AI正在生成回复...</div>';
+
+  try {
+    var systemPrompt = `你是一位体育学/运动科学领域的资深学术编辑，擅长撰写专业、得体的审稿意见回复。请根据以下审稿意见，为作者生成一条专业的回复。
+
+回复要求：
+1. 开头感谢审稿人的宝贵意见
+2. 针对意见内容给出具体回应：
+   - 如果是合理的修改建议：说明已经做了什么具体修改，引用修改后的原文片段
+   - 如果是需要补充实验/数据：说明补充了什么，或说明为什么无法补充及替代方案
+   - 如果是有争议的意见：有理有据地解释，语气尊重专业，不要直接反驳
+   - 如果是文字/格式问题：说明已全文检查并修改
+3. 回复要具体、可操作，不要空泛地说"已修改"
+4. 语言：正式学术英语（如果意见是中文则用中文回复）
+5. 长度：50-150词，简洁有力
+
+论文标题：` + paper.title + `
+文章类型：` + (paper.type || '未分类') + `
+目标期刊：` + sub.journal + `
+审稿人：` + (reviewer.name || '匿名') + `
+当前投稿状态：` + getStatusInfo(sub.status).label;
+
+    var userPrompt = '审稿意见原文：\n' + comment.text + (comment.response ? '\n\n作者已有回复（请在此基础上优化）：\n' + comment.response : '');
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 500, model);
+
+    respEl.innerHTML = '<div style="background:#f5f3ff;border-radius:6px;padding:12px;border:1px solid #c4b5fd">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:11px;font-weight:600;color:#7c3aed">AI生成的回复草稿</span><span style="font-size:10px;color:#9ca3af">可编辑后保存</span></div>'
+      + '<textarea id="aiRespText_' + commentId + '" rows="5" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;resize:vertical;line-height:1.7;font-family:inherit">' + response + '</textarea>'
+      + '<div style="display:flex;gap:8px;margin-top:8px">'
+      + '<button onclick="saveAICommentResponse(\'' + paperId + '\', \'' + subId + '\', \'' + reviewerId + '\', \'' + commentId + '\')" style="font-size:11px;color:#fff;background:#7c3aed;border:none;padding:5px 14px;border-radius:4px;cursor:pointer;font-weight:600">保存回复</button>'
+      + '<button onclick="aiGenerateCommentResponse(\'' + paperId + '\', \'' + subId + '\', \'' + reviewerId + '\', \'' + commentId + '\')" style="font-size:11px;color:#7c3aed;background:#ede9fe;border:none;padding:5px 14px;border-radius:4px;cursor:pointer">重新生成</button>'
+      + '<button onclick="document.getElementById(\'aiResp_' + commentId + '\').innerHTML=\'\'" style="font-size:11px;color:#6b7280;background:#f3f4f6;border:none;padding:5px 14px;border-radius:4px;cursor:pointer">收起</button>'
+      + '</div></div>';
+  } catch (error) {
+    respEl.innerHTML = '<div style="padding:10px;background:#fef2f2;border-radius:6px;font-size:12px;color:#dc2626">生成失败：' + error.message + '</div>';
+  }
+}
+
+// 保存AI生成的回复
+function saveAICommentResponse(paperId, subId, reviewerId, commentId) {
+  var textEl = document.getElementById('aiRespText_' + commentId);
+  if (!textEl) return;
+  var response = textEl.value.trim();
+  if (!response) { alert('回复内容不能为空'); return; }
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub || !sub.reviewers) return;
+  var reviewer = sub.reviewers.find(function(r) { return r.id === reviewerId; });
+  if (!reviewer || !reviewer.comments) return;
+  var comment = reviewer.comments.find(function(c) { return c.id === commentId; });
+  if (!comment) return;
+  comment.response = response;
+  comment.status = 'done';
+  savePubPapers(papers);
+  showSubmissionDetail(paperId, subId);
+  alert('回复已保存，该意见已标记为"已完成"');
+}
+
 
 function deleteComment(paperId, subId, reviewerId, commentId) {
   if (!confirm('确定删除这条审稿意见？')) return;
