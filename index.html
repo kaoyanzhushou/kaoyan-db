@@ -7150,16 +7150,35 @@ console.log('✅ 学习工具入口已加载');
         <button onclick="switchAssistTool('chart')" id="assistTool-chart" style="background:#fff;border:2px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:28px;margin-bottom:6px">📊</div><div style="font-size:13px;font-weight:700;color:#1f2937">图表建议</div><div style="font-size:11px;color:#6b7280;margin-top:2px">图表类型推荐+代码</div></button>
       </div>
 
-      <!-- AI选题推荐 -->
+      <!-- AI选题推荐（多模型增强版） -->
       <div id="assistContent-topic" style="display:block">
+        <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:12px;padding:18px;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div style="font-size:16px;font-weight:700;color:#166534">多模型AI选题推荐</div>
+            <span style="font-size:11px;color:#16a34a;background:#fff;padding:3px 8px;border-radius:10px;font-weight:600">7大模型可选</span>
+          </div>
+          <div style="font-size:12px;color:#15803d">多模型并行生成 · 结果对比 · AI聚合评分 · 选题深化</div>
+        </div>
+
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
-          <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:14px">AI选题推荐</div>
+          <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:14px">选题设置</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">研究方向 *</label><input type="text" id="topicField" placeholder="如：运动生理学、体育教育训练学..." style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>
             <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">研究基础/兴趣</label><input type="text" id="topicInterest" placeholder="如：有氧运动、线粒体、胰岛素抵抗" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>
           </div>
-          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">目标层次</label><select id="topicLevel" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff"><option value="phd">博士论文（深度创新）</option><option value="master">硕士论文（中等创新）</option><option value="journal">期刊论文（聚焦创新点）</option></select></div>
-          <button onclick="generateTopics()" style="width:100%;background:#16a34a;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">AI推荐选题方向</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+            <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">目标层次</label><select id="topicLevel" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff"><option value="phd">博士论文（深度创新）</option><option value="master">硕士论文（中等创新）</option><option value="journal">期刊论文（聚焦创新点）</option></select></div>
+            <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">每模型选题数</label><select id="topicCount" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff"><option value="5">5个（快速）</option><option value="8" selected>8个（推荐）</option><option value="10">10个（全面）</option></select></div>
+          </div>
+          <div style="margin-bottom:14px">
+            <div style="font-size:12px;color:#374151;font-weight:600;margin-bottom:6px">选择AI模型（可多选，建议2-3个对比）</div>
+            <div id="topicModelSelector" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"></div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px">已选 <span id="topicSelectedCount" style="color:#16a34a;font-weight:600">1</span> 个模型 · 当前默认：<span id="topicCurrentModel" style="color:#6b7280"></span></div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button onclick="generateTopicsMulti()" id="topicGenBtn" style="flex:1;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;box-shadow:0 2px 8px rgba(22,163,74,0.3)">多模型生成选题</button>
+            <button onclick="aggregateTopics()" id="topicAggBtn" style="background:#f59e0b;color:#fff;border:none;padding:12px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;display:none">AI聚合推荐</button>
+          </div>
         </div>
         <div id="topicResult"></div>
       </div>
@@ -28680,6 +28699,279 @@ function switchAssistTool(tool) {
     if (content) content.style.display = (t === tool) ? 'block' : 'none';
   });
 }
+
+
+// ========== 多模型AI选题 ==========
+var TOPIC_MODELS = [
+  {id:'deepseek-chat', name:'DeepSeek V3', color:'#6366f1'},
+  {id:'deepseek-v4-pro', name:'DeepSeek V4 Pro', color:'#8b5cf6'},
+  {id:'deepseek-v4-flash', name:'DeepSeek V4 Flash', color:'#a78bfa'},
+  {id:'glm-5.3', name:'智谱GLM 5.3', color:'#06b6d4'},
+  {id:'kimi-k3', name:'Kimi K3', color:'#f59e0b'},
+  {id:'hy3', name:'混元Hunyuan 3', color:'#ef4444'},
+  {id:'hy4-preview', name:'混元Hunyuan 4', color:'#dc2626'}
+];
+var _topicResults = {};
+var _topicSaved = JSON.parse(localStorage.getItem('kaoyan_saved_topics') || '[]');
+
+function initTopicModelSelector() {
+  var container = document.getElementById('topicModelSelector');
+  if (!container) return;
+  var html = '';
+  TOPIC_MODELS.forEach(function(m) {
+    var checked = m.id === (window.currentAiModel || 'deepseek-chat') ? 'checked' : '';
+    html += '<label style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;font-size:11px;color:#374151;transition:all .15s" onmouseover="this.style.borderColor=\'' + m.color + '\';this.style.background=\'' + m.color + '11\'" onmouseout="this.style.borderColor=\'#e5e7eb\';this.style.background=\'transparent\'"><input type="checkbox" class="topicModelCb" value="' + m.id + '" data-name="' + m.name + '" data-color="' + m.color + '" ' + checked + ' onchange="updateTopicSelectedCount()"><span style="font-weight:500">' + m.name + '</span></label>';
+  });
+  container.innerHTML = html;
+  document.getElementById('topicCurrentModel').textContent = window.currentAiModel || 'deepseek-chat';
+  updateTopicSelectedCount();
+}
+
+function updateTopicSelectedCount() {
+  var count = document.querySelectorAll('.topicModelCb:checked').length;
+  document.getElementById('topicSelectedCount').textContent = count;
+}
+
+function getSelectedTopicModels() {
+  var models = [];
+  document.querySelectorAll('.topicModelCb:checked').forEach(function(cb) {
+    models.push({id: cb.value, name: cb.dataset.name, color: cb.dataset.color});
+  });
+  return models;
+}
+
+async function generateTopicsMulti() {
+  var field = document.getElementById('topicField').value.trim();
+  if (!field) { alert('请输入研究方向'); return; }
+  var models = getSelectedTopicModels();
+  if (models.length === 0) { alert('请至少选择一个AI模型'); return; }
+
+  var interest = document.getElementById('topicInterest').value.trim();
+  var level = document.getElementById('topicLevel').value;
+  var count = document.getElementById('topicCount').value;
+  var levelLabels = {phd:'博士论文', master:'硕士论文', journal:'期刊论文'};
+
+  var btn = document.getElementById('topicGenBtn');
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  btn.textContent = '生成中... (0/' + models.length + ')';
+
+  var resultEl = document.getElementById('topicResult');
+  _topicResults = {};
+
+  // 生成进度卡片
+  var progressHtml = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">';
+  progressHtml += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:14px">多模型生成进度</div>';
+  progressHtml += '<div id="topicProgressCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">';
+  models.forEach(function(m) {
+    progressHtml += '<div id="topicProgress-' + m.id + '" style="padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><div style="width:8px;height:8px;border-radius:50%;background:' + m.color + '"></div><span style="font-size:12px;font-weight:600;color:#374151">' + m.name + '</span></div><div style="font-size:11px;color:#9ca3af" id="topicStatus-' + m.id + '">等待中...</div></div>';
+  });
+  progressHtml += '</div></div>';
+  progressHtml += '<div id="topicModelResults"></div>';
+  resultEl.innerHTML = progressHtml;
+
+  var systemPrompt = '你是一位体育学研究选题专家，拥有10年以上体育学基金申请和论文选题指导经验，熟悉运动人体科学、体育教育训练学、体育人文社会学、运动康复学等各方向的研究前沿和热点。你擅长结合学科发展趋势和研究者背景，提出具体、可操作、有创新性的研究选题。';
+
+  var completed = 0;
+  var promises = models.map(function(m) {
+    return new Promise(function(resolve) {
+      var userPrompt = '请为以下研究方向推荐' + count + '个具体的选题方向：\n\n研究方向：' + field + '\n研究基础/兴趣：' + (interest || '无特别限制') + '\n目标层次：' + (levelLabels[level] || '') + '\n\n每个选题请包含：\n1. 选题名称（简洁明确）\n2. 研究意义（理论意义+实践价值）\n3. 可行性分析（数据可获得性/方法成熟度/资源需求）\n4. 创新点（理论/方法/应用）\n5. 推荐研究方法\n\n要求：选题要具体、可操作，避免过于宽泛；优先推荐近3年领域热点和前沿方向；结合体育学特点；使用JSON格式输出，格式为：{"topics":[{"name":"","significance":"","feasibility":"","innovation":"","method":""}]}';
+
+      var statusEl = document.getElementById('topicStatus-' + m.id);
+      if (statusEl) statusEl.textContent = '生成中...';
+      var cardEl = document.getElementById('topicProgress-' + m.id);
+      if (cardEl) cardEl.style.borderColor = m.color;
+
+      callDeepSeekAPI(systemPrompt, userPrompt, 3000, m.id).then(function(result) {
+        _topicResults[m.id] = {model: m, raw: result, parsed: parseTopicJSON(result)};
+        completed++;
+        btn.textContent = '生成中... (' + completed + '/' + models.length + ')';
+        if (statusEl) statusEl.textContent = '完成 ✓';
+        if (cardEl) { cardEl.style.background = m.color + '11'; cardEl.style.borderColor = m.color; }
+        renderTopicModelResult(m);
+        resolve();
+      }).catch(function(err) {
+        _topicResults[m.id] = {model: m, raw: '', parsed: null, error: err.message};
+        completed++;
+        btn.textContent = '生成中... (' + completed + '/' + models.length + ')';
+        if (statusEl) statusEl.textContent = '失败: ' + err.message;
+        if (cardEl) { cardEl.style.background = '#fef2f2'; cardEl.style.borderColor = '#fca5a5'; }
+        resolve();
+      });
+    });
+  });
+
+  await Promise.all(promises);
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.textContent = '多模型生成选题';
+
+  // 显示聚合按钮
+  var aggBtn = document.getElementById('topicAggBtn');
+  if (aggBtn && Object.keys(_topicResults).length > 1) {
+    aggBtn.style.display = 'block';
+  }
+}
+
+function parseTopicJSON(text) {
+  try {
+    var match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      var obj = JSON.parse(match[0]);
+      if (obj.topics && Array.isArray(obj.topics)) return obj.topics;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function renderTopicModelResult(m) {
+  var container = document.getElementById('topicModelResults');
+  if (!container) return;
+  var data = _topicResults[m.id];
+  if (!data) return;
+
+  var html = '<div id="topicResult-' + m.id + '" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);overflow:hidden">';
+  html += '<div style="padding:14px 18px;background:' + m.color + '0d;border-bottom:1px solid ' + m.color + '33;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:' + m.color + '"></div><span style="font-size:14px;font-weight:700;color:#1f2937">' + m.name + ' 推荐选题</span>';
+  if (data.parsed) html += '<span style="font-size:11px;color:' + m.color + ';background:#fff;padding:2px 8px;border-radius:10px;font-weight:600">' + data.parsed.length + '个</span>';
+  html += '</div></div>';
+  html += '<div style="padding:16px 18px">';
+
+  if (data.error) {
+    html += '<div style="color:#dc2626;font-size:13px">生成失败：' + data.error + '</div>';
+  } else if (data.parsed) {
+    data.parsed.forEach(function(t, idx) {
+      html += '<div style="padding:12px;background:#f9fafb;border-radius:8px;margin-bottom:10px;border-left:3px solid ' + m.color + '">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">';
+      html += '<div style="font-size:13px;font-weight:700;color:#1f2937;flex:1">' + (idx+1) + '. ' + (t.name || '未命名选题') + '</div>';
+      html += '<button onclick="saveTopic(\'' + m.id + '\',' + idx + ')" style="background:#f3f4f6;color:#6b7280;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;white-space:nowrap">保存</button>';
+      html += '</div>';
+      if (t.significance) html += '<div style="font-size:12px;color:#374151;margin-top:6px;line-height:1.6"><strong style="color:#16a34a">意义：</strong>' + t.significance + '</div>';
+      if (t.feasibility) html += '<div style="font-size:12px;color:#374151;margin-top:4px;line-height:1.6"><strong style="color:#2563eb">可行性：</strong>' + t.feasibility + '</div>';
+      if (t.innovation) html += '<div style="font-size:12px;color:#374151;margin-top:4px;line-height:1.6"><strong style="color:#f59e0b">创新点：</strong>' + t.innovation + '</div>';
+      if (t.method) html += '<div style="font-size:12px;color:#374151;margin-top:4px;line-height:1.6"><strong style="color:#8b5cf6">方法：</strong>' + t.method + '</div>';
+      html += '</div>';
+    });
+  } else {
+    html += '<div class="md-content" style="font-size:13px;line-height:1.8;color:#1f2937">' + (window.renderMarkdown ? renderMarkdown(data.raw) : data.raw) + '</div>';
+  }
+  html += '</div></div>';
+
+  // 插入到容器顶部（按生成顺序）
+  var existing = document.getElementById('topicResult-' + m.id);
+  if (existing) existing.remove();
+  container.insertAdjacentHTML('beforeend', html);
+}
+
+async function aggregateTopics() {
+  var allTopics = [];
+  Object.keys(_topicResults).forEach(function(mid) {
+    var data = _topicResults[mid];
+    if (data.parsed) {
+      data.parsed.forEach(function(t) {
+        allTopics.push({...t, source: data.model.name});
+      });
+    }
+  });
+  if (allTopics.length < 3) { alert('选题太少，无法聚合（至少需要3个）'); return; }
+
+  var btn = document.getElementById('topicAggBtn');
+  btn.disabled = true;
+  btn.textContent = '聚合中...';
+  btn.style.opacity = '0.7';
+
+  var resultEl = document.getElementById('topicResult');
+  resultEl.insertAdjacentHTML('afterbegin', '<div id="topicAggResult" style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fde68a;border-radius:12px;padding:20px;margin-bottom:16px"><div style="text-align:center;padding:20px"><div style="font-size:32px;margin-bottom:8px;animation:spin 1s linear infinite">⏳</div><div style="font-size:14px;color:#92400e;font-weight:600">AI正在聚合' + allTopics.length + '个选题，去重并评分排序...</div></div></div>');
+
+  var topicsText = allTopics.map(function(t, i) { return (i+1) + '. ' + t.name + '（来源：' + t.source + '）\n意义：' + (t.significance || '') + '\n创新：' + (t.innovation || ''); }).join('\n\n');
+
+  var systemPrompt = '你是一位体育学学术评审专家，擅长评估研究选题的质量和价值。请对以下多个AI模型生成的选题进行聚合、去重、评分和排序。';
+  var userPrompt = '以下是' + allTopics.length + '个体育学研究选题（来自不同AI模型）：\n\n' + topicsText + '\n\n请完成以下任务：\n1.【去重合并】将相似/重复的选题合并，保留最完善的表述\n2.【评分】对每个选题按以下维度评分（每项0-100分）：创新性、可行性、研究价值、时效性（是否为当前热点）、体育学特色\n3.【综合排序】按综合得分排序，选出TOP 8推荐选题\n4.【推荐理由】为每个TOP选题给出一句话推荐理由\n5.【选题深化建议】为排名前3的选题给出具体的深化方向（如研究框架、关键科学问题）\n\n输出JSON格式：{"aggregated_topics":[{"name":"","scores":{"innovation":0,"feasibility":0,"value":0,"timeliness":0,"sports_feature":0},"total_score":0,"recommendation":"","sources":[]}],"top3_deepening":[{"name":"","deepening":""}]}';
+
+  try {
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+    var parsed = parseAggregateJSON(result);
+    renderAggregateResult(parsed, result);
+  } catch(e) {
+    document.getElementById('topicAggResult').innerHTML = '<div style="color:#dc2626;font-size:13px">聚合失败：' + e.message + '</div>';
+  }
+  btn.disabled = false;
+  btn.textContent = 'AI聚合推荐';
+  btn.style.opacity = '1';
+}
+
+function parseAggregateJSON(text) {
+  try {
+    var match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+  } catch(e) {}
+  return null;
+}
+
+function renderAggregateResult(parsed, raw) {
+  var el = document.getElementById('topicAggResult');
+  if (!el) return;
+  if (!parsed || !parsed.aggregated_topics) {
+    el.innerHTML = '<div style="padding:14px"><div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px">AI聚合结果（原始格式）</div><div class="md-content" style="font-size:13px;line-height:1.8;color:#1f2937">' + (window.renderMarkdown ? renderMarkdown(raw) : raw) + '</div></div>';
+    return;
+  }
+  var topics = parsed.aggregated_topics.slice(0, 8);
+  var html = '<div style="padding:4px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-size:15px;font-weight:700;color:#92400e">AI聚合推荐 TOP ' + topics.length + '</div><span style="font-size:11px;color:#a16207;background:#fff;padding:3px 10px;border-radius:10px;font-weight:600">多模型去重评分</span></div>';
+  html += '<div style="display:flex;gap:6px;font-size:10px;color:#6b7280;margin-bottom:10px;padding-left:4px"><span>💡创新</span><span>🔧可行</span><span>⭐价值</span><span>🔥时效</span><span>🏃体育特色</span></div>';
+
+  topics.forEach(function(t, idx) {
+    var medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : (idx+1);
+    var scores = t.scores || {};
+    html += '<div style="padding:12px 14px;background:#fff;border-radius:8px;margin-bottom:8px;border:1px solid #fde68a">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px">';
+    html += '<div style="font-size:13px;font-weight:700;color:#1f2937;flex:1"><span style="margin-right:6px">' + medal + '</span>' + (t.name || '') + '</div>';
+    html += '<div style="font-size:14px;font-weight:800;color:#d97706;white-space:nowrap">' + (t.total_score || 0) + '分</div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">';
+    ['innovation','feasibility','value','timeliness','sports_feature'].forEach(function(k) {
+      var s = scores[k] || 0;
+      var color = s >= 85 ? '#16a34a' : s >= 70 ? '#2563eb' : s >= 60 ? '#f59e0b' : '#dc2626';
+      html += '<span style="font-size:10px;color:' + color + ';font-weight:600">' + s + '</span>';
+    });
+    html += '</div>';
+    if (t.recommendation) html += '<div style="font-size:12px;color:#78350f;line-height:1.6">💡 ' + t.recommendation + '</div>';
+    if (t.sources && t.sources.length > 0) html += '<div style="font-size:10px;color:#9ca3af;margin-top:4px">来源：' + t.sources.join('、') + '</div>';
+    html += '</div>';
+  });
+
+  if (parsed.top3_deepening && parsed.top3_deepening.length > 0) {
+    html += '<div style="margin-top:14px;padding-top:14px;border-top:1px solid #fde68a"><div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px">TOP3 选题深化建议</div>';
+    parsed.top3_deepening.forEach(function(d) {
+      html += '<div style="padding:10px;background:#fffbeb;border-radius:6px;margin-bottom:8px"><div style="font-size:12px;font-weight:600;color:#78350f;margin-bottom:4px">' + (d.name || '') + '</div><div style="font-size:11px;color:#92400e;line-height:1.7">' + (d.deepening || '') + '</div></div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function saveTopic(modelId, idx) {
+  var data = _topicResults[modelId];
+  if (!data || !data.parsed || !data.parsed[idx]) return;
+  var topic = data.parsed[idx];
+  var item = {
+    name: topic.name,
+    significance: topic.significance,
+    feasibility: topic.feasibility,
+    innovation: topic.innovation,
+    method: topic.method,
+    source: data.model.name,
+    savedAt: new Date().toISOString()
+  };
+  _topicSaved.push(item);
+  localStorage.setItem('kaoyan_saved_topics', JSON.stringify(_topicSaved));
+  alert('选题已保存！共保存 ' + _topicSaved.length + ' 个选题');
+}
+
+// 页面加载时初始化模型选择器
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(initTopicModelSelector, 500);
+});
 
 async function generateTopics() {
   var field = (document.getElementById('topicField') || {}).value || '';
