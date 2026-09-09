@@ -46389,11 +46389,24 @@ function startPhdMentorInterview(profileId) {
     }
     mentorDetail = dirs + papersStr + projStr;
   }
+  // 根据导师研究方向自动匹配面试官风格
+  const focusText = (profile.focus || '') + (profile.direction || '') + (profile.tags || []).join('');
+  let autoStyle = '学术严谨型';
+  if (/康复|临床|处方|干预|体质|健康|慢性病/.test(focusText)) autoStyle = '实践应用型';
+  else if (/机制|分子|细胞|生理|生化|信号|代谢|线粒体/.test(focusText)) autoStyle = '学术严谨型';
+  else if (/生物力学|测量|技术|方法|动作分析/.test(focusText)) autoStyle = '学术严谨型';
+  else if (/神经|脑|心理|认知|行为/.test(focusText)) autoStyle = '学术严谨型';
+  state.config.interviewerStyle = autoStyle;
+  // 提问风格分类提示
+  const styleCategory = /康复|临床|处方|干预|体质|健康/.test(focusText) ? '应用实践型' : /生物力学|测量|技术|方法/.test(focusText) ? '方法技术型' : /神经|脑|心理|认知/.test(focusText) ? '交叉学科型' : '基础机制型';
+  state.config.mentorCategory = styleCategory;
+
   state.config.mentorProfile = {
     name: profile.name,
     school: profile.school,
     isReal: !!profile.isReal,
-    fullDesc: '你正在模拟「' + profile.name + '」的面试风格（' + profile.school + '·' + profile.direction + '方向）。该导师关注：' + profile.focus + '。' + mentorDetail + '提问风格：' + profile.style + '。常出题型：' + profile.qTypes.join('、') + '。给考生的建议：' + profile.tips + '。请全程以该导师的身份提问，问题必须紧密围绕其研究方向和代表论文，体现其学术关注点；追问时要深入到其研究领域的具体机制和方法。'
+    fullDesc: '你正在模拟「' + profile.name + '」的面试风格（' + profile.school + '·' + profile.direction + '方向）。该导师关注：' + profile.focus + '。' + mentorDetail + '提问风格：' + profile.style + '。常出题型：' + profile.qTypes.join('、') + '。给考生的建议：' + profile.tips + '。请全程以该导师的身份提问，问题必须紧密围绕其研究方向和代表论文，体现其学术关注点；追问时要深入到其研究领域的具体机制和方法。' +
+'【提问风格分类】该导师属于「' + styleCategory + '」：' + (styleCategory === '基础机制型' ? '提问侧重分子机制、信号通路、实验设计、文献依据，喜欢追问到细胞/分子层面。' : styleCategory === '应用实践型' ? '提问侧重临床方案、运动处方、干预设计、效果评价，喜欢结合真实场景提问。' : styleCategory === '方法技术型' ? '提问侧重技术原理、数据分析、仪器使用、方法学比较，关注研究方法的严谨性。' : '提问侧重跨领域结合、研究方法创新、脑科学技术应用，关注学科交叉。') + '所有问题必须体现该分类的提问特点。'
   };
   renderPhdAIMockInterview();
   document.getElementById('phdInterviewArea').scrollIntoView({ behavior: 'smooth' });
@@ -48240,7 +48253,23 @@ function updateAIInterviewWordCount() {
   const input = document.getElementById('aiInterviewAnswerInput');
   const count = document.getElementById('aiInterviewWordCount');
   if (input && count) {
-    count.textContent = input.value.length;
+    const len = input.value.length;
+    count.textContent = len;
+    count.style.color = len < 50 ? '#dc2626' : len < 150 ? '#f59e0b' : '#16a34a';
+    count.style.fontWeight = '700';
+    // 字数过少提示
+    let hintEl = document.getElementById('aiInterviewWordHint');
+    if (len > 0 && len < 50) {
+      if (!hintEl) {
+        hintEl = document.createElement('span');
+        hintEl.id = 'aiInterviewWordHint';
+        hintEl.style.cssText = 'color:#dc2626;font-size:12px;margin-left:8px';
+        count.parentNode.appendChild(hintEl);
+      }
+      hintEl.textContent = '⚠️ 回答过短，建议至少150字';
+    } else if (hintEl) {
+      hintEl.remove();
+    }
     phdAIMockInterviewState.currentAnswer = input.value;
   }
 }
@@ -48252,13 +48281,49 @@ function startAIQuestionTimer() {
   const limit = state.answerTimeLimit;
   if (!limit || limit <= 0) return;
   state.questionDeadline = Date.now() + limit * 1000;
+  state._lastInputTime = Date.now();
+  state._coldHinted = false;
   state.timerInterval = setInterval(() => {
     if (state.mode !== 'chatting') { stopAIQuestionTimer(); return; }
     const remain = Math.max(0, Math.ceil((state.questionDeadline - Date.now()) / 1000));
     const el = document.getElementById('aiInterviewCountdown');
     if (el) {
       el.textContent = '⏱️ 剩余 ' + Math.floor(remain / 60) + ':' + String(remain % 60).padStart(2, '0');
-      el.style.color = remain <= 30 ? '#dc2626' : '#333';
+      if (remain <= 10) {
+        el.style.color = '#dc2626';
+        el.style.animation = 'pulse 1s infinite';
+        el.textContent += ' ⚠️ 即将超时';
+      } else if (remain <= 30) {
+        el.style.color = '#dc2626';
+        el.style.fontWeight = '700';
+      } else {
+        el.style.color = '#333';
+        el.style.animation = '';
+      }
+    }
+    // 冷场检测：20秒未输入，显示提示按钮
+    const inputEl = document.getElementById('aiInterviewAnswerInput');
+    if (inputEl && inputEl.value.length === 0 && !state._coldHinted) {
+      const idleTime = (Date.now() - state._lastInputTime) / 1000;
+      if (idleTime >= 20) {
+        state._coldHinted = true;
+        let coldBtn = document.getElementById('aiColdHintBtn');
+        if (!coldBtn) {
+          coldBtn = document.createElement('button');
+          coldBtn.id = 'aiColdHintBtn';
+          coldBtn.textContent = '💡 卡壳了？获取答题提示';
+          coldBtn.style.cssText = 'display:block;margin:8px auto 0;padding:8px 16px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600';
+          coldBtn.onclick = function() { hintAIInterviewAnswer(); this.remove(); };
+          const inputParent = inputEl.parentNode;
+          if (inputParent) inputParent.insertBefore(coldBtn, inputEl.nextSibling);
+        }
+      }
+    }
+    if (inputEl && inputEl.value.length > 0) {
+      state._lastInputTime = Date.now();
+      state._coldHinted = false;
+      const oldColdBtn = document.getElementById('aiColdHintBtn');
+      if (oldColdBtn) oldColdBtn.remove();
     }
     if (remain <= 0) {
       stopAIQuestionTimer();
