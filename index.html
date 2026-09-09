@@ -38008,6 +38008,7 @@ function renderPhdPublish() {
   html += '<div onclick="showPubTool(\'reviewer\')" style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">👥</div><div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:4px">审稿人推荐</div><div style="font-size:12px;color:#b45309">根据研究主题推荐潜在审稿人</div></div>';
   html += '<div onclick="showPubTool(\'highlights\')" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">✨</div><div style="font-size:15px;font-weight:700;color:#075985;margin-bottom:4px">Highlights生成</div><div style="font-size:12px;color:#0369a1">生成期刊要求的3-5条研究亮点</div></div>';
   html += '<div onclick="showPubTool(\'response\')" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">💬</div><div style="font-size:15px;font-weight:700;color:#991b1b;margin-bottom:4px">审稿意见回复</div><div style="font-size:12px;color:#b91c1c">AI分析审稿意见并生成逐条回复</div></div>';
+  html += '<div onclick="showPubTool(\'format\')" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📄</div><div style="font-size:15px;font-weight:700;color:#075985;margin-bottom:4px">论文格式修改与润色</div><div style="font-size:12px;color:#0369a1">AI检查格式问题并修改，7个快捷工具</div></div>';
   html += '</div>';
   html += '<div id="pubToolContent" style="margin-top:20px"></div>';
   html += '</div>';
@@ -38190,6 +38191,25 @@ function showGenResultModal(title, content, loading) {
 }
 
 // 快捷工具切换
+function initQuickTools() {
+  var area = document.getElementById('quickToolArea');
+  if (!area) return;
+  var tools = [
+    {id:'qtRef',icon:'📚',name:'参考文献格式化',color:'#7c3aed',bg:'#f5f3ff',border:'#c4b5fd'},
+    {id:'qtWords',icon:'📊',name:'字数统计对比',color:'#0284c7',bg:'#f0f9ff',border:'#7dd3fc'},
+    {id:'qtCite',icon:'🔗',name:'引用对应检查',color:'#ea580c',bg:'#fff7ed',border:'#fdba74'},
+    {id:'qtAbstract',icon:'📝',name:'摘要结构检查',color:'#059669',bg:'#f0fdf4',border:'#86efac'},
+    {id:'qtTitle',icon:'✏️',name:'标题格式优化',color:'#db2777',bg:'#fdf2f8',border:'#f9a8d4'},
+    {id:'qtFigure',icon:'📈',name:'图表格式建议',color:'#6366f1',bg:'#eef2ff',border:'#a5b4fc'},
+    {id:'qtAuthor',icon:'👤',name:'作者基金检查',color:'#14b8a6',bg:'#f0fdfa',border:'#5eead4'}
+  ];
+  var html = '';
+  tools.forEach(function(t) {
+    html += '<div onclick="toggleQuickTool(\'' + t.id + '\')" style="background:' + t.bg + ';border:1px solid ' + t.border + ';border-radius:10px;padding:14px;cursor:pointer;transition:transform .2s;text-align:center" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:24px;margin-bottom:6px">' + t.icon + '</div><div style="font-size:12px;font-weight:600;color:' + t.color + '">' + t.name + '</div></div>';
+  });
+  area.innerHTML = html;
+}
+
 function toggleQuickTool(toolId) {
   var area = document.getElementById('quickToolArea');
   if (!area) return;
@@ -39652,6 +39672,42 @@ function showPubTool(tool) {
     html += '</div>';
     html += '<button onclick="generateResponseLetter()" style="background:#dc2626;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">生成逐条回复信</button>';
     html += '</div><div id="rpResult" style="margin-top:16px"></div>';
+  } else if (tool === 'format') {
+    html = '<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px">';
+    html += '<div style="font-size:16px;font-weight:700;color:#075985;margin-bottom:12px">论文格式修改与润色</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">';
+    html += '<div><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:4px">目标期刊</label><select id="fmtJournal" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#075985;cursor:pointer"><option value="">通用学术标准</option>' + PHD_JOURNALS.map(function(j) { return '<option value="' + j.name + '">' + j.name + '</option>'; }).join('') + '</select></div>';
+    html += '<div><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:4px">参考文献格式</label><select id="fmtRefStyle" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#075985;cursor:pointer"><option value="Vancouver">Vancouver（数字顺序）</option><option value="APA">APA（作者-年份）</option><option value="Harvard">Harvard（作者-年份）</option><option value="GB7714">GB/T 7714（国标）</option><option value="AMA">AMA（美国医学会）</option></select></div>';
+    html += '</div>';
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:6px">检查项目（可多选）</label>';
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">';
+    var fmtChecks = [
+      {id:'fmtRef',label:'参考文献格式'},
+      {id:'fmtCite',label:'引用编号'},
+      {id:'fmtFig',label:'图表编号'},
+      {id:'fmtHead',label:'标题层级'},
+      {id:'fmtAbbr',label:'缩写定义'},
+      {id:'fmtUnit',label:'单位格式'},
+      {id:'fmtLang',label:'语言润色'},
+      {id:'fmtTense',label:'时态一致'},
+      {id:'fmtStructure',label:'段落结构'}
+    ];
+    fmtChecks.forEach(function(c) {
+      html += '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#0c4a6e;cursor:pointer;padding:4px 8px;background:#fff;border:1px solid #bae6fd;border-radius:4px"><input type="checkbox" id="' + c.id + '" checked style="accent-color:#0284c7">' + c.label + '</label>';
+    });
+    html += '</div></div>';
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:4px">论文内容</label><textarea id="fmtContent" rows="10" placeholder="粘贴论文全文，AI将检查格式问题并修改..." oninput="document.getElementById(\'fmtCharCount\').textContent=this.value.length+\' 字符\'" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;resize:vertical;font-family:Consolas,monospace"></textarea><div style="text-align:right;font-size:10px;color:#64748b;margin-top:2px"><span id="fmtCharCount">0 字符</span></div></div>';
+    html += '<div style="display:flex;gap:10px;margin-bottom:16px"><button onclick="checkPaperFormat()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI检查格式问题</button><button onclick="autoFixPaperFormat()" style="background:#075985;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">一键检查并修改</button></div>';
+    html += '<div id="fmtResult"></div>';
+    // 快捷工具区
+    html += '<div style="margin-top:20px;border-top:2px solid #bae6fd;padding-top:16px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#075985;margin-bottom:10px">快捷工具</div>';
+    html += '<div id="quickToolArea" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div>';
+    html += '<div id="quickToolContent" style="margin-top:12px"></div>';
+    html += '</div>';
+    html += '</div>';
+    // 初始化快捷工具
+    setTimeout(function() { initQuickTools(); }, 100);
   }
   container.innerHTML = html;
 }
