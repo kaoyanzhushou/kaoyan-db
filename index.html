@@ -38002,7 +38002,8 @@ function renderPhdPublish() {
   html += '</div>';
   // 投稿管理Tab
   html += '<div id="pubContent-manage" style="display:none">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><div style="display:flex;gap:8px"><button onclick="showExportMenu()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">导出数据</button><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div></div>';
+  html += '<div id="pubExportMenu" style="display:none;position:absolute;right:20px;top:50px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;overflow:hidden"></div>';
   html += '<div id="pubManageStats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px"></div>';
   html += '<div id="pubManageList"></div>';
   html += '<div id="pubManageDetail" style="margin-top:20px"></div>';
@@ -38632,7 +38633,61 @@ function renderPubManage() {
   var statsEl = document.getElementById('pubManageStats');
   var listEl = document.getElementById('pubManageList');
   var detailEl = document.getElementById('pubManageDetail');
+  // 搜索筛选栏
+  var filterBar = document.getElementById('pubFilterBar');
+  if (!filterBar && listEl) {
+    var bar = document.createElement('div');
+    bar.id = 'pubFilterBar';
+    bar.style.cssText = 'display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center';
+    bar.innerHTML = '<input type="text" id="pubSearchInput" placeholder="搜索论文标题或作者..." style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;outline:none" oninput="renderPubManage()">'
+      + '<select id="pubFilterStatus" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;outline:none;background:#fff;cursor:pointer" onchange="renderPubManage()"><option value="">全部状态</option><option value="active">进行中</option><option value="revision">待修回</option><option value="accepted">已录用</option><option value="rejected">已拒稿</option></select>'
+      + '<select id="pubFilterJournal" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;outline:none;background:#fff;cursor:pointer;max-width:200px" onchange="renderPubManage()"><option value="">全部期刊</option></select>'
+      + '<span id="pubFilterCount" style="font-size:11px;color:#9ca3af;margin-left:auto"></span>';
+    listEl.parentNode.insertBefore(bar, listEl);
+    // 填充期刊筛选
+    var journals = [];
+    papers.forEach(function(p) { if (p.submissions) p.submissions.forEach(function(s) { if (journals.indexOf(s.journal) === -1) journals.push(s.journal); }); });
+    var sel = document.getElementById('pubFilterJournal');
+    journals.sort().forEach(function(j) { var opt = document.createElement('option'); opt.value = j; opt.textContent = j; sel.appendChild(opt); });
+  }
   if (detailEl) detailEl.innerHTML = '';
+
+  // 修回截止提醒
+  var urgentSubs = [];
+  papers.forEach(function(p) {
+    if (p.submissions) p.submissions.forEach(function(s) {
+      if ((s.status === 'minor_revision' || s.status === 'major_revision') && s.revisionDeadline) {
+        var days = daysUntil(s.revisionDeadline);
+        if (days !== null && days <= 7) {
+          urgentSubs.push({paper: p, sub: s, days: days});
+        }
+      }
+    });
+  });
+  urgentSubs.sort(function(a, b) { return a.days - b.days; });
+  if (urgentSubs.length > 0) {
+    var alertHtml = '<div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:10px;padding:14px 16px;margin-bottom:16px">';
+    alertHtml += '<div style="display:flex;align-items:center;margin-bottom:10px"><span style="font-size:18px;margin-right:8px">⚠️</span><span style="font-size:13px;font-weight:700;color:#991b1b">修回截止提醒（' + urgentSubs.length + '篇）</span></div>';
+    alertHtml += '<div style="display:flex;flex-direction:column;gap:6px">';
+    urgentSubs.forEach(function(item) {
+      var isOverdue = item.days < 0;
+      var color = isOverdue ? '#dc2626' : item.days <= 3 ? '#dc2626' : '#d97706';
+      var bg = isOverdue ? '#fee2e2' : item.days <= 3 ? '#fef2f2' : '#fffbeb';
+      var text = isOverdue ? '已逾期' + Math.abs(item.days) + '天' : '剩余' + item.days + '天';
+      alertHtml += '<div onclick="showPaperDetail(\'' + item.paper.id + '\')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:' + bg + ';border-radius:6px;cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'#fff\'" onmouseout="this.style.background=\'' + bg + '\'">';
+      alertHtml += '<div style="flex:1;min-width:0"><span style="font-size:12px;font-weight:600;color:#1e293b">' + item.paper.title + '</span><span style="font-size:11px;color:#6b7280;margin-left:8px">' + item.sub.journal + '</span></div>';
+      alertHtml += '<span style="background:' + color + ';color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;margin-left:10px">' + text + '</span>';
+      alertHtml += '</div>';
+    });
+    alertHtml += '</div></div>';
+    // 插入到统计面板前面
+    var statsEl2 = document.getElementById('pubManageStats');
+    if (statsEl2 && statsEl2.parentNode) {
+      var alertDiv = document.createElement('div');
+      alertDiv.innerHTML = alertHtml;
+      statsEl2.parentNode.insertBefore(alertDiv.firstChild, statsEl2);
+    }
+  }
 
   // 统计
   var total = papers.length;
@@ -38686,10 +38741,35 @@ function renderPubManage() {
     };
   }
 
+  // 搜索筛选
+  var searchKw = document.getElementById('pubSearchInput') ? document.getElementById('pubSearchInput').value.trim().toLowerCase() : '';
+  var filterStatus = document.getElementById('pubFilterStatus') ? document.getElementById('pubFilterStatus').value : '';
+  var filterJournal = document.getElementById('pubFilterJournal') ? document.getElementById('pubFilterJournal').value : '';
+  var filteredPapers = papers.filter(function(p) {
+    if (searchKw && p.title.toLowerCase().indexOf(searchKw) === -1 && (p.authors || '').toLowerCase().indexOf(searchKw) === -1) return false;
+    if (filterStatus) {
+      var latest = p.submissions && p.submissions.length > 0 ? p.submissions[p.submissions.length - 1] : null;
+      var s = latest ? latest.status : 'preparing';
+      if (filterStatus === 'active' && !(s === 'preparing' || s === 'submitted' || s === 'under_review')) return false;
+      if (filterStatus === 'revision' && !(s === 'minor_revision' || s === 'major_revision')) return false;
+      if (filterStatus === 'accepted' && !(s === 'accepted' || s === 'published')) return false;
+      if (filterStatus === 'rejected' && s !== 'rejected') return false;
+    }
+    if (filterJournal) {
+      var hasJournal = p.submissions && p.submissions.some(function(s) { return s.journal === filterJournal; });
+      if (!hasJournal) return false;
+    }
+    return true;
+  });
+  // 更新筛选计数
+  var countEl = document.getElementById('pubFilterCount');
+  if (countEl) countEl.textContent = (searchKw || filterStatus || filterJournal) ? '筛选结果：' + filteredPapers.length + '/' + papers.length + '篇' : '';
+
   // 论文列表
   if (!listEl) return;
-  if (papers.length === 0) {
-    listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#9ca3af"><div style="font-size:48px;margin-bottom:12px">📄</div><div style="font-size:14px;margin-bottom:16px">还没有添加论文</div>'
+  if (filteredPapers.length === 0) {
+    var emptyMsg = (searchKw || filterStatus || filterJournal) ? '没有找到匹配的论文，请调整筛选条件' : '还没有添加论文';
+  listEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#9ca3af"><div style="font-size:48px;margin-bottom:12px">📄</div><div style="font-size:14px;margin-bottom:16px">' + emptyMsg + '</div>'
   + '<div style="max-width:520px;margin:0 auto;text-align:left;background:#f9fafb;border-radius:10px;padding:20px;border:1px solid #e5e7eb">'
   + '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px">使用流程：</div>'
   + '<div style="font-size:12px;color:#6b7280;line-height:2.2">'
@@ -38704,7 +38784,7 @@ function renderPubManage() {
     return;
   }
   var html = '';
-  papers.forEach(function(p) {
+  filteredPapers.forEach(function(p) {
     var latest = p.submissions && p.submissions.length > 0 ? p.submissions[p.submissions.length - 1] : null;
     var statusInfo = latest ? getStatusInfo(latest.status) : getStatusInfo('preparing');
     var deadlineHtml = '';
@@ -39098,7 +39178,18 @@ function showSubmissionDetail(paperId, subId) {
   if (!area) return;
 
   var html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-top:16px">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:700;color:#1e293b">审稿意见管理 - ' + sub.journal + '</div><button onclick="showAddReviewerForm(\'' + paperId + '\', \'' + subId + '\')" style="background:#7c3aed;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">+ 添加审稿人</button></div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:700;color:#1e293b">审稿意见管理 - ' + sub.journal + '</div><div style="display:flex;gap:8px"><button onclick="togglePubBatchMode(\'' + paperId + '\', \'' + subId + '\')" id="pubBatchBtn" style="background:#f59e0b;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">批量操作</button><button onclick="showAddReviewerForm(\'' + paperId + '\', \'' + subId + '\')" style="background:#7c3aed;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">+ 添加审稿人</button></div></div>';
+  html += '<div id="pubBatchBar" style="display:none;position:sticky;bottom:0;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;margin-bottom:12px;z-index:10;box-shadow:0 -2px 8px rgba(0,0,0,0.05)">';
+  html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
+  html += '<span style="font-size:12px;font-weight:600;color:#92400e">批量操作模式</span>';
+  html += '<label style="font-size:12px;color:#92400e;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="checkbox" id="pubBatchSelectAll" onchange="pubBatchToggleAll(this.checked)" style="accent-color:#f59e0b">全选</label>';
+  html += '<span id="pubBatchCount" style="font-size:11px;color:#b45309">已选 0 条</span>';
+  html += '<div style="flex:1"></div>';
+  html += '<button onclick="pubBatchMark(\'done\')" style="font-size:11px;color:#fff;background:#059669;border:none;padding:5px 12px;border-radius:4px;cursor:pointer">标记已完成</button>';
+  html += '<button onclick="pubBatchMark(\'pending\')" style="font-size:11px;color:#fff;background:#f59e0b;border:none;padding:5px 12px;border-radius:4px;cursor:pointer">标记待处理</button>';
+  html += '<button onclick="pubBatchExport()" style="font-size:11px;color:#fff;background:#7c3aed;border:none;padding:5px 12px;border-radius:4px;cursor:pointer">导出选中回复</button>';
+  html += '<button onclick="togglePubBatchMode()" style="font-size:11px;color:#6b7280;background:#f3f4f6;border:none;padding:5px 12px;border-radius:4px;cursor:pointer">退出</button>';
+  html += '</div></div>';
 
   if (!sub.reviewers || sub.reviewers.length === 0) {
     html += '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px">还没有添加审稿人意见，点击上方"添加审稿人"开始管理</div>';
@@ -39112,12 +39203,14 @@ function showSubmissionDetail(paperId, subId) {
         r.comments.forEach(function(cmt, ci) {
           var statusColors = { pending: '#f59e0b', in_progress: '#2563eb', done: '#059669', disputed: '#dc2626' };
           var statusLabels = { pending: '待处理', in_progress: '修改中', done: '已完成', disputed: '已反驳' };
-          html += '<div style="background:#f9fafb;border-radius:6px;padding:10px;margin-bottom:8px;border-left:3px solid ' + (statusColors[cmt.status] || '#9ca3af') + '">';
+          html += '<div style="background:#f9fafb;border-radius:6px;padding:10px;margin-bottom:8px;border-left:3px solid ' + (statusColors[cmt.status] || '#9ca3af') + ';display:flex;gap:8px">';
+      html += '<div class="pubBatchCheckbox" style="display:none;flex-shrink:0;padding-top:2px"><input type="checkbox" class="pubBatchItem" data-comment-id="' + cmt.id + '" onchange="pubBatchUpdateCount()" style="accent-color:#f59e0b;width:16px;height:16px;cursor:pointer"></div>';
+      html += '<div style="flex:1;min-width:0">';
           html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><div style="font-size:12px;color:#374151;flex:1;margin-right:10px;line-height:1.6">' + cmt.text + '</div><select onchange="updateCommentStatus(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\', this.value)" style="font-size:11px;padding:3px 6px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;white-space:nowrap"><option value="pending"' + (cmt.status==='pending'?' selected':'') + '>待处理</option><option value="in_progress"' + (cmt.status==='in_progress'?' selected':'') + '>修改中</option><option value="done"' + (cmt.status==='done'?' selected':'') + '>已完成</option><option value="disputed"' + (cmt.status==='disputed'?' selected':'') + '>已反驳</option></select></div>';
           if (cmt.response) html += '<div style="font-size:11px;color:#059669;background:#f0fdf4;padding:6px 10px;border-radius:4px;margin-top:6px;line-height:1.6"><b>回复：</b>' + cmt.response + '</div>';
           html += '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><button onclick="aiGenerateCommentResponse(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\')" style="font-size:10px;color:#fff;background:#7c3aed;border:none;padding:3px 10px;border-radius:4px;cursor:pointer">AI生成回复</button><button onclick="editCommentResponse(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\')" style="font-size:10px;color:#7c3aed;background:#ede9fe;border:none;padding:3px 10px;border-radius:4px;cursor:pointer">编辑回复</button><button onclick="deleteComment(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\', \'' + cmt.id + '\')" style="font-size:10px;color:#dc2626;background:#fee2e2;border:none;padding:3px 10px;border-radius:4px;cursor:pointer">删除意见</button></div>';
           html += '<div id="aiResp_' + cmt.id + '" style="margin-top:8px"></div>';
-          html += '</div>';
+          html += '</div></div>';
         });
       }
       html += '<button onclick="showAddCommentForm(\'' + paperId + '\', \'' + subId + '\', \'' + r.id + '\')" style="font-size:11px;color:#7c3aed;background:#ede9fe;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;margin-top:4px">+ 添加意见</button>';
@@ -39256,6 +39349,238 @@ async function aiGenerateCommentResponse(paperId, subId, reviewerId, commentId) 
     respEl.innerHTML = '<div style="padding:10px;background:#fef2f2;border-radius:6px;font-size:12px;color:#dc2626">生成失败：' + error.message + '</div>';
   }
 }
+
+// 显示导出菜单
+function showExportMenu() {
+  var menu = document.getElementById('pubExportMenu');
+  if (!menu) return;
+  if (menu.style.display === 'block') {
+    menu.style.display = 'none';
+    return;
+  }
+  menu.innerHTML = '<div onclick="exportPubData(\'csv\')" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#374151;hover;background:#f9fafb" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'#fff\'">导出为 CSV（表格）</div>'
+    + '<div onclick="exportPubData(\'text\')" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#374151" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'#fff\'">导出为文本（详细）</div>'
+    + '<div onclick="exportPubData(\'json\')" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#374151;border-top:1px solid #f3f4f6" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'#fff\'">导出为 JSON（备份）</div>';
+  menu.style.display = 'block';
+  // 点击外部关闭
+  setTimeout(function() {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!menu.contains(e.target)) { menu.style.display = 'none'; document.removeEventListener('click', closeMenu); }
+    });
+  }, 10);
+}
+
+// 批量操作模式相关
+var pubBatchMode = false;
+var pubBatchPaperId = '';
+var pubBatchSubId = '';
+
+function togglePubBatchMode(paperId, subId) {
+  pubBatchMode = !pubBatchMode;
+  if (pubBatchMode && paperId) {
+    pubBatchPaperId = paperId;
+    pubBatchSubId = subId;
+  }
+  var bar = document.getElementById('pubBatchBar');
+  var btn = document.getElementById('pubBatchBtn');
+  var checkboxes = document.querySelectorAll('.pubBatchCheckbox');
+  if (pubBatchMode) {
+    if (bar) bar.style.display = 'block';
+    if (btn) { btn.textContent = '退出批量'; btn.style.background = '#dc2626'; }
+    checkboxes.forEach(function(cb) { cb.style.display = 'block'; });
+  } else {
+    if (bar) bar.style.display = 'none';
+    if (btn) { btn.textContent = '批量操作'; btn.style.background = '#f59e0b'; }
+    checkboxes.forEach(function(cb) { cb.style.display = 'none'; cb.querySelector('input').checked = false; });
+    pubBatchPaperId = '';
+    pubBatchSubId = '';
+  }
+  pubBatchUpdateCount();
+}
+
+function pubBatchToggleAll(checked) {
+  document.querySelectorAll('.pubBatchItem').forEach(function(cb) { cb.checked = checked; });
+  pubBatchUpdateCount();
+}
+
+function pubBatchUpdateCount() {
+  var count = document.querySelectorAll('.pubBatchItem:checked').length;
+  var el = document.getElementById('pubBatchCount');
+  if (el) el.textContent = '已选 ' + count + ' 条';
+  var all = document.getElementById('pubBatchSelectAll');
+  if (all) {
+    var total = document.querySelectorAll('.pubBatchItem').length;
+    all.checked = total > 0 && count === total;
+  }
+}
+
+function pubBatchMark(status) {
+  var checked = document.querySelectorAll('.pubBatchItem:checked');
+  if (checked.length === 0) { alert('请先选择要操作的意见'); return; }
+  if (!confirm('确定将选中的 ' + checked.length + ' 条意见标记为"' + ({done:'已完成',pending:'待处理'}[status] || status) + '"？')) return;
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === pubBatchPaperId; });
+  if (!paper || !paper.submissions) return;
+  var sub = paper.submissions.find(function(s) { return s.id === pubBatchSubId; });
+  if (!sub || !sub.reviewers) return;
+  var ids = [];
+  checked.forEach(function(cb) { ids.push(cb.getAttribute('data-comment-id')); });
+  sub.reviewers.forEach(function(r) {
+    if (r.comments) r.comments.forEach(function(c) {
+      if (ids.indexOf(c.id) !== -1) c.status = status;
+    });
+  });
+  savePubPapers(papers);
+  showSubmissionDetail(pubBatchPaperId, pubBatchSubId);
+  pubBatchMode = false;
+  alert('已将 ' + checked.length + ' 条意见标记为"' + ({done:'已完成',pending:'待处理'}[status] || status) + '"');
+}
+
+function pubBatchExport() {
+  var checked = document.querySelectorAll('.pubBatchItem:checked');
+  if (checked.length === 0) { alert('请先选择要导出的意见'); return; }
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === pubBatchPaperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === pubBatchSubId; });
+  if (!sub) return;
+  var ids = [];
+  checked.forEach(function(cb) { ids.push(cb.getAttribute('data-comment-id')); });
+  var content = '审稿意见回复导出\n';
+  content += '论文：' + paper.title + '\n';
+  content += '期刊：' + sub.journal + '\n';
+  content += '导出时间：' + new Date().toLocaleString('zh-CN') + '\n';
+  content += '========================================\n\n';
+  var idx = 1;
+  if (sub.reviewers) sub.reviewers.forEach(function(r) {
+    if (r.comments) r.comments.forEach(function(c) {
+      if (ids.indexOf(c.id) !== -1) {
+        content += '【意见' + idx + '】' + (r.name || '审稿人') + '\n';
+        content += '状态：' + ({pending:'待处理',in_progress:'修改中',done:'已完成',disputed:'已反驳'}[c.status] || c.status) + '\n';
+        content += '意见内容：' + c.text + '\n';
+        content += '回复：' + (c.response || '（未填写）') + '\n';
+        content += '----------------------------------------\n\n';
+        idx++;
+      }
+    });
+  });
+  var blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '审稿意见回复_' + new Date().toISOString().split('T')[0] + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  alert('已导出 ' + (idx-1) + ' 条意见回复');
+}
+
+
+// 导出投稿数据
+function exportPubData(format) {
+  var papers = getPubPapers();
+  if (papers.length === 0) { alert('没有数据可导出'); return; }
+  document.getElementById('pubExportMenu').style.display = 'none';
+
+  var content = '';
+  var filename = '';
+  var mimeType = '';
+
+  if (format === 'csv') {
+    // CSV格式
+    var headers = ['论文标题','作者','文章类型','投稿期刊','投稿日期','当前状态','修回截止日期','结果日期','审稿意见总数','已完成意见数'];
+    content = '\uFEFF' + headers.join(',') + '\n';
+    papers.forEach(function(p) {
+      if (p.submissions && p.submissions.length > 0) {
+        p.submissions.forEach(function(s) {
+          var totalCmt = 0, doneCmt = 0;
+          if (s.reviewers) s.reviewers.forEach(function(r) { if (r.comments) { totalCmt += r.comments.length; r.comments.forEach(function(c) { if (c.status === 'done') doneCmt++; }); } });
+          var row = [
+            '"' + (p.title || '').replace(/"/g, '""') + '"',
+            '"' + (p.authors || '').replace(/"/g, '""') + '"',
+            '"' + (p.type || '') + '"',
+            '"' + s.journal + '"',
+            s.submitDate || '',
+            getStatusInfo(s.status).label,
+            s.revisionDeadline || '',
+            s.resultDate || '',
+            totalCmt,
+            doneCmt
+          ];
+          content += row.join(',') + '\n';
+        });
+      } else {
+        var row = ['"' + (p.title || '').replace(/"/g, '""') + '"', '"' + (p.authors || '').replace(/"/g, '""') + '"', '"' + (p.type || '') + '"', '未投稿', '', '', '', '', 0, 0];
+        content += row.join(',') + '\n';
+      }
+    });
+    filename = '投稿记录_' + new Date().toISOString().split('T')[0] + '.csv';
+    mimeType = 'text/csv;charset=utf-8';
+  } else if (format === 'text') {
+    // 文本格式（详细）
+    content = '========================================\n';
+    content += '       投稿记录导出报告\n';
+    content += '       导出时间：' + new Date().toLocaleString('zh-CN') + '\n';
+    content += '       论文总数：' + papers.length + '篇\n';
+    content += '========================================\n\n';
+    papers.forEach(function(p, idx) {
+      content += '【论文' + (idx+1) + '】' + (p.title || '无标题') + '\n';
+      content += '作者：' + (p.authors || '未填写') + '\n';
+      content += '类型：' + (p.type || '未分类') + '\n';
+      if (p.submissions && p.submissions.length > 0) {
+        content += '投稿记录（' + p.submissions.length + '次）：\n';
+        p.submissions.forEach(function(s, si) {
+          content += '  第' + (si+1) + '次投稿：\n';
+          content += '    期刊：' + s.journal + '\n';
+          content += '    投稿日期：' + s.submitDate + '\n';
+          content += '    当前状态：' + getStatusInfo(s.status).label + '\n';
+          if (s.revisionDeadline) content += '    修回截止：' + s.revisionDeadline + '\n';
+          if (s.resultDate) content += '    结果日期：' + s.resultDate + '\n';
+          if (s.reviewers && s.reviewers.length > 0) {
+            content += '    审稿意见：\n';
+            s.reviewers.forEach(function(r) {
+              content += '      ' + (r.name || '审稿人') + '：\n';
+              if (r.comments) r.comments.forEach(function(c, ci) {
+                content += '        ' + (ci+1) + '. [' + ({pending:'待处理',in_progress:'修改中',done:'已完成',disputed:'已反驳'}[c.status] || c.status) + '] ' + c.text + '\n';
+                if (c.response) content += '           回复：' + c.response + '\n';
+              });
+            });
+          }
+          if (s.timeline && s.timeline.length > 0) {
+            content += '    时间线：\n';
+            s.timeline.forEach(function(t) {
+              content += '      ' + t.date + ' - ' + t.event + (t.note ? '：' + t.note : '') + '\n';
+            });
+          }
+        });
+      } else {
+        content += '投稿记录：尚未投稿\n';
+      }
+      content += '\n----------------------------------------\n\n';
+    });
+    filename = '投稿记录详细_' + new Date().toISOString().split('T')[0] + '.txt';
+    mimeType = 'text/plain;charset=utf-8';
+  } else {
+    // JSON备份
+    content = JSON.stringify(papers, null, 2);
+    filename = '投稿数据备份_' + new Date().toISOString().split('T')[0] + '.json';
+    mimeType = 'application/json;charset=utf-8';
+  }
+
+  // 下载文件
+  var blob = new Blob([content], {type: mimeType});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  alert('导出成功：' + filename);
+}
+
 
 // 保存AI生成的回复
 function saveAICommentResponse(paperId, subId, reviewerId, commentId) {
