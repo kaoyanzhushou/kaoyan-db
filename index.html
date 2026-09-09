@@ -6929,6 +6929,59 @@ console.log('✅ 学习工具入口已加载');
         </div>
       </div>
       
+      <!-- 文献检索面板（第一阶段增强） -->
+      <div id="phdLiteraturePanel" style="display:none;margin-top:16px;padding:20px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h4 style="margin:0;color:#5b21b6;font-size:16px">文献检索与管理</h4>
+          <button onclick="document.getElementById('phdLiteraturePanel').style.display='none'" style="background:none;border:none;color:#7c3aed;cursor:pointer;font-size:18px">×</button>
+        </div>
+        <!-- Tab切换 -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:2px solid #ddd6fe;padding-bottom:0">
+          <button id="litTabSearch" onclick="switchLitTab('search')" style="padding:8px 18px;border:none;background:#7c3aed;color:#fff;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">文献检索</button>
+          <button id="litTabMentor" onclick="switchLitTab('mentor')" style="padding:8px 18px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">导师文献追踪</button>
+          <button id="litTabFav" onclick="switchLitTab('fav')" style="padding:8px 18px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">我的收藏 <span id="litFavCount" style="background:#7c3aed;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">0</span></button>
+        </div>
+        <!-- 文献检索Tab -->
+        <div id="litTabContent-search">
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+            <span style="font-size:12px;color:#6b21a8;font-weight:600">数据库：</span>
+            <button onclick="setLitDB('pubmed')" id="litDBpubmed" style="padding:5px 14px;border-radius:6px;border:1px solid #7c3aed;background:#7c3aed;color:#fff;cursor:pointer;font-size:12px">PubMed</button>
+            <button onclick="setLitDB('semantic')" id="litDBsemantic" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">Semantic Scholar</button>
+            <button onclick="setLitDB('mixed')" id="litDBmixed" style="padding:5px 14px;border-radius:6px;border:1px solid #c4b5fd;background:#fff;color:#5b21b6;cursor:pointer;font-size:12px">中英文混合</button>
+          </div>
+          <div style="display:flex;gap:10px;margin-bottom:12px">
+            <input type="text" id="phdLitSearchInput" placeholder="输入研究方向或关键词，如：exercise intervention chronic pain" style="flex:1;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none">
+            <select id="phdLitCount" style="padding:10px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none;background:#fff;cursor:pointer;color:#5b21b6">
+              <option value="5">5篇</option>
+              <option value="10" selected>10篇</option>
+              <option value="20">20篇</option>
+            </select>
+            <button onclick="searchPhdLiterature()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">检索</button>
+          </div>
+          <div id="phdLitSearchStatus" style="font-size:13px;color:#6b21a8;margin-bottom:10px"></div>
+          <div id="phdLitResults"></div>
+        </div>
+        <!-- 导师文献追踪Tab -->
+        <div id="litTabContent-mentor" style="display:none">
+          <div style="font-size:13px;color:#6b21a8;margin-bottom:10px">输入导师姓名，自动检索其近年发表的文献，了解研究方向与最新成果</div>
+          <div style="display:flex;gap:10px;margin-bottom:12px">
+            <input type="text" id="litMentorName" placeholder="导师姓名，如：Zhang San" style="flex:1;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none">
+            <input type="text" id="litMentorAffil" placeholder="院校（可选），如：Shanghai University of Sport" style="flex:1;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none">
+            <button onclick="searchMentorPapers()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">追踪</button>
+          </div>
+          <div id="litMentorStatus" style="font-size:13px;color:#6b21a8;margin-bottom:10px"></div>
+          <div id="litMentorResults"></div>
+        </div>
+        <!-- 我的收藏Tab -->
+        <div id="litTabContent-fav" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:13px;color:#6b21a8">收藏的文献保存在本地浏览器，可随时查看和导出</div>
+            <button onclick="exportFavLiterature()" style="background:#7c3aed;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">导出为文本</button>
+          </div>
+          <div id="litFavResults"></div>
+        </div>
+      </div>
+      
       <!-- 文档评审结果面板 -->
       <div id="phdDocReviewPanel" style="display:none;margin-top:16px;padding:20px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -36113,6 +36166,321 @@ async function generatePhdLiteratureReview(query, articles, container) {
     reviewDiv.innerHTML = '<div style="color:#dc2626;padding:20px">❌ 综述生成失败：' + error.message + '</div>';
   }
 }
+
+// ========== 文献检索第一阶段增强功能 ==========
+
+let phdLitCurrentDB = 'pubmed';
+
+// Tab切换
+function switchLitTab(tab) {
+  ['search', 'mentor', 'fav'].forEach(function(t) {
+    document.getElementById('litTabContent-' + t).style.display = (t === tab) ? 'block' : 'none';
+    var btn = document.getElementById('litTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (btn) {
+      btn.style.background = (t === tab) ? '#7c3aed' : '#fff';
+      btn.style.color = (t === tab) ? '#fff' : '#7c3aed';
+    }
+  });
+  if (tab === 'fav') renderFavLiterature();
+}
+
+// 数据库选择
+function setLitDB(db) {
+  phdLitCurrentDB = db;
+  ['pubmed', 'semantic', 'mixed'].forEach(function(d) {
+    var btn = document.getElementById('litDB' + d);
+    if (btn) {
+      btn.style.background = (d === db) ? '#7c3aed' : '#fff';
+      btn.style.color = (d === db) ? '#fff' : '#5b21b6';
+      btn.style.borderColor = (d === db) ? '#7c3aed' : '#c4b5fd';
+    }
+  });
+}
+
+// 重写搜索函数：支持多数据库
+async function searchPhdLiterature() {
+  var query = document.getElementById('phdLitSearchInput').value.trim();
+  var count = document.getElementById('phdLitCount').value;
+  var statusDiv = document.getElementById('phdLitSearchStatus');
+  var resultsDiv = document.getElementById('phdLitResults');
+  if (!query) { alert('请输入研究方向或关键词'); return; }
+  statusDiv.innerHTML = '正在检索...';
+  resultsDiv.innerHTML = '';
+  try {
+    var articles = [];
+    if (phdLitCurrentDB === 'pubmed') {
+      statusDiv.innerHTML = '正在PubMed检索...';
+      articles = await searchPubMed(query, count);
+    } else if (phdLitCurrentDB === 'semantic') {
+      statusDiv.innerHTML = '正在Semantic Scholar检索...';
+      articles = await searchSemanticScholar(query, count);
+    } else {
+      statusDiv.innerHTML = '正在多数据库混合检索（PubMed + Semantic Scholar）...';
+      var [pubmedArts, semanticArts] = await Promise.all([
+        searchPubMed(query, Math.ceil(count/2)),
+        searchSemanticScholar(query, Math.ceil(count/2))
+      ]);
+      articles = pubmedArts.concat(semanticArts);
+      // 去重（按标题）
+      var seen = {};
+      articles = articles.filter(function(a) {
+        var key = a.title.substring(0, 50).toLowerCase();
+        if (seen[key]) return false;
+        seen[key] = true;
+        return true;
+      });
+    }
+    if (!articles || articles.length === 0) {
+      statusDiv.innerHTML = '未找到相关文献，请尝试其他关键词';
+      return;
+    }
+    statusDiv.innerHTML = '找到 ' + articles.length + ' 篇文献，正在生成AI综述...';
+    displayLiteratureListEnhanced(articles, resultsDiv);
+    await generatePhdLiteratureReview(query, articles, resultsDiv);
+  } catch (error) {
+    statusDiv.innerHTML = '检索失败：' + error.message;
+  }
+}
+
+// PubMed检索
+async function searchPubMed(query, count) {
+  var searchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=' +
+    encodeURIComponent(query) + '&retmax=' + count + '&retmode=json&sort=relevance';
+  var searchResponse = await fetch(searchUrl);
+  var searchData = await searchResponse.json();
+  var idList = searchData.esearchresult.idlist;
+  if (!idList || idList.length === 0) return [];
+  var fetchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=' +
+    idList.join(',') + '&rettype=abstract&retmode=json';
+  var fetchResponse = await fetch(fetchUrl);
+  var fetchData = await fetchResponse.json();
+  return parsePubmedArticles(fetchData);
+}
+
+// Semantic Scholar检索
+async function searchSemanticScholar(query, count) {
+  var url = 'https://api.semanticscholar.org/graph/v1/paper/search?query=' +
+    encodeURIComponent(query) + '&limit=' + count +
+    '&fields=title,abstract,authors,year,venue,citationCount,externalIds,url';
+  var response = await fetch(url);
+  var data = await response.json();
+  if (!data || !data.data) return [];
+  return data.data.map(function(p) {
+    return {
+      pmid: p.paperId || '',
+      title: p.title || '无标题',
+      abstract: p.abstract || '无摘要',
+      authors: p.authors ? p.authors.map(function(a) { return a.name; }).join(', ') : '未知作者',
+      journal: p.venue || 'Semantic Scholar',
+      pubdate: p.year ? String(p.year) : '未知日期',
+      doi: (p.externalIds && p.externalIds.DOI) ? p.externalIds.DOI : '',
+      citationCount: p.citationCount || 0,
+      url: p.url || ('https://www.semanticscholar.org/paper/' + (p.paperId || '')),
+      source: 'Semantic Scholar'
+    };
+  });
+}
+
+// 增强的文献列表展示（含收藏、AI解读、被引数）
+function displayLiteratureListEnhanced(articles, container) {
+  var favs = getFavLiterature();
+  var favIds = {};
+  favs.forEach(function(f) { favIds[f.title.substring(0, 50)] = true; });
+  var html = '<div style="margin-bottom:16px;padding:14px;background:#fff;border-radius:10px;border:1px solid #ddd6fe">';
+  html += '<div style="font-weight:600;color:#5b21b6;margin-bottom:10px;font-size:14px">检索结果（' + articles.length + '篇）</div>';
+  articles.forEach(function(article, index) {
+    var isFav = favIds[article.title.substring(0, 50)];
+    var citeBadge = article.citationCount ? '<span style="background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:8px;font-size:10px;margin-left:6px">被引' + article.citationCount + '</span>' : '';
+    var sourceBadge = article.source ? '<span style="background:#e0e7ff;color:#3730a3;padding:1px 7px;border-radius:8px;font-size:10px;margin-left:6px">' + article.source + '</span>' : '<span style="background:#dbeafe;color:#1e40af;padding:1px 7px;border-radius:8px;font-size:10px;margin-left:6px">PubMed</span>';
+    html += '<div style="padding:10px 0;border-bottom:1px solid #f3f0ff">' +
+      '<div style="font-weight:600;color:#3b0764;font-size:13px;margin-bottom:4px">' + (index + 1) + '. ' + article.title + citeBadge + sourceBadge + '</div>' +
+      '<div style="font-size:11px;color:#7c3aed;margin-bottom:4px">' + article.authors + '. ' + article.journal + '. ' + article.pubdate + (article.doi ? ' DOI:' + article.doi : '') + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">' +
+      '<a href="' + article.url + '" target="_blank" style="font-size:11px;color:#7c3aed;text-decoration:none;padding:3px 10px;background:#f5f3ff;border-radius:5px">原文链接</a>' +
+      '<button onclick="analyzeSingleLiterature(' + index + ', this)" style="font-size:11px;color:#fff;background:#7c3aed;border:none;padding:3px 10px;border-radius:5px;cursor:pointer">AI深度解读</button>' +
+      '<button onclick="toggleFavLiterature(' + index + ')" style="font-size:11px;color:' + (isFav ? '#b45309' : '#6b7280') + ';background:' + (isFav ? '#fef3c7' : '#f3f4f6') + ';border:none;padding:3px 10px;border-radius:5px;cursor:pointer" id="favBtn-' + index + '">' + (isFav ? '已收藏' : '收藏') + '</button>' +
+      '</div>' +
+      '<div id="litAnalysis-' + index + '" style="margin-top:8px"></div>' +
+      '</div>';
+  });
+  html += '</div>';
+  // 保存当前搜索结果供AI解读和收藏使用
+  window._currentLitArticles = articles;
+  container.innerHTML += html;
+}
+
+// 单篇文献AI深度解读
+async function analyzeSingleLiterature(index, btn) {
+  var articles = window._currentLitArticles || [];
+  var article = articles[index];
+  if (!article) return;
+  var resultDiv = document.getElementById('litAnalysis-' + index);
+  btn.disabled = true;
+  btn.textContent = '分析中...';
+  resultDiv.innerHTML = '<div style="padding:10px;color:#7c3aed;font-size:12px">AI正在深度解读这篇文献...</div>';
+  try {
+    var systemPrompt = `你是一位体育学/运动人体科学领域的资深学术专家。请对以下学术文献进行深度解读，帮助考博学生理解这篇文献的核心价值。
+
+解读结构：
+1. **核心研究问题**：这篇文献要解决什么科学问题？
+2. **研究方法与设计**：采用了什么研究方法？实验设计有何特点？样本量、干预方案、检测指标是什么？
+3. **主要发现与结论**：核心结果是什么？结论是否可靠？
+4. **创新点与学术贡献**：这篇文献的创新之处在哪里？对领域有什么贡献？
+5. **局限性与不足**：研究设计、方法、样本等方面有什么局限？
+6. **对考博的参考价值**：这篇文献对考博选题、面试准备、科研计划书撰写有什么启发？可以引用哪些观点？
+
+要求：语言专业但易懂，总字数500-800字，使用Markdown格式。`;
+    var userPrompt = `文献标题：${article.title}
+作者：${article.authors}
+期刊：${article.journal}
+发表时间：${article.pubdate}
+
+摘要：
+${article.abstract || '无摘要'}`;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 1500, model);
+    resultDiv.innerHTML = '<div class="md-content" style="padding:12px;background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px;font-size:12px;line-height:1.8;color:#3b0764">' + renderMarkdown(response) + '</div>';
+    btn.textContent = '重新解读';
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;font-size:12px">解读失败：' + error.message + '</div>';
+    btn.textContent = 'AI深度解读';
+  }
+  btn.disabled = false;
+}
+
+// 导师文献追踪
+async function searchMentorPapers() {
+  var name = document.getElementById('litMentorName').value.trim();
+  var affil = document.getElementById('litMentorAffil').value.trim();
+  var statusDiv = document.getElementById('litMentorStatus');
+  var resultsDiv = document.getElementById('litMentorResults');
+  if (!name) { alert('请输入导师姓名'); return; }
+  statusDiv.innerHTML = '正在检索 ' + name + ' 的文献...';
+  resultsDiv.innerHTML = '';
+  try {
+    // 用Semantic Scholar的author搜索
+    var query = name + (affil ? ' ' + affil : '');
+    var articles = await searchSemanticScholar(query, 15);
+    // 过滤：作者列表中包含该导师姓名的
+    var nameLower = name.toLowerCase().replace(/\s/g, '');
+    var filtered = articles.filter(function(a) {
+      return a.authors.toLowerCase().replace(/\s/g, '').indexOf(nameLower) >= 0;
+    });
+    if (filtered.length === 0) filtered = articles; // 过滤不到就显示全部
+    if (filtered.length === 0) {
+      statusDiv.innerHTML = '未找到该导师的文献，请尝试英文姓名或不同拼写';
+      return;
+    }
+    statusDiv.innerHTML = '找到 ' + filtered.length + ' 篇相关文献（按时间倒序）';
+    // 按年份排序
+    filtered.sort(function(a, b) {
+      var ya = parseInt(a.pubdate) || 0;
+      var yb = parseInt(b.pubdate) || 0;
+      return yb - ya;
+    });
+    window._currentLitArticles = filtered;
+    displayLiteratureListEnhanced(filtered, resultsDiv);
+  } catch (error) {
+    statusDiv.innerHTML = '检索失败：' + error.message;
+  }
+}
+
+// ===== 文献收藏功能（localStorage） =====
+function getFavLiterature() {
+  try {
+    return JSON.parse(localStorage.getItem('phdFavLiterature') || '[]');
+  } catch (e) { return []; }
+}
+
+function saveFavLiterature(favs) {
+  localStorage.setItem('phdFavLiterature', JSON.stringify(favs));
+  updateFavCount();
+}
+
+function updateFavCount() {
+  var el = document.getElementById('litFavCount');
+  if (el) el.textContent = getFavLiterature().length;
+}
+
+function toggleFavLiterature(index) {
+  var articles = window._currentLitArticles || [];
+  var article = articles[index];
+  if (!article) return;
+  var favs = getFavLiterature();
+  var key = article.title.substring(0, 50);
+  var existIdx = -1;
+  favs.forEach(function(f, i) { if (f.title.substring(0, 50) === key) existIdx = i; });
+  var btn = document.getElementById('favBtn-' + index);
+  if (existIdx >= 0) {
+    favs.splice(existIdx, 1);
+    if (btn) { btn.textContent = '收藏'; btn.style.color = '#6b7280'; btn.style.background = '#f3f4f6'; }
+  } else {
+    favs.push({
+      title: article.title, authors: article.authors, journal: article.journal,
+      pubdate: article.pubdate, abstract: article.abstract, url: article.url,
+      doi: article.doi, source: article.source || 'PubMed', savedAt: new Date().toISOString()
+    });
+    if (btn) { btn.textContent = '已收藏'; btn.style.color = '#b45309'; btn.style.background = '#fef3c7'; }
+  }
+  saveFavLiterature(favs);
+}
+
+function renderFavLiterature() {
+  var favs = getFavLiterature();
+  var container = document.getElementById('litFavResults');
+  if (!container) return;
+  if (favs.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px">还没有收藏的文献，去检索页面收藏吧</div>';
+    return;
+  }
+  window._currentLitArticles = favs;
+  var html = '<div style="padding:14px;background:#fff;border-radius:10px;border:1px solid #ddd6fe">';
+  html += '<div style="font-weight:600;color:#5b21b6;margin-bottom:10px;font-size:14px">我的收藏（' + favs.length + '篇）</div>';
+  favs.forEach(function(article, index) {
+    var citeBadge = article.citationCount ? '<span style="background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:8px;font-size:10px;margin-left:6px">被引' + article.citationCount + '</span>' : '';
+    html += '<div style="padding:10px 0;border-bottom:1px solid #f3f0ff">' +
+      '<div style="font-weight:600;color:#3b0764;font-size:13px;margin-bottom:4px">' + (index + 1) + '. ' + article.title + citeBadge + '</div>' +
+      '<div style="font-size:11px;color:#7c3aed;margin-bottom:4px">' + article.authors + '. ' + article.journal + '. ' + article.pubdate + '</div>' +
+      '<div style="font-size:10px;color:#9ca3af;margin-bottom:4px">收藏于 ' + (article.savedAt ? article.savedAt.substring(0, 10) : '') + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">' +
+      '<a href="' + article.url + '" target="_blank" style="font-size:11px;color:#7c3aed;text-decoration:none;padding:3px 10px;background:#f5f3ff;border-radius:5px">原文链接</a>' +
+      '<button onclick="analyzeSingleLiterature(' + index + ', this)" style="font-size:11px;color:#fff;background:#7c3aed;border:none;padding:3px 10px;border-radius:5px;cursor:pointer">AI深度解读</button>' +
+      '<button onclick="removeFavLiterature(' + index + ')" style="font-size:11px;color:#dc2626;background:#fef2f2;border:none;padding:3px 10px;border-radius:5px;cursor:pointer">移除</button>' +
+      '</div>' +
+      '<div id="litAnalysis-' + index + '" style="margin-top:8px"></div>' +
+      '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function removeFavLiterature(index) {
+  var favs = getFavLiterature();
+  favs.splice(index, 1);
+  saveFavLiterature(favs);
+  renderFavLiterature();
+}
+
+function exportFavLiterature() {
+  var favs = getFavLiterature();
+  if (favs.length === 0) { alert('没有收藏的文献'); return; }
+  var text = '我的文献收藏\n导出时间：' + new Date().toLocaleString() + '\n共' + favs.length + '篇\n\n';
+  favs.forEach(function(a, i) {
+    text += '[' + (i+1) + '] ' + a.title + '\n';
+    text += '作者：' + a.authors + '\n';
+    text += '期刊：' + a.journal + ' (' + a.pubdate + ')\n';
+    if (a.doi) text += 'DOI：' + a.doi + '\n';
+    text += '链接：' + a.url + '\n\n';
+  });
+  var blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = '我的文献收藏.txt'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 初始化收藏计数
+updateFavCount();
 
 
 // ========== 考博AI联网搜索增强功能 ==========
