@@ -36276,16 +36276,34 @@ async function searchPhdLiterature() {
 }
 
 // PubMed检索
+// CORS代理请求（PubMed不支持CORS，需通过代理）
+async function fetchViaProxy(url) {
+  var proxies = [
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+    'https://corsproxy.io/?url=' + encodeURIComponent(url)
+  ];
+  var lastError = null;
+  for (var i = 0; i < proxies.length; i++) {
+    try {
+      var resp = await fetch(proxies[i]);
+      if (resp.ok) return resp;
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError || new Error('所有代理均失败');
+}
+
 async function searchPubMed(query, count) {
   var searchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=' +
     encodeURIComponent(query) + '&retmax=' + count + '&retmode=json&sort=relevance';
-  var searchResponse = await fetch(searchUrl);
+  var searchResponse = await fetchViaProxy(searchUrl);
   var searchData = await searchResponse.json();
   var idList = searchData.esearchresult.idlist;
   if (!idList || idList.length === 0) return [];
   var fetchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=' +
     idList.join(',') + '&rettype=abstract&retmode=json';
-  var fetchResponse = await fetch(fetchUrl);
+  var fetchResponse = await fetchViaProxy(fetchUrl);
   var fetchData = await fetchResponse.json();
   return parsePubmedArticles(fetchData);
 }
@@ -36295,7 +36313,14 @@ async function searchSemanticScholar(query, count) {
   var url = 'https://api.semanticscholar.org/graph/v1/paper/search?query=' +
     encodeURIComponent(query) + '&limit=' + count +
     '&fields=title,abstract,authors,year,venue,citationCount,externalIds,url';
-  var response = await fetch(url);
+  var response;
+  try {
+    response = await fetch(url);
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+  } catch (e) {
+    // 直连失败时走代理
+    response = await fetchViaProxy(url);
+  }
   var data = await response.json();
   if (!data || !data.data) return [];
   return data.data.map(function(p) {
