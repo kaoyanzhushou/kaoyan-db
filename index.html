@@ -36286,25 +36286,46 @@ function displayLiteratureListEnhanced(articles, container) {
   var favs = getFavLiterature();
   var favIds = {};
   favs.forEach(function(f) { favIds[f.title.substring(0, 50)] = true; });
-  var html = '<div style="margin-bottom:16px;padding:14px;background:#fff;border-radius:10px;border:1px solid #ddd6fe">';
-  html += '<div style="font-weight:600;color:#5b21b6;margin-bottom:10px;font-size:14px">检索结果（' + articles.length + '篇）</div>';
+  litCompareSelected = [];
+  var html = '';
+  // 工具栏：对比分析 + 选题推荐
+  html += '<div id="litCompareBar" style="display:none;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;flex-wrap:wrap">';
+  html += '<span style="font-size:13px;color:#92400e;font-weight:600">已选 <span id="litCompareCount">0</span> 篇</span>';
+  html += '<button onclick="compareSelectedLiterature()" style="font-size:12px;color:#fff;background:#d97706;border:none;padding:5px 14px;border-radius:6px;cursor:pointer;font-weight:600">开始对比分析</button>';
+  html += '<button onclick="clearLitCompare()" style="font-size:12px;color:#92400e;background:#fff;border:1px solid #fcd34d;padding:5px 12px;border-radius:6px;cursor:pointer">清空选择</button>';
+  html += '<span style="font-size:11px;color:#b45309">勾选2-5篇文献进行横向对比</span>';
+  html += '</div>';
+  html += '<div id="litCompareResult" style="display:none;margin-bottom:16px"></div>';
+  // 选题推荐按钮
+  html += '<div style="margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap">';
+  html += '<button id="litRecommendBtn" onclick="recommendResearchTopics()" style="font-size:12px;color:#fff;background:linear-gradient(135deg,#8b5cf6,#7c3aed);border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-weight:600">AI选题推荐</button>';
+  html += '<span style="font-size:11px;color:#7c3aed;align-self:center">基于检索文献分析研究热点与空白，推荐考博选题</span>';
+  html += '</div>';
+  html += '<div id="litRecommendResult" style="display:none;margin-bottom:16px"></div>';
+  // 文献列表
+  html += '<div style="margin-bottom:16px;padding:14px;background:#fff;border-radius:10px;border:1px solid #ddd6fe">';
+  html += '<div style="font-weight:600;color:#5b21b6;margin-bottom:10px;font-size:14px">检索结果（' + articles.length + '篇）— 勾选可对比分析</div>';
   articles.forEach(function(article, index) {
     var isFav = favIds[article.title.substring(0, 50)];
     var citeBadge = article.citationCount ? '<span style="background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:8px;font-size:10px;margin-left:6px">被引' + article.citationCount + '</span>' : '';
     var sourceBadge = article.source ? '<span style="background:#e0e7ff;color:#3730a3;padding:1px 7px;border-radius:8px;font-size:10px;margin-left:6px">' + article.source + '</span>' : '<span style="background:#dbeafe;color:#1e40af;padding:1px 7px;border-radius:8px;font-size:10px;margin-left:6px">PubMed</span>';
-    html += '<div style="padding:10px 0;border-bottom:1px solid #f3f0ff">' +
+    html += '<div style="padding:10px 0;border-bottom:1px solid #f3f0ff;display:flex;gap:10px">' +
+      '<div style="flex-shrink:0;padding-top:3px"><input type="checkbox" class="lit-compare-check" onchange="toggleLitCompare(' + index + ')" style="width:16px;height:16px;cursor:pointer;accent-color:#7c3aed"></div>' +
+      '<div style="flex:1;min-width:0">' +
       '<div style="font-weight:600;color:#3b0764;font-size:13px;margin-bottom:4px">' + (index + 1) + '. ' + article.title + citeBadge + sourceBadge + '</div>' +
       '<div style="font-size:11px;color:#7c3aed;margin-bottom:4px">' + article.authors + '. ' + article.journal + '. ' + article.pubdate + (article.doi ? ' DOI:' + article.doi : '') + '</div>' +
-      '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">' +
-      '<a href="' + article.url + '" target="_blank" style="font-size:11px;color:#7c3aed;text-decoration:none;padding:3px 10px;background:#f5f3ff;border-radius:5px">原文链接</a>' +
-      '<button onclick="analyzeSingleLiterature(' + index + ', this)" style="font-size:11px;color:#fff;background:#7c3aed;border:none;padding:3px 10px;border-radius:5px;cursor:pointer">AI深度解读</button>' +
+      '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">' +
+      '<a href="' + article.url + '" target="_blank" style="font-size:11px;color:#7c3aed;text-decoration:none;padding:3px 10px;background:#f5f3ff;border-radius:5px">原文</a>' +
+      '<button onclick="analyzeSingleLiterature(' + index + ', this)" style="font-size:11px;color:#fff;background:#7c3aed;border:none;padding:3px 10px;border-radius:5px;cursor:pointer">AI解读</button>' +
+      '<button onclick="translateAbstract(' + index + ', this)" style="font-size:11px;color:#065f46;background:#d1fae5;border:none;padding:3px 10px;border-radius:5px;cursor:pointer">翻译摘要</button>' +
+      '<button onclick="copyCitation(' + index + ')" style="font-size:11px;color:#1e40af;background:#dbeafe;border:none;padding:3px 10px;border-radius:5px;cursor:pointer">复制引用</button>' +
       '<button onclick="toggleFavLiterature(' + index + ')" style="font-size:11px;color:' + (isFav ? '#b45309' : '#6b7280') + ';background:' + (isFav ? '#fef3c7' : '#f3f4f6') + ';border:none;padding:3px 10px;border-radius:5px;cursor:pointer" id="favBtn-' + index + '">' + (isFav ? '已收藏' : '收藏') + '</button>' +
       '</div>' +
       '<div id="litAnalysis-' + index + '" style="margin-top:8px"></div>' +
-      '</div>';
+      '<div id="litTranslation-' + index + '" style="margin-top:8px;display:none"></div>' +
+      '</div></div>';
   });
   html += '</div>';
-  // 保存当前搜索结果供AI解读和收藏使用
   window._currentLitArticles = articles;
   container.innerHTML += html;
 }
@@ -36481,6 +36502,173 @@ function exportFavLiterature() {
 
 // 初始化收藏计数
 updateFavCount();
+
+// ========== 文献检索第二阶段增强功能 ==========
+
+// 已选择用于对比的文献索引
+let litCompareSelected = [];
+
+// 切换对比选择
+function toggleLitCompare(index) {
+  var idx = litCompareSelected.indexOf(index);
+  if (idx >= 0) {
+    litCompareSelected.splice(idx, 1);
+  } else {
+    if (litCompareSelected.length >= 5) {
+      alert('最多选择5篇文献进行对比');
+      return;
+    }
+    litCompareSelected.push(index);
+  }
+  updateCompareBar();
+}
+
+// 更新对比工具栏
+function updateCompareBar() {
+  var bar = document.getElementById('litCompareBar');
+  if (!bar) return;
+  if (litCompareSelected.length > 0) {
+    bar.style.display = 'flex';
+    document.getElementById('litCompareCount').textContent = litCompareSelected.length;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+// 执行文献对比分析
+async function compareSelectedLiterature() {
+  if (litCompareSelected.length < 2) { alert('请至少选择2篇文献进行对比'); return; }
+  var articles = window._currentLitArticles || [];
+  var selected = litCompareSelected.map(function(i) { return articles[i]; }).filter(Boolean);
+  var resultDiv = document.getElementById('litCompareResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#7c3aed">AI正在对比分析 ' + selected.length + ' 篇文献...</div>';
+  try {
+    var litText = selected.map(function(a, i) {
+      return '【文献' + (i+1) + '】' + a.title + '\n作者：' + a.authors + '\n期刊：' + a.journal + ' (' + a.pubdate + ')\n摘要：' + (a.abstract || '无') + '\n';
+    }).join('\n');
+    var systemPrompt = `你是一位体育学/运动人体科学领域的资深学术专家。请对以下多篇文献进行横向对比分析，帮助考博学生理解这些研究的异同和研究脉络。
+
+对比分析结构：
+1. **研究概览表**：用表格形式对比各文献的研究对象、样本量、干预/研究方法、核心检测指标、主要结论
+2. **研究方法对比**：各文献在研究设计、实验方法、统计分析上的异同，哪些方法更严谨
+3. **核心结论一致性分析**：哪些结论在多篇文献中得到验证（共识），哪些结论存在矛盾或不一致（争议）
+4. **研究演进脉络**：这些文献反映了该研究方向怎样的发展趋势？从早期到近期有什么变化？
+5. **研究空白与未来方向**：综合这些文献，还有哪些问题没有解决？未来研究可以从哪些方向突破？
+6. **对考博的启示**：这些对比分析对考博选题、面试准备、科研计划书撰写有什么具体启发？
+
+要求：语言专业客观，总字数800-1200字，使用Markdown格式，表格用Markdown表格语法。`;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, '以下是需要对比的文献：\n\n' + litText, 2000, model);
+    resultDiv.innerHTML = '<div style="font-weight:600;color:#5b21b6;margin-bottom:10px;font-size:14px">文献对比分析（' + selected.length + '篇）</div><div class="md-content" style="padding:14px;background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px;font-size:13px;line-height:1.9;color:#3b0764">' + renderMarkdown(response) + '</div>';
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">对比分析失败：' + error.message + '</div>';
+  }
+}
+
+// 清空对比选择
+function clearLitCompare() {
+  litCompareSelected = [];
+  updateCompareBar();
+  // 取消所有复选框勾选
+  document.querySelectorAll('.lit-compare-check').forEach(function(cb) { cb.checked = false; });
+  document.getElementById('litCompareResult').style.display = 'none';
+}
+
+// AI选题推荐
+async function recommendResearchTopics() {
+  var query = document.getElementById('phdLitSearchInput').value.trim();
+  var articles = window._currentLitArticles || [];
+  if (!query) { alert('请先输入研究方向并检索文献'); return; }
+  if (articles.length === 0) { alert('请先检索文献'); return; }
+  var btn = document.getElementById('litRecommendBtn');
+  var resultDiv = document.getElementById('litRecommendResult');
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#7c3aed">AI正在分析文献热点并推荐选题...</div>';
+  try {
+    var hotTopics = articles.map(function(a) { return a.title; }).join('; ');
+    var systemPrompt = `你是一位体育学/运动人体科学领域的资深博导，拥有丰富的博士招生和科研指导经验。请基于以下研究方向和文献热点，为考博学生推荐具体的博士研究选题。
+
+推荐要求：
+1. 推荐5-8个具体选题，每个选题包含：
+   - 选题名称（简洁明确，不超过20字）
+   - 研究意义（为什么值得研究，理论价值和实践价值）
+   - 研究内容（具体研究什么，2-3个核心研究问题）
+   - 可行性分析（研究方法是否成熟，数据/样本是否可获取）
+   - 创新点（与现有研究相比的新颖之处）
+   - 难度评级（低/中/高，适合什么基础的学生）
+2. 选题要具体、可操作，避免空泛的大题目
+3. 优先推荐当前研究热点、存在争议或研究空白的方向
+4. 结合体育学/运动人体科学的学科特点
+5. 最后给出选题建议：如何根据个人背景选择合适的选题
+
+使用Markdown格式，每个选题用### 标题，总字数1000-1500字。`;
+    var userPrompt = '研究方向：' + query + '\n\n相关文献标题（反映当前研究热点）：' + hotTopics;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 2500, model);
+    resultDiv.innerHTML = '<div style="font-weight:600;color:#5b21b6;margin-bottom:10px;font-size:14px">AI选题推荐（基于' + articles.length + '篇文献分析）</div><div class="md-content" style="padding:14px;background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px;font-size:13px;line-height:1.9;color:#3b0764">' + renderMarkdown(response) + '</div>';
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">选题推荐失败：' + error.message + '</div>';
+  }
+  btn.disabled = false;
+  btn.textContent = 'AI选题推荐';
+}
+
+// 摘要翻译
+async function translateAbstract(index, btn) {
+  var articles = window._currentLitArticles || [];
+  var article = articles[index];
+  if (!article || !article.abstract || article.abstract === '无摘要') {
+    alert('该文献没有可翻译的摘要');
+    return;
+  }
+  var resultDiv = document.getElementById('litTranslation-' + index);
+  btn.disabled = true;
+  btn.textContent = '翻译中...';
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<div style="padding:8px;color:#7c3aed;font-size:12px">正在翻译摘要...</div>';
+  try {
+    var systemPrompt = '你是一位专业的学术翻译，擅长将体育学、运动人体科学、生物医学领域的英文文献摘要翻译成准确、流畅、专业的中文。要求：1.专业术语翻译准确，首次出现时可附英文原文；2.保持学术严谨性，不添加主观评价；3.语句通顺，符合中文学术写作习惯；4.只输出翻译后的中文，不要添加解释或注释。';
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, '请将以下英文摘要翻译成中文：\n\n' + article.abstract, 1000, model);
+    resultDiv.innerHTML = '<div style="padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;line-height:1.8;color:#14532d"><div style="font-weight:600;margin-bottom:6px;color:#166534">中文摘要</div>' + response + '</div>';
+    btn.textContent = '重新翻译';
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;font-size:12px">翻译失败：' + error.message + '</div>';
+    btn.textContent = '翻译摘要';
+  }
+  btn.disabled = false;
+}
+
+// 复制引用格式（GB/T 7714-2015标准）
+function copyCitation(index) {
+  var articles = window._currentLitArticles || [];
+  var article = articles[index];
+  if (!article) return;
+  // 格式化作者：取前3位，超过3位加"等"
+  var authors = article.authors.split(',');
+  var authorStr = authors.slice(0, 3).map(function(a) { return a.trim(); }).join(', ');
+  if (authors.length > 3) authorStr += ', 等';
+  // GB/T 7714格式：作者. 题名[J]. 刊名, 年.
+  var citation = authorStr + '. ' + article.title + '[J]. ' + article.journal + ', ' + article.pubdate + '.';
+  if (article.doi) citation += ' DOI:' + article.doi;
+  // 复制到剪贴板
+  var textarea = document.createElement('textarea');
+  textarea.value = citation;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    alert('引用格式已复制到剪贴板：\n\n' + citation);
+  } catch (e) {
+    alert('复制失败，请手动复制：\n\n' + citation);
+  }
+  document.body.removeChild(textarea);
+}
 
 
 // ========== 考博AI联网搜索增强功能 ==========
