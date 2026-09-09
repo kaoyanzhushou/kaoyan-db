@@ -27943,16 +27943,30 @@ const TECH_ROUTE_TEMPLATES = {
 };
 function renderPaperRoute() {
   const ms = document.getElementById('routeModel');
-  if (ms && !ms.dataset.inited) {
+  const fallbackModels = [
+    { value: 'deepseek-chat', label: 'DeepSeek V3（均衡推荐）' },
+    { value: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro（最强推理）' },
+    { value: 'deepseek-v4-flash', label: 'DeepSeek V4 Flash（快速响应）' },
+    { value: 'hy3', label: '腾讯混元 hy3' },
+    { value: 'hy4-preview', label: '腾讯混元 hy4（预览版）' }
+  ];
+  const models = (typeof AI_MODELS !== 'undefined' && AI_MODELS.length) ? AI_MODELS : fallbackModels;
+  if (ms && (!ms.dataset.inited || ms.options.length === 0)) {
     ms.dataset.inited = '1';
-    (typeof AI_MODELS !== 'undefined' ? AI_MODELS : []).forEach(function(m) {
+    models.forEach(function(m) {
       if (m.value === 'glm-5.3' || m.value === 'kimi-k3') return;
       const opt = document.createElement('option');
       opt.value = m.value; opt.textContent = m.label;
-      const cur = (typeof currentAiModel !== 'undefined') ? currentAiModel : 'deepseek-chat';
+      const cur = (typeof currentAiModel !== 'undefined' && currentAiModel) ? currentAiModel : 'deepseek-chat';
       if (m.value === cur) opt.selected = true;
       ms.appendChild(opt);
     });
+  }
+  if (ms && ms.options.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = 'deepseek-chat'; opt.textContent = 'DeepSeek V3（均衡推荐）';
+    opt.selected = true;
+    ms.appendChild(opt);
   }
   renderRouteHistory();
 }
@@ -28332,7 +28346,8 @@ function generatePaperTechRoute() {
   const subject = (document.getElementById('routeSubject').value || '').trim();
   const note = (document.getElementById('routeNote').value || '').trim();
   if (!topic) { alert('请先输入研究题目'); return; }
-  const model = document.getElementById('routeModel') ? document.getElementById('routeModel').value : 'deepseek-chat';
+  const modelSel = document.getElementById('routeModel');
+  const model = (modelSel && modelSel.value) ? modelSel.value : 'deepseek-chat';
   const btn = document.getElementById('routeGenBtn');
   const status = document.getElementById('routeStatus');
   btn.disabled = true; btn.textContent = '⏳ 生成中...';
