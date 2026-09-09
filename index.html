@@ -7651,6 +7651,8 @@ console.log('✅ 学习工具入口已加载');
               <option value="调查法">调查法（问卷/访谈）</option>
               <option value="文献综述">文献综述法</option>
               <option value="案例法">案例法</option>
+              <option value="混合设计法">混合设计法（实验+问卷）</option>
+              <option value="Meta分析">Meta分析（系统评价）</option>
             </select>
             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">研究对象 / 样本（可选）</label>
             <input id="routeSubject" placeholder="如：16-18岁男性足球运动员60名，随机分2组" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-bottom:10px;box-sizing:border-box;font-family:inherit">
@@ -7667,6 +7669,9 @@ console.log('✅ 学习工具入口已加载');
             <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:4px">📋 必经环节校验</div>
             <div style="font-size:11px;color:#059669;margin-bottom:10px">按所选研究类型的专业模板，自动检查流程完整性与逻辑顺序</div>
             <div id="routeValidation" style="font-size:12px;color:#6b7280;line-height:1.8">生成后自动校验研究流程的完整性与逻辑顺序</div>
+            <div style="font-size:14px;font-weight:600;color:#1f2937;margin:18px 0 4px">📊 研究方案总览</div>
+            <div style="font-size:11px;color:#059669;margin-bottom:10px">各阶段研究方法、产出物与预计时长</div>
+            <div id="routePlanCards" style="font-size:12px;color:#6b7280;line-height:1.8">生成后自动展示各阶段方案详情</div>
           </div>
         </div>
 
@@ -27913,7 +27918,9 @@ const TECH_ROUTE_TEMPLATES = {
   '实验法': { required: ['选题','文献综述','研究假设','伦理审批','样本量估算','预实验','随机分组','基线测试','运动干预','指标检测','数据采集','统计分析','结果讨论'], label: '实验法（动物/人体/细胞）' },
   '调查法': { required: ['选题','文献综述','问卷设计','专家效度检验','预调查','正式调查','数据回收','统计分析','结果讨论'], label: '调查法（问卷/访谈）' },
   '文献综述': { required: ['选题','文献检索','文献筛选','文献质量评价','信息提取','主题综合','理论框架','结论展望'], label: '文献综述法' },
-  '案例法': { required: ['选题','文献综述','案例选择','伦理审批','资料收集','数据分析','三角验证','结果讨论'], label: '案例法' }
+  '案例法': { required: ['选题','文献综述','案例选择','伦理审批','资料收集','数据分析','三角验证','结果讨论'], label: '案例法' },
+  '混合设计法': { required: ['选题','文献综述','研究假设','伦理审批','样本量估算','问卷设计','专家效度检验','预调查','随机分组','基线测试','运动干预','指标检测','数据采集','统计分析','结果讨论'], label: '混合设计法（实验+问卷）' },
+  'Meta分析': { required: ['选题','文献检索','文献筛选','文献质量评价','数据提取','异质性检验','效应量合并','敏感性分析','发表偏倚检验','结果讨论'], label: 'Meta分析（系统评价）' }
 };
 function renderPaperRoute() {
   const ms = document.getElementById('routeModel');
@@ -27949,18 +27956,79 @@ function buildMermaidFromPhases(phases, title) {
     if (!ph || !ph.steps || !ph.steps.length) return;
     const phaseName = ph.name || ('阶段' + (pi + 1));
     lines.push('  subgraph S' + pi + '["' + routeEscape(phaseName) + '"]');
-    ph.steps.forEach(function(st) {
-      lines.push('    N' + nodeId + '["' + routeEscape(st) + '"]');
-      if (nodeId === 0) {
-        lines.push('  T0 --> N0');
-      } else {
-        lines.push('    N' + (nodeId - 1) + ' --> N' + nodeId);
-      }
+    const stepIds = [];
+    (ph.steps || []).forEach(function(st) {
+      const id = 'N' + nodeId;
       nodeId++;
+      stepIds.push(id);
+      lines.push('    ' + id + '["' + routeEscape(st) + '"]');
+      lines.push('    click ' + id + ' editRouteNode "' + id + '"');
     });
+    if (stepIds.length) {
+      lines.push('  ' + (prevRouteNode || 'T0') + ' --> ' + stepIds[0]);
+      for (let i = 1; i < stepIds.length; i++) {
+        lines.push('    ' + stepIds[i - 1] + ' --> ' + stepIds[i]);
+      }
+    }
+    // 分支决策节点（纳入/排除、分组筛选等）
+    (ph.branches || []).forEach(function(br, bi) {
+      const cid = 'C' + pi + '_' + bi;
+      const yid = 'Y' + pi + '_' + bi;
+      const nid = 'X' + pi + '_' + bi;
+      lines.push('    ' + cid + '{"' + routeEscape(br.condition || '筛选条件') + '"}');
+      lines.push('    click ' + cid + ' editRouteNode "' + cid + '"');
+      if (stepIds.length) lines.push('    ' + stepIds[stepIds.length - 1] + ' --> ' + cid);
+      if (br.yes) {
+        lines.push('    ' + yid + '["' + routeEscape(br.yes) + '"]');
+        lines.push('    click ' + yid + ' editRouteNode "' + yid + '"');
+        lines.push('    ' + cid + ' -->|是| ' + yid);
+        window.__routeLastYes = yid;
+      }
+      if (br.no) {
+        lines.push('    ' + nid + '["' + routeEscape(br.no) + '"]');
+        lines.push('    click ' + nid + ' editRouteNode "' + nid + '"');
+        lines.push('    ' + cid + ' -->|否| ' + nid);
+      }
+      if (br.yes) prevRouteNode = yid;
+    });
+    if (stepIds.length) prevRouteNode = stepIds[stepIds.length - 1];
     lines.push('  end');
   });
   return lines.join('\n');
+}
+// 点击节点编辑文字（支持方框/菱形节点）
+function editRouteNode(nodeId) {
+  const src = document.getElementById('routeSource');
+  if (!src) return;
+  const re = new RegExp(nodeId + '(\\[|\\{)\\"([^\\"]*)\\"(\\]|\\})');
+  const m = src.value.match(re);
+  if (!m) { alert('未找到该节点'); return; }
+  const newText = prompt('编辑节点文字：', m[2]);
+  if (newText === null || newText.trim() === '') return;
+  const bracket = m[1];
+  const closeB = m[3];
+  const newSrc = src.value.replace(re, nodeId + bracket + '"' + newText.trim() + '"' + closeB);
+  src.value = newSrc;
+  renderMermaidGraph(newSrc, 'routeGraph');
+}
+// 研究方案总览卡片（阶段方法/产出/时长）
+function renderRoutePlanCards(phases) {
+  const box = document.getElementById('routePlanCards');
+  if (!box) return;
+  let html = '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+  phases.forEach(function(ph, i) {
+    if (!ph) return;
+    html += '<div style="flex:1;min-width:170px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;box-sizing:border-box">';
+    html += '<div style="font-size:12px;font-weight:700;color:#065f46;margin-bottom:6px">' + (i + 1) + '. ' + routeEscape(ph.name || '阶段' + (i + 1)) + '</div>';
+    html += '<div style="font-size:11px;color:#374151;line-height:1.7">';
+    if (ph.method) html += '🔧 方法：' + routeEscape(ph.method) + '<br>';
+    if (ph.deliverable) html += '📦 产出：' + routeEscape(ph.deliverable) + '<br>';
+    if (ph.duration) html += '⏱ 时长：' + routeEscape(ph.duration) + '<br>';
+    html += '📋 步骤：' + routeEscape((ph.steps || []).join('、'));
+    html += '</div></div>';
+  });
+  html += '</div>';
+  box.innerHTML = html;
 }
 function validateTechRoute(phases, type) {
   const allSteps = [];
@@ -28053,7 +28121,7 @@ function generatePaperTechRoute() {
   btn.disabled = true; btn.textContent = '⏳ 生成中...';
   status.innerHTML = '<div style="padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:12.5px;color:#1d4ed8">🤖 AI 正在按「' + type + '」专业模板生成结构化技术路线...</div>';
   const tmpl = TECH_ROUTE_TEMPLATES[type] || TECH_ROUTE_TEMPLATES['实验法'];
-  const sys = '你是运动人体科学领域的科研方法专家，精通课题设计与技术路线图绘制。你严格遵循结构化输出：只输出一个JSON对象，不输出任何其他文字、不做解释。\n\nJSON格式如下（phases为3-5个阶段，每个阶段steps为3-6个具体步骤）：\n{"title":"研究题目","type":"研究类型","phases":[{"name":"阶段名（如：准备阶段）","steps":["具体步骤1","具体步骤2"],"method":"本阶段主要方法","deliverable":"本阶段产出物","duration":"预计时长"}]}\n\n【专业要求】\n1. 研究类型为实验法时，流程必须覆盖：选题→文献综述→研究假设→伦理审批→样本量估算→预实验→随机分组→基线测试→运动干预→指标检测→数据采集→统计分析→结果讨论。\n2. 使用运动人体科学专业术语（随机分组、基线测试、运动干预、最大摄氧量、Western Blot、qPCR、重复测量方差分析等）。\n3. 阶段划分合理：准备阶段、实验/实施阶段、数据与分析阶段、总结阶段。\n4. steps按先后逻辑顺序排列，不得颠倒。';
+  const sys = '你是运动人体科学领域的科研方法专家，精通课题设计与技术路线图绘制。你严格遵循结构化输出：只输出一个JSON对象，不输出任何其他文字、不做解释。\n\nJSON格式如下（phases为3-5个阶段，每个阶段steps为3-6个具体步骤）：\n{"title":"研究题目","type":"研究类型","phases":[{"name":"阶段名（如：准备阶段）","steps":["具体步骤1","具体步骤2"],"method":"本阶段主要方法","deliverable":"本阶段产出物","duration":"预计时长"}]}\n\n【专业要求】\n1. 研究类型为实验法时，流程必须覆盖：选题→文献综述→研究假设→伦理审批→样本量估算→预实验→随机分组→基线测试→运动干预→指标检测→数据采集→统计分析→结果讨论。\n2. 使用运动人体科学专业术语（随机分组、基线测试、运动干预、最大摄氧量、Western Blot、qPCR、重复测量方差分析等）。\n3. 阶段划分合理：准备阶段、实验/实施阶段、数据与分析阶段、总结阶段。\n4. steps按先后逻辑顺序排列，不得颠倒。\n5. 若研究设计含纳入/排除、分组筛选等逻辑，可在相应阶段的JSON对象中添加可选的"branches"数组字段，格式：[{"condition":"纳入标准是否满足?","yes":"随机分组","no":"排除并记录"}]，前端会渲染为菱形决策节点。';
   const usr = '研究题目：' + topic + '\n研究类型：' + type + '\n研究对象/样本：' + (subject || '未指定') + '\n补充说明：' + (note || '无') + '\n\n参考本类型必经环节：' + (tmpl.required || []).join('、') + '\n\n请输出JSON：';
   callDeepSeekAPI(sys, usr, 3000, model).then(function(resp) {
     const parsed = parseRouteJSON(resp);
@@ -28061,7 +28129,9 @@ function generatePaperTechRoute() {
       throw new Error('AI未返回有效的结构化JSON');
     }
     window._routeData = { phases: parsed.phases, type: type, title: topic, raw: resp };
+    window.prevRouteNode = null;
     const code = buildMermaidFromPhases(parsed.phases, topic);
+    renderRoutePlanCards(parsed.phases);
     renderMermaidGraph(code, 'routeGraph');
     const src = document.getElementById('routeSource');
     if (src) src.value = code;
