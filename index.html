@@ -7561,6 +7561,18 @@ console.log('✅ 学习工具入口已加载');
             </div>
             <div style="font-size:11px;color:#9ca3af;margin-top:10px;line-height:1.6">⚠️ 本地查重结果仅供参考，正式提交前请以学校指定平台为准</div>
           </div>
+
+          <!-- 查重报告上传解析 -->
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-top:16px">
+            <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:4px">📄 查重报告上传解析</div>
+            <div style="font-size:11px;color:#6b7280;margin-bottom:12px">把在知网 / 格子达 / 维普 / 万方查重后导出的报告（HTML或TXT）上传，自动解析重复率与重复片段</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="file" id="plagReportFile" accept=".html,.htm,.txt" style="flex:1;min-width:150px;font-size:12px;padding:6px;border:1px solid #d1d5db;border-radius:6px;background:#fff">
+              <button onclick="parsePlagReport()" style="background:#0ea5e9;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📊 解析报告</button>
+            </div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:8px;line-height:1.6">💡 各平台查重完成后通常提供「导出报告 / 下载报告」，格式选 HTML 或 TXT 即可</div>
+            <div id="plagReportResult" style="margin-top:12px"></div>
+          </div>
         </div>
 
         <div style="flex:1;min-width:320px">
@@ -30038,7 +30050,39 @@ var PLAG_COMMON_PHRASES = [
   "奥林匹克运动", "大众体育", "学校体育", "竞技体育", "社会体育",
   "健康中国", "全民健身", "体育强国", "体教融合", "体医融合",
   "运动处方", "体质健康", "健康促进", "慢性病预防", "老年体育",
-  "青少年体育", "幼儿体育", "女性体育", "残疾人体育", "特殊体育"
+  "青少年体育", "幼儿体育", "女性体育", "残疾人体育", "特殊体育",
+  // ---- 扩展语料：学术规范常用表达 ----
+  "本文", "本研究", "国内外研究现状", "研究背景与意义", "文献综述",
+  "研究对象与方法", "选取", "随机分为", "分为对照组和实验组", "对照组",
+  "实验组", "干预前后", "实验前后", "训练前后", "测试指标",
+  "数据采用SPSS", "运用SPSS", "进行统计分析", "独立样本t检验", "配对样本t检验",
+  "单因素方差分析", "重复测量方差分析", "相关性分析", "回归分析", "卡方检验",
+  "显著性水平", "差异有统计学意义", "差异具有统计学意义", "结果分析", "结果与分析",
+  "本研究的局限性", "研究的不足", "未来展望", "今后研究", "后续研究",
+  "综上所述，本研究", "总而言之", "总之", "总体而言", "就本研究而言",
+  "为今后", "提供一定", "提供有益", "具有一定的", "作出贡献",
+  "对促进", "对提高", "对改善", "对增强", "有助于",
+  "受到广泛关注", "日益受到重视", "越来越受到", "已成为", "成为研究热点",
+  "相关研究", "大量研究表明", "多项研究表明", "已有研究表明", "有学者指出",
+  "一般认为", "普遍认为", "众所周知", "不难发现", "值得指出的是",
+  "值得注意的是", "值得注意的是，", "然而", "但是", "尽管如此",
+  "从总体上看", "从宏观上看", "从微观上看", "从某种程度上说", "从这个意义上讲",
+  // ---- 扩展语料：体育科研惯用表达 ----
+  "体育教学", "运动训练", "运动竞赛", "体育锻炼", "课外体育活动",
+  "体育课程", "体育教师", "体育课堂", "运动技能", "技术动作",
+  "动作要领", "训练负荷", "训练强度", "训练量", "训练频率",
+  "训练周期", "训练监控", "运动成绩", "竞技水平", "运动表现",
+  "体能训练", "力量训练", "耐力训练", "速度训练", "柔韧性训练",
+  "核心力量", "爆发力", "灵敏素质", "协调能力", "平衡能力",
+  "关节活动度", "肌肉力量", "肌肉耐力", "心肺耐力", "身体成分",
+  "体重指数", "体脂率", "腰臀比", "骨密度", "柔韧度",
+  "疲劳程度", "运动性疲劳", "恢复时间", "超量恢复", "运动适应",
+  "运动干预", "运动处方制定", "有氧运动", "无氧运动", "抗阻训练",
+  "间歇训练", "高强度间歇训练", "持续训练", "拉伸训练", "放松活动",
+  "运动前后", "运动过程中", "安静状态下", "运动后恢复", "即刻恢复",
+  "运动员", "大学生", "中学生", "老年人", "久坐人群",
+  "慢性病患者", "2型糖尿病", "高血压患者", "冠心病", "肥胖人群",
+  "跌倒风险", "生活质量", "主观幸福感", "睡眠质量", "焦虑抑郁"
 ];
 
 function updatePlagWordCount() {
@@ -30214,6 +30258,176 @@ function aiRewriteSentence(idx) {
   } else {
     resultEl.innerHTML = '<div style="font-size:12px;color:#6b7280;padding:8px">AI功能暂不可用，请手动改写</div>';
   }
+}
+
+
+// ========== 论文工作台 - 查重报告上传解析 ==========
+function parsePlagReport() {
+  var fileInput = document.getElementById('plagReportFile');
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    alert('请先选择查重报告文件（HTML或TXT）');
+    return;
+  }
+  var file = fileInput.files[0];
+  var resultEl = document.getElementById('plagReportResult');
+  resultEl.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280;font-size:13px">⏳ 正在解析报告 <b>' + file.name + '</b>...</div>';
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var content = e.target.result;
+    setTimeout(function() {
+      try {
+        analyzePlagReport(content, file.name);
+      } catch(err) {
+        resultEl.innerHTML = '<div style="padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:12px;color:#dc2626">报告解析失败：' + err.message + '</div>';
+      }
+    }, 200);
+  };
+  reader.onerror = function() {
+    resultEl.innerHTML = '<div style="padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:12px;color:#dc2626">文件读取失败，请重试</div>';
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function stripHtmlTags(html) {
+  return html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+}
+
+function analyzePlagReport(content, filename) {
+  var resultEl = document.getElementById('plagReportResult');
+  var lower = content.toLowerCase();
+  var isHtml = /<html|<body|<head|<div|<table/i.test(lower);
+
+  // ---- 1. 提取重复率（多种平台格式兼容） ----
+  var rate = null;
+  var rateLabel = '';
+  var patterns = [
+    { re: /总文字复制比[：:\s]*([\d.]+)\s*%/, label: '总文字复制比' },
+    { re: /总文字复制比[：:\s]*([\d.]+)%/, label: '总文字复制比' },
+    { re: /总相似比[：:\s]*([\d.]+)\s*%/, label: '总相似比' },
+    { re: /总相似度[：:\s]*([\d.]+)\s*%/, label: '总相似度' },
+    { re: /复制比[：:\s]*([\d.]+)\s*%/, label: '复制比' },
+    { re: /重复率[：:\s]*([\d.]+)\s*%/, label: '重复率' },
+    { re: /相似比[：:\s]*([\d.]+)\s*%/, label: '相似比' },
+    { re: /相似度[：:\s]*([\d.]+)\s*%/, label: '相似度' },
+    { re: /重复[率比][：:\s]*([\d.]+)\s*%/, label: '重复率' },
+    { re: /overall similarity[^\d]*([\d.]+)\s*%/i, label: 'Overall Similarity' }
+  ];
+  for (var pi = 0; pi < patterns.length; pi++) {
+    var m = content.match(patterns[pi].re);
+    if (m) { rate = parseFloat(m[1]); rateLabel = patterns[pi].label; break; }
+  }
+
+  // ---- 2. 提取辅助指标（去除本人/去除引用/去除已发表） ----
+  var auxRates = {};
+  var auxPatterns = [
+    { re: /去除本人(?:文献)?复制比[：:\s]*([\d.]+)\s*%/, key: '去除本人' },
+    { re: /去除引用(?:文献)?复制比[：:\s]*([\d.]+)\s*%/, key: '去除引用' },
+    { re: /去除已发表(?:文献)?复制比[：:\s]*([\d.]+)\s*%/, key: '去除已发表' },
+    { re: /单篇最大文字复制比[：:\s]*([\d.]+)\s*%/, key: '单篇最大' },
+    { re: /单篇最大相似比[：:\s]*([\d.]+)\s*%/, key: '单篇最大' },
+    { re: /去除本人(?:文献)?相似比[：:\s]*([\d.]+)\s*%/, key: '去除本人' },
+    { re: /去除引用(?:文献)?相似比[：:\s]*([\d.]+)\s*%/, key: '去除引用' }
+  ];
+  for (var ai = 0; ai < auxPatterns.length; ai++) {
+    var am = content.match(auxPatterns[ai].re);
+    if (am) auxRates[auxPatterns[ai].key] = parseFloat(am[1]);
+  }
+
+  // ---- 3. 提取重复片段（红色高亮文本） ----
+  var dupSegments = [];
+  if (isHtml) {
+    // 知网/格子达/维普常见红色标注格式
+    var colorPatterns = [
+      /<font[^>]*color\s*=\s*["']?(?:#ff0000|red|#f00|#e10000|#cc0000|#ff0033|rgb\(255,\s*0,\s*0\))["']?[^>]*>([\s\S]*?)<\/font>/gi,
+      /<span[^>]*style\s*=\s*["'][^"']*color\s*:\s*(?:#ff0000|red|#f00|#e10000|#cc0000|rgb\(255,\s*0,\s*0\))[^"']*["'][^>]*>([\s\S]*?)<\/span>/gi,
+      /<span[^>]*style\s*=\s*["'][^"']*background(?:-color)?\s*:\s*(?:#ff0000|#fecaca|#fee2e2|red|#ffcccc)[^"']*["'][^>]*>([\s\S]*?)<\/span>/gi
+    ];
+    var seen = {};
+    for (var cp = 0; cp < colorPatterns.length; cp++) {
+      var re = colorPatterns[cp];
+      var mm;
+      while ((mm = re.exec(content)) !== null) {
+        var segText = stripHtmlTags(mm[1]).trim();
+        if (segText.length >= 4 && !seen[segText]) {
+          seen[segText] = true;
+          dupSegments.push(segText);
+        }
+      }
+    }
+    // 兼容"标红"等特殊标记
+    var redMark = content.match(/<mark[^>]*>([\s\S]*?)<\/mark>/gi);
+    if (redMark) {
+      redMark.forEach(function(mk) {
+        var t = stripHtmlTags(mk).trim();
+        if (t.length >= 4 && !seen[t]) { seen[t] = true; dupSegments.push(t); }
+      });
+    }
+  } else {
+    // TXT纯文本：按常见重复标记行提取
+    var lines = content.split(/[\n\r]+/);
+    for (var li = 0; li < lines.length; li++) {
+      var line = lines[li].trim();
+      if ((line.indexOf('重复') >= 0 || line.indexOf('标红') >= 0 || line.indexOf('相似') >= 0) && line.length > 6 && line.length < 500) {
+        var clean = line.replace(/^[^\u4e00-\u9fa5a-zA-Z]+/, '').substring(0, 100);
+        if (clean.length >= 6 && dupSegments.indexOf(clean) < 0) dupSegments.push(clean);
+      }
+    }
+  }
+  if (dupSegments.length > 50) dupSegments = dupSegments.slice(0, 50);
+
+  // ---- 4. 生成分析结果 ----
+  var html = '';
+  html += '<div style="padding:12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;margin-bottom:12px">' +
+    '<div style="font-size:13px;font-weight:700;color:#0369a1;margin-bottom:6px">📄 ' + filename + '</div>' +
+    '<div style="font-size:12px;color:#075985;line-height:1.8">报告类型：' + (isHtml ? 'HTML 报告' : 'TXT 文本报告') + '</div>' +
+  '</div>';
+
+  if (rate !== null) {
+    var level = rate > 30 ? '高重复' : rate > 15 ? '中等重复' : rate > 8 ? '轻度重复' : '基本合格';
+    var levelColor = rate > 30 ? '#dc2626' : rate > 15 ? '#f59e0b' : rate > 8 ? '#3b82f6' : '#16a34a';
+    html += '<div style="padding:12px;background:' + levelColor + '10;border-left:4px solid ' + levelColor + ';border-radius:8px;margin-bottom:12px">' +
+      '<div style="font-size:14px;font-weight:700;color:' + levelColor + '">总重复率：' + rate.toFixed(1) + '%（' + level + '）</div>';
+    if (Object.keys(auxRates).length > 0) {
+      html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">';
+      for (var k in auxRates) {
+        html += '<span style="font-size:11px;background:#fff;padding:3px 8px;border-radius:4px;color:#374151">' + k + '：' + auxRates[k].toFixed(1) + '%</span>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  } else {
+    html += '<div style="padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;margin-bottom:12px">⚠️ 未在报告中识别到重复率数值，请确认报告为完整导出（可能只导出了片段）。已解析出重复片段 ' + dupSegments.length + ' 处。</div>';
+  }
+
+  if (dupSegments.length > 0) {
+    html += '<div style="font-size:13px;font-weight:600;color:#1f2937;margin-bottom:8px">🔴 报告标注的重复片段（' + dupSegments.length + '处）</div>';
+    html += '<div style="max-height:260px;overflow-y:auto">';
+    dupSegments.forEach(function(seg, i) {
+      html += '<div style="padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;margin-bottom:6px">' +
+        '<div style="font-size:10px;color:#dc2626;font-weight:600;margin-bottom:3px">重复 ' + (i+1) + '</div>' +
+        '<div style="font-size:12px;color:#374151;line-height:1.6">' + seg + '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+
+    // 降重建议
+    html += '<div style="margin-top:12px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px">' +
+      '<div style="font-size:12px;font-weight:600;color:#166534;margin-bottom:6px">💡 降重建议</div>' +
+      '<ul style="margin:0;padding-left:16px;font-size:12px;color:#14532d;line-height:1.9">' +
+      '<li>对重复片段进行句式改写（被动转主动、拆分长句、调整语序）</li>' +
+      '<li>用同义词替换高频学术套话，保留核心术语不变</li>' +
+      '<li>适当补充个人研究数据、案例或分析，增加原创内容占比</li>' +
+      '<li>直接引用请规范标注引文，避免整段照搬</li>' +
+      '</ul>' +
+    '</div>';
+  } else if (rate === null) {
+    html += '<div style="text-align:center;padding:20px;color:#9ca3af;font-size:12px">未能从报告中解析出重复内容，请尝试导出完整HTML报告</div>';
+  } else {
+    html += '<div style="text-align:center;padding:20px;color:#16a34a;font-size:13px">✅ 报告中未检测到红色标注的重复片段</div>';
+  }
+
+  resultEl.innerHTML = html;
 }
 
 
