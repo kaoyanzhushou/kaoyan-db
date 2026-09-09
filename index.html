@@ -31062,6 +31062,12 @@ function init(){
 try {
 if(typeof initDefaultAdmin === 'function') initDefaultAdmin();
 } catch(e) { console.warn('initDefaultAdmin error in init:', e); }
+try {
+if(typeof getCurrentUser === 'function' && getCurrentUser()){
+if(typeof unlockContent === 'function') unlockContent();
+if(typeof updateUserUI === 'function') updateUserUI();
+}
+} catch(e) { console.warn('auto login check error:', e); }
 initDarkMode();
 // 延迟渲染：三科知识点在第一次切换到对应tab时才渲染，提升首屏加载速度
 window.knowledgeRendered = {politics:false, physio:false, anatomy:false};
@@ -31688,18 +31694,20 @@ lockContent();
 showLoginScreen();
 }
 function unlockContent(){
-document.getElementById('loginOverlay').classList.add('hidden');
-document.querySelector('.app').style.filter = '';
-document.querySelector('.app').style.pointerEvents = '';
+var overlay = document.getElementById('loginOverlay');
+if(overlay){ overlay.style.display = 'none'; overlay.classList.add('hidden'); }
+var app = document.querySelector('.app');
+if(app){ app.style.filter = ''; app.style.pointerEvents = ''; }
 }
 function lockContent(){
-document.querySelector('.app').style.filter = 'blur(8px)';
-document.querySelector('.app').style.pointerEvents = 'none';
+var app = document.querySelector('.app');
+if(app){ app.style.filter = 'blur(8px)'; app.style.pointerEvents = 'none'; }
 }
 function showLoginScreen(){
-document.getElementById('loginOverlay').classList.remove('hidden');
-document.getElementById('loginUsername').value = '';
-document.getElementById('loginPassword').value = '';
+var overlay = document.getElementById('loginOverlay');
+if(overlay){ overlay.style.display = 'flex'; overlay.classList.remove('hidden'); }
+var u = document.getElementById('loginUsername'); if(u) u.value = '';
+var p = document.getElementById('loginPassword'); if(p) p.value = '';
 switchLoginTab('login');
 hideLoginMessages();
 }
