@@ -5019,6 +5019,7 @@ console.log('✅ 学习工具入口已加载');
   <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('interview')"><span class="icon">🎤</span><span>面试模拟</span></div>
   <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('literature')"><span class="icon">📚</span><span>文献检索</span></div>
           <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('taoci')"><span class="icon">✉️</span><span>套磁助手</span></div>
+          <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('publish')"><span class="icon">📤</span><span>投稿模式</span><span class="nav-badge">NEW</span></div>
 
   <div class="nav-group">🛠️ 学习工具</div>
   <div class="nav-item" data-tab="plan"><span class="icon">📅</span><span>备考规划</span></div>
@@ -7072,6 +7073,11 @@ console.log('✅ 学习工具入口已加载');
   <!-- 套磁助手内容 -->
   <div class="phd-content" id="phdContent-taoci">
     <div id="phdTaociArea"></div>
+  </div>
+
+  <!-- 投稿模式内容 -->
+  <div class="phd-content" id="phdContent-publish">
+    <div id="phdPublishArea"></div>
   </div>
 
   
@@ -37768,6 +37774,7 @@ function switchPhdTab(tabName) {
   if (tabName === 'timeline' && typeof renderPhdTimeline === 'function') renderPhdTimeline();
   if (tabName === 'proposal' && typeof renderPhdProposal === 'function') renderPhdProposal();
   if (tabName === 'taoci' && typeof renderPhdTaoci === 'function') renderPhdTaoci();
+  if (tabName === 'publish' && typeof renderPhdPublish === 'function') renderPhdPublish();
   // 更新标签样式
   document.querySelectorAll('.phd-tab').forEach(tab => {
     tab.classList.remove('active');
@@ -37793,7 +37800,8 @@ function updatePhdSectionHeader(tabName) {
     schools: { icon: '🏫', title: '院校与导师', desc: '招收运动人体科学博士的院校信息、考试科目、博导介绍', statLabel: '院校' },
     timeline: { icon: '📅', title: '备考时间线', desc: '考博全年备考规划、关键节点提醒、材料准备清单', statLabel: '节点' },
     proposal: { icon: '📝', title: '科研计划书', desc: '科研计划书AI辅助生成、模板库、写作指南、AI评审', statLabel: '模板' },
-    taoci: { icon: '✉️', title: '套磁助手', desc: '体育考博套磁全流程指南、AI个性化套磁信生成、模板库与联系记录管理', statLabel: '模板' }
+    taoci: { icon: '✉️', title: '套磁助手', desc: '体育考博套磁全流程指南、AI个性化套磁信生成、模板库与联系记录管理', statLabel: '模板' },
+    publish: { icon: '📤', title: '投稿模式', desc: '体育学论文智能选刊、期刊信息库、Cover Letter生成、投稿全流程辅助', statLabel: '期刊' }
   };
   const info = sectionInfo[tabName] || sectionInfo.knowledge;
   const iconEl = document.getElementById('phdSectionIcon');
@@ -37858,6 +37866,412 @@ function closePhdDetail() {
   document.body.style.overflow = '';
 }
 
+
+
+// ========== 投稿模式：期刊数据库 ==========
+const PHD_JOURNALS = [
+  // ===== 英文SCI/SSCI期刊 - 运动医学与康复 =====
+  {id:'bjsm', name:'British Journal of Sports Medicine', abbr:'BJSM', issn:'0306-3674', eissn:'1473-0480', publisher:'BMJ', year:1964, if:24.2, if5y:22.5, jcr:'Q1', cas:'一区', selfCite:3.2, papers:420, oa:'Hybrid', reviewDays:45, acceptRate:12, fee:0, scope:'运动医学、运动损伤预防与治疗、运动康复、运动营养、兴奋剂检测、公共卫生体育', types:['原创研究','综述','Meta分析','病例报告','社论'], matchKeywords:['injury','rehabilitation','sports medicine','prevention','concussion','ACL','ankle'], strengths:'领域顶刊，影响力最大，喜欢多中心大样本临床研究和系统综述', pitfalls:'拒稿率极高，小样本研究基本直接拒，需要明确临床意义', url:'https://bjsm.bmj.com/', submitUrl:'https://mc.manuscriptcentral.com/bjsm'},
+  {id:'msse', name:'Medicine & Science in Sports & Exercise', abbr:'MSSE', issn:'0195-9131', eissn:'1530-0315', publisher:'Wolters Kluwer', year:1969, if:7.8, if5y:8.2, jcr:'Q1', cas:'一区', selfCite:5.1, papers:350, oa:'Hybrid', reviewDays:60, acceptRate:18, fee:0, scope:'运动生理学、运动生物化学、运动免疫学、运动营养学、运动康复、运动医学', types:['原创研究','综述','简报'], matchKeywords:['exercise physiology','metabolism','muscle','endurance','training adaptation','VO2max','lactate'], strengths:'ACSM官方期刊，运动生理学领域权威，方法学要求严格', pitfalls:'实验设计要求高，需要有明确的机制探讨，纯描述性研究难中', url:'https://journals.lww.com/acsm-msse', submitUrl:'https://www.editorialmanager.com/msse'},
+  {id:'sportsmed', name:'Sports Medicine', abbr:'Sports Med', issn:'0112-1642', eissn:'1179-2036', publisher:'Springer', year:1984, if:10.5, if5y:11.2, jcr:'Q1', cas:'一区', selfCite:4.3, papers:180, oa:'Hybrid', reviewDays:50, acceptRate:15, fee:0, scope:'运动医学、运动损伤、运动康复、运动营养、运动表现、运动与慢性病', types:['原创研究','系统综述','Meta分析','叙事综述'], matchKeywords:['sports injury','return to play','performance','nutrition','chronic disease','exercise therapy'], strengths:'综述类文章质量极高，系统综述容易中，临床应用导向', pitfalls:'原创研究要求有较大样本量和明确临床意义，纯基础研究不太适合', url:'https://link.springer.com/journal/40279', submitUrl:'https://www.editorialmanager.com/spme'},
+  {id:'jsams', name:'Journal of Science and Medicine in Sport', abbr:'JSAMS', issn:'1440-2440', eissn:'1878-1861', publisher:'Elsevier', year:1998, if:4.2, if5y:4.5, jcr:'Q1', cas:'二区', selfCite:6.2, papers:200, oa:'Hybrid', reviewDays:55, acceptRate:25, fee:0, scope:'运动科学、运动医学、运动康复、运动训练、体育教育', types:['原创研究','综述','简报'], matchKeywords:['sports science','athletes','training','performance','injury prevention','rehabilitation'], strengths:'体育科学综合期刊，审稿较快，对应用研究友好', pitfalls:'创新性要求中等，需要有明确的实践意义', url:'https://www.journals.elsevier.com/journal-of-science-and-medicine-in-sport', submitUrl:'https://www.editorialmanager.com/JSAMS'},
+  {id:'cjsm', name:'Clinical Journal of Sport Medicine', abbr:'CJSM', issn:'1050-642X', eissn:'1536-576X', publisher:'Wolters Kluwer', year:1990, if:3.1, if5y:3.3, jcr:'Q2', cas:'三区', selfCite:5.8, papers:150, oa:'Hybrid', reviewDays:70, acceptRate:30, fee:0, scope:'临床运动医学、运动损伤诊断与治疗、运动康复、团队医生实践', types:['原创研究','综述','病例报告','临床指南'], matchKeywords:['clinical sports medicine','diagnosis','treatment','team physician','return to sport','ultrasound'], strengths:'临床导向，病例报告和临床研究容易中，审稿人多为临床医生', pitfalls:'基础研究不太适合，需要有临床应用价值', url:'https://journals.lww.com/cjsm', submitUrl:'https://www.editorialmanager.com/cjsm'},
+  {id:'sportshealth', name:'Sports Health', abbr:'Sports Health', issn:'1941-7381', eissn:'1941-739X', publisher:'SAGE', year:2009, if:3.0, if5y:3.2, jcr:'Q2', cas:'三区', selfCite:7.1, papers:120, oa:'Hybrid', reviewDays:65, acceptRate:32, fee:0, scope:'运动医学、运动损伤、运动康复、运动营养、运动表现、青少年体育健康', types:['原创研究','综述','病例报告','临床技巧'], matchKeywords:['sports health','injury','rehabilitation','nutrition','youth athletes','concussion'], strengths:'审稿相对宽松，病例报告和临床技巧类文章有专门栏目', pitfalls:'影响力中等，适合求稳投稿', url:'https://journals.sagepub.com/home/sph', submitUrl:'https://mc.manuscriptcentral.com/sportshealth'},
+  {id:'jathltrain', name:'Journal of Athletic Training', abbr:'JAT', issn:'1062-6050', eissn:'1947-380X', publisher:'Wiley', year:1966, if:3.2, if5y:3.5, jcr:'Q2', cas:'三区', selfCite:8.3, papers:140, oa:'Full OA', reviewDays:50, acceptRate:28, fee:0, scope:'运动防护、运动损伤预防与康复、运动急救、运动医学教育', types:['原创研究','综述','病例报告','教育研究'], matchKeywords:['athletic training','injury prevention','rehabilitation','emergency care','taping','bracing'], strengths:'运动防护领域权威，全OA免费发表，康复和防护类研究适合', pitfalls:'需要与运动防护实践紧密结合，纯基础研究不太适合', url:'https://journals.sagepub.com/home/jat', submitUrl:'https://mc.manuscriptcentral.com/jathltrain'},
+  {id:'pts', name:'Physical Therapy in Sport', abbr:'PTS', issn:'1466-853X', eissn:'1878-1640', publisher:'Elsevier', year:2000, if:2.4, if5y:2.6, jcr:'Q2', cas:'四区', selfCite:6.5, papers:130, oa:'Hybrid', reviewDays:75, acceptRate:35, fee:0, scope:'运动物理治疗、运动康复、运动损伤康复、运动功能评估、运动按摩', types:['原创研究','综述','病例报告','临床指南'], matchKeywords:['physical therapy','sports rehabilitation','injury recovery','functional assessment','manual therapy','exercise therapy'], strengths:'康复类文章友好，病例报告容易中，审稿周期适中', pitfalls:'影响因子较低，适合保底', url:'https://www.journals.elsevier.com/physical-therapy-in-sport', submitUrl:'https://www.editorialmanager.com/PTS'},
+  {id:'jmpf', name:'Journal of Sports Medicine and Physical Fitness', abbr:'J Sports Med Phys Fitness', issn:'0022-4707', eissn:'1827-1928', publisher:'Edizioni Minerva Medica', year:1961, if:2.1, if5y:2.3, jcr:'Q3', cas:'四区', selfCite:5.4, papers:160, oa:'Hybrid', reviewDays:80, acceptRate:38, fee:0, scope:'运动医学、运动生理学、运动康复、运动营养、运动训练、运动与健康', types:['原创研究','综述','病例报告','简报'], matchKeywords:['sports medicine','physical fitness','exercise','training','health','rehabilitation'], strengths:'审稿宽松，接受范围广，适合保底和初学者', pitfalls:'影响因子低，审稿周期较长', url:'https://www.minervamedica.it/en/journals/sports-med-physical-fitness.php', submitUrl:'https://www.minervamedica.it/en/journals/sports-med-physical-fitness/guidelines.php'},
+  {id:'ijsm', name:'International Journal of Sports Medicine', abbr:'IJSM', issn:'0172-4622', eissn:'1439-3964', publisher:'Thieme', year:1980, if:2.5, if5y:2.7, jcr:'Q2', cas:'四区', selfCite:6.8, papers:170, oa:'Hybrid', reviewDays:70, acceptRate:30, fee:0, scope:'运动医学、运动生理学、运动生物力学、运动心理学、运动训练学', types:['原创研究','综述','简报'], matchKeywords:['sports medicine','exercise physiology','biomechanics','training','performance','athletes'], strengths:'欧洲运动医学老牌期刊，接受范围广，方法学要求适中', pitfalls:'创新性要求中等，需要有一定的理论深度', url:'https://www.thieme-connect.com/products/ejournals/journal/10.1055/s-00019540', submitUrl:'https://mc.manuscriptcentral.com/ijsm'},
+
+  // ===== 英文SCI期刊 - 运动生理学与生物力学 =====
+  {id:'sjmss', name:'Scandinavian Journal of Medicine & Science in Sports', abbr:'Scand J Med Sci Sports', issn:'0905-7188', eissn:'1600-0838', publisher:'Wiley', year:1991, if:4.5, if5y:4.8, jcr:'Q1', cas:'二区', selfCite:4.9, papers:140, oa:'Hybrid', reviewDays:55, acceptRate:22, fee:0, scope:'运动医学、运动生理学、运动生物力学、运动生物化学、运动免疫学', types:['原创研究','综述','简报'], matchKeywords:['exercise physiology','muscle','metabolism','biomechanics','endurance','strength','adaptation'], strengths:'北欧运动科学顶刊，实验设计要求高，机制研究适合', pitfalls:'样本量要求较大，需要有明确的机制探讨', url:'https://onlinelibrary.wiley.com/journal/16000838', submitUrl:'https://mc.manuscriptcentral.com/sjmss'},
+  {id:'jss', name:'Journal of Sports Sciences', abbr:'J Sports Sci', issn:'0264-0414', eissn:'1466-447X', publisher:'Taylor & Francis', year:1983, if:3.2, if5y:3.4, jcr:'Q2', cas:'三区', selfCite:7.5, papers:280, oa:'Hybrid', reviewDays:65, acceptRate:28, fee:0, scope:'运动科学、运动生理学、运动生物力学、运动心理学、运动训练学、体育教育', types:['原创研究','综述','简报'], matchKeywords:['sports science','physiology','biomechanics','psychology','training','performance','motor control'], strengths:'英国运动科学老牌期刊，接受范围广，跨学科研究适合', pitfalls:'创新性要求中等，年发文量大导致竞争激烈', url:'https://www.tandfonline.com/journals/rjsp20', submitUrl:'https://mc.manuscriptcentral.com/tjss'},
+  {id:'ejss', name:'European Journal of Sport Science', abbr:'EJSS', issn:'1746-1391', eissn:'1536-7290', publisher:'Taylor & Francis', year:2001, if:3.0, if5y:3.2, jcr:'Q2', cas:'三区', selfCite:6.9, papers:160, oa:'Hybrid', reviewDays:60, acceptRate:26, fee:0, scope:'运动科学、运动生理学、运动生物力学、运动心理学、运动训练学', types:['原创研究','综述','简报'], matchKeywords:['sport science','exercise','performance','training','physiology','biomechanics','motor learning'], strengths:'欧洲运动科学新秀期刊，审稿较快，对青年学者友好', pitfalls:'影响力中等，需要有明确的科学问题', url:'https://www.tandfonline.com/journals/tejs20', submitUrl:'https://mc.manuscriptcentral.com/tejs'},
+  {id:'ijspp', name:'International Journal of Sports Physiology and Performance', abbr:'IJSPP', issn:'1555-0265', eissn:'1555-0273', publisher:'Human Kinetics', year:2006, if:4.0, if5y:4.3, jcr:'Q1', cas:'二区', selfCite:5.6, papers:150, oa:'Hybrid', reviewDays:50, acceptRate:20, fee:0, scope:'运动生理学、运动表现、运动训练、运动营养、运动生物力学、运动心理学', types:['原创研究','综述','简报'], matchKeywords:['sports physiology','performance','training','nutrition','recovery','monitoring','testing'], strengths:'运动表现领域权威，训练监控和测试类文章适合，审稿较快', pitfalls:'需要有明确的应用价值，纯基础机制研究不太适合', url:'https://journals.humankinetics.com/view/journals/ijspp/ijspp-overview.xml', submitUrl:'https://mc.manuscriptcentral.com/humankinetics-ijspp'},
+  {id:'jscr', name:'Journal of Strength and Conditioning Research', abbr:'JSCR', issn:'1064-8011', eissn:'1533-4287', publisher:'Wolters Kluwer', year:1987, if:3.3, if5y:3.5, jcr:'Q2', cas:'三区', selfCite:9.2, papers:300, oa:'Hybrid', reviewDays:70, acceptRate:30, fee:0, scope:'力量训练、体能训练、运动表现、运动生理学、运动生物力学、运动营养', types:['原创研究','综述','简报','应用技巧'], matchKeywords:['strength','conditioning','power','resistance training','hypertrophy','periodization','athlete'], strengths:'NSCA官方期刊，力量训练领域权威，应用研究友好', pitfalls:'自引率较高，需要与力量体能训练紧密结合', url:'https://journals.lww.com/nsca-jscr', submitUrl:'https://www.editorialmanager.com/jscr'},
+  {id:'jab', name:'Journal of Applied Biomechanics', abbr:'JAB', issn:'1065-8483', eissn:'1543-2837', publisher:'Human Kinetics', year:1985, if:2.2, if5y:2.4, jcr:'Q3', cas:'四区', selfCite:7.8, papers:100, oa:'Hybrid', reviewDays:75, acceptRate:32, fee:0, scope:'运动生物力学、动作分析、运动技术、运动装备、人体运动仿真', types:['原创研究','综述','技术笔记'], matchKeywords:['biomechanics','kinematics','kinetics','motion analysis','technique','equipment','inverse dynamics'], strengths:'生物力学专门期刊，方法学创新和技术分析适合', pitfalls:'需要有扎实的生物力学方法，纯描述性研究难中', url:'https://journals.humankinetics.com/view/journals/jab/jab-overview.xml', submitUrl:'https://mc.manuscriptcentral.com/humankinetics-jab'},
+  {id:'sportsbiomech', name:'Sports Biomechanics', abbr:'Sports Biomech', issn:'1476-3141', eissn:'1536-7290', publisher:'Taylor & Francis', year:2002, if:2.3, if5y:2.5, jcr:'Q3', cas:'四区', selfCite:8.1, papers:90, oa:'Hybrid', reviewDays:80, acceptRate:35, fee:0, scope:'运动生物力学、动作技术分析、运动装备、运动损伤生物力学、运动仿真', types:['原创研究','综述','技术笔记'], matchKeywords:['sports biomechanics','technique analysis','kinematics','injury mechanics','equipment','modelling'], strengths:'生物力学应用期刊，运动技术和装备研究适合', pitfalls:'影响因子较低，适合保底', url:'https://www.tandfonline.com/journals/rspb20', submitUrl:'https://mc.manuscriptcentral.com/rspb'},
+  {id:'jap', name:'Journal of Applied Physiology', abbr:'J Appl Physiol', issn:'8750-7587', eissn:'1522-1601', publisher:'American Physiological Society', year:1948, if:3.5, if5y:3.8, jcr:'Q2', cas:'二区', selfCite:4.2, papers:350, oa:'Hybrid', reviewDays:60, acceptRate:22, fee:0, scope:'应用生理学、运动生理学、呼吸循环生理、肌肉生理、神经生理、环境生理', types:['原创研究','综述','简报'], matchKeywords:['applied physiology','exercise','cardiovascular','respiratory','muscle','neural','thermoregulation'], strengths:'生理学老牌权威期刊，机制研究要求高，运动生理经典期刊', pitfalls:'需要有深入的机制探讨，方法学要求严格', url:'https://journals.physiology.org/journal/jappl', submitUrl:'https://journals.physiology.org/journal/jappl/submit-paper'},
+
+  // ===== 英文SSCI期刊 - 体育人文社科 =====
+  {id:'pse', name:'Psychology of Sport and Exercise', abbr:'PSE', issn:'1469-0292', eissn:'1878-5476', publisher:'Elsevier', year:2000, if:5.5, if5y:5.8, jcr:'Q1', cas:'一区', selfCite:5.3, papers:160, oa:'Hybrid', reviewDays:55, acceptRate:18, fee:0, scope:'运动心理学、锻炼心理学、体育心理学、运动动机、运动情绪、运动认知、运动行为', types:['原创研究','综述','简报','元分析'], matchKeywords:['sport psychology','exercise psychology','motivation','anxiety','confidence','attention','behavior change','physical activity'], strengths:'运动心理学领域顶刊，理论和方法要求高，元分析容易中', pitfalls:'需要有扎实的心理学理论基础，纯描述性调查难中', url:'https://www.journals.elsevier.com/psychology-of-sport-and-exercise', submitUrl:'https://www.editorialmanager.com/PSE'},
+  {id:'jsep', name:'Journal of Sport and Exercise Psychology', abbr:'JSEP', issn:'1930-5610', eissn:'1930-5629', publisher:'Human Kinetics', year:1979, if:4.2, if5y:4.5, jcr:'Q1', cas:'二区', selfCite:6.1, papers:100, oa:'Hybrid', reviewDays:60, acceptRate:20, fee:0, scope:'运动心理学、锻炼心理学、体育心理学、运动动机、运动表现心理', types:['原创研究','综述','简报'], matchKeywords:['sport psychology','exercise psychology','motivation','performance','anxiety','self-efficacy','goal setting'], strengths:'北美运动心理学权威期刊，实验研究和干预研究适合', pitfalls:'需要有明确的理论框架，方法学要求严格', url:'https://journals.humankinetics.com/view/journals/jsep/jsep-overview.xml', submitUrl:'https://mc.manuscriptcentral.com/humankinetics-jsep'},
+  {id:'sepp', name:'Sport, Exercise, and Performance Psychology', abbr:'SEPP', issn:'2157-3880', eissn:'2157-3899', publisher:'American Psychological Association', year:2012, if:3.8, if5y:4.0, jcr:'Q1', cas:'二区', selfCite:4.8, papers:80, oa:'Hybrid', reviewDays:65, acceptRate:22, fee:0, scope:'运动心理学、锻炼心理学、表现心理学、运动干预、运动与心理健康', types:['原创研究','综述','元分析','干预研究'], matchKeywords:['sport psychology','exercise','performance','intervention','mental health','well-being','mindfulness'], strengths:'APA旗下期刊，干预研究和元分析适合，心理学方法要求高', pitfalls:'需要有扎实的心理学方法，样本量要求较大', url:'https://psycnet.apa.org/journals/spn/', submitUrl:'https://www.editorialmanager.com/sepp'},
+  {id:'jsm', name:'Journal of Sport Management', abbr:'JSM', issn:'0888-4773', eissn:'1543-270X', publisher:'Human Kinetics', year:1987, if:4.5, if5y:4.8, jcr:'Q1', cas:'一区', selfCite:7.2, papers:90, oa:'Hybrid', reviewDays:70, acceptRate:15, fee:0, scope:'体育管理、体育营销、体育经济、体育组织行为、体育消费者行为、体育政策', types:['原创研究','综述','理论论文'], matchKeywords:['sport management','sport marketing','sport economics','consumer behavior','organizational behavior','sport policy','sponsorship'], strengths:'体育管理领域顶刊，理论和方法要求高，定量研究适合', pitfalls:'需要有扎实的管理学理论基础，纯描述性研究难中', url:'https://journals.humankinetics.com/view/journals/jsm/jsm-overview.xml', submitUrl:'https://mc.manuscriptcentral.com/humankinetics-jsm'},
+  {id:'smr', name:'Sport Management Review', abbr:'SMR', issn:'1441-3523', eissn:'1878-0148', publisher:'Taylor & Francis', year:1998, if:5.2, if5y:5.5, jcr:'Q1', cas:'一区', selfCite:6.5, papers:70, oa:'Hybrid', reviewDays:65, acceptRate:14, fee:0, scope:'体育管理、体育营销、体育经济、体育组织、体育消费者、体育治理', types:['原创研究','综述','理论论文','书评'], matchKeywords:['sport management','sport marketing','sport governance','consumer','organizational','innovation','digital sport'], strengths:'澳大拉西亚体育管理顶刊，理论创新要求高，定性研究也接受', pitfalls:'理论贡献要求极高，是体育管理领域最难中的期刊之一', url:'https://www.tandfonline.com/journals/rsmr20', submitUrl:'https://mc.manuscriptcentral.com/rsmr'},
+  {id:'jss_soc', name:'Journal of Sport and Social Issues', abbr:'JSSI', issn:'0193-7235', eissn:'1552-7581', publisher:'SAGE', year:1977, if:2.5, if5y:2.7, jcr:'Q2', cas:'三区', selfCity:5.8, papers:60, oa:'Hybrid', reviewDays:80, acceptRate:28, fee:0, scope:'体育社会学、体育与社会、体育与政治、体育与文化、体育与性别、体育与种族', types:['原创研究','综述','理论论文','评论'], matchKeywords:['sport sociology','sport and society','gender','race','politics','culture','globalization','media'], strengths:'体育社会学老牌期刊，批判理论和定性研究适合', pitfalls:'需要有社会学理论框架，纯描述性研究难中', url:'https://journals.sagepub.com/home/jss', submitUrl:'https://mc.manuscriptcentral.com/jss'},
+  {id:'ssj', name:'Sociology of Sport Journal', abbr:'SSJ', issn:'0741-1235', eissn:'1543-2785', publisher:'Human Kinetics', year:1984, if:2.3, if5y:2.5, jcr:'Q2', cas:'三区', selfCite:6.2, papers:50, oa:'Hybrid', reviewDays:85, acceptRate:30, fee:0, scope:'体育社会学、体育与社会结构、体育与不平等、体育与全球化、体育与身体', types:['原创研究','综述','理论论文'], matchKeywords:['sociology of sport','inequality','globalization','body','culture','identity','social class'], strengths:'北美体育社会学权威期刊，定性研究和理论论文适合', pitfalls:'需要有扎实的社会学理论，审稿周期较长', url:'https://journals.humankinetics.com/view/journals/ssj/ssj-overview.xml', submitUrl:'https://mc.manuscriptcentral.com/humankinetics-ssj'},
+  {id:'irss', name:'International Review for the Sociology of Sport', abbr:'IRSS', issn:'1012-6902', eissn:'1741-2958', publisher:'SAGE', year:1966, if:2.2, if5y:2.4, jcr:'Q2', cas:'三区', selfCite:5.5, papers:50, oa:'Hybrid', reviewDays:90, acceptRate:25, fee:0, scope:'体育社会学、体育与社会、体育与全球化、体育与政治、体育与文化', types:['原创研究','综述','理论论文','特刊'], matchKeywords:['sociology of sport','globalization','politics','culture','identity','nation','migration'], strengths:'国际体育社会学老牌期刊，比较研究和全球视野适合', pitfalls:'理论要求高，审稿周期很长', url:'https://journals.sagepub.com/home/irs', submitUrl:'https://mc.manuscriptcentral.com/irss'},
+
+  // ===== 英文SCI/SSCI期刊 - 体育教育与公共卫生 =====
+  {id:'jpah', name:'Journal of Physical Activity and Health', abbr:'JPAH', issn:'1543-5434', eissn:'1543-5442', publisher:'Human Kinetics', year:2004, if:3.5, if5y:3.8, jcr:'Q1', cas:'二区', selfCite:6.8, papers:200, oa:'Hybrid', reviewDays:55, acceptRate:24, fee:0, scope:'身体活动与健康、运动流行病学、运动干预、运动与慢性病、运动与心理健康、运动促进', types:['原创研究','综述','元分析','简报'], matchKeywords:['physical activity','health','exercise intervention','epidemiology','chronic disease','mental health','sedentary behavior','public health'], strengths:'运动与公共卫生领域权威，流行病学和干预研究适合，审稿较快', pitfalls:'样本量要求较大，需要有明确的公共卫生意义', url:'https://journals.humankinetics.com/view/journals/jpah/jpah-overview.xml', submitUrl:'https://mc.manuscriptcentral.com/humankinetics-jpah'},
+  {id:'rqes', name:'Research Quarterly for Exercise and Sport', abbr:'RQES', issn:'0270-1367', eissn:'2168-3883', publisher:'Taylor & Francis', year:1930, if:2.2, if5y:2.4, jcr:'Q2', cas:'三区', selfCite:7.5, papers:100, oa:'Hybrid', reviewDays:70, acceptRate:30, fee:0, scope:'运动科学、体育教育、运动心理学、运动生理学、运动生物力学、运动测量', types:['原创研究','综述','简报'], matchKeywords:['exercise','sport','physical education','motor learning','measurement','assessment','pedagogy'], strengths:'美国体育教育老牌期刊，体育教育和测量评估类研究适合', pitfalls:'需要有明确的教育或测量意义，纯基础研究不太适合', url:'https://www.tandfonline.com/journals/urqe20', submitUrl:'https://mc.manuscriptcentral.com/urqe'},
+  {id:'jtpe', name:'Journal of Teaching in Physical Education', abbr:'JTPE', issn:'0279-7573', eissn:'1543-2742', publisher:'Human Kinetics', year:1982, if:2.4, if5y:2.6, jcr:'Q2', cas:'三区', selfCite:8.2, papers:80, oa:'Hybrid', reviewDays:75, acceptRate:28, fee:0, scope:'体育教学、体育教育、课程设计、教学方法、教师教育、学生学习', types:['原创研究','综述','案例研究'], matchKeywords:['physical education','teaching','pedagogy','curriculum','teacher education','student learning','instruction','assessment'], strengths:'体育教学领域权威期刊，教学实验和课程研究适合', pitfalls:'需要有扎实的教育学理论，纯描述性研究难中', url:'https://journals.humankinetics.com/view/journals/jtpe/jtpe-overview.xml', submitUrl:'https://mc.manuscriptcentral.com/humankinetics-jtpe'},
+  {id:'pesp', name:'Physical Education and Sport Pedagogy', abbr:'PESP', issn:'1740-8989', eissn:'1740-8997', publisher:'Taylor & Francis', year:1996, if:2.3, if5y:2.5, jcr:'Q2', cas:'三区', selfCite:7.8, papers:70, oa:'Hybrid', reviewDays:80, acceptRate:30, fee:0, scope:'体育教育学、体育教学法、课程与教学、教师教育、体育课程改革', types:['原创研究','综述','案例研究'], matchKeywords:['physical education','pedagogy','curriculum','teaching','teacher education','inclusion','health-related fitness'], strengths:'欧洲体育教育期刊，定性研究和课程改革研究适合', pitfalls:'需要有教育学理论框架，审稿周期较长', url:'https://www.tandfonline.com/journals/rpes20', submitUrl:'https://mc.manuscriptcentral.com/rpes'},
+  {id:'apaq', name:'Adapted Physical Activity Quarterly', abbr:'APAQ', issn:'0736-5829', eissn:'1543-2742', publisher:'Human Kinetics', year:1984, if:2.1, if5y:2.3, jcr:'Q2', cas:'四区', selfCite:6.5, papers:50, oa:'Hybrid', reviewDays:75, acceptRate:32, fee:0, scope:'适应性体育活动、残疾人体育、特殊教育体育、运动康复、运动与残障', types:['原创研究','综述','案例研究'], matchKeywords:['adapted physical activity','disability','special education','rehabilitation','inclusive sport','paralympic','motor impairment'], strengths:'适应性体育领域权威期刊，残疾人体育和康复研究适合', pitfalls:'需要与残障或适应性体育紧密结合，受众较窄', url:'https://journals.humankinetics.com/view/journals/apaq/apaq-overview.xml', submitUrl:'https://mc.manuscriptcentral.com/humankinetics-apaq'},
+  {id:'quest', name:'Quest', issn:'0033-6297', eissn:'2162-3883', publisher:'Taylor & Francis', year:1949, if:1.8, if5y:2.0, jcr:'Q3', cas:'四区', selfCite:7.2, papers:40, oa:'Hybrid', reviewDays:90, acceptRate:35, fee:0, scope:'体育教育、运动科学、体育人文社科、体育哲学、体育历史', types:['原创研究','综述','理论论文','评论'], matchKeywords:['physical education','sport','philosophy','history','culture','professional','ethics'], strengths:'体育教育老牌期刊，理论论文和哲学分析适合', pitfalls:'影响因子低，审稿周期长，适合保底', url:'https://www.tandfonline.com/journals/uqst20', submitUrl:'https://mc.manuscriptcentral.com/uqst'},
+
+  // ===== 英文OA期刊 =====
+  {id:'fphys', name:'Frontiers in Physiology', abbr:'Front Physiol', issn:'1664-042X', eissn:'1664-042X', publisher:'Frontiers', year:2010, if:4.0, if5y:4.3, jcr:'Q1', cas:'二区', selfCite:5.8, papers:2000, oa:'Full OA', reviewDays:45, acceptRate:45, fee:2950, scope:'生理学、运动生理学、肌肉生理、心血管生理、神经生理、内分泌、代谢', types:['原创研究','综述','简报','观点'], matchKeywords:['physiology','exercise','muscle','cardiovascular','neural','metabolism','endocrine','respiratory'], strengths:'全OA，审稿快，接受率高，生理学各分支都接受，适合求快求稳', pitfalls:'版面费高（约2950美元），年发文量大导致质量参差不齐', url:'https://www.frontiersin.org/journals/physiology', submitUrl:'https://www.frontiersin.org/journals/physiology/submit'},
+  {id:'fsports', name:'Frontiers in Sports and Active Living', abbr:'Front Sports Act Living', issn:'2624-9367', eissn:'2624-9367', publisher:'Frontiers', year:2019, if:3.2, if5y:3.5, jcr:'Q1', cas:'二区', selfCite:6.5, papers:300, oa:'Full OA', reviewDays:50, acceptRate:48, fee:2490, scope:'运动科学、积极生活、身体活动、运动表现、运动康复、运动与健康、运动营养', types:['原创研究','综述','简报','观点','方法学'], matchKeywords:['sports','active living','physical activity','performance','rehabilitation','health','nutrition','training'], strengths:'全OA，审稿快，接受率高，运动科学综合期刊，适合求快', pitfalls:'版面费高（约2490美元），新期刊影响力有待提升', url:'https://www.frontiersin.org/journals/sports-and-active-living', submitUrl:'https://www.frontiersin.org/journals/sports-and-active-living/submit'},
+  {id:'pmr', name:'PM&R', abbr:'PM&R', issn:'1934-1482', eissn:'1934-1490', publisher:'Elsevier', year:2009, if:2.5, if5y:2.7, jcr:'Q2', cas:'三区', selfCite:5.2, papers:150, oa:'Hybrid', reviewDays:60, acceptRate:32, fee:0, scope:'物理医学与康复、运动康复、慢性疼痛、运动损伤、神经康复、肌肉骨骼康复', types:['原创研究','综述','病例报告','临床指南'], matchKeywords:['physical medicine','rehabilitation','pain','sports injury','neurological rehabilitation','musculoskeletal','function'], strengths:'康复医学期刊，临床康复研究和病例报告适合', pitfalls:'需要与康复临床紧密结合，纯基础研究不太适合', url:'https://www.journals.elsevier.com/pm-and-r', submitUrl:'https://www.editorialmanager.com/PMR'},
+
+  // ===== 中文核心期刊 =====
+  {id:'tykx', name:'体育科学', abbr:'体育科学', issn:'1000-677X', eissn:'', publisher:'中国体育科学学会', year:1981, if:0, if5y:0, jcr:'CSSCI', cas:'顶级', selfCite:8.5, papers:120, oa:'订阅', reviewDays:90, acceptRate:8, fee:0, scope:'体育学各分支学科基础理论与应用研究，包括体育人文社会学、运动人体科学、体育教育训练学、民族传统体育学', types:['原创研究','综述','研究报告','述评'], matchKeywords:['体育','运动','锻炼','体能','训练','竞技','体育教育','体育人文','运动人体科学'], strengths:'中国体育学顶级期刊，CSSCI来源刊，权威性最高', pitfalls:'录用率极低（<10%），审稿周期长，需要有重大理论或实践创新', url:'http://www.sportscience.cn/', submitUrl:'http://www.sportscience.cn/CN/1000-677X/home.shtml'},
+  {id:'bjty', name:'北京体育大学学报', abbr:'北体学报', issn:'1007-3612', eissn:'', publisher:'北京体育大学', year:1966, if:0, if5y:0, jcr:'CSSCI', cas:'权威', selfCite:9.2, papers:150, oa:'订阅', reviewDays:90, acceptRate:10, fee:0, scope:'体育学各学科研究，侧重体育人文社会学、运动人体科学、体育教育训练学', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','训练','竞技','体育教育','体育人文','运动生理','运动康复'], strengths:'体育院校顶级学报，CSSCI来源刊，权威性高', pitfalls:'录用率低，审稿周期长，偏好有基金项目支持的研究', url:'https://bjtd.cbpt.cnki.net/', submitUrl:'https://bjtd.cbpt.cnki.net/editor'},
+  {id:'shty', name:'上海体育学院学报', abbr:'上体学报', issn:'1000-5498', eissn:'', publisher:'上海体育大学', year:1959, if:0, if5y:0, jcr:'CSSCI', cas:'权威', selfCite:8.8, papers:130, oa:'订阅', reviewDays:85, acceptRate:12, fee:0, scope:'体育学各学科研究，侧重运动人体科学、体育教育训练学、体育人文社会学', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','训练','运动生理','运动生物力学','体育教育','体育人文'], strengths:'体育院校权威学报，CSSCI来源刊，运动人体科学方向较强', pitfalls:'录用率较低，审稿周期较长', url:'https://stkx.cbpt.cnki.net/', submitUrl:'https://stkx.cbpt.cnki.net/editor'},
+  {id:'tyxk', name:'体育学刊', abbr:'体育学刊', issn:'1006-7116', eissn:'', publisher:'华南理工大学', year:1994, if:0, if5y:0, jcr:'CSSCI', cas:'核心', selfCite:7.5, papers:120, oa:'订阅', reviewDays:80, acceptRate:15, fee:0, scope:'体育学各学科研究，侧重体育人文社会学、体育教育训练学', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','体育教育','体育人文','社会体育','学校体育','体育文化'], strengths:'CSSCI来源刊，体育人文社科方向较强，审稿相对规范', pitfalls:'录用率中等，需要有明确的理论框架', url:'https://tyxk.cbpt.cnki.net/', submitUrl:'https://tyxk.cbpt.cnki.net/editor'},
+  {id:'whty', name:'武汉体育学院学报', abbr:'武体学报', issn:'1000-520X', eissn:'', publisher:'武汉体育学院', year:1959, if:0, if5y:0, jcr:'CSSCI', cas:'核心', selfCite:8.0, papers:140, oa:'订阅', reviewDays:85, acceptRate:14, fee:0, scope:'体育学各学科研究，侧重运动人体科学、体育教育训练学、体育人文社会学', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','训练','运动生理','运动康复','体育教育','体育人文'], strengths:'CSSCI来源刊，体育院校学报中发文量较大，运动人体科学方向较强', pitfalls:'录用率中等，审稿周期较长', url:'https://whty.cbpt.cnki.net/', submitUrl:'https://whty.cbpt.cnki.net/editor'},
+  {id:'tyykx', name:'体育与科学', abbr:'体育与科学', issn:'1004-4590', eissn:'', publisher:'江苏省体育科学研究所', year:1980, if:0, if5y:0, jcr:'CSSCI', cas:'核心', selfCite:6.8, papers:80, oa:'订阅', reviewDays:80, acceptRate:12, fee:0, scope:'体育学基础理论、体育哲学、体育社会学、体育科学方法论、奥林匹克研究', types:['原创研究','综述','理论论文','评论'], matchKeywords:['体育哲学','体育社会学','体育科学','奥林匹克','体育文化','体育理论','学术评论'], strengths:'CSSCI来源刊，体育人文社科和理论研究见长，学术性强', pitfalls:'录用率低，偏好理论深度和学术创新，纯应用研究不太适合', url:'https://tyykx.cbpt.cnki.net/', submitUrl:'https://tyykx.cbpt.cnki.net/editor'},
+  {id:'tywhdk', name:'体育文化导刊', abbr:'体育文化导刊', issn:'1671-1572', eissn:'', publisher:'国家体育总局体育文化发展中心', year:1983, if:0, if5y:0, jcr:'CSSCI扩展', cas:'核心', selfCite:7.2, papers:120, oa:'订阅', reviewDays:75, acceptRate:18, fee:0, scope:'体育文化、体育人文社会学、体育历史、体育哲学、体育政策、体育产业', types:['原创研究','综述','研究报告'], matchKeywords:['体育文化','体育人文','体育历史','体育哲学','体育政策','体育产业','体育社会学'], strengths:'CSSCI扩展版，体育文化和人文社科方向专门期刊，审稿相对宽松', pitfalls:'影响力中等，需要与体育文化紧密结合', url:'https://tywhdk.cbpt.cnki.net/', submitUrl:'https://tywhdk.cbpt.cnki.net/editor'},
+  {id:'cdty', name:'成都体育学院学报', abbr:'成体学报', issn:'1001-9154', eissn:'', publisher:'成都体育学院', year:1960, if:0, if5y:0, jcr:'CSSCI扩展', cas:'核心', selfCite:7.8, papers:120, oa:'订阅', reviewDays:80, acceptRate:18, fee:0, scope:'体育学各学科研究，侧重运动人体科学、体育教育训练学、体育人文社会学', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','训练','运动生理','运动康复','体育教育','体育人文'], strengths:'CSSCI扩展版，体育院校学报，西部体育研究特色', pitfalls:'影响力中等，审稿周期较长', url:'https://cdty.cbpt.cnki.net/', submitUrl:'https://cdty.cbpt.cnki.net/editor'},
+  {id:'xaty', name:'西安体育学院学报', abbr:'西体学报', issn:'1001-747X', eissn:'', publisher:'西安体育学院', year:1964, if:0, if5y:0, jcr:'CSSCI扩展', cas:'核心', selfCite:7.5, papers:110, oa:'订阅', reviewDays:80, acceptRate:18, fee:0, scope:'体育学各学科研究，侧重运动人体科学、体育教育训练学、民族传统体育', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','训练','运动生理','民族传统体育','体育教育','体育人文'], strengths:'CSSCI扩展版，民族传统体育方向有特色', pitfalls:'影响力中等，审稿周期较长', url:'https://xaty.cbpt.cnki.net/', submitUrl:'https://xaty.cbpt.cnki.net/editor'},
+  {id:'tjty', name:'天津体育学院学报', abbr:'天体学报', issn:'1005-0000', eissn:'', publisher:'天津体育学院', year:1981, if:0, if5y:0, jcr:'北大核心', cas:'核心', selfCite:7.0, papers:100, oa:'订阅', reviewDays:75, acceptRate:20, fee:0, scope:'体育学各学科研究，侧重运动人体科学、体育教育训练学', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','训练','运动生理','运动生物力学','体育教育'], strengths:'北大核心期刊，运动人体科学方向较强，审稿相对规范', pitfalls:'非CSSCI，影响力中等', url:'https://tjty.cbpt.cnki.net/', submitUrl:'https://tjty.cbpt.cnki.net/editor'},
+  {id:'sydty', name:'沈阳体育学院学报', abbr:'沈体学报', issn:'1004-0560', eissn:'', publisher:'沈阳体育学院', year:1982, if:0, if5y:0, jcr:'CSSCI扩展', cas:'核心', selfCite:7.3, papers:100, oa:'订阅', reviewDays:75, acceptRate:20, fee:0, scope:'体育学各学科研究，侧重体育教育训练学、运动人体科学、体育人文社会学', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','训练','体育教育','运动生理','体育人文'], strengths:'CSSCI扩展版，东北体育研究特色', pitfalls:'影响力中等', url:'https://sydty.cbpt.cnki.net/', submitUrl:'https://sydty.cbpt.cnki.net/editor'},
+  {id:'sdty', name:'山东体育学院学报', abbr:'山体学报', issn:'1006-2076', eissn:'', publisher:'山东体育学院', year:1985, if:0, if5y:0, jcr:'北大核心', cas:'核心', selfCite:6.8, papers:100, oa:'订阅', reviewDays:70, acceptRate:22, fee:0, scope:'体育学各学科研究，侧重体育教育训练学、运动人体科学', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','训练','体育教育','运动生理','运动康复'], strengths:'北大核心期刊，审稿相对宽松，适合求稳', pitfalls:'非CSSCI，影响力中等', url:'https://sdty.cbpt.cnki.net/', submitUrl:'https://sdty.cbpt.cnki.net/editor'},
+  {id:'sdty2', name:'首都体育学院学报', abbr:'首体学报', issn:'1009-783X', eissn:'', publisher:'首都体育学院', year:1987, if:0, if5y:0, jcr:'CSSCI扩展', cas:'核心', selfCite:7.0, papers:90, oa:'订阅', reviewDays:75, acceptRate:20, fee:0, scope:'体育学各学科研究，侧重体育人文社会学、体育教育训练学', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','体育教育','体育人文','社会体育','学校体育'], strengths:'CSSCI扩展版，首都区位优势，体育人文社科方向较强', pitfalls:'影响力中等', url:'https://sdty2.cbpt.cnki.net/', submitUrl:'https://sdty2.cbpt.cnki.net/editor'},
+  {id:'gzty', name:'广州体育学院学报', abbr:'广体学报', issn:'1007-323X', eissn:'', publisher:'广州体育学院', year:1981, if:0, if5y:0, jcr:'北大核心', cas:'核心', selfCite:6.5, papers:100, oa:'订阅', reviewDays:70, acceptRate:22, fee:0, scope:'体育学各学科研究，侧重体育人文社会学、体育教育训练学', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','体育教育','体育人文','社会体育','粤港澳体育'], strengths:'北大核心期刊，粤港澳体育研究特色，审稿相对宽松', pitfalls:'非CSSCI，影响力中等', url:'https://gzty.cbpt.cnki.net/', submitUrl:'https://gzty.cbpt.cnki.net/editor'},
+  {id:'njty', name:'南京体育学院学报', abbr:'南体学报', issn:'1008-1909', eissn:'', publisher:'南京体育学院', year:1987, if:0, if5y:0, jcr:'北大核心', cas:'核心', selfCite:6.2, papers:90, oa:'订阅', reviewDays:70, acceptRate:24, fee:0, scope:'体育学各学科研究，侧重运动人体科学、体育教育训练学', types:['原创研究','综述','研究报告'], matchKeywords:['体育','运动','训练','运动生理','体育教育','运动康复'], strengths:'北大核心期刊，审稿相对宽松，适合求稳', pitfalls:'非CSSCI，影响力中等', url:'https://njty.cbpt.cnki.net/', submitUrl:'https://njty.cbpt.cnki.net/editor'}
+];
+
+// 投稿模式当前状态
+let publishCurrentSubTab = 'recommend';
+let publishCompareList = [];
+
+// 渲染投稿模式主面板
+function renderPhdPublish() {
+  var area = document.getElementById('phdPublishArea');
+  if (!area) return;
+  if (area.dataset.rendered) return;
+  area.dataset.rendered = '1';
+  var html = '';
+  // 子Tab导航
+  html += '<div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:2px solid #ddd6fe;padding-bottom:0;flex-wrap:wrap">';
+  html += '<button onclick="switchPublishTab(\'recommend\')" id="pubTab-recommend" style="padding:10px 20px;border:none;background:#7c3aed;color:#fff;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">AI智能选刊</button>';
+  html += '<button onclick="switchPublishTab(\'library\')" id="pubTab-library" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">期刊信息库 <span style="background:#7c3aed;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">' + PHD_JOURNALS.length + '</span></button>';
+  html += '<button onclick="switchPublishTab(\'compare\')" id="pubTab-compare" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">选刊对比</button>';
+  html += '<button onclick="switchPublishTab(\'tools\')" id="pubTab-tools" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿工具</button>';
+  html += '</div>';
+  // 智能选刊Tab
+  html += '<div id="pubContent-recommend">';
+  html += '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:12px;padding:20px;margin-bottom:20px">';
+  html += '<div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:8px">AI智能期刊推荐</div>';
+  html += '<div style="font-size:13px;color:#6b21a8;margin-bottom:16px">粘贴文章标题+摘要，或填写研究信息，AI将根据文章内容匹配度推荐冲刺/稳妥/保底三档期刊</div>';
+  html += '<div style="margin-bottom:12px"><label style="font-size:13px;color:#5b21b6;font-weight:600;display:block;margin-bottom:6px">文章标题</label><input type="text" id="pubTitle" placeholder="输入论文标题" style="width:100%;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none"></div>';
+  html += '<div style="margin-bottom:12px"><label style="font-size:13px;color:#5b21b6;font-weight:600;display:block;margin-bottom:6px">摘要 / 研究内容简介</label><textarea id="pubAbstract" rows="5" placeholder="粘贴摘要，或简要描述研究目的、方法、结果、创新点" style="width:100%;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none;resize:vertical"></textarea></div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
+  html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">研究类型</label><select id="pubType" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="原创研究">原创研究</option><option value="综述">综述/Meta分析</option><option value="病例报告">病例报告</option><option value="实验研究">实验研究</option><option value="调查研究">调查/问卷研究</option><option value="理论论文">理论论文</option></select></div>';
+  html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">研究方向</label><select id="pubDirection" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="运动医学">运动医学/运动损伤</option><option value="运动康复">运动康复/物理治疗</option><option value="运动生理学">运动生理学</option><option value="运动生物力学">运动生物力学</option><option value="运动心理学">运动心理学</option><option value="体育教育">体育教育/教学</option><option value="体育人文">体育人文社会学</option><option value="体育管理">体育管理/产业</option><option value="公共卫生">公共卫生/身体活动</option><option value="运动营养">运动营养</option><option value="运动训练">运动训练/体能</option></select></div>';
+  html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">投稿目标</label><select id="pubGoal" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="冲高分">冲刺高分区</option><option value="求稳妥">稳妥录用</option><option value="求快速">快速发表</option><option value="免费">免费发表</option><option value="OA">开源OA</option></select></div>';
+  html += '</div>';
+  html += '<button onclick="aiRecommendJournals()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;padding:12px 28px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">AI推荐期刊</button>';
+  html += '</div>';
+  html += '<div id="pubRecommendResult"></div>';
+  html += '</div>';
+  // 期刊库Tab
+  html += '<div id="pubContent-library" style="display:none">';
+  html += '<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">';
+  html += '<input type="text" id="pubLibSearch" placeholder="搜索期刊名称/缩写/ISSN" oninput="filterJournals()" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none">';
+  html += '<select id="pubLibFilterJCR" onchange="filterJournals()" style="padding:10px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="">全部分区</option><option value="Q1">Q1</option><option value="Q2">Q2</option><option value="Q3">Q3</option><option value="CSSCI">CSSCI</option><option value="北大核心">北大核心</option></select>';
+  html += '<select id="pubLibFilterDir" onchange="filterJournals()" style="padding:10px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="">全部方向</option><option value="运动医学">运动医学</option><option value="运动康复">运动康复</option><option value="运动生理学">运动生理学</option><option value="运动生物力学">运动生物力学</option><option value="运动心理学">运动心理学</option><option value="体育教育">体育教育</option><option value="体育人文">体育人文</option><option value="体育管理">体育管理</option><option value="公共卫生">公共卫生</option><option value="中文期刊">中文期刊</option></select>';
+  html += '<select id="pubLibSort" onchange="filterJournals()" style="padding:10px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="if">按影响因子</option><option value="review">按审稿速度</option><option value="accept">按录用率</option><option value="name">按名称</option></select>';
+  html += '</div>';
+  html += '<div id="pubLibCount" style="font-size:13px;color:#6b21a8;margin-bottom:12px">共 ' + PHD_JOURNALS.length + ' 本期刊</div>';
+  html += '<div id="pubLibList"></div>';
+  html += '</div>';
+  // 选刊对比Tab
+  html += '<div id="pubContent-compare" style="display:none">';
+  html += '<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:16px;margin-bottom:16px"><div style="font-size:14px;font-weight:600;color:#92400e;margin-bottom:6px">选刊横向对比</div><div style="font-size:12px;color:#b45309">在期刊库中点击"加入对比"选择2-5本期刊，然后在此查看详细对比</div></div>';
+  html += '<div id="pubCompareList" style="margin-bottom:16px"></div>';
+  html += '<div id="pubCompareResult"></div>';
+  html += '</div>';
+  // 投稿工具Tab
+  html += '<div id="pubContent-tools" style="display:none">';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">';
+  html += '<div onclick="showPubTool(\'coverletter\')" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">✉️</div><div style="font-size:15px;font-weight:700;color:#065f46;margin-bottom:4px">Cover Letter生成</div><div style="font-size:12px;color:#047857">AI根据论文内容和目标期刊生成专业投稿信</div></div>';
+  html += '<div onclick="showPubTool(\'checklist\')" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">✅</div><div style="font-size:15px;font-weight:700;color:#1e40af;margin-bottom:4px">投稿前检查清单</div><div style="font-size:12px;color:#2563eb">根据目标期刊要求生成逐项检查清单</div></div>';
+  html += '<div onclick="showPubTool(\'title\')" style="background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:1px solid #f0abfc;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📝</div><div style="font-size:15px;font-weight:700;color:#86198f;margin-bottom:4px">标题/摘要优化</div><div style="font-size:12px;color:#a21caf">AI优化论文标题、摘要、关键词</div></div>';
+  html += '<div onclick="showPubTool(\'reviewer\')" style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">👥</div><div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:4px">审稿人推荐</div><div style="font-size:12px;color:#b45309">根据研究主题推荐潜在审稿人</div></div>';
+  html += '<div onclick="showPubTool(\'highlights\')" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">✨</div><div style="font-size:15px;font-weight:700;color:#075985;margin-bottom:4px">Highlights生成</div><div style="font-size:12px;color:#0369a1">生成期刊要求的3-5条研究亮点</div></div>';
+  html += '<div onclick="showPubTool(\'response\')" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">💬</div><div style="font-size:15px;font-weight:700;color:#991b1b;margin-bottom:4px">审稿意见回复</div><div style="font-size:12px;color:#b91c1c">AI分析审稿意见并生成逐条回复</div></div>';
+  html += '</div>';
+  html += '<div id="pubToolContent" style="margin-top:20px"></div>';
+  html += '</div>';
+  area.innerHTML = html;
+  // 默认渲染期刊库列表
+  filterJournals();
+  renderCompareList();
+}
+
+// AI智能期刊推荐
+async function aiRecommendJournals() {
+  var title = document.getElementById('pubTitle').value.trim();
+  var abstract = document.getElementById('pubAbstract').value.trim();
+  var type = document.getElementById('pubType').value;
+  var direction = document.getElementById('pubDirection').value;
+  var goal = document.getElementById('pubGoal').value;
+  var resultDiv = document.getElementById('pubRecommendResult');
+  if (!title && !abstract) { alert('请输入文章标题或摘要'); return; }
+  resultDiv.innerHTML = '<div style="padding:30px;text-align:center;color:#7c3aed;font-size:14px">AI正在分析文章内容并匹配期刊...</div>';
+  try {
+    // 构建期刊列表文本供AI参考
+    var journalList = PHD_JOURNALS.map(function(j, i) {
+      return (i+1) + '. ' + j.name + '（IF:' + j.if + ', ' + j.jcr + ', 审稿:' + j.reviewDays + '天, 录用率:' + j.acceptRate + '%, 方向:' + j.scope.substring(0, 60) + '...）';
+    }).join('\n');
+    var systemPrompt = `你是一位体育学/运动科学领域的资深期刊编辑和投稿顾问，拥有10年以上的投稿指导经验。请根据用户提供的文章信息，从以下期刊列表中推荐最合适的投稿期刊。
+
+推荐要求：
+1. 推荐9本期刊，分为三档：
+   - 冲刺刊（3本）：影响因子较高，有一定难度但文章有亮点可尝试
+   - 稳妥刊（3本）：与文章水平匹配，正常投稿大概率录用
+   - 保底刊（3本）：审稿较快、录用率较高，确保能发表
+2. 每本期刊必须包含：
+   - 期刊名称
+   - 影响因子、JCR分区/中科院分区
+   - 匹配度评分（0-100%）
+   - 推荐理由（为什么适合这篇文章，结合文章内容和期刊收稿范围）
+   - 注意事项（投稿时需要注意什么，常见拒稿原因）
+   - 预估审稿周期和录用率
+3. 最后给出"投稿策略建议"：建议先投哪本，如果被拒后转投哪本
+4. 只从提供的期刊列表中推荐，不要推荐列表外的期刊
+5. 使用Markdown格式，每档用### 标题，每本期刊用#### 标题
+
+期刊列表：
+` + journalList;
+    var userPrompt = '文章标题：' + title + '\n\n摘要/研究内容：' + abstract + '\n\n研究类型：' + type + '\n研究方向：' + direction + '\n投稿目标：' + goal;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 3000, model);
+    resultDiv.innerHTML = '<div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:16px">AI期刊推荐结果</div><div class="md-content" style="padding:20px;background:#faf5ff;border:1px solid #ddd6fe;border-radius:12px;font-size:13px;line-height:1.9;color:#3b0764">' + renderMarkdown(response) + '</div>';
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">推荐失败：' + error.message + '</div>';
+  }
+}
+
+// 期刊库筛选
+function filterJournals() {
+  var search = (document.getElementById('pubLibSearch')?.value || '').toLowerCase();
+  var jcrFilter = document.getElementById('pubLibFilterJCR')?.value || '';
+  var dirFilter = document.getElementById('pubLibFilterDir')?.value || '';
+  var sortBy = document.getElementById('pubLibSort')?.value || 'if';
+  var list = PHD_JOURNALS.filter(function(j) {
+    if (search) {
+      var match = j.name.toLowerCase().indexOf(search) >= 0 ||
+        (j.abbr && j.abbr.toLowerCase().indexOf(search) >= 0) ||
+        (j.issn && j.issn.indexOf(search) >= 0);
+      if (!match) return false;
+    }
+    if (jcrFilter && j.jcr !== jcrFilter && j.cas !== jcrFilter) return false;
+    if (dirFilter) {
+      if (dirFilter === '中文期刊') {
+        if (j.if > 0) return false;
+      } else {
+        var scope = (j.scope + j.matchKeywords.join(',')).toLowerCase();
+        if (scope.indexOf(dirFilter.toLowerCase()) < 0 && scope.indexOf(dirFilter.replace('运动','').toLowerCase()) < 0) return false;
+      }
+    }
+    return true;
+  });
+  // 排序
+  list.sort(function(a, b) {
+    if (sortBy === 'if') return (b.if || 0) - (a.if || 0);
+    if (sortBy === 'review') return (a.reviewDays || 999) - (b.reviewDays || 999);
+    if (sortBy === 'accept') return (b.acceptRate || 0) - (a.acceptRate || 0);
+    return a.name.localeCompare(b.name);
+  });
+  document.getElementById('pubLibCount').textContent = '共 ' + list.length + ' 本期刊';
+  renderJournalList(list);
+}
+
+// 渲染期刊列表
+function renderJournalList(list) {
+  var container = document.getElementById('pubLibList');
+  if (!container) return;
+  if (list.length === 0) {
+    container.innerHTML = '<div style="padding:30px;text-align:center;color:#9ca3af">没有找到匹配的期刊</div>';
+    return;
+  }
+  var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">';
+  list.forEach(function(j) {
+    var inCompare = publishCompareList.indexOf(j.id) >= 0;
+    var ifBadge = j.if > 0 ? '<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">IF ' + j.if + '</span>' : '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">' + j.jcr + '</span>';
+    var jcrBadge = '<span style="background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:10px;font-size:11px">' + (j.cas || j.jcr) + '</span>';
+    var oaBadge = j.oa === 'Full OA' ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px">OA</span>' : '';
+    html += '<div class="journal-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;transition:box-shadow .2s;cursor:pointer" onmouseover="this.style.boxShadow=\'0 4px 12px rgba(124,58,237,0.15)\'" onmouseout="this.style.boxShadow=\'none\'">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div style="font-size:14px;font-weight:700;color:#1e293b;flex:1;cursor:pointer" onclick="showJournalDetail(\'' + j.id + '\')">' + j.name + '</div></div>';
+    html += '<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">' + ifBadge + jcrBadge + oaBadge + '</div>';
+    html += '<div style="font-size:12px;color:#6b7280;margin-bottom:8px;line-height:1.6">' + j.scope.substring(0, 80) + '...</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;color:#9ca3af;margin-bottom:12px">';
+    html += '<div>审稿：约' + j.reviewDays + '天</div><div>录用率：' + j.acceptRate + '%</div>';
+    html += '<div>年发文：' + j.papers + '篇</div><div>自引率：' + (j.selfCite || 0) + '%</div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button onclick="showJournalDetail(\'' + j.id + '\')" style="flex:1;font-size:12px;color:#fff;background:#7c3aed;border:none;padding:7px;border-radius:6px;cursor:pointer">查看详情</button>';
+    html += '<button onclick="toggleCompareJournal(\'' + j.id + '\')" style="flex:1;font-size:12px;color:' + (inCompare ? '#b45309' : '#6b7280') + ';background:' + (inCompare ? '#fef3c7' : '#f3f4f6') + ';border:none;padding:7px;border-radius:6px;cursor:pointer">' + (inCompare ? '已加入对比' : '加入对比') + '</button>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// 期刊详情
+function showJournalDetail(id) {
+  var j = PHD_JOURNALS.find(function(x) { return x.id === id; });
+  if (!j) return;
+  var html = '<div style="max-width:800px;margin:0 auto">';
+  html += '<div style="font-size:20px;font-weight:700;color:#1e293b;margin-bottom:4px">' + j.name + '</div>';
+  html += '<div style="font-size:13px;color:#6b7280;margin-bottom:16px">' + (j.abbr || '') + ' | ISSN: ' + j.issn + (j.eissn ? ' | eISSN: ' + j.eissn : '') + ' | 出版社：' + j.publisher + ' | 创刊年：' + j.year + '</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">';
+  html += '<div style="background:#eff6ff;border-radius:8px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#1e40af">' + (j.if > 0 ? j.if : '-') + '</div><div style="font-size:11px;color:#6b7280">影响因子</div></div>';
+  html += '<div style="background:#faf5ff;border-radius:8px;padding:12px;text-align:center"><div style="font-size:16px;font-weight:700;color:#5b21b6">' + j.jcr + '</div><div style="font-size:11px;color:#6b7280">JCR分区</div></div>';
+  html += '<div style="background:#fef3c7;border-radius:8px;padding:12px;text-align:center"><div style="font-size:16px;font-weight:700;color:#92400e">' + (j.cas || '-') + '</div><div style="font-size:11px;color:#6b7280">中科院分区</div></div>';
+  html += '<div style="background:#dcfce7;border-radius:8px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#166534">' + j.acceptRate + '%</div><div style="font-size:11px;color:#6b7280">录用率</div></div>';
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">';
+  html += '<div style="background:#f9fafb;border-radius:8px;padding:10px"><div style="font-size:11px;color:#9ca3af">平均审稿周期</div><div style="font-size:15px;font-weight:600;color:#374151">约' + j.reviewDays + '天</div></div>';
+  html += '<div style="background:#f9fafb;border-radius:8px;padding:10px"><div style="font-size:11px;color:#9ca3af">年发文量</div><div style="font-size:15px;font-weight:600;color:#374151">' + j.papers + '篇</div></div>';
+  html += '<div style="background:#f9fafb;border-radius:8px;padding:10px"><div style="font-size:11px;color:#9ca3af">自引率</div><div style="font-size:15px;font-weight:600;color:#374151">' + (j.selfCite || 0) + '%</div></div>';
+  html += '<div style="background:#f9fafb;border-radius:8px;padding:10px"><div style="font-size:11px;color:#9ca3af">开源模式</div><div style="font-size:15px;font-weight:600;color:#374151">' + j.oa + '</div></div>';
+  html += '<div style="background:#f9fafb;border-radius:8px;padding:10px"><div style="font-size:11px;color:#9ca3af">版面费</div><div style="font-size:15px;font-weight:600;color:#374151">' + (j.fee > 0 ? '约$' + j.fee : '免费/订阅制') + '</div></div>';
+  html += '<div style="background:#f9fafb;border-radius:8px;padding:10px"><div style="font-size:11px;color:#9ca3af">5年平均IF</div><div style="font-size:15px;font-weight:600;color:#374151">' + (j.if5y > 0 ? j.if5y : '-') + '</div></div>';
+  html += '</div>';
+  html += '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">收稿范围</div><div style="font-size:13px;color:#4b5563;line-height:1.8;background:#f9fafb;padding:12px;border-radius:8px">' + j.scope + '</div></div>';
+  html += '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">接收文章类型</div><div style="display:flex;gap:6px;flex-wrap:wrap">' + (j.types || []).map(function(t) { return '<span style="background:#ede9fe;color:#5b21b6;padding:4px 10px;border-radius:6px;font-size:12px">' + t + '</span>'; }).join('') + '</div></div>';
+  html += '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">优势与特点</div><div style="font-size:13px;color:#065f46;line-height:1.8;background:#f0fdf4;padding:12px;border-radius:8px;border-left:3px solid #10b981">' + (j.strengths || '暂无') + '</div></div>';
+  html += '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">注意事项 / 常见拒稿原因</div><div style="font-size:13px;color:#991b1b;line-height:1.8;background:#fef2f2;padding:12px;border-radius:8px;border-left:3px solid #ef4444">' + (j.pitfalls || '暂无') + '</div></div>';
+  html += '<div style="display:flex;gap:10px;margin-top:20px">';
+  html += '<a href="' + j.url + '" target="_blank" style="flex:1;text-align:center;font-size:13px;color:#fff;background:#7c3aed;border:none;padding:10px;border-radius:8px;cursor:pointer;text-decoration:none">官方网站</a>';
+  html += '<a href="' + j.submitUrl + '" target="_blank" style="flex:1;text-align:center;font-size:13px;color:#fff;background:#059669;border:none;padding:10px;border-radius:8px;cursor:pointer;text-decoration:none">投稿系统</a>';
+  html += '<button onclick="toggleCompareJournal(\'' + j.id + '\');closePhdDetail()" style="flex:1;font-size:13px;color:#fff;background:#d97706;border:none;padding:10px;border-radius:8px;cursor:pointer">加入对比</button>';
+  html += '</div></div>';
+  showPhdDetail(html);
+}
+
+// 加入/移除对比
+function toggleCompareJournal(id) {
+  var idx = publishCompareList.indexOf(id);
+  if (idx >= 0) {
+    publishCompareList.splice(idx, 1);
+  } else {
+    if (publishCompareList.length >= 5) { alert('最多对比5本期刊'); return; }
+    publishCompareList.push(id);
+  }
+  filterJournals();
+  renderCompareList();
+}
+
+// 渲染对比列表
+function renderCompareList() {
+  var container = document.getElementById('pubCompareList');
+  if (!container) return;
+  if (publishCompareList.length === 0) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">尚未选择期刊，请在期刊库中点击"加入对比"</div>';
+    document.getElementById('pubCompareResult').innerHTML = '';
+    return;
+  }
+  var journals = publishCompareList.map(function(id) { return PHD_JOURNALS.find(function(j) { return j.id === id; }); }).filter(Boolean);
+  var html = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">';
+  html += '<span style="font-size:13px;color:#5b21b6;font-weight:600">已选 ' + journals.length + ' 本：</span>';
+  journals.forEach(function(j) {
+    html += '<span style="background:#ede9fe;color:#5b21b6;padding:4px 10px;border-radius:6px;font-size:12px;display:flex;align-items:center;gap:6px">' + j.abbr + '<button onclick="toggleCompareJournal(\'' + j.id + '\')" style="background:none;border:none;color:#7c3aed;cursor:pointer;font-size:14px;padding:0">×</button></span>';
+  });
+  if (journals.length >= 2) {
+    html += '<button onclick="generateJournalComparison()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">生成对比分析</button>';
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// 生成期刊对比分析
+function generateJournalComparison() {
+  var journals = publishCompareList.map(function(id) { return PHD_JOURNALS.find(function(j) { return j.id === id; }); }).filter(Boolean);
+  var resultDiv = document.getElementById('pubCompareResult');
+  // 生成对比表格
+  var html = '<div style="overflow-x:auto;margin-bottom:20px"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:10px;overflow:hidden">';
+  html += '<thead><tr style="background:#7c3aed;color:#fff">';
+  html += '<th style="padding:10px;text-align:left;min-width:100px">对比项</th>';
+  journals.forEach(function(j) { html += '<th style="padding:10px;text-align:center;min-width:120px">' + j.abbr + '</th>'; });
+  html += '</tr></thead><tbody>';
+  var rows = [
+    ['影响因子', function(j) { return j.if > 0 ? j.if : '-'; }],
+    ['JCR分区', function(j) { return j.jcr; }],
+    ['中科院分区', function(j) { return j.cas || '-'; }],
+    ['5年平均IF', function(j) { return j.if5y > 0 ? j.if5y : '-'; }],
+    ['录用率', function(j) { return j.acceptRate + '%'; }],
+    ['审稿周期', function(j) { return '约' + j.reviewDays + '天'; }],
+    ['年发文量', function(j) { return j.papers + '篇'; }],
+    ['自引率', function(j) { return (j.selfCite || 0) + '%'; }],
+    ['开源模式', function(j) { return j.oa; }],
+    ['版面费', function(j) { return j.fee > 0 ? '$' + j.fee : '免费'; }],
+    ['出版社', function(j) { return j.publisher; }]
+  ];
+  rows.forEach(function(row, ri) {
+    html += '<tr style="' + (ri % 2 === 0 ? 'background:#faf5ff' : 'background:#fff') + '">';
+    html += '<td style="padding:8px 10px;font-weight:600;color:#5b21b6">' + row[0] + '</td>';
+    journals.forEach(function(j) {
+      var val = row[1](j);
+      var color = '#374151';
+      if (row[0] === '影响因子' && j.if >= 5) color = '#16a34a';
+      if (row[0] === '录用率' && j.acceptRate >= 30) color = '#16a34a';
+      if (row[0] === '审稿周期' && j.reviewDays <= 60) color = '#16a34a';
+      html += '<td style="padding:8px 10px;text-align:center;color:' + color + ';font-weight:' + (color !== '#374151' ? '600' : '400') + '">' + val + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  // 收稿范围对比
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:20px">';
+  journals.forEach(function(j) {
+    html += '<div style="background:#f9fafb;border-radius:8px;padding:12px"><div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">' + j.abbr + ' 收稿范围</div><div style="font-size:12px;color:#6b7280;line-height:1.7">' + j.scope + '</div></div>';
+  });
+  html += '</div>';
+  // AI选刊建议
+  html += '<div id="pubCompareAI" style="margin-top:16px"><button onclick="aiCompareAdvice()" style="width:100%;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">AI生成选刊建议</button></div>';
+  resultDiv.innerHTML = html;
+}
+
+// AI选刊建议
+async function aiCompareAdvice() {
+  var journals = publishCompareList.map(function(id) { return PHD_JOURNALS.find(function(j) { return j.id === id; }); }).filter(Boolean);
+  var container = document.getElementById('pubCompareAI');
+  container.innerHTML = '<div style="padding:20px;text-align:center;color:#7c3aed">AI正在生成选刊建议...</div>';
+  try {
+    var jText = journals.map(function(j, i) {
+      return (i+1) + '. ' + j.name + '（IF:' + j.if + ', ' + j.jcr + ', 审稿:' + j.reviewDays + '天, 录用率:' + j.acceptRate + '%, 优势:' + (j.strengths || '').substring(0, 50) + ', 注意:' + (j.pitfalls || '').substring(0, 50) + '）';
+    }).join('\n');
+    var systemPrompt = `你是一位体育学领域的资深投稿顾问。请对比以下几本期刊，给出详细的选刊建议。
+
+要求：
+1. 横向对比各期刊的优劣势
+2. 给出"优先投稿顺序"建议（第1选择、第2选择、备选）
+3. 针对不同情况给出建议：
+   - 如果追求高影响因子，选哪本
+   - 如果追求快速发表，选哪本
+   - 如果追求稳妥录用，选哪本
+   - 如果文章创新性强，选哪本
+   - 如果文章是综述/Meta分析，选哪本
+4. 给出每本期刊的投稿注意事项和提高录用率的建议
+5. 使用Markdown格式，总字数600-1000字
+
+期刊信息：
+` + jText;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, '请对比以上期刊并给出选刊建议', 2000, model);
+    container.innerHTML = '<div class="md-content" style="padding:16px;background:#faf5ff;border:1px solid #ddd6fe;border-radius:10px;font-size:13px;line-height:1.9;color:#3b0764">' + renderMarkdown(response) + '</div>';
+  } catch (error) {
+    container.innerHTML = '<div style="color:#dc2626;padding:20px">生成失败：' + error.message + '</div>';
+  }
+}
+
+
+// 切换投稿模式子Tab
+function switchPublishTab(tab) {
+  publishCurrentSubTab = tab;
+  ['recommend','library','compare','tools'].forEach(function(t) {
+    var btn = document.getElementById('pubTab-' + t);
+    var content = document.getElementById('pubContent-' + t);
+    if (btn) { btn.style.background = (t === tab) ? '#7c3aed' : '#fff'; btn.style.color = (t === tab) ? '#fff' : '#7c3aed'; }
+    if (content) content.style.display = (t === tab) ? 'block' : 'none';
+  });
+}
 
 
 // ========== 考博真题数据 ==========
