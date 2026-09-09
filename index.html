@@ -37972,6 +37972,7 @@ function renderPhdPublish() {
   html += '<button onclick="switchPublishTab(\'compare\')" id="pubTab-compare" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">选刊对比</button>';
   html += '<button onclick="switchPublishTab(\'tools\')" id="pubTab-tools" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿工具</button>';
   html += '<button onclick="switchPublishTab(\'manage\')" id="pubTab-manage" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿管理</button>';
+  html += '<button onclick="switchPublishTab(\'format\')" id="pubTab-format" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">论文润色</button>';
   html += '</div>';
   // 智能选刊Tab
   html += '<div id="pubContent-recommend">';
@@ -38037,6 +38038,7 @@ function renderPhdPublish() {
   html += '<div id="pubManageStats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px"></div>';
   html += '<div id="pubManageList"></div>';
   html += '<div id="pubManageDetail" style="margin-top:20px"></div>';
+  html += '<div id="pubContent-format" style="display:none"></div>';
   html += '</div>';
   area.innerHTML = html;
   // 默认渲染期刊库列表
@@ -41988,13 +41990,55 @@ function addTimelineEvent(paperId, subId) {
 // 切换投稿模式子Tab
 function switchPublishTab(tab) {
   publishCurrentSubTab = tab;
-  ['recommend','library','compare','tools','manage'].forEach(function(t) {
+  ['recommend','library','compare','tools','manage','format'].forEach(function(t) {
     var btn = document.getElementById('pubTab-' + t);
     var content = document.getElementById('pubContent-' + t);
     if (btn) { btn.style.background = (t === tab) ? '#7c3aed' : '#fff'; btn.style.color = (t === tab) ? '#fff' : '#7c3aed'; }
     if (content) content.style.display = (t === tab) ? 'block' : 'none';
   });
   if (tab === 'manage') renderPubManage();
+  if (tab === 'format') renderPublishFormat();
+}
+
+// 论文润色独立页面渲染
+function renderPublishFormat() {
+  var container = document.getElementById('pubContent-format');
+  if (!container) return;
+  var html = '<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px">';
+  html += '<div style="font-size:16px;font-weight:700;color:#075985;margin-bottom:12px">论文格式修改与润色</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">';
+  html += '<div><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:4px">目标期刊</label><select id="fmtJournal" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#075985;cursor:pointer"><option value="">通用学术标准</option>' + PHD_JOURNALS.map(function(j) { return '<option value="' + j.name + '">' + j.name + '</option>'; }).join('') + '</select></div>';
+  html += '<div><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:4px">参考文献格式</label><select id="fmtRefStyle" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#075985;cursor:pointer"><option value="Vancouver">Vancouver（数字顺序）</option><option value="APA">APA（作者-年份）</option><option value="Harvard">Harvard（作者-年份）</option><option value="GB7714">GB/T 7714（国标）</option><option value="AMA">AMA（美国医学会）</option></select></div>';
+  html += '</div>';
+  html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:6px">检查项目（可多选）</label>';
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">';
+  var fmtChecks = [
+    {id:'fmtRef',label:'参考文献格式'},
+    {id:'fmtCite',label:'引用编号'},
+    {id:'fmtFig',label:'图表编号'},
+    {id:'fmtHead',label:'标题层级'},
+    {id:'fmtAbbr',label:'缩写定义'},
+    {id:'fmtUnit',label:'单位格式'},
+    {id:'fmtLang',label:'语言润色'},
+    {id:'fmtTense',label:'时态一致'},
+    {id:'fmtStructure',label:'段落结构'}
+  ];
+  fmtChecks.forEach(function(c) {
+    html += '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#0c4a6e;cursor:pointer;padding:4px 8px;background:#fff;border:1px solid #bae6fd;border-radius:4px"><input type="checkbox" id="' + c.id + '" checked style="accent-color:#0284c7">' + c.label + '</label>';
+  });
+  html += '</div></div>';
+  html += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><label style="font-size:12px;color:#075985;font-weight:600">论文内容</label><div style="display:flex;gap:8px;align-items:center"><input type="file" id="fmtFileUpload" accept=".docx,.txt" style="display:none" onchange="handleFmtFileUpload(this)"><button onclick="document.getElementById(\'fmtFileUpload\').click()" style="background:#0284c7;color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">上传Word/TXT</button><span style="font-size:10px;color:#64748b">支持.docx/.txt，表格自动转换</span></div></div><textarea id="fmtContent" rows="14" placeholder="粘贴论文全文，或点击上方\"上传Word/TXT\"按钮上传文档..." oninput="document.getElementById(\'fmtCharCount\').textContent=this.value.length+\' 字符\'" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;resize:vertical;font-family:Consolas,monospace;line-height:1.8"></textarea><div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px"><span id="fmtFileInfo" style="font-size:10px;color:#0284c7"></span><span style="font-size:10px;color:#64748b"><span id="fmtCharCount">0 字符</span></span></div></div>';
+  html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#075985">文档图片（<span id="fmtImgCount">0</span>张）</div><div style="display:flex;gap:6px"><button onclick="detectAllImageFormats()" style="background:#0284c7;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检测图片格式</button><button onclick="checkFigureCaptions()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检查标题与引用</button><button onclick="toggleImageTool()" style="background:#d97706;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">图片处理工具</button><button onclick="analyzeAllImagesAI()" style="background:#0891b2;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">AI分析图片</button><button onclick="ocrAllImages()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">OCR文字检查</button></div></div><div id="fmtAIAnalysisResults" style="margin-top:10px"></div><div id="fmtOCRResults" style="margin-top:10px"></div><div id="fmtImageToolPanel" style="display:none;margin-bottom:10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px">图片压缩与格式转换</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标格式</label><select id="imgToolFormat" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;background:#fff;color:#92400e;cursor:pointer"><option value="image/jpeg">JPG（照片，体积小）</option><option value="image/png">PNG（线图，无损）</option><option value="image/webp">WebP（高压缩率）</option></select></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">质量（JPG/WebP）: <span id="imgToolQualityVal">85</span></label><input type="range" id="imgToolQuality" min="10" max="100" value="85" oninput="document.getElementById(\'imgToolQualityVal\').textContent=this.value" style="width:100%;accent-color:#d97706"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标宽度（px，0=不缩放）</label><input type="number" id="imgToolWidth" value="0" min="0" max="5000" placeholder="如1600" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标DPI（用于计算尺寸，0=不使用）</label><input type="number" id="imgToolDPI" value="0" min="0" max="1200" placeholder="如300" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">印刷宽度（cm，配合DPI使用）</label><input type="number" id="imgToolPrintWidth" value="8.5" min="1" max="30" step="0.5" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onclick="processAllImages()" style="background:#d97706;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">批量处理并下载ZIP</button><button onclick="processImagesPreview()" style="background:#92400e;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">预览处理效果</button><span style="font-size:10px;color:#92400e">提示：DPI+印刷宽度会自动计算目标像素宽度</span></div><div id="imgToolProgress" style="display:none;margin-top:10px"><div style="font-size:10px;color:#92400e;margin-bottom:4px">处理进度: <span id="imgToolProgressText">0/0</span></div><div style="background:#fef3c7;border-radius:4px;height:8px;overflow:hidden"><div id="imgToolProgressBar" style="background:#d97706;height:100%;width:0%;transition:width .3s"></div></div></div><div id="imgToolResults" style="margin-top:10px"></div></div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div><div id="fmtImageDetectResults" style="margin-top:10px"></div><div id="fmtCaptionCheckResult" style="margin-top:10px"></div></div>';
+  html += '<div style="display:flex;gap:10px;margin-bottom:16px"><button onclick="checkPaperFormat()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI检查格式问题</button><button onclick="autoFixPaperFormat()" style="background:#075985;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">一键检查并修改</button></div>';
+  html += '<div id="fmtResult"></div>';
+  html += '<div style="margin-top:20px;border-top:2px solid #bae6fd;padding-top:16px">';
+  html += '<div style="font-size:14px;font-weight:700;color:#075985;margin-bottom:10px">快捷工具</div>';
+  html += '<div id="quickToolArea" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div>';
+  html += '<div id="quickToolContent" style="margin-top:12px"></div>';
+  html += '</div>';
+  html += '</div>';
+  container.innerHTML = html;
+  setTimeout(function() { initQuickTools(); }, 100);
 }
 
 
