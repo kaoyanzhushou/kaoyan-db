@@ -5032,6 +5032,7 @@ console.log('✅ 学习工具入口已加载');
   <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('editor')"><span class="icon">✍️</span><span>AI写作助手</span></div>
   <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('format')"><span class="icon">🔍</span><span>格式检查</span></div>
   <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('literature')"><span class="icon">📚</span><span>文献管理</span></div>
+  <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('design')"><span class="icon">🧪</span><span>研究设计</span></div>
 
   <div class="nav-group">🛠️ 学习工具</div>
   <div class="nav-item" data-tab="plan"><span class="icon">📅</span><span>备考规划</span></div>
@@ -6884,6 +6885,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('editor')" id="paperTab-editor" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">AI写作助手</button>
       <button onclick="switchPaperSubTab('format')" id="paperTab-format" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">格式检查</button>
       <button onclick="switchPaperSubTab('literature')" id="paperTab-literature" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">文献管理</button>
+      <button onclick="switchPaperSubTab('design')" id="paperTab-design" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">研究设计</button>
     </div>
 
     <!-- 我的论文页面 -->
@@ -6923,11 +6925,95 @@ console.log('✅ 学习工具入口已加载');
 
     <!-- 文献管理页面 -->
     <div id="paperContent-literature" style="display:none">
-      <div style="text-align:center;padding:60px 20px;color:#9ca3af">
-        <div style="font-size:48px;margin-bottom:16px">📚</div>
-        <div style="font-size:16px;margin-bottom:8px">文献管理功能</div>
-        <div style="font-size:13px">文献库管理、AI文献总结、智能检索功能即将上线</div>
+      <!-- 工具栏 -->
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <input type="text" id="paperLitSearch" placeholder="搜索文献标题、作者、关键词..." style="flex:1;min-width:200px;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none" oninput="renderPaperLiterature()">
+        <button onclick="showAddLitModal()" style="background:#16a34a;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加文献</button>
+        <button onclick="paperLitAISearch()" style="background:#0ea5e9;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI智能检索</button>
       </div>
+      <!-- 统计 -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#16a34a" id="paperLitTotal">0</div><div style="font-size:11px;color:#6b7280">文献总数</div></div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#0ea5e9" id="paperLitRead">0</div><div style="font-size:11px;color:#6b7280">已读</div></div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#f59e0b" id="paperLitStar">0</div><div style="font-size:11px;color:#6b7280">收藏</div></div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#8b5cf6" id="paperLitTags">0</div><div style="font-size:11px;color:#6b7280">标签数</div></div>
+      </div>
+      <!-- 文献列表 -->
+      <div id="paperLiteratureList"></div>
+      <div id="paperLitEmpty" style="text-align:center;padding:50px 20px;color:#9ca3af;display:none">
+        <div style="font-size:40px;margin-bottom:12px">📚</div>
+        <div style="font-size:14px">还没有文献，点击「添加文献」开始管理你的文献库</div>
+      </div>
+    </div>
+
+    <!-- 研究设计页面 -->
+    <div id="paperContent-design" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <!-- 研究类型选择 -->
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:14px">选择研究类型</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button onclick="selectDesignType('experiment')" id="designType-experiment" style="padding:14px;border:2px solid #e5e7eb;background:#fff;border-radius:8px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:22px;margin-bottom:4px">🧪</div><div style="font-size:12px;font-weight:600;color:#374151">实验研究</div></button>
+            <button onclick="selectDesignType('survey')" id="designType-survey" style="padding:14px;border:2px solid #e5e7eb;background:#fff;border-radius:8px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:22px;margin-bottom:4px">📋</div><div style="font-size:12px;font-weight:600;color:#374151">调查研究</div></button>
+            <button onclick="selectDesignType('review')" id="designType-review" style="padding:14px;border:2px solid #e5e7eb;background:#fff;border-radius:8px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:22px;margin-bottom:4px">📖</div><div style="font-size:12px;font-weight:600;color:#374151">文献研究</div></button>
+            <button onclick="selectDesignType('case')" id="designType-case" style="padding:14px;border:2px solid #e5e7eb;background:#fff;border-radius:8px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:22px;margin-bottom:4px">🔍</div><div style="font-size:12px;font-weight:600;color:#374151">案例研究</div></button>
+            <button onclick="selectDesignType('mixed')" id="designType-mixed" style="padding:14px;border:2px solid #e5e7eb;background:#fff;border-radius:8px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:22px;margin-bottom:4px">🔀</div><div style="font-size:12px;font-weight:600;color:#374151">混合方法</div></button>
+            <button onclick="selectDesignType('qualitative')" id="designType-qualitative" style="padding:14px;border:2px solid #e5e7eb;background:#fff;border-radius:8px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:22px;margin-bottom:4px">💬</div><div style="font-size:12px;font-weight:600;color:#374151">定性研究</div></button>
+          </div>
+        </div>
+        <!-- 研究基本信息 -->
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:14px">研究基本信息</div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">研究题目</label><input type="text" id="designTitle" placeholder="输入研究题目" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">研究方向</label><input type="text" id="designField" placeholder="如：运动生理学、体育教育训练学..." style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">研究问题</label><textarea id="designQuestion" rows="2" placeholder="简要描述你要解决的研究问题" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;resize:vertical"></textarea></div>
+          <button onclick="generateDesignPlan()" style="width:100%;background:#16a34a;color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;margin-top:8px">AI生成研究设计方案</button>
+        </div>
+      </div>
+      <!-- 样本量计算 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+        <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:14px">样本量快速计算</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px">效应量 (d)</label><input type="number" id="sampleEffect" value="0.5" step="0.1" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:13px"></div>
+          <div><label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px">显著性水平 α</label><input type="number" id="sampleAlpha" value="0.05" step="0.01" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:13px"></div>
+          <div><label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px">检验效能 (1-β)</label><input type="number" id="samplePower" value="0.8" step="0.05" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:13px"></div>
+          <div><label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px">研究设计</label><select id="sampleDesign" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:13px;background:#fff"><option value="independent">独立样本t检验</option><option value="paired">配对t检验</option><option value="anova">单因素ANOVA</option><option value="correlation">相关性分析</option><option value="chi2">卡方检验</option></select></div>
+        </div>
+        <button onclick="calculateSampleSize()" style="background:#0ea5e9;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">计算所需样本量</button>
+        <div id="sampleSizeResult" style="margin-top:12px;padding:12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;display:none"></div>
+      </div>
+      <!-- 统计方法推荐 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+        <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:14px">统计方法智能推荐</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
+          <div><label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px">自变量类型</label><select id="statIV" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:13px;background:#fff"><option value="categorical">分类变量</option><option value="continuous">连续变量</option><option value="none">无自变量</option></select></div>
+          <div><label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px">因变量类型</label><select id="statDV" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:13px;background:#fff"><option value="continuous">连续变量</option><option value="categorical">分类变量</option><option value="ordinal">有序变量</option></select></div>
+          <div><label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px">组别数</label><select id="statGroups" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:13px;background:#fff"><option value="1">单组</option><option value="2">两组</option><option value="3+">三组及以上</option></select></div>
+        </div>
+        <button onclick="recommendStatMethod()" style="background:#8b5cf6;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">推荐统计方法</button>
+        <div id="statMethodResult" style="margin-top:12px;padding:12px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:6px;display:none"></div>
+      </div>
+      <!-- AI生成结果区 -->
+      <div id="designResult"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 添加文献弹窗 -->
+<div id="addLitModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto">
+    <div style="font-size:18px;font-weight:700;color:#1f2937;margin-bottom:16px">添加文献</div>
+    <div style="margin-bottom:12px"><label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">文献标题 *</label><input type="text" id="litTitle" placeholder="输入文献标题" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;outline:none"></div>
+    <div style="margin-bottom:12px"><label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">作者</label><input type="text" id="litAuthors" placeholder="如：张三, 李四, 王五" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;outline:none"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div><label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">期刊/来源</label><input type="text" id="litJournal" placeholder="期刊名称" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;outline:none"></div>
+      <div><label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">年份</label><input type="number" id="litYear" placeholder="2024" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;outline:none"></div>
+    </div>
+    <div style="margin-bottom:12px"><label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">关键词（逗号分隔）</label><input type="text" id="litKeywords" placeholder="如：运动, 生理, 代谢" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;outline:none"></div>
+    <div style="margin-bottom:16px"><label style="font-size:13px;color:#374151;font-weight:600;display:block;margin-bottom:4px">摘要</label><textarea id="litAbstract" rows="3" placeholder="粘贴文献摘要..." style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;outline:none;resize:vertical"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="closeAddLitModal()" style="padding:10px 20px;border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:6px;cursor:pointer;font-size:14px">取消</button>
+      <button onclick="addPaperLiterature()" style="padding:10px 20px;border:none;background:#16a34a;color:#fff;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600">添加</button>
     </div>
   </div>
 </div>
@@ -26658,7 +26744,7 @@ function savePaperProjects(projects) {
 
 function switchPaperSubTab(subTab) {
   paperCurrentSubTab = subTab;
-  ['projects','editor','format','literature'].forEach(function(t) {
+  ['projects','editor','format','literature','design'].forEach(function(t) {
     var btn = document.getElementById('paperTab-' + t);
     var content = document.getElementById('paperContent-' + t);
     if (btn) { btn.style.background = (t === subTab) ? '#16a34a' : '#fff'; btn.style.color = (t === subTab) ? '#fff' : '#16a34a'; }
@@ -26941,6 +27027,266 @@ function applyAIRewrite() {
     savePaperContent();
     alert('已应用润色结果');
   }
+}
+
+
+// ========== 论文工作台 - 文献管理 ==========
+function getPaperLiterature() {
+  try { return JSON.parse(localStorage.getItem('paper_literature') || '[]'); } catch(e) { return []; }
+}
+function savePaperLiterature(lit) { localStorage.setItem('paper_literature', JSON.stringify(lit)); }
+
+function renderPaperLiterature() {
+  var lit = getPaperLiterature();
+  var keyword = (document.getElementById('paperLitSearch') || {}).value || '';
+  if (keyword) {
+    var kw = keyword.toLowerCase();
+    lit = lit.filter(function(l) {
+      return (l.title || '').toLowerCase().indexOf(kw) >= 0 ||
+             (l.authors || '').toLowerCase().indexOf(kw) >= 0 ||
+             (l.keywords || '').toLowerCase().indexOf(kw) >= 0 ||
+             (l.journal || '').toLowerCase().indexOf(kw) >= 0;
+    });
+  }
+  var list = document.getElementById('paperLiteratureList');
+  var empty = document.getElementById('paperLitEmpty');
+  if (!list || !empty) return;
+  
+  var all = getPaperLiterature();
+  var readCount = all.filter(function(l) { return l.read; }).length;
+  var starCount = all.filter(function(l) { return l.star; }).length;
+  var allTags = {};
+  all.forEach(function(l) { (l.keywords || '').split(',').forEach(function(t) { if (t.trim()) allTags[t.trim()] = 1; }); });
+  if (document.getElementById('paperLitTotal')) document.getElementById('paperLitTotal').textContent = all.length;
+  if (document.getElementById('paperLitRead')) document.getElementById('paperLitRead').textContent = readCount;
+  if (document.getElementById('paperLitStar')) document.getElementById('paperLitStar').textContent = starCount;
+  if (document.getElementById('paperLitTags')) document.getElementById('paperLitTags').textContent = Object.keys(allTags).length;
+  
+  if (lit.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  
+  list.innerHTML = lit.map(function(l) {
+    var tags = (l.keywords || '').split(',').filter(function(t) { return t.trim(); }).map(function(t) {
+      return '<span style="background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:4px;font-size:11px;margin-right:4px">' + t.trim() + '</span>';
+    }).join('');
+    return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,0.04)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:4px;line-height:1.4">' + (l.title || '无标题') + '</div>' +
+          '<div style="font-size:12px;color:#6b7280;margin-bottom:6px">' + (l.authors || '未知作者') + (l.journal ? ' · ' + l.journal : '') + (l.year ? ' (' + l.year + ')' : '') + '</div>' +
+          (tags ? '<div style="margin-bottom:6px">' + tags + '</div>' : '') +
+          (l.abstract ? '<div style="font-size:12px;color:#9ca3af;line-height:1.6;max-height:36px;overflow:hidden">' + l.abstract.substring(0, 120) + (l.abstract.length > 120 ? '...' : '') + '</div>' : '') +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">' +
+          '<button onclick="togglePaperLitRead(\'' + l.id + '\')" style="padding:4px 10px;border:1px solid ' + (l.read ? '#16a34a' : '#d1d5db') + ';background:' + (l.read ? '#f0fdf4' : '#fff') + ';color:' + (l.read ? '#16a34a' : '#6b7280') + ';border-radius:5px;cursor:pointer;font-size:11px;white-space:nowrap">' + (l.read ? '已读' : '未读') + '</button>' +
+          '<button onclick="togglePaperLitStar(\'' + l.id + '\')" style="padding:4px 10px;border:1px solid ' + (l.star ? '#f59e0b' : '#d1d5db') + ';background:' + (l.star ? '#fffbeb' : '#fff') + ';color:' + (l.star ? '#f59e0b' : '#6b7280') + ';border-radius:5px;cursor:pointer;font-size:11px;white-space:nowrap">' + (l.star ? '已收藏' : '收藏') + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #f3f4f6">' +
+        '<button onclick="paperLitAISummary(\'' + l.id + '\')" style="flex:1;padding:6px;background:#f0f9ff;color:#0ea5e9;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">AI总结</button>' +
+        '<button onclick="deletePaperLiterature(\'' + l.id + '\')" style="padding:6px 12px;background:#fef2f2;color:#dc2626;border:none;border-radius:5px;cursor:pointer;font-size:12px">删除</button>' +
+      '</div>' +
+      '<div id="litSummary-' + l.id + '" style="margin-top:10px"></div>' +
+    '</div>';
+  }).join('');
+}
+
+function showAddLitModal() {
+  var modal = document.getElementById('addLitModal');
+  if (modal) { modal.style.display = 'flex'; document.getElementById('litTitle').focus(); }
+}
+function closeAddLitModal() {
+  var modal = document.getElementById('addLitModal');
+  if (modal) modal.style.display = 'none';
+}
+function addPaperLiterature() {
+  var title = document.getElementById('litTitle').value.trim();
+  if (!title) { alert('请输入文献标题'); return; }
+  var lit = {
+    id: 'lit_' + Date.now(),
+    title: title,
+    authors: document.getElementById('litAuthors').value.trim(),
+    journal: document.getElementById('litJournal').value.trim(),
+    year: document.getElementById('litYear').value,
+    keywords: document.getElementById('litKeywords').value.trim(),
+    abstract: document.getElementById('litAbstract').value.trim(),
+    read: false,
+    star: false,
+    createdAt: Date.now()
+  };
+  var all = getPaperLiterature();
+  all.unshift(lit);
+  savePaperLiterature(all);
+  ['litTitle','litAuthors','litJournal','litYear','litKeywords','litAbstract'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+  closeAddLitModal();
+  renderPaperLiterature();
+}
+function deletePaperLiterature(id) {
+  if (!confirm('确定删除这篇文献吗？')) return;
+  savePaperLiterature(getPaperLiterature().filter(function(l) { return l.id !== id; }));
+  renderPaperLiterature();
+}
+function togglePaperLitRead(id) {
+  var all = getPaperLiterature();
+  var l = all.find(function(x) { return x.id === id; });
+  if (l) { l.read = !l.read; savePaperLiterature(all); renderPaperLiterature(); }
+}
+function togglePaperLitStar(id) {
+  var all = getPaperLiterature();
+  var l = all.find(function(x) { return x.id === id; });
+  if (l) { l.star = !l.star; savePaperLiterature(all); renderPaperLiterature(); }
+}
+
+async function paperLitAISummary(id) {
+  var all = getPaperLiterature();
+  var l = all.find(function(x) { return x.id === id; });
+  if (!l) return;
+  var resultEl = document.getElementById('litSummary-' + id);
+  if (!resultEl) return;
+  resultEl.innerHTML = '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:10px;text-align:center;color:#0ea5e9;font-size:12px">AI正在分析文献...</div>';
+  try {
+    var systemPrompt = '你是一位体育学文献分析专家，擅长快速提炼学术论文的核心内容。';
+    var userPrompt = '请对以下文献进行结构化总结：\n\n标题：' + l.title + '\n作者：' + (l.authors || '未知') + '\n期刊：' + (l.journal || '未知') + '\n年份：' + (l.year || '未知') + '\n摘要：' + (l.abstract || '无摘要') + '\n\n请输出：1. 研究目的 2. 研究方法 3. 主要结果 4. 核心结论 5. 创新点与局限 6. 对体育学研究的启示。使用中文，简洁专业。';
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 1500);
+    resultEl.innerHTML = '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:12px"><div style="font-size:12px;font-weight:700;color:#0369a1;margin-bottom:8px">AI文献总结</div><div class="md-content" style="font-size:12px;line-height:1.7;color:#1f2937">' + renderMarkdown(result) + '</div></div>';
+  } catch(e) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:10px;color:#dc2626;font-size:12px">总结失败：' + e.message + '</div>';
+  }
+}
+
+async function paperLitAISearch() {
+  var keyword = (document.getElementById('paperLitSearch') || {}).value || '';
+  if (!keyword) { alert('请输入检索关键词'); return; }
+  var list = document.getElementById('paperLiteratureList');
+  if (!list) return;
+  list.innerHTML = '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:20px;text-align:center;color:#0ea5e9;font-size:14px">AI正在检索相关文献（PubMed/Europe PMC）...</div>';
+  try {
+    var systemPrompt = '你是一位体育学文献检索专家，熟悉PubMed和Europe PMC数据库。';
+    var userPrompt = '请围绕关键词"' + keyword + '"，推荐5-8篇体育学/运动科学领域的重要文献。每篇包含：标题、作者、期刊、年份、研究要点。优先推荐近5年的高影响力文献。使用中文。';
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
+    list.innerHTML = '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:#0369a1;margin-bottom:8px">AI智能检索结果（关键词：' + keyword + '）</div><div class="md-content" style="font-size:13px;line-height:1.8;color:#1f2937">' + renderMarkdown(result) + '</div></div><div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:8px">以上为AI推荐文献，建议在PubMed/Europe PMC中核实后添加到文献库</div>';
+  } catch(e) {
+    list.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:20px;text-align:center;color:#dc2626;font-size:14px">检索失败：' + e.message + '</div>';
+  }
+}
+
+// ========== 论文工作台 - 研究设计 ==========
+var currentDesignType = null;
+function selectDesignType(type) {
+  currentDesignType = type;
+  ['experiment','survey','review','case','mixed','qualitative'].forEach(function(t) {
+    var btn = document.getElementById('designType-' + t);
+    if (btn) { btn.style.borderColor = (t === type) ? '#16a34a' : '#e5e7eb'; btn.style.background = (t === type) ? '#f0fdf4' : '#fff'; }
+  });
+}
+
+async function generateDesignPlan() {
+  var title = (document.getElementById('designTitle') || {}).value || '';
+  var field = (document.getElementById('designField') || {}).value || '';
+  var question = (document.getElementById('designQuestion') || {}).value || '';
+  if (!currentDesignType) { alert('请先选择研究类型'); return; }
+  if (!question && !title) { alert('请输入研究题目或研究问题'); return; }
+  
+  var typeLabels = {experiment:'实验研究', survey:'调查研究', review:'文献研究', case:'案例研究', mixed:'混合方法研究', qualitative:'定性研究'};
+  var resultEl = document.getElementById('designResult');
+  resultEl.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px;text-align:center;color:#16a34a;font-size:14px">AI正在生成研究设计方案...</div>';
+  
+  try {
+    var systemPrompt = '你是一位体育学研究方法学专家，拥有10年以上体育学研究设计和论文指导经验，精通实验法、调查法、文献法、案例法等各类研究设计。';
+    var userPrompt = '请为以下研究生成完整的研究设计方案：\n\n研究类型：' + (typeLabels[currentDesignType] || '') + '\n研究题目：' + title + '\n研究方向：' + field + '\n研究问题：' + question + '\n\n请输出：1. 研究设计类型与理由 2. 研究对象与抽样方法 3. 研究工具/测量指标 4. 研究程序/实施步骤 5. 数据分析方法 6. 质量控制措施 7. 伦理考量 8. 预期结果与创新点 9. 可能的局限与应对。使用中文，专业、具体、可操作，结合体育学特点。';
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 3000);
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)"><div style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:14px">研究设计方案</div><div class="md-content" style="font-size:14px;line-height:1.8;color:#1f2937">' + renderMarkdown(result) + '</div></div>';
+  } catch(e) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:20px;text-align:center;color:#dc2626;font-size:14px">生成失败：' + e.message + '</div>';
+  }
+}
+
+function calculateSampleSize() {
+  var d = parseFloat(document.getElementById('sampleEffect').value) || 0.5;
+  var alpha = parseFloat(document.getElementById('sampleAlpha').value) || 0.05;
+  var power = parseFloat(document.getElementById('samplePower').value) || 0.8;
+  var design = document.getElementById('sampleDesign').value;
+  var beta = 1 - power;
+  
+  var zAlpha = alpha <= 0.01 ? 2.576 : (alpha <= 0.05 ? 1.96 : 1.645);
+  var zBeta = beta <= 0.1 ? 1.282 : (beta <= 0.2 ? 0.842 : 0.524);
+  
+  var n, formula, note;
+  if (design === 'independent') {
+    n = Math.ceil(2 * Math.pow((zAlpha + zBeta) / d, 2));
+    formula = 'n = 2 * ((Zα/2 + Zβ) / d)^2';
+    note = '每组所需样本量（两组各需' + n + '人，共' + (n*2) + '人）';
+  } else if (design === 'paired') {
+    n = Math.ceil(Math.pow((zAlpha + zBeta) / d, 2));
+    formula = 'n = ((Zα/2 + Zβ) / d)^2';
+    note = '所需配对样本量（共' + n + '对）';
+  } else if (design === 'anova') {
+    n = Math.ceil(2 * Math.pow((zAlpha + zBeta) / d, 2) * 1.1);
+    formula = 'n ≈ 2 * ((Zα/2 + Zβ) / d)^2 * 1.1';
+    note = '每组所需样本量（建议每组至少' + n + '人）';
+  } else if (design === 'correlation') {
+    var fz = 0.5 * Math.log((1+d)/(1-d));
+    n = Math.ceil(Math.pow((zAlpha + zBeta) / fz, 2)) + 3;
+    formula = 'n = ((Zα/2 + Zβ) / Fisher Z)^2 + 3';
+    note = '所需样本量（共' + n + '人）';
+  } else {
+    n = Math.ceil(Math.pow((zAlpha + zBeta) / d, 2) * 1.5);
+    formula = 'n ≈ ((Zα/2 + Zβ) / d)^2 * 1.5';
+    note = '建议样本量（至少' + n + '人）';
+  }
+  
+  var resultEl = document.getElementById('sampleSizeResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
+    '<div><div style="font-size:24px;font-weight:700;color:#0ea5e9">n = ' + n + '</div><div style="font-size:12px;color:#6b7280;margin-top:2px">' + note + '</div></div>' +
+    '<div style="font-size:11px;color:#9ca3af;text-align:right"><div>公式：' + formula + '</div><div>效应量 d=' + d + '，α=' + alpha + '，1-β=' + power + '</div></div>' +
+    '</div><div style="margin-top:10px;padding-top:10px;border-top:1px solid #e0f2fe;font-size:11px;color:#6b7280">注：此为近似计算，实际样本量需结合脱落率（建议增加10-20%）、研究设计复杂度和资源可行性综合确定。效应量参考：小=0.2，中=0.5，大=0.8。</div>';
+}
+
+function recommendStatMethod() {
+  var iv = document.getElementById('statIV').value;
+  var dv = document.getElementById('statDV').value;
+  var groups = document.getElementById('statGroups').value;
+  var resultEl = document.getElementById('statMethodResult');
+  
+  var methods = [];
+  var reason = '';
+  
+  if (iv === 'categorical' && dv === 'continuous' && groups === '2') {
+    methods = ['独立样本t检验（两组比较）', 'Mann-Whitney U检验（非正态时）'];
+    reason = '自变量为二分类、因变量为连续变量，适合用t检验比较两组均值差异';
+  } else if (iv === 'categorical' && dv === 'continuous' && groups === '3+') {
+    methods = ['单因素方差分析（ANOVA）', '事后检验（Tukey HSD / Bonferroni）', 'Kruskal-Wallis H检验（非正态时）'];
+    reason = '自变量为多分类、因变量为连续变量，适合用ANOVA比较多组均值差异';
+  } else if (iv === 'continuous' && dv === 'continuous') {
+    methods = ['Pearson相关分析', '简单线性回归', 'Spearman秩相关（非正态时）'];
+    reason = '两个连续变量之间的关系分析，适合用相关或回归';
+  } else if (iv === 'categorical' && dv === 'categorical') {
+    methods = ['卡方检验', 'Fisher精确检验（期望频数<5时）', 'Cramer V（效应量）'];
+    reason = '两个分类变量之间的关联性分析，适合用卡方检验';
+  } else if (iv === 'none' && dv === 'continuous') {
+    methods = ['单样本t检验（与已知均值比较）', '描述性统计'];
+    reason = '无自变量、单组连续数据，适合用单样本检验或描述统计';
+  } else {
+    methods = ['建议咨询统计专家，根据具体研究设计选择合适方法'];
+    reason = '该变量组合需要更详细的研究设计信息';
+  }
+  
+  var sportsExtra = '';
+  if (dv === 'continuous') {
+    sportsExtra = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e9d5ff"><div style="font-size:12px;font-weight:600;color:#7c3aed;margin-bottom:6px">体育学常用进阶方法</div><div style="font-size:12px;color:#6b7280;line-height:1.8">重复测量ANOVA（运动干预前后比较）、混合线性模型（多层数据）、结构方程模型（SEM，路径分析）、ICC（组内相关系数，信度检验）、效应量报告（Cohen d / η² / r）</div></div>';
+  }
+  
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="font-size:13px;font-weight:600;color:#7c3aed;margin-bottom:8px">推荐统计方法</div>' +
+    '<div style="font-size:13px;color:#1f2937;line-height:1.8;margin-bottom:8px">' + methods.map(function(m) { return '• ' + m; }).join('<br>') + '</div>' +
+    '<div style="font-size:12px;color:#6b7280;margin-bottom:8px">选择理由：' + reason + '</div>' +
+    '<div style="font-size:11px;color:#9ca3af">前提假设：正态性检验（Shapiro-Wilk）、方差齐性检验（Levene）、独立性检验。若不满足参数检验前提，使用对应非参数方法。</div>' +
+    sportsExtra;
 }
 
 
