@@ -48195,6 +48195,26 @@ function renderPhdAIMockInterview() {
     }
     html += '</div></div>';
     
+    // 分阶段面试流程进度条
+    const _totalQ = state.config.questionCount;
+    const _curQ = state.questionIndex + 1;
+    const _stages = [
+      {name: '自我介绍', start: 1, end: Math.max(1, Math.ceil(_totalQ * 0.12))},
+      {name: '专业问答', start: Math.ceil(_totalQ * 0.12) + 1, end: Math.ceil(_totalQ * 0.55)},
+      {name: '研究设计', start: Math.ceil(_totalQ * 0.55) + 1, end: Math.ceil(_totalQ * 0.7)},
+      {name: '英文/综合', start: Math.ceil(_totalQ * 0.7) + 1, end: Math.ceil(_totalQ * 0.85)},
+      {name: '报考动机', start: Math.ceil(_totalQ * 0.85) + 1, end: _totalQ}
+    ];
+    let _curStage = '专业问答';
+    _stages.forEach(function(s) { if (_curQ >= s.start && _curQ <= s.end) _curStage = s.name; });
+    if (state.mode === 'ended') _curStage = '已完成';
+    const _stageHtml = _stages.map(function(s, i) {
+      const active = s.name === _curStage;
+      const passed = _curQ > s.end || state.mode === 'ended';
+      return '<span style="display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;margin:0 2px;background:' + (active ? '#667eea;color:#fff;font-weight:700' : passed ? '#dcfce7;color:#16a34a' : '#f1f5f9;color:#94a3b8') + '">' + (passed ? '✓ ' : '') + s.name + '</span>';
+    }).join('');
+    html += '<div style="background:#f8fafc;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0;padding:8px 14px;text-align:center;border-bottom:1px solid #e2e8f0"><span style="font-size:11px;color:#64748b;margin-right:6px">📋 流程：</span>' + _stageHtml + '<span style="font-size:11px;color:#667eea;margin-left:8px;font-weight:600">第' + _curQ + '/' + _totalQ + '题</span></div>';
+    
     // 对话区域
     html += '<div id="aiInterviewChatArea" style="background:#f8f9ff;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0;padding:20px;min-height:400px;max-height:500px;overflow-y:auto">';
     
@@ -48497,21 +48517,36 @@ ${mentorInstr}
 
     let userPrompt = '';
     if (isFirst) {
-      userPrompt = `这是面试的第一个问题，请提出一个关于${state.config.major}基础概念或核心理论的问题，难度${state.config.difficulty}。`;
+      // P2：第一题必须是自我介绍
+      userPrompt = `这是面试的第一个环节【自我介绍】。请用面试官的口吻说："请做一个2-3分钟的自我介绍，包括你的教育背景、研究经历、报考动机和个人优势。" 直接输出这句话，不要加其他内容。`;
     } else {
       const lastAnswer = state.conversation.filter(m => m.role === 'candidate').slice(-1)[0];
       const lastQuestion = state.conversation.filter(m => m.role === 'interviewer').slice(-1)[0];
       const history = state.conversation.slice(-6).map(m => (m.role === 'interviewer' ? '面试官：' : '考生：') + m.content).join('\n\n');
       
+      // P2：根据题号确定面试阶段和问题类型
+      const _qIdx = state.questionIndex;
+      const _total = state.config.questionCount;
+      let _stageType = '专业问答';
+      let _stageReq = '';
+      if (_qIdx < Math.ceil(_total * 0.12)) { _stageType = '自我介绍'; _stageReq = '这是自我介绍环节，请引导考生补充介绍自己的研究经历或报考动机（如果考生已经做了自我介绍，则针对其自我介绍中的某个细节提问）。'; }
+      else if (_qIdx < Math.ceil(_total * 0.55)) { _stageType = '专业问答'; _stageReq = '这是专业问答环节，请提出与' + state.config.major + '相关的专业问题，侧重概念辨析、机制阐释或前沿进展，必须紧密结合目标导师的研究方向。'; }
+      else if (_qIdx < Math.ceil(_total * 0.7)) { _stageType = '研究设计'; _stageReq = '这是研究设计环节，请提出一个科研设计类问题，如"如果让你研究XX对YY的影响，你会如何设计实验？"考察考生的科研思维和实验设计能力，结合目标导师的研究领域。'; }
+      else if (_qIdx < Math.ceil(_total * 0.85)) { _stageType = '英文/综合'; _stageReq = '这是英文/综合面试环节，请用英文提出一个专业问题（如"Please elaborate on..."），考察考生的学术英语表达能力。如果是英文面试型，则全程英文。'; }
+      else { _stageType = '报考动机'; _stageReq = '这是报考动机/职业规划环节，请提出关于报考动机、职业规划、为什么选择该导师/院校、博士阶段规划等方面的问题。'; }
       userPrompt = `以下是之前的面试对话：
 ${history}
+
+【当前环节：${_stageType}】
+${_stageReq}
 
 请根据考生刚才的回答，提出下一个面试问题。要求：
 1. 如果考生回答充分，可以深入追问相关的机制或前沿进展
 2. 如果考生回答有漏洞或错误，针对性地提问考察
 3. 如果考生回答较简短，可以换一个角度考察同一知识点
 4. 问题难度${state.config.difficulty}，符合博士研究生水平
-5. 这是第${state.questionIndex + 1}个问题，总共${state.config.questionCount}个问题`;
+5. 这是第${state.questionIndex + 1}个问题，总共${state.config.questionCount}个问题
+6. 问题必须符合当前环节【${_stageType}】的要求`;
     if (isFollowup) {
       userPrompt += '\n\n【追问模式】这是对上一个问题的深入追问，请针对考生刚才回答中的某个具体概念、机制或漏洞，提出一个更深入的追问问题（如"你刚才提到XX，能否详细说明...？"）。不要换话题，要在同一知识点上深挖。';
     }
