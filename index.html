@@ -38189,6 +38189,400 @@ function showGenResultModal(title, content, loading) {
   modal.style.display = 'flex';
 }
 
+// 快捷工具切换
+function toggleQuickTool(toolId) {
+  var area = document.getElementById('quickToolArea');
+  if (!area) return;
+  // 如果已经打开同一个，关闭
+  if (area.dataset.current === toolId) {
+    area.innerHTML = '';
+    area.dataset.current = '';
+    return;
+  }
+  area.dataset.current = toolId;
+  if (toolId === 'qtRef') renderRefFormatTool(area);
+  else if (toolId === 'qtWords') renderWordsTool(area);
+  else if (toolId === 'qtCite') renderCiteCheckTool(area);
+  else if (toolId === 'qtAbstract') renderAbstractTool(area);
+  else if (toolId === 'qtTitle') renderTitleTool(area);
+  else if (toolId === 'qtFigure') renderFigureTool(area);
+}
+
+// 工具1：参考文献批量格式化
+function renderRefFormatTool(area) {
+  area.innerHTML = '<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:16px">'
+    + '<div style="font-size:13px;font-weight:700;color:#5b21b6;margin-bottom:10px">参考文献批量格式化</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+    + '<div><label style="font-size:11px;color:#5b21b6;font-weight:600;display:block;margin-bottom:3px">目标格式</label><select id="qtRefStyle" style="width:100%;padding:7px 10px;border:1px solid #c4b5fd;border-radius:5px;font-size:11px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="Vancouver">Vancouver（数字编号）</option><option value="APA">APA 7th</option><option value="Harvard">Harvard</option><option value="GB7714">GB/T 7714-2015</option><option value="AMA">AMA 11th</option></select></div>'
+    + '<div><label style="font-size:11px;color:#5b21b6;font-weight:600;display:block;margin-bottom:3px">排序方式</label><select id="qtRefSort" style="width:100%;padding:7px 10px;border:1px solid #c4b5fd;border-radius:5px;font-size:11px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="citation">按正文引用顺序</option><option value="author">按作者姓氏字母</option><option value="year">按年份</option></select></div>'
+    + '</div>'
+    + '<div style="margin-bottom:10px"><label style="font-size:11px;color:#5b21b6;font-weight:600;display:block;margin-bottom:3px">粘贴参考文献（每条一行，格式不限）</label><textarea id="qtRefInput" rows="5" placeholder="例如：&#10;[1] Smith J, Wang L. Exercise and health. J Sports Sci. 2021;39:100-110&#10;2. 张三, 李四. 运动与健康. 体育科学. 2021,41(5):23-30" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:5px;font-size:11px;outline:none;resize:vertical;font-family:Consolas,monospace"></textarea></div>'
+    + '<div style="display:flex;gap:8px;align-items:center"><button onclick="formatReferences()" style="background:#7c3aed;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">AI格式化</button><span id="qtRefCount" style="font-size:10px;color:#9ca3af"></span></div>'
+    + '<div id="qtRefResult" style="margin-top:12px"></div></div>';
+}
+
+async function formatReferences() {
+  var input = document.getElementById('qtRefInput').value.trim();
+  if (!input) { alert('请粘贴参考文献'); return; }
+  var style = document.getElementById('qtRefStyle').value;
+  var sort = document.getElementById('qtRefSort').value;
+  var resultEl = document.getElementById('qtRefResult');
+  resultEl.innerHTML = '<div style="padding:16px;text-align:center;color:#7c3aed;font-size:12px">AI正在格式化参考文献...</div>';
+  try {
+    var sortText = sort === 'author' ? '作者姓氏字母顺序' : sort === 'year' ? '发表年份' : '正文引用顺序';
+    var systemPrompt = '你是参考文献格式专家。请将用户提供的参考文献统一格式化为' + style + '标准。要求：1.识别每条文献的类型（期刊论文[J]/专著[M]/会议论文[C]/学位论文[D]/网页[EB/OL]）；2.提取作者、标题、来源、年份、卷期、页码；3.按' + style + '标准格式化；4.按' + sortText + '排序；5.自动去重；6.直接输出格式化后的参考文献列表，每条一行，不要添加解释。如果某条信息不足，标注[信息不全]。';
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, input, 2500, model);
+    var lines = response.split('\n').filter(function(l) { return l.trim(); });
+    var html = '<div style="background:#fff;border:1px solid #ddd6fe;border-radius:6px;padding:10px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:11px;font-weight:600;color:#5b21b6">格式化结果（' + lines.length + '条）</span><button onclick="navigator.clipboard.writeText(document.getElementById(\'qtRefOutput\').textContent).then(function(){alert(\'已复制\')})" style="background:#7c3aed;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:10px">复制全部</button></div><div id="qtRefOutput" style="font-size:11px;line-height:1.8;color:#1e293b;font-family:Consolas,monospace;max-height:300px;overflow-y:auto;white-space:pre-wrap">' + response.trim() + '</div></div>';
+    resultEl.innerHTML = html;
+  } catch (e) {
+    resultEl.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:10px">格式化失败：' + e.message + '</div>';
+  }
+}
+
+// 工具2：字数统计与期刊对比
+function renderWordsTool(area) {
+  var content = document.getElementById('fmtContent').value || '';
+  var journal = document.getElementById('fmtJournal').value || '';
+  var journalInfo = PHD_JOURNALS.find(function(j) { return j.name === journal; });
+
+  // 统计
+  var chars = content.length;
+  var charsNoSpace = content.replace(/\s/g, '').length;
+  var words = content.trim() ? content.trim().split(/\s+/).length : 0;
+  var paragraphs = content.trim() ? content.split(/\n\s*\n/).filter(function(p) { return p.trim(); }).length : 0;
+  var lines = content.split('\n').length;
+
+  // 常见期刊字数限制（默认值）
+  var limits = {
+    abstractWords: 250,
+    totalWords: 8000,
+    titleChars: 150,
+    keywords: 6
+  };
+
+  var html = '<div style="background:#f0f9ff;border:1px solid #7dd3fc;border-radius:10px;padding:16px">'
+    + '<div style="font-size:13px;font-weight:700;color:#075985;margin-bottom:10px">字数统计' + (journal ? ' - ' + journal : '') + '</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px">';
+  var stats = [
+    {label:'总字符数', value:chars, color:'#0284c7'},
+    {label:'不含空格', value:charsNoSpace, color:'#0891b2'},
+    {label:'单词数', value:words, color:'#0e7490'},
+    {label:'段落数', value:paragraphs, color:'#155e75'},
+    {label:'行数', value:lines, color:'#164e63'}
+  ];
+  stats.forEach(function(s) {
+    html += '<div style="background:#fff;border:1px solid #bae6fd;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:' + s.color + '">' + s.value.toLocaleString() + '</div><div style="font-size:10px;color:#64748b">' + s.label + '</div></div>';
+  });
+  html += '</div>';
+
+  // 期刊限制对比
+  html += '<div style="background:#fff;border:1px solid #bae6fd;border-radius:6px;padding:12px">'
+    + '<div style="font-size:11px;font-weight:600;color:#075985;margin-bottom:8px">常见期刊限制对比（仅供参考，以期刊官网为准）</div>'
+    + '<div style="font-size:11px;color:#374151;line-height:2">';
+  var checks = [
+    {label:'摘要字数', current:'需粘贴摘要单独统计', limit:limits.abstractWords + '词', ok:null},
+    {label:'全文字数', current:words + '词', limit:'建议≤' + limits.totalWords + '词', ok:words <= limits.totalWords},
+    {label:'标题长度', current:'需单独检查', limit:'建议≤' + limits.titleChars + '字符', ok:null},
+    {label:'关键词数量', current:'需单独检查', limit:'建议3-6个', ok:null}
+  ];
+  checks.forEach(function(c) {
+    var icon = c.ok === true ? '✅' : c.ok === false ? '⚠️' : 'ℹ️';
+    var color = c.ok === true ? '#059669' : c.ok === false ? '#d97706' : '#6b7280';
+    html += '<div style="color:' + color + '">' + icon + ' ' + c.label + '：' + c.current + ' / ' + c.limit + '</div>';
+  });
+  html += '</div></div>';
+  if (words > limits.totalWords) {
+    html += '<div style="margin-top:8px;font-size:11px;color:#d97706;background:#fffbeb;padding:8px 10px;border-radius:4px">⚠️ 全文超过' + limits.totalWords + '词建议上限，部分期刊可能要求精简。建议删减引言和讨论部分的冗余内容。</div>';
+  }
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+// 工具3：引用与参考文献对应检查
+function renderCiteCheckTool(area) {
+  var content = document.getElementById('fmtContent').value || '';
+  if (!content) { area.innerHTML = '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px;font-size:12px;color:#92400e">请先在上方粘贴论文内容</div>'; return; }
+
+  // 提取正文引用 [1] [2] 等
+  var citeMatches = content.match(/\[(\d+)\]/g);
+  var citedNums = [];
+  if (citeMatches) {
+    citeMatches.forEach(function(m) {
+      var n = parseInt(m.match(/\d+/)[0]);
+      if (citedNums.indexOf(n) < 0) citedNums.push(n);
+    });
+    citedNums.sort(function(a,b) { return a-b; });
+  }
+
+  // 尝试提取参考文献部分
+  var refSection = content.match(/(?:参考文献|References|REFERENCES|Reference\s+list)[\s\S]*$/i);
+  var refCount = 0;
+  if (refSection) {
+    var refLines = refSection[0].split('\n').filter(function(l) { return l.trim().match(/^\[?\d+[\]\.]/); });
+    refCount = refLines.length;
+  }
+
+  var html = '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:16px">'
+    + '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px">引用与参考文献对应检查</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">';
+  html += '<div style="background:#fff;border:1px solid #fcd34d;border-radius:6px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700;color:#d97706">' + citedNums.length + '</div><div style="font-size:10px;color:#92400e">正文引用编号数</div></div>';
+  html += '<div style="background:#fff;border:1px solid #fcd34d;border-radius:6px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700;color:#d97706">' + refCount + '</div><div style="font-size:10px;color:#92400e">参考文献条目数</div></div>';
+  var maxCited = citedNums.length > 0 ? Math.max.apply(null, citedNums) : 0;
+  html += '<div style="background:#fff;border:1px solid #fcd34d;border-radius:6px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700;color:#d97706">' + maxCited + '</div><div style="font-size:10px;color:#92400e">最大引用编号</div></div>';
+  html += '</div>';
+
+  // 检查引用编号连续性
+  if (citedNums.length > 0 && maxCited > 0) {
+    var missing = [];
+    for (var i = 1; i <= maxCited; i++) {
+      if (citedNums.indexOf(i) < 0) missing.push(i);
+    }
+    if (missing.length > 0) {
+      html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#991b1b;margin-bottom:4px">⚠️ 引用编号不连续</div><div style="font-size:11px;color:#b91c1c">以下编号在正文中被引用但编号跳跃：[' + missing.join(', ') + ']<br>建议检查参考文献列表是否有缺失，或重新编号。</div></div>';
+    } else {
+      html += '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px;margin-bottom:8px"><div style="font-size:11px;color:#047857">✅ 引用编号1-' + maxCited + '连续，无跳跃</div></div>';
+    }
+  }
+
+  // 引用与参考文献数量对比
+  if (refCount > 0 && citedNums.length > 0) {
+    if (refCount === maxCited) {
+      html += '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px;margin-bottom:8px"><div style="font-size:11px;color:#047857">✅ 参考文献条目数（' + refCount + '）与最大引用编号（' + maxCited + '）一致</div></div>';
+    } else if (refCount > maxCited) {
+      html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#991b1b;margin-bottom:4px">⚠️ 参考文献多于引用</div><div style="font-size:11px;color:#b91c1c">参考文献有' + refCount + '条，但正文最大引用编号为' + maxCited + '。可能有' + (refCount - maxCited) + '条参考文献未在正文中引用，建议删除或在正文中引用。</div></div>';
+    } else {
+      html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#991b1b;margin-bottom:4px">⚠️ 引用多于参考文献</div><div style="font-size:11px;color:#b91c1c">正文最大引用编号为' + maxCited + '，但参考文献只有' + refCount + '条。缺少' + (maxCited - refCount) + '条参考文献，请补充。</div></div>';
+    }
+  }
+
+  // 引用编号列表
+  if (citedNums.length > 0) {
+    html += '<div style="font-size:11px;color:#6b7280;margin-top:8px">正文引用的编号：' + citedNums.join(', ') + '</div>';
+  }
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+
+// 工具4：摘要结构检查
+function renderAbstractTool(area) {
+  area.innerHTML = '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:16px">'
+    + '<div style="font-size:13px;font-weight:700;color:#065f46;margin-bottom:10px">摘要结构与字数检查</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+    + '<div><label style="font-size:11px;color:#065f46;font-weight:600;display:block;margin-bottom:3px">目标期刊摘要字数限制</label><select id="qtAbsLimit" style="width:100%;padding:7px 10px;border:1px solid #86efac;border-radius:5px;font-size:11px;outline:none;background:#fff;color:#065f46;cursor:pointer"><option value="150">≤150词（部分期刊）</option><option value="200">≤200词</option><option value="250" selected>≤250词（常见）</option><option value="300">≤300词</option><option value="350">≤350词</option><option value="400">≤400词（部分综述）</option><option value="9999">不限制</option></select></div>'
+    + '<div><label style="font-size:11px;color:#065f46;font-weight:600;display:block;margin-bottom:3px">摘要类型</label><select id="qtAbsType" style="width:100%;padding:7px 10px;border:1px solid #86efac;border-radius:5px;font-size:11px;outline:none;background:#fff;color:#065f46;cursor:pointer"><option value="structured">结构化摘要（背景/目的/方法/结果/结论）</option><option value="unstructured">非结构化摘要（一段式）</option></select></div>'
+    + '</div>'
+    + '<div style="margin-bottom:10px"><label style="font-size:11px;color:#065f46;font-weight:600;display:block;margin-bottom:3px">粘贴摘要</label><textarea id="qtAbsInput" rows="5" placeholder="粘贴论文摘要..." style="width:100%;padding:8px 10px;border:1px solid #86efac;border-radius:5px;font-size:11px;outline:none;resize:vertical"></textarea></div>'
+    + '<div style="display:flex;gap:8px"><button onclick="checkAbstract()" style="background:#059669;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">检查摘要</button><button onclick="aiOptimizeAbstract()" style="background:#0891b2;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">AI优化摘要</button></div>'
+    + '<div id="qtAbsResult" style="margin-top:12px"></div></div>';
+}
+
+function checkAbstract() {
+  var abs = document.getElementById('qtAbsInput').value.trim();
+  var limit = parseInt(document.getElementById('qtAbsLimit').value);
+  var type = document.getElementById('qtAbsType').value;
+  var resultEl = document.getElementById('qtAbsResult');
+  if (!abs) { alert('请粘贴摘要'); return; }
+
+  var words = abs.split(/\s+/).filter(function(w) { return w; }).length;
+  var chars = abs.length;
+  var sentences = abs.split(/[.!?。！？]+/).filter(function(s) { return s.trim(); }).length;
+
+  // 五要素检测（结构化摘要）
+  var elements = {
+    background: {label:'背景/引言', keywords:['背景','background','目的','objective','aim','purpose','研究目的','旨在']},
+    methods: {label:'方法', keywords:['方法','method','methods','采用','使用','选取','纳入','排除','实验','调查','问卷','intervention','participants','study design']},
+    results: {label:'结果', keywords:['结果','result','results','发现','found','showed','显示','表明','p<','P<','显著','差异']},
+    conclusion: {label:'结论', keywords:['结论','conclusion','conclusions','综上','因此','提示','建议','implications','suggest']}
+  };
+  var foundElements = [];
+  var missingElements = [];
+  Object.keys(elements).forEach(function(key) {
+    var found = elements[key].keywords.some(function(kw) {
+      return abs.toLowerCase().indexOf(kw.toLowerCase()) >= 0;
+    });
+    if (found) foundElements.push(elements[key].label);
+    else missingElements.push(elements[key].label);
+  });
+
+  var html = '<div style="background:#fff;border:1px solid #86efac;border-radius:6px;padding:12px">';
+  // 字数统计
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">';
+  var wordOk = words <= limit;
+  html += '<div style="text-align:center;padding:8px;background:' + (wordOk?'#f0fdf4':'#fef2f2') + ';border-radius:6px"><div style="font-size:20px;font-weight:700;color:' + (wordOk?'#059669':'#dc2626') + '">' + words + '</div><div style="font-size:10px;color:#6b7280">单词数（限' + (limit===9999?'不限':limit) + '）</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#f0f9ff;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#0284c7">' + chars + '</div><div style="font-size:10px;color:#6b7280">字符数</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#fffbeb;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#d97706">' + sentences + '</div><div style="font-size:10px;color:#6b7280">句子数</div></div>';
+  html += '</div>';
+
+  if (!wordOk && limit !== 9999) {
+    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:4px;padding:8px 10px;margin-bottom:10px;font-size:11px;color:#991b1b">⚠️ 摘要' + words + '词，超过' + limit + '词限制，需精简' + (words - limit) + '词。建议删减背景部分的冗余描述。</div>';
+  }
+
+  // 五要素检查
+  html += '<div style="font-size:11px;font-weight:600;color:#065f46;margin-bottom:6px">摘要要素检查</div>';
+  html += '<div style="font-size:11px;line-height:2;margin-bottom:8px">';
+  foundElements.forEach(function(e) {
+    html += '<span style="color:#059669">✅ ' + e + '</span>　';
+  });
+  missingElements.forEach(function(e) {
+    html += '<span style="color:#dc2626">❌ ' + e + '</span>　';
+  });
+  html += '</div>';
+  if (missingElements.length > 0) {
+    html += '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:4px;padding:8px 10px;font-size:11px;color:#92400e">💡 建议补充以下要素：' + missingElements.join('、') + '。结构化摘要应包含背景、目的、方法、结果、结论五部分。</div>';
+  }
+  html += '</div>';
+  resultEl.innerHTML = html;
+}
+
+async function aiOptimizeAbstract() {
+  var abs = document.getElementById('qtAbsInput').value.trim();
+  var limit = document.getElementById('qtAbsLimit').value;
+  var type = document.getElementById('qtAbsType').value;
+  var resultEl = document.getElementById('qtAbsResult');
+  if (!abs) { alert('请粘贴摘要'); return; }
+  resultEl.innerHTML = '<div style="padding:16px;text-align:center;color:#0891b2;font-size:12px">AI正在优化摘要...</div>';
+  try {
+    var systemPrompt = '你是体育学SCI论文摘要写作专家。请优化用户提供的摘要。要求：1.控制在' + (limit==='9999'?'合理范围':limit+'词以内') + '；2.' + (type==='structured'?'使用结构化摘要格式（Background/Objective/Methods/Results/Conclusion）':'使用一段式摘要，但内部逻辑应包含背景-目的-方法-结果-结论') + '；3.学术英语表达地道，避免中式英语；4.突出研究创新点和核心发现；5.输出优化后的摘要，然后给出修改说明（改了什么、为什么改）。';
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, abs, 2000, model);
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #67e8f9;border-radius:6px;padding:12px"><div style="font-size:12px;font-weight:600;color:#0e7490;margin-bottom:8px">AI优化结果</div><div style="font-size:12px;line-height:1.9;color:#1e293b;white-space:pre-wrap;font-family:Georgia,serif">' + response + '</div></div>';
+  } catch (e) {
+    resultEl.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:10px">优化失败：' + e.message + '</div>';
+  }
+}
+
+// 工具5：标题格式优化
+function renderTitleTool(area) {
+  area.innerHTML = '<div style="background:#fdf2f8;border:1px solid #f9a8d4;border-radius:10px;padding:16px">'
+    + '<div style="font-size:13px;font-weight:700;color:#9d174d;margin-bottom:10px">标题格式优化</div>'
+    + '<div style="margin-bottom:10px"><label style="font-size:11px;color:#9d174d;font-weight:600;display:block;margin-bottom:3px">当前标题</label><input type="text" id="qtTitleInput" placeholder="输入当前论文标题" style="width:100%;padding:8px 10px;border:1px solid #f9a8d4;border-radius:5px;font-size:12px;outline:none"></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+    + '<div><label style="font-size:11px;color:#9d174d;font-weight:600;display:block;margin-bottom:3px">标题大小写格式</label><select id="qtTitleCase" style="width:100%;padding:7px 10px;border:1px solid #f9a8d4;border-radius:5px;font-size:11px;outline:none;background:#fff;color:#9d174d;cursor:pointer"><option value="sentence">Sentence case（仅首字母大写）</option><option value="title">Title Case（主要词大写）</option><option value="all">全部大写（少数期刊）</option></select></div>'
+    + '<div><label style="font-size:11px;color:#9d174d;font-weight:600;display:block;margin-bottom:3px">标题类型</label><select id="qtTitleType" style="width:100%;padding:7px 10px;border:1px solid #f9a8d4;border-radius:5px;font-size:11px;outline:none;background:#fff;color:#9d174d;cursor:pointer"><option value="declarative">陈述式（最常见）</option><option value="descriptive">描述式</option><option value="question">疑问式</option><option value="colon">冒号式（主标题:副标题）</option></select></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px"><button onclick="checkTitle()" style="background:#db2777;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">检查标题</button><button onclick="aiOptimizeTitle()" style="background:#be185d;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">AI生成3个优化版本</button></div>'
+    + '<div id="qtTitleResult" style="margin-top:12px"></div></div>';
+}
+
+function checkTitle() {
+  var title = document.getElementById('qtTitleInput').value.trim();
+  var caseFormat = document.getElementById('qtTitleCase').value;
+  var resultEl = document.getElementById('qtTitleResult');
+  if (!title) { alert('请输入标题'); return; }
+
+  var words = title.split(/\s+/).filter(function(w) { return w; }).length;
+  var chars = title.length;
+  var issues = [];
+  var suggestions = [];
+
+  // 字数检查
+  if (words > 15) issues.push('标题' + words + '词，建议≤15词（当前' + words + '词偏长）');
+  if (chars > 150) issues.push('标题' + chars + '字符，建议≤150字符');
+  if (words < 5) suggestions.push('标题较短（' + words + '词），可考虑补充研究方法或对象');
+
+  // 冗余词检查
+  var redundantWords = ['A study of', 'A study on', 'Research on', 'Investigation into', 'Analysis of', 'The effect of', 'Effects of', '浅谈', '浅析', '初探', '研究', '探讨', '分析'];
+  redundantWords.forEach(function(rw) {
+    if (title.toLowerCase().indexOf(rw.toLowerCase()) === 0) {
+      suggestions.push('标题以"' + rw + '"开头，可考虑删除，直接陈述核心发现更有力');
+    }
+  });
+
+  // 大小写检查
+  if (caseFormat === 'title') {
+    var smallWords = ['a','an','the','and','but','or','for','nor','on','at','to','by','in','of','with'];
+    var titleWords = title.split(' ');
+    var caseIssues = [];
+    titleWords.forEach(function(w, i) {
+      if (i === 0 || i === titleWords.length - 1) {
+        if (w[0] !== w[0].toUpperCase()) caseIssues.push('第' + (i+1) + '词"' + w + '"首字母应大写');
+      } else if (smallWords.indexOf(w.toLowerCase()) < 0) {
+        if (w[0] !== w[0].toUpperCase()) caseIssues.push('第' + (i+1) + '词"' + w + '"首字母应大写（Title Case）');
+      }
+    });
+    if (caseIssues.length > 0) issues.push('Title Case格式问题：' + caseIssues.slice(0,3).join('；') + (caseIssues.length>3?'等':''));
+  }
+
+  // 缩写检查
+  var abbrPattern = /\b[A-Z]{2,}\b/g;
+  var abbrs = title.match(abbrPattern);
+  if (abbrs && abbrs.length > 2) suggestions.push('标题中包含' + abbrs.length + '个缩写（' + abbrs.join(', ') + '），建议标题中尽量少用缩写');
+
+  var html = '<div style="background:#fff;border:1px solid #f9a8d4;border-radius:6px;padding:12px">';
+  html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px">';
+  html += '<div style="text-align:center;padding:8px;background:#fdf2f8;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#db2777">' + words + '</div><div style="font-size:10px;color:#6b7280">单词数（建议≤15）</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#fdf2f8;border-radius:6px"><div style="font-size:20px;font-weight:700;color:#db2777">' + chars + '</div><div style="font-size:10px;color:#6b7280">字符数（建议≤150）</div></div>';
+  html += '</div>';
+  if (issues.length > 0) {
+    html += '<div style="font-size:11px;font-weight:600;color:#991b1b;margin-bottom:4px">⚠️ 问题</div>';
+    issues.forEach(function(i) { html += '<div style="font-size:11px;color:#b91c1c;line-height:1.8">• ' + i + '</div>'; });
+  }
+  if (suggestions.length > 0) {
+    html += '<div style="font-size:11px;font-weight:600;color:#92400e;margin:8px 0 4px">💡 优化建议</div>';
+    suggestions.forEach(function(s) { html += '<div style="font-size:11px;color:#b45309;line-height:1.8">• ' + s + '</div>'; });
+  }
+  if (issues.length === 0 && suggestions.length === 0) {
+    html += '<div style="font-size:12px;color:#059669;text-align:center;padding:10px">✅ 标题格式良好，未发现明显问题</div>';
+  }
+  html += '</div>';
+  resultEl.innerHTML = html;
+}
+
+async function aiOptimizeTitle() {
+  var title = document.getElementById('qtTitleInput').value.trim();
+  var titleType = document.getElementById('qtTitleType').value;
+  var resultEl = document.getElementById('qtTitleResult');
+  if (!title) { alert('请输入标题'); return; }
+  resultEl.innerHTML = '<div style="padding:16px;text-align:center;color:#be185d;font-size:12px">AI正在生成优化标题...</div>';
+  try {
+    var content = document.getElementById('fmtContent').value || '';
+    var systemPrompt = '你是体育学SCI论文标题写作专家。请根据原标题和论文内容，生成3个优化版本的标题。要求：1.每个标题≤15词；2.突出研究创新点和核心发现；3.避免冗余开头（如"A study of"）；4.类型：' + titleType + '；5.输出格式：版本1: ...\n版本2: ...\n版本3: ...\n\n然后说明每个版本的特点和适用场景。';
+    var userPrompt = '原标题：' + title + (content ? '\n\n论文内容摘要：' + content.substring(0, 500) : '');
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 1500, model);
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #f9a8d4;border-radius:6px;padding:12px"><div style="font-size:12px;font-weight:600;color:#9d174d;margin-bottom:8px">AI优化标题（3个版本）</div><div style="font-size:12px;line-height:1.9;color:#1e293b;white-space:pre-wrap">' + response + '</div></div>';
+  } catch (e) {
+    resultEl.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:10px">生成失败：' + e.message + '</div>';
+  }
+}
+
+// 工具6：图表格式建议
+function renderFigureTool(area) {
+  area.innerHTML = '<div style="background:#eef2ff;border:1px solid #a5b4fc;border-radius:10px;padding:16px">'
+    + '<div style="font-size:13px;font-weight:700;color:#3730a3;margin-bottom:10px">图表格式与图像处理建议</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+    + '<div><label style="font-size:11px;color:#3730a3;font-weight:600;display:block;margin-bottom:3px">图表类型</label><select id="qtFigType" style="width:100%;padding:7px 10px;border:1px solid #a5b4fc;border-radius:5px;font-size:11px;outline:none;background:#fff;color:#3730a3;cursor:pointer"><option value="line">折线图（趋势/时间序列）</option><option value="bar">柱状图（组间比较）</option><option value="scatter">散点图（相关性）</option><option value="box">箱线图（分布/离群值）</option><option value="pie">饼图（占比）</option><option value="table">表格（详细数据）</option><option value="flow">流程图/技术路线</option><option value="photo">实验照片/图像</option></select></div>'
+    + '<div><label style="font-size:11px;color:#3730a3;font-weight:600;display:block;margin-bottom:3px">目标期刊要求</label><select id="qtFigJournal" style="width:100%;padding:7px 10px;border:1px solid #a5b4fc;border-radius:5px;font-size:11px;outline:none;background:#fff;color:#3730a3;cursor:pointer"><option value="general">通用学术标准</option><option value="high">高影响因子期刊（严格）</option><option value="open">开源期刊（彩色免费）</option><option value="chinese">中文核心期刊</option></select></div>'
+    + '</div>'
+    + '<div style="margin-bottom:10px"><label style="font-size:11px;color:#3730a3;font-weight:600;display:block;margin-bottom:3px">图表内容描述（数据类型、变量、组数等）</label><textarea id="qtFigDesc" rows="3" placeholder="例如：比较3组受试者（对照组/低强度组/高强度组）在干预前后的VO2max变化，每组20人，数据为均值±标准差..." style="width:100%;padding:8px 10px;border:1px solid #a5b4fc;border-radius:5px;font-size:11px;outline:none;resize:vertical"></textarea></div>'
+    + '<div style="display:flex;gap:8px"><button onclick="figureFormatAdvice()" style="background:#4f46e5;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">生成图表格式建议</button></div>'
+    + '<div id="qtFigResult" style="margin-top:12px"></div></div>';
+}
+
+async function figureFormatAdvice() {
+  var figType = document.getElementById('qtFigType').value;
+  var journal = document.getElementById('qtFigJournal').value;
+  var desc = document.getElementById('qtFigDesc').value.trim();
+  var resultEl = document.getElementById('qtFigResult');
+  if (!desc) { alert('请描述图表内容'); return; }
+  resultEl.innerHTML = '<div style="padding:16px;text-align:center;color:#4f46e5;font-size:12px">AI正在生成图表格式建议...</div>';
+  try {
+    var typeNames = {line:'折线图',bar:'柱状图',scatter:'散点图',box:'箱线图',pie:'饼图',table:'表格',flow:'流程图',photo:'实验照片'};
+    var journalNames = {general:'通用学术标准',high:'高影响因子期刊',open:'开源期刊',chinese:'中文核心期刊'};
+    var systemPrompt = '你是学术论文图表制作专家。请根据图表类型和内容描述，给出详细的格式规范建议。输出结构：\n一、图表类型选择建议（当前类型是否最合适，有无更好替代）\n二、分辨率与格式要求（dpi、文件格式、尺寸、色彩模式）\n三、标题规范（图题/表题写法、位置、字数）\n四、坐标轴与标签（坐标轴标签、单位、刻度、字体大小）\n五、图例与标注（图例位置、符号说明、误差线、显著性标记）\n六、色彩建议（配色方案、色盲友好、黑白打印兼容性）\n七、常见错误与避坑（列出5-8个常见问题）\n八、推荐工具（推荐使用什么软件制作）\n\n要求：建议要具体、可操作，给出具体数值（如分辨率300dpi、字体Arial 8pt等）。';
+    var userPrompt = '图表类型：' + typeNames[figType] + '\n目标期刊：' + journalNames[journal] + '\n图表内容描述：' + desc;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 2500, model);
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #a5b4fc;border-radius:6px;padding:12px"><div style="font-size:12px;font-weight:600;color:#3730a3;margin-bottom:8px">图表格式建议（' + typeNames[figType] + '）</div><div class="md-content" style="font-size:12px;line-height:1.9;color:#1e293b">' + renderMarkdown(response) + '</div></div>';
+  } catch (e) {
+    resultEl.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:10px">生成失败：' + e.message + '</div>';
+  }
+}
+
+
 // 获取选中的格式检查项
 function getFmtChecks() {
   var checks = [];
