@@ -28015,17 +28015,31 @@ function runRouteReview(phases, type, topic, model) {
   const stepsText = phases.map(function(ph, i) { return (i + 1) + '.' + (ph.name || '') + '：' + ((ph.steps || []).join('→')); }).join('\n');
   const sys = '你是运动人体科学领域资深科研评审专家。请对给定的研究技术路线进行二次审查，重点检查：1)逻辑链完整性（是否存在步骤缺失或因果断裂）；2)专业术语准确性（是否符合运动人体科学规范）；3)研究可行性（样本、伦理、方法是否合理）。只输出审查结论，用以下格式：\n【逻辑链】\n✔/⚠ + 说明\n【专业术语】\n✔/⚠ + 说明\n【可行性】\n✔/⚠ + 说明\n【优化建议】\n1-3条具体可操作建议。';
   const usr = '研究题目：' + topic + '\n研究类型：' + type + '\n技术路线：\n' + stepsText;
+  let settled = false;
+  const to = setTimeout(function() {
+    if (!settled) {
+      settled = true;
+      box.innerHTML = '<div style="color:#b45309;font-size:12.5px">⚠️ 审查超时（后端繁忙），可稍后点击「重新审查」重试</div>';
+    }
+  }, 30000);
   callDeepSeekAPI(sys, usr, 1500, model).then(function(resp) {
-    box.innerHTML = '<div style="white-space:pre-wrap;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px;color:#4c1d95;font-size:12.5px;line-height:1.8">' + routeEscape(String(resp).trim()) + '</div>';
+    settled = true; clearTimeout(to);
+    const txt = String(resp || '').trim();
+    if (!txt) {
+      box.innerHTML = '<div style="color:#b45309;font-size:12.5px">⚠️ 审查未返回有效内容（模型响应为空），可点击「重新审查」重试</div>';
+      return;
+    }
+    box.innerHTML = '<div style="white-space:pre-wrap;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px;color:#4c1d95;font-size:12.5px;line-height:1.8">' + routeEscape(txt) + '</div>';
   }).catch(function() {
+    settled = true; clearTimeout(to);
     box.innerHTML = '<div style="color:#dc2626;font-size:12px">⚠️ 二次审查失败（不影响已生成的路线图），可稍后点击「重新审查」</div>';
   });
 }
 function runRouteReviewAgain() {
   const d = window._routeData;
   if (!d || !d.phases) { alert('请先生成技术路线图'); return; }
-  const model = document.getElementById('routeModel') ? document.getElementById('routeModel').value : 'deepseek-chat';
-  runRouteReview(d.phases, d.type, d.title, model);
+  // 审查固定使用 deepseek-chat 保证稳定返回
+  runRouteReview(d.phases, d.type, d.title, 'deepseek-chat');
 }
 function generatePaperTechRoute() {
   const topic = (document.getElementById('routeTopic').value || '').trim();
@@ -28054,7 +28068,7 @@ function generatePaperTechRoute() {
     status.innerHTML = '<div style="padding:12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;font-size:12.5px;color:#065f46">✅ 生成成功！已自动校验并开始二次审查</div>';
     const v = validateTechRoute(parsed.phases, type);
     renderRouteValidation(v);
-    runRouteReview(parsed.phases, type, topic, model);
+    runRouteReview(parsed.phases, type, topic, 'deepseek-chat');
     btn.disabled = false; btn.textContent = '🔄 重新生成';
   }).catch(function(e) {
     status.innerHTML = '<div style="padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:12.5px;color:#dc2626">❌ 生成失败：' + routeEscape(e.message || '未知错误') + '，可重试或切换模型</div>';
