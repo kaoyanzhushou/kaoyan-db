@@ -30877,7 +30877,7 @@ function aiInterpretPlagReport() {
 
   var p = buildPrompt();
   models.forEach(function(m) {
-    callDeepSeekAPI(p.sys, p.user, 1500, m.value).then(function(resp) {
+    callDeepSeekAPI(p.sys, p.user, 2600, m.value).then(function(resp) {
       results.push({ model: m, raw: resp, ok: true });
       done++;
       updateProgress();
@@ -30902,11 +30902,26 @@ function aiInterpretPlagReport() {
 }
 
 function parseReportJson(raw) {
+  if (!raw) return null;
+  var cleaned = String(raw).replace(/```json/gi, '').replace(/```/g, '').trim();
+  // 尝试1: 直接解析
+  try { return JSON.parse(cleaned); } catch(e) {}
+  // 尝试2: 提取首个{到最后一个}之间的内容
+  var s = cleaned.indexOf('{');
+  var e = cleaned.lastIndexOf('}');
+  if (s >= 0 && e > s) {
+    try { return JSON.parse(cleaned.substring(s, e + 1)); } catch(e2) {}
+  }
+  // 尝试3: 宽松逐行解析关键字段
   try {
-    var cleaned = (raw || '').replace(/```json/gi, '').replace(/```/g, '').trim();
-    var m = cleaned.match(/\{[\s\S]*\}/);
-    if (m) return JSON.parse(m[0]);
-  } catch(e) {}
+    var obj = {};
+    var lines = cleaned.split(/[\n,]+/);
+    for (var li = 0; li < lines.length; li++) {
+      var mm = lines[li].match(/^\s*["']?(overall|level|rewriteStrategy|prediction)["']?\s*[:：]\s*["']?(.*?)["']?\s*$/);
+      if (mm) obj[mm[1]] = mm[2];
+    }
+    if (obj.overall || obj.level) return obj;
+  } catch(e3) {}
   return null;
 }
 
@@ -30993,6 +31008,19 @@ function finishInterpret(results, models, threshold) {
         html += '<div style="font-size:12px;color:#14532d;line-height:1.8">' + (i+1) + '. ' + pr + '</div>';
       });
       html += '</div>';
+    }
+
+    var failedModels = [];
+    results.forEach(function(r) {
+      if (r.ok) {
+        var j = parseReportJson(r.raw);
+        if (!j) failedModels.push(r.model.label + '(返回无法解析)');
+      } else {
+        failedModels.push(r.model.label + '(' + (r.error||'调用失败') + ')');
+      }
+    });
+    if (failedModels.length) {
+      html += '<div style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;color:#64748b;margin-bottom:12px">ℹ️ ' + parsedList.length + '/' + models.length + '个模型成功解读；未计入：' + failedModels.join('；') + '</div>';
     }
 
     if (lead && lead.data.prediction) {
