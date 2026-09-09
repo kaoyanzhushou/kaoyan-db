@@ -6897,6 +6897,10 @@ console.log('✅ 学习工具入口已加载');
         <input type="text" id="phdAIInput" placeholder="输入你的考博问题，例如：上体运动人体科学考博科目？" style="flex:1;padding:12px 16px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;outline:none" onkeypress="if(event.key==='Enter')sendPhdAIMessage()">
         <select id="phdAIModelSelect" style="padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:13px;outline:none;background:#fff;cursor:pointer;color:#374151">
           <option value="deepseek-chat">DeepSeek V3</option>
+          <option value="deepseek-v4-pro">DeepSeek V4 Pro（最强推理）</option>
+          <option value="deepseek-v4-flash">DeepSeek V4 Flash（快速）</option>
+          <option value="glm-5.3">智谱 GLM-5.3（中文优秀）</option>
+          <option value="kimi-k3">Kimi K3（长文本）</option>
           <option value="hy3">腾讯混元 hy3</option>
           <option value="hy4-preview">腾讯混元 hy4</option>
         </select>
@@ -8040,6 +8044,10 @@ console.log('✅ 学习工具入口已加载');
         <button class="ai-btn" onclick="askAI()">🔍 搜索</button>
         <select id="aiModelSelect" onchange="setAiModel(this.value)" style="padding:12px 14px;border:none;border-radius:10px;font-size:13px;outline:none;background:#fff;color:#374151;cursor:pointer">
           <option value="deepseek-chat">DeepSeek V3</option>
+          <option value="deepseek-v4-pro">DeepSeek V4 Pro（最强推理）</option>
+          <option value="deepseek-v4-flash">DeepSeek V4 Flash（快速）</option>
+          <option value="glm-5.3">智谱 GLM-5.3（中文优秀）</option>
+          <option value="kimi-k3">Kimi K3（长文本）</option>
           <option value="hy3">腾讯混元 hy3</option>
           <option value="hy4-preview">腾讯混元 hy4</option>
         </select>
@@ -55477,9 +55485,13 @@ const BACKEND_API_URL = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.c
 // AI模型选择（默认DeepSeek，可切换腾讯混元）
 let currentAiModel = localStorage.getItem('kaoyan_ai_model') || 'deepseek-chat';
 const AI_MODELS = [
-  { value: 'deepseek-chat', label: 'DeepSeek V3（推荐）', provider: 'DeepSeek' },
-  { value: 'hy3', label: '腾讯混元 hy3', provider: '腾讯云TokenHub' },
-  { value: 'hy4-preview', label: '腾讯混元 hy4（预览版）', provider: '腾讯云TokenHub' }
+  { value: 'deepseek-chat', label: 'DeepSeek V3（均衡推荐）', provider: 'DeepSeek', tag: '通用' },
+  { value: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro（最强推理）', provider: '腾讯云TokenHub', tag: '深度推理' },
+  { value: 'deepseek-v4-flash', label: 'DeepSeek V4 Flash（快速响应）', provider: '腾讯云TokenHub', tag: '快速' },
+  { value: 'glm-5.3', label: '智谱 GLM-5.3（中文优秀）', provider: '腾讯云TokenHub', tag: '中文写作' },
+  { value: 'kimi-k3', label: '月之暗面 Kimi K3（长文本）', provider: '腾讯云TokenHub', tag: '长文档' },
+  { value: 'hy3', label: '腾讯混元 hy3', provider: '腾讯云TokenHub', tag: '通用' },
+  { value: 'hy4-preview', label: '腾讯混元 hy4（预览版）', provider: '腾讯云TokenHub', tag: '多模态' }
 ];
 function setAiModel(model) {
   currentAiModel = model;
