@@ -37768,6 +37768,13 @@ let phdCurrentTab = 'knowledge';
 
 function switchPhdTab(tabName) {
   phdCurrentTab = tabName;
+  // 切换模块时关闭文献检索面板和AI扩展面板
+  var litPanel = document.getElementById('phdLiteraturePanel');
+  if (litPanel) litPanel.style.display = 'none';
+  var searchPanel = document.getElementById('phdSearchPanel');
+  if (searchPanel) searchPanel.style.display = 'none';
+  var reviewPanel = document.getElementById('phdAIReviewPanel');
+  if (reviewPanel) reviewPanel.style.display = 'none';
   // 懒加载渲染对应模块内容
   if (tabName === 'knowledge' && typeof renderPhdKnowledge === 'function') renderPhdKnowledge();
   if (tabName === 'exam' && typeof renderPhdExam === 'function') renderPhdExam();
@@ -37840,6 +37847,9 @@ function navigateToPhdSubTab(subTab) {
         var panel = document.getElementById('phdAIChatPanel');
         if (panel && panel.style.display === 'none') togglePhdAIChat();
       }
+      // 进入AI咨询时关闭文献检索面板
+      var litPanel2 = document.getElementById('phdLiteraturePanel');
+      if (litPanel2) litPanel2.style.display = 'none';
     } else if (subTab === 'literature') {
       if (typeof togglePhdAIChat === 'function') {
         var panel = document.getElementById('phdAIChatPanel');
