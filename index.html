@@ -46372,10 +46372,28 @@ function startPhdMentorInterview(profileId) {
   const state = phdAIMockInterviewState;
   state.config.major = profile.direction === '运动康复' ? '运动康复' : profile.direction === '运动解剖学' ? '运动解剖学' : '运动生理学';
   state.config.targetSchool = profile.school === '通用' ? '上海体育大学' : profile.school;
+  // 真实导师：注入论文/项目/细分方向，让AI提问更贴近导师研究
+  let mentorDetail = '';
+  if (profile.isReal && typeof profile.supIndex === 'number' && typeof PHD_SUPERVISORS !== 'undefined' && PHD_SUPERVISORS[profile.supIndex]) {
+    const sup = PHD_SUPERVISORS[profile.supIndex];
+    const dirs = sup.directions && sup.directions.length ? '细分研究方向：' + sup.directions.join('、') + '。' : '';
+    let papersStr = '';
+    if (sup.papers && sup.papers.length) {
+      const topPapers = sup.papers.slice(0, 3).map(function(p, i) { return (i+1) + '. ' + (typeof p === 'string' ? p : (p.title || p.name || JSON.stringify(p))); }).join('；');
+      papersStr = '近年代表论文：' + topPapers + '。';
+    }
+    let projStr = '';
+    if (sup.projects && sup.projects.length) {
+      const topProjs = sup.projects.slice(0, 2).map(function(p, i) { return (i+1) + '. ' + (typeof p === 'string' ? p : (p.name || p.title || JSON.stringify(p))); }).join('；');
+      projStr = '主持/参与项目：' + topProjs + '。';
+    }
+    mentorDetail = dirs + papersStr + projStr;
+  }
   state.config.mentorProfile = {
     name: profile.name,
     school: profile.school,
-    fullDesc: '你正在模拟「' + profile.name + '」的面试风格（' + profile.school + '·' + profile.direction + '方向）。该导师关注：' + profile.focus + '。提问风格：' + profile.style + '。常出题型：' + profile.qTypes.join('、') + '。给考生的建议：' + profile.tips + '。请全程以该导师的身份提问，问题要体现其关注重点与风格。'
+    isReal: !!profile.isReal,
+    fullDesc: '你正在模拟「' + profile.name + '」的面试风格（' + profile.school + '·' + profile.direction + '方向）。该导师关注：' + profile.focus + '。' + mentorDetail + '提问风格：' + profile.style + '。常出题型：' + profile.qTypes.join('、') + '。给考生的建议：' + profile.tips + '。请全程以该导师的身份提问，问题必须紧密围绕其研究方向和代表论文，体现其学术关注点；追问时要深入到其研究领域的具体机制和方法。'
   };
   renderPhdAIMockInterview();
   document.getElementById('phdInterviewArea').scrollIntoView({ behavior: 'smooth' });
@@ -48263,9 +48281,19 @@ function stopAIQuestionTimer() {
 async function interruptAIInterviewTimeout() {
   const state = phdAIMockInterviewState;
   if (state.mode !== 'chatting' || state.aiThinking) return;
+  // 多样化打断话术，根据面试官风格
+  const interruptLines = {
+    '学术严谨型': ['（⏰ 打断：时间到。你的核心思路我们已经了解，注意面试时要把控答题节奏，先给结论再展开。我们继续下一题。）', '（⏰ 打断：好，时间有限。这个问题先到这里，你的主要观点我们已经记录。继续下一题。）'],
+    '温和引导型': ['（⏰ 温和打断：时间差不多了，你的思路很好，我们先记下来。面试时注意时间分配哦。继续下一题～）', '（⏰ 打断：好的，我们时间有限，这个问题先聊到这里。继续下一题。）'],
+    '压力挑战型': ['（⏰ 打断：时间到！面试时可没有多余时间让你慢慢展开，要学会在有限时间内给出核心答案。下一题。）', '（⏰ 打断：好了，超时了。真实面试中导师不会等你，注意节奏。下一题。）'],
+    '实践应用型': ['（⏰ 打断：时间到。核心观点我们了解了，实践中也要注意效率。继续下一题。）'],
+    '英文面试型': ['（⏰ Interrupt: Time is up. Let\'s move to the next question.）']
+  };
+  const styleLines = interruptLines[state.config.interviewerStyle] || interruptLines['学术严谨型'];
+  const interruptMsg = styleLines[Math.floor(Math.random() * styleLines.length)];
   state.conversation.push({
     role: 'interviewer',
-    content: '（⏰ 面试官打断：时间到。请先记住你的核心思路，我们按当前作答记录，继续下一题。面试时也要注意把握答题节奏。）',
+    content: interruptMsg,
     timestamp: Date.now(),
     interrupt: true,
     questionNum: state.questionIndex + 1
@@ -48353,7 +48381,7 @@ async function beginPhdAIMockInterview() {
 }
 
 // AI生成下一个问题
-async function generateNextAIInterviewQuestion(isFirst) {
+async function generateNextAIInterviewQuestion(isFirst, isFollowup) {
   const state = phdAIMockInterviewState;
   state.aiThinking = true;
   renderPhdAIMockInterview();
@@ -48389,16 +48417,18 @@ ${schoolInstr}
 
 ${mentorInstr}
 
-面试要求：
-1. 问题要专业、有深度，符合${state.config.major}博士研究生的学术水平
-2. 根据考生之前的回答进行有针对性的追问，深入挖掘考生的专业功底
-3. 如果考生回答有漏洞或错误，要针对性地提问，考察考生的应变能力
-4. 问题类型要多样化：概念理解题、机制分析题、实验设计题、前沿进展题、综合应用题
-5. 每个问题要清晰明确，让考生知道需要回答什么
+面试行为要求（模拟真实导师面试）：
+1. 问题要专业、有深度，符合${state.config.major}博士研究生的学术水平，必须紧密围绕目标导师的研究方向
+2. 追问机制：如果考生回答涉及某个专业概念或机制，要针对该点进行深入追问（如"你刚才提到XX，能否详细说明其信号通路？"），不要轻易换题
+3. 如果考生回答有漏洞或概念错误，要针对性地质疑或追问（如"你这个说法的依据是什么？"），考察考生的应变能力
+4. 问题类型多样化：概念理解题、机制分析题、实验设计题、前沿进展题、导师论文相关题、综合应用题
+5. 每个问题清晰明确，让考生知道需要回答什么
 6. 不要重复已经问过的问题
 7. 适当使用专业术语，考察考生的专业素养
+8. 面试官表情反馈：在提出新问题前，先用一句话给出对上一个回答的简短反馈（如"（点头）嗯，思路不错。"、"（皱眉）这个概念可能需要再想想。"、"（记录）好的。"），然后再提出问题。反馈要简短（10字以内），不要评价分数。
+9. 打断倾向：如果是压力挑战型或学术严谨型面试官，在追问时可以更直接、更犀利；温和型则委婉引导。
 
-请直接输出面试问题，不要有任何前缀或解释。问题长度控制在50-150字之间。`;
+输出格式：先输出面试官表情反馈（10字以内，括号包裹），换行后输出面试问题。不要有其他前缀或解释。问题长度控制在50-150字之间。`;
 
     let userPrompt = '';
     if (isFirst) {
@@ -48417,6 +48447,9 @@ ${history}
 3. 如果考生回答较简短，可以换一个角度考察同一知识点
 4. 问题难度${state.config.difficulty}，符合博士研究生水平
 5. 这是第${state.questionIndex + 1}个问题，总共${state.config.questionCount}个问题`;
+    if (isFollowup) {
+      userPrompt += '\n\n【追问模式】这是对上一个问题的深入追问，请针对考生刚才回答中的某个具体概念、机制或漏洞，提出一个更深入的追问问题（如"你刚才提到XX，能否详细说明...？"）。不要换话题，要在同一知识点上深挖。';
+    }
     }
     
     const question = await callDeepSeekAPI(systemPrompt, userPrompt, 500, 'deepseek-chat');
@@ -48498,6 +48531,20 @@ async function submitAIInterviewAnswer() {
     content: answer,
     timestamp: Date.now()
   });
+  
+  // 追问机制：35%概率对当前问题进行深入追问（不增加题号）
+  // 条件：不是最后一题、回答字数>50、当前不是追问状态、不是压力型必追问
+  const shouldFollowup = !state._isFollowup && state.questionIndex + 1 < state.config.questionCount && answer.length > 50 && Math.random() < 0.35;
+  if (shouldFollowup) {
+    state._isFollowup = true;
+    state._followupCount = (state._followupCount || 0) + 1;
+    // 追问时不增加questionIndex，让AI生成针对当前回答的深入追问
+    state.currentAnswer = '';
+    await generateNextAIInterviewQuestion(false, true);
+    return;
+  }
+  // 退出追问状态
+  state._isFollowup = false;
   
   state.questionIndex++;
   
