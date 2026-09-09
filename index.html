@@ -38732,6 +38732,44 @@ function addPaper() {
   alert('论文添加成功！');
 }
 
+// 显示编辑论文表单
+function showEditPaperForm(paperId) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var area = document.getElementById('submissionDetailArea');
+  if (!area) return;
+  area.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-top:16px">'
+    + '<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px">编辑论文信息</div>'
+    + '<div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">论文标题 *</label><input type="text" id="editPaperTitle" value="' + paper.title.replace(/"/g, '&quot;') + '" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">作者</label><input type="text" id="editPaperAuthors" value="' + (paper.authors || '').replace(/"/g, '&quot;') + '" placeholder="如：张三, 李四" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">文章类型</label><select id="editPaperType" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;background:#fff"><option>原创研究</option><option>综述/Meta分析</option><option>病例报告</option><option>实验研究</option><option>调查研究</option><option>理论论文</option></select></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:10px"><button onclick="saveEditPaper(\'' + paperId + '\')" style="background:#7c3aed;color:#fff;border:none;padding:9px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">保存修改</button><button onclick="document.getElementById(\'submissionDetailArea\').innerHTML=\'\'" style="background:#f3f4f6;color:#374151;border:none;padding:9px 20px;border-radius:6px;cursor:pointer;font-size:13px">取消</button></div>'
+    + '</div>';
+  document.getElementById('editPaperType').value = paper.type || '原创研究';
+}
+
+// 保存编辑后的论文信息
+function saveEditPaper(paperId) {
+  var title = document.getElementById('editPaperTitle').value.trim();
+  if (!title) { alert('论文标题不能为空'); return; }
+  var authors = document.getElementById('editPaperAuthors').value.trim();
+  var type = document.getElementById('editPaperType').value;
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  paper.title = title;
+  paper.authors = authors;
+  paper.type = type;
+  savePubPapers(papers);
+  showPaperDetail(paperId);
+  renderPubManage();
+  alert('论文信息已更新');
+}
+
+
 function deletePaper(paperId) {
   if (!confirm('确定删除这篇论文及其所有投稿记录？')) return;
   var papers = getPubPapers().filter(function(p) { return p.id !== paperId; });
@@ -38747,8 +38785,8 @@ function showPaperDetail(paperId) {
   if (!detailEl) return;
 
   var html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px"><div><div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:4px">' + paper.title + '</div><div style="font-size:12px;color:#6b7280">' + (paper.authors || '') + ' | ' + (paper.type || '') + '</div></div>';
-  html += '<button onclick="showAddSubmissionForm(\'' + paper.id + '\')" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">+ 添加投稿记录</button></div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px"><div style="flex:1;margin-right:12px"><div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:4px">' + paper.title + '</div><div style="font-size:12px;color:#6b7280">' + (paper.authors || '') + ' | ' + (paper.type || '') + '</div></div>';
+  html += '<div style="display:flex;gap:8px;flex-shrink:0"><button onclick="showEditPaperForm(\'' + paper.id + '\')" style="background:#f3f4f6;color:#374151;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">编辑论文</button><button onclick="showAddSubmissionForm(\'' + paper.id + '\')" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">+ 添加投稿记录</button></div></div>';
 
   // 投稿记录
   if (paper.submissions && paper.submissions.length > 0) {
