@@ -48102,59 +48102,7 @@ function downloadPhdEmailWord() {
   const htmlContent = '<html xmlns:o=\'urn:schemas-microsoft-com:office:office\' xmlns:w=\'urn:schemas-microsoft-com:office:word\' xmlns=\'http://www.w3.org/TR/REC-html40\'>' +
     '<head><meta charset=\'utf-8\'><title>套磁邮件</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->' +
     '<style>body{font-family:SimSun,serif;font-size:12pt;line-height:1.8;color:#333;padding:30px}pre{white-space:pre-wrap;font-family:SimSun,serif;font-size:12pt}</style></head>' +
-    '<body><pre>' + text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre><script>
-// 延迟自动登录检查：直接操作DOM和localStorage，不依赖外部函数
-(function(){
-  function tryAutoLogin(){
-    try {
-      var currentUser = null;
-      try {
-        currentUser = JSON.parse(localStorage.getItem('kaoyan_current_user'));
-      } catch(e) { currentUser = null; }
-      
-      if(currentUser && currentUser.username){
-        // 隐藏登录遮罩层
-        var overlay = document.getElementById('loginOverlay');
-        if(overlay){
-          overlay.style.display = 'none';
-          overlay.classList.add('hidden');
-        }
-        // 移除app的模糊和禁用
-        var app = document.querySelector('.app');
-        if(app){
-          app.style.filter = '';
-          app.style.pointerEvents = '';
-        }
-        // 更新用户UI
-        var userInfo = document.getElementById('userInfo');
-        if(userInfo) userInfo.style.display = 'flex';
-        var userName = document.getElementById('userName');
-        if(userName) userName.textContent = currentUser.username;
-        var userAvatar = document.getElementById('userAvatar');
-        if(userAvatar) userAvatar.textContent = currentUser.username.charAt(0).toUpperCase();
-        
-        console.log('[AutoLogin] 自动登录成功:', currentUser.username);
-        return true;
-      }
-    } catch(e) {
-      console.warn('[AutoLogin] 自动登录检查失败:', e);
-    }
-    return false;
-  }
-  // 立即尝试一次
-  if(!tryAutoLogin()){
-    // 如果失败，延迟100ms再试（最多重试10次）
-    var attempts = 0;
-    var interval = setInterval(function(){
-      attempts++;
-      if(tryAutoLogin() || attempts >= 10){
-        clearInterval(interval);
-      }
-    }, 100);
-  }
-})();
-</script>
-</body></html>';
+    '<body><pre>' + text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre></body></html>';
   const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
