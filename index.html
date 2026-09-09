@@ -41551,7 +41551,7 @@ function renderTaociAI(){
     <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">感兴趣的研究方向（结合导师方向）*</label><textarea id="taociResearchDir" rows="2" placeholder="例如：我对运动与心血管健康、运动干预慢性病机制等方向非常感兴趣，阅读了您关于XX的论文，深受启发..." style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;resize:vertical;box-sizing:border-box"></textarea></div>
     <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">个人优势 / 科研经历（选填）</label><textarea id="taociAdvantage" rows="3" placeholder="例如：曾参与XX科研项目，发表XX论文（SCI/中文核心），掌握Western Blot/qPCR/动物实验等技术，英语六级550分..." style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;resize:vertical;box-sizing:border-box"></textarea></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">🎭 语气风格</label><select id="taociStyle" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px"><option value="谦逊诚恳型">谦逊诚恳型</option><option value="自信专业型">自信专业型</option><option value="简洁干练型">简洁干练型</option></select></div>
+      <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">🎭 语气风格</label><select id="taociStyle" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px"><option value="谦逊诚恳型">谦逊诚恳型（首次联系推荐）</option><option value="正式学术型">正式学术型（联系知名教授）</option><option value="自信专业型">自信专业型（科研背景强）</option><option value="热情主动型">热情主动型（跟进/表达兴趣）</option><option value="简洁干练型">简洁干练型（跟进提醒）</option><option value="温和礼貌型">温和礼貌型（通用）</option></select></div>
       <div><label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">📮 套磁阶段</label><select id="taociStage" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px"><option value="首次联系">首封套磁（首次联系导师）</option><option value="跟进提醒">跟进套磁（首封后跟进）</option><option value="回复后沟通">回复后深度沟通</option><option value="考前面谈">考前面谈预约</option><option value="致谢">录取后致谢</option></select></div>
     </div>
     <div style="margin-bottom:16px;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#854d0e;line-height:1.7">
@@ -41694,27 +41694,35 @@ async function scoreTaociLetter(){
   panel.style.display = 'block';
   panel.innerHTML = '<div style="text-align:center;padding:20px;color:#8b5cf6"><div style="font-size:20px;margin-bottom:8px">📊</div>AI评分中，请稍候...</div>';
   const supInfo = sup ? `导师：${sup.name}（${sup.school}），研究方向：${(sup.directions&&sup.directions.length)?sup.directions.join('、'):sup.research}` : '导师信息未提供';
-  const systemPrompt = `你是一位体育学考博套磁信评审专家。请从以下5个维度对套磁信进行评分（每项满分20分，总分100分），并给出具体修改建议和优化版套磁信。
-5个维度：
-1. 个性化程度（是否提及导师具体研究、是否避免模板化）
-2. 学术专业性（术语是否准确、研究背景描述是否专业）
-3. 表达规范性（邮件格式、语法、措辞是否规范得体）
-4. 吸引力（是否突出学生亮点、是否让导师产生兴趣）
-5. 附件合理性（是否提及附件、附件描述是否恰当）
+  const systemPrompt = `你是一位资深的体育学考博套磁信评审专家，拥有10年以上博导招生经验。请从以下6个维度对套磁信进行严格评分（总分100分），并给出详细的逐句诊断、可操作的修改建议和优化版套磁信。
 
-请严格按以下格式输出（不要输出其他内容）：
-【总分】XX分
-【个性化】XX分 - 评语
-【学术性】XX分 - 评语
-【规范性】XX分 - 评语
-【吸引力】XX分 - 评语
-【附件】XX分 - 评语
+6个评分维度：
+1. 个性化程度（20分）：是否具体提及导师的研究方向、代表性论文或项目？是否避免了群发模板化表达？导师能否感受到这封邮件是专门写给他的？
+2. 研究契合度（20分）：学生的研究背景、兴趣与导师方向的契合点是否清晰、具体、有说服力？是否说明了为什么适合加入该课题组？
+3. 学术专业性（15分）：专业术语使用是否准确？研究背景描述是否专业严谨？是否体现了对学科前沿的了解？
+4. 表达规范性（15分）：邮件格式是否完整（主题/称呼/正文/结尾/署名）？语法、标点、措辞是否规范得体？字数是否合适（400-700字）？
+5. 吸引力与亮点（15分）：学生的核心优势（论文/项目/技能/获奖）是否突出？是否有让导师眼前一亮的亮点？是否激发了导师进一步了解的兴趣？
+6. 附件与行动号召（15分）：是否提及了附件（CV/科研计划书）？附件描述是否恰当？是否有明确且礼貌的下一步请求（如恳请回复、希望交流）？是否避免了过度催促？
+
+请严格按以下格式输出（不要输出其他无关内容）：
+【总分】XX分（等级：优秀≥90/良好80-89/中等70-79/及格60-69/需改进<60）
+【个性化】XX分 - 详细评语（至少2句话，指出具体优点和不足）
+【契合度】XX分 - 详细评语（至少2句话）
+【学术性】XX分 - 详细评语（至少2句话）
+【规范性】XX分 - 详细评语（至少2句话）
+【吸引力】XX分 - 详细评语（至少2句话）
+【附件】XX分 - 详细评语（至少2句话）
+【逐句诊断】
+原文第X句："..." → 问题：... → 建议改为："..."
+（列出3-5个最需要修改的句子，如果没有问题句则写"整体表达较好，无需逐句修改"）
 【修改建议】
-1. ...
+1. （具体可操作的建议，如"在第二段加入导师XX论文的具体观点"）
 2. ...
 3. ...
+4. ...
+5. ...
 【优化版】
-（优化后的完整套磁信）`;
+（完整的优化后套磁信，保留学生真实信息，修正所有问题，提升个性化和专业度）`;
   const userPrompt = `目标导师：${supInfo}\n学生背景：${userBg||'未提供'}\n\n待评分套磁信：\n${letter}`;
   try{
     const result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000, 'deepseek-chat');
@@ -41736,7 +41744,7 @@ function renderTaociScoreResult(text){
     html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px"><div style="font-size:36px;font-weight:800;color:'+color+'">'+total+'</div><div><div style="font-size:14px;font-weight:600;color:#1e293b">'+level+'</div><div style="font-size:12px;color:#64748b">满分100分</div></div></div>';
   }
   // 5维度
-  const dims = [['个性化','个性化程度'],['学术性','学术专业性'],['规范性','表达规范性'],['吸引力','吸引力'],['附件','附件合理性']];
+  const dims = [['个性化','个性化程度'],['契合度','研究契合度'],['学术性','学术专业性'],['规范性','表达规范性'],['吸引力','吸引力与亮点'],['附件','附件与行动号召']];
   dims.forEach(d=>{
     const m = text.match(new RegExp('【'+d[0]+'】\\s*(\\d+)\\s*分\\s*-?\\s*(.+)'));
     if(m){
@@ -41748,6 +41756,11 @@ function renderTaociScoreResult(text){
     }
   });
   html += '</div>';
+  // 逐句诊断
+  const diagMatch = text.match(/【逐句诊断】([\s\S]*?)(?=【修改建议】|$)/);
+  if(diagMatch && diagMatch[1].trim().length > 5){
+    html += '<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:#9a3412;margin-bottom:8px">🔍 逐句诊断</div><div style="font-size:13px;color:#7c2d12;line-height:1.8;white-space:pre-wrap">'+diagMatch[1].trim()+'</div></div>';
+  }
   // 修改建议
   const sugMatch = text.match(/【修改建议】([\s\S]*?)(?=【优化版】|$)/);
   if(sugMatch){
