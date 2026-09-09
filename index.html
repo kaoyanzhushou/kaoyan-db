@@ -37967,6 +37967,17 @@ function renderPhdPublish() {
   html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">研究方向</label><select id="pubDirection" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="运动医学">运动医学/运动损伤</option><option value="运动康复">运动康复/物理治疗</option><option value="运动生理学">运动生理学</option><option value="运动生物力学">运动生物力学</option><option value="运动心理学">运动心理学</option><option value="体育教育">体育教育/教学</option><option value="体育人文">体育人文社会学</option><option value="体育管理">体育管理/产业</option><option value="公共卫生">公共卫生/身体活动</option><option value="运动营养">运动营养</option><option value="运动训练">运动训练/体能</option></select></div>';
   html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">投稿目标</label><select id="pubGoal" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="冲高分">冲刺高分区</option><option value="求稳妥">稳妥录用</option><option value="求快速">快速发表</option><option value="免费">免费发表</option><option value="OA">开源OA</option></select></div>';
   html += '</div>';
+  // 第二行：高级筛选条件
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">';
+  html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">目标IF区间</label><div style="display:flex;gap:6px;align-items:center"><input type="number" id="pubMinIF" placeholder="最低" min="0" step="0.1" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none"><span style="color:#7c3aed;font-size:12px">-</span><input type="number" id="pubMaxIF" placeholder="最高" min="0" step="0.1" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none"></div></div>';
+  html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">开源要求</label><select id="pubOAPref" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="">不限制</option><option value="必须OA">必须开源OA</option><option value="偏好OA">偏好开源</option><option value="非OA">非开源（传统订阅）</option></select></div>';
+  html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">期望审稿速度</label><select id="pubSpeedPref" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="">不限制</option><option value="快速">快速（≤2个月）</option><option value="正常">正常（2-4个月）</option><option value="慢速">可接受慢速</option></select></div>';
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
+  html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">作者身份</label><select id="pubAuthorLevel" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="博士生">博士生</option><option value="博士后">博士后</option><option value="讲师">讲师/助理教授</option><option value="副教授">副教授</option><option value="教授">教授</option></select></div>';
+  html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">基金项目</label><select id="pubHasFund" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="有">有基金项目</option><option value="无">无基金项目</option></select></div>';
+  html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">文章字数</label><select id="pubWordCount" style="width:100%;padding:8px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="短篇">短篇（≤5000字）</option><option value="中篇">中篇（5000-8000字）</option><option value="长篇">长篇（≥8000字）</option></select></div>';
+  html += '</div>';
   html += '<button onclick="aiRecommendJournals()" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;padding:12px 28px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">AI推荐期刊</button>';
   html += '</div>';
   html += '<div id="pubRecommendResult"></div>';
@@ -38021,41 +38032,253 @@ async function aiRecommendJournals() {
   var type = document.getElementById('pubType').value;
   var direction = document.getElementById('pubDirection').value;
   var goal = document.getElementById('pubGoal').value;
+  var minIF = parseFloat(document.getElementById('pubMinIF')?.value) || 0;
+  var maxIF = parseFloat(document.getElementById('pubMaxIF')?.value) || 999;
+  var oaPref = document.getElementById('pubOAPref')?.value || '';
+  var speedPref = document.getElementById('pubSpeedPref')?.value || '';
+  var authorLevel = document.getElementById('pubAuthorLevel')?.value || '博士生';
+  var hasFund = document.getElementById('pubHasFund')?.value || '无';
+  var wordCount = document.getElementById('pubWordCount')?.value || '中篇';
   var resultDiv = document.getElementById('pubRecommendResult');
   if (!title && !abstract) { alert('请输入文章标题或摘要'); return; }
-  resultDiv.innerHTML = '<div style="padding:30px;text-align:center;color:#7c3aed;font-size:14px">AI正在分析文章内容并匹配期刊...</div>';
+  resultDiv.innerHTML = '<div style="padding:30px;text-align:center;color:#7c3aed;font-size:14px">第一步：规则筛选候选期刊...<br><span style="font-size:12px;color:#9ca3af">正在从45本期刊中按研究方向、IF区间、OA要求、审稿速度筛选...</span></div>';
+
   try {
-    // 构建期刊列表文本供AI参考
-    var journalList = PHD_JOURNALS.map(function(j, i) {
-      return (i+1) + '. ' + j.name + '（IF:' + j.if + ', ' + j.jcr + ', 审稿:' + j.reviewDays + '天, 录用率:' + j.acceptRate + '%, 方向:' + j.scope.substring(0, 60) + '...）';
-    }).join('\n');
-    var systemPrompt = `你是一位体育学/运动科学领域的资深期刊编辑和投稿顾问，拥有10年以上的投稿指导经验。请根据用户提供的文章信息，从以下期刊列表中推荐最合适的投稿期刊。
+    // ===== 第一步：规则筛选候选池 =====
+    var candidates = PHD_JOURNALS.filter(function(j) {
+      // IF区间筛选
+      if (j.if > 0 && (j.if < minIF || j.if > maxIF)) return false;
+      // OA筛选
+      if (oaPref === '必须OA' && j.oa !== 'Full OA' && j.oa !== 'Hybrid') return false;
+      if (oaPref === '非OA' && j.oa === 'Full OA') return false;
+      // 审稿速度筛选
+      if (speedPref === '快速' && j.reviewDays > 60) return false;
+      if (speedPref === '正常' && j.reviewDays > 120) return false;
+      // 研究方向匹配（至少匹配一个关键词或方向词出现在scope中）
+      if (direction && direction !== '不限') {
+        var scopeText = (j.scope + ' ' + (j.matchKeywords || []).join(' ')).toLowerCase();
+        var dirKey = direction.replace('运动', '').replace('体育', '').toLowerCase();
+        if (scopeText.indexOf(direction.toLowerCase()) < 0 && scopeText.indexOf(dirKey) < 0) {
+          // 中文期刊不做方向严格筛选
+          if (j.if > 0) return false;
+        }
+      }
+      // 文章类型匹配
+      if (j.types && j.types.length > 0) {
+        var typeMatch = j.types.some(function(t) { return type.indexOf(t) >= 0 || t.indexOf(type) >= 0; });
+        if (!typeMatch && j.types.length < 5) return false;
+      }
+      return true;
+    });
 
-推荐要求：
-1. 推荐9本期刊，分为三档：
-   - 冲刺刊（3本）：影响因子较高，有一定难度但文章有亮点可尝试
-   - 稳妥刊（3本）：与文章水平匹配，正常投稿大概率录用
-   - 保底刊（3本）：审稿较快、录用率较高，确保能发表
-2. 每本期刊必须包含：
-   - 期刊名称
-   - 影响因子、JCR分区/中科院分区
-   - 匹配度评分（0-100%）
-   - 推荐理由（为什么适合这篇文章，结合文章内容和期刊收稿范围）
-   - 注意事项（投稿时需要注意什么，常见拒稿原因）
-   - 预估审稿周期和录用率
-3. 最后给出"投稿策略建议"：建议先投哪本，如果被拒后转投哪本
-4. 只从提供的期刊列表中推荐，不要推荐列表外的期刊
-5. 使用Markdown格式，每档用### 标题，每本期刊用#### 标题
+    if (candidates.length < 3) {
+      // 筛选太严格，放宽条件
+      candidates = PHD_JOURNALS.filter(function(j) {
+        if (j.if > 0 && (j.if < minIF || j.if > maxIF)) return false;
+        return true;
+      });
+    }
+    if (candidates.length < 3) candidates = PHD_JOURNALS.slice();
 
-期刊列表：
+    resultDiv.innerHTML = '<div style="padding:30px;text-align:center;color:#7c3aed;font-size:14px">第一步完成：从45本中筛选出 ' + candidates.length + ' 本候选期刊<br><span style="font-size:12px;color:#9ca3af">第二步：AI深度分析与精选推荐中...</span></div>';
+
+    // 构建候选期刊详细列表
+    var journalList = candidates.map(function(j, i) {
+      return (i+1) + '. ' + j.name + ' [IF:' + j.if + ', ' + j.jcr + '/' + (j.cas||'-') + ', 审稿:' + j.reviewDays + '天, 录用率:' + j.acceptRate + '%, OA:' + j.oa + ', 自引率:' + (j.selfCite||'-') + '%]\n   收稿范围: ' + j.scope.substring(0, 100) + '\n   接收类型: ' + (j.types||[]).join('/') + '\n   优势: ' + (j.strengths||'').substring(0, 80) + '\n   注意: ' + (j.pitfalls||'').substring(0, 80);
+    }).join('\n\n');
+
+    var systemPrompt = `你是一位体育学/运动科学领域的资深期刊编辑和投稿顾问，拥有10年以上投稿指导经验。请根据文章信息，从候选期刊列表中精选9本最合适的期刊。
+
+【输出格式要求 - 严格遵守】
+请输出纯文本，按以下结构：
+
+===文章质量评估===
+创新性评分(1-10): X
+研究质量评分(1-10): X
+写作质量评分(1-10): X
+综合评价: 一句话评价文章整体水平和适合的期刊档次
+
+===推荐结果===
+[冲刺刊]
+1. 期刊名称 | 匹配度:XX% | 主题匹配:XX | 类型匹配:XX | IF匹配:XX | 速度匹配:XX | 录用难度:XX
+推荐理由: ...
+注意事项: ...
+风险提示: ...
+
+2. ...（同上格式，共3本）
+
+[稳妥刊]
+1. ...（同上格式，共3本）
+
+[保底刊]
+1. ...（同上格式，共3本）
+
+===投稿阶梯策略===
+第一投: 期刊名 - 理由
+如果被拒转投: 期刊名 - 理由
+最终保底: 期刊名 - 理由
+
+===时间线规划===
+第1-2周: ...
+第1-3月: ...
+如果被拒: ...
+预计总时间: X-X个月
+
+【评分说明】
+- 5个维度评分均为0-100分
+- 主题匹配: 文章内容与期刊收稿范围的契合度
+- 类型匹配: 文章类型是否在期刊接收范围内
+- IF匹配: 文章质量与期刊影响因子的匹配度
+- 速度匹配: 期刊审稿速度是否符合用户期望
+- 录用难度: 综合评估录用可能性（分数越高越容易录用）
+- 匹配度为5个维度的加权平均分
+
+【重要规则】
+1. 只从候选列表中推荐，不要推荐列表外的期刊
+2. 冲刺刊选IF较高、有一定难度的；稳妥刊选匹配度最高的；保底刊选录用率高、审稿快的
+3. 结合作者身份（` + authorLevel + `）和基金情况（` + hasFund + `）评估录用难度：无基金的博士生投顶刊难度较大
+4. 不要使用Markdown格式，使用上面指定的纯文本格式
+5. 每本期刊的推荐理由要具体，结合文章内容和期刊收稿范围说明为什么适合
+
+候选期刊列表（共` + candidates.length + `本）：
 ` + journalList;
-    var userPrompt = '文章标题：' + title + '\n\n摘要/研究内容：' + abstract + '\n\n研究类型：' + type + '\n研究方向：' + direction + '\n投稿目标：' + goal;
+
+    var userPrompt = '文章标题：' + title + '\n\n摘要/研究内容：' + abstract + '\n\n研究类型：' + type + '\n研究方向：' + direction + '\n投稿目标：' + goal + '\n目标IF区间：' + (minIF||0) + '-' + (maxIF===999?'不限':maxIF) + '\n开源要求：' + (oaPref||'不限制') + '\n期望审稿速度：' + (speedPref||'不限制') + '\n作者身份：' + authorLevel + '\n基金项目：' + hasFund + '\n文章字数：' + wordCount;
+
     var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
-    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 3000, model);
-    resultDiv.innerHTML = '<div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:16px">AI期刊推荐结果</div><div class="md-content" style="padding:20px;background:#faf5ff;border:1px solid #ddd6fe;border-radius:12px;font-size:13px;line-height:1.9;color:#3b0764">' + renderMarkdown(response) + '</div>';
+    var response = await callDeepSeekAPI(systemPrompt, userPrompt, 4000, model);
+
+    // 解析AI输出并渲染
+    resultDiv.innerHTML = renderAIRecommendResult(response, candidates);
   } catch (error) {
     resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">推荐失败：' + error.message + '</div>';
   }
+}
+
+// 渲染AI推荐结果（解析纯文本格式）
+function renderAIRecommendResult(response, candidates) {
+  var html = '<div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:16px">AI期刊推荐结果</div>';
+
+  // 文章质量评估
+  var qualityMatch = response.match(/===文章质量评估===([\s\S]*?)===推荐结果===/);
+  if (qualityMatch) {
+    var qText = qualityMatch[1];
+    html += '<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;border-radius:12px;padding:16px;margin-bottom:20px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px">文章质量评估</div>';
+    var scores = [];
+    var innovMatch = qText.match(/创新性评分[^\d]*(\d+)/);
+    var qualityMatch2 = qText.match(/研究质量评分[^\d]*(\d+)/);
+    var writingMatch = qText.match(/写作质量评分[^\d]*(\d+)/);
+    if (innovMatch) scores.push({label:'创新性', value:parseInt(innovMatch[1])});
+    if (qualityMatch2) scores.push({label:'研究质量', value:parseInt(qualityMatch2[1])});
+    if (writingMatch) scores.push({label:'写作质量', value:parseInt(writingMatch[1])});
+    if (scores.length > 0) {
+      html += '<div style="display:flex;gap:20px;margin-bottom:10px">';
+      scores.forEach(function(s) {
+        var color = s.value >= 8 ? '#059669' : s.value >= 6 ? '#d97706' : '#dc2626';
+        html += '<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:' + color + '">' + s.value + '<span style="font-size:12px;color:#9ca3af">/10</span></div><div style="font-size:11px;color:#92400e">' + s.label + '</div></div>';
+      });
+      html += '</div>';
+    }
+    var evalMatch = qText.match(/综合评价[:：]\s*(.+)/);
+    if (evalMatch) html += '<div style="font-size:12px;color:#78350f;line-height:1.7;background:#fffbeb;padding:8px 12px;border-radius:6px">' + evalMatch[1].trim() + '</div>';
+    html += '</div>';
+  }
+
+  // 推荐结果 - 分三档
+  var tiers = [
+    {key: '\\[冲刺刊\\]', label: '冲刺刊', color: '#dc2626', bg: '#fef2f2', desc: '影响因子较高，有一定难度但文章有亮点可尝试'},
+    {key: '\\[稳妥刊\\]', label: '稳妥刊', color: '#2563eb', bg: '#eff6ff', desc: '与文章水平匹配，正常投稿大概率录用'},
+    {key: '\\[保底刊\\]', label: '保底刊', color: '#059669', bg: '#f0fdf4', desc: '审稿较快、录用率较高，确保能发表'}
+  ];
+
+  tiers.forEach(function(tier) {
+    var tierRegex = new RegExp(tier.key + '([\\s\S]*?)(?=\\[(?:冲刺刊|稳妥刊|保底刊)\\]|===投稿阶梯策略===|$)');
+    var tierMatch = response.match(tierRegex);
+    if (!tierMatch) return;
+    var tierText = tierMatch[1];
+    html += '<div style="margin-bottom:20px">';
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="width:4px;height:20px;background:' + tier.color + ';border-radius:2px"></div><span style="font-size:15px;font-weight:700;color:' + tier.color + '">' + tier.label + '</span><span style="font-size:11px;color:#9ca3af">' + tier.desc + '</span></div>';
+
+    // 解析每本期刊
+    var journalBlocks = tierText.split(/\n(?=\d+\.\s)/).filter(function(b) { return b.trim() && /^\d+\./.test(b.trim()); });
+    journalBlocks.forEach(function(block) {
+      var nameMatch = block.match(/^\d+\.\s*(.+?)\s*\|/);
+      var matchMatch = block.match(/匹配度[:：]\s*(\d+)%/);
+      var dimScores = {};
+      ['主题匹配','类型匹配','IF匹配','速度匹配','录用难度'].forEach(function(dim) {
+        var m = block.match(new RegExp(dim + '[:：]\s*(\d+)'));
+        if (m) dimScores[dim] = parseInt(m[1]);
+      });
+      var reasonMatch = block.match(/推荐理由[:：]\s*([\s\S]*?)(?=注意事项|风险提示|$)/);
+      var noteMatch = block.match(/注意事项[:：]\s*([\s\S]*?)(?=风险提示|$)/);
+      var riskMatch = block.match(/风险提示[:：]\s*([\s\S]*?)$/);
+
+      var journalName = nameMatch ? nameMatch[1].trim() : '未知期刊';
+      var journalInfo = candidates.find(function(j) { return j.name === journalName || journalName.indexOf(j.name) >= 0; });
+
+      html += '<div style="background:' + tier.bg + ';border:1px solid ' + tier.color + '33;border-radius:10px;padding:14px;margin-bottom:10px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1e293b">' + journalName + '</div>';
+      if (journalInfo) html += '<div style="font-size:11px;color:#6b7280;margin-top:2px">IF:' + journalInfo.if + ' | ' + journalInfo.jcr + ' | 审稿:' + journalInfo.reviewDays + '天 | 录用率:' + journalInfo.acceptRate + '%</div>';
+      html += '</div>';
+      if (matchMatch) html += '<div style="text-align:center;margin-left:12px"><div style="font-size:22px;font-weight:700;color:' + tier.color + '">' + matchMatch[1] + '<span style="font-size:12px">%</span></div><div style="font-size:10px;color:#9ca3af">匹配度</div></div>';
+      html += '</div>';
+
+      // 5维度评分条
+      var dimLabels = [['主题匹配','#8b5cf6'],['类型匹配','#06b6d4'],['IF匹配','#f59e0b'],['速度匹配','#10b981'],['录用难度','#ec4899']];
+      html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px">';
+      dimLabels.forEach(function(dim) {
+        var val = dimScores[dim[0]] || 0;
+        html += '<div><div style="display:flex;justify-content:space-between;font-size:10px;color:#6b7280;margin-bottom:2px"><span>' + dim[0] + '</span><span style="font-weight:600;color:' + dim[1] + '">' + val + '</span></div><div style="height:5px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + val + '%;background:' + dim[1] + ';border-radius:3px"></div></div></div>';
+      });
+      html += '</div>';
+
+      if (reasonMatch) html += '<div style="font-size:12px;color:#374151;line-height:1.7;margin-bottom:6px"><b style="color:' + tier.color + '">推荐理由：</b>' + reasonMatch[1].trim().replace(/\n/g, ' ') + '</div>';
+      if (noteMatch) html += '<div style="font-size:11px;color:#6b7280;line-height:1.6;margin-bottom:4px"><b>注意事项：</b>' + noteMatch[1].trim().replace(/\n/g, ' ') + '</div>';
+      if (riskMatch && riskMatch[1].trim()) html += '<div style="font-size:11px;color:#dc2626;line-height:1.6;background:#fef2f2;padding:6px 10px;border-radius:4px"><b>风险提示：</b>' + riskMatch[1].trim().replace(/\n/g, ' ') + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  // 投稿阶梯策略
+  var strategyMatch = response.match(/===投稿阶梯策略===([\s\S]*?)===时间线规划===/);
+  if (strategyMatch) {
+    var sText = strategyMatch[1];
+    html += '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:12px;padding:16px;margin-bottom:20px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#5b21b6;margin-bottom:12px">投稿阶梯策略</div>';
+    var steps = sText.split('\n').filter(function(l) { return l.trim() && /[:：]/.test(l); });
+    steps.forEach(function(step, i) {
+      var parts = step.split(/[:：]/);
+      var label = parts[0].trim();
+      var value = parts.slice(1).join(':').trim();
+      var icons = ['🎯','🔄','🛡️'];
+      var colors = ['#dc2626','#d97706','#059669'];
+      html += '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:' + colors[i%3] + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">' + (i+1) + '</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:' + colors[i%3] + '">' + label + '</div><div style="font-size:12px;color:#4c1d95;line-height:1.6">' + value + '</div></div></div>';
+    });
+    html += '</div>';
+  }
+
+  // 时间线规划
+  var timelineMatch = response.match(/===时间线规划===([\s\S]*)$/);
+  if (timelineMatch) {
+    var tText = timelineMatch[1];
+    html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:12px">投稿时间线规划</div>';
+    html += '<div style="position:relative;padding-left:24px">';
+    html += '<div style="position:absolute;left:7px;top:0;bottom:0;width:2px;background:#e5e7eb"></div>';
+    var tLines = tText.split('\n').filter(function(l) { return l.trim() && /[:：]/.test(l); });
+    tLines.forEach(function(line, i) {
+      var parts = line.split(/[:：]/);
+      var time = parts[0].trim();
+      var event = parts.slice(1).join(':').trim();
+      var isLast = i === tLines.length - 1;
+      html += '<div style="position:relative;margin-bottom:12px"><div style="position:absolute;left:-21px;top:2px;width:12px;height:12px;border-radius:50%;background:' + (isLast ? '#7c3aed' : '#c4b5fd') + ';border:2px solid #fff;box-shadow:0 0 0 2px ' + (isLast ? '#7c3aed' : '#c4b5fd') + '"></div><div style="font-size:12px;font-weight:600;color:#7c3aed;margin-bottom:2px">' + time + '</div><div style="font-size:12px;color:#374151;line-height:1.6">' + event + '</div></div>';
+    });
+    html += '</div></div>';
+  }
+
+  return html;
 }
 
 // 期刊库筛选
