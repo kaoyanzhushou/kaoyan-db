@@ -36295,17 +36295,40 @@ async function fetchViaProxy(url) {
 }
 
 async function searchPubMed(query, count) {
-  var searchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=' +
-    encodeURIComponent(query) + '&retmax=' + count + '&retmode=json&sort=relevance';
-  var searchResponse = await fetchViaProxy(searchUrl);
-  var searchData = await searchResponse.json();
-  var idList = searchData.esearchresult.idlist;
-  if (!idList || idList.length === 0) return [];
-  var fetchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=' +
-    idList.join(',') + '&rettype=abstract&retmode=json';
-  var fetchResponse = await fetchViaProxy(fetchUrl);
-  var fetchData = await fetchResponse.json();
-  return parsePubmedArticles(fetchData);
+  // 使用Europe PMC API（欧洲版PubMed，数据同源，原生支持CORS）
+  var url = 'https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=' +
+    encodeURIComponent(query) + '&resultType=core&pageSize=' + count + '&format=json';
+  var response = await fetch(url);
+  var data = await response.json();
+  if (!data || !data.resultList || !data.resultList.result) return [];
+  return data.resultList.result.map(function(p) {
+    var authors = '';
+    if (p.authorString) {
+      authors = p.authorString;
+    } else if (p.authors && p.authors.author) {
+      authors = p.authors.author.map(function(a) { return a.fullName || (a.firstName + ' ' + a.lastName); }).join(', ');
+    }
+    var journal = p.journalTitle || p.journalInfo && p.journalInfo.journal.title || 'Europe PMC';
+    var pubdate = p.pubYear || p.firstPublicationDate || '未知';
+    var doi = p.doi || '';
+    var pmid = p.pmid || '';
+    var cited = p.citedByCount || 0;
+    var abstract = p.abstractText || '无摘要';
+    var paperUrl = 'https://europepmc.org/article/MED/' + pmid;
+    if (!pmid && doi) paperUrl = 'https://doi.org/' + doi;
+    return {
+      pmid: pmid,
+      title: p.title || '无标题',
+      abstract: abstract,
+      authors: authors || '未知作者',
+      journal: journal,
+      pubdate: String(pubdate),
+      doi: doi,
+      citationCount: cited,
+      url: paperUrl,
+      source: 'PubMed'
+    };
+  });
 }
 
 // Semantic Scholar检索
