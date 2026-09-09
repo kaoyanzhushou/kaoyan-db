@@ -6957,7 +6957,35 @@ console.log('✅ 学习工具入口已加载');
               <option value="20">20篇</option>
             </select>
             <button onclick="searchPhdLiterature()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">检索</button>
+            <button id="litAdvancedBtn" onclick="toggleLitAdvanced()" style="background:#fff;color:#7c3aed;border:1px solid #c4b5fd;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px">高级检索</button>
           </div>
+          <!-- 高级检索面板 -->
+          <div id="litAdvancedPanel" style="display:none;margin-bottom:12px;padding:14px;background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px">
+            <div style="font-size:12px;color:#5b21b6;font-weight:600;margin-bottom:10px">高级检索条件（PubMed语法）</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <input type="text" id="litAdvAuthor" placeholder="作者（如：Zhang S）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
+              <input type="text" id="litAdvJournal" placeholder="期刊名（如：Medicine & Science in Sports）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
+              <input type="text" id="litAdvYearFrom" placeholder="起始年份（如：2020）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
+              <input type="text" id="litAdvYearTo" placeholder="结束年份（如：2026）" style="padding:8px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none">
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <span style="font-size:12px;color:#6b21a8">关键词逻辑：</span>
+              <select id="litAdvLogic" style="padding:6px 10px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer">
+                <option value="AND">AND（同时包含）</option>
+                <option value="OR">OR（任一包含）</option>
+                <option value="NOT">NOT（排除）</option>
+              </select>
+              <button onclick="advancedLitSearch()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">应用条件检索</button>
+            </div>
+          </div>
+          <!-- 工具按钮行 -->
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <button onclick="generateLitMetrics()" style="font-size:12px;color:#fff;background:linear-gradient(135deg,#0ea5e9,#0284c7);border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:600">文献计量分析</button>
+            <button onclick="exportCurrentLiterature('bibtex')" style="font-size:12px;color:#1e40af;background:#dbeafe;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">导出BibTeX</button>
+            <button onclick="exportCurrentLiterature('csv')" style="font-size:12px;color:#166534;background:#dcfce7;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">导出CSV</button>
+            <button onclick="exportCurrentLiterature('txt')" style="font-size:12px;color:#92400e;background:#fef3c7;border:none;padding:6px 14px;border-radius:6px;cursor:pointer">导出文本</button>
+          </div>
+          <div id="litMetricsResult" style="display:none;margin-bottom:16px"></div>
           <div id="phdLitSearchStatus" style="font-size:13px;color:#6b21a8;margin-bottom:10px"></div>
           <div id="phdLitResults"></div>
         </div>
@@ -6971,6 +6999,11 @@ console.log('✅ 学习工具入口已加载');
           </div>
           <div id="litMentorStatus" style="font-size:13px;color:#6b21a8;margin-bottom:10px"></div>
           <div id="litMentorResults"></div>
+          <div id="litInterviewQResult" style="display:none;margin-top:16px"></div>
+          <div id="litInterviewQBar" style="display:none;margin-top:12px">
+            <button onclick="generateInterviewLitQuestions()" style="font-size:12px;color:#fff;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-weight:600">生成面试文献问题</button>
+            <span style="font-size:11px;color:#92400e;margin-left:8px">基于导师文献生成面试可能问到的问题清单</span>
+          </div>
         </div>
         <!-- 我的收藏Tab -->
         <div id="litTabContent-fav" style="display:none">
@@ -36401,6 +36434,9 @@ async function searchMentorPapers() {
     });
     window._currentLitArticles = filtered;
     displayLiteratureListEnhanced(filtered, resultsDiv);
+    // 显示面试文献问题按钮
+    var qBar = document.getElementById('litInterviewQBar');
+    if (qBar) qBar.style.display = 'block';
   } catch (error) {
     statusDiv.innerHTML = '检索失败：' + error.message;
   }
@@ -36668,6 +36704,222 @@ function copyCitation(index) {
     alert('复制失败，请手动复制：\n\n' + citation);
   }
   document.body.removeChild(textarea);
+}
+
+// ========== 文献检索第三阶段增强功能 ==========
+
+// ===== 文献计量可视化 =====
+
+// 生成文献计量分析
+function generateLitMetrics() {
+  var articles = window._currentLitArticles || [];
+  if (articles.length === 0) { alert('请先检索文献'); return; }
+  var resultDiv = document.getElementById('litMetricsResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#7c3aed">正在生成文献计量分析...</div>';
+  try {
+    // 1. 年度发文统计
+    var yearCount = {};
+    articles.forEach(function(a) {
+      var m = String(a.pubdate).match(/(19|20)\d{2}/);
+      if (m) {
+        var y = m[0];
+        yearCount[y] = (yearCount[y] || 0) + 1;
+      }
+    });
+    var years = Object.keys(yearCount).sort();
+    var maxCount = Math.max.apply(null, years.map(function(y) { return yearCount[y]; }));
+    // 生成柱状图HTML
+    var chartHtml = '<div style="margin-bottom:20px">';
+    chartHtml += '<div style="font-weight:600;color:#5b21b6;margin-bottom:10px;font-size:13px">年度发文趋势</div>';
+    chartHtml += '<div style="display:flex;align-items:flex-end;gap:6px;height:140px;padding:10px;background:#faf5ff;border-radius:8px;border:1px solid #ddd6fe">';
+    years.forEach(function(y) {
+      var h = Math.max(8, Math.round((yearCount[y] / maxCount) * 110));
+      chartHtml += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">' +
+        '<div style="font-size:10px;color:#5b21b6;font-weight:600;margin-bottom:2px">' + yearCount[y] + '</div>' +
+        '<div style="width:100%;max-width:36px;background:linear-gradient(180deg,#8b5cf6,#7c3aed);border-radius:4px 4px 0 0;height:' + h + 'px"></div>' +
+        '<div style="font-size:10px;color:#6b7280;margin-top:4px">' + y + '</div></div>';
+    });
+    chartHtml += '</div></div>';
+
+    // 2. 关键词词频统计（从标题中提取）
+    var stopWords = ['the','a','an','of','in','for','and','or','on','with','to','is','are','was','were','be','by','as','at','from','that','this','these','those','it','its','their','they','we','our','us','can','may','will','has','have','had','do','does','did','not','no','no','effect','effects','study','studies','research','analysis','between','among','during','after','before','into','about','over','under','than','more','most','less','least','such','which','who','whom','what','when','where','why','how'];
+    var wordCount = {};
+    articles.forEach(function(a) {
+      var words = (a.title || '').toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/);
+      words.forEach(function(w) {
+        if (w.length > 3 && stopWords.indexOf(w) < 0) {
+          wordCount[w] = (wordCount[w] || 0) + 1;
+        }
+      });
+    });
+    var topWords = Object.keys(wordCount).sort(function(a, b) { return wordCount[b] - wordCount[a]; }).slice(0, 20);
+    var maxWordCount = topWords.length > 0 ? wordCount[topWords[0]] : 1;
+    var cloudHtml = '<div style="margin-bottom:20px">';
+    cloudHtml += '<div style="font-weight:600;color:#5b21b6;margin-bottom:10px;font-size:13px">研究热点关键词（标题词频Top20）</div>';
+    cloudHtml += '<div style="padding:14px;background:#faf5ff;border-radius:8px;border:1px solid #ddd6fe;line-height:2">';
+    topWords.forEach(function(w, i) {
+      var size = 11 + Math.round((wordCount[w] / maxWordCount) * 10);
+      var opacity = 0.5 + (wordCount[w] / maxWordCount) * 0.5;
+      cloudHtml += '<span style="font-size:' + size + 'px;color:#5b21b6;opacity:' + opacity + ';margin-right:12px;font-weight:' + (i < 5 ? '700' : '400') + '">' + w + '</span>';
+    });
+    cloudHtml += '</div></div>';
+
+    // 3. 高被引文献排行
+    var cited = articles.filter(function(a) { return a.citationCount > 0; }).sort(function(a, b) { return b.citationCount - a.citationCount; }).slice(0, 10);
+    var citeHtml = '';
+    if (cited.length > 0) {
+      citeHtml = '<div style="margin-bottom:10px">';
+      citeHtml += '<div style="font-weight:600;color:#5b21b6;margin-bottom:10px;font-size:13px">高被引文献Top' + cited.length + '</div>';
+      citeHtml += '<div style="padding:10px;background:#faf5ff;border-radius:8px;border:1px solid #ddd6fe">';
+      cited.forEach(function(a, i) {
+        citeHtml += '<div style="padding:6px 0;border-bottom:1px solid #ede9fe;font-size:12px;display:flex;gap:8px;align-items:flex-start">' +
+          '<span style="background:#7c3aed;color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">' + (i+1) + '</span>' +
+          '<div style="flex:1"><div style="color:#3b0764;font-weight:500">' + a.title + '</div>' +
+          '<div style="color:#7c3aed;font-size:11px;margin-top:2px">被引' + a.citationCount + '次 · ' + a.journal + ' · ' + a.pubdate + '</div></div></div>';
+      });
+      citeHtml += '</div></div>';
+    }
+
+    // 4. 来源分布
+    var sourceCount = {};
+    articles.forEach(function(a) {
+      var s = a.source || 'PubMed';
+      sourceCount[s] = (sourceCount[s] || 0) + 1;
+    });
+    var sourceHtml = '<div style="margin-top:16px;padding:10px;background:#faf5ff;border-radius:8px;border:1px solid #ddd6fe;font-size:12px;color:#5b21b6">';
+    sourceHtml += '<span style="font-weight:600">数据来源：</span>';
+    Object.keys(sourceCount).forEach(function(s) {
+      sourceHtml += '<span style="margin-left:10px;background:#fff;padding:2px 8px;border-radius:10px;border:1px solid #ddd6fe">' + s + '：' + sourceCount[s] + '篇</span>';
+    });
+    sourceHtml += '</div>';
+
+    resultDiv.innerHTML = '<div style="font-weight:600;color:#5b21b6;margin-bottom:12px;font-size:14px">文献计量分析（基于' + articles.length + '篇文献）</div>' + chartHtml + cloudHtml + citeHtml + sourceHtml;
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">计量分析失败：' + error.message + '</div>';
+  }
+}
+
+// ===== 高级检索 =====
+
+let litAdvancedOpen = false;
+
+function toggleLitAdvanced() {
+  litAdvancedOpen = !litAdvancedOpen;
+  var panel = document.getElementById('litAdvancedPanel');
+  var btn = document.getElementById('litAdvancedBtn');
+  if (litAdvancedOpen) {
+    panel.style.display = 'block';
+    btn.textContent = '收起高级检索';
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = '高级检索';
+  }
+}
+
+// 构建高级检索查询
+function buildAdvancedQuery() {
+  var keyword = document.getElementById('phdLitSearchInput').value.trim();
+  var author = document.getElementById('litAdvAuthor').value.trim();
+  var journal = document.getElementById('litAdvJournal').value.trim();
+  var yearFrom = document.getElementById('litAdvYearFrom').value.trim();
+  var yearTo = document.getElementById('litAdvYearTo').value.trim();
+  var logic = document.getElementById('litAdvLogic').value;
+  var query = keyword;
+  if (author) {
+    if (query) query += ' ' + logic + ' ';
+    query += author + '[Author]';
+  }
+  if (journal) {
+    if (query) query += ' AND ';
+    query += '"' + journal + '"[Journal]';
+  }
+  if (yearFrom || yearTo) {
+    if (query) query += ' AND ';
+    query += (yearFrom || '1900') + ':' + (yearTo || '2026') + '[Date - Publication]';
+  }
+  return query;
+}
+
+// 高级检索执行
+async function advancedLitSearch() {
+  var query = buildAdvancedQuery();
+  if (!query) { alert('请输入至少一个检索条件'); return; }
+  document.getElementById('phdLitSearchInput').value = query;
+  await searchPhdLiterature();
+}
+
+// 导出当前检索结果
+function exportCurrentLiterature(format) {
+  var articles = window._currentLitArticles || [];
+  if (articles.length === 0) { alert('没有可导出的文献，请先检索'); return; }
+  var content = '';
+  var filename = '';
+  var mimeType = 'text/plain;charset=utf-8';
+  if (format === 'bibtex') {
+    content = articles.map(function(a, i) {
+      var key = 'ref' + (i+1);
+      var authors = a.authors.split(',').map(function(x) { return x.trim(); }).join(' and ');
+      return '@article{' + key + ',\n  title={' + a.title + '},\n  author={' + authors + '},\n  journal={' + a.journal + '},\n  year={' + a.pubdate + '}' + (a.doi ? ',\n  doi={' + a.doi + '}' : '') + '\n}';
+    }).join('\n\n');
+    filename = 'literature.bib';
+    mimeType = 'application/x-bibtex;charset=utf-8';
+  } else if (format === 'csv') {
+    content = '序号,标题,作者,期刊,年份,DOI,被引次数,来源,链接\n';
+    content += articles.map(function(a, i) {
+      return [i+1, '"'+a.title.replace(/"/g,'""')+'"', '"'+a.authors.replace(/"/g,'""')+'"', '"'+a.journal.replace(/"/g,'""')+'"', a.pubdate, a.doi||'', a.citationCount||0, a.source||'PubMed', a.url].join(',');
+    }).join('\n');
+    filename = 'literature.csv';
+    mimeType = 'text/csv;charset=utf-8';
+  } else {
+    content = '文献列表\n导出时间：' + new Date().toLocaleString() + '\n共' + articles.length + '篇\n\n';
+    articles.forEach(function(a, i) {
+      content += '[' + (i+1) + '] ' + a.title + '\n';
+      content += '作者：' + a.authors + '\n';
+      content += '期刊：' + a.journal + ' (' + a.pubdate + ')\n';
+      if (a.citationCount) content += '被引：' + a.citationCount + '次\n';
+      if (a.doi) content += 'DOI：' + a.doi + '\n';
+      content += '链接：' + a.url + '\n\n';
+    });
+    filename = 'literature.txt';
+  }
+  var blob = new Blob([content], {type: mimeType});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 面试文献准备：基于导师文献生成面试可能问到的问题
+async function generateInterviewLitQuestions() {
+  var articles = window._currentLitArticles || [];
+  if (articles.length === 0) { alert('请先追踪导师文献'); return; }
+  var resultDiv = document.getElementById('litInterviewQResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#7c3aed">AI正在基于导师文献生成面试问题...</div>';
+  try {
+    var litText = articles.slice(0, 8).map(function(a, i) {
+      return '【文献' + (i+1) + '】' + a.title + '（' + a.journal + ', ' + a.pubdate + '）\n摘要：' + (a.abstract || '无').substring(0, 300) + '\n';
+    }).join('\n');
+    var systemPrompt = `你是一位体育学/运动人体科学专业的博士招生面试考官。请基于以下导师的代表文献，生成一份面试中可能问到的文献相关问题清单。
+
+要求：
+1. 生成8-12个面试问题，分为以下类别：
+   - 基础理解类（3-4题）：考察考生对导师核心研究方向和经典文献的理解
+   - 深入分析类（3-4题）：考察考生对具体研究方法、实验设计、结论的深入理解
+   - 批判思考类（2题）：考察考生对研究局限性、争议点的批判性思考
+   - 拓展应用类（2题）：考察考生能否将导师研究拓展到新方向或结合自身研究
+2. 每个问题后附上"答题要点提示"，帮助考生准备
+3. 问题要具体、有针对性，避免空泛
+4. 最后给出"面试文献准备建议"：考生应该如何阅读和准备这些文献
+
+使用Markdown格式，总字数800-1200字。`;
+    var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+    var response = await callDeepSeekAPI(systemPrompt, '以下是导师的代表文献：\n\n' + litText, 2000, model);
+    resultDiv.innerHTML = '<div style="font-weight:600;color:#5b21b6;margin-bottom:10px;font-size:14px">面试文献问题清单（基于' + articles.length + '篇文献）</div><div class="md-content" style="padding:14px;background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px;font-size:13px;line-height:1.9;color:#3b0764">' + renderMarkdown(response) + '</div>';
+  } catch (error) {
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">生成失败：' + error.message + '</div>';
+  }
 }
 
 
