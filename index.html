@@ -30857,22 +30857,525 @@ function aiInterpretPlagReport() {
   var done = 0;
 
   function buildPrompt() {
-    var sys = '你是体育学学术论文查重报告解读专家，精通运动人体科学、运动训练学、体育教育训练学等领域的学术规范。' +
-      '用户给你一份查重报告的结构化数据（来源于知网/万方/维普/格子达等平台），请进行专业解读。' +
+    var sys = '你是体育学学术论文查重报告深度解读专家，精通运动人体科学、运动训练学、体育教育训练学、运动康复学等领域的学术规范。' +
+      '用户给你一份查重报告的结构化数据（来源于知网/万方/维普/格子达等平台），请逐条精细解读。' +
       '要求：1) 基于给定数据客观分析，严禁编造报告中不存在的数字；2) 结合硕博学位论文常见重复率要求（博士一般<10-15%，硕士<15-20%，以学校规定为准）；' +
-      '3) 只输出严格JSON，不要任何其他文字或代码块标记。JSON格式：' +
-      '{"overall":"整体评估，2-3句话","level":"达标|接近临界|超标","weakPoints":["薄弱点1","薄弱点2","薄弱点3"],"riskAlerts":["风险1","风险2"],"rewriteStrategy":"总体改写策略，100字内","priority":["优先项1","优先项2","优先项3"],"prediction":"达标预测与建议，60字内"}';
+      '3) 对【每条重复片段】单独分析：判断其所属类别（引言套话/方法模板/文献综述/讨论表述/数据描述/概念定义/其他）与严重度（高/中/低），并给出针对该片段的改写成句建议；' +
+      '4) 对严重度最高的3处片段，额外提供完整改写示范（原句改写为新句，保留专业术语）；' +
+      '5) 只输出严格JSON，不要任何其他文字或代码块标记。JSON格式：' +
+      '{"overall":"整体评估，2-3句话","level":"达标|接近临界|超标","metrics":[{"name":"指标名","value":"数值","judge":"判定","advice":"建议"},{"name":"指标名2","value":"数值","judge":"判定","advice":"建议"}],"segments":[{"no":1,"category":"类别","severity":"高|中|低","advice":"该片段改写成句建议","rewrite":"（仅最严重3处填写）原句改写为新句"},{"no":2,"category":"类别","severity":"高|中|低","advice":"建议"}],"weakPoints":["薄弱点1","薄弱点2","薄弱点3"],"riskAlerts":["风险1","风险2"],"rewriteStrategy":"总体改写策略，100字内","priority":["优先项1","优先项2","优先项3"],"prediction":"达标预测与建议，60字内","checklist":["逐条复核清单1","逐条复核清单2","逐条复核清单3"]}';
+    var segText = '';
+    if (data.dupSegments && data.dupSegments.length) {
+      var list = data.dupSegments.map(function(s, i) {
+        return (i + 1) + '. ' + s.substring(0, 100);
+      });
+      segText = list.join('\n');
+    } else {
+      segText = '无';
+    }
     var user = '【报告文件名】' + (data.filename || '未命名') + '\n' +
       '【总重复率】' + (data.rate !== null ? data.rate.toFixed(1) + '%' : '未识别') + '（识别标签：' + (data.rateLabel || '无') + '）\n' +
       '【辅助指标】' + (Object.keys(data.auxRates).length ? Object.keys(data.auxRates).map(function(k){return k+'='+data.auxRates[k].toFixed(1)+'%';}).join('，') : '无') + '\n' +
       '【单篇最大复制比】' + (data.auxRates['单篇最大'] !== undefined ? data.auxRates['单篇最大'].toFixed(1) + '%' : '未识别') + '\n' +
       '【重复片段数量】' + (data.dupSegments ? data.dupSegments.length : 0) + '处\n' +
-      '【重复片段示例】\n' + (data.dupSegments ? data.dupSegments.slice(0, 8).map(function(s,i){return (i+1)+'. '+s.substring(0,60);}).join('\n') : '无') + '\n\n' +
+      '【全部重复片段】\n' + segText + '\n\n' +
       '【学校要求阈值】' + (threshold !== null ? threshold + '%' : '未提供，请按常见标准评估') + '\n\n' +
       '请输出JSON。';
     return { sys: sys, user: user };
   }
+  var p = buildPrompt();
+  function callReportModel(m, retries) {
+    return callDeepSeekAPI(p.sys, p.user, 3600, m.value).catch(function(e) {
+      if (retries > 0) {
+        return new Promise(function(resolve, reject) {
+          setTimeout(function() {
+            callReportModel(m, retries - 1).then(resolve).catch(reject);
+          }, 3000);
+        });
+      }
+      throw e;
+    });
+  }
+  models.forEach(function(m) {
+    callReportModel(m, 1).then(function(resp) {
+      results.push({ model: m, raw: resp, ok: true });
+      done++;
+      updateProgress();
+      if (done >= models.length) finishInterpret(results, models, threshold);
+    }).catch(function(e) {
+      results.push({ model: m, raw: '', ok: false, error: (e.message||'').substring(0,50) });
+      done++;
+      updateProgress();
+      if (done >= models.length) finishInterpret(results, models, threshold);
+    });
+  });
 
+  function updateProgress() {
+    var pe = document.getElementById('aiReportProgress');
+    var bar = document.getElementById('aiReportBar');
+    if (pe) {
+      var doneNames = results.filter(function(r){ return r.ok; }).map(function(r){ return r.model.label; });
+      pe.innerHTML = '已完成 ' + done + '/' + models.length + '：' + (doneNames.length ? doneNames.join('、') : '处理中...');
+    }
+    if (bar) bar.style.width = Math.round(done / models.length * 100) + '%';
+  }
+}
+
+function parseReportJson(raw) {
+  if (!raw) return null;
+  var cleaned = String(raw).replace(/```json/gi, '').replace(/```/g, '').trim();
+  // 尝试1: 直接解析
+  try { return JSON.parse(cleaned); } catch(e) {}
+  // 尝试2: 提取首个{到最后一个}之间的内容
+  var s = cleaned.indexOf('{');
+  var e = cleaned.lastIndexOf('}');
+  if (s >= 0 && e > s) {
+    try { return JSON.parse(cleaned.substring(s, e + 1)); } catch(e2) {}
+  }
+  // 尝试3: 宽松逐行解析关键字段
+  try {
+    var obj = {};
+    var lines = cleaned.split(/[\n,]+/);
+    for (var li = 0; li < lines.length; li++) {
+      var mm = lines[li].match(/^\s*["']?(overall|level|rewriteStrategy|prediction)["']?\s*[:：]\s*["']?(.*?)["']?\s*$/);
+      if (mm) obj[mm[1]] = mm[2];
+    }
+    if (obj.overall || obj.level) return obj;
+  } catch(e3) {}
+  return null;
+}
+
+function finishInterpret(results, models, threshold) {
+  __aiReportRunning = false;
+  var resultEl = document.getElementById('aiReportResult');
+  var parsedList = [];
+  results.forEach(function(r) {
+    if (r.ok) {
+      var j = parseReportJson(r.raw);
+      if (j) parsedList.push({ model: r.model, data: j });
+    }
+  });
+
+  var html = '';
+  html += '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-top:12px">';
+  html += '<div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:2px">🤖 AI多模型解读报告</div>';
+  html += '<div style="font-size:11px;color:#6b7280;margin-bottom:12px">' + models.length + '个模型独立解读' + (threshold !== null ? ' · 学校要求 ≤ ' + threshold + '%' : '') + ' · 参考标准：博士≤10-15% / 硕士≤15-20%（以学校规定为准）</div>';
+
+  if (parsedList.length === 0) {
+    var failInfo = results.filter(function(r){return !r.ok;}).map(function(r){return r.model.label + ':' + (r.error||'');}).join('；');
+    html += '<div style="padding:16px;background:#fef2f2;border-radius:8px;font-size:12px;color:#dc2626;line-height:1.8">所有模型解读失败，请稍后重试。<br>失败详情：' + failInfo + '</div>';
+  } else {
+    var levels = parsedList.map(function(p){ return p.data.level || '未知'; });
+    var levelCount = {};
+    levels.forEach(function(l){ levelCount[l] = (levelCount[l]||0) + 1; });
+    var topLevel = Object.keys(levelCount).sort(function(a,b){ return levelCount[b] - levelCount[a]; })[0];
+    var isConsensus = levelCount[topLevel] >= parsedList.length * 0.6;
+
+    html += '<div style="padding:12px;background:' + (isConsensus ? '#f0fdf4' : '#fffbeb') + ';border-left:4px solid ' + (isConsensus ? '#16a34a' : '#f59e0b') + ';border-radius:8px;margin-bottom:12px">';
+    html += '<div style="font-size:12px;font-weight:700;color:' + (isConsensus ? '#166534' : '#92400e') + ';margin-bottom:4px">' +
+      (isConsensus ? '✅ 模型共识：' : '⚠️ 模型存在分歧：') + '整体判定「' + topLevel + '」</div>';
+    html += '<div style="font-size:11px;color:#6b7280">各模型判定：' + levels.join(' / ') + '（' + levelCount[topLevel] + '/' + parsedList.length + '个模型一致）</div>';
+    html += '</div>';
+
+    var lead = null;
+    for (var li = 0; li < parsedList.length; li++) {
+      if (parsedList[li].model.value === 'deepseek-v4-pro') { lead = parsedList[li]; break; }
+    }
+    if (!lead) lead = parsedList[0];
+    if (lead && lead.data.overall) {
+      html += '<div style="padding:12px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;margin-bottom:12px">' +
+        '<div style="font-size:11px;font-weight:700;color:#6d28d9;margin-bottom:4px">📌 综合评估（主审：' + lead.model.label + '）</div>' +
+        '<div style="font-size:13px;color:#4c1d95;line-height:1.8">' + lead.data.overall + '</div></div>';
+    }
+
+    // ---- 指标明细卡 ----
+    if (lead && lead.data.metrics && lead.data.metrics.length) {
+      html += '<div style="padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:12px">' +
+        '<div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:8px">📊 指标逐项解读</div>' +
+        '<div style="display:flex;flex-direction:column;gap:6px">';
+      lead.data.metrics.forEach(function(mt) {
+        html += '<div style="display:flex;gap:8px;align-items:flex-start;background:#fff;border:1px solid #eef2f7;border-radius:6px;padding:8px 10px">' +
+          '<span style="font-size:11px;font-weight:700;color:#0f172a;min-width:90px;padding-top:1px">' + (mt.name||'') + '</span>' +
+          '<span style="font-size:12px;font-weight:700;color:#6366f1;min-width:60px">' + (mt.value||'') + '</span>' +
+          '<div style="flex:1;font-size:11px;color:#475569;line-height:1.6"><b style="color:#b91c1c">' + (mt.judge||'') + '</b>　' + (mt.advice||'') + '</div>' +
+          '</div>';
+      });
+      html += '</div></div>';
+    }
+
+    // ---- 逐片段分析表 ----
+    if (lead && lead.data.segments && lead.data.segments.length) {
+      var segCount = lead.data.segments.length;
+      var highCount = 0, midCount = 0, lowCount = 0;
+      lead.data.segments.forEach(function(sg){ if (sg.severity === '高') highCount++; else if (sg.severity === '中') midCount++; else lowCount++; });
+      html += '<div style="padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin-bottom:12px">' +
+        '<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">🔬 逐片段细粒度分析（' + segCount + '处 · 高' + highCount + ' / 中' + midCount + ' / 低' + lowCount + '）</div>';
+      lead.data.segments.forEach(function(sg) {
+        var sevColor = sg.severity === '高' ? '#dc2626' : sg.severity === '中' ? '#f59e0b' : '#16a34a';
+        html += '<div style="background:#fff;border:1px solid #fef3c7;border-radius:6px;padding:8px 10px;margin-bottom:6px">' +
+          '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px">' +
+          '<span style="font-size:10px;font-weight:700;color:#78716c">片段' + (sg.no||'?') + '</span>' +
+          '<span style="font-size:10px;background:#f1f5f9;color:#475569;padding:1px 8px;border-radius:10px">' + (sg.category||'其他') + '</span>' +
+          '<span style="font-size:10px;font-weight:700;color:' + sevColor + ';background:' + sevColor + '18;padding:1px 8px;border-radius:10px">' + (sg.severity||'中') + '严重度</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:#334155;line-height:1.6;margin-bottom:4px">' + (sg.advice||'') + '</div>';
+        if (sg.rewrite) {
+          html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:6px 8px;font-size:11px;color:#14532d;line-height:1.6"><b>✍️ 改写示范：</b>' + sg.rewrite + '</div>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    var allWeak = [];
+    parsedList.forEach(function(p){ if (p.data.weakPoints && p.data.weakPoints.length) allWeak = allWeak.concat(p.data.weakPoints); });
+    var weakCount = {};
+    allWeak.forEach(function(w){ var key = w.substring(0, 10); weakCount[key] = (weakCount[key]||0) + 1; });
+    var topWeak = Object.keys(weakCount).sort(function(a,b){ return weakCount[b]-weakCount[a]; }).slice(0, 4);
+    html += '<div style="padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;margin-bottom:12px">' +
+      '<div style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:6px">🔴 薄弱环节（多模型聚焦）</div>';
+    if (topWeak.length) {
+      topWeak.forEach(function(w, i) {
+        html += '<div style="font-size:12px;color:#7f1d1d;line-height:1.8">' + (i+1) + '. ' + w + '（' + weakCount[w] + '个模型提及）</div>';
+      });
+    } else {
+      html += '<div style="font-size:12px;color:#7f1d1d">未能提取到明确薄弱点</div>';
+    }
+    html += '</div>';
+
+    var allRisks = [];
+    parsedList.forEach(function(p){ if (p.data.riskAlerts && p.data.riskAlerts.length) allRisks = allRisks.concat(p.data.riskAlerts); });
+    if (allRisks.length) {
+      html += '<div style="padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin-bottom:12px">' +
+        '<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ 风险预警</div>';
+      allRisks.slice(0, 4).forEach(function(r) {
+        html += '<div style="font-size:12px;color:#78350f;line-height:1.8">• ' + r + '</div>';
+      });
+      html += '</div>';
+    }
+
+    if (lead && lead.data.rewriteStrategy) {
+      html += '<div style="padding:12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;margin-bottom:12px">' +
+        '<div style="font-size:11px;font-weight:700;color:#0369a1;margin-bottom:4px">✏️ 总体改写策略</div>' +
+        '<div style="font-size:13px;color:#075985;line-height:1.8">' + lead.data.rewriteStrategy + '</div></div>';
+    }
+
+    if (lead && lead.data.priority && lead.data.priority.length) {
+      html += '<div style="padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;margin-bottom:12px">' +
+        '<div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:6px">🎯 改写优先级</div>';
+      lead.data.priority.forEach(function(pr, i) {
+        html += '<div style="font-size:12px;color:#14532d;line-height:1.8">' + (i+1) + '. ' + pr + '</div>';
+      });
+      html += '</div>';
+    }
+
+    if (lead && lead.data.prediction) {
+      html += '<div style="padding:12px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;margin-bottom:12px">' +
+        '<div style="font-size:11px;font-weight:700;color:#7e22ce;margin-bottom:4px">📊 达标预测' + (threshold !== null ? '（目标 ≤ ' + threshold + '%）' : '') + '</div>' +
+        '<div style="font-size:13px;color:#6b21a8;line-height:1.8">' + lead.data.prediction + '</div></div>';
+    }
+
+    if (lead && lead.data.checklist && lead.data.checklist.length) {
+      html += '<div style="padding:12px;background:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;margin-bottom:12px">' +
+        '<div style="font-size:11px;font-weight:700;color:#0e7490;margin-bottom:6px">✅ AI逐条复核清单</div>';
+      lead.data.checklist.forEach(function(cl, i) {
+        html += '<div style="font-size:12px;color:#155e75;line-height:1.8"><input type="checkbox" style="margin-right:6px" onclick="return false">' + cl + '</div>';
+      });
+      html += '</div>';
+    }
+
+    var failedModels = [];
+    results.forEach(function(r) {
+      if (r.ok) {
+        var j = parseReportJson(r.raw);
+        if (!j) failedModels.push(r.model.label + '(返回无法解析)');
+      } else {
+        failedModels.push(r.model.label + '(' + (r.error||'调用失败') + ')');
+      }
+    });
+    if (failedModels.length) {
+      html += '<div style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;color:#64748b;margin-bottom:12px">ℹ️ ' + parsedList.length + '/' + models.length + '个模型成功解读；未计入：' + failedModels.join('；') + '</div>';
+    }
+
+    html += '<div style="font-size:12px;font-weight:700;color:#1f2937;margin:14px 0 8px">🔎 各模型详细解读（点击展开）</div>';
+    parsedList.forEach(function(p, i) {
+      html += '<div style="border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;overflow:hidden">' +
+        '<div style="padding:8px 12px;background:#f9fafb;font-size:12px;font-weight:600;color:#374151;cursor:pointer" onclick="var el=document.getElementById(\'aiModelDetail-' + i + '\');el.style.display=el.style.display===\'none\'?\'block\':\'none\'">' +
+        '🤖 ' + p.model.label + ' <span style="font-size:10px;color:#6b7280;font-weight:400">' + (p.model.tag||'') + '</span>' +
+        '<span style="float:right;color:#9ca3af">▾</span></div>' +
+        '<div id="aiModelDetail-' + i + '" style="display:none;padding:10px 12px;font-size:12px;color:#4b5563;line-height:1.9;background:#fff;border-top:1px solid #f3f4f6">' +
+        '<div><b>整体评估：</b>' + (p.data.overall || '无') + '</div>' +
+        '<div style="margin-top:4px"><b>判定：</b>' + (p.data.level || '未知') + '</div>' +
+        '<div style="margin-top:4px"><b>指标解读：</b>' + ((p.data.metrics||[]).map(function(mt){return mt.name+'='+mt.value+'('+mt.judge+')';}).join('；') || '无') + '</div>' +
+        '<div style="margin-top:4px"><b>薄弱点：</b>' + ((p.data.weakPoints||[]).join('；') || '无') + '</div>' +
+        '<div style="margin-top:4px"><b>风险：</b>' + ((p.data.riskAlerts||[]).join('；') || '无') + '</div>' +
+        '<div style="margin-top:4px"><b>改写策略：</b>' + (p.data.rewriteStrategy || '无') + '</div>' +
+        '<div style="margin-top:4px"><b>优先级：</b>' + ((p.data.priority||[]).join('；') || '无') + '</div>' +
+        '<div style="margin-top:4px"><b>达标预测：</b>' + (p.data.prediction || '无') + '</div>' +
+        '<div style="margin-top:4px"><b>复核清单：</b>' + ((p.data.checklist||[]).join('；') || '无') + '</div>' +
+        '</div></div>';
+    });
+
+    html += '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+      '<button onclick="copyAiReport()" style="background:#2563eb;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📋 复制解读报告</button>' +
+      '</div>';
+  }
+
+  html += '</div>';
+  resultEl.innerHTML = html;
+  resultEl.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+}
+
+
+// ========== 论文工作台 - 查重报告上传解析 ==========
+function parsePlagReport() {
+  var fileInput = document.getElementById('plagReportFile');
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    alert('请先选择查重报告文件（HTML或TXT）');
+    return;
+  }
+  var file = fileInput.files[0];
+  var resultEl = document.getElementById('plagReportResult');
+  resultEl.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280;font-size:13px">⏳ 正在解析报告 <b>' + file.name + '</b>...</div>';
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var content = e.target.result;
+    setTimeout(function() {
+      try {
+        analyzePlagReport(content, file.name);
+      } catch(err) {
+        resultEl.innerHTML = '<div style="padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:12px;color:#dc2626">报告解析失败：' + err.message + '</div>';
+      }
+    }, 200);
+  };
+  reader.onerror = function() {
+    resultEl.innerHTML = '<div style="padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:12px;color:#dc2626">文件读取失败，请重试</div>';
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function stripHtmlTags(html) {
+  return html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+}
+
+function analyzePlagReport(content, filename) {
+  var resultEl = document.getElementById('plagReportResult');
+  var lower = content.toLowerCase();
+  var isHtml = /<html|<body|<head|<div|<table/i.test(lower);
+
+  // ---- 1. 提取重复率（多种平台格式兼容） ----
+  var rate = null;
+  var rateLabel = '';
+  var patterns = [
+    { re: /总文字复制比[^0-9]*([\d.]+)\s*%/, label: '总文字复制比' },
+    { re: /总相似比[^0-9]*([\d.]+)\s*%/, label: '总相似比' },
+    { re: /总相似度[^0-9]*([\d.]+)\s*%/, label: '总相似度' },
+    { re: /复制比[^0-9]*([\d.]+)\s*%/, label: '复制比' },
+    { re: /重复率[^0-9]*([\d.]+)\s*%/, label: '重复率' },
+    { re: /相似比[^0-9]*([\d.]+)\s*%/, label: '相似比' },
+    { re: /相似度[^0-9]*([\d.]+)\s*%/, label: '相似度' },
+    { re: /重复[率比][^0-9]*([\d.]+)\s*%/, label: '重复率' },
+    { re: /overall similarity[^\d]*([\d.]+)\s*%/i, label: 'Overall Similarity' }
+  ];
+  for (var pi = 0; pi < patterns.length; pi++) {
+    var m = content.match(patterns[pi].re);
+    if (m) { rate = parseFloat(m[1]); rateLabel = patterns[pi].label; break; }
+  }
+
+  // ---- 2. 提取辅助指标（去除本人/去除引用/去除已发表） ----
+  var auxRates = {};
+  var auxPatterns = [
+    { re: /去除本人(?:文献)?复制比[^0-9]*([\d.]+)\s*%/, key: '去除本人' },
+    { re: /去除引用(?:文献)?复制比[^0-9]*([\d.]+)\s*%/, key: '去除引用' },
+    { re: /去除已发表(?:文献)?复制比[^0-9]*([\d.]+)\s*%/, key: '去除已发表' },
+    { re: /单篇最大文字复制比[^0-9]*([\d.]+)\s*%/, key: '单篇最大' },
+    { re: /单篇最大相似比[^0-9]*([\d.]+)\s*%/, key: '单篇最大' },
+    { re: /去除本人(?:文献)?相似比[^0-9]*([\d.]+)\s*%/, key: '去除本人' },
+    { re: /去除引用(?:文献)?相似比[^0-9]*([\d.]+)\s*%/, key: '去除引用' }
+  ];
+  for (var ai = 0; ai < auxPatterns.length; ai++) {
+    var am = content.match(auxPatterns[ai].re);
+    if (am) auxRates[auxPatterns[ai].key] = parseFloat(am[1]);
+  }
+
+  // ---- 3. 提取重复片段（红色高亮文本） ----
+  var dupSegments = [];
+  if (isHtml) {
+    // 知网/格子达/维普常见红色标注格式
+    var colorPatterns = [
+      /<font[^>]*color\s*=\s*["']?(?:#ff0000|red|#f00|#e10000|#cc0000|#ff0033|rgb\(255,\s*0,\s*0\))["']?[^>]*>([\s\S]*?)<\/font>/gi,
+      /<span[^>]*style\s*=\s*["'][^"']*color\s*:\s*(?:#ff0000|red|#f00|#e10000|#cc0000|rgb\(255,\s*0,\s*0\))[^"']*["'][^>]*>([\s\S]*?)<\/span>/gi,
+      /<span[^>]*style\s*=\s*["'][^"']*background(?:-color)?\s*:\s*(?:#ff0000|#fecaca|#fee2e2|red|#ffcccc)[^"']*["'][^>]*>([\s\S]*?)<\/span>/gi
+    ];
+    var seen = {};
+    for (var cp = 0; cp < colorPatterns.length; cp++) {
+      var re = colorPatterns[cp];
+      var mm;
+      while ((mm = re.exec(content)) !== null) {
+        var segText = stripHtmlTags(mm[1]).trim();
+        if (segText.length >= 4 && !seen[segText]) {
+          seen[segText] = true;
+          dupSegments.push(segText);
+        }
+      }
+    }
+    // 兼容"标红"等特殊标记
+    var redMark = content.match(/<mark[^>]*>([\s\S]*?)<\/mark>/gi);
+    if (redMark) {
+      redMark.forEach(function(mk) {
+        var t = stripHtmlTags(mk).trim();
+        if (t.length >= 4 && !seen[t]) { seen[t] = true; dupSegments.push(t); }
+      });
+    }
+  } else {
+    // TXT纯文本：按常见重复标记行提取
+    var lines = content.split(/[\n\r]+/);
+    for (var li = 0; li < lines.length; li++) {
+      var line = lines[li].trim();
+      if ((line.indexOf('重复') >= 0 || line.indexOf('标红') >= 0 || line.indexOf('相似') >= 0) && line.length > 6 && line.length < 500) {
+        var clean = line.replace(/^[^\u4e00-\u9fa5a-zA-Z]+/, '').substring(0, 100);
+        if (clean.length >= 6 && dupSegments.indexOf(clean) < 0) dupSegments.push(clean);
+      }
+    }
+  }
+  if (dupSegments.length > 50) dupSegments = dupSegments.slice(0, 50);
+
+  // ---- 4. 生成分析结果 ----
+  var html = '';
+  html += '<div style="padding:12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;margin-bottom:12px">' +
+    '<div style="font-size:13px;font-weight:700;color:#0369a1;margin-bottom:6px">📄 ' + filename + '</div>' +
+    '<div style="font-size:12px;color:#075985;line-height:1.8">报告类型：' + (isHtml ? 'HTML 报告' : 'TXT 文本报告') + '</div>' +
+  '</div>';
+
+  if (rate !== null) {
+    var level = rate > 30 ? '高重复' : rate > 15 ? '中等重复' : rate > 8 ? '轻度重复' : '基本合格';
+    var levelColor = rate > 30 ? '#dc2626' : rate > 15 ? '#f59e0b' : rate > 8 ? '#3b82f6' : '#16a34a';
+    html += '<div style="padding:12px;background:' + levelColor + '10;border-left:4px solid ' + levelColor + ';border-radius:8px;margin-bottom:12px">' +
+      '<div style="font-size:14px;font-weight:700;color:' + levelColor + '">总重复率：' + rate.toFixed(1) + '%（' + level + '）</div>';
+    if (Object.keys(auxRates).length > 0) {
+      html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">';
+      for (var k in auxRates) {
+        html += '<span style="font-size:11px;background:#fff;padding:3px 8px;border-radius:4px;color:#374151">' + k + '：' + auxRates[k].toFixed(1) + '%</span>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  } else {
+    html += '<div style="padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;margin-bottom:12px">⚠️ 未在报告中识别到重复率数值，请确认报告为完整导出（可能只导出了片段）。已解析出重复片段 ' + dupSegments.length + ' 处。</div>';
+  }
+
+  if (dupSegments.length > 0) {
+    html += '<div style="font-size:13px;font-weight:600;color:#1f2937;margin-bottom:8px">🔴 报告标注的重复片段（' + dupSegments.length + '处）</div>';
+    html += '<div style="max-height:260px;overflow-y:auto">';
+    dupSegments.forEach(function(seg, i) {
+      html += '<div style="padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;margin-bottom:6px">' +
+        '<div style="font-size:10px;color:#dc2626;font-weight:600;margin-bottom:3px">重复 ' + (i+1) + '</div>' +
+        '<div style="font-size:12px;color:#374151;line-height:1.6">' + seg + '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+
+    // 降重建议
+    html += '<div style="margin-top:12px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px">' +
+      '<div style="font-size:12px;font-weight:600;color:#166534;margin-bottom:6px">💡 降重建议</div>' +
+      '<ul style="margin:0;padding-left:16px;font-size:12px;color:#14532d;line-height:1.9">' +
+      '<li>对重复片段进行句式改写（被动转主动、拆分长句、调整语序）</li>' +
+      '<li>用同义词替换高频学术套话，保留核心术语不变</li>' +
+      '<li>适当补充个人研究数据、案例或分析，增加原创内容占比</li>' +
+      '<li>直接引用请规范标注引文，避免整段照搬</li>' +
+      '</ul>' +
+    '</div>';
+  } else if (rate === null) {
+    html += '<div style="text-align:center;padding:20px;color:#9ca3af;font-size:12px">未能从报告中解析出重复内容，请尝试导出完整HTML报告</div>';
+  } else {
+    html += '<div style="text-align:center;padding:20px;color:#16a34a;font-size:13px">✅ 报告中未检测到红色标注的重复片段</div>';
+  }
+
+  resultEl.innerHTML = html;
+
+  // 存储解析数据供AI多模型解读使用
+  window.__plagReportData = {
+    filename: filename,
+    rate: rate,
+    rateLabel: rateLabel,
+    auxRates: auxRates,
+    dupSegments: dupSegments,
+    isHtml: isHtml
+  };
+  var aiArea = document.getElementById('aiReportInterpretArea');
+  if (aiArea) aiArea.style.display = 'block';
+}
+
+// ========== AI查重报告深度解读（多模型委员会） ==========
+var __aiReportRunning = false;
+
+var REPORT_MODELS = [
+  { value: 'deepseek-chat', label: 'DeepSeek V3', tag: '基线解读·均衡' },
+  { value: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro', tag: '主审·最强推理' },
+  { value: 'deepseek-v4-flash', label: 'DeepSeek V4 Flash', tag: '快速复核' },
+  { value: 'deepseek-v4-flash-vision-exp', label: 'DeepSeek V4 Vision', tag: '多模态增强' },
+  { value: 'hy3', label: '腾讯混元 hy3', tag: '通用补充' }
+];
+
+function aiInterpretPlagReport() {
+  if (__aiReportRunning) { alert('AI解读进行中，请稍候'); return; }
+  var data = window.__plagReportData;
+  if (!data) { alert('请先上传并解析查重报告'); return; }
+  if (data.rate === null && (!data.dupSegments || data.dupSegments.length === 0)) {
+    alert('报告中未解析出有效数据，无法进行AI解读'); return;
+  }
+
+  var modeEl = document.getElementById('aiReportMode');
+  var mode = modeEl ? modeEl.value : 'fast';
+  var thEl = document.getElementById('aiReportThreshold');
+  var threshold = thEl && thEl.value ? parseFloat(thEl.value) : null;
+  if (thEl && thEl.value && isNaN(threshold)) { alert('请输入有效的阈值数字，如15'); return; }
+
+  var models;
+  if (mode === 'fast') models = REPORT_MODELS.slice(0, 1);
+  else if (mode === 'deep') models = REPORT_MODELS.slice(0, 3);
+  else models = REPORT_MODELS.slice(0);
+
+  var resultEl = document.getElementById('aiReportResult');
+  __aiReportRunning = true;
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="padding:16px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px">' +
+    '<div style="font-size:13px;font-weight:600;color:#6d28d9;margin-bottom:6px">🤖 AI深度解读中（' + models.length + '个模型并行分析）...</div>' +
+    '<div id="aiReportProgress" style="font-size:11px;color:#8b5cf6;line-height:1.8">准备中...</div>' +
+    '<div style="width:100%;max-width:400px;height:6px;background:#ede9fe;border-radius:3px;margin-top:8px;overflow:hidden"><div id="aiReportBar" style="height:100%;width:0%;background:#8b5cf6;transition:width .3s"></div></div>' +
+    '<div style="font-size:10px;color:#a78bfa;margin-top:8px">全量模式约需2-3分钟，请勿关闭页面</div></div>';
+
+  var results = [];
+  var done = 0;
+
+  function buildPrompt() {
+    var sys = '你是体育学学术论文查重报告深度解读专家，精通运动人体科学、运动训练学、体育教育训练学、运动康复学等领域的学术规范。' +
+      '用户给你一份查重报告的结构化数据（来源于知网/万方/维普/格子达等平台），请逐条精细解读。' +
+      '要求：1) 基于给定数据客观分析，严禁编造报告中不存在的数字；2) 结合硕博学位论文常见重复率要求（博士一般<10-15%，硕士<15-20%，以学校规定为准）；' +
+      '3) 对【每条重复片段】单独分析：判断其所属类别（引言套话/方法模板/文献综述/讨论表述/数据描述/概念定义/其他）与严重度（高/中/低），并给出针对该片段的改写成句建议；' +
+      '4) 对严重度最高的3处片段，额外提供完整改写示范（原句改写为新句，保留专业术语）；' +
+      '5) 只输出严格JSON，不要任何其他文字或代码块标记。JSON格式：' +
+      '{"overall":"整体评估，2-3句话","level":"达标|接近临界|超标","metrics":[{"name":"指标名","value":"数值","judge":"判定","advice":"建议"},{"name":"指标名2","value":"数值","judge":"判定","advice":"建议"}],"segments":[{"no":1,"category":"类别","severity":"高|中|低","advice":"该片段改写成句建议","rewrite":"（仅最严重3处填写）原句改写为新句"},{"no":2,"category":"类别","severity":"高|中|低","advice":"建议"}],"weakPoints":["薄弱点1","薄弱点2","薄弱点3"],"riskAlerts":["风险1","风险2"],"rewriteStrategy":"总体改写策略，100字内","priority":["优先项1","优先项2","优先项3"],"prediction":"达标预测与建议，60字内","checklist":["逐条复核清单1","逐条复核清单2","逐条复核清单3"]}';
+    var segText = '';
+    if (data.dupSegments && data.dupSegments.length) {
+      var list = data.dupSegments.map(function(s, i) {
+        return (i + 1) + '. ' + s.substring(0, 100);
+      });
+      segText = list.join('\n');
+    } else {
+      segText = '无';
+    }
+    var user = '【报告文件名】' + (data.filename || '未命名') + '\n' +
+      '【总重复率】' + (data.rate !== null ? data.rate.toFixed(1) + '%' : '未识别') + '（识别标签：' + (data.rateLabel || '无') + '）\n' +
+      '【辅助指标】' + (Object.keys(data.auxRates).length ? Object.keys(data.auxRates).map(function(k){return k+'='+data.auxRates[k].toFixed(1)+'%';}).join('，') : '无') + '\n' +
+      '【单篇最大复制比】' + (data.auxRates['单篇最大'] !== undefined ? data.auxRates['单篇最大'].toFixed(1) + '%' : '未识别') + '\n' +
+      '【重复片段数量】' + (data.dupSegments ? data.dupSegments.length : 0) + '处\n' +
+      '【全部重复片段】\n' + segText + '\n\n' +
+      '【学校要求阈值】' + (threshold !== null ? threshold + '%' : '未提供，请按常见标准评估') + '\n\n' +
+      '请输出JSON。';
+    return { sys: sys, user: user };
+  }
   var p = buildPrompt();
   function callReportModel(m, retries) {
     return callDeepSeekAPI(p.sys, p.user, 2600, m.value).catch(function(e) {
