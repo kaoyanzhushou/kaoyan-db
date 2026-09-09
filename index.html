@@ -4979,6 +4979,7 @@ console.log('✅ 学习工具入口已加载');
         <input type="password" id="loginPassword" placeholder="请输入密码" onkeypress="if(event.key==='Enter')doLogin()">
       </div>
       <button class="login-btn" onclick="doLogin()">登 录</button>
+      <button class="login-btn" style="margin-top:8px;background:linear-gradient(135deg,#10b981,#059669);font-size:13px;padding:10px" onclick="quickAdminLogin()">⚡ 一键默认登录 (admin)</button>
     </div>
 
     <div id="registerForm" style="display:none">
@@ -5000,7 +5001,7 @@ console.log('✅ 学习工具入口已加载');
       </div>
       <button class="login-btn" onclick="doRegister()">注 册</button>
     </div>
-    <p class="login-hint">🎫 注册需邀请码，请联系管理员获取<br>数据保存在本地浏览器，无需联网</p>
+    <p class="login-hint">✨ 默认账号：admin / admin123（直接登录）<br>🎫 注册需邀请码，请联系管理员获取<br>数据保存在本地浏览器，无需联网</p>
   </div>
 </div>
 
@@ -31559,7 +31560,14 @@ setTimeout(generateAIAdvice, 500);
 const USERS_KEY = 'kaoyan_users';
 const CURRENT_USER_KEY = 'kaoyan_current_user';
 function getUsers(){
-try{ return JSON.parse(localStorage.getItem(USERS_KEY)) || {}; }
+try{
+  var users = JSON.parse(localStorage.getItem(USERS_KEY)) || {};
+  if(!users['admin']){
+    users['admin'] = {username:'admin',password:btoa('admin123'),registerTime:new Date().toISOString(),invitedBy:'system',inviteCodeUsed:'DEFAULT',studyData:{},isDefault:true};
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
+  return users;
+}
 catch(e){ return {}; }
 }
 function saveUsers(users){
@@ -31641,6 +31649,12 @@ document.getElementById('loginUsername').value = username;
 document.getElementById('loginPassword').focus();
 }, 1200);
 }
+function quickAdminLogin(){
+  document.getElementById('loginUsername').value = 'admin';
+  document.getElementById('loginPassword').value = 'admin123';
+  setTimeout(function(){ doLogin(); }, 200);
+}
+
 function doLogin(){
 const username = document.getElementById('loginUsername').value.trim();
 const password = document.getElementById('loginPassword').value;
