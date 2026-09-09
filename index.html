@@ -6987,6 +6987,8 @@ console.log('✅ 学习工具入口已加载');
         <input type="text" id="paperLitSearch" placeholder="搜索文献标题、作者、关键词..." style="flex:1;min-width:200px;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none" oninput="renderPaperLiterature()">
         <button onclick="showAddLitModal()" style="background:#16a34a;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加文献</button>
         <button onclick="paperLitAISearch()" style="background:#0ea5e9;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI智能检索</button>
+        <button onclick="showLitReviewModal()" style="background:#8b5cf6;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI文献综述</button>
+        <button onclick="showCitationModal()" style="background:#f59e0b;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">引用格式</button>
       </div>
       <!-- 统计 -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
@@ -7000,6 +7002,89 @@ console.log('✅ 学习工具入口已加载');
       <div id="paperLitEmpty" style="text-align:center;padding:50px 20px;color:#9ca3af;display:none">
         <div style="font-size:40px;margin-bottom:12px">📚</div>
         <div style="font-size:14px">还没有文献，点击「添加文献」开始管理你的文献库</div>
+      </div>
+    </div>
+
+
+    <!-- AI文献综述模态框 -->
+    <div id="litReviewModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:12px;width:90%;max-width:700px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column">
+        <div style="padding:16px 20px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:16px;font-weight:700">AI 文献综述自动生成</div>
+          <button onclick="closeLitReviewModal()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">×</button>
+        </div>
+        <div style="padding:20px;overflow-y:auto;flex:1">
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">综述主题</label>
+            <input type="text" id="litReviewTopic" placeholder="如：运动干预对2型糖尿病患者血糖控制的影响" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none">
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">选择参考文献（从文献库中选择，或在下方手动输入）</label>
+            <div id="litReviewSelectList" style="max-height:150px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:8px;background:#f9fafb"></div>
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">或手动输入文献内容（每篇一行，格式：作者. 标题. 期刊, 年份, 卷(期): 页码）</label>
+            <textarea id="litReviewManual" rows="4" placeholder="张三, 李四. 运动干预对糖尿病的影响. 体育科学, 2023, 43(5): 12-20." style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;outline:none;resize:vertical;font-family:Consolas,monospace"></textarea>
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">综述类型</label>
+            <select id="litReviewType" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
+              <option value="narrative">叙述性综述（按主题组织）</option>
+              <option value="systematic">系统性综述（按PICO框架）</option>
+              <option value="meta">Meta分析框架（含效应量分析）</option>
+              <option value="timeline">时间线综述（按研究发展脉络）</option>
+            </select>
+          </div>
+          <button onclick="generateLitReview()" id="litReviewBtn" style="width:100%;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">生成 AI 文献综述</button>
+          <div id="litReviewResult" style="margin-top:16px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 引用格式生成模态框 -->
+    <div id="citationModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:12px;width:90%;max-width:650px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column">
+        <div style="padding:16px 20px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:16px;font-weight:700">引用格式自动生成</div>
+          <button onclick="closeCitationModal()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">×</button>
+        </div>
+        <div style="padding:20px;overflow-y:auto;flex:1">
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">文献类型</label>
+            <select id="citationType" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px" onchange="updateCitationFields()">
+              <option value="journal">期刊论文</option>
+              <option value="book">专著</option>
+              <option value="chapter">书中章节</option>
+              <option value="conference">会议论文</option>
+              <option value="thesis">学位论文</option>
+              <option value="web">网页/电子资源</option>
+            </select>
+          </div>
+          <div id="citationFields">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div><label style="font-size:12px;color:#374151;display:block;margin-bottom:4px">作者（多位用逗号分隔）</label><input type="text" id="citAuthors" placeholder="张三, 李四, 王五" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:12px"></div>
+              <div><label style="font-size:12px;color:#374151;display:block;margin-bottom:4px">发表年份</label><input type="text" id="citYear" placeholder="2023" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:12px"></div>
+            </div>
+            <div style="margin-bottom:10px"><label style="font-size:12px;color:#374151;display:block;margin-bottom:4px">论文标题</label><input type="text" id="citTitle" placeholder="运动干预对2型糖尿病患者血糖控制的影响" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:12px"></div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+              <div><label style="font-size:12px;color:#374151;display:block;margin-bottom:4px">期刊名称</label><input type="text" id="citJournal" placeholder="体育科学" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:12px"></div>
+              <div><label style="font-size:12px;color:#374151;display:block;margin-bottom:4px">卷</label><input type="text" id="citVolume" placeholder="43" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:12px"></div>
+              <div><label style="font-size:12px;color:#374151;display:block;margin-bottom:4px">期</label><input type="text" id="citIssue" placeholder="5" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:12px"></div>
+              <div><label style="font-size:12px;color:#374151;display:block;margin-bottom:4px">页码</label><input type="text" id="citPages" placeholder="12-20" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:12px"></div>
+            </div>
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">目标格式</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer;padding:8px;border:1px solid #e5e7eb;border-radius:5px"><input type="checkbox" class="citationFormat" value="gb7714" checked> GB/T 7714-2015（国标）</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer;padding:8px;border:1px solid #e5e7eb;border-radius:5px"><input type="checkbox" class="citationFormat" value="apa" checked> APA 7th</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer;padding:8px;border:1px solid #e5e7eb;border-radius:5px"><input type="checkbox" class="citationFormat" value="mla"> MLA 9th</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer;padding:8px;border:1px solid #e5e7eb;border-radius:5px"><input type="checkbox" class="citationFormat" value="chicago"> Chicago 17th</label>
+            </div>
+          </div>
+          <button onclick="generateCitations()" style="width:100%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">生成引用格式</button>
+          <div id="citationResult" style="margin-top:16px"></div>
+        </div>
       </div>
     </div>
 
@@ -7159,6 +7244,14 @@ console.log('✅ 学习工具入口已加载');
         </div>
       </div>
 
+      <!-- 标签切换 -->
+      <div style="display:flex;gap:4px;margin-bottom:16px;background:#f3f4f6;padding:4px;border-radius:10px">
+        <button onclick="switchPolishTab('polish')" id="polishTabBtn" style="flex:1;padding:10px;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;background:#fff;color:#7c3aed;box-shadow:0 1px 3px rgba(0,0,0,0.1)">论文润色</button>
+        <button onclick="switchPolishTab('plagiarism')" id="plagiarismTabBtn" style="flex:1;padding:10px;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;background:transparent;color:#6b7280">查重降重</button>
+      </div>
+
+      <!-- 润色内容区 -->
+      <div id="polishContentArea">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
         <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">润色模式</label>
           <select id="polishModeType" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff">
@@ -7215,7 +7308,67 @@ console.log('✅ 学习工具入口已加载');
 
       <div id="polishResult"></div>
       <div id="polishHistory" style="margin-top:16px"></div>
-    <div id="polishVersions" style="margin-top:16px"></div>
+    <div id="polishVersions" style="margin-top:16px">
+      </div><!-- 结束polishContentArea -->
+
+      <!-- 查重降重内容区 -->
+      <div id="plagiarismContentArea" style="display:none">
+        <div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fecaca;border-radius:12px;padding:16px;margin-bottom:16px">
+          <div style="font-size:15px;font-weight:700;color:#b91c1c;margin-bottom:4px">AI 智能查重与降重</div>
+          <div style="font-size:12px;color:#dc2626">AI分析重复风险区域 · 智能降重改写 · 多种改写版本对比 · 重复率估算</div>
+        </div>
+
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <!-- 左侧：输入区 -->
+          <div style="flex:1;min-width:300px">
+            <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:16px">
+              <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">待查内容</div>
+              <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+                <button onclick="loadPaperForPlagiarism()" style="background:#dc2626;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">从项目加载</button>
+                <button onclick="document.getElementById('plagiarismText').value='';document.getElementById('plagiarismResult').innerHTML='';" style="background:#f3f4f6;color:#374151;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px">清空</button>
+                <span id="plagiarismWordCount" style="font-size:11px;color:#9ca3af;align-self:center">0字</span>
+              </div>
+              <textarea id="plagiarismText" placeholder="粘贴需要查重/降重的论文内容..." style="width:100%;height:280px;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;line-height:1.6;resize:vertical;outline:none;font-family:Consolas,Monaco,monospace" oninput="document.getElementById('plagiarismWordCount').textContent=this.value.length+'字'"></textarea>
+            </div>
+
+            <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:16px">
+              <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">功能选择</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer"><input type="radio" name="plagiarismMode" value="check" checked> AI查重分析</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer"><input type="radio" name="plagiarismMode" value="reduce"> AI智能降重</label>
+              </div>
+              <div id="reduceOptions" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6">
+                <label style="font-size:12px;color:#374151;display:block;margin-bottom:6px">降重强度</label>
+                <select id="reduceIntensity" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px">
+                  <option value="light">轻度（保留原意，微调表达）</option>
+                  <option value="medium" selected>中度（改写句式+替换词汇）</option>
+                  <option value="deep">深度（重构段落+变换视角）</option>
+                </select>
+                <label style="font-size:12px;color:#374151;display:block;margin:10px 0 6px">生成版本数</label>
+                <select id="reduceVersions" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px">
+                  <option value="1">1个版本</option>
+                  <option value="2" selected>2个版本对比</option>
+                  <option value="3">3个版本对比</option>
+                </select>
+              </div>
+            </div>
+
+            <button onclick="runPlagiarismCheck()" id="plagiarismBtn" style="width:100%;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;padding:14px;border-radius:10px;cursor:pointer;font-size:15px;font-weight:700;box-shadow:0 4px 12px rgba(220,38,38,0.3)">开始 AI 查重分析</button>
+          </div>
+
+          <!-- 右侧：结果区 -->
+          <div style="flex:1;min-width:300px">
+            <div id="plagiarismResult" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:20px;min-height:400px">
+              <div style="text-align:center;padding:60px 20px;color:#9ca3af">
+                <div style="font-size:48px;margin-bottom:16px">🔍</div>
+                <div style="font-size:15px;margin-bottom:8px">查重/降重结果将显示在这里</div>
+                <div style="font-size:12px">输入内容，选择功能，点击开始</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+</div>
     </div>
 
     <!-- 投稿中心页面 -->
@@ -27053,6 +27206,237 @@ function loadPaperForFormatCheck() {
   alert('已加载论文：' + project.title + '（' + content.length + '字）');
 }
 
+
+// ========== 查重降重功能 ==========
+function switchPolishTab(tab) {
+  var polishBtn = document.getElementById('polishTabBtn');
+  var plagBtn = document.getElementById('plagiarismTabBtn');
+  var polishArea = document.getElementById('polishContentArea');
+  var plagArea = document.getElementById('plagiarismContentArea');
+  if (tab === 'polish') {
+    polishBtn.style.background = '#fff';
+    polishBtn.style.color = '#7c3aed';
+    polishBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+    plagBtn.style.background = 'transparent';
+    plagBtn.style.color = '#6b7280';
+    plagBtn.style.boxShadow = 'none';
+    if (polishArea) polishArea.style.display = 'block';
+    if (plagArea) plagArea.style.display = 'none';
+    var btn = document.getElementById('plagiarismBtn');
+    if (btn) btn.textContent = '开始 AI 查重分析';
+  } else {
+    plagBtn.style.background = '#fff';
+    plagBtn.style.color = '#b91c1c';
+    plagBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+    polishBtn.style.background = 'transparent';
+    polishBtn.style.color = '#6b7280';
+    polishBtn.style.boxShadow = 'none';
+    if (polishArea) polishArea.style.display = 'none';
+    if (plagArea) plagArea.style.display = 'block';
+  }
+}
+
+// 监听功能选择切换
+document.addEventListener('change', function(e) {
+  if (e.target.name === 'plagiarismMode') {
+    var reduceOpts = document.getElementById('reduceOptions');
+    var btn = document.getElementById('plagiarismBtn');
+    if (e.target.value === 'reduce') {
+      if (reduceOpts) reduceOpts.style.display = 'block';
+      if (btn) { btn.textContent = '开始 AI 智能降重'; btn.style.background = 'linear-gradient(135deg,#7c3aed,#6d28d9)'; }
+    } else {
+      if (reduceOpts) reduceOpts.style.display = 'none';
+      if (btn) { btn.textContent = '开始 AI 查重分析'; btn.style.background = 'linear-gradient(135deg,#dc2626,#b91c1c)'; }
+    }
+  }
+});
+
+function loadPaperForPlagiarism() {
+  if (!window.paperProjects || window.paperProjects.length === 0) {
+    alert('暂无论文项目，请先在「我的论文」中创建');
+    return;
+  }
+  var project = window.paperProjects[0];
+  var content = '';
+  if (project.chapters) {
+    project.chapters.forEach(function(ch) {
+      if (ch.content && ch.content.trim()) {
+        content += '【' + ch.title + '】\n' + ch.content + '\n\n';
+      }
+    });
+  }
+  if (!content) content = project.abstract || project.content || '';
+  document.getElementById('plagiarismText').value = content;
+  document.getElementById('plagiarismWordCount').textContent = content.length + '字';
+  alert('已加载论文：' + project.title + '（' + content.length + '字）');
+}
+
+function runPlagiarismCheck() {
+  var text = document.getElementById('plagiarismText').value.trim();
+  if (!text) { alert('请先输入或加载论文内容'); return; }
+  if (text.length < 50) { alert('内容太少（少于50字），请输入更多内容'); return; }
+
+  var mode = document.querySelector('input[name="plagiarismMode"]:checked').value;
+  var btn = document.getElementById('plagiarismBtn');
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  var originalText = btn.textContent;
+  btn.textContent = 'AI 处理中...';
+
+  var resultArea = document.getElementById('plagiarismResult');
+  resultArea.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:16px;animation:spin 1s linear infinite">⏳</div><div style="font-size:15px;color:' + (mode === 'reduce' ? '#7c3aed' : '#dc2626') + ';margin-bottom:8px">AI 正在' + (mode === 'reduce' ? '智能降重' : '查重分析') + '...</div><div style="font-size:12px;color:#64748b">请稍候（约20-40秒）</div></div>';
+
+  if (mode === 'check') {
+    var systemPrompt = '你是学术论文查重分析专家，具有丰富的学术不端检测和论文降重经验。请对以下论文内容进行AI模拟查重分析，识别可能存在重复风险的区域，并给出降重建议。\n\n【分析维度】\n1.【重复风险估算】基于常见学术表达、引用未标注、句式雷同、数据描述模板化等维度，估算整体重复风险率（0-100%）。\n2.【高风险段落识别】找出重复风险最高的段落，标注风险等级（高/中/低），说明可能的重复原因。\n3.【引用规范检查】检查是否有引用未标注、参考文献格式不规范、直接引用未加引号等问题。\n4.【降重建议】针对每个高风险段落，给出具体的降重建议和改写示例。\n5.【原创性提升建议】给出5-8条提升论文原创性的具体建议。\n\n【输出格式】JSON，包含：\n- estimatedRate：估算重复率（0-100）\n- riskLevel：风险等级（高/中/低）\n- summary：总体评价\n- highRiskSegments：高风险段落数组，每个含content(原文片段), risk(高/中/低), reason(原因), suggestion(降重建议), rewriteExample(改写示例)\n- citationIssues：引用规范问题数组\n- originalityTips：原创性提升建议数组（5-8条）';
+    callDeepSeekAPI(systemPrompt, '论文总字数：' + text.length + '字\n\n论文内容：\n' + text.substring(0, 6000), 5000).then(function(response) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.textContent = originalText;
+      try {
+        var jsonMatch = response.match(/\{[\s\S]*\}/);
+        var result = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+        renderPlagiarismCheckResult(result, response);
+      } catch(e) {
+        resultArea.innerHTML = '<div style="padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px"><div style="font-size:14px;font-weight:600;color:#dc2626;margin-bottom:8px">解析失败，显示原始结果</div><pre style="font-size:12px;color:#374151;white-space:pre-wrap;word-break:break-all;max-height:500px;overflow-y:auto">' + response + '</pre></div>';
+      }
+    }).catch(function(err) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.textContent = originalText;
+      resultArea.innerHTML = '<div style="padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px"><div style="font-size:14px;font-weight:600;color:#dc2626">分析失败：' + err.message + '</div></div>';
+    });
+  } else {
+    var intensity = document.getElementById('reduceIntensity').value;
+    var versions = parseInt(document.getElementById('reduceVersions').value);
+    var intensityName = {light: '轻度', medium: '中度', deep: '深度'}[intensity];
+    var systemPrompt2 = '你是学术论文降重改写专家，具有丰富的论文降重和学术改写经验。请对以下论文内容进行智能降重改写，要求：\n1.【保留原意】改写后必须保留原文的核心意思、学术观点和数据，不能改变原意。\n2.【降重强度' + intensityName + '】' + (intensity === 'light' ? '仅微调表达方式，替换部分词汇，调整句式顺序。' : intensity === 'medium' ? '改写句式结构，替换专业词汇，调整段落逻辑顺序，合并或拆分句子。' : '深度重构段落，变换叙述视角，用不同的逻辑框架重新组织内容，大幅改变表达方式。') + '\n3.【学术规范】改写后仍需保持学术语言风格，术语准确，逻辑清晰。\n4.【引用保留】原文中的引用标注[1]、(Author, Year)等必须保留。\n5.【只输出改写结果】不要添加解释说明，直接输出改写后的文本。\n\n请生成' + versions + '个不同的改写版本，每个版本用"=== 版本N ==="分隔。';
+    callDeepSeekAPI(systemPrompt2, '原文内容：\n' + text.substring(0, 4000), 4000).then(function(response) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.textContent = originalText;
+      renderReduceResult(response, text);
+    }).catch(function(err) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.textContent = originalText;
+      resultArea.innerHTML = '<div style="padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px"><div style="font-size:14px;font-weight:600;color:#dc2626">降重失败：' + err.message + '</div></div>';
+    });
+  }
+}
+
+function renderPlagiarismCheckResult(result, rawText) {
+  var area = document.getElementById('plagiarismResult');
+  if (!result) {
+    area.innerHTML = '<div style="padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px"><div style="font-size:14px;font-weight:600;color:#dc2626;margin-bottom:8px">无法解析结果，显示原始内容</div><pre style="font-size:12px;color:#374151;white-space:pre-wrap;word-break:break-all;max-height:500px;overflow-y:auto">' + rawText + '</pre></div>';
+    return;
+  }
+  var rate = result.estimatedRate || 0;
+  var level = result.riskLevel || '低';
+  var levelColor = rate >= 30 ? '#dc2626' : rate >= 15 ? '#d97706' : '#059669';
+  var levelBg = rate >= 30 ? '#fef2f2' : rate >= 15 ? '#fffbeb' : '#ecfdf5';
+
+  var html = '';
+  html += '<div style="padding:16px;background:' + levelBg + ';border-radius:10px;margin-bottom:16px;border:1px solid ' + levelColor + '22">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">';
+  html += '<div><div style="font-size:16px;font-weight:700;color:' + levelColor + '">查重分析报告</div>';
+  html += '<div style="font-size:12px;color:#64748b;margin-top:2px">' + (result.summary || '') + '</div></div>';
+  html += '<div style="text-align:center"><div style="font-size:32px;font-weight:800;color:' + levelColor + '">' + rate + '<span style="font-size:14px">%</span></div>';
+  html += '<div style="font-size:12px;color:' + levelColor + ';font-weight:600">估算重复率（' + level + '风险）</div></div>';
+  html += '</div></div>';
+
+  // 高风险段落
+  if (result.highRiskSegments && result.highRiskSegments.length > 0) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">高风险段落（' + result.highRiskSegments.length + '处）</div>';
+    html += '<div style="max-height:350px;overflow-y:auto">';
+    result.highRiskSegments.forEach(function(seg, idx) {
+      var riskColor = seg.risk === '高' ? '#dc2626' : seg.risk === '中' ? '#d97706' : '#6b7280';
+      html += '<div style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid ' + riskColor + ';border-radius:0 8px 8px 0;padding:12px;margin-bottom:10px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+      html += '<span style="font-size:12px;font-weight:700;color:' + riskColor + '">段落' + (idx+1) + '</span>';
+      html += '<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:' + riskColor + ';color:#fff;font-weight:600">' + (seg.risk || '中') + '风险</span></div>';
+      if (seg.content) html += '<div style="font-size:11px;color:#374151;background:#f9fafb;padding:8px;border-radius:4px;margin-bottom:6px;border:1px solid #e5e7eb;max-height:80px;overflow-y:auto">' + seg.content.substring(0,200) + (seg.content.length > 200 ? '...' : '') + '</div>';
+      if (seg.reason) html += '<div style="font-size:11px;color:#dc2626;margin-bottom:4px">原因：' + seg.reason + '</div>';
+      if (seg.suggestion) html += '<div style="font-size:11px;color:#059669;margin-bottom:4px">建议：' + seg.suggestion + '</div>';
+      if (seg.rewriteExample) html += '<div style="font-size:11px;color:#7c3aed;background:#faf5ff;padding:8px;border-radius:4px;border:1px solid #e9d5ff">改写示例：' + seg.rewriteExample + '</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // 引用规范问题
+  if (result.citationIssues && result.citationIssues.length > 0) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">引用规范问题（' + result.citationIssues.length + '处）</div>';
+    result.citationIssues.forEach(function(issue, idx) {
+      html += '<div style="font-size:12px;color:#374151;padding:8px 12px;background:#fffbeb;border-radius:6px;margin-bottom:6px;border:1px solid #fde68a">' + (idx+1) + '. ' + (typeof issue === 'string' ? issue : (issue.description || JSON.stringify(issue))) + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // 原创性提升建议
+  if (result.originalityTips && result.originalityTips.length > 0) {
+    html += '<div style="background:#f0f9ff;border-radius:10px;padding:14px;border:1px solid #bae6fd">';
+    html += '<div style="font-size:14px;font-weight:600;color:#0369a1;margin-bottom:10px">原创性提升建议</div>';
+    html += '<ol style="margin:0;padding-left:20px">';
+    result.originalityTips.forEach(function(tip) {
+      html += '<li style="font-size:12px;color:#0c4a6e;margin-bottom:6px;line-height:1.6">' + (typeof tip === 'string' ? tip : (tip.tip || JSON.stringify(tip))) + '</li>';
+    });
+    html += '</ol></div>';
+  }
+
+  // 一键降重按钮
+  html += '<div style="margin-top:16px;text-align:center"><button onclick="document.querySelector(\'input[name=plagiarismMode][value=reduce]\').checked=true;document.getElementById(\'reduceOptions\').style.display=\'block\';document.getElementById(\'plagiarismBtn\').textContent=\'开始 AI 智能降重\';document.getElementById(\'plagiarismBtn\').style.background=\'linear-gradient(135deg,#7c3aed,#6d28d9)\';window.scrollTo({top:0,behavior:\'smooth\'})" style="background:#7c3aed;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">一键切换到降重模式</button></div>';
+
+  area.innerHTML = html;
+}
+
+function renderReduceResult(response, originalText) {
+  var area = document.getElementById('plagiarismResult');
+  // 解析多个版本
+  var versions = [];
+  var parts = response.split(/===+\s*版本\s*\d+\s*===+/i);
+  if (parts.length > 1) {
+    for (var i = 1; i < parts.length; i++) {
+      if (parts[i].trim()) versions.push(parts[i].trim());
+    }
+  } else {
+    // 没有版本标记，整个作为一个版本
+    versions.push(response.trim());
+  }
+
+  var html = '';
+  html += '<div style="padding:14px;background:linear-gradient(135deg,#faf5ff,#f3e8ff);border-radius:10px;margin-bottom:16px;border:1px solid #e9d5ff">';
+  html += '<div style="font-size:15px;font-weight:700;color:#7c3aed">AI 智能降重完成</div>';
+  html += '<div style="font-size:12px;color:#8b5cf6;margin-top:2px">共生成 ' + versions.length + ' 个改写版本，原文 ' + originalText.length + ' 字</div>';
+  html += '</div>';
+
+  // 原文对比
+  html += '<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">📄 原文</div>';
+  html += '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:12px;color:#374151;line-height:1.7;max-height:150px;overflow-y:auto;white-space:pre-wrap">' + originalText.substring(0, 1000) + (originalText.length > 1000 ? '...' : '') + '</div></div>';
+
+  // 各版本
+  versions.forEach(function(ver, idx) {
+    html += '<div style="margin-bottom:16px;background:#fff;border:1px solid #e9d5ff;border-radius:10px;overflow:hidden">';
+    html += '<div style="padding:10px 14px;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;justify-content:space-between;align-items:center">';
+    html += '<span style="font-size:13px;font-weight:700;color:#fff">版本 ' + (idx+1) + '（' + ver.length + '字）</span>';
+    html += '<button onclick="navigator.clipboard.writeText(document.getElementById(\'reduceVer' + idx + '\').textContent).then(function(){alert(\'已复制版本' + (idx+1) + '\')})" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">复制</button>';
+    html += '</div>';
+    html += '<div id="reduceVer' + idx + '" style="padding:14px;font-size:12px;color:#374151;line-height:1.8;max-height:300px;overflow-y:auto;white-space:pre-wrap">' + ver + '</div>';
+    html += '</div>';
+  });
+
+  // 使用建议
+  html += '<div style="background:#f0f9ff;border-radius:10px;padding:14px;border:1px solid #bae6fd">';
+  html += '<div style="font-size:13px;font-weight:600;color:#0369a1;margin-bottom:8px">使用建议</div>';
+  html += '<ul style="margin:0;padding-left:18px;font-size:11px;color:#0c4a6e;line-height:1.8">';
+  html += '<li>建议将多个版本混合使用，从每个版本中选取最优的段落</li>';
+  html += '<li>改写后请仔细核对专业术语、数据和引用是否准确</li>';
+  html += '<li>AI降重仅为辅助工具，最终内容需人工审核确认</li>';
+  html += '<li>建议结合查重系统（知网/万方等）进行最终验证</li>';
+  html += '</ul></div>';
+
+  area.innerHTML = html;
+}
+
 function runFormatCheck() {
   var text = document.getElementById('formatCheckText').value.trim();
   if (!text) { alert('请先输入或加载论文内容'); return; }
@@ -27391,9 +27775,13 @@ function renderPaperEditor(id) {
   html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">';
   html += '<div id="paperCurrentChapterTitle" style="font-size:16px;font-weight:700;color:#1f2937">摘要</div>';
-  html += '<div style="display:flex;gap:8px">';
-  html += '<button onclick="paperAIAssist()" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">AI辅助写作</button>';
-  html += '<button onclick="paperAIRewrite()" style="background:#f59e0b;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">AI润色</button>';
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
+  html += '<button onclick="paperAIAction(\'outline\')" style="background:#6366f1;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="为当前章节生成写作大纲">📋 大纲</button>';
+  html += '<button onclick="paperAIAction(\'continue\')" style="background:#16a34a;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="基于当前内容继续续写">✍️ 续写</button>';
+  html += '<button onclick="paperAIAction(\'expand\')" style="background:#0ea5e9;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="扩展内容，增加细节和论述">📈 扩写</button>';
+  html += '<button onclick="paperAIAction(\'condense\')" style="background:#f59e0b;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="精简内容，保留核心观点">✂️ 缩写</button>';
+  html += '<button onclick="paperAIAction(\'rewrite\')" style="background:#8b5cf6;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="改写表达方式，提升学术性">🔄 改写</button>';
+  html += '<button onclick="paperAIAction(\'polish\')" style="background:#ec4899;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="学术润色，优化语言和逻辑">✨ 润色</button>';
   html += '</div></div>';
   html += '<textarea id="paperChapterEditor" rows="20" placeholder="在此输入内容..." oninput="savePaperContent()" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;line-height:1.8;outline:none;resize:vertical;font-family:-apple-system,\'Segoe UI\',\'Microsoft YaHei\',sans-serif"></textarea>';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:#6b7280">';
@@ -27457,6 +27845,247 @@ function updatePaperWordCount() {
   var editor = document.getElementById('paperChapterEditor');
   var wc = document.getElementById('paperChapterWordCount');
   if (editor && wc) wc.textContent = editor.value.length + ' 字';
+}
+
+async 
+// ========== AI写作助手深化功能 ==========
+
+// ========== 文献综述与引用格式 ==========
+function showLitReviewModal() {
+  var modal = document.getElementById('litReviewModal');
+  modal.style.display = 'flex';
+  // 加载文献列表供选择
+  var list = document.getElementById('litReviewSelectList');
+  var libs = getPaperLiterature();
+  if (libs.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:12px;padding:20px">文献库为空，请先添加文献</div>';
+  } else {
+    var html = '';
+    libs.slice(0, 30).forEach(function(lib, idx) {
+      html += '<label style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:12px;color:#374151" onmouseover="this.style.background=\'#f3f4f6\'" onmouseout="this.style.background=\'transparent\'"><input type="checkbox" class="litReviewSelect" value="' + idx + '" style="margin-top:2px"><span style="flex:1">' + (lib.title || '无标题') + ' (' + (lib.authors || '未知') + ', ' + (lib.year || '') + ')</span></label>';
+    });
+    list.innerHTML = html;
+  }
+}
+
+function closeLitReviewModal() {
+  document.getElementById('litReviewModal').style.display = 'none';
+}
+
+function generateLitReview() {
+  var topic = document.getElementById('litReviewTopic').value.trim();
+  var manual = document.getElementById('litReviewManual').value.trim();
+  var reviewType = document.getElementById('litReviewType').value;
+  var typeNames = {narrative:'叙述性综述', systematic:'系统性综述', meta:'Meta分析框架', timeline:'时间线综述'};
+
+  // 收集选中的文献
+  var selectedLibs = [];
+  document.querySelectorAll('.litReviewSelect:checked').forEach(function(cb) {
+    var libs = getPaperLiterature();
+    if (libs[parseInt(cb.value)]) selectedLibs.push(libs[parseInt(cb.value)]);
+  });
+
+  var litContent = '';
+  if (selectedLibs.length > 0) {
+    selectedLibs.forEach(function(lib, idx) {
+      litContent += '文献' + (idx+1) + '：' + (lib.authors || '') + '. ' + (lib.title || '') + '. ' + (lib.journal || '') + ', ' + (lib.year || '') + (lib.abstract ? '\n摘要：' + lib.abstract : '') + '\n\n';
+    });
+  }
+  if (manual) litContent += '手动输入文献：\n' + manual;
+
+  if (!topic && !litContent) { alert('请输入综述主题或选择/输入文献'); return; }
+
+  var btn = document.getElementById('litReviewBtn');
+  btn.disabled = true;
+  btn.textContent = 'AI 正在生成文献综述...';
+  btn.style.opacity = '0.7';
+
+  var resultArea = document.getElementById('litReviewResult');
+  resultArea.innerHTML = '<div style="text-align:center;padding:30px"><div style="font-size:32px;margin-bottom:10px;animation:spin 1s linear infinite">⏳</div><div style="font-size:13px;color:#8b5cf6">AI 正在生成' + typeNames[reviewType] + '...</div></div>';
+
+  var systemPrompt = '你是体育学领域的资深文献综述专家，具有丰富的学术综述写作经验。请根据以下主题和参考文献，撰写一篇专业、系统、有深度的文献综述。\n\n【综述类型】' + typeNames[reviewType] + '\n\n【写作要求】\n1.【结构完整】包含引言（研究背景与意义）、主体（按主题/时间/方法组织）、总结与展望（研究不足、未来方向）。\n2.【逻辑清晰】各部分之间有明确的逻辑递进关系，避免简单罗列文献。\n3.【批判性分析】不仅总结文献内容，还要分析研究方法的优缺点、研究结果的一致性与矛盾、研究领域的争议点。\n4.【引用规范】在文中使用[1][2]标注引用，文末列出参考文献列表。\n5.【学术规范】使用学术语言，术语准确，避免口语化表达。\n6.【体育学特色】结合体育学学科特点，关注运动干预、人体适应、健康促进等核心议题。\n\n【输出格式】完整的文献综述正文，包含标题、摘要、关键词、正文（分章节）、参考文献。';
+
+  callDeepSeekAPI(systemPrompt, '综述主题：' + (topic || '基于提供文献的综述') + '\n综述类型：' + typeNames[reviewType] + '\n\n参考文献：\n' + (litContent || '（用户未提供具体文献，请基于该主题的通用研究现状撰写）'), 5000).then(function(response) {
+    btn.disabled = false;
+    btn.textContent = '生成 AI 文献综述';
+    btn.style.opacity = '1';
+    resultArea.innerHTML = '<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:13px;font-weight:700;color:#7c3aed">AI 文献综述（' + response.length + '字）</span><button onclick="navigator.clipboard.writeText(document.getElementById(\'litReviewText\').textContent).then(function(){alert(\'已复制\')})" style="background:#7c3aed;color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px">复制</button></div><div id="litReviewText" style="font-size:12px;color:#374151;line-height:1.8;max-height:400px;overflow-y:auto;white-space:pre-wrap">' + response + '</div></div>';
+  }).catch(function(err) {
+    btn.disabled = false;
+    btn.textContent = '生成 AI 文献综述';
+    btn.style.opacity = '1';
+    resultArea.innerHTML = '<div style="padding:14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px">生成失败：' + err.message + '</div>';
+  });
+}
+
+function showCitationModal() {
+  document.getElementById('citationModal').style.display = 'flex';
+}
+
+function closeCitationModal() {
+  document.getElementById('citationModal').style.display = 'none';
+}
+
+function updateCitationFields() {
+  // 可以根据文献类型显示不同字段，这里简化处理
+}
+
+function generateCitations() {
+  var type = document.getElementById('citationType').value;
+  var authors = document.getElementById('citAuthors').value.trim();
+  var year = document.getElementById('citYear').value.trim();
+  var title = document.getElementById('citTitle').value.trim();
+  var journal = document.getElementById('citJournal').value.trim();
+  var volume = document.getElementById('citVolume').value.trim();
+  var issue = document.getElementById('citIssue').value.trim();
+  var pages = document.getElementById('citPages').value.trim();
+
+  if (!authors || !title) { alert('请至少填写作者和标题'); return; }
+
+  var formats = [];
+  document.querySelectorAll('.citationFormat:checked').forEach(function(cb) { formats.push(cb.value); });
+  if (formats.length === 0) { alert('请至少选择一种格式'); return; }
+
+  // 处理作者格式
+  var authorList = authors.split(/[,，]/).map(function(a) { return a.trim(); }).filter(function(a) { return a; });
+
+  var resultHtml = '';
+  var formatNames = {gb7714:'GB/T 7714-2015', apa:'APA 7th', mla:'MLA 9th', chicago:'Chicago 17th'};
+
+  formats.forEach(function(fmt) {
+    var citation = '';
+    if (fmt === 'gb7714') {
+      // GB/T 7714: 作者. 题名[J]. 刊名, 年, 卷(期): 页码.
+      var gbAuthors = authorList.length > 3 ? authorList.slice(0,3).join(', ') + ', 等' : authorList.join(', ');
+      citation = gbAuthors + '. ' + title + '[J]. ' + (journal || '') + ', ' + year + (volume ? ', ' + volume : '') + (issue ? '(' + issue + ')' : '') + (pages ? ': ' + pages : '') + '.';
+    } else if (fmt === 'apa') {
+      // APA: Author, A. A., & Author, B. B. (Year). Title. Journal, Volume(Issue), Pages.
+      var apaAuthors = authorList.map(function(a) {
+        var parts = a.trim().split(/\s+/);
+        if (parts.length === 1) return parts[0];
+        return parts[parts.length-1] + ', ' + parts.slice(0,-1).map(function(p) { return p[0] + '.'; }).join(' ');
+      }).join(', ');
+      if (authorList.length > 1) apaAuthors = apaAuthors.replace(/, ([^,]+)$/, ', & $1');
+      citation = apaAuthors + ' (' + year + '). ' + title + '. ' + (journal || '') + (volume ? ', ' + volume : '') + (issue ? '(' + issue + ')' : '') + (pages ? ', ' + pages : '') + '.';
+    } else if (fmt === 'mla') {
+      // MLA: Author. "Title." Journal, vol. Volume, no. Issue, Year, pp. Pages.
+      var mlaAuthors = authorList.length > 1 ? authorList[0] + ', et al.' : authorList[0];
+      citation = mlaAuthors + '. "' + title + '." ' + (journal || '') + (volume ? ', vol. ' + volume : '') + (issue ? ', no. ' + issue : '') + ', ' + year + (pages ? ', pp. ' + pages : '') + '.';
+    } else if (fmt === 'chicago') {
+      // Chicago: Author. "Title." Journal Volume, no. Issue (Year): Pages.
+      var chiAuthors = authorList.length > 1 ? authorList[0] + ', et al.' : authorList[0];
+      citation = chiAuthors + '. "' + title + '." ' + (journal || '') + ' ' + (volume || '') + (issue ? ', no. ' + issue : '') + ' (' + year + ')' + (pages ? ': ' + pages : '') + '.';
+    }
+
+    resultHtml += '<div style="margin-bottom:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px">';
+    resultHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#92400e">' + formatNames[fmt] + '</span><button onclick="navigator.clipboard.writeText(this.closest(\'div\').querySelector(\'.citation-text\').textContent).then(function(){alert(\'已复制\'})" style="background:#f59e0b;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px">复制</button></div>';
+    resultHtml += '<div class="citation-text" style="font-size:12px;color:#374151;line-height:1.7;font-family:Consolas,monospace">' + citation + '</div>';
+    resultHtml += '</div>';
+  });
+
+  document.getElementById('citationResult').innerHTML = '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:10px">生成结果（' + formats.length + '种格式）</div>' + resultHtml;
+}
+
+function paperAIAction(action) {
+  var editor = document.getElementById('paperChapterEditor');
+  if (!editor) { alert('请先选择论文和章节'); return; }
+  var content = editor.value.trim();
+  var chapter = paperCurrentChapter;
+  var titles = {abstract:'摘要', introduction:'引言', literature:'文献综述', methods:'研究方法', results:'研究结果', discussion:'讨论', conclusion:'结论', references:'参考文献'};
+  var chapterName = titles[chapter] || chapter;
+  var project = getPaperProjects().find(function(p) { return p.id === paperCurrentProjectId; });
+  var paperTitle = project ? (project.title || '') : '';
+  var paperField = project ? (project.field || '体育学') : '体育学';
+
+  var actionNames = {outline:'生成大纲', continue:'AI续写', expand:'AI扩写', condense:'AI缩写', rewrite:'AI改写', polish:'学术润色'};
+  var resultArea = document.getElementById('paperAIResult');
+  resultArea.innerHTML = '<div style="text-align:center;padding:40px 20px"><div style="font-size:36px;margin-bottom:12px;animation:spin 1s linear infinite">⏳</div><div style="font-size:14px;color:#6366f1">AI 正在' + actionNames[action] + '...</div><div style="font-size:12px;color:#9ca3af;margin-top:4px">章节：' + chapterName + '</div></div>';
+
+  var systemPrompt = '';
+  var userPrompt = '';
+
+  if (action === 'outline') {
+    systemPrompt = '你是体育学学术论文写作专家，具有丰富的论文写作和指导经验。请为以下论文章节生成详细的写作大纲，大纲要专业、具体、可操作。\n\n【大纲要求】\n1.【结构完整】包含该章节应有的所有子部分，每个子部分有明确的写作要点。\n2.【内容具体】每个要点说明应该写什么内容、引用什么类型的文献、使用什么论证方法。\n3.【字数建议】每个子部分给出建议字数。\n4.【逻辑清晰】体现章节内部的逻辑递进关系。\n5.【只输出大纲】不要写正文内容，只输出大纲结构和写作要点。\n\n【输出格式】层级化大纲，使用"一、（一）、1.、（1）"的层级结构。';
+    userPrompt = '论文题目：' + paperTitle + '\n研究领域：' + paperField + '\n当前章节：' + chapterName + (content ? '\n已有内容（供参考）：\n' + content.substring(0, 1000) : '');
+  } else if (action === 'continue') {
+    if (!content) { alert('请先输入一些内容，AI才能基于上下文续写'); return; }
+    systemPrompt = '你是体育学学术论文写作专家。请基于以下论文内容的上下文，继续续写后续内容，续写要与前文风格一致、逻辑连贯、学术规范。\n\n【续写要求】\n1.【承接上文】续写内容要自然承接前文的最后一段，逻辑连贯。\n2.【学术规范】使用学术语言，术语准确，避免口语化表达。\n3.【内容充实】续写300-500字，内容要有深度，不要空洞。\n4.【保留引用】如果需要引用文献，使用[1][2]格式标注。\n5.【只输出续写内容】不要重复前文，只输出续写的新内容。';
+    userPrompt = '论文题目：' + paperTitle + '\n章节：' + chapterName + '\n\n前文内容（最后500字）：\n' + content.substring(Math.max(0, content.length - 500));
+  } else if (action === 'expand') {
+    if (!content) { alert('请先输入需要扩写的内容'); return; }
+    systemPrompt = '你是体育学学术论文写作专家。请对以下论文内容进行扩写，增加细节、深度和论述，使内容更加充实丰满。\n\n【扩写要求】\n1.【保留原意】扩写必须保留原文的核心观点和逻辑结构。\n2.【增加细节】补充理论依据、实验细节、数据解释、文献支撑等。\n3.【深化论述】对关键论点进行更深入的分析和论证。\n4.【学术规范】保持学术语言风格，术语准确。\n5.【字数增加】扩写后字数增加50%-100%。\n6.【只输出扩写后内容】直接输出完整的扩写后文本。';
+    userPrompt = '论文题目：' + paperTitle + '\n章节：' + chapterName + '\n\n原文内容：\n' + content.substring(0, 3000);
+  } else if (action === 'condense') {
+    if (!content) { alert('请先输入需要缩写的内容'); return; }
+    systemPrompt = '你是体育学学术论文写作专家。请对以下论文内容进行缩写精简，保留核心观点和关键信息，去除冗余表述。\n\n【缩写要求】\n1.【保留核心】必须保留原文的核心观点、关键数据和重要结论。\n2.【去除冗余】删除重复表述、过度修饰、不必要的细节。\n3.【逻辑完整】缩写后逻辑仍然完整，语句通顺。\n4.【学术规范】保持学术语言风格。\n5.【字数减少】缩写后字数减少40%-60%。\n6.【只输出缩写后内容】直接输出完整的缩写后文本。';
+    userPrompt = '论文题目：' + paperTitle + '\n章节：' + chapterName + '\n\n原文内容：\n' + content.substring(0, 3000);
+  } else if (action === 'rewrite') {
+    if (!content) { alert('请先输入需要改写的内容'); return; }
+    systemPrompt = '你是体育学学术论文写作专家。请对以下论文内容进行改写，改变表达方式和句式结构，提升学术性和可读性，同时保留原意。\n\n【改写要求】\n1.【保留原意】改写必须保留原文的核心意思、观点和数据。\n2.【变换表达】改变句式结构、替换词汇、调整语序、合并或拆分句子。\n3.【提升学术性】使用更规范、更精准的学术表达。\n4.【逻辑优化】优化句子之间的逻辑连接，使行文更流畅。\n5.【只输出改写后内容】直接输出完整的改写后文本。';
+    userPrompt = '论文题目：' + paperTitle + '\n章节：' + chapterName + '\n\n原文内容：\n' + content.substring(0, 3000);
+  } else if (action === 'polish') {
+    if (!content) { alert('请先输入需要润色的内容'); return; }
+    systemPrompt = '你是体育学学术论文润色专家，具有10年以上SCI论文润色经验。请对以下论文内容进行学术润色，优化语言表达、逻辑结构和学术规范。\n\n【润色维度】\n1.【语言优化】修正语法错误、拼写错误、标点符号，优化词汇选择。\n2.【逻辑优化】优化句子之间、段落之间的逻辑连接，使论证更严密。\n3.【学术规范】统一术语使用，规范引用格式，提升学术表达的严谨性。\n4.【句式优化】变化句式结构，避免重复单调，增强可读性。\n5.【只输出润色后内容】直接输出完整的润色后文本，不要添加解释说明。';
+    userPrompt = '论文题目：' + paperTitle + '\n章节：' + chapterName + '\n\n原文内容：\n' + content.substring(0, 3000);
+  }
+
+  callDeepSeekAPI(systemPrompt, userPrompt, action === 'outline' ? 3000 : 2500).then(function(response) {
+    renderPaperAIResult(action, actionNames[action], response, content);
+  }).catch(function(err) {
+    resultArea.innerHTML = '<div style="padding:16px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px"><div style="font-size:13px;font-weight:600;color:#dc2626">操作失败：' + err.message + '</div></div>';
+  });
+}
+
+function renderPaperAIResult(action, actionName, response, originalContent) {
+  var resultArea = document.getElementById('paperAIResult');
+  var colors = {outline:'#6366f1', continue:'#16a34a', expand:'#0ea5e9', condense:'#f59e0b', rewrite:'#8b5cf6', polish:'#ec4899'};
+  var color = colors[action] || '#6366f1';
+
+  var html = '';
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05)">';
+  html += '<div style="padding:12px 16px;background:linear-gradient(135deg,' + color + '22,' + color + '11);border-bottom:1px solid ' + color + '22;display:flex;justify-content:space-between;align-items:center">';
+  html += '<span style="font-size:14px;font-weight:700;color:' + color + '">AI ' + actionName + '结果（' + response.length + '字）</span>';
+  html += '<div style="display:flex;gap:6px">';
+  html += '<button onclick="insertPaperAIResult()" style="background:' + color + ';color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">插入到光标处</button>';
+  html += '<button onclick="replacePaperAIResult()" style="background:#fff;color:' + color + ';border:1px solid ' + color + ';padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">替换当前章节</button>';
+  html += '<button onclick="copyPaperAIResult()" style="background:#f3f4f6;color:#374151;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">复制</button>';
+  html += '</div></div>';
+  html += '<div id="paperAIResultContent" style="padding:16px;font-size:13px;color:#374151;line-height:1.8;max-height:400px;overflow-y:auto;white-space:pre-wrap">' + response + '</div>';
+  html += '</div>';
+
+  resultArea.innerHTML = html;
+  window._lastPaperAIResult = response;
+}
+
+function insertPaperAIResult() {
+  var editor = document.getElementById('paperChapterEditor');
+  if (!editor || !window._lastPaperAIResult) return;
+  var start = editor.selectionStart;
+  var end = editor.selectionEnd;
+  var text = editor.value;
+  editor.value = text.substring(0, start) + window._lastPaperAIResult + text.substring(end);
+  savePaperContent();
+  updatePaperWordCount();
+  alert('已插入到光标位置');
+}
+
+function replacePaperAIResult() {
+  var editor = document.getElementById('paperChapterEditor');
+  if (!editor || !window._lastPaperAIResult) return;
+  if (!confirm('确定要用AI结果替换当前章节的全部内容吗？')) return;
+  editor.value = window._lastPaperAIResult;
+  savePaperContent();
+  updatePaperWordCount();
+  alert('已替换当前章节内容');
+}
+
+function copyPaperAIResult() {
+  if (!window._lastPaperAIResult) return;
+  navigator.clipboard.writeText(window._lastPaperAIResult).then(function() {
+    alert('已复制到剪贴板');
+  }).catch(function() {
+    alert('复制失败，请手动复制');
+  });
 }
 
 async function paperAIAssist() {
