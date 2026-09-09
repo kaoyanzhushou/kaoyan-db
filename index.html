@@ -46159,11 +46159,39 @@ const PHD_MENTOR_PROFILES = [
   { id: 'generic_design', school: '通用', direction: '科研方法', name: '研究设计型导师', focus: '科研选题、实验设计、统计分析、学术规范', style: '不问知识背记，专考研究设计：选题依据、对象分组、干预对照、统计方法、可行性', qTypes: ['研究设计题', '统计分析题', '逻辑思辨题'], tags: ['科研设计', '统计', '选题'], tips: '按「假设→设计→方法→预期→创新点」完整框架回答', sampleQuestions: ['如何从文献阅读中找到有价值的研究空白？请以运动科学为例说明选题流程。', '随机对照试验、交叉设计与准实验设计在运动干预研究中的适用场景有何区别？', '你的研究如果出现阴性与预期不符的结果，你会如何分析并处理？'] }
 ];
 
+// 动态同步真实导师库到模拟导师画像
+(function(){
+  if(typeof PHD_SUPERVISORS === 'undefined') return;
+  PHD_SUPERVISORS.forEach(function(sup, i){
+    if(!sup || !sup.name) return;
+    var dirs = sup.directions && sup.directions.length ? sup.directions : [sup.research ? sup.research.substring(0,12) : '运动人体科学'];
+    var focus = sup.research || (dirs.join('、'));
+    var style = '注重' + (dirs[0] || '专业') + '方向的理论深度与研究设计，常追问研究背景、实验方案与创新点，关注考生对该方向前沿进展的了解';
+    var sq1 = '请阐述' + (dirs[0] || '运动人体科学') + '领域的最新研究进展，并谈谈你认为未来3-5年的研究热点是什么。';
+    var sq2 = '如果让你围绕「' + (dirs[0] || '运动干预') + '」设计一项博士研究，你会如何选题？请说明研究问题、研究对象、方法与预期创新点。';
+    var sq3 = '请谈谈你对' + sup.name + '老师研究方向的理解，以及你为什么希望在该方向攻读博士。';
+    PHD_MENTOR_PROFILES.push({
+      id: 'real_' + i,
+      school: sup.school || '未知院校',
+      direction: dirs[0] || '运动人体科学',
+      name: sup.name + '（' + (sup.title || '博导') + '·真实导师）',
+      focus: focus,
+      style: style,
+      qTypes: ['研究设计题', '专业知识题', '前沿进展题'],
+      tags: dirs,
+      tips: '建议提前阅读' + sup.name + '老师近年发表的论文，面试时结合其具体研究方向回答，体现对导师工作的了解与兴趣',
+      sampleQuestions: [sq1, sq2, sq3],
+      isReal: true,
+      supIndex: i
+    });
+  });
+})();
+
 function showPhdMentorLibrary() {
   const body = document.getElementById('phdInterviewBody');
   let html = '<div class="phd-quiz-header"><div class="phd-quiz-title">🎓 模拟导师库</div>';
   html += '<button class="phd-quiz-btn" style="font-size:12px;padding:6px 12px" onclick="showPhdInterviewHome()">← 返回</button></div>';
-  html += '<div style="margin-bottom:20px;font-size:14px;color:#666;line-height:1.7">按目标院校与方向选择「导师画像」，AI将模拟该风格导师的提问与追问；也可自定义模拟某位心仪导师（输入姓名+方向）。画像综合自各校该方向导师团队的公开风格，仅供参考。</div>';
+  html += '<div style="margin-bottom:20px;font-size:14px;color:#666;line-height:1.7">按目标院校与方向选择「导师画像」，AI将模拟该风格导师的提问与追问；也可自定义模拟某位心仪导师（输入姓名+方向）。画像包含通用风格画像与真实导师画像（标注「真实导师」），AI将模拟该风格导师的提问与追问；也可自定义模拟某位心仪导师。真实导师画像基于其公开研究方向生成，仅供参考。</div>';
 
   // 自定义导师区
   html += '<div style="background:linear-gradient(135deg,#eff6ff,#e0f2fe);border:1px solid #bae6fd;border-radius:12px;padding:18px;margin-bottom:20px">';
