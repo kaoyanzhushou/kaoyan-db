@@ -4920,6 +4920,15 @@ console.log('✅ 学习工具入口已加载');
   };
 })();
 </script>
+<style>
+.md-content h3{font-size:16px;font-weight:700;color:#5b21b6;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #ede9fe}
+.md-content h3:first-child{margin-top:0}
+.md-content strong{color:#7c3aed;font-weight:700}
+.md-content ul{margin:8px 0 12px;padding-left:24px}
+.md-content li{margin-bottom:8px;line-height:1.9}
+.md-content p{margin:8px 0}
+.md-content blockquote{border-left:3px solid #a78bfa;background:#faf5ff;padding:10px 16px;margin:12px 0;border-radius:0 8px 8px 0;color:#6d28d9}
+</style>
 </head>
 <body>
 
@@ -39958,12 +39967,12 @@ async function analyzePhdReply() {
     const analysis = await callDeepSeekAPI(systemPrompt, userPrompt, 1500, 'deepseek-chat');
     if (!analysis || analysis.trim().length < 30) throw new Error('分析异常');
     window._phdLastReplyAnalysis = analysis;
-    result.innerHTML = '<div style="border:1px solid #ddd6fe;border-radius:10px;overflow:hidden">' +
-      '<div style="background:#f5f3ff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ddd6fe;flex-wrap:wrap;gap:8px">' +
-      '<span style="font-size:14px;font-weight:600;color:#4c1d95">💬 AI回复意图分析</span>' +
-      '<button onclick="draftPhdReplyToTeacher()" style="padding:6px 14px;background:#7c3aed;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">✍️ 生成回复草稿</button>' +
+    result.innerHTML = '<div style="border:1px solid #ddd6fe;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(139,92,246,.08)">' +
+      '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ddd6fe;flex-wrap:wrap;gap:8px">' +
+      '<span style="font-size:15px;font-weight:700;color:#5b21b6">💬 AI回复意图分析</span>' +
+      '<button onclick="draftPhdReplyToTeacher()" style="padding:8px 18px;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(124,58,237,.3)">✍️ 生成回复草稿</button>' +
       '</div>' +
-      '<div style="padding:16px;font-size:13px;line-height:1.9;color:#334155;white-space:pre-wrap">' + analysis + '</div></div>';
+      '<div class="md-content" style="padding:20px 24px;font-size:14px;line-height:2;color:#334155">' + renderMarkdown(analysis) + '</div></div>';
   } catch (e) {
     result.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;color:#dc2626;font-size:14px">分析失败：' + e.message + '</div>';
   }
