@@ -39706,7 +39706,8 @@ function showPubTool(tool) {
       html += '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#0c4a6e;cursor:pointer;padding:4px 8px;background:#fff;border:1px solid #bae6fd;border-radius:4px"><input type="checkbox" id="' + c.id + '" checked style="accent-color:#0284c7">' + c.label + '</label>';
     });
     html += '</div></div>';
-    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#075985;font-weight:600;display:block;margin-bottom:4px">论文内容</label><textarea id="fmtContent" rows="10" placeholder="粘贴论文全文，AI将检查格式问题并修改..." oninput="document.getElementById(\'fmtCharCount\').textContent=this.value.length+\' 字符\'" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;resize:vertical;font-family:Consolas,monospace"></textarea><div style="text-align:right;font-size:10px;color:#64748b;margin-top:2px"><span id="fmtCharCount">0 字符</span></div></div>';
+    html += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><label style="font-size:12px;color:#075985;font-weight:600">论文内容</label><div style="display:flex;gap:8px;align-items:center"><input type="file" id="fmtFileUpload" accept=".docx,.txt" style="display:none" onchange="handleFmtFileUpload(this)"><button onclick="document.getElementById(\'fmtFileUpload\').click()" style="background:#0284c7;color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">上传Word/TXT</button><span style="font-size:10px;color:#64748b">支持.docx/.txt，表格自动转换</span></div></div><textarea id="fmtContent" rows="14" placeholder="粘贴论文全文，或点击上方"上传Word/TXT"按钮上传文档..." oninput="document.getElementById(\'fmtCharCount\').textContent=this.value.length+\' 字符\'" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;resize:vertical;font-family:Consolas,monospace;line-height:1.8"></textarea><div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px"><span id="fmtFileInfo" style="font-size:10px;color:#0284c7"></span><span style="font-size:10px;color:#64748b"><span id="fmtCharCount">0 字符</span></span></div></div>';
+    html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="font-size:11px;font-weight:600;color:#075985;margin-bottom:6px">文档图片（<span id="fmtImgCount">0</span>张，AI无法分析图片内容，请手动检查图片格式）</div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px"></div></div>';
     html += '<div style="display:flex;gap:10px;margin-bottom:16px"><button onclick="checkPaperFormat()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI检查格式问题</button><button onclick="autoFixPaperFormat()" style="background:#075985;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">一键检查并修改</button></div>';
     html += '<div id="fmtResult"></div>';
     // 快捷工具区
@@ -39721,6 +39722,170 @@ function showPubTool(tool) {
   }
   container.innerHTML = html;
 }
+
+// Word文档上传处理
+async function handleFmtFileUpload(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var fileInfo = document.getElementById('fmtFileInfo');
+  var contentArea = document.getElementById('fmtContent');
+  fileInfo.textContent = '正在解析: ' + file.name + '...';
+  
+  try {
+    if (file.name.endsWith('.txt')) {
+      var text = await file.text();
+      contentArea.value = text;
+      document.getElementById('fmtCharCount').textContent = text.length + ' 字符';
+      fileInfo.textContent = '已加载: ' + file.name + ' (' + text.length + ' 字符)';
+      document.getElementById('fmtImagesArea').style.display = 'none';
+    } else if (file.name.endsWith('.docx')) {
+      // 动态加载mammoth.js
+      if (typeof mammoth === 'undefined') {
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+      }
+      var arrayBuffer = await file.arrayBuffer();
+      // 提取文本（表格转Markdown）
+      var result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+      var text = result.value;
+      // 尝试用convertToHtml获取更丰富的格式，然后转纯文本保留表格
+      var htmlResult = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+      var html = htmlResult.value;
+      // 从HTML中提取表格并转成Markdown表格格式
+      var processedText = htmlToFormattedText(html);
+      contentArea.value = processedText || text;
+      document.getElementById('fmtCharCount').textContent = (processedText || text).length + ' 字符';
+      fileInfo.textContent = '已加载: ' + file.name + ' (' + (processedText || text).length + ' 字符，表格已转换)';
+      // 提取图片
+      extractDocxImages(arrayBuffer);
+    }
+  } catch (e) {
+    fileInfo.textContent = '解析失败: ' + e.message;
+    alert('文档解析失败: ' + e.message + '\n请尝试复制粘贴内容');
+  }
+  input.value = '';
+}
+
+// HTML转格式化纯文本（保留表格结构）
+function htmlToFormattedText(html) {
+  if (!html) return '';
+  // 创建临时DOM
+  var div = document.createElement('div');
+  div.innerHTML = html;
+  
+  var result = [];
+  var elements = div.childNodes;
+  
+  function processNode(node) {
+    if (node.nodeType === 3) {
+      var text = node.textContent.trim();
+      if (text) result.push(text);
+    } else if (node.nodeType === 1) {
+      var tag = node.tagName.toLowerCase();
+      if (tag === 'table') {
+        // 表格转Markdown格式
+        var rows = node.querySelectorAll('tr');
+        if (rows.length > 0) {
+          result.push('');
+          result.push('【表格】');
+          rows.forEach(function(row, idx) {
+            var cells = row.querySelectorAll('th,td');
+            var cellTexts = [];
+            cells.forEach(function(cell) {
+              cellTexts.push(cell.textContent.trim().replace(/\n/g, ' '));
+            });
+            result.push('| ' + cellTexts.join(' | ') + ' |');
+            if (idx === 0) {
+              result.push('|' + cellTexts.map(function(){return '---|';}).join(''));
+            }
+          });
+          result.push('');
+        }
+      } else if (tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4') {
+        var level = parseInt(tag.substring(1));
+        result.push('');
+        result.push('#'.repeat(level) + ' ' + node.textContent.trim());
+        result.push('');
+      } else if (tag === 'p') {
+        var pText = node.textContent.trim();
+        if (pText) result.push(pText);
+      } else if (tag === 'li') {
+        result.push('• ' + node.textContent.trim());
+      } else if (tag === 'br') {
+        // 不处理
+      } else if (tag === 'img') {
+        var alt = node.getAttribute('alt') || '图片';
+        result.push('[图片: ' + alt + ']');
+      } else {
+        // 其他元素递归处理子节点
+        node.childNodes.forEach(processNode);
+      }
+    }
+  }
+  
+  elements.forEach(processNode);
+  return result.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// 提取Word文档中的图片
+async function extractDocxImages(arrayBuffer) {
+  try {
+    var JSZip = await loadJSZip();
+    var zip = await JSZip.loadAsync(arrayBuffer);
+    var imgFiles = [];
+    zip.forEach(function(path, file) {
+      if (path.match(/word\/media\/image\d+\.(png|jpg|jpeg|gif|bmp)/i)) {
+        imgFiles.push({path: path, file: file});
+      }
+    });
+    
+    if (imgFiles.length === 0) {
+      document.getElementById('fmtImagesArea').style.display = 'none';
+      return;
+    }
+    
+    document.getElementById('fmtImagesArea').style.display = 'block';
+    document.getElementById('fmtImgCount').textContent = imgFiles.length;
+    var grid = document.getElementById('fmtImagesGrid');
+    grid.innerHTML = '';
+    
+    for (var i = 0; i < imgFiles.length; i++) {
+      var blob = await imgFiles[i].file.async('blob');
+      var url = URL.createObjectURL(blob);
+      var ext = imgFiles[i].path.split('.').pop().toLowerCase();
+      var div = document.createElement('div');
+      div.style.cssText = 'border:1px solid #bae6fd;border-radius:6px;padding:6px;background:#fff;text-align:center';
+      div.innerHTML = '<img src="' + url + '" style="max-width:100%;max-height:100px;object-fit:contain;border-radius:4px"><div style="font-size:10px;color:#64748b;margin-top:4px">图' + (i+1) + ' (' + ext.toUpperCase() + ')</div>';
+      grid.appendChild(div);
+    }
+  } catch (e) {
+    console.log('图片提取失败:', e);
+    document.getElementById('fmtImagesArea').style.display = 'none';
+  }
+}
+
+// 动态加载脚本
+function loadScript(src) {
+  return new Promise(function(resolve, reject) {
+    var script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+// 动态加载JSZip
+function loadJSZip() {
+  return new Promise(function(resolve, reject) {
+    if (typeof JSZip !== 'undefined') { resolve(JSZip); return; }
+    var script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    script.onload = function() { resolve(JSZip); };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
 
 // 生成Cover Letter
 async function generateCoverLetter() {
