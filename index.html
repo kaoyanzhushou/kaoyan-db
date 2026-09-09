@@ -39707,7 +39707,7 @@ function showPubTool(tool) {
     });
     html += '</div></div>';
     html += '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><label style="font-size:12px;color:#075985;font-weight:600">论文内容</label><div style="display:flex;gap:8px;align-items:center"><input type="file" id="fmtFileUpload" accept=".docx,.txt" style="display:none" onchange="handleFmtFileUpload(this)"><button onclick="document.getElementById(\'fmtFileUpload\').click()" style="background:#0284c7;color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">上传Word/TXT</button><span style="font-size:10px;color:#64748b">支持.docx/.txt，表格自动转换</span></div></div><textarea id="fmtContent" rows="14" placeholder="粘贴论文全文，或点击上方"上传Word/TXT"按钮上传文档..." oninput="document.getElementById(\'fmtCharCount\').textContent=this.value.length+\' 字符\'" style="width:100%;padding:9px 12px;border:1px solid #7dd3fc;border-radius:6px;font-size:12px;outline:none;resize:vertical;font-family:Consolas,monospace;line-height:1.8"></textarea><div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px"><span id="fmtFileInfo" style="font-size:10px;color:#0284c7"></span><span style="font-size:10px;color:#64748b"><span id="fmtCharCount">0 字符</span></span></div></div>';
-    html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#075985">文档图片（<span id="fmtImgCount">0</span>张）</div><div style="display:flex;gap:6px"><button onclick="detectAllImageFormats()" style="background:#0284c7;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检测图片格式</button><button onclick="checkFigureCaptions()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检查标题与引用</button></div></div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div><div id="fmtImageDetectResults" style="margin-top:10px"></div><div id="fmtCaptionCheckResult" style="margin-top:10px"></div></div>';
+    html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#075985">文档图片（<span id="fmtImgCount">0</span>张）</div><div style="display:flex;gap:6px"><button onclick="detectAllImageFormats()" style="background:#0284c7;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检测图片格式</button><button onclick="checkFigureCaptions()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检查标题与引用</button><button onclick="toggleImageTool()" style="background:#d97706;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">图片处理工具</button></div></div><div id="fmtImageToolPanel" style="display:none;margin-bottom:10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px">图片压缩与格式转换</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标格式</label><select id="imgToolFormat" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;background:#fff;color:#92400e;cursor:pointer"><option value="image/jpeg">JPG（照片，体积小）</option><option value="image/png">PNG（线图，无损）</option><option value="image/webp">WebP（高压缩率）</option></select></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">质量（JPG/WebP）: <span id="imgToolQualityVal">85</span></label><input type="range" id="imgToolQuality" min="10" max="100" value="85" oninput="document.getElementById(\'imgToolQualityVal\').textContent=this.value" style="width:100%;accent-color:#d97706"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标宽度（px，0=不缩放）</label><input type="number" id="imgToolWidth" value="0" min="0" max="5000" placeholder="如1600" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标DPI（用于计算尺寸，0=不使用）</label><input type="number" id="imgToolDPI" value="0" min="0" max="1200" placeholder="如300" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">印刷宽度（cm，配合DPI使用）</label><input type="number" id="imgToolPrintWidth" value="8.5" min="1" max="30" step="0.5" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onclick="processAllImages()" style="background:#d97706;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">批量处理并下载ZIP</button><button onclick="processImagesPreview()" style="background:#92400e;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">预览处理效果</button><span style="font-size:10px;color:#92400e">提示：DPI+印刷宽度会自动计算目标像素宽度</span></div><div id="imgToolProgress" style="display:none;margin-top:10px"><div style="font-size:10px;color:#92400e;margin-bottom:4px">处理进度: <span id="imgToolProgressText">0/0</span></div><div style="background:#fef3c7;border-radius:4px;height:8px;overflow:hidden"><div id="imgToolProgressBar" style="background:#d97706;height:100%;width:0%;transition:width .3s"></div></div></div><div id="imgToolResults" style="margin-top:10px"></div></div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div><div id="fmtImageDetectResults" style="margin-top:10px"></div><div id="fmtCaptionCheckResult" style="margin-top:10px"></div></div>';
     html += '<div style="display:flex;gap:10px;margin-bottom:16px"><button onclick="checkPaperFormat()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI检查格式问题</button><button onclick="autoFixPaperFormat()" style="background:#075985;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">一键检查并修改</button></div>';
     html += '<div id="fmtResult"></div>';
     // 快捷工具区
@@ -40108,6 +40108,180 @@ function ruleCheckFigureCaptions(content) {
   }
   
   return result;
+}
+
+
+// 切换图片处理工具面板
+function toggleImageTool() {
+  var panel = document.getElementById('fmtImageToolPanel');
+  if (panel.style.display === 'none') panel.style.display = 'block';
+  else panel.style.display = 'none';
+}
+
+// 处理单张图片（返回Blob）
+function processSingleImage(imgMeta, format, quality, targetWidth) {
+  return new Promise(function(resolve, reject) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var ctx = canvas.getContext('2d');
+      
+      var w = img.naturalWidth;
+      var h = img.naturalHeight;
+      
+      // 按目标宽度等比缩放
+      if (targetWidth > 0 && targetWidth < w) {
+        var ratio = targetWidth / w;
+        w = targetWidth;
+        h = Math.round(h * ratio);
+      }
+      
+      canvas.width = w;
+      canvas.height = h;
+      
+      // PNG需要白色背景（处理透明）
+      if (format === 'image/jpeg') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+      }
+      
+      ctx.drawImage(img, 0, 0, w, h);
+      
+      canvas.toBlob(function(blob) {
+        if (blob) resolve({blob: blob, width: w, height: h});
+        else reject(new Error('图片处理失败'));
+      }, format, quality / 100);
+    };
+    img.onerror = function() { reject(new Error('图片加载失败')); };
+    img.src = imgMeta.url;
+  });
+}
+
+// 预览处理效果（显示第一张图片的处理前后对比）
+async function processImagesPreview() {
+  if (fmtImagesMeta.length === 0) { alert('请先上传含图片的Word文档'); return; }
+  
+  var format = document.getElementById('imgToolFormat').value;
+  var quality = parseInt(document.getElementById('imgToolQuality').value);
+  var targetWidth = parseInt(document.getElementById('imgToolWidth').value) || 0;
+  var targetDPI = parseInt(document.getElementById('imgToolDPI').value) || 0;
+  var printWidth = parseFloat(document.getElementById('imgToolPrintWidth').value) || 8.5;
+  
+  // 如果设置了DPI，计算目标宽度
+  if (targetDPI > 0) {
+    targetWidth = Math.round(targetDPI * printWidth / 2.54);
+    document.getElementById('imgToolWidth').value = targetWidth;
+  }
+  
+  var resultsEl = document.getElementById('imgToolResults');
+  resultsEl.innerHTML = '<div style="padding:10px;text-align:center;color:#92400e;font-size:11px">正在处理预览...</div>';
+  
+  try {
+    var img = fmtImagesMeta[0];
+    var result = await processSingleImage(img, format, quality, targetWidth);
+    var url = URL.createObjectURL(result.blob);
+    var ext = format.split('/')[1].replace('jpeg', 'jpg');
+    var origSizeKB = (img.fileSize / 1024).toFixed(1);
+    var newSizeKB = (result.blob.size / 1024).toFixed(1);
+    var savedPct = ((1 - result.blob.size / img.fileSize) * 100).toFixed(1);
+    
+    var html = '<div style="background:#fff;border:1px solid #fcd34d;border-radius:6px;padding:12px">';
+    html += '<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:10px">处理效果预览（图1）</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+    html += '<div><div style="font-size:10px;font-weight:600;color:#dc2626;margin-bottom:4px;text-align:center">处理前</div><img src="' + img.url + '" style="width:100%;max-height:150px;object-fit:contain;border:1px solid #fecaca;border-radius:4px"><div style="font-size:9px;color:#6b7280;text-align:center;margin-top:4px">' + img.width + '×' + img.height + 'px, ' + origSizeKB + 'KB, ' + img.ext.toUpperCase() + '</div></div>';
+    html += '<div><div style="font-size:10px;font-weight:600;color:#059669;margin-bottom:4px;text-align:center">处理后</div><img src="' + url + '" style="width:100%;max-height:150px;object-fit:contain;border:1px solid #86efac;border-radius:4px"><div style="font-size:9px;color:#6b7280;text-align:center;margin-top:4px">' + result.width + '×' + result.height + 'px, ' + newSizeKB + 'KB, ' + ext.toUpperCase() + '</div></div>';
+    html += '</div>';
+    html += '<div style="margin-top:10px;padding:8px;background:#f0fdf4;border-radius:4px;text-align:center"><span style="font-size:12px;font-weight:700;color:#059669">体积减少 ' + savedPct + '%</span><span style="font-size:10px;color:#6b7280;margin-left:8px">（' + origSizeKB + 'KB → ' + newSizeKB + 'KB）</span></div>';
+    html += '<div style="text-align:center;margin-top:8px"><a href="' + url + '" download="figure1_processed.' + ext + '" style="display:inline-block;background:#d97706;color:#fff;padding:6px 16px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:600">下载此图</a></div>';
+    html += '</div>';
+    resultsEl.innerHTML = html;
+  } catch (e) {
+    resultsEl.innerHTML = '<div style="color:#dc2626;font-size:11px;padding:8px">处理失败：' + e.message + '</div>';
+  }
+}
+
+// 批量处理所有图片并下载ZIP
+async function processAllImages() {
+  if (fmtImagesMeta.length === 0) { alert('请先上传含图片的Word文档'); return; }
+  
+  var format = document.getElementById('imgToolFormat').value;
+  var quality = parseInt(document.getElementById('imgToolQuality').value);
+  var targetWidth = parseInt(document.getElementById('imgToolWidth').value) || 0;
+  var targetDPI = parseInt(document.getElementById('imgToolDPI').value) || 0;
+  var printWidth = parseFloat(document.getElementById('imgToolPrintWidth').value) || 8.5;
+  
+  if (targetDPI > 0) {
+    targetWidth = Math.round(targetDPI * printWidth / 2.54);
+    document.getElementById('imgToolWidth').value = targetWidth;
+  }
+  
+  var progressEl = document.getElementById('imgToolProgress');
+  var progressBar = document.getElementById('imgToolProgressBar');
+  var progressText = document.getElementById('imgToolProgressText');
+  var resultsEl = document.getElementById('imgToolResults');
+  
+  progressEl.style.display = 'block';
+  resultsEl.innerHTML = '';
+  var total = fmtImagesMeta.length;
+  var processed = [];
+  
+  try {
+    var JSZip = await loadJSZip();
+    var zip = new JSZip();
+    var ext = format.split('/')[1].replace('jpeg', 'jpg');
+    var totalOrigSize = 0;
+    var totalNewSize = 0;
+    
+    for (var i = 0; i < fmtImagesMeta.length; i++) {
+      progressText.textContent = (i+1) + '/' + total;
+      progressBar.style.width = ((i+1)/total*100) + '%';
+      
+      var img = fmtImagesMeta[i];
+      totalOrigSize += img.fileSize;
+      
+      try {
+        var result = await processSingleImage(img, format, quality, targetWidth);
+        totalNewSize += result.blob.size;
+        zip.file('figure_' + (i+1) + '.' + ext, result.blob);
+        processed.push({index: i+1, origSize: img.fileSize, newSize: result.blob.size, width: result.width, height: result.height});
+      } catch (e) {
+        console.log('图' + (i+1) + '处理失败:', e);
+        // 处理失败时加入原图
+        var origBlob = await fetch(img.url).then(r => r.blob());
+        zip.file('figure_' + (i+1) + '_original.' + img.ext, origBlob);
+        processed.push({index: i+1, origSize: img.fileSize, newSize: img.fileSize, width: img.width, height: img.height, failed: true});
+      }
+    }
+    
+    // 生成ZIP
+    var zipBlob = await zip.generateAsync({type: 'blob'});
+    var zipUrl = URL.createObjectURL(zipBlob);
+    var savedPct = totalOrigSize > 0 ? ((1 - totalNewSize / totalOrigSize) * 100).toFixed(1) : '0';
+    
+    // 显示结果
+    var html = '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:12px">';
+    html += '<div style="text-align:center;margin-bottom:10px"><div style="font-size:18px;font-weight:700;color:#059669">处理完成！</div>';
+    html += '<div style="font-size:12px;color:#166534;margin-top:4px">共处理 ' + processed.length + ' 张图片，总体积减少 ' + savedPct + '%</div>';
+    html += '<div style="font-size:10px;color:#6b7280;margin-top:2px">（' + (totalOrigSize/1024).toFixed(1) + 'KB → ' + (totalNewSize/1024).toFixed(1) + 'KB）</div></div>';
+    
+    // 明细
+    html += '<div style="max-height:200px;overflow-y:auto;margin-bottom:10px">';
+    processed.forEach(function(p) {
+      var pct = p.origSize > 0 ? ((1 - p.newSize / p.origSize) * 100).toFixed(0) : '0';
+      var color = p.failed ? '#9ca3af' : (p.newSize < p.origSize ? '#059669' : '#d97706');
+      html += '<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 6px;border-bottom:1px solid #d1fae5;color:#374151"><span>图' + p.index + (p.failed ? '（处理失败，用原图）' : '') + '</span><span style="color:' + color + ';font-weight:600">' + p.width + '×' + p.height + 'px, ' + (p.newSize/1024).toFixed(1) + 'KB' + (p.failed ? '' : ' (-' + pct + '%)') + '</span></div>';
+    });
+    html += '</div>';
+    
+    html += '<div style="text-align:center"><a href="' + zipUrl + '" download="processed_figures.zip" style="display:inline-block;background:#059669;color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:700">下载ZIP压缩包（' + (zipBlob.size/1024).toFixed(1) + 'KB）</a></div>';
+    html += '</div>';
+    resultsEl.innerHTML = html;
+    
+  } catch (e) {
+    resultsEl.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:10px">批量处理失败：' + e.message + '</div>';
+  }
+  
+  setTimeout(function() { progressEl.style.display = 'none'; }, 2000);
 }
 
 
