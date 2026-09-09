@@ -5033,6 +5033,7 @@ console.log('✅ 学习工具入口已加载');
   <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('format')"><span class="icon">🔍</span><span>格式检查</span></div>
   <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('literature')"><span class="icon">📚</span><span>文献管理</span></div>
   <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('design')"><span class="icon">🧪</span><span>研究设计</span></div>
+  <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('assist')"><span class="icon">💡</span><span>研究辅助</span></div>
 
   <div class="nav-group">🛠️ 学习工具</div>
   <div class="nav-item" data-tab="plan"><span class="icon">📅</span><span>备考规划</span></div>
@@ -6886,6 +6887,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('format')" id="paperTab-format" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">格式检查</button>
       <button onclick="switchPaperSubTab('literature')" id="paperTab-literature" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">文献管理</button>
       <button onclick="switchPaperSubTab('design')" id="paperTab-design" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">研究设计</button>
+      <button onclick="switchPaperSubTab('assist')" id="paperTab-assist" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">研究辅助</button>
     </div>
 
     <!-- 我的论文页面 -->
@@ -6995,6 +6997,90 @@ console.log('✅ 学习工具入口已加载');
       </div>
       <!-- AI生成结果区 -->
       <div id="designResult"></div>
+    </div>
+
+    <!-- 研究辅助页面 -->
+    <div id="paperContent-assist" style="display:none">
+      <!-- 功能选择卡片 -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px">
+        <button onclick="switchAssistTool('topic')" id="assistTool-topic" style="background:#fff;border:2px solid #16a34a;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:28px;margin-bottom:6px">🎯</div><div style="font-size:13px;font-weight:700;color:#1f2937">AI选题推荐</div><div style="font-size:11px;color:#6b7280;margin-top:2px">基于方向推荐选题</div></button>
+        <button onclick="switchAssistTool('innovation')" id="assistTool-innovation" style="background:#fff;border:2px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:28px;margin-bottom:6px">✨</div><div style="font-size:13px;font-weight:700;color:#1f2937">创新点挖掘</div><div style="font-size:11px;color:#6b7280;margin-top:2px">提炼论文核心亮点</div></button>
+        <button onclick="switchAssistTool('discussion')" id="assistTool-discussion" style="background:#fff;border:2px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:28px;margin-bottom:6px">💬</div><div style="font-size:13px;font-weight:700;color:#1f2937">讨论部分辅助</div><div style="font-size:11px;color:#6b7280;margin-top:2px">AI深度撰写讨论</div></button>
+        <button onclick="switchAssistTool('code')" id="assistTool-code" style="background:#fff;border:2px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:28px;margin-bottom:6px">🐍</div><div style="font-size:13px;font-weight:700;color:#1f2937">分析代码生成</div><div style="font-size:11px;color:#6b7280;margin-top:2px">Python/R统计代码</div></button>
+        <button onclick="switchAssistTool('chart')" id="assistTool-chart" style="background:#fff;border:2px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:28px;margin-bottom:6px">📊</div><div style="font-size:13px;font-weight:700;color:#1f2937">图表建议</div><div style="font-size:11px;color:#6b7280;margin-top:2px">图表类型推荐+代码</div></button>
+      </div>
+
+      <!-- AI选题推荐 -->
+      <div id="assistContent-topic" style="display:block">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:14px">AI选题推荐</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">研究方向 *</label><input type="text" id="topicField" placeholder="如：运动生理学、体育教育训练学..." style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>
+            <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">研究基础/兴趣</label><input type="text" id="topicInterest" placeholder="如：有氧运动、线粒体、胰岛素抵抗" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>
+          </div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">目标层次</label><select id="topicLevel" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff"><option value="phd">博士论文（深度创新）</option><option value="master">硕士论文（中等创新）</option><option value="journal">期刊论文（聚焦创新点）</option></select></div>
+          <button onclick="generateTopics()" style="width:100%;background:#16a34a;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">AI推荐选题方向</button>
+        </div>
+        <div id="topicResult"></div>
+      </div>
+
+      <!-- 创新点挖掘 -->
+      <div id="assistContent-innovation" style="display:none">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:14px">创新点挖掘</div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">研究题目</label><input type="text" id="innovTitle" placeholder="输入论文题目" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">研究内容/方法（简要描述）</label><textarea id="innovContent" rows="5" placeholder="简要描述你的研究内容、研究方法、主要发现..." style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;resize:vertical"></textarea></div>
+          <button onclick="generateInnovation()" style="width:100%;background:#f59e0b;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">AI挖掘创新点</button>
+        </div>
+        <div id="innovationResult"></div>
+      </div>
+
+      <!-- 讨论部分辅助 -->
+      <div id="assistContent-discussion" style="display:none">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:14px">讨论部分深度辅助</div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">主要研究结果</label><textarea id="discResults" rows="4" placeholder="列出你的主要研究发现（2-5条）..." style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;resize:vertical"></textarea></div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">相关前人研究（可选）</label><textarea id="discPrior" rows="3" placeholder="简要列出与你结果相关的前人研究及其发现..." style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;resize:vertical"></textarea></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">讨论深度</label><select id="discDepth" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff"><option value="standard">标准（结果解释+对比+意义）</option><option value="deep">深度（机制探讨+理论贡献+局限+未来方向）</option><option value="comprehensive">全面（含实践应用+政策建议+跨学科视角）</option></select></div>
+            <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">字数目标</label><select id="discWords" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff"><option value="800">800字（期刊短文）</option><option value="1500">1500字（标准）</option><option value="2500">2500字（深度）</option><option value="4000">4000字（学位论文）</option></select></div>
+          </div>
+          <button onclick="generateDiscussion()" style="width:100%;background:#8b5cf6;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">AI生成讨论部分</button>
+        </div>
+        <div id="discussionResult"></div>
+      </div>
+
+      <!-- 分析代码生成 -->
+      <div id="assistContent-code" style="display:none">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:14px">数据分析代码生成</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">编程语言</label><select id="codeLang" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff"><option value="python">Python</option><option value="r">R</option></select></div>
+            <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">分析类型</label><select id="codeType" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff"><option value="ttest">t检验（独立/配对）</option><option value="anova">方差分析（ANOVA）</option><option value="repeated">重复测量ANOVA</option><option value="correlation">相关与回归</option><option value="mixed">混合线性模型</option><option value="sem">结构方程模型</option><option value="nonparametric">非参数检验</option><option value="descriptive">描述统计与可视化</option></select></div>
+          </div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">变量说明（变量名:类型:说明）</label><textarea id="codeVars" rows="4" placeholder="例如：&#10;group: 分类: 实验组/对照组&#10;age: 连续: 年龄&#10;vo2max: 连续: 最大摄氧量&#10;time: 分类: 前测/后测" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;resize:vertical;font-family:Consolas,monospace"></textarea></div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">数据文件格式</label><select id="codeData" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff"><option value="csv">CSV</option><option value="excel">Excel (.xlsx)</option><option value="sav">SPSS (.sav)</option></select></div>
+          <button onclick="generateAnalysisCode()" style="width:100%;background:#0ea5e9;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">生成分析代码</button>
+        </div>
+        <div id="codeResult"></div>
+      </div>
+
+      <!-- 图表建议 -->
+      <div id="assistContent-chart" style="display:none">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:14px">图表类型建议与生成</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">数据类型</label><select id="chartDataType" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff"><option value="comparison">组间比较（均值±标准差）</option><option value="trend">趋势变化（时间序列）</option><option value="correlation">相关性（双变量）</option><option value="distribution">分布（直方图/箱线图）</option><option value="composition">构成（百分比）</option><option value="interaction">交互作用（多因素）</option></select></div>
+            <div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">图表风格</label><select id="chartStyle" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff"><option value="academic">学术期刊风格（简洁黑白）</option><option value="colorful">彩色清晰（适合报告/PPT）</option><option value="minimal">极简风格</option></select></div>
+          </div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">变量/数据说明</label><textarea id="chartVars" rows="3" placeholder="例如：&#10;X轴：时间（0周/4周/8周/12周）&#10;Y轴：最大摄氧量（ml/kg/min）&#10;分组：实验组、对照组" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;resize:vertical"></textarea></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <button onclick="recommendChart()" style="background:#16a34a;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">推荐图表类型</button>
+            <button onclick="generateChartCode()" style="background:#0ea5e9;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">生成ECharts代码</button>
+          </div>
+        </div>
+        <div id="chartResult"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -26744,7 +26830,7 @@ function savePaperProjects(projects) {
 
 function switchPaperSubTab(subTab) {
   paperCurrentSubTab = subTab;
-  ['projects','editor','format','literature','design'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist'].forEach(function(t) {
     var btn = document.getElementById('paperTab-' + t);
     var content = document.getElementById('paperContent-' + t);
     if (btn) { btn.style.background = (t === subTab) ? '#16a34a' : '#fff'; btn.style.color = (t === subTab) ? '#fff' : '#16a34a'; }
@@ -27287,6 +27373,181 @@ function recommendStatMethod() {
     '<div style="font-size:12px;color:#6b7280;margin-bottom:8px">选择理由：' + reason + '</div>' +
     '<div style="font-size:11px;color:#9ca3af">前提假设：正态性检验（Shapiro-Wilk）、方差齐性检验（Levene）、独立性检验。若不满足参数检验前提，使用对应非参数方法。</div>' +
     sportsExtra;
+}
+
+
+// ========== 论文工作台 - 研究辅助 ==========
+function switchAssistTool(tool) {
+  ['topic','innovation','discussion','code','chart'].forEach(function(t) {
+    var btn = document.getElementById('assistTool-' + t);
+    var content = document.getElementById('assistContent-' + t);
+    if (btn) { btn.style.borderColor = (t === tool) ? '#16a34a' : '#e5e7eb'; }
+    if (content) content.style.display = (t === tool) ? 'block' : 'none';
+  });
+}
+
+async function generateTopics() {
+  var field = (document.getElementById('topicField') || {}).value || '';
+  var interest = (document.getElementById('topicInterest') || {}).value || '';
+  var level = (document.getElementById('topicLevel') || {}).value || 'phd';
+  if (!field) { alert('请输入研究方向'); return; }
+  
+  var levelLabels = {phd:'博士论文', master:'硕士论文', journal:'期刊论文'};
+  var resultEl = document.getElementById('topicResult');
+  resultEl.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px;text-align:center;color:#16a34a;font-size:14px">AI正在分析领域热点，推荐选题方向...</div>';
+  
+  try {
+    var systemPrompt = '你是一位体育学研究选题专家，拥有10年以上体育学基金申请和论文选题指导经验，熟悉运动人体科学、体育教育训练学、体育人文社会学等各方向的研究前沿和热点。';
+    var userPrompt = '请为以下研究方向推荐10个具体的选题方向：\n\n研究方向：' + field + '\n研究基础/兴趣：' + (interest || '无特别限制') + '\n目标层次：' + (levelLabels[level] || '') + '\n\n每个选题请包含：1. 选题名称 2. 研究意义（理论+实践）3. 可行性分析（数据可获得性/方法成熟度/资源需求）4. 创新点 5. 适合的研究方法。\n\n要求：选题要具体、可操作，避免过于宽泛；优先推荐近3年领域热点和前沿方向；结合体育学特点；使用中文。';
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 3500);
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)"><div style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:14px">AI推荐选题方向（' + field + '）</div><div class="md-content" style="font-size:14px;line-height:1.8;color:#1f2937">' + renderMarkdown(result) + '</div></div>';
+  } catch(e) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:20px;text-align:center;color:#dc2626;font-size:14px">生成失败：' + e.message + '</div>';
+  }
+}
+
+async function generateInnovation() {
+  var title = (document.getElementById('innovTitle') || {}).value || '';
+  var content = (document.getElementById('innovContent') || {}).value || '';
+  if (!title && !content) { alert('请输入研究题目或研究内容'); return; }
+  
+  var resultEl = document.getElementById('innovationResult');
+  resultEl.innerHTML = '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:20px;text-align:center;color:#92400e;font-size:14px">AI正在挖掘研究创新点...</div>';
+  
+  try {
+    var systemPrompt = '你是一位体育学论文评审专家，擅长从研究内容中提炼和挖掘创新点，熟悉体育学各方向的研究现状和学术标准。';
+    var userPrompt = '请从以下研究内容中挖掘和提炼创新点：\n\n研究题目：' + title + '\n研究内容/方法：' + content + '\n\n请输出：1. 理论创新点（2-3条）2. 方法创新点（2-3条）3. 实践创新点（1-2条）4. 论文核心亮点（3-5条，可用于摘要和Highlights）5. 创新点的论证建议（如何在论文中论证这些创新点）6. 可能的不足和改进方向。\n\n要求：创新点要具体、有说服力，避免空泛；结合体育学领域的研究现状；使用中文。';
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2500);
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)"><div style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:14px">创新点挖掘结果</div><div class="md-content" style="font-size:14px;line-height:1.8;color:#1f2937">' + renderMarkdown(result) + '</div></div>';
+  } catch(e) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:20px;text-align:center;color:#dc2626;font-size:14px">挖掘失败：' + e.message + '</div>';
+  }
+}
+
+async function generateDiscussion() {
+  var results = (document.getElementById('discResults') || {}).value || '';
+  var prior = (document.getElementById('discPrior') || {}).value || '';
+  var depth = (document.getElementById('discDepth') || {}).value || 'standard';
+  var words = (document.getElementById('discWords') || {}).value || '1500';
+  if (!results) { alert('请输入主要研究结果'); return; }
+  
+  var depthLabels = {standard:'标准', deep:'深度', comprehensive:'全面'};
+  var resultEl = document.getElementById('discussionResult');
+  resultEl.innerHTML = '<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:20px;text-align:center;color:#7c3aed;font-size:14px">AI正在撰写讨论部分...</div>';
+  
+  try {
+    var systemPrompt = '你是一位体育学论文写作专家，擅长撰写学术论文的讨论部分，熟悉体育学各方向的研究现状、理论框架和学术规范。';
+    var userPrompt = '请根据以下研究结果撰写论文的讨论部分：\n\n主要研究结果：' + results + '\n相关前人研究：' + (prior || '无特别指定') + '\n讨论深度：' + (depthLabels[depth] || '') + '\n字数目标：约' + words + '字\n\n讨论部分应包含：1. 主要发现的概述 2. 结果解释（结合可能的机制）3. 与前人研究的对比（一致/不一致及原因）4. 研究意义（理论贡献+实践应用）5. 研究局限性 6. 未来研究方向 7. 结论。\n\n要求：学术化表达，逻辑严谨，论证充分；结合体育学特点；避免重复结果部分；使用中文。';
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-size:16px;font-weight:700;color:#1f2937">讨论部分（AI生成）</div><button onclick="copyDiscussion()" style="background:#7c3aed;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">复制全文</button></div><div class="md-content" style="font-size:14px;line-height:1.9;color:#1f2937">' + renderMarkdown(result) + '</div></div>';
+    window._paperDiscussionText = result;
+  } catch(e) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:20px;text-align:center;color:#dc2626;font-size:14px">生成失败：' + e.message + '</div>';
+  }
+}
+
+function copyDiscussion() {
+  if (!window._paperDiscussionText) return;
+  var textarea = document.createElement('textarea');
+  textarea.value = window._paperDiscussionText;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  alert('已复制到剪贴板');
+}
+
+async function generateAnalysisCode() {
+  var lang = (document.getElementById('codeLang') || {}).value || 'python';
+  var type = (document.getElementById('codeType') || {}).value || 'ttest';
+  var vars = (document.getElementById('codeVars') || {}).value || '';
+  var data = (document.getElementById('codeData') || {}).value || 'csv';
+  
+  var typeLabels = {ttest:'t检验', anova:'方差分析', repeated:'重复测量ANOVA', correlation:'相关与回归', mixed:'混合线性模型', sem:'结构方程模型', nonparametric:'非参数检验', descriptive:'描述统计与可视化'};
+  var resultEl = document.getElementById('codeResult');
+  resultEl.innerHTML = '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:20px;text-align:center;color:#0ea5e9;font-size:14px">AI正在生成分析代码...</div>';
+  
+  try {
+    var systemPrompt = '你是一位体育统计学和数据科学专家，精通Python和R语言，熟悉体育学研究中常用的统计分析方法和代码实现。';
+    var userPrompt = '请生成以下统计分析的完整代码：\n\n编程语言：' + (lang === 'python' ? 'Python' : 'R') + '\n分析类型：' + (typeLabels[type] || '') + '\n变量说明：\n' + (vars || '（用户未指定变量，请使用示例变量名并注释说明）') + '\n数据格式：' + data.toUpperCase() + '\n\n代码应包含：1. 数据导入 2. 数据清洗与预处理 3. 描述性统计 4. 假设检验（正态性/方差齐性等）5. 主分析 6. 事后检验（如适用）7. 结果可视化 8. 结果输出与解释。\n\n要求：代码完整可运行，有详细中文注释；使用体育学研究中常用的库和方法；输出结果要清晰易读。';
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-size:16px;font-weight:700;color:#1f2937">' + (lang === 'python' ? 'Python' : 'R') + '分析代码（' + (typeLabels[type] || '') + '）</div><button onclick="copyCode()" style="background:#0ea5e9;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">复制代码</button></div><div class="md-content" style="font-size:13px;line-height:1.7;color:#1f2937">' + renderMarkdown(result) + '</div></div>';
+    window._paperCodeText = result;
+  } catch(e) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:20px;text-align:center;color:#dc2626;font-size:14px">生成失败：' + e.message + '</div>';
+  }
+}
+
+function copyCode() {
+  if (!window._paperCodeText) return;
+  var textarea = document.createElement('textarea');
+  textarea.value = window._paperCodeText;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  alert('已复制到剪贴板');
+}
+
+
+// ========== 论文工作台 - 图表建议 ==========
+function recommendChart() {
+  var dataType = (document.getElementById('chartDataType') || {}).value || 'comparison';
+  var vars = (document.getElementById('chartVars') || {}).value || '';
+  var resultEl = document.getElementById('chartResult');
+  
+  var recommendations = {
+    comparison: {charts: ['柱状图（Bar Chart）', '误差棒图（Error Bar）', '小提琴图（Violin Plot）'], best: '柱状图+误差棒', reason: '组间均值比较最常用柱状图，误差棒显示标准差或标准误；若数据分布偏态或有异常值，小提琴图更合适。', tips: 'Y轴从0开始；组别顺序按逻辑排列；添加显著性标记（*p<0.05, **p<0.01）'},
+    trend: {charts: ['折线图（Line Chart）', '面积图（Area Chart）', '阶梯图（Step Chart）'], best: '折线图', reason: '时间序列或连续变量变化趋势用折线图最直观；多组对比时用不同颜色折线。', tips: 'X轴时间间隔均匀；数据点用不同形状区分；添加趋势线或拟合曲线'},
+    correlation: {charts: ['散点图（Scatter Plot）', '气泡图（Bubble Chart）', '热力图（Heatmap）'], best: '散点图+拟合线', reason: '两个连续变量的关系用散点图，添加回归拟合线和R²值；多变量相关用热力图。', tips: '添加拟合线和置信区间；标注相关系数和p值；注意X/Y轴范围不要误导'},
+    distribution: {charts: ['直方图（Histogram）', '箱线图（Box Plot）', '密度图（Density Plot）'], best: '箱线图（多组）/直方图（单组）', reason: '单组数据分布用直方图；多组分布比较用箱线图（显示中位数、四分位数、异常值）。', tips: '箱线图标注异常值；直方图选择合适的bin数；密度图平滑参数要合适'},
+    composition: {charts: ['饼图（Pie Chart）', '堆叠柱状图（Stacked Bar）', '环形图（Donut Chart）'], best: '堆叠柱状图', reason: '构成比用堆叠柱状图比饼图更易比较；类别超过5个时避免用饼图。', tips: '百分比标注清晰；颜色对比度足够；按大小排序'},
+    interaction: {charts: ['交互作用图（Interaction Plot）', '分组折线图（Grouped Line）', '热力图（Heatmap）'], best: '分组折线图', reason: '两因素交互作用用分组折线图，X轴为一个因素，不同颜色为另一个因素，观察线条是否交叉。', tips: '标注简单效应分析结果；误差棒显示标准误；线条交叉提示交互作用显著'}
+  };
+  
+  var rec = recommendations[dataType] || recommendations.comparison;
+  resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">' +
+    '<div style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:14px">图表类型推荐</div>' +
+    '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:4px">最佳选择：' + rec.best + '</div><div style="font-size:12px;color:#374151;line-height:1.7">' + rec.reason + '</div></div>' +
+    '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">可选图表类型：</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">' + rec.charts.map(function(c) { return '<span style="background:#f3f4f6;color:#374151;padding:5px 12px;border-radius:5px;font-size:12px">' + c + '</span>'; }).join('') + '</div>' +
+    '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">学术图表规范建议：</div>' +
+    '<div style="font-size:12px;color:#6b7280;line-height:1.8">' + rec.tips + '</div>' +
+    (vars ? '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6"><div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">基于你的数据：</div><div style="font-size:12px;color:#6b7280">' + vars + '</div></div>' : '') +
+    '</div>';
+}
+
+async function generateChartCode() {
+  var dataType = (document.getElementById('chartDataType') || {}).value || 'comparison';
+  var style = (document.getElementById('chartStyle') || {}).value || 'academic';
+  var vars = (document.getElementById('chartVars') || {}).value || '';
+  var resultEl = document.getElementById('chartResult');
+  
+  var typeLabels = {comparison:'组间比较', trend:'趋势变化', correlation:'相关性', distribution:'分布', composition:'构成', interaction:'交互作用'};
+  var styleLabels = {academic:'学术期刊风格', colorful:'彩色清晰', minimal:'极简风格'};
+  
+  resultEl.innerHTML = '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:20px;text-align:center;color:#0ea5e9;font-size:14px">AI正在生成ECharts图表代码...</div>';
+  
+  try {
+    var systemPrompt = '你是一位数据可视化专家，精通ECharts图表库，熟悉学术论文和体育学研究中的图表规范。';
+    var userPrompt = '请生成一个ECharts图表的完整HTML代码：\n\n图表类型：' + (typeLabels[dataType] || '') + '\n图表风格：' + (styleLabels[style] || '') + '\n数据说明：' + (vars || '使用示例数据') + '\n\n要求：1. 完整可运行的HTML文件（含ECharts CDN引入）2. 图表美观、专业、符合学术规范 3. 有标题、坐标轴标签、图例 4. 中文标注 5. 响应式布局 6. 如果是学术风格，使用黑白灰配色；如果是彩色风格，使用清晰的配色方案。\n\n只输出HTML代码，不要额外解释。';
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 3000);
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-size:16px;font-weight:700;color:#1f2937">ECharts图表代码（' + (typeLabels[dataType] || '') + '）</div><button onclick="copyChartCode()" style="background:#0ea5e9;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">复制代码</button></div><div class="md-content" style="font-size:13px;line-height:1.7;color:#1f2937">' + renderMarkdown(result) + '</div><div style="margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6;font-size:12px;color:#6b7280">使用方法：将代码保存为 .html 文件，用浏览器打开即可查看图表；可根据实际数据修改 series 中的 data 数组。</div></div>';
+    window._paperChartCode = result;
+  } catch(e) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:20px;text-align:center;color:#dc2626;font-size:14px">生成失败：' + e.message + '</div>';
+  }
+}
+
+function copyChartCode() {
+  if (!window._paperChartCode) return;
+  var textarea = document.createElement('textarea');
+  textarea.value = window._paperChartCode;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  alert('已复制到剪贴板');
 }
 
 
