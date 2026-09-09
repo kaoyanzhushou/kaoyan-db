@@ -41458,7 +41458,7 @@ function renderPhdTaoci(){
   const area = document.getElementById('phdTaociArea');
   if(!area) return;
   let html = '<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
-  const tabs = [['guide','📖 套磁指南'],['ai','🤖 AI套磁信生成'],['tpl','📋 模板库'],['record','📊 联系记录'],['attach','📎 附件准备']];
+  const tabs = [['guide','📖 套磁指南'],['ai','🤖 AI套磁信生成'],['tpl','📋 模板库'],['reply','💬 回复分析'],['phrases','💎 话术库'],['record','📊 联系记录'],['attach','📎 附件准备']];
   tabs.forEach(t=>{
     html += '<button onclick="switchPhdTaociTab(\''+t[0]+'\')" id="taociTab-'+t[0]+'" style="padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:1px solid '+(phdTaociSubTab===t[0]?'#3b82f6':'#e2e8f0')+';background:'+(phdTaociSubTab===t[0]?'linear-gradient(135deg,#3b82f6,#2563eb)':'#fff')+';color:'+(phdTaociSubTab===t[0]?'#fff':'#475569')+'">'+t[1]+'</button>';
   });
@@ -41475,6 +41475,8 @@ function renderPhdTaociContent(){
   else if(phdTaociSubTab==='ai') el.innerHTML = renderTaociAI();
   else if(phdTaociSubTab==='tpl') el.innerHTML = renderTaociTemplates();
   else if(phdTaociSubTab==='record') el.innerHTML = renderTaociRecords();
+  else if(phdTaociSubTab==='reply') el.innerHTML = renderTaociReplyAnalysis();
+  else if(phdTaociSubTab==='phrases') el.innerHTML = renderTaociPhrases();
   else if(phdTaociSubTab==='attach') el.innerHTML = renderTaociAttach();
 }
 
@@ -41657,6 +41659,40 @@ async function generateTaociLetter(){
   }
   btn.disabled = false; btn.textContent = '✨ AI生成套磁邮件';
 }
+function renderTaociReplyAnalysis(){
+  return `
+  <div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border-radius:12px;padding:16px;margin-bottom:16px">
+    <div style="font-size:15px;font-weight:700;color:#5b21b6;margin-bottom:4px">💬 导师回复分析</div>
+    <div style="font-size:13px;color:#6d28d9;line-height:1.6">把导师的回复粘贴进来，AI判断真实意图（积极/观望/婉拒/客套/约面/名额满），给出应对策略与回复草稿</div>
+  </div>
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px">
+    <div style="margin-bottom:14px"><label style="display:block;margin-bottom:6px;font-size:13px;font-weight:700;color:#1e293b">📩 导师的回复邮件（必填）</label><textarea id="replyTeacherText" rows="6" placeholder="粘贴导师回复原文，例如：你好，来信收到。你的背景还不错，但今年名额可能比较紧张，建议同时考虑其他学校..." style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div><label style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:#475569">🧑‍🏫 导师身份（选填）</label><input type="text" id="replyTeacherIdentity" placeholder="如：上海体育大学 运动康复方向 博导" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;box-sizing:border-box"></div>
+      <div><label style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:#475569">🗒️ 你的原套磁要点（选填）</label><input type="text" id="replyMyEmailKey" placeholder="如：我申请其运动与骨骼肌方向博士，附简历" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;box-sizing:border-box"></div>
+    </div>
+    <button onclick="analyzePhdReply()" style="width:100%;padding:12px;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-weight:700;box-shadow:0 4px 12px rgba(139,92,246,.3)">🔍 AI分析回复意图</button>
+    <div id="replyAnalyzeResult" style="margin-top:20px"></div>
+  </div>`;
+}
+
+function renderTaociPhrases(){
+  const keys = Object.keys(PHD_TAOCI_PHRASES);
+  let tabsHtml = '';
+  keys.forEach(function(k, i) {
+    tabsHtml += '<button id="phraseTab_' + k + '" onclick="switchPhraseTab(\'' + k + '\')" style="padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;border:1px solid #e5e7eb;background:' + (i === 0 ? '#8b5cf6' : '#fff') + ';color:' + (i === 0 ? '#fff' : '#333') + ';font-weight:600;margin-bottom:8px">' + PHD_TAOCI_PHRASES[k].name + '</button>';
+  });
+  return `
+  <div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border-radius:12px;padding:16px;margin-bottom:16px">
+    <div style="font-size:15px;font-weight:700;color:#5b21b6;margin-bottom:4px">💎 套磁话术库</div>
+    <div style="font-size:13px;color:#6d28d9;line-height:1.6">六大高频场景得体表述，写邮件时直接参考改写（记得结合导师具体信息个性化，切勿照搬）</div>
+  </div>
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">${tabsHtml}</div>
+    <div id="phraseContentArea">${phraseContent(keys[0])}</div>
+  </div>`;
+}
+
 function copyTaociLetter(){
   const text = document.getElementById('taociLetterText').textContent;
   navigator.clipboard.writeText(text).then(()=>alert('已复制到剪贴板！')).catch(()=>{
