@@ -16544,6 +16544,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
           </select>
 
+          <input id="lessonClassInfo" placeholder="学情/班级（可选）：如 高一学生、基础一般" style="flex:1;min-width:160px;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
         </div>
 
         <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:12px;margin-bottom:12px">
@@ -16559,6 +16561,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
             <input id="bookChapterKey" placeholder="章节关键词，如：无氧耐力" style="flex:1;min-width:160px;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key==='Enter')locateChapter()">
 
             <button onclick="locateChapter()" style="background:#16a34a;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">定位章节内容</button>
+
+            <button onclick="aiExtractChapter()" style="background:#d97706;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">✨ AI 提炼本章要点</button>
 
             <span id="bookStatus" style="font-size:12px;color:#6b7280"></span>
 
@@ -16595,6 +16599,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
         <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">
 
           <button onclick="runLessonGen()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">✨ 生成教案</button>
+
+          <label style="font-size:12px;color:#4b5563;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="lessonHealthCheck" checked style="vertical-align:middle">生成后 AI 体检</label>
 
           <span id="lessonGenStatus" style="font-size:12px;color:#6b7280"></span>
 
@@ -127510,8 +127516,9 @@ async function runLessonGen(){
   }
   let fmtReq = '';
   try{ fmtReq = getLessonFormatReq(); }catch(e){ fmtReq = ''; }
-  const sys = '你是高校体育专业理论课优秀教师，擅长教案撰写。根据提供的科目、章节、教材内容和风格参考教案（若有），撰写一份完整规范的教学教案。' + fmtReq + '若提供了风格参考教案，在满足格式要求的前提下模仿其详略与表达风格；内容紧扣教材章节内容，专业准确。';
-  const usr = '科目：' + subject + '\n章节：' + chapter + '\n\n教材章节内容：\n' + chapterContent.slice(0, 6000) + (styleText ? '\n\n【风格参考教案（模仿其结构与风格）】\n' + styleText.slice(0, 5000) : '');
+  const classInfo = (document.getElementById('lessonClassInfo').value||'').trim();
+  const sys = '你是高校体育专业理论课优秀教师，擅长教案撰写。根据提供的科目、章节、教材内容和风格参考教案（若有），撰写一份完整规范的教学教案。' + fmtReq + (classInfo ? '授课对象学情：' + classInfo + '。教案难度、活动设计与评价方式须贴合该学情。' : '') + '若提供了风格参考教案，在满足格式要求的前提下模仿其详略与表达风格；内容紧扣教材章节内容，专业准确。';
+  const usr = '科目：' + subject + '\n章节：' + chapter + (classInfo ? '\n学情：' + classInfo : '') + '\n\n教材章节内容：\n' + chapterContent.slice(0, 6000) + (styleText ? '\n\n【风格参考教案（模仿其结构与风格）】\n' + styleText.slice(0, 5000) : '');
   let out = '';
   try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
   if(!out.trim()){
@@ -127524,9 +127531,54 @@ async function runLessonGen(){
     return;
   }
   const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-  resEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px"><div style="font-size:16px;font-weight:700;color:#6b21a8;margin-bottom:4px">📖 教案初稿：' + (subject||'') + ' · ' + (chapter||'') + '</div><div style="font-size:12px;color:#b45309;margin-bottom:12px">⚠️ AI 生成初稿，请结合班级学情复核调整后使用</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
+  let resHtml = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:700;color:#7c3aed;margin-bottom:10px">📖 教案初稿：' + esc(subject) + ' · ' + esc(chapter) + '</div><div style="font-size:12px;color:#b45309;margin-bottom:12px">⚠️ AI 生成初稿，请结合班级学情复核调整后使用</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
   status.textContent = '生成完成';
+  const hc = document.getElementById('lessonHealthCheck');
+  if(hc && hc.checked){
+    resHtml += '<div id="healthBlock" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin-top:16px"><div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">🔍 AI 教案体检中（约1-2分钟，GLM 独立评审）...</div><div style="font-size:12px;color:#6b7280">对照格式逐环节核查 · 质量评分 · 问题清单 · 补写建议</div></div>';
+    resEl.innerHTML = resHtml;
+    status.textContent = '生成完成，AI 体检中（约1-2分钟）...';
+    const health = await healthCheckLesson(out, fmtReq);
+    if(health && health.trim()){
+      const hb = document.getElementById('healthBlock');
+      if(hb){ hb.outerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin-top:16px"><div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">🔍 AI 教案体检报告（GLM 独立评审）</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(health) + '</div></div>'; }
+      status.textContent = '生成完成（含体检报告）';
+    }else{
+      const hb = document.getElementById('healthBlock');
+      if(hb){ hb.outerHTML = ''; }
+      status.textContent = '生成完成（体检未返回，可直接使用教案）';
+    }
+  } else {
+    resEl.innerHTML = resHtml;
+  }
   renderLessonRefs();
+}
+
+async function healthCheckLesson(lessonText, formatReq){
+  const sys = '你是体育教案评审专家。对照教案格式要求与教学质量标准，对教案进行体检，输出四部分：一、格式覆盖检查（按格式要求逐环节标注 ✅ 已覆盖 / ⚠️ 缺失或薄弱）二、质量评分（教学目标可测性、重难点与目标对应、学情贴合度、时间分配合理性、专业准确性，各 0-100 分）三、问题清单与具体修改建议 四、缺失或薄弱环节的直接补写文字（可粘贴使用）。语言专业、具体可操作。';
+  const usr = '教案格式要求：' + (formatReq || '标准教学设计格式') + '\n\n教案内容：\n' + lessonText.slice(0, 8000);
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 2500, 'glm-5.3', 120000); }catch(e){ out = ''; }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'kimi-k3', 120000); }catch(e){ out = ''; } }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'hy3', 120000); }catch(e){ out = ''; } }
+  return out;
+}
+
+async function aiExtractChapter(){
+  const contentEl = document.getElementById('lessonChapterContent');
+  const raw = (contentEl.value||'').trim();
+  const status = document.getElementById('bookStatus');
+  if(!raw){ alert('请先定位章节或粘贴内容，再 AI 提炼'); return; }
+  if(raw.length > 8000){ status.textContent = '内容过长，AI 仅提炼前 8000 字...'; }
+  status.textContent = 'AI 提炼中（约30秒）...';
+  const sys = '你是运动科学教材解析专家。把用户提供的教材章节原文，提炼为结构化"教案知识点清单"，输出格式：\n一、核心概念（2-4个，一句话解释）\n二、关键机制/原理（分条，含关键指标与数据）\n三、重难点预判（本章易错点与教学重点）\n四、教学建议（如何导入、举例、活动设计）\n语言精炼专业，忠于原文，不虚构。';
+  const usr = raw.slice(0, 8000);
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 2500, 'deepseek-chat', 90000); }catch(e){ out = ''; }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'deepseek-v4-flash', 90000); }catch(e){ out = ''; } }
+  if(!out.trim()){ status.textContent = '⚠️ 提炼失败，请重试'; return; }
+  contentEl.value = out.trim();
+  status.textContent = '✅ 已提炼为教案知识点清单（可编辑）';
 }
 </script>
 <script>
