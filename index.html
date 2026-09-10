@@ -87912,6 +87912,22 @@ function renderPhdPublish(containerId) {
   html += '</div>';
 
   html += '<div id="pubRecommendResult"></div>';
+  html += '<div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fecaca;border-radius:12px;padding:20px;margin-top:20px">';
+  html += '<div style="font-size:16px;font-weight:700;color:#b91c1c;margin-bottom:6px">⚖️ AI 多模型选刊评审</div>';
+  html += '<div style="font-size:12px;color:#dc2626;margin-bottom:6px">七个大模型独立评审选刊 → 共识聚合 → 分歧识别 → 综合推荐（与上方同一篇文章信息）</div>';
+  html += '<div style="font-size:11px;color:#f87171;margin-bottom:12px">评分维度：主题匹配 / 录用难度 / 综合推荐指数（各0-100）。被多个模型共同推荐的期刊置信度更高。</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
+  html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#374151;cursor:pointer;background:#fff;border:1px solid #e5e7eb;padding:6px 10px;border-radius:6px"><input type="checkbox" class="pubMultiModelCk" value="deepseek-v4-pro" checked> DeepSeek V4 Pro</label>';
+  html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#374151;cursor:pointer;background:#fff;border:1px solid #e5e7eb;padding:6px 10px;border-radius:6px"><input type="checkbox" class="pubMultiModelCk" value="deepseek-v4-flash" checked> DeepSeek V4 Flash</label>';
+  html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#374151;cursor:pointer;background:#fff;border:1px solid #e5e7eb;padding:6px 10px;border-radius:6px"><input type="checkbox" class="pubMultiModelCk" value="deepseek-chat"> DeepSeek V3</label>';
+  html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#374151;cursor:pointer;background:#fff;border:1px solid #e5e7eb;padding:6px 10px;border-radius:6px"><input type="checkbox" class="pubMultiModelCk" value="glm-5.3" checked> GLM-5.3</label>';
+  html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#374151;cursor:pointer;background:#fff;border:1px solid #e5e7eb;padding:6px 10px;border-radius:6px"><input type="checkbox" class="pubMultiModelCk" value="kimi-k3"> Kimi K3</label>';
+  html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#374151;cursor:pointer;background:#fff;border:1px solid #e5e7eb;padding:6px 10px;border-radius:6px"><input type="checkbox" class="pubMultiModelCk" value="hy3"> 混元 Turbo（hy3）</label>';
+  html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#374151;cursor:pointer;background:#fff;border:1px solid #e5e7eb;padding:6px 10px;border-radius:6px"><input type="checkbox" class="pubMultiModelCk" value="hy4-preview"> 混元 V4 Preview</label>';
+  html += '</div>';
+  html += '<button onclick="publishMultiModels()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px 28px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">⚖️ 开始多模型选刊评审</button>';
+  html += '<div id="pubMultiResult" style="margin-top:16px"></div>';
+  html += '</div>';
 
   html += '</div>';
 
@@ -91080,6 +91096,185 @@ function generateJournalComparison() {
 
 
 // AI选刊建议
+
+
+// ========== 多模型选刊评审（七模型共识版，纯新增） ==========
+function getPubMultiSelectedModels() {
+  var boxes = document.querySelectorAll('.pubMultiModelCk');
+  var models = [];
+  boxes.forEach(function(b) { if (b.checked) models.push(b.value); });
+  return models;
+}
+
+async function publishMultiModels() {
+  var title = (document.getElementById('pubTitle') || {}).value || '';
+  var abstract = (document.getElementById('pubAbstract') || {}).value || '';
+  var type = (document.getElementById('pubType') || {}).value || '原创研究';
+  var direction = (document.getElementById('pubDirection') || {}).value || '运动康复';
+  var goal = (document.getElementById('pubGoal') || {}).value || '求稳妥';
+  if (!title && !abstract) { alert('请先在下方输入文章标题或摘要'); return; }
+  var models = getPubMultiSelectedModels();
+  if (models.length < 2) { alert('请至少选择2个模型参与评审'); return; }
+
+  var resultDiv = document.getElementById('pubMultiResult');
+  resultDiv.innerHTML = '<div style="background:#fff;border:1px solid #fecaca;border-radius:10px;padding:24px;text-align:center"><div style="font-size:26px;margin-bottom:8px">⚖️</div><div style="font-size:14px;color:#b91c1c;font-weight:600">多模型选刊评审中...</div><div style="font-size:12px;color:#9ca3af;margin-top:6px" id="pubMultiProgress">已提交 ' + models.length + ' 个模型，等待结果（约30-60秒）</div></div>';
+
+  // 规则预筛选候选池（简化版，与单模型一致口径）
+  var minIF = parseFloat((document.getElementById('pubMinIF') || {}).value) || 0;
+  var maxIF = parseFloat((document.getElementById('pubMaxIF') || {}).value) || 999;
+  var candidates = PHD_JOURNALS.filter(function(j) {
+    if (j.if > 0 && (j.if < minIF || j.if > maxIF)) return false;
+    var scopeText = (j.scope + ' ' + (j.matchKeywords || []).join(' ')).toLowerCase();
+    var dirKey = (direction || '').replace('运动', '').replace('体育', '').toLowerCase();
+    if (direction && scopeText.indexOf(direction.toLowerCase()) < 0 && scopeText.indexOf(dirKey) < 0) {
+      if (j.if > 0) return false;
+    }
+    return true;
+  });
+  if (candidates.length < 3) candidates = PHD_JOURNALS.slice();
+  var pool = candidates.slice(0, 14).map(function(j, i) {
+    return (i+1) + '. ' + j.name + ' [IF:' + j.if + ', ' + j.jcr + ', 审稿:' + j.reviewDays + '天, 录用率:' + j.acceptRate + '%, OA:' + j.oa + ']';
+  }).join('\n');
+
+  var systemPrompt = '你是一位体育学/运动科学领域的资深期刊编辑与投稿顾问。请从候选期刊列表中精选3本最适合该论文的期刊。\n\n【输出要求-严格遵守】\n只输出一个JSON对象（不要任何其他文字/注释/代码块标记），格式：\n{\"journals\":[{\"name\":\"期刊全名（必须来自候选列表）\",\"tier\":\"冲刺|稳妥|保底\",\"matchScore\":0-100整数(主题匹配度),\"difficultyScore\":0-100整数(录用难度,越高越难),\"recommendScore\":0-100整数(综合推荐指数),\"reason\":\"一句话理由(30字内)\"}]}\n三本分别对应冲刺/稳妥/保底各一本。';
+
+  var userPrompt = '论文标题：' + title + '\n研究类型：' + type + '\n研究方向：' + direction + '\n投稿目标：' + goal + '\n摘要：' + (abstract ? abstract.substring(0, 800) : '（未提供）') + '\n\n候选期刊列表：\n' + pool;
+
+  var results = [];
+  var done = 0;
+  var modelNames = {'deepseek-v4-pro':'DeepSeek V4 Pro', 'deepseek-v4-flash':'DeepSeek V4 Flash', 'deepseek-chat':'DeepSeek V3', 'glm-5.3':'GLM-5.3', 'kimi-k3':'Kimi K3', 'hy3':'混元 Turbo', 'hy4-preview':'混元 V4 Preview'};
+
+  await Promise.all(models.map(function(model) {
+    return callDeepSeekAPI(systemPrompt, userPrompt, 2500, model).then(function(text) {
+      results.push({model: model, text: text});
+    }).catch(function() {
+      results.push({model: model, text: null});
+    }).then(function() {
+      done++;
+      var p = document.getElementById('pubMultiProgress');
+      if (p) p.textContent = '已完成 ' + done + '/' + models.length + ' 个模型评审...';
+    });
+  }));
+
+  renderPubMultiReport(results, modelNames);
+}
+
+function renderPubMultiReport(results, modelNames) {
+  var resultDiv = document.getElementById('pubMultiResult');
+  var valid = results.filter(function(r) { return r.text; });
+  var failed = results.filter(function(r) { return !r.text; });
+
+  // 解析每个模型的 JSON
+  var parsed = [];
+  valid.forEach(function(r) {
+    var m = null;
+    try {
+      var txt = r.text.trim();
+      // 去掉可能的代码块标记
+      txt = txt.replace(/^```json\s*/,'').replace(/```\s*$/,'').replace(/^```\s*/,'');
+      var start = txt.indexOf('{'), end = txt.lastIndexOf('}');
+      if (start >= 0 && end > start) txt = txt.substring(start, end + 1);
+      m = JSON.parse(txt);
+    } catch(e) { m = null; }
+    if (m && Array.isArray(m.journals)) {
+      parsed.push({model: r.model, name: modelNames[r.model] || r.model, journals: m.journals});
+    } else {
+      failed.push(r);
+    }
+  });
+
+  if (!parsed.length) {
+    resultDiv.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;color:#b91c1c;font-size:13px">❌ 所有模型均未返回有效结果，请重试（可能是临时超时）。</div>';
+    return;
+  }
+
+  // 聚合：按期刊名统计
+  var journalMap = {};
+  parsed.forEach(function(p) {
+    p.journals.forEach(function(j) {
+      if (!j || !j.name) return;
+      var name = j.name.trim();
+      if (!journalMap[name]) journalMap[name] = {name: name, votes: [], tiers: {}, matchScores: [], diffScores: [], recScores: []};
+      var rec = journalMap[name];
+      rec.votes.push(p.name);
+      rec.tiers[j.tier || '未标注'] = (rec.tiers[j.tier || '未标注'] || 0) + 1;
+      if (typeof j.matchScore === 'number') rec.matchScores.push(j.matchScore);
+      if (typeof j.difficultyScore === 'number') rec.diffScores.push(j.difficultyScore);
+      if (typeof j.recommendScore === 'number') rec.recScores.push(j.recommendScore);
+    });
+  });
+
+  var entries = Object.keys(journalMap).map(function(k) { return journalMap[k]; });
+  entries.forEach(function(e) {
+    e.voteCount = e.votes.length;
+    e.avgMatch = e.matchScores.length ? Math.round(e.matchScores.reduce(function(a,b){return a+b;},0) / e.matchScores.length) : 0;
+    e.avgDiff = e.diffScores.length ? Math.round(e.diffScores.reduce(function(a,b){return a+b;},0) / e.diffScores.length) : 0;
+    e.avgRec = e.recScores.length ? Math.round(e.recScores.reduce(function(a,b){return a+b;},0) / e.recScores.length) : 0;
+  });
+  entries.sort(function(a, b) { return b.avgRec - a.avgRec; });
+
+  var consensus = entries.filter(function(e) { return e.voteCount >= 2; });
+  var unique = entries.filter(function(e) { return e.voteCount === 1; });
+
+  var html = '';
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+  html += '<div style="font-size:15px;font-weight:700;color:#b91c1c">⚖️ 多模型选刊评审报告</div>';
+  html += '<div style="font-size:11px;color:#9ca3af">' + parsed.length + ' 个模型有效' + (failed.length ? ' · ' + failed.length + ' 个失败(已容错)' : '') + '</div>';
+  html += '</div>';
+
+  // 共识推荐
+  if (consensus.length) {
+    html += '<div style="font-size:13px;font-weight:700;color:#065f46;margin:10px 0 8px">⚡ 共识推荐（≥2个模型共同推荐）</div>';
+    consensus.forEach(function(e) {
+      var tiers = Object.keys(e.tiers).map(function(t) { return t + '×' + e.tiers[t]; }).join(' / ');
+      html += '<div style="border:1px solid #bbf7d0;background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:8px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
+      html += '<span style="font-size:14px;font-weight:700;color:#065f46">📌 ' + e.name + '</span>';
+      html += '<span style="font-size:11px;background:#dcfce7;color:#166534;padding:3px 8px;border-radius:10px;font-weight:600">' + e.voteCount + ' 个模型推荐</span>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:#374151">';
+      html += '<span>推荐指数 <b style="color:#dc2626;font-size:15px">' + e.avgRec + '</b></span>';
+      html += '<span>主题匹配 <b>' + e.avgMatch + '</b></span>';
+      html += '<span>录用难度 <b>' + e.avgDiff + '</b></span>';
+      html += '<span>档位分布 ' + tiers + '</span>';
+      html += '</div>';
+      html += '<div style="font-size:11px;color:#6b7280;margin-top:6px">来自：' + e.votes.join('、') + '</div>';
+      html += '</div>';
+    });
+  } else {
+    html += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;font-size:12px;color:#92400e;margin-bottom:8px">⚠️ 未发现多模型共识推荐，以下为各模型独立推荐（分歧较大，建议结合单模型详评人工判断）</div>';
+  }
+
+  // 全部推荐排序
+  html += '<div style="font-size:13px;font-weight:700;color:#374151;margin:12px 0 8px">📋 全部推荐期刊（按平均推荐指数排序）</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+  html += '<tr style="background:#fef2f2;color:#b91c1c"><th style="padding:8px;text-align:left;border:1px solid #fecaca">期刊</th><th style="padding:8px;border:1px solid #fecaca">推荐指数</th><th style="padding:8px;border:1px solid #fecaca">主题匹配</th><th style="padding:8px;border:1px solid #fecaca">录用难度</th><th style="padding:8px;border:1px solid #fecaca">推荐模型</th><th style="padding:8px;border:1px solid #fecaca">档位</th></tr>';
+  entries.forEach(function(e) {
+    var tiers = Object.keys(e.tiers).map(function(t) { return t + '×' + e.tiers[t]; }).join(' ');
+    html += '<tr><td style="padding:8px;border:1px solid #f3e8ff;font-weight:600">' + e.name + '</td><td style="padding:8px;border:1px solid #f3e8ff;color:#dc2626;font-weight:700">' + e.avgRec + '</td><td style="padding:8px;border:1px solid #f3e8ff">' + e.avgMatch + '</td><td style="padding:8px;border:1px solid #f3e8ff">' + e.avgDiff + '</td><td style="padding:8px;border:1px solid #f3e8ff">' + e.votes.join('、') + '</td><td style="padding:8px;border:1px solid #f3e8ff">' + tiers + '</td></tr>';
+  });
+  html += '</table>';
+
+  // 综合建议
+  var finalRec = consensus.length ? consensus : entries;
+  var top = finalRec.slice(0, 3);
+  html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;margin-top:12px">';
+  html += '<div style="font-size:13px;font-weight:700;color:#b91c1c;margin-bottom:6px">💡 综合投稿建议</div>';
+  html += '<div style="font-size:12px;color:#374151;line-height:1.8">';
+  if (top.length) {
+    html += '建议投稿顺序：<b>' + top[0].name + '</b>（推荐指数 ' + top[0].avgRec + '）';
+    if (top[1]) html += ' → 被拒转投 <b>' + top[1].name + '</b>';
+    if (top[2]) html += ' → 保底 <b>' + top[2].name + '</b>';
+    html += '。<br>⚠️ 多模型评审为AI建议，正式投稿前请核对期刊官网最新投稿须知、影响因子与分区变化。';
+  } else {
+    html += '无有效推荐，请调整文章信息或筛选条件后重试。';
+  }
+  html += '</div></div>';
+  html += '</div>';
+
+  resultDiv.innerHTML = html;
+}
 
 async function aiCompareAdvice() {
 
