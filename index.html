@@ -126081,6 +126081,12 @@ async function runRoundTable(){
 </script>
 <script>
 // ========== 反思链（生成→自检→修正，三模型轮换） ==========
+async function callModelWithTimeout(sysMsg, usrMsg, maxTok, mdl, timeoutMs){
+  return await Promise.race([
+    callDeepSeekAPI(sysMsg, usrMsg, maxTok, mdl),
+    new Promise(function(res, rej){ setTimeout(function(){ rej(new Error('请求超时（' + mdl + '）')); }, timeoutMs || 50000); })
+  ]);
+}
 async function runReflectChain(){
   const mode = (document.querySelector('input[name="refMode"]:checked')||{}).value || 'generate';
   const input = (document.getElementById('reflectInput').value||'').trim();
@@ -126094,28 +126100,29 @@ async function runReflectChain(){
     // 第一轮：生成初稿（生成模式）
     if(mode === 'generate'){
       show('第一轮：DeepSeek 生成学术初稿...');
-      draft = (await callDeepSeekAPI('你是体育科学研究论文写作专家。根据研究主题撰写学术论文初稿（约800字，含引言/方法/结果/讨论框架，使用专业学术表达）', '研究主题：' + input, 2000, 'deepseek-chat')) || '';
+      try{ draft = await callModelWithTimeout('你是体育科学研究论文写作专家。根据研究主题撰写学术论文初稿（约800字，含引言/方法/结果/讨论框架，使用专业学术表达）', '研究主题：' + input, 2000, 'deepseek-chat', 50000); }catch(e){ draft = ''; }
     }else{
       draft = input;
       show('第一轮：已读取原文，准备独立检查...');
     }
     if(!draft.trim()) throw new Error('初稿生成失败（返回为空）');
-    // 第二轮：另一模型独立检查（空值自动降级重试）
+    // 第二轮：另一模型独立检查（独立try+超时+自动降级）
     show('第二轮：GLM 独立检查（逻辑/术语/引用）...');
-    check = (await callDeepSeekAPI('你是学术质量审校专家。检查以下学术文本：1.逻辑漏洞与论证问题 2.专业术语准确性 3.引用/数据一致性问题 4.表达硬伤。分点列出具体问题（指出问题所在位置），不要修改原文。若确实无可改进，请明确输出「未发现明显问题」。', draft.slice(0,5000), 1500, 'glm-5.3')) || '';
+    const checkSys = '你是学术质量审校专家。检查以下学术文本：1.逻辑漏洞与论证问题 2.专业术语准确性 3.引用/数据一致性问题 4.表达硬伤。分点列出具体问题（指出问题所在位置），不要修改原文。若确实无可改进，请明确输出「未发现明显问题」。';
+    try{ check = await callModelWithTimeout(checkSys, draft.slice(0,5000), 1500, 'glm-5.3', 50000); }catch(e){ check = ''; }
     if(!check.trim()){
-      show('第二轮：GLM 未返回内容，改用 DeepSeek 检查...');
-      check = (await callDeepSeekAPI('你是学术质量审校专家。检查以下学术文本：1.逻辑漏洞与论证问题 2.专业术语准确性 3.引用/数据一致性问题 4.表达硬伤。分点列出具体问题（指出问题所在位置），不要修改原文。若确实无可改进，请明确输出「未发现明显问题」。', draft.slice(0,5000), 1500, 'deepseek-chat')) || '';
+      show('第二轮：GLM 超时/未返回，改用 DeepSeek 检查...');
+      try{ check = await callModelWithTimeout(checkSys, draft.slice(0,5000), 1500, 'deepseek-chat', 50000); }catch(e){ check = ''; }
     }
     if(!check.trim()){ check = '（检查模型未返回内容，未发现明显问题）'; }
-    // 第三轮：第三模型修正（输入截断防超时，失败自动降级）
+    // 第三轮：第三模型修正（独立try+超时+自动降级）
     show('第三轮：Kimi 根据检查意见修正...');
     const fixSys = '你是学术写作专家。根据审校意见修正以下文本：保留原意与专业内容，修正审校指出的问题；若审校意见为「未发现明显问题」则输出原文。输出修正后的完整版本。';
     const fixInput = '【原文】\n' + draft.slice(0,3000) + '\n\n【审校意见】\n' + check.slice(0,1200);
-    fixed = (await callDeepSeekAPI(fixSys, fixInput, 1500, 'kimi-k3')) || '';
+    try{ fixed = await callModelWithTimeout(fixSys, fixInput, 1500, 'kimi-k3', 50000); }catch(e){ fixed = ''; }
     if(!fixed.trim()){
-      show('第三轮：Kimi 未返回，改用 DeepSeek 修正...');
-      fixed = (await callDeepSeekAPI(fixSys, fixInput, 1500, 'deepseek-chat')) || '';
+      show('第三轮：Kimi 超时/未返回，改用 DeepSeek 修正...');
+      try{ fixed = await callModelWithTimeout(fixSys, fixInput, 1500, 'deepseek-chat', 50000); }catch(e){ fixed = ''; }
     }
     if(!fixed.trim()){ fixed = draft; }
     // 渲染三阶段
