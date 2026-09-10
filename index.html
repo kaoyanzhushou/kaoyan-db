@@ -125990,19 +125990,15 @@ async function runRoundTable(){
     html += '</div>';
   });
   resultEl.innerHTML = html;
-  // 主持人决议
+  // 主持人决议（进度占位独立渲染，完成后不留残留）
   status.textContent = '主持人正在汇总圆桌决议...';
-  html += '<div style="text-align:center;color:#6b7280;padding:30px;font-size:14px">⏳ 主持人汇总决议中...</div>';
-  resultEl.innerHTML = html;
+  const expertsHtml = html;
+  resultEl.innerHTML = expertsHtml + '<div style="text-align:center;color:#6b7280;padding:30px;font-size:14px">⏳ 主持人汇总决议中...</div>';
   try{
     const modSys = '你是学术论文评审会议主持人。四位专家已给出独立意见，请汇总成「圆桌决议」：1.【必须修改】（专家共识必须改的问题，去重合并）2.【建议修改】3.【可保留】4.【综合结论】一句话总结论文水平与修改后录用前景。简洁、有重点、可直接执行。';
     const modUsr = '论文主题简介：' + inputShort.slice(0,300) + '\n\n--- 四位专家意见 ---\n\n' + ROUND_EXPERTS.map(function(e){ return '【' + e.name + '】\n' + (expertsOut[e.id]||''); }).join('\n\n');
     const verdict = await callDeepSeekAPI(modSys, modUsr, 2000, 'glm-5.3');
-    html += '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px;margin-top:14px">';
-    html += '<div style="font-size:15px;font-weight:700;color:#065f46;margin-bottom:10px">🧑‍⚖️ 圆桌决议</div>';
-    html += '<div style="font-size:13px;line-height:1.9;color:#14532d;white-space:pre-wrap">' + verdict + '</div>';
-    html += '</div>';
-    resultEl.innerHTML = html;
+    resultEl.innerHTML = expertsHtml + '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px;margin-top:14px"><div style="font-size:15px;font-weight:700;color:#065f46;margin-bottom:10px">🧑‍⚖️ 圆桌决议</div><div style="font-size:13px;line-height:1.9;color:#14532d;white-space:pre-wrap">' + verdict + '</div></div>';
     status.textContent = '圆桌评审完成';
   }catch(err){
     status.textContent = '决议生成失败：' + err.message;
