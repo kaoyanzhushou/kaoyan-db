@@ -57313,6 +57313,16 @@ function renderPaperEditor(id) {
   html += '<div id="paperCurrentChapterTitle" style="font-size:16px;font-weight:700;color:#1f2937">摘要</div>';
 
   html += '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
+  html += '<select id="paperEditorModel" style="padding:6px 10px;border:1px solid #c7d2fe;border-radius:6px;font-size:12px;background:#fff;color:#4f46e5;outline:none;cursor:pointer" title="选择AI写作模型">';
+  html += '<option value="">🤖 AI模型（跟随全局）</option>';
+  html += '<option value="deepseek-v4-pro">DeepSeek V4 Pro</option>';
+  html += '<option value="deepseek-v4-flash">DeepSeek V4 Flash</option>';
+  html += '<option value="deepseek-chat">DeepSeek V3</option>';
+  html += '<option value="glm-5.3">GLM-5.3</option>';
+  html += '<option value="kimi-k3">Kimi K3</option>';
+  html += '<option value="hy3">混元 Turbo（hy3）</option>';
+  html += '<option value="hy4-preview">混元 V4 Preview</option>';
+  html += '</select>';
 
   html += '<button onclick="paperAIAction(\'outline\')" style="background:#6366f1;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="为当前章节生成写作大纲">📋 大纲</button>';
 
@@ -58312,6 +58322,8 @@ function paperAIAction(action) {
   var actionNames = {outline:'生成大纲', continue:'AI续写', expand:'AI扩写', condense:'AI缩写', rewrite:'AI改写', polish:'学术润色'};
 
   var resultArea = document.getElementById('paperAIResult');
+  var editorModel = (document.getElementById('paperEditorModel') || {}).value || '';
+
 
   resultArea.innerHTML = '<div style="text-align:center;padding:40px 20px"><div style="font-size:36px;margin-bottom:12px;animation:spin 1s linear infinite">⏳</div><div style="font-size:14px;color:#6366f1">AI 正在' + actionNames[action] + '...</div><div style="font-size:12px;color:#9ca3af;margin-top:4px">章节：' + chapterName + '</div></div>';
 
@@ -58373,7 +58385,7 @@ function paperAIAction(action) {
 
 
 
-  callDeepSeekAPI(systemPrompt, userPrompt, action === 'outline' ? 3000 : 2500).then(function(response) {
+  callDeepSeekAPI(systemPrompt, userPrompt, action === 'outline' ? 3000 : 2500, editorModel || undefined).then(function(response) {
 
     renderPaperAIResult(action, actionNames[action], response, content);
 
