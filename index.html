@@ -13839,6 +13839,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('pipeline')" id="paperTab-pipeline" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">写作流水线</button>
       <button onclick="switchPaperSubTab('idea')" id="paperTab-idea" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">想法评估</button>
       <button onclick="switchPaperSubTab('roundtable')" id="paperTab-roundtable" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">评审圆桌</button>
+      <button onclick="switchPaperSubTab('reflect')" id="paperTab-reflect" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">反思链</button>
 
     </div>
 
@@ -15573,6 +15574,46 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       <div id="roundProgress" style="display:none"></div>
 
       <div id="roundResult" style="display:none"></div>
+
+    </div>
+
+
+
+    <!-- 反思链（生成→自检→修正，三模型轮换） -->
+
+    <div id="paperContent-reflect" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">🔄 反思链（生成 → 自检 → 修正）</div>
+
+        <div style="font-size:13px;color:#059669">三个大模型接力：① 生成初稿（或粘贴原文）→ ② 另一模型独立检查逻辑/术语/引用 → ③ 第三模型修正输出，附修改要点</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="display:flex;gap:20px;margin-bottom:12px">
+
+          <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="refMode" value="generate" checked> ✨ 按主题生成 + 反思</label>
+
+          <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="refMode" value="review"> 📄 粘贴文本反思</label>
+
+        </div>
+
+        <textarea id="reflectInput" rows="8" placeholder="选择「生成模式」输入研究主题；选择「文本模式」粘贴论文段落/摘要/结论..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+
+          <button onclick="runReflectChain()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🔄 启动反思链</button>
+
+          <span id="reflectStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+      </div>
+
+      <div id="reflectResult" style="display:none"></div>
 
     </div>
 
@@ -56158,7 +56199,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -126038,6 +126079,57 @@ async function runRoundTable(){
   status.textContent = '圆桌评审完成';
 }
 </script>
+<script>
+// ========== 反思链（生成→自检→修正，三模型轮换） ==========
+async function runReflectChain(){
+  const mode = (document.querySelector('input[name="refMode"]:checked')||{}).value || 'generate';
+  const input = (document.getElementById('reflectInput').value||'').trim();
+  if(!input){ alert('请输入研究主题或论文内容'); return; }
+  const status = document.getElementById('reflectStatus');
+  const resultEl = document.getElementById('reflectResult');
+  resultEl.style.display = 'block';
+  const show = function(msg){ status.textContent = msg; resultEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ ' + msg + '</div>'; };
+  let draft = '', check = '', fixed = '';
+  try{
+    // 第一轮：生成初稿（生成模式）
+    if(mode === 'generate'){
+      show('第一轮：DeepSeek 生成学术初稿...');
+      draft = (await callDeepSeekAPI('你是体育科学研究论文写作专家。根据研究主题撰写学术论文初稿（约800字，含引言/方法/结果/讨论框架，使用专业学术表达）', '研究主题：' + input, 2000, 'deepseek-chat')) || '';
+    }else{
+      draft = input;
+      show('第一轮：已读取原文，准备独立检查...');
+    }
+    if(!draft.trim()) throw new Error('初稿生成失败（返回为空）');
+    // 第二轮：另一模型独立检查
+    show('第二轮：GLM 独立检查（逻辑/术语/引用）...');
+    check = (await callDeepSeekAPI('你是学术质量审校专家。检查以下学术文本：1.逻辑漏洞与论证问题 2.专业术语准确性 3.引用/数据一致性问题 4.表达硬伤。分点列出具体问题（指出问题所在位置），不要修改原文。若确实无可改进，请明确输出「未发现明显问题」。', draft.slice(0,5000), 1500, 'glm-5.3')) || '';
+    // 第三轮：第三模型修正
+    show('第三轮：Kimi 根据检查意见修正...');
+    const fixSys = '你是学术写作专家。根据审校意见修正以下文本：保留原意与专业内容，修正审校指出的问题；若审校意见为「未发现明显问题」则输出原文。输出修正后的完整版本。';
+    fixed = (await callDeepSeekAPI(fixSys, '【原文】\n' + draft + '\n\n【审校意见】\n' + check, 2500, 'kimi-k3')) || draft;
+    // 渲染三阶段
+    const esc = function(t){ return (t||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:14px">';
+    html += '<div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:10px">📝 ① 初稿（' + (mode==='generate' ? 'DeepSeek 生成' : '原文') + '）</div>';
+    html += '<div style="font-size:13px;line-height:1.8;color:#374151;white-space:pre-wrap;max-height:280px;overflow-y:auto">' + esc(draft) + '</div>';
+    html += '</div>';
+    html += '<div style="background:#fff;border:1px solid #fde68a;border-radius:12px;padding:20px;margin-bottom:14px">';
+    html += '<div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:10px">🔍 ② 独立检查（GLM）</div>';
+    html += '<div style="font-size:13px;line-height:1.8;color:#78350f;white-space:pre-wrap">' + esc(check) + '</div>';
+    html += '</div>';
+    html += '<div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #86efac;border-radius:12px;padding:20px">';
+    html += '<div style="font-size:15px;font-weight:700;color:#065f46;margin-bottom:10px">✨ ③ 修正稿（Kimi）</div>';
+    html += '<div style="font-size:13px;line-height:1.8;color:#14532d;white-space:pre-wrap">' + esc(fixed) + '</div>';
+    html += '</div>';
+    resultEl.innerHTML = html;
+    status.textContent = '反思链完成';
+  }catch(e){
+    status.textContent = '反思链失败：' + e.message;
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ ' + e.message + '</div>';
+  }
+}
+</script>
+
 
 
 
