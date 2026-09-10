@@ -16476,6 +16476,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
           <button onclick="runProposalGen()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">📋 生成申报书活页</button>
 
+          <label style="font-size:12px;color:#4b5563;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="proposalHealthCheck" checked style="vertical-align:middle">生成后 AI 体检</label>
+
           <span id="proposalStatus" style="font-size:12px;color:#6b7280"></span>
 
         </div>
@@ -127390,8 +127392,36 @@ async function runProposalGen(){
     return;
   }
   const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-  resEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px"><div style="font-size:16px;font-weight:700;color:#6b21a8;margin-bottom:6px">📋 申报书活页初稿（' + fund + '）</div><div style="font-size:12px;color:#b45309;margin-bottom:12px">⚠️ AI 生成初稿，请逐项核对补充后提交</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
+  let resHtml = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px"><div style="font-size:16px;font-weight:700;color:#6b21a8;margin-bottom:6px">📋 申报书活页初稿（' + fund + '）</div><div style="font-size:12px;color:#b45309;margin-bottom:12px">⚠️ AI 生成初稿，请逐项核对补充后提交</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
   status.textContent = '生成完成';
+  const phc = document.getElementById('proposalHealthCheck');
+  if(phc && phc.checked){
+    resHtml += '<div id="proposalHealthBlock" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-top:16px"><div style="font-size:14px;font-weight:700;color:#c2410c;margin-bottom:8px">🔍 申报书体检中（约1-2分钟，GLM/Kimi 独立评审）...</div><div style="font-size:12px;color:#9a3412">选题价值 · 论证逻辑 · 创新性 · 可行性 · 经费合理性 · 修改建议</div></div>';
+    resEl.innerHTML = resHtml;
+    status.textContent = '生成完成，申报书体检中（约1-2分钟）...';
+    const health = await healthCheckProposal(out, fund, fundSpec);
+    if(health && health.trim()){
+      const hb = document.getElementById('proposalHealthBlock');
+      if(hb){ hb.outerHTML = '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-top:16px"><div style="font-size:14px;font-weight:700;color:#c2410c;margin-bottom:8px">🔍 申报书体检报告（GLM/Kimi 独立评审）</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(health) + '</div></div>'; }
+      status.textContent = '生成完成（含体检报告）';
+    }else{
+      const hb = document.getElementById('proposalHealthBlock');
+      if(hb){ hb.outerHTML = ''; }
+      status.textContent = '生成完成（体检未返回，可直接使用）';
+    }
+  } else {
+    resEl.innerHTML = resHtml;
+  }
+}
+
+async function healthCheckProposal(proposalText, fund, fundSpec){
+  const sys = '你是国家社科/教育部基金评审专家，熟悉申报书评审标准。对照基金要求对申报书活页进行体检，输出四部分：一、总体评价（一句话定性+总评）二、五维评分（选题价值、论证逻辑、创新性、可行性、经费预算合理性，各0-100分，含扣分理由）三、问题清单与逐条修改建议（具体可操作）四、可直接粘贴的补写/改写段落（针对最薄弱环节）。语言专业、犀利但建设性。';
+  const usr = '基金类型：' + (fund||'') + '，基金要求：' + (fundSpec||'') + '\n\n申报书内容：\n' + proposalText.slice(0, 9000);
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 2500, 'glm-5.3', 120000); }catch(e){ out = ''; }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'kimi-k3', 120000); }catch(e){ out = ''; } }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'hy3', 120000); }catch(e){ out = ''; } }
+  return out;
 }
 </script>
 <script>
