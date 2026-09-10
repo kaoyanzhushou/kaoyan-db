@@ -127613,7 +127613,72 @@ async function runLessonGen(){
   } else {
     resEl.innerHTML = resHtml;
   }
+  appendLessonAIOps(out);
   renderLessonRefs();
+}
+
+function appendLessonAIOps(lessonText){
+  const resEl = document.getElementById('lessonResult');
+  if(!resEl) return;
+  const ops = document.createElement('div');
+  ops.id = 'lessonAIOps';
+  ops.style.cssText = 'margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center';
+  ops.innerHTML = '<span style="font-size:12px;color:#6b7280">多模型增强：</span>'
+    + '<button onclick="kimiAddResources()" style="background:#7e22ce;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🧩 Kimi 补教学资源</button>'
+    + '<button onclick="hyStudentView()" style="background:#0e7490;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🎓 混元学生视角预判</button>'
+    + '<span id="lessonOpsStatus" style="font-size:12px;color:#6b7280"></span>';
+  const oldOps = document.getElementById('lessonAIOps');
+  if(oldOps) oldOps.remove();
+  resEl.appendChild(ops);
+  window.__lastLessonText = lessonText;
+}
+
+async function kimiAddResources(){
+  const lessonText = window.__lastLessonText || '';
+  const status = document.getElementById('lessonOpsStatus');
+  const resEl = document.getElementById('lessonResult');
+  if(!lessonText){ if(status) status.textContent = '请先生成教案'; return; }
+  if(status) status.textContent = 'Kimi 生成中（约40秒）...';
+  const sys = '你是体育教学设计资源专家。基于教案内容，补充可直接用于课堂的教学资源，输出四部分：一、课堂情境素材（1-2个贴近生活的导入情境，可直接讲述）二、课堂互动提问（3-5个分层问题：基础/提升/挑战）三、易错点辨析（本章学生最易混淆的2-3处，正误对照）四、课中练习设计（1-2个课堂练习/活动，含操作要点与时间）。语言简洁可操作，直接可用。';
+  const usr = '教案内容：\n' + lessonText.slice(0, 8000);
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 2500, 'kimi-k3', 120000); }catch(e){ out = ''; }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'deepseek-chat', 120000); }catch(e){ out = ''; } }
+  if(!out.trim()){ if(status) status.textContent = '⚠️ 生成失败，请重试'; return; }
+  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  const blk = document.createElement('div');
+  blk.id = 'lessonKimiBlock';
+  blk.style.cssText = 'background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:20px;margin-top:14px';
+  blk.innerHTML = '<div style="font-size:14px;font-weight:700;color:#6b21a8;margin-bottom:8px">🧩 教学资源补充（Kimi）</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div>';
+  const oldBlk = document.getElementById('lessonKimiBlock');
+  if(oldBlk) oldBlk.remove();
+  resEl.appendChild(blk);
+  if(status) status.textContent = '✅ 资源补充完成';
+  blk.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+async function hyStudentView(){
+  const lessonText = window.__lastLessonText || '';
+  const status = document.getElementById('lessonOpsStatus');
+  const resEl = document.getElementById('lessonResult');
+  if(!lessonText){ if(status) status.textContent = '请先生成教案'; return; }
+  if(status) status.textContent = '混元分析中（约40秒）...';
+  const sys = '你是教学经验丰富的高校体育教师，善于从学生视角审视教学。基于教案内容，模拟真实学生视角输出：一、学生最可能卡壳的知识点（2-3处，说明卡壳原因——概念抽象/记忆负担/前概念干扰等）二、学生可能的疑问（3-5个真实感问题，如"为什么要学这个""这和训练有什么关系"）三、教师化解建议（针对每个卡壳点的具体教学化解策略：类比/图示/生活案例/小活动）四、课堂节奏预警（哪个环节学生易走神/疲劳，如何调整）。语言真实接地气。';
+  const usr = '教案内容：\n' + lessonText.slice(0, 8000);
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 2500, 'hy3', 120000); }catch(e){ out = ''; }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'deepseek-chat', 120000); }catch(e){ out = ''; } }
+  if(!out.trim()){ if(status) status.textContent = '⚠️ 生成失败，请重试'; return; }
+  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  const blk = document.createElement('div');
+  blk.id = 'lessonHyBlock';
+  blk.style.cssText = 'background:#ecfeff;border:1px solid #a5f3fc;border-radius:12px;padding:20px;margin-top:14px';
+  blk.innerHTML = '<div style="font-size:14px;font-weight:700;color:#155e75;margin-bottom:8px">🎓 学生视角预判（混元）</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div>';
+  const oldBlk = document.getElementById('lessonHyBlock');
+  if(oldBlk) oldBlk.remove();
+  resEl.appendChild(blk);
+  if(status) status.textContent = '✅ 学生视角分析完成';
+  blk.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 async function healthCheckLesson(lessonText, formatReq){
