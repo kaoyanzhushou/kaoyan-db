@@ -123690,7 +123690,13 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model) {
 
   const userApiKey = getMockApiKey();
 
-  const useModel = model || currentAiModel || 'deepseek-chat';
+  let useModel = model || currentAiModel || 'deepseek-chat';
+
+  // 混元V4(hy4-preview)为推理模型：token过小会全部消耗在思考上导致空输出，统一提升下限
+  let useTokens = maxTokens || 2000;
+  if (useModel === 'hy4-preview' && useTokens < 1000) {
+    useTokens = 1000;
+  }
 
   
 
@@ -123718,7 +123724,7 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model) {
 
         temperature: 0.7,
 
-        max_tokens: maxTokens || 2000
+        max_tokens: useTokens
 
       })
 
@@ -123737,10 +123743,41 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model) {
     
 
     const data = await response.json();
+    const respContent = data.content || '';
 
-    return data.content || '';
+    // 混元V4偶发空响应：自动降级hy3重试一次
+    if (useModel === 'hy4-preview' && !respContent.trim()) {
+      const fb = await fetch(BACKEND_API_URL + '/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'hy3', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: useTokens })
+      });
+      if (fb.ok) {
+        const fbData = await fb.json();
+        if (fbData.content && fbData.content.trim()) return fbData.content;
+      }
+    }
+
+    return respContent;
 
   } catch (backendError) {
+
+    // 混元V4偶发失败：先自动降级hy3重试一次
+    if (useModel === 'hy4-preview') {
+      try {
+        const fb = await fetch(BACKEND_API_URL + '/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'hy3', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: useTokens })
+        });
+        if (fb.ok) {
+          const fbData = await fb.json();
+          if (fbData.content && fbData.content.trim()) return fbData.content;
+        }
+      } catch (e2) {
+        console.warn('hy4-preview降级hy3失败:', e2.message);
+      }
+    }
 
     // 后端API失败时，如果用户配置了自己的Key，则直连DeepSeek作为备用
 
