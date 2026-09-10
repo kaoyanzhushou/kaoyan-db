@@ -7166,6 +7166,7 @@ console.log('✅ 学习工具入口已加载');
         <button onclick="switchAssistTool('discussion')" id="assistTool-discussion" style="background:#fff;border:2px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:28px;margin-bottom:6px">💬</div><div style="font-size:13px;font-weight:700;color:#1f2937">讨论部分辅助</div><div style="font-size:11px;color:#6b7280;margin-top:2px">AI深度撰写讨论</div></button>
         <button onclick="switchAssistTool('code')" id="assistTool-code" style="background:#fff;border:2px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:28px;margin-bottom:6px">🐍</div><div style="font-size:13px;font-weight:700;color:#1f2937">分析代码生成</div><div style="font-size:11px;color:#6b7280;margin-top:2px">Python/R统计代码</div></button>
         <button onclick="switchAssistTool('chart')" id="assistTool-chart" style="background:#fff;border:2px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:28px;margin-bottom:6px">📊</div><div style="font-size:13px;font-weight:700;color:#1f2937">图表建议</div><div style="font-size:11px;color:#6b7280;margin-top:2px">图表类型推荐+代码</div></button>
+        <button onclick="switchAssistTool('debate')" id="assistTool-debate" style="background:#fff;border:2px solid #e5e7eb;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:28px;margin-bottom:6px">⚔️</div><div style="font-size:13px;font-weight:700;color:#1f2937">模型辩论评审</div><div style="font-size:11px;color:#6b7280;margin-top:2px">多模型交叉评审+共识聚合</div></button>
       </div>
 
       <!-- AI选题推荐（多模型增强版） -->
@@ -7258,6 +7259,42 @@ console.log('✅ 学习工具入口已加载');
         </div>
         <div id="chartResult"></div>
       </div>
+      <!-- 模型辩论评审（多模型协作） -->
+      <div id="assistContent-debate" style="display:none">
+        <div style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid #fed7aa;border-radius:12px;padding:18px;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div style="font-size:16px;font-weight:700;color:#9a3412">⚔️ 模型辩论评审</div>
+            <span style="font-size:11px;color:#ea580c;background:#fff;padding:3px 8px;border-radius:10px;font-weight:600">多模型协作层</span>
+          </div>
+          <div style="font-size:12px;color:#c2410c">多个大模型独立评审 → 共识问题聚合（多模型一致指出=高置信度）→ 分歧识别 → 综合修改建议</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:14px">评审设置</div>
+          <div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">待评审内容（论文/研究方案/计划书正文）*</label><textarea id="debateInput" rows="8" placeholder="粘贴需要评审的内容（建议 500-8000 字）&#10;支持：论文全文/研究方案/开题报告/计划书章节" style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;outline:none;resize:vertical;font-family:Consolas,monospace;line-height:1.6"></textarea></div>
+          <div style="margin-bottom:12px">
+            <div style="font-size:12px;color:#374151;font-weight:600;margin-bottom:6px">评审维度（可多选）</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#374151;padding:5px 8px;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer"><input type="checkbox" class="debateDim" value="选题价值" checked> 选题价值</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#374151;padding:5px 8px;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer"><input type="checkbox" class="debateDim" value="研究方法" checked> 研究方法</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#374151;padding:5px 8px;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer"><input type="checkbox" class="debateDim" value="创新性" checked> 创新性</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#374151;padding:5px 8px;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer"><input type="checkbox" class="debateDim" value="可行性" checked> 可行性</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#374151;padding:5px 8px;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer"><input type="checkbox" class="debateDim" value="写作规范" checked> 写作规范</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#374151;padding:5px 8px;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer"><input type="checkbox" class="debateDim" value="文献引用" checked> 文献引用</label>
+            </div>
+          </div>
+          <div style="margin-bottom:14px">
+            <div style="font-size:12px;color:#374151;font-weight:600;margin-bottom:6px">选择参与辩论的AI模型（建议选 3-4 个，交叉验证更全面）</div>
+            <div id="debateModelSelector" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"></div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px">已选 <span id="debateSelectedCount" style="color:#ea580c;font-weight:600">0</span> 个模型</div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button onclick="runDebateReview()" id="debateGenBtn" style="flex:1;background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;box-shadow:0 2px 8px rgba(249,115,22,0.3)">⚔️ 开始辩论评审</button>
+            <button onclick="document.getElementById('debateResult').innerHTML=''" style="background:#e5e7eb;color:#374151;border:none;padding:12px 16px;border-radius:8px;cursor:pointer;font-size:13px">清空</button>
+          </div>
+        </div>
+        <div id="debateResult"></div>
+      </div>
+
     </div>
 
     <!-- 论文润色页面（优化版） -->
@@ -29445,7 +29482,7 @@ function recommendStatMethod() {
 
 // ========== 论文工作台 - 研究辅助 ==========
 function switchAssistTool(tool) {
-  ['topic','innovation','discussion','code','chart'].forEach(function(t) {
+  ['topic','innovation','discussion','code','chart','debate'].forEach(function(t) {
     var btn = document.getElementById('assistTool-' + t);
     var content = document.getElementById('assistContent-' + t);
     if (btn) { btn.style.borderColor = (t === tool) ? '#16a34a' : '#e5e7eb'; }
@@ -29575,6 +29612,280 @@ function parseTopicJSON(text) {
     }
   } catch(e) {}
   return null;
+}
+
+// ========== 模型辩论评审（多模型协作层，纯新增） ==========
+var DEBATE_MODELS = (typeof TOPIC_MODELS !== 'undefined' && TOPIC_MODELS.length) ? TOPIC_MODELS : [
+  {id:'deepseek-chat', name:'DeepSeek V3', color:'#6366f1'},
+  {id:'deepseek-v4-pro', name:'DeepSeek V4 Pro', color:'#8b5cf6'},
+  {id:'deepseek-v4-flash', name:'DeepSeek V4 Flash', color:'#a78bfa'},
+  {id:'glm-5.3', name:'智谱GLM 5.3', color:'#06b6d4'},
+  {id:'kimi-k3', name:'Kimi K3', color:'#f59e0b'},
+  {id:'hy3', name:'混元Hunyuan 3', color:'#ef4444'},
+  {id:'hy4-preview', name:'混元Hunyuan 4', color:'#dc2626'}
+];
+
+function initDebateModelSelector() {
+  var container = document.getElementById('debateModelSelector');
+  if (!container) return;
+  var html = '';
+  DEBATE_MODELS.forEach(function(m, i) {
+    var checked = (i < 3) ? 'checked' : '';
+    html += '<label style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;font-size:11px;color:#374151;transition:all .15s" onmouseover="this.style.borderColor=\'' + m.color + '\';this.style.background=\'' + m.color + '11\'" onmouseout="this.style.borderColor=\'#e5e7eb\';this.style.background=\'transparent\'"><input type="checkbox" class="debateModelCb" value="' + m.id + '" data-name="' + m.name + '" data-color="' + m.color + '" ' + checked + ' onchange="updateDebateSelectedCount()"><span style="font-weight:500">' + m.name + '</span></label>';
+  });
+  container.innerHTML = html;
+  updateDebateSelectedCount();
+}
+
+function updateDebateSelectedCount() {
+  var count = document.querySelectorAll('.debateModelCb:checked').length;
+  var el = document.getElementById('debateSelectedCount');
+  if (el) el.textContent = count;
+}
+
+function getSelectedDebateModels() {
+  var models = [];
+  document.querySelectorAll('.debateModelCb:checked').forEach(function(cb) {
+    models.push({id: cb.value, name: cb.dataset.name, color: cb.dataset.color});
+  });
+  return models;
+}
+
+function parseDebateJSON(text) {
+  try {
+    var match = String(text).match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    var obj = JSON.parse(match[0]);
+    if (obj && typeof obj.score !== 'undefined') return obj;
+  } catch(e) {}
+  return null;
+}
+
+async function runDebateReview() {
+  initDebateModelSelector();
+  var inputEl = document.getElementById('debateInput');
+  var text = inputEl ? inputEl.value.trim() : '';
+  if (!text) { alert('请先粘贴需要评审的内容'); return; }
+  var models = getSelectedDebateModels();
+  if (!models.length) { alert('请至少选择一个AI模型'); return; }
+  var dims = [];
+  document.querySelectorAll('.debateDim:checked').forEach(function(cb) { dims.push(cb.value); });
+  if (!dims.length) { alert('请至少选择一个评审维度'); return; }
+
+  var btn = document.getElementById('debateGenBtn');
+  btn.disabled = true; btn.style.opacity = '0.7';
+  var resultEl = document.getElementById('debateResult');
+  var textLen = text.length;
+
+  // 进度区
+  var progressHtml = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px">';
+  progressHtml += '<div style="font-size:13px;font-weight:700;color:#1f2937;margin-bottom:10px">⚔️ ' + models.length + ' 个模型独立评审中（内容 ' + textLen + ' 字）</div>';
+  progressHtml += '<div id="debateProgressCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">';
+  models.forEach(function(m) {
+    progressHtml += '<div id="debateProgress-' + m.id + '" style="padding:10px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb"><div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><div style="width:8px;height:8px;border-radius:50%;background:' + m.color + '"></div><span style="font-size:11px;font-weight:600;color:#374151">' + m.name + '</span></div><div style="font-size:10px;color:#9ca3af" id="debateStatus-' + m.id + '">等待中</div></div>';
+  });
+  progressHtml += '</div></div>';
+  progressHtml += '<div id="debateModelResults"></div>';
+  resultEl.innerHTML = progressHtml;
+
+  var systemPrompt = '你是一位资深学术论文评审专家（相当于体育学领域核心期刊资深审稿人 + 博士论文外审专家）。请对待评审内容进行严格、专业、客观的多维度评审。必须输出严格JSON格式（不要输出JSON以外的文字），格式为：{"score": 总分0-100整数, "dimensions": {"维度名": 0-100整数}, "strengths": ["优点1", "优点2"], "problems": ["问题1（需具体到内容或位置）", "问题2"], "suggestions": ["修改建议1", "修改建议2"]}。评分要严格：选题价值看新颖性与学术意义；研究方法看设计与统计严谨性；创新性看增量贡献；可行性看数据与资源可得性；写作规范看结构与语言；文献引用看时效与规范性。问题必须具体、可操作，禁止空泛评价。';
+
+  var completed = 0;
+  var reviews = [];
+  var promises = models.map(function(m) {
+    return new Promise(function(resolve) {
+      var userPrompt = '请对以下内容进行学术评审，评审维度：' + dims.join('、') + '。请按要求的JSON格式输出。\n\n【待评审内容】\n' + text.substring(0, 8000);
+      var statusEl = document.getElementById('debateStatus-' + m.id);
+      var cardEl = document.getElementById('debateProgress-' + m.id);
+      if (statusEl) statusEl.textContent = '评审中...';
+      if (cardEl) cardEl.style.borderColor = m.color;
+      callDeepSeekAPI(systemPrompt, userPrompt, 3000, m.id).then(function(result) {
+        var parsed = parseDebateJSON(result);
+        reviews.push({model: m, raw: String(result || ''), parsed: parsed});
+        completed++;
+        btn.textContent = '评审中... (' + completed + '/' + models.length + ')';
+        if (statusEl) statusEl.textContent = parsed ? ('得分 ' + (parsed.score !== undefined ? parsed.score : '—')) : '完成（解析失败）';
+        if (cardEl) { cardEl.style.background = parsed ? (m.color + '11') : '#fef2f2'; }
+        renderDebateModelCard(m, parsed, String(result || ''));
+        resolve();
+      }).catch(function(err) {
+        reviews.push({model: m, raw: '', parsed: null, error: err.message});
+        completed++;
+        btn.textContent = '评审中... (' + completed + '/' + models.length + ')';
+        if (statusEl) statusEl.textContent = '失败';
+        if (cardEl) { cardEl.style.background = '#fef2f2'; cardEl.style.borderColor = '#fca5a5'; }
+        resolve();
+      });
+    });
+  });
+
+  await Promise.all(promises);
+  btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '⚔️ 开始辩论评审';
+
+  // 聚合分析
+  renderDebateAggregate(reviews, dims);
+}
+
+function renderDebateModelCard(m, parsed, raw) {
+  var holder = document.getElementById('debateModelResults');
+  if (!holder) return;
+  var html = '<div style="border:1px solid ' + m.color + '55;border-radius:10px;margin-bottom:12px;overflow:hidden">';
+  html += '<div style="padding:10px 14px;background:' + m.color + '11;display:flex;justify-content:space-between;align-items:center">';
+  html += '<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:' + m.color + '"></div><span style="font-size:13px;font-weight:700;color:#1f2937">' + m.name + '</span></div>';
+  if (parsed && parsed.score !== undefined) {
+    var sc = Number(parsed.score);
+    var scColor = sc >= 85 ? '#059669' : (sc >= 70 ? '#d97706' : '#dc2626');
+    html += '<div style="font-size:20px;font-weight:800;color:' + scColor + '">' + Math.round(sc) + '<span style="font-size:11px;color:#9ca3af">/100</span></div>';
+  } else {
+    html += '<span style="font-size:11px;color:#b91c1c">格式解析失败</span>';
+  }
+  html += '</div>';
+  if (parsed) {
+    if (parsed.dimensions && typeof parsed.dimensions === 'object') {
+      html += '<div style="padding:10px 14px;border-top:1px solid #f3f4f6;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px">';
+      Object.keys(parsed.dimensions).forEach(function(d) {
+        var v = Number(parsed.dimensions[d]) || 0;
+        html += '<div style="font-size:11px;color:#374151"><span style="color:#6b7280">' + d + '</span> <b>' + Math.round(v) + '</b></div>';
+      });
+      html += '</div>';
+    }
+    if (parsed.strengths && parsed.strengths.length) {
+      html += '<div style="padding:8px 14px;border-top:1px solid #f3f4f6"><div style="font-size:11px;font-weight:700;color:#059669;margin-bottom:4px">✅ 优点</div><ul style="margin:0;padding-left:16px">' + parsed.strengths.slice(0,4).map(function(s){return '<li style="font-size:11px;color:#374151;margin-bottom:2px">' + String(s).replace(/</g,'&lt;') + '</li>';}).join('') + '</ul></div>';
+    }
+    if (parsed.problems && parsed.problems.length) {
+      html += '<div style="padding:8px 14px;border-top:1px solid #f3f4f6"><div style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:4px">⚠️ 问题</div><ul style="margin:0;padding-left:16px">' + parsed.problems.slice(0,6).map(function(s){return '<li style="font-size:11px;color:#374151;margin-bottom:2px">' + String(s).replace(/</g,'&lt;') + '</li>';}).join('') + '</ul></div>';
+    }
+    if (parsed.suggestions && parsed.suggestions.length) {
+      html += '<div style="padding:8px 14px;border-top:1px solid #f3f4f6"><div style="font-size:11px;font-weight:700;color:#d97706;margin-bottom:4px">💡 建议</div><ul style="margin:0;padding-left:16px">' + parsed.suggestions.slice(0,5).map(function(s){return '<li style="font-size:11px;color:#374151;margin-bottom:2px">' + String(s).replace(/</g,'&lt;') + '</li>';}).join('') + '</ul></div>';
+    }
+  } else if (raw) {
+    html += '<div style="padding:10px 14px;border-top:1px solid #f3f4f6;font-size:11px;color:#6b7280;max-height:150px;overflow-y:auto;white-space:pre-wrap">' + raw.replace(/</g,'&lt;').substring(0, 1200) + '</div>';
+  }
+  html += '</div>';
+  holder.insertAdjacentHTML('beforeend', html);
+}
+
+function renderDebateAggregate(reviews, dims) {
+  var holder = document.getElementById('debateResult');
+  if (!holder) return;
+  var parsedAll = reviews.filter(function(r){ return r.parsed; });
+  if (!parsedAll.length) {
+    holder.insertAdjacentHTML('beforeend', '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;color:#991b1b;font-size:13px">所有模型的评审结果均无法解析为结构化JSON，请重试或更换模型。</div>');
+    return;
+  }
+
+  // 平均分
+  var scores = parsedAll.map(function(r){ return Number(r.parsed.score) || 0; });
+  var avg = scores.reduce(function(a,b){return a+b;},0) / scores.length;
+  var maxScore = Math.max.apply(null, scores);
+  var minScore = Math.min.apply(null, scores);
+
+  // 维度平均
+  var dimAvg = {};
+  var dimSpread = {};
+  dims.forEach(function(d) {
+    var vals = [];
+    parsedAll.forEach(function(r) {
+      var v = r.parsed.dimensions && r.parsed.dimensions[d];
+      if (typeof v !== 'undefined' && v !== null && !isNaN(Number(v))) vals.push(Number(v));
+    });
+    if (vals.length) {
+      dimAvg[d] = vals.reduce(function(a,b){return a+b;},0) / vals.length;
+      var spread = Math.max.apply(null, vals) - Math.min.apply(null, vals);
+      dimSpread[d] = spread;
+    }
+  });
+
+  // 共识问题聚合
+  var problemCount = {};
+  parsedAll.forEach(function(r) {
+    (r.parsed.problems || []).forEach(function(p) {
+      var key = String(p).trim().substring(0, 20);
+      if (!problemCount[key]) problemCount[key] = {text: String(p), count: 0, models: []};
+      problemCount[key].count++;
+      problemCount[key].models.push(r.model.name);
+    });
+  });
+  var consensus = Object.keys(problemCount).filter(function(k){ return problemCount[k].count >= 2; })
+    .sort(function(a,b){ return problemCount[b].count - problemCount[a].count; })
+    .map(function(k){ return problemCount[k]; });
+
+  // 建议聚合
+  var sugCount = {};
+  parsedAll.forEach(function(r) {
+    (r.parsed.suggestions || []).forEach(function(s) {
+      var key = String(s).trim().substring(0, 15);
+      if (!sugCount[key]) sugCount[key] = {text: String(s), count: 0};
+      sugCount[key].count++;
+    });
+  });
+  var topSug = Object.keys(sugCount).sort(function(a,b){ return sugCount[b].count - sugCount[a].count; }).slice(0, 6).map(function(k){ return sugCount[k]; });
+
+  var html = '<div style="background:#fff;border:1px solid #fed7aa;border-radius:12px;padding:18px;margin-top:14px;box-shadow:0 2px 8px rgba(249,115,22,0.08)">';
+  html += '<div style="font-size:15px;font-weight:700;color:#9a3412;margin-bottom:14px">📊 辩论综合报告（' + parsedAll.length + ' 个模型交叉验证）</div>';
+
+  // 总分概览
+  var avgColor = avg >= 85 ? '#059669' : (avg >= 70 ? '#d97706' : '#dc2626');
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
+  html += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px;text-align:center"><div style="font-size:26px;font-weight:800;color:' + avgColor + '">' + avg.toFixed(1) + '</div><div style="font-size:11px;color:#9a3412">平均分</div></div>';
+  html += '<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#059669">' + maxScore.toFixed(0) + '</div><div style="font-size:11px;color:#047857">最高分</div></div>';
+  html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#dc2626">' + minScore.toFixed(0) + '</div><div style="font-size:11px;color:#b91c1c">最低分</div></div>';
+  html += '</div>';
+
+  // 各模型分数条
+  html += '<div style="margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">各模型评分</div>';
+  parsedAll.forEach(function(r) {
+    var sc = Number(r.parsed.score) || 0;
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="width:110px;font-size:11px;color:#374151;text-align:right">' + r.model.name + '</div><div style="flex:1;background:#f3f4f6;border-radius:4px;height:14px;overflow:hidden"><div style="width:' + Math.min(100, sc) + '%;height:100%;background:' + r.model.color + ';border-radius:4px"></div></div><div style="width:36px;font-size:12px;font-weight:700;color:#374151">' + Math.round(sc) + '</div></div>';
+  });
+  html += '</div>';
+
+  // 维度对比（含分歧标注）
+  var dimKeys = Object.keys(dimAvg);
+  if (dimKeys.length) {
+    html += '<div style="margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">维度平均分</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">';
+    dimKeys.forEach(function(d) {
+      var v = dimAvg[d];
+      var vColor = v >= 85 ? '#059669' : (v >= 70 ? '#d97706' : '#dc2626');
+      var spreadNote = (dimSpread[d] || 0) >= 20 ? ' <span style="color:#dc2626;font-size:10px">分歧大</span>' : '';
+      html += '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px"><div style="font-size:11px;color:#6b7280">' + d + spreadNote + '</div><div style="font-size:18px;font-weight:700;color:' + vColor + '">' + v.toFixed(0) + '</div></div>';
+    });
+    html += '</div></div>';
+  }
+
+  // 共识问题（高置信度）
+  html += '<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#1f2937;margin-bottom:8px">🎯 共识问题（' + consensus.length + ' 项，多模型一致指出 = 高置信度）</div>';
+  if (consensus.length) {
+    html += '<div style="border:1px solid #fecaca;border-radius:8px;padding:10px;background:#fef2f2">';
+    consensus.forEach(function(c, i) {
+      html += '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start">' +
+        '<span style="background:#dc2626;color:#fff;border-radius:10px;font-size:10px;padding:2px 8px;white-space:nowrap">' + c.count + ' 个模型</span>' +
+        '<div style="font-size:12px;color:#374151;line-height:1.5">' + c.text.replace(/</g,'&lt;') + '<div style="font-size:10px;color:#9ca3af;margin-top:2px">由 ' + c.models.join('、') + ' 共同指出</div></div></div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="color:#9ca3af;font-size:12px">各模型指出的问题不一致，暂无明显共识问题。</div>';
+  }
+  html += '</div>';
+
+  // 分歧点提示
+  var divs = dimKeys.filter(function(d){ return (dimSpread[d] || 0) >= 20; });
+  if (divs.length) {
+    html += '<div style="margin-bottom:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px">⚡ 模型分歧提示</div><div style="font-size:12px;color:#78350f">以下维度各模型评分差异较大（≥20分），建议结合领域专家意见重点复核：' + divs.join('、') + '</div></div>';
+  }
+
+  // 综合建议
+  if (topSug.length) {
+    html += '<div style="margin-bottom:6px"><div style="font-size:13px;font-weight:700;color:#1f2937;margin-bottom:8px">💡 综合修改建议（按共识度排序）</div><div style="border:1px solid #bbf7d0;border-radius:8px;padding:10px;background:#f0fdf4">';
+    topSug.forEach(function(s, i) {
+      html += '<div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start"><span style="background:' + (s.count >= 2 ? '#059669' : '#a7f3d0') + ';color:#fff;border-radius:10px;font-size:10px;padding:2px 8px;white-space:nowrap">' + s.count + ' 模型</span><div style="font-size:12px;color:#374151">' + s.text.replace(/</g,'&lt;') + '</div></div>';
+    });
+    html += '</div></div>';
+  }
+
+  html += '<div style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:8px">本报告由多个大模型独立评审后自动聚合生成：共识问题具有更高置信度；模型间分歧不代表对错，建议以领域权威标准与导师意见为准。模型评分仅作参考。</div>';
+  html += '</div>';
+  holder.insertAdjacentHTML('beforeend', html);
 }
 
 function renderTopicModelResult(m) {
