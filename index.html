@@ -14754,6 +14754,24 @@ console.log('✅ 学习工具入口已加载');
 
 
 
+      <div id="polishJournalBar" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+
+        <label style="font-size:12px;color:#0c4a6e;font-weight:700;white-space:nowrap">🎯 目标期刊</label>
+
+        <select id="polishJournalSel" style="flex:1;min-width:260px;padding:9px 11px;border:1px solid #0284c7;border-radius:6px;font-size:13px;background:#fff;color:#0c4a6e;outline:none">
+
+          <option value="">从期刊库选择，或下方手动输入（可选）</option>
+
+        </select>
+
+        <button onclick="document.getElementById('polishJournalSel').value='';this.style.display='none'" id="polishJournalClear" style="display:none;background:#f3f4f6;color:#374151;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px">清除</button>
+
+        <span style="font-size:11px;color:#9ca3af">选择后「期刊适配润色」将自动注入该刊收稿范围/审稿周期等资料，适配更精准</span>
+
+      </div>
+
+
+
       <div style="display:flex;gap:10px;margin-bottom:16px">
 
         <button onclick="startPolish()" style="flex:1;background:#7c3aed;color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:700">开始AI润色</button>
@@ -60613,6 +60631,10 @@ async function startPolish() {
 
     var systemPrompt = '你是一位资深的体育学学术论文润色专家，拥有10年以上体育学论文润色和英文论文母语化修改经验。你熟悉运动生理学、运动解剖学、运动生物力学、体育教育训练学、运动康复学、体育心理学、体育人文社会学等各方向的学术写作规范和专业术语。';
 
+    var termGuard = buildTermProtectPrompt(field);
+
+    if (termGuard) systemPrompt += termGuard;
+
     var userPrompt = '请对以下论文内容进行' + (modeLabels[modeType] || '') + '：\n\n润色章节：' + (chapterLabels[chapter] || '') + '\n专业领域：' + (fieldLabels[field] || '') + '\n\n原文：\n' + content + '\n\n润色要求：\n';
 
     
@@ -61583,6 +61605,77 @@ function loadPolishVersion(idx) {
 
 // P2: 期刊适配润色
 
+
+// ========== 期刊适配润色增强（P2：期刊库下拉+资料注入+七模型+术语主动保护，纯新增） ==========
+var COMMON_CN_JOURNALS = [
+  {name:'中国运动医学杂志', if:1.2, jcr:'北大核心'},
+  {name:'体育科学', if:3.1, jcr:'北大核心/CSSCI'},
+  {name:'北京体育大学学报', if:2.8, jcr:'北大核心/CSSCI'},
+  {name:'上海体育学院学报', if:3.4, jcr:'北大核心/CSSCI'},
+  {name:'体育学刊', if:2.5, jcr:'北大核心/CSSCI'},
+  {name:'中国体育科技', if:2.2, jcr:'北大核心/CSSCI'},
+  {name:'体育与科学', if:2.0, jcr:'北大核心/CSSCI'},
+  {name:'武汉体育学院学报', if:2.1, jcr:'北大核心/CSSCI'},
+  {name:'成都体育学院学报', if:2.0, jcr:'北大核心/CSSCI'},
+  {name:'西安体育学院学报', if:1.8, jcr:'北大核心'}
+];
+
+function initPolishJournalSel() {
+  var sel = document.getElementById('polishJournalSel');
+  if (!sel || sel.dataset.inited) return;
+  sel.dataset.inited = '1';
+  var html = '<option value="">从期刊库选择，或下方手动输入（可选）</option>';
+  var list = (typeof PHD_JOURNALS !== 'undefined' && PHD_JOURNALS.length) ? PHD_JOURNALS.slice() : [];
+  var names = {};
+  list.forEach(function(j) { names[j.name] = true; });
+  (COMMON_CN_JOURNALS || []).forEach(function(j) {
+    if (!names[j.name]) { list.push(j); names[j.name] = true; }
+  });
+  list.sort(function(a, b) { return (b.if || 0) - (a.if || 0); });
+  html += list.map(function(j) {
+    return '<option value="' + String(j.name || '').replace(/"/g, '&quot;') + '">' + (j.name || '') + ' [IF:' + (j.if || '-') + ', ' + (j.jcr || '') + ']</option>';
+  }).join('');
+  sel.innerHTML = html;
+}
+
+function getJournalInfo(name) {
+  if (!name) return '';
+  var list = (typeof PHD_JOURNALS !== 'undefined' && PHD_JOURNALS.length) ? PHD_JOURNALS : [];
+  var j = null;
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].name === name || list[i].abbr === name) { j = list[i]; break; }
+  }
+  if (!j) return '';
+  var parts = ['期刊全名：' + j.name];
+  if (j.if) parts.push('影响因子：' + j.if);
+  if (j.jcr) parts.push('JCR分区：' + j.jcr);
+  if (j.cas) parts.push('中科院分区：' + j.cas);
+  if (j.reviewDays) parts.push('平均审稿周期：' + j.reviewDays + '天');
+  if (j.acceptRate) parts.push('录用率：' + j.acceptRate + '%');
+  if (j.oa) parts.push('OA模式：' + j.oa);
+  if (j.scope) parts.push('收稿范围：' + j.scope.substring(0, 200));
+  if (j.strengths) parts.push('期刊优势：' + j.strengths.substring(0, 100));
+  if (j.pitfalls) parts.push('注意事项：' + j.pitfalls.substring(0, 100));
+  return parts.join('\n');
+}
+
+function buildTermProtectPrompt(field) {
+  var terms = [];
+  if (field && typeof SPORTS_TERMS !== 'undefined' && SPORTS_TERMS[field]) {
+    (SPORTS_TERMS[field] || []).forEach(function(t) {
+      if (t.en && terms.indexOf(t.en) === -1) terms.push(t.en);
+      if (t.zh && terms.indexOf(t.zh) === -1) terms.push(t.zh);
+    });
+  }
+  if (typeof PROTECTED_TERMS !== 'undefined') {
+    for (var i = 0; i < PROTECTED_TERMS.length && terms.length < 60; i++) {
+      if (terms.indexOf(PROTECTED_TERMS[i]) === -1) terms.push(PROTECTED_TERMS[i]);
+    }
+  }
+  if (!terms.length) return '';
+  return '\n\n【专业术语保护 - 必须严格遵守】以下体育学专业术语（中英文）在润色过程中不得改动拼写、大小写、缩写形式或译法，必须原样保留：' + terms.join('、') + '。若原文术语使用确有错误，可在保留原术语的基础上补充正确写法并注明，但不得直接删除或替换原术语。';
+}
+
 async function startJournalPolish() {
 
   var content = (document.getElementById('polishContent') || {}).value || '';
@@ -61591,7 +61684,11 @@ async function startJournalPolish() {
 
   
 
-  var journal = prompt('请输入目标期刊名称（如：Medicine & Science in Sports & Exercise、Journal of Sport and Health Science、中国运动医学杂志）：');
+  var journalSel = document.getElementById('polishJournalSel');
+
+  if (journalSel && !journalSel.dataset.inited) initPolishJournalSel();
+
+  var journal = (journalSel && journalSel.value) ? journalSel.value : prompt('请输入目标期刊名称（如：Medicine & Science in Sports & Exercise、Journal of Sport and Health Science、中国运动医学杂志）：');
 
   if (!journal) return;
 
@@ -61607,11 +61704,21 @@ async function startJournalPolish() {
 
     var systemPrompt = '你是一位资深的体育学期刊编辑，熟悉各类体育学SCI/SSCI/中文核心期刊的投稿要求和写作风格。你了解每本期刊的栏目设置、论文结构要求、摘要格式、参考文献格式、语言风格等。';
 
+    var journalInfo = getJournalInfo(journal);
+
+    if (journalInfo) systemPrompt += '\n\n【目标期刊资料（用于精准适配，请严格参考）】\n' + journalInfo;
+
+    var termGuard = buildTermProtectPrompt((document.getElementById('polishField') || {}).value || '');
+
+    if (termGuard) systemPrompt += termGuard;
+
     var userPrompt = '请根据目标期刊《' + journal + '》的写作风格和投稿要求，对以下论文内容进行期刊适配润色：\n\n原文：\n' + content + '\n\n润色要求：\n1. 根据该期刊的常见论文结构调整内容组织\n2. 优化摘要结构（如果该期刊要求结构化摘要）\n3. 规范结果部分的统计表述（符合该期刊惯例）\n4. 提升讨论部分的深度，与该期刊发表的论文风格一致\n5. 统一专业术语使用\n6. 保持核心观点和研究内容不变\n7. 输出润色后的完整内容\n\n如果不确定该期刊的具体要求，请按照体育学高水平期刊的通用标准进行润色。';
 
     
 
-    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+    var polishModelSel = (document.getElementById('polishModel') || {}).value || '';
+
+    var result = polishModelSel ? await callDeepSeekAPI(systemPrompt, userPrompt, 4000, polishModelSel) : await callDeepSeekAPI(systemPrompt, userPrompt, 4000);
 
     
 
@@ -61619,7 +61726,7 @@ async function startJournalPolish() {
 
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
 
-        '<div style="font-size:16px;font-weight:700;color:#1f2937">期刊适配润色（《' + journal + '》）</div>' +
+        '<div style="font-size:16px;font-weight:700;color:#1f2937">期刊适配润色（《' + journal + '》' + (polishModelSel ? ' · ' + (polishModelSel === 'deepseek-v4-pro' ? 'DeepSeek V4 Pro' : polishModelSel === 'deepseek-v4-flash' ? 'DeepSeek V4 Flash' : polishModelSel === 'deepseek-chat' ? 'DeepSeek V3' : polishModelSel === 'glm-5.3' ? 'GLM-5.3' : polishModelSel === 'kimi-k3' ? 'Kimi K3' : polishModelSel === 'hy3' ? '混元 Turbo' : '混元 V4 Preview') : '') + '）</div>' +
 
         '<div style="display:flex;gap:8px">' +
 
