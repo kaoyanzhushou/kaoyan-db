@@ -7005,6 +7005,22 @@ console.log('✅ 学习工具入口已加载');
         <div style="font-size:40px;margin-bottom:12px">📚</div>
         <div style="font-size:14px">还没有文献，点击「添加文献」开始管理你的文献库</div>
       </div>
+      <!-- 引用真实性核验（独立功能，不依赖文献库） -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px;margin-top:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+          <div style="font-size:15px;font-weight:700;color:#1f2937">🔍 引用真实性核验</div>
+          <div style="font-size:11px;color:#6b7280">基于 Europe PMC / CrossRef 实时核验参考文献是否存在、信息是否一致，并识别疑似被撤回文献</div>
+        </div>
+        <textarea id="refVerifyInput" rows="5" placeholder="粘贴参考文献列表（每行一条），支持 PMID / DOI / 完整引用格式&#10;例：Smith J, et al. Effects of exercise on health. Sports Med. 2023. PMID: 37212345&#10;    或 DOI: 10.1007/s40279-023-01845-6&#10;    或：Author A, Author B. Title of paper. Journal Name. 2022;10(2):100-110." style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;outline:none;resize:vertical;box-sizing:border-box;font-family:Consolas,monospace;line-height:1.6"></textarea>
+        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center">
+          <button onclick="runRefVerify()" style="background:#16a34a;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">✅ 开始核验</button>
+          <select id="refVerifyModel" title="选择AI分析模型" style="padding:9px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;background:#fff;font-family:inherit;max-width:220px"></select>
+          <button onclick="runRefVerifyAI()" style="background:#7c3aed;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🤖 AI 深度分析</button>
+          <button onclick="document.getElementById('refVerifyResult').innerHTML=''" style="background:#e5e7eb;color:#374151;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px">清空结果</button>
+        </div>
+        <div id="refVerifyResult" style="margin-top:14px"></div>
+      </div>
+
     </div>
 
 
@@ -41727,6 +41743,228 @@ async function searchSemanticScholar(query, count) {
       source: 'Semantic Scholar'
     };
   });
+}
+
+
+// ========== 引用真实性核验（P0 新增，独立功能） ==========
+function refVerifyFillModel() {
+  var sel = document.getElementById('refVerifyModel');
+  if (!sel) return;
+  if (sel.options.length > 0) return;
+  var list = (typeof AI_MODELS !== 'undefined' && AI_MODELS.length) ? AI_MODELS : [];
+  if (!list.length) {
+    list = [
+      {value:'deepseek-chat', label:'DeepSeek V3（均衡推荐）'},
+      {value:'glm-5.3', label:'智谱 GLM-5.3（中文优秀）'},
+      {value:'kimi-k3', label:'Kimi K3（长文本）'},
+      {value:'hy3', label:'腾讯混元 hy3'},
+      {value:'hy4-preview', label:'腾讯混元 hy4（预览版）'}
+    ];
+  }
+  list.forEach(function(m) {
+    var o = document.createElement('option');
+    o.value = m.value; o.textContent = m.label || m.value;
+    sel.appendChild(o);
+  });
+  if (typeof currentAiModel !== 'undefined' && currentAiModel) sel.value = currentAiModel;
+}
+
+function parseRefItems(text) {
+  var lines = text.split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});
+  var items = [];
+  lines.forEach(function(line, idx) {
+    var it = { raw: line, pmid: '', doi: '', index: idx + 1, hasId: false };
+    var mP = line.match(/PMID[:：]?\s*(\d{6,10})/i);
+    if (mP) { it.pmid = mP[1]; it.hasId = true; }
+    var mD = line.match(/doi\.org\/(10\.\d{4,9}\/[^\s,;\)\]]+)/i);
+    if (!mD) mD = line.match(/(?:doi|DOI)\s*[:：]?\s*(10\.\d{4,9}\/[^\s,;\)\]]+)/i);
+    if (mD) { it.doi = mD[1].replace(/[\.\)]$/,'').replace(/[\.]+$/,''); it.hasId = true; }
+    items.push(it);
+  });
+  return items;
+}
+
+function refNormTitle(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function refTitleSim(a, b) {
+  var A = refNormTitle(a), B = refNormTitle(b);
+  if (!A || !B) return 0;
+  var wordsA = A.split(' ').filter(function(w){return w.length > 1;});
+  var wordsB = B.split(' ').filter(function(w){return w.length > 1;});
+  if (!wordsA.length || !wordsB.length) return 0;
+  var hit = 0;
+  wordsA.forEach(function(w) {
+    if (wordsB.indexOf(w) >= 0) hit++;
+  });
+  var denom = Math.max(wordsA.length, wordsB.length);
+  var base = hit / denom;
+  // 中文短标题按字符重合补强
+  if (wordsA.length <= 3 && A.length >= 4) {
+    var chars = 0;
+    var setB = {};
+    for (var i = 0; i < B.length; i++) setB[B[i]] = 1;
+    for (var j = 0; j < A.length; j++) if (setB[A[j]]) chars++;
+    base = Math.max(base, chars / Math.max(A.length, B.length));
+  }
+  return base;
+}
+
+async function refVerifyOnline(it) {
+  var query = '';
+  if (it.pmid) query = 'EXT_ID:' + it.pmid + ' AND SRC:MED';
+  else if (it.doi) query = 'DOI:"' + it.doi + '"';
+  var url = 'https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=' + encodeURIComponent(query) + '&resultType=core&format=json&pageSize=1';
+  var resp = await fetch(url);
+  var data = await resp.json();
+  if (data && data.resultList && data.resultList.result && data.resultList.result.length) {
+    var p = data.resultList.result[0];
+    var pubTypes = '';
+    try { pubTypes = (p.pubTypeList && p.pubTypeList.pubType) ? p.pubTypeList.pubType.join(',') : ''; } catch(e) {}
+    var retracted = /retract|withdrawn/i.test(pubTypes + ' ' + (p.title || ''));
+    var authors = p.authorString || '';
+    var journal = p.journalTitle || (p.journalInfo && p.journalInfo.journal && p.journalInfo.journal.title) || '';
+    var year = p.pubYear || '';
+    var pmid = p.pmid || '';
+    var doi = p.doi || '';
+    return {
+      status: 'found',
+      pmid: pmid, doi: doi,
+      title: p.title || '',
+      authors: authors,
+      journal: journal,
+      year: String(year),
+      retracted: retracted,
+      url: pmid ? ('https://pubmed.ncbi.nlm.nih.gov/' + pmid + '/') : (doi ? ('https://doi.org/' + doi) : '')
+    };
+  }
+  // Europe PMC 未命中且是 DOI，走 CrossRef 兜底
+  if (it.doi) {
+    try {
+      var cross = await fetch('https://api.crossref.org/works/' + encodeURIComponent(it.doi), {headers:{'User-Agent':'kaoyan-db/1.0 (mailto:research@example.com)'}});
+      if (cross.ok) {
+        var cd = await cross.json();
+        var msg = cd.message || {};
+        var title = (msg.title && msg.title[0]) || '';
+        var authors = (msg.author || []).map(function(a){return [a.family, a.given].filter(Boolean).join(' ');}).join(', ');
+        var journal = (msg['container-title'] && msg['container-title'][0]) || '';
+        var year = '';
+        try { year = String(msg.issued['date-parts'][0][0] || ''); } catch(e) {}
+        return {
+          status: 'found', pmid: '', doi: it.doi,
+          title: title, authors: authors, journal: journal,
+          year: year, retracted: false,
+          url: 'https://doi.org/' + it.doi
+        };
+      }
+    } catch(e) {}
+  }
+  return { status: 'not_found' };
+}
+
+async function runRefVerify() {
+  var textarea = document.getElementById('refVerifyInput');
+  var text = textarea ? textarea.value : '';
+  var resultEl = document.getElementById('refVerifyResult');
+  if (!text.trim()) { alert('请先粘贴需要核验的参考文献'); return; }
+  var items = parseRefItems(text);
+  if (!items.length) { resultEl.innerHTML = '<div style="color:#dc2626;font-size:13px">未识别到有效条目，请检查输入格式</div>'; return; }
+  resultEl.innerHTML = '<div style="color:#6b7280;font-size:13px;padding:8px 0">⏳ 正在逐条核验（共 ' + items.length + ' 条），每条约 1-2 秒，请稍候...</div>';
+  var stats = { found: 0, notFound: 0, noId: 0, failed: 0 };
+  var rows = [];
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    var row = { it: it, res: null, state: '' };
+    if (!it.hasId) { stats.noId++; row.state = 'noId'; }
+    else {
+      try {
+        var r = await refVerifyOnline(it);
+        if (r.status === 'found') { stats.found++; row.state = r.retracted ? 'retracted' : 'found'; }
+        else { stats.notFound++; row.state = 'notFound'; }
+        row.res = r;
+      } catch(e) {
+        stats.failed++; row.state = 'failed';
+      }
+    }
+    rows.push(row);
+  }
+  var html = '';
+  html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px">';
+  html += '<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#059669">' + stats.found + '</div><div style="font-size:10px;color:#059669">真实存在</div></div>';
+  html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#dc2626">' + stats.notFound + '</div><div style="font-size:10px;color:#dc2626">未找到</div></div>';
+  html += '<div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#d97706">' + (rows.filter(function(r){return r.state==='retracted';}).length) + '</div><div style="font-size:10px;color:#d97706">疑似被撤回</div></div>';
+  html += '<div style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#6b7280">' + stats.noId + '</div><div style="font-size:10px;color:#6b7280">无PMID/DOI</div></div>';
+  html += '<div style="background:#fdf4ff;border:1px solid #f5d0fe;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#a21caf">' + stats.failed + '</div><div style="font-size:10px;color:#a21caf">核验失败</div></div>';
+  html += '</div>';
+  rows.forEach(function(row) {
+    var it = row.it;
+    var badge = '', detail = '';
+    if (row.state === 'found') {
+      badge = '<span style="background:#ecfdf5;color:#059669;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">✅ 真实存在</span>';
+      detail = '<div style="font-size:11px;color:#374151;line-height:1.7;margin-top:4px">' +
+        '<div><b>官方记录：</b>' + (row.res.title || '—') + '</div>' +
+        '<div><b>作者：</b>' + (row.res.authors || '—') + ' · <b>期刊：</b>' + (row.res.journal || '—') + ' · <b>年份：</b>' + (row.res.year || '—') + '</div>' +
+        '<div><b>PMID：</b>' + (row.res.pmid || '—') + ' · <b>DOI：</b>' + (row.res.doi || '—') + (row.res.url ? ' · <a href="' + row.res.url + '" target="_blank" style="color:#0284c7">查看原文</a>' : '') + '</div>' +
+        '</div>';
+    } else if (row.state === 'retracted') {
+      badge = '<span style="background:#fefce8;color:#d97706;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">⚠️ 疑似被撤回</span>';
+      detail = '<div style="font-size:11px;color:#92400e;line-height:1.7;margin-top:4px">' +
+        '<div><b>官方记录：</b>' + (row.res.title || '—') + '</div>' +
+        '<div><b>作者：</b>' + (row.res.authors || '—') + ' · <b>期刊：</b>' + (row.res.journal || '—') + ' · <b>年份：</b>' + (row.res.year || '—') + '</div>' +
+        '<div style="color:#b45309">该文献可能已被期刊撤回，建议核实后替换引用。</div></div>';
+    } else if (row.state === 'notFound') {
+      badge = '<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">❌ 未找到</span>';
+      detail = '<div style="font-size:11px;color:#dc2626;line-height:1.7;margin-top:4px">在 Europe PMC / CrossRef 中未检索到该文献记录，引用可能错误或为伪造文献，请核对原始出处。</div>';
+    } else if (row.state === 'noId') {
+      badge = '<span style="background:#f3f4f6;color:#6b7280;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">– 无 PMID/DOI</span>';
+      detail = '<div style="font-size:11px;color:#6b7280;margin-top:4px">该条目未包含 PMID 或 DOI，无法自动核验；建议在参考文献中补充 PMID/DOI 以便溯源。</div>';
+    } else {
+      badge = '<span style="background:#fdf4ff;color:#a21caf;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">⚠️ 核验失败</span>';
+      detail = '<div style="font-size:11px;color:#a21caf;margin-top:4px">网络或接口临时异常，请稍后重试本条。</div>';
+    }
+    html += '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:8px;background:#f9fafb">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
+      '<div style="font-size:11px;color:#6b7280;flex:1;min-width:200px;font-family:Consolas,monospace">#' + it.index + ' ' + (it.raw.length > 90 ? it.raw.slice(0,90) + '…' : it.raw) + '</div>' + badge + '</div>' + detail + '</div>';
+  });
+  html += '<div style="font-size:11px;color:#9ca3af;margin-top:6px">核验数据来源：Europe PMC（欧洲PubMed镜像）与 CrossRef DOI 注册库，实时查询，仅供写作自查参考。</div>';
+  resultEl.innerHTML = html;
+}
+
+async function runRefVerifyAI() {
+  refVerifyFillModel();
+  var textarea = document.getElementById('refVerifyInput');
+  var text = textarea ? textarea.value : '';
+  var resultEl = document.getElementById('refVerifyResult');
+  if (!text.trim()) { alert('请先粘贴参考文献'); return; }
+  var sel = document.getElementById('refVerifyModel');
+  var model = sel ? sel.value : 'deepseek-chat';
+  resultEl.innerHTML = '<div style="color:#6b7280;font-size:13px;padding:8px 0">🤖 AI 正在深度分析引用质量（模型：' + model + '），请稍候...</div>';
+  var system = '你是学术论文参考文献质量审查专家。用户会提供论文的参考文献列表及核验结果，你需要输出专业、准确、可操作的审查结论。';
+  var user = '请对以下参考文献列表进行引用质量审查。要求输出（用清晰的分节）：\n' +
+    '1.【总体评价】参考文献整体质量（数量、时效性、权威性、来源均衡度）\n' +
+    '2.【逐条问题】标注每条引用的问题：疑似虚构/信息不符/已撤回/过于老旧/非权威来源/格式不规范等\n' +
+    '3.【引用规范】参考文献著录是否符合学术规范（作者、年份、卷期页码、DOI/PMID 完整性）\n' +
+    '4.【替换建议】对高风险引用给出可操作的替换或核实建议\n' +
+    '5.【最终建议】3-5条提升参考文献质量的要点\n\n' +
+    '参考文献列表：\n' + text;
+  try {
+    var res = await callDeepSeekAPI(system, user, 3000, model);
+    var out = String(res || '');
+    if (!out.trim()) {
+      resultEl.innerHTML = '<div style="color:#b45309;font-size:13px;padding:8px 0">模型未返回有效内容（推理模型可能需要更长时间），请重试或更换模型。</div>';
+      return;
+    }
+    var html = '<div style="border:1px solid #ddd6fe;border-radius:10px;overflow:hidden">' +
+      '<div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;padding:10px 14px;font-size:14px;font-weight:700">🤖 AI 引用质量深度分析</div>' +
+      '<div style="padding:14px;font-size:13px;color:#374151;line-height:1.8;white-space:pre-wrap;font-family:inherit;max-height:480px;overflow-y:auto">' + out.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div></div>';
+    html += '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button onclick="runRefVerify()" style="background:#16a34a;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px">先做客观核验</button>' +
+      '<button onclick="document.getElementById(\'refVerifyResult\').innerHTML=\'\'" style="background:#e5e7eb;color:#374151;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px">清空</button></div>';
+    resultEl.innerHTML = html;
+  } catch(e) {
+    resultEl.innerHTML = '<div style="color:#dc2626;font-size:13px;padding:8px 0">AI 分析失败：' + String(e.message || e).slice(0, 120) + '</div>';
+  }
 }
 
 // 增强的文献列表展示（含收藏、AI解读、被引数）
