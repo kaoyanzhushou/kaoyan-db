@@ -16504,11 +16504,11 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
 
-          <input type="file" id="lessonFile" accept=".txt,.docx" style="font-size:13px">
+          <input type="file" id="lessonFile" accept=".txt,.docx,.pdf" style="font-size:13px">
 
           <button onclick="readLessonFile()" style="background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">上传教案</button>
 
-          <span style="font-size:12px;color:#9ca3af">支持 .txt / .docx</span>
+          <span style="font-size:12px;color:#9ca3af">支持 .txt / .docx / .pdf</span>
 
         </div>
 
@@ -127340,13 +127340,44 @@ function saveLessonRef(){
   document.getElementById('lessonRefStatus').textContent = '✅ 已存入风格库';
   renderLessonRefs();
 }
+function loadPdfjs(cb){
+  if(window.pdfjsLib){ cb(); return; }
+  var sc = document.createElement('script');
+  sc.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+  sc.onload = cb;
+  sc.onerror = function(){ alert('无法加载 PDF 解析库（需联网），请粘贴教案文本'); };
+  document.head.appendChild(sc);
+}
 function readLessonFile(){
   const fileInput = document.getElementById('lessonFile');
   if(!fileInput.files || !fileInput.files[0]){ alert('请先选择教案文件'); return; }
   const file = fileInput.files[0];
-  const name = file.name.replace(/\.(txt|docx)$/i, '');
+  const name = file.name.replace(/\.(txt|docx|pdf)$/i, '');
   const reader = new FileReader();
-  if(file.name.toLowerCase().endsWith('.docx')){
+  if(file.name.toLowerCase().endsWith('.pdf')){
+    loadPdfjs(function(){
+      reader.onload = function(e){
+        var arr = e.target.result;
+        try{
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+          pdfjsLib.getDocument({ data: arr }).promise.then(function(pdf){
+            var pagePromises = [];
+            for(var pi = 1; pi <= pdf.numPages; pi++){ pagePromises.push(pdf.getPage(pi)); }
+            Promise.all(pagePromises).then(function(pages){
+              var textPromises = pages.map(function(p){ return p.getTextContent(); });
+              Promise.all(textPromises).then(function(contents){
+                var txt = contents.map(function(c){ return c.items.map(function(it){ return it.str; }).join(' '); }).join('\n');
+                document.getElementById('lessonRefInput').value = txt || '';
+                document.getElementById('lessonRefTitle').value = name;
+                document.getElementById('lessonRefStatus').textContent = '✅ ' + name + '（' + pdf.numPages + '页）已解析，可保存入风格库';
+              }).catch(function(err){ alert('PDF 文本提取失败：' + err.message); });
+            }).catch(function(err){ alert('PDF 页面读取失败：' + err.message); });
+          }).catch(function(err){ alert('PDF 解析失败：' + err.message); });
+        }catch(err){ alert('PDF 解析异常：' + err.message); }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }else if(file.name.toLowerCase().endsWith('.docx')){
     // 动态加载 mammoth 解析 docx
     if(window.mammoth){
       reader.onload = function(e){
