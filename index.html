@@ -91142,29 +91142,37 @@ async function publishMultiModels() {
 
   var results = [];
   var done = 0;
+  var totalModels = models.length;
   var modelNames = {'deepseek-v4-pro':'DeepSeek V4 Pro', 'deepseek-v4-flash':'DeepSeek V4 Flash', 'deepseek-chat':'DeepSeek V3', 'glm-5.3':'GLM-5.3', 'kimi-k3':'Kimi K3', 'hy3':'混元 Turbo', 'hy4-preview':'混元 V4 Preview'};
 
-  await Promise.all(models.map(function(model) {
-    var attempt = function(tryNum) {
-      return callDeepSeekAPI(systemPrompt, userPrompt, 3000, model).then(function(text) {
-        results.push({model: model, text: text, err: null});
-      }).catch(function(e) {
-        // 失败自动重试一次（hy4容量限制/glm瞬时限流可自愈）
-        if (tryNum < 2) {
-          return new Promise(function(r2) { setTimeout(r2, 2000); }).then(function() {
-            return attempt(tryNum + 1);
-          });
-        }
-        results.push({model: model, text: null, err: String(e || '').slice(0, 80)});
-        return null;
+  // 分批并行：每批3个，降低后端并发限流风险，提升成功率
+  var BATCH = 3;
+  for (var bi = 0; bi < models.length; bi += BATCH) {
+    var batch = models.slice(bi, bi + BATCH);
+    var p = document.getElementById('pubMultiProgress');
+    if (p) p.textContent = '正在评审第 ' + ((bi / BATCH) + 1) + ' 批（' + batch.length + ' 个模型）...';
+    await Promise.all(batch.map(function(model) {
+      var attempt = function(tryNum) {
+        return callDeepSeekAPI(systemPrompt, userPrompt, 3000, model).then(function(text) {
+          results.push({model: model, text: text, err: null});
+        }).catch(function(e) {
+          // 失败自动重试一次（hy4容量限制/glm瞬时限流可自愈）
+          if (tryNum < 2) {
+            return new Promise(function(r2) { setTimeout(r2, 2000); }).then(function() {
+              return attempt(tryNum + 1);
+            });
+          }
+          results.push({model: model, text: null, err: String(e || '').slice(0, 80)});
+          return null;
+        });
+      };
+      return attempt(1).then(function() {
+        done++;
+        var p2 = document.getElementById('pubMultiProgress');
+        if (p2) p2.textContent = '已完成 ' + done + '/' + totalModels + ' 个模型评审...';
       });
-    };
-    return attempt(1).then(function() {
-      done++;
-      var p = document.getElementById('pubMultiProgress');
-      if (p) p.textContent = '已完成 ' + done + '/' + models.length + ' 个模型评审...';
-    });
-  }));
+    }));
+  }
 
   renderPubMultiReport(results, modelNames);
 }
