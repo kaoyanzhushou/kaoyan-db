@@ -13840,6 +13840,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('idea')" id="paperTab-idea" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">想法评估</button>
       <button onclick="switchPaperSubTab('roundtable')" id="paperTab-roundtable" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">评审圆桌</button>
       <button onclick="switchPaperSubTab('reflect')" id="paperTab-reflect" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">反思链</button>
+      <button onclick="switchPaperSubTab('prereg')" id="paperTab-prereg" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">预注册</button>
 
     </div>
 
@@ -15614,6 +15615,44 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="reflectResult" style="display:none"></div>
+
+    </div>
+
+
+
+    <!-- 研究预注册生成器（Preregistration） -->
+
+    <div id="paperContent-prereg" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">📋 研究预注册生成器</div>
+
+        <div style="font-size:13px;color:#059669">输入研究主题，AI 生成完整预注册方案：研究题目 / 假设 / 设计 / 样本量计算 / 结局指标 / 统计分析计划 / 伦理与时间表——投稿规范化的加分项</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:8px">研究主题</label>
+
+        <textarea id="preregInput" rows="3" placeholder="例如：八段锦联合有氧运动对老年2型糖尿病患者血糖控制与体适能的影响（12周随机对照试验）" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:12px 0 8px">补充约束（可选：人群/干预/效应量假设/样本量上限等）</label>
+
+        <input id="preregExtra" placeholder="例如：老年人 65-75岁，干预12周，预期中等效应量 d=0.5，α=0.05，power=0.8" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+
+          <button onclick="runPrereg()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">📋 生成预注册方案</button>
+
+          <span id="preregStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+      </div>
+
+      <div id="preregResult" style="display:none"></div>
 
     </div>
 
@@ -56199,7 +56238,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -126147,6 +126186,36 @@ async function runReflectChain(){
   }
 }
 </script>
+<script>
+// ========== 研究预注册生成器 ==========
+async function runPrereg(){
+  const topic = (document.getElementById('preregInput').value||'').trim();
+  const extra = (document.getElementById('preregExtra').value||'').trim();
+  if(!topic){ alert('请输入研究主题'); return; }
+  const status = document.getElementById('preregStatus');
+  const resultEl = document.getElementById('preregResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ AI 正在生成预注册方案（约1分钟）...</div>';
+  status.textContent = '生成中...';
+  const sys = '你是临床研究预注册（Preregistration）专家，熟悉 CONSORT 报告规范与研究注册平台要求。根据研究主题生成一份完整、规范、可直接用于预注册平台（如中国临床试验注册中心 ChiCTR / ClinicalTrials.gov / OSF）的预注册方案，结构如下：\n一、研究题目（规范表达，含设计类型）\n二、研究假设（H1/H2，可检验）\n三、研究设计（类型/分组/干预方案/时间线）\n四、样本量计算（给出参数假设：效应量、α、power、脱落率，代入公式给出计算过程与最终样本量）\n五、结局指标（主要/次要，含测量工具）\n六、统计分析计划（描述统计/组间比较方法/效应量/缺失数据处理）\n七、伦理与预注册信息（伦理审批要点/数据共享/注册号获取步骤/研究时间表）\n请具体、专业、可直接填写到注册平台。';
+  const usr = '研究主题：' + topic + (extra ? '\n补充约束：' + extra : '');
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 3000, 'deepseek-chat', 90000); }catch(e){ out = ''; }
+  if(!out.trim()){
+    status.textContent = 'DeepSeek 超时，改用 V4-Pro 重试...';
+    try{ out = await callModelWithTimeout(sys, usr, 3000, 'deepseek-v4-pro', 90000); }catch(e){ out = ''; }
+  }
+  if(!out.trim()){
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 预注册方案生成失败（模型未返回），请重试</div>';
+    status.textContent = '生成失败';
+    return;
+  }
+  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px"><div style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:12px">📋 预注册方案</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
+  status.textContent = '方案生成完成';
+}
+</script>
+
 
 
 
