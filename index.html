@@ -13848,6 +13848,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('mentor')" id="paperTab-mentor" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">导师视角</button>
       <button onclick="switchPaperSubTab('knowledge')" id="paperTab-knowledge" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">知识库</button>
       <button onclick="switchPaperSubTab('assistant')" id="paperTab-assistant" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">论文助手</button>
+      <button onclick="switchPaperSubTab('impact')" id="paperTab-impact" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">影响力</button>
 
     </div>
 
@@ -15903,6 +15904,26 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
       <div id="knList" style="display:none"></div>
 
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:16px">
+
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:4px">🤖 AI 复用助手</div>
+
+        <div style="font-size:12px;color:#6b7280;margin-bottom:10px">输入当前写作场景/问题，AI 从知识库中挑选最相关的经验并给出可直接复用的表达建议</div>
+
+        <div style="display:flex;gap:10px;align-items:center">
+
+          <input id="knAsk" placeholder="例如：怎么写研究局限性的段落；上次审稿人抓了哪些点" style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key==='Enter')askKnAi()">
+
+          <button onclick="askKnAi()" style="background:#7c3aed;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">AI 复用建议</button>
+
+          <span id="knAskStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+        <div id="knAskResult" style="display:none"></div>
+
+      </div>
+
     </div>
 
 
@@ -15946,6 +15967,72 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="assistChat" style="display:none"></div>
+
+    </div>
+
+
+
+    <!-- 学术影响力与日历 -->
+
+    <div id="paperContent-impact" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">📈 学术影响力与日历</div>
+
+        <div style="font-size:13px;color:#059669">引用追踪（Crossref 实时数据）· 投稿截止 / 会议摘要 / 基金申请 学术日历提醒</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">📊 引用追踪</div>
+
+        <div style="display:flex;gap:10px;align-items:center">
+
+          <input id="impactDoi" placeholder="输入文章 DOI，如：10.1080/02640414.2023.2190000" style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key==='Enter')trackCitation()">
+
+          <button onclick="trackCitation()" style="background:#16a34a;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">追踪引用</button>
+
+          <span id="impactStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+        <div id="impactResult" style="display:none"></div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">🗓️ 学术日历（投稿截止 / 会议摘要 / 基金申请）</div>
+
+        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+
+          <input id="calTitle" placeholder="事项名称，如：体育科学大会摘要截止" style="flex:2;min-width:180px;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+          <input id="calDate" type="date" style="border:1px solid #d1d5db;border-radius:8px;padding:9px;font-size:13px">
+
+          <select id="calCat" style="border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px">
+
+            <option value="投稿">📄 投稿截止</option>
+
+            <option value="会议">🎤 会议摘要</option>
+
+            <option value="基金">💰 基金申请</option>
+
+            <option value="其他">📌 其他</option>
+
+          </select>
+
+          <button onclick="addCalEvent()" style="background:#2563eb;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">添加提醒</button>
+
+        </div>
+
+        <div id="calNotice" style="display:none"></div>
+
+        <div id="calList" style="display:none"></div>
+
+      </div>
 
     </div>
 
@@ -56531,7 +56618,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -126782,6 +126869,134 @@ async function askAssist(){
   statusEl.textContent = '';
 }
 </script>
+<script>
+// ========== 学术影响力与日历 ==========
+async function trackCitation(){
+  const doi = (document.getElementById('impactDoi').value||'').trim();
+  if(!doi){ alert('请输入 DOI'); return; }
+  const status = document.getElementById('impactStatus');
+  const resEl = document.getElementById('impactResult');
+  resEl.style.display = 'block';
+  resEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:24px;font-size:13px">⏳ 正在查询 Crossref 数据库...</div>';
+  status.textContent = '查询中...';
+  try{
+    const resp = await fetch('https://api.crossref.org/works/' + encodeURIComponent(doi));
+    if(!resp.ok){ throw new Error('HTTP ' + resp.status); }
+    const data = await resp.json();
+    const m = data.message || {};
+    const title = (m.title && m.title[0]) ? m.title[0] : '（未获取到标题）';
+    const cited = m['is-referenced-by-count'] || 0;
+    const year = (m['published-print'] && m['published-print']['date-parts']) ? m['published-print']['date-parts'][0][0] : ((m['published-online'] && m['published-online']['date-parts']) ? m['published-online']['date-parts'][0][0] : '未知');
+    const authors = (m.author || []).slice(0,3).map(function(a){ return (a.family||'') + ' ' + (a.given||''); }).join(', ');
+    resEl.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px">'
+      + '<div style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:10px">✅ 引用数据（Crossref）</div>'
+      + '<div style="font-size:13px;color:#1f2937;line-height:2">'
+      + '<div><b>标题：</b>' + (title||'').replace(/</g,'&lt;') + '</div>'
+      + '<div><b>作者：</b>' + (authors||'—') + (m.author && m.author.length>3 ? ' 等' : '') + '</div>'
+      + '<div><b>发表年份：</b>' + year + '</div>'
+      + '<div style="margin-top:10px;padding:12px;background:#dcfce7;border-radius:8px;font-size:18px;font-weight:700;color:#15803d">被引用 ' + cited + ' 次</div>'
+      + '</div></div>';
+    status.textContent = '查询完成';
+  }catch(e){
+    resEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 查询失败（' + e.message + '）。请确认 DOI 正确（格式：10.xxxx/xxxx）。</div>';
+    status.textContent = '查询失败';
+  }
+}
+function getCal(){ try{ return JSON.parse(localStorage.getItem('aiCalEvents') || '[]'); }catch(e){ return []; } }
+function saveCal(list){ try{ localStorage.setItem('aiCalEvents', JSON.stringify(list || getCal())); }catch(e){} }
+function addCalEvent(){
+  const title = (document.getElementById('calTitle').value||'').trim();
+  const date = (document.getElementById('calDate').value||'').trim();
+  const cat = document.getElementById('calCat').value;
+  if(!title || !date){ alert('请填写事项名称和日期'); return; }
+  const list = getCal();
+  list.push({ id: Date.now(), title: title, date: date, cat: cat });
+  list.sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+  saveCal(list);
+  document.getElementById('calTitle').value = '';
+  document.getElementById('calDate').value = '';
+  renderCal();
+}
+function delCalEvent(id){
+  const list = getCal().filter(function(e){ return e.id !== id; });
+  saveCal(list);
+  renderCal();
+}
+function renderCal(){
+  const list = getCal();
+  const listEl = document.getElementById('calList');
+  const noticeEl = document.getElementById('calNotice');
+  listEl.style.display = 'block';
+  if(!list.length){
+    listEl.innerHTML = '<div style="color:#9ca3af;font-size:13px;text-align:center;padding:20px">暂无提醒事项。添加投稿截止、会议摘要或基金申请时间，到期前自动提示。</div>';
+    noticeEl.style.display = 'none';
+    return;
+  }
+  const now = new Date();
+  const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  const catColor = {'投稿':'#2563eb','会议':'#7c3aed','基金':'#b45309','其他':'#6b7280'};
+  // 7天内到期提醒
+  const upcoming = list.filter(function(e){ return e.date >= todayStr && e.date <= addDaysStr(todayStr, 7); });
+  if(upcoming.length){
+    noticeEl.style.display = 'block';
+    noticeEl.innerHTML = '<div style="background:#fef9c3;border:1px solid #fde047;border-radius:10px;padding:12px;color:#854d0e;font-size:13px;margin-bottom:12px">⚠️ 未来 7 天内到期：' + upcoming.map(function(e){ return '<b>' + e.title + '</b>（' + e.date + '）'; }).join('、') + '</div>';
+  }else{
+    noticeEl.style.display = 'none';
+  }
+  listEl.innerHTML = list.map(function(e){
+    const days = diffDays(todayStr, e.date);
+    let badge;
+    if(days < 0){ badge = '<span style="font-size:11px;color:#dc2626;font-weight:700">已过期 ' + (-days) + ' 天</span>'; }
+    else if(days <= 7){ badge = '<span style="font-size:11px;color:#b45309;font-weight:700">⚠️ 剩 ' + days + ' 天</span>'; }
+    else { badge = '<span style="font-size:11px;color:#059669;font-weight:700">剩 ' + days + ' 天</span>'; }
+    return '<div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin-bottom:8px">'
+      + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-size:11px;font-weight:700;color:' + (catColor[e.cat]||'#6b7280') + ';background:#f3f4f6;padding:2px 8px;border-radius:8px">' + e.cat + '</span><span style="font-size:13px;font-weight:600;color:#1f2937">' + (e.title||'').replace(/</g,'&lt;') + '</span><span style="font-size:12px;color:#6b7280">' + e.date + '</span>' + badge + '</div>'
+      + '<button onclick="delCalEvent(' + e.id + ')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px">删除</button>'
+      + '</div>';
+  }).join('');
+}
+function addDaysStr(dateStr, n){
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + n);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function diffDays(fromStr, toStr){
+  const a = new Date(fromStr), b = new Date(toStr);
+  return Math.round((b - a) / 86400000);
+}
+</script>
+<script>
+// ========== 知识库 AI 复用助手 ==========
+async function askKnAi(){
+  const q = (document.getElementById('knAsk').value||'').trim();
+  if(!q){ alert('请输入当前写作场景或问题'); return; }
+  const items = getKn();
+  if(!items.length){ alert('知识库为空，请先沉淀经验'); return; }
+  const statusEl = document.getElementById('knAskStatus');
+  const resEl = document.getElementById('knAskResult');
+  resEl.style.display = 'block';
+  resEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:24px;font-size:13px">⏳ AI 正在从知识库匹配经验（约1分钟）...</div>';
+  statusEl.textContent = '匹配中...';
+  const kbText = items.slice(0, 60).map(function(it, i){ return '[' + (i+1) + '][' + it.cat + '] ' + (it.title||'') + '：' + it.content; }).join('\n');
+  const sys = '你是学术写作经验复用助手。基于用户的个人知识库条目，针对他当前的写作场景/问题：1.挑选最相关的 3-5 条经验并说明为什么相关 2.给出可直接复用的表达建议（引用条目编号）3.如知识库无相关内容，明确说明并给出通用建议。专业、具体、可直接执行。';
+  const usr = '当前写作场景/问题：' + q + '\n\n个人知识库内容：\n' + kbText.slice(0, 5000);
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 2000, 'deepseek-chat', 90000); }catch(e){ out = ''; }
+  if(!out.trim()){
+    statusEl.textContent = 'DeepSeek 超时，改用 GLM...';
+    try{ out = await callModelWithTimeout(sys, usr, 2000, 'glm-5.3', 90000); }catch(e){ out = ''; }
+  }
+  if(!out.trim()){
+    resEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ AI 未返回结果，请重试</div>';
+    statusEl.textContent = '失败';
+    return;
+  }
+  resEl.innerHTML = '<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:20px"><div style="font-size:14px;font-weight:700;color:#6b21a8;margin-bottom:10px">🤖 AI 复用建议</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + (out||'').replace(/</g,'&lt;') + '</div></div>';
+  statusEl.textContent = '完成';
+}
+</script>
+
+
 
 
 
