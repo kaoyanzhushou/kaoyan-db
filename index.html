@@ -125275,6 +125275,29 @@ document.addEventListener('click', function(e) {
 })();
 
 </script>
+<script>
+// 布局结构修复：将误置于 #app 直接子级的 .tab-content 移回 .main，恢复 flex 布局宽度
+(function(){
+  function fixTabPlacement(){
+    try{
+      var app = document.getElementById('app');
+      var main = document.querySelector('.main');
+      if(!app || !main) return;
+      var tabs = app.querySelectorAll(':scope > .tab-content');
+      if(!tabs.length) return;
+      for(var i=0;i<tabs.length;i++){
+        main.appendChild(tabs[i]);
+      }
+    }catch(e){ console.log('fixTabPlacement:', e.message); }
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', fixTabPlacement);
+  } else {
+    fixTabPlacement();
+  }
+})();
+</script>
+
 
 
 
