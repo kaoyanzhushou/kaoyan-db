@@ -125692,7 +125692,15 @@ async function pipeSelectTopic(){
 // --- 检索 Agent（真实调用 EuropePMC） ---
 async function pipeSearchLiterature(){
   const p = window._pipe;
-  const q = encodeURIComponent(p.topic + ' AND (sport OR exercise OR "physical activity" OR training OR physical education)');
+  // 先用 AI 把中文研究主题转化为英文检索式（保证 EuropePMC 命中准确）
+  let query = '';
+  try{
+    const sysQ = '你是医学文献检索专家。把用户的中文研究主题转化为 EuropePMC/PubMed 英文检索式（可用布尔运算符 AND/OR/引号，控制在40词内）。只输出检索式本身，不要任何其他文字。';
+    const qr = await callDeepSeekAPI(sysQ, '研究主题：' + p.topic, 200);
+    query = (qr||'').trim().split('\n')[0];
+  }catch(e){ query = ''; }
+  if(!query || query.length > 150){ query = p.topic; }
+  const q = encodeURIComponent(query + ' AND (open_access:y OR has_fulltext:y)');
   const r = await fetch('https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=' + q + '&format=json&pageSize=8&resultType=core');
   const j = await r.json();
   const res = (j.resultList && j.resultList.result) || [];
