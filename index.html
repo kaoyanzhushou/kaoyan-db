@@ -13842,6 +13842,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('reflect')" id="paperTab-reflect" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">反思链</button>
       <button onclick="switchPaperSubTab('prereg')" id="paperTab-prereg" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">预注册</button>
       <button onclick="switchPaperSubTab('dataflow')" id="paperTab-dataflow" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">数据链路</button>
+      <button onclick="switchPaperSubTab('ailog')" id="paperTab-ailog" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">决策日志</button>
 
     </div>
 
@@ -15694,6 +15695,36 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="dataflowResult" style="display:none"></div>
+
+    </div>
+
+
+
+    <!-- AI决策日志（可追溯） -->
+
+    <div id="paperContent-ailog" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">📜 AI 决策日志</div>
+
+        <div style="font-size:13px;color:#059669">自动记录所有 AI 关键动作（什么模型 / 什么输入 / 什么输出），可追溯、可导出——方便你或导师复核</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px;display:flex;gap:10px;align-items:center">
+
+        <button onclick="renderAiLog()" style="background:#16a34a;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🔄 刷新日志</button>
+
+        <button onclick="exportAiLog()" style="background:#2563eb;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">⬇️ 导出 JSON</button>
+
+        <button onclick="clearAiLog()" style="background:#dc2626;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🗑️ 清空日志</button>
+
+        <span id="ailogCount" style="font-size:12px;color:#6b7280"></span>
+
+      </div>
+
+      <div id="ailogList" style="display:none"></div>
 
     </div>
 
@@ -56279,7 +56310,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -124039,6 +124070,13 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model) {
       }
     }
 
+    // AI决策日志（纯增量：记录关键AI动作，不影响任何功能）
+    try {
+      var _aiLog = JSON.parse(localStorage.getItem('aiDecLog') || '[]');
+      _aiLog.push({ t: new Date().toLocaleString('zh-CN'), model: useModel, sys: (systemPrompt||'').slice(0,60), usr: (userPrompt||'').slice(0,100), out: (respContent||'').slice(0,150) });
+      if (_aiLog.length > 300) _aiLog = _aiLog.slice(-300);
+      localStorage.setItem('aiDecLog', JSON.stringify(_aiLog));
+    } catch(_e) {}
     return respContent;
 
   } catch (backendError) {
@@ -126293,6 +126331,49 @@ async function runDataChain(){
   status.textContent = '分析完成';
 }
 </script>
+<script>
+// ========== AI决策日志（展示/导出/清空） ==========
+function renderAiLog(){
+  const listEl = document.getElementById('ailogList');
+  const countEl = document.getElementById('ailogCount');
+  let logs = [];
+  try{ logs = JSON.parse(localStorage.getItem('aiDecLog') || '[]'); }catch(e){ logs = []; }
+  countEl.textContent = '共 ' + logs.length + ' 条记录';
+  if(!logs.length){
+    listEl.style.display = 'block';
+    listEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:30px;text-align:center;color:#9ca3af;font-size:13px">暂无 AI 调用记录。使用任意 AI 功能后，这里会自动记录每次调用的模型、输入摘要与输出摘要。</div>';
+    return;
+  }
+  const modelNames = {'deepseek-chat':'DeepSeek V3','deepseek-v4-pro':'DeepSeek V4 Pro','deepseek-v4-flash':'DeepSeek V4 Flash','glm-5.3':'GLM-5.3','kimi-k3':'Kimi K3','hy3':'混元 V3','hy4-preview':'混元 V4'};
+  const rows = logs.slice().reverse().map(function(l, i){
+    return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:8px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;color:#6b7280">' + (l.t||'') + '</span><span style="font-size:12px;font-weight:700;color:#047857;background:#ecfdf5;padding:2px 10px;border-radius:10px">' + (modelNames[l.model]||l.model||'') + '</span></div>'
+      + '<div style="font-size:12px;color:#374151;margin-bottom:4px"><b>输入：</b>' + (l.usr||'').replace(/</g,'&lt;') + '</div>'
+      + '<div style="font-size:12px;color:#6b7280"><b>输出：</b>' + (l.out||'').replace(/</g,'&lt;') + '</div>'
+      + '</div>';
+  }).join('');
+  listEl.style.display = 'block';
+  listEl.innerHTML = rows;
+}
+function exportAiLog(){
+  let logs = [];
+  try{ logs = JSON.parse(localStorage.getItem('aiDecLog') || '[]'); }catch(e){ logs = []; }
+  const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'AI决策日志_' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 500);
+}
+function clearAiLog(){
+  if(confirm('确认清空全部 AI 决策日志？')){
+    localStorage.removeItem('aiDecLog');
+    renderAiLog();
+  }
+}
+</script>
+
 
 
 
