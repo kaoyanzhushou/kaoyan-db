@@ -125700,8 +125700,9 @@ async function pipeSearchLiterature(){
     query = (qr||'').trim().split('\n')[0];
   }catch(e){ query = ''; }
   if(!query || query.length > 150){ query = p.topic; }
-  const q = encodeURIComponent(query + ' AND (open_access:y OR has_fulltext:y)');
-  const r = await fetch('https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=' + q + '&format=json&pageSize=8&resultType=core');
+  p.lastQuery = query;
+  const q = encodeURIComponent(query);
+  const r = await fetch('https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=' + q + '&format=json&pageSize=8&resultType=core&sort=P_PDATE_D%20desc');
   const j = await r.json();
   const res = (j.resultList && j.resultList.result) || [];
   p.refs = res.map(function(x){
