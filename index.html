@@ -125994,15 +125994,48 @@ async function runRoundTable(){
   status.textContent = '主持人正在汇总圆桌决议...';
   const expertsHtml = html;
   resultEl.innerHTML = expertsHtml + '<div style="text-align:center;color:#6b7280;padding:30px;font-size:14px">⏳ 主持人汇总决议中...</div>';
+  let verdict = '';
   try{
     const modSys = '你是学术论文评审会议主持人。四位专家已给出独立意见，请汇总成「圆桌决议」：1.【必须修改】（专家共识必须改的问题，去重合并）2.【建议修改】3.【可保留】4.【综合结论】一句话总结论文水平与修改后录用前景。简洁、有重点、可直接执行。';
-    const modUsr = '论文主题简介：' + inputShort.slice(0,300) + '\n\n--- 四位专家意见 ---\n\n' + ROUND_EXPERTS.map(function(e){ return '【' + e.name + '】\n' + (expertsOut[e.id]||''); }).join('\n\n');
-    const verdict = await callDeepSeekAPI(modSys, modUsr, 2000, 'glm-5.3');
-    resultEl.innerHTML = expertsHtml + '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px;margin-top:14px"><div style="font-size:15px;font-weight:700;color:#065f46;margin-bottom:10px">🧑‍⚖️ 圆桌决议</div><div style="font-size:13px;line-height:1.9;color:#14532d;white-space:pre-wrap">' + verdict + '</div></div>';
-    status.textContent = '圆桌评审完成';
-  }catch(err){
-    status.textContent = '决议生成失败：' + err.message;
+    const modUsr = '论文主题简介：' + inputShort.slice(0,300) + '\n\n--- 四位专家意见（节选） ---\n\n' + ROUND_EXPERTS.map(function(e){ return '【' + e.name + '】\n' + ((expertsOut[e.id]||'').slice(0,1200)); }).join('\n\n');
+    verdict = (await callDeepSeekAPI(modSys, modUsr, 2000, 'glm-5.3')) || '';
+    // 空值降级：GLM 返回空时用 DeepSeek 重试一次
+    if(!verdict || verdict.trim().length < 20){
+      verdict = (await callDeepSeekAPI(modSys, modUsr, 2000, 'deepseek-chat')) || '';
+    }
+  }catch(e){ verdict = ''; }
+  let verdictHtml = '';
+  if(verdict && verdict.trim().length >= 20){
+    verdictHtml = '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px;margin-top:14px"><div style="font-size:15px;font-weight:700;color:#065f46;margin-bottom:10px">🧑‍⚖️ 圆桌决议</div><div style="font-size:13px;line-height:1.9;color:#14532d;white-space:pre-wrap">' + verdict + '</div></div>';
+  }else{
+    // 本地兜底：从专家意见中按类提取关键行
+    const cats = {must:[], should:[], keep:[]};
+    const seen = {must:{}, should:{}, keep:{}};
+    ROUND_EXPERTS.forEach(function(e){
+      const t = expertsOut[e.id] || '';
+      t.split('\n').forEach(function(line){
+        const l = line.trim().replace(/^[-*•\d\.、\s]+/, '');
+        if(!l || l.length < 6) return;
+        let cat = null;
+        if(l.indexOf('必须改') >= 0){ cat = 'must'; }
+        else if(l.indexOf('建议改') >= 0){ cat = 'should'; }
+        else if(l.indexOf('可保留') >= 0){ cat = 'keep'; }
+        if(cat && !seen[cat][l]){ seen[cat][l] = 1; cats[cat].push(l); }
+      });
+    });
+    if(cats.must.length || cats.should.length || cats.keep.length){
+      let vh = '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px;margin-top:14px"><div style="font-size:15px;font-weight:700;color:#065f46;margin-bottom:10px">🧑‍⚖️ 圆桌决议（本地汇总）</div>';
+      if(cats.must.length) vh += '<div style="font-size:13px;font-weight:700;color:#b91c1c;margin:8px 0 4px">【必须修改】</div><div style="font-size:13px;line-height:1.8;color:#374151">' + cats.must.map(function(l){ return '• ' + l; }).join('<br>') + '</div>';
+      if(cats.should.length) vh += '<div style="font-size:13px;font-weight:700;color:#b45309;margin:8px 0 4px">【建议修改】</div><div style="font-size:13px;line-height:1.8;color:#374151">' + cats.should.map(function(l){ return '• ' + l; }).join('<br>') + '</div>';
+      if(cats.keep.length) vh += '<div style="font-size:13px;font-weight:700;color:#047857;margin:8px 0 4px">【可保留】</div><div style="font-size:13px;line-height:1.8;color:#374151">' + cats.keep.map(function(l){ return '• ' + l; }).join('<br>') + '</div>';
+      vh += '</div>';
+      verdictHtml = vh;
+    }else{
+      verdictHtml = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;margin-top:14px;color:#b91c1c;font-size:13px">⚠️ 决议生成失败（模型返回为空）。请查看上方专家意见，或点击按钮重新评审。</div>';
+    }
   }
+  resultEl.innerHTML = expertsHtml + verdictHtml;
+  status.textContent = '圆桌评审完成';
 }
 </script>
 
