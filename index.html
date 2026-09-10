@@ -91145,11 +91145,21 @@ async function publishMultiModels() {
   var modelNames = {'deepseek-v4-pro':'DeepSeek V4 Pro', 'deepseek-v4-flash':'DeepSeek V4 Flash', 'deepseek-chat':'DeepSeek V3', 'glm-5.3':'GLM-5.3', 'kimi-k3':'Kimi K3', 'hy3':'混元 Turbo', 'hy4-preview':'混元 V4 Preview'};
 
   await Promise.all(models.map(function(model) {
-    return callDeepSeekAPI(systemPrompt, userPrompt, 2500, model).then(function(text) {
-      results.push({model: model, text: text});
-    }).catch(function() {
-      results.push({model: model, text: null});
-    }).then(function() {
+    var attempt = function(tryNum) {
+      return callDeepSeekAPI(systemPrompt, userPrompt, 3000, model).then(function(text) {
+        results.push({model: model, text: text, err: null});
+      }).catch(function(e) {
+        // 失败自动重试一次（hy4容量限制/glm瞬时限流可自愈）
+        if (tryNum < 2) {
+          return new Promise(function(r2) { setTimeout(r2, 2000); }).then(function() {
+            return attempt(tryNum + 1);
+          });
+        }
+        results.push({model: model, text: null, err: String(e || '').slice(0, 80)});
+        return null;
+      });
+    };
+    return attempt(1).then(function() {
       done++;
       var p = document.getElementById('pubMultiProgress');
       if (p) p.textContent = '已完成 ' + done + '/' + models.length + ' 个模型评审...';
@@ -91163,6 +91173,7 @@ function renderPubMultiReport(results, modelNames) {
   var resultDiv = document.getElementById('pubMultiResult');
   var valid = results.filter(function(r) { return r.text; });
   var failed = results.filter(function(r) { return !r.text; });
+  var failedDesc = failed.map(function(f) { return (modelNames[f.model] || f.model) + (f.err ? '（' + f.err + '）' : ''); }).join('、');
 
   // 解析每个模型的 JSON
   var parsed = [];
@@ -91177,7 +91188,19 @@ function renderPubMultiReport(results, modelNames) {
       m = JSON.parse(txt);
     } catch(e) { m = null; }
     if (m && Array.isArray(m.journals)) {
-      parsed.push({model: r.model, name: modelNames[r.model] || r.model, journals: m.journals});
+      // 宽松字段兼容：支持中英文key
+      m.journals = m.journals.map(function(j) {
+        return {
+          name: j.name || j['期刊名'] || j['期刊'] || j['journal'] || '',
+          tier: j.tier || j['档位'] || j['档次'] || '未标注',
+          matchScore: typeof j.matchScore === 'number' ? j.matchScore : (typeof j['主题匹配'] === 'number' ? j['主题匹配'] : (typeof j['匹配度'] === 'number' ? j['匹配度'] : 0)),
+          difficultyScore: typeof j.difficultyScore === 'number' ? j.difficultyScore : (typeof j['录用难度'] === 'number' ? j['录用难度'] : 0),
+          recommendScore: typeof j.recommendScore === 'number' ? j.recommendScore : (typeof j['推荐指数'] === 'number' ? j['推荐指数'] : 0),
+          reason: j.reason || j['理由'] || ''
+        };
+      }).filter(function(j) { return j.name; });
+      if (m.journals.length) parsed.push({model: r.model, name: modelNames[r.model] || r.model, journals: m.journals});
+      else failed.push(r);
     } else {
       failed.push(r);
     }
@@ -91220,10 +91243,14 @@ function renderPubMultiReport(results, modelNames) {
   html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
   html += '<div style="font-size:15px;font-weight:700;color:#b91c1c">⚖️ 多模型选刊评审报告</div>';
-  html += '<div style="font-size:11px;color:#9ca3af">' + parsed.length + ' 个模型有效' + (failed.length ? ' · ' + failed.length + ' 个失败(已容错)' : '') + '</div>';
+  html += '<div style="font-size:11px;color:#9ca3af">' + parsed.length + ' 个模型有效' + (failed.length ? ' · ' + failed.length + ' 个失败(已自动重试)' : '') + '</div>';
   html += '</div>';
 
   // 共识推荐
+  if (failed.length) {
+    html += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:#9a3412">⚠️ 以下模型本次未返回有效结果（已自动重试仍失败，多为瞬时限流/容量限制，可稍后重试）：' + failedDesc + '</div>';
+  }
+
   if (consensus.length) {
     html += '<div style="font-size:13px;font-weight:700;color:#065f46;margin:10px 0 8px">⚡ 共识推荐（≥2个模型共同推荐）</div>';
     consensus.forEach(function(e) {
