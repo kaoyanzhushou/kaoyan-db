@@ -16546,7 +16546,49 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
         </div>
 
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">教材/书籍章节内容（粘贴本章节教材要点）</label>
+        <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:12px;margin-bottom:12px">
+
+          <div style="font-size:13px;font-weight:700;color:#6b21a8;margin-bottom:8px">📚 上传指定书目（教材）— 自动定位章节内容</div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+
+            <input type="file" id="bookFile" accept=".txt,.docx,.pdf" style="font-size:13px">
+
+            <button onclick="uploadBookFile()" style="background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">上传书目</button>
+
+            <input id="bookChapterKey" placeholder="章节关键词，如：无氧耐力" style="flex:1;min-width:160px;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key==='Enter')locateChapter()">
+
+            <button onclick="locateChapter()" style="background:#16a34a;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">定位章节内容</button>
+
+            <span id="bookStatus" style="font-size:12px;color:#6b7280"></span>
+
+          </div>
+
+          <div style="font-size:11px;color:#9ca3af;margin-top:6px">支持 .txt / .docx / .pdf · 上传后输入章节关键词即可自动截取本章节内容填入下方（可编辑）</div>
+
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;align-items:flex-start">
+
+          <select id="lessonFormat" onchange="toggleFormatCustom()" style="border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px">
+
+            <option value="standard">📋 标准教学设计</option>
+
+            <option value="contest">🏆 教学技能大赛格式</option>
+
+            <option value="traditional">📓 传统教案本格式</option>
+
+            <option value="newcur">🎯 核心素养新课标格式</option>
+
+            <option value="custom">✏️ 自定义格式</option>
+
+          </select>
+
+          <textarea id="lessonFormatCustom" rows="2" placeholder="选择"自定义格式"时，粘贴学校/学院的教案格式要求（如：需含教学目标、重难点、教学过程、板书、作业，字号小四...）" style="display:none;flex:2;min-width:260px;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        </div>
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">教材/书籍章节内容（可上传书目自动截取，或手动粘贴）</label>
 
         <textarea id="lessonChapterContent" rows="6" placeholder="粘贴教材该章节的核心内容：概念、原理、机制、要点...（AI 将基于此内容撰写教案）" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
 
@@ -16556,9 +16598,41 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
           <span id="lessonGenStatus" style="font-size:12px;color:#6b7280"></span>
 
-          <span style="font-size:12px;color:#9ca3af">生成约需 1-2 分钟</span>
+          <span style="font-size:12px;color:#9ca3af">生成约需 1-2 分钟 · 按所选格式输出</span>
 
         </div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">🔄 AI 教案格式转换 / 补全</div>
+
+        <div style="font-size:12px;color:#6b7280;margin-bottom:10px">粘贴已有教案 → 选择目标格式 → AI 重写为该格式、补全缺失环节并给出格式核对清单</div>
+
+        <textarea id="lessonConvertInput" rows="5" placeholder="粘贴已有教案内容..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap">
+
+          <select id="lessonConvertFormat" style="border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px">
+
+            <option value="standard">📋 标准教学设计</option>
+
+            <option value="contest">🏆 教学技能大赛格式</option>
+
+            <option value="traditional">📓 传统教案本格式</option>
+
+            <option value="newcur">🎯 核心素养新课标格式</option>
+
+          </select>
+
+          <button onclick="convertLessonFormat()" style="background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🔄 转换 + 补全 + 核对</button>
+
+          <span id="lessonConvertStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+        <div id="lessonConvertResult" style="display:none"></div>
 
       </div>
 
@@ -127434,7 +127508,9 @@ async function runLessonGen(){
   }else if(refs.length){
     styleText = refs.map(function(r){ return r.content; }).join('\n\n---\n\n').slice(0, 6000);
   }
-  const sys = '你是高校体育专业理论课优秀教师，擅长教案撰写。根据提供的科目、章节、教材内容和风格参考教案（若有），撰写一份完整规范的教学教案，包括：一、教学目标（知识目标/能力目标/素养目标，用行为动词表述）二、教学重难点 三、学情分析 四、教学方法 五、教学准备 六、教学过程（导入→讲授新知→师生互动/课堂练习→巩固提高→小结，含时间分配）七、板书设计 八、课后作业与延伸。若提供了风格参考教案，模仿其结构、详略与表达风格；若未提供，按标准教案格式撰写。内容紧扣教材章节内容，专业准确。';
+  let fmtReq = '';
+  try{ fmtReq = getLessonFormatReq(); }catch(e){ fmtReq = ''; }
+  const sys = '你是高校体育专业理论课优秀教师，擅长教案撰写。根据提供的科目、章节、教材内容和风格参考教案（若有），撰写一份完整规范的教学教案。' + fmtReq + '若提供了风格参考教案，在满足格式要求的前提下模仿其详略与表达风格；内容紧扣教材章节内容，专业准确。';
   const usr = '科目：' + subject + '\n章节：' + chapter + '\n\n教材章节内容：\n' + chapterContent.slice(0, 6000) + (styleText ? '\n\n【风格参考教案（模仿其结构与风格）】\n' + styleText.slice(0, 5000) : '');
   let out = '';
   try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
@@ -127453,6 +127529,148 @@ async function runLessonGen(){
   renderLessonRefs();
 }
 </script>
+<script>
+// ========== 教案助手增强：格式模板 ==========
+const LESSON_FORMATS = {
+  standard: '标准课堂教学设计格式：一、教学目标（知识/能力/素养三维，行为动词表述）二、教学重难点 三、学情分析 四、教学方法 五、教学准备 六、教学过程（导入→讲授新知→师生互动/课堂练习→巩固提高→小结，含时间分配）七、板书设计 八、课后作业与延伸',
+  contest: '教学技能大赛/说课格式：一、说教材（地位与作用）二、说学情 三、说教学目标（核心素养导向）四、说重难点 五、说教法学法 六、说教学过程（含设计意图标注、时间分配）七、说板书设计 八、教学反思预设。语言规范精炼，凸显设计亮点与创新',
+  traditional: '传统教案本格式：教学目的、教学重点、教学难点、教学用具、教学过程（详细步骤，含师生活动）、板书设计、课后记（教学反思留白）',
+  newcur: '核心素养导向教案：一、素养目标（对应学科核心素养）二、学习情境与任务设计 三、学习活动（情境导入→任务驱动→合作探究→展示评价，含设计意图）四、学习评价（过程性+表现性，教-学-评一致性）五、作业与延伸',
+  custom: ''
+};
+function toggleFormatCustom(){
+  var sel = document.getElementById('lessonFormat');
+  var cus = document.getElementById('lessonFormatCustom');
+  if(sel && cus) cus.style.display = (sel.value === 'custom') ? 'block' : 'none';
+}
+function getLessonFormatReq(){
+  var sel = document.getElementById('lessonFormat');
+  var f = sel ? sel.value : 'standard';
+  var req = LESSON_FORMATS[f] || '';
+  if(f === 'custom'){
+    req = (document.getElementById('lessonFormatCustom').value||'').trim() || '（用户未粘贴自定义格式，按标准教案格式）';
+  }
+  return '【教案格式要求】' + req + '。必须严格按此格式输出教案，不得遗漏任何环节。';
+}
+
+// ========== 教案助手增强：书目上传解析 ==========
+function parseBookFile(file, cb){
+  const name = file.name;
+  const reader = new FileReader();
+  if(name.toLowerCase().endsWith('.docx')){
+    const done = function(){
+      reader.onload = function(e){
+        mammoth.extractRawText({ arrayBuffer: e.target.result }).then(function(result){
+          cb(result.value || '');
+        }).catch(function(err){ alert('docx 解析失败：' + err.message); });
+      };
+      reader.readAsArrayBuffer(file);
+    };
+    if(window.mammoth){ done(); }
+    else{
+      const sc = document.createElement('script');
+      sc.src = 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+      sc.onload = done;
+      sc.onerror = function(){ alert('无法加载 docx 解析库，请改用 txt 或粘贴文本'); };
+      document.head.appendChild(sc);
+    }
+  }else if(name.toLowerCase().endsWith('.pdf')){
+    const done = function(){
+      reader.onload = function(e){
+        try{
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+          pdfjsLib.getDocument({ data: e.target.result }).promise.then(function(pdf){
+            var pagePromises = [];
+            for(var pi = 1; pi <= pdf.numPages; pi++){ pagePromises.push(pdf.getPage(pi)); }
+            Promise.all(pagePromises).then(function(pages){
+              Promise.all(pages.map(function(p){ return p.getTextContent(); })).then(function(contents){
+                cb(contents.map(function(c){ return c.items.map(function(it){ return it.str; }).join(' '); }).join('\n'));
+              }).catch(function(err){ alert('PDF 文本提取失败：' + err.message); });
+            }).catch(function(err){ alert('PDF 页面读取失败：' + err.message); });
+          }).catch(function(err){ alert('PDF 解析失败：' + err.message); });
+        }catch(err){ alert('PDF 解析异常：' + err.message); }
+      };
+      reader.readAsArrayBuffer(file);
+    };
+    if(window.pdfjsLib){ done(); }
+    else{ loadPdfjs(done); }
+  }else{
+    reader.onload = function(e){ cb(e.target.result || ''); };
+    reader.readAsText(file, 'utf-8');
+  }
+}
+function uploadBookFile(){
+  const fi = document.getElementById('bookFile');
+  if(!fi.files || !fi.files[0]){ alert('请先选择书目文件'); return; }
+  const file = fi.files[0];
+  const status = document.getElementById('bookStatus');
+  status.textContent = '解析中（整本教材较大，请稍候）...';
+  parseBookFile(file, function(text){
+    if(!text || text.length < 50){ status.textContent = '⚠️ 解析内容过少，请检查文件或手动粘贴'; return; }
+    // localStorage 限制约 5MB，教材文本存前 300KB
+    let store = text;
+    try{ localStorage.setItem('aiBookText', store); }
+    catch(e){ try{ localStorage.setItem('aiBookText', store.slice(0, 300000)); }catch(e2){ status.textContent = '⚠️ 书目过大无法存储，请手动粘贴章节内容'; return; } }
+    status.textContent = '✅ 书目已上传（' + (text.length/1000).toFixed(1) + 'K字），输入章节关键词点击"定位章节内容"';
+  });
+}
+function locateChapter(){
+  const key = (document.getElementById('bookChapterKey').value||'').trim();
+  const status = document.getElementById('bookStatus');
+  let book = '';
+  try{ book = localStorage.getItem('aiBookText') || ''; }catch(e){ book = ''; }
+  if(!book){ alert('请先上传书目'); return; }
+  if(!key){ alert('请输入章节关键词（如：无氧耐力、第六章）'); return; }
+  // 跳过目录区域：从正文 1/8 之后开始找
+  const start = Math.floor(book.length / 8);
+  const idx = book.indexOf(key, start);
+  if(idx < 0){
+    status.textContent = '未在书目中找到"' + key + '"，请换关键词或手动粘贴';
+    return;
+  }
+  let seg = book.slice(idx, idx + 3500);
+  // 截到下一个"第X章/第X节"前
+  const nextMatch = seg.slice(300).search(/第[一二三四五六七八九十百0-9]+[章节][^，。]{0,12}/);
+  if(nextMatch >= 0){ seg = seg.slice(0, 300 + nextMatch); }
+  const el = document.getElementById('lessonChapterContent');
+  el.value = seg.trim();
+  status.textContent = '✅ 已定位并截取章节内容（' + seg.length + '字），可编辑后生成';
+  const ch = document.getElementById('lessonChapter');
+  if(!ch.value.trim()){ ch.value = key; }
+}
+
+// ========== 教案格式转换 ==========
+async function convertLessonFormat(){
+  const input = (document.getElementById('lessonConvertInput').value||'').trim();
+  if(!input){ alert('请粘贴已有教案'); return; }
+  const fmt = document.getElementById('lessonConvertFormat').value;
+  const status = document.getElementById('lessonConvertStatus');
+  const resEl = document.getElementById('lessonConvertResult');
+  resEl.style.display = 'block';
+  resEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:30px;font-size:13px">⏳ AI 转换并补全中（约1-2分钟）...</div>';
+  status.textContent = '转换中...';
+  const req = LESSON_FORMATS[fmt] || LESSON_FORMATS.standard;
+  const sys = '你是高校教案评审与改写专家。根据目标教案格式要求，把用户提供的已有教案改写为符合该格式的完整教案：1.按目标格式逐项组织内容 2.原教案缺失的环节按该格式补全（基于原内容合理补写）3.语言专业规范 4.输出末尾附【格式核对清单】：✅符合项 / ⚠️缺失或薄弱项及补写建议。';
+  const usr = '目标格式要求：' + req + '\n\n已有教案内容：\n' + input.slice(0, 5000);
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
+  if(!out.trim()){
+    status.textContent = 'DeepSeek 超时，改用 V4-Pro...';
+    try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-v4-pro', 120000); }catch(e){ out = ''; }
+  }
+  if(!out.trim()){
+    resEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 转换失败，请重试</div>';
+    status.textContent = '失败';
+    return;
+  }
+  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  resEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:700;color:#1d4ed8;margin-bottom:10px">🔄 格式转换结果</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
+  status.textContent = '转换完成';
+}
+
+// ========== 修改 runLessonGen：支持格式 ==========
+</script>
+
 
 
 
