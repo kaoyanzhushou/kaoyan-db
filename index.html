@@ -127325,15 +127325,18 @@ async function runTopicGen(){
   const sysA = '你是体育科研课题选题专家。结合体育领域政策热点（体教融合、健康中国、全民健身计划、体育强国建设、新质生产力与体育、体育数字化转型、体卫融合、学校体育改革）与当前文献空白，针对给定研究方向与研究基础，生成 3 个可申报课题选题。每个选题输出：1.课题题目（精准、可申报）2.选题依据要点（政策依据+现实问题+学术价值）3.创新之处 4.适合的基金类型 5.初步可行性（数据/样本可得性）。结构化、专业、可直接修改使用。';
   const sysB = '你是体育科研课题评审专家（与另一位选题专家不同视角）。针对同样的研究方向，从【现实落地性和创新差异化】角度，另生成 2-3 个与常见选题不同、更具差异化竞争力的课题选题，每个给出：课题题目、为什么差异化（别人没做/没做透）、政策契合点、实现路径。结构化输出。';
   const usr = '研究方向：' + dir + (base ? '\n研究基础：' + base : '');
-  let outA = '', outB = '';
+  const sysC = '你是体育科研政策与前沿追踪专家（与前两位视角都不同）。针对同样的研究方向，从【国家政策文件最新表述、国际研究前沿动态、地方/行业实际需求】角度，再生成 2 个有政策依据支撑的课题选题，每个给出：课题题目、对应政策文件及条款（如健康中国2030/全民健身计划/体育强国纲要等）、国际研究对标（国外怎么做的）、申报价值。结构化输出。';
+  let outA = '', outB = '', outC = '';
   try{
     const results = await Promise.allSettled([
       callModelWithTimeout(sysA, usr, 3000, 'deepseek-chat', 90000),
-      callModelWithTimeout(sysB, usr, 3000, 'glm-5.3', 90000)
+      callModelWithTimeout(sysB, usr, 3000, 'glm-5.3', 90000),
+      callModelWithTimeout(sysC, usr, 2500, 'kimi-k3', 90000)
     ]);
     outA = (results[0].status === 'fulfilled' && results[0].value) ? results[0].value : '';
     outB = (results[1].status === 'fulfilled' && results[1].value) ? results[1].value : '';
-  }catch(e){ outA = ''; outB = ''; }
+    outC = (results[2].status === 'fulfilled' && results[2].value) ? results[2].value : '';
+  }catch(e){ outA = ''; outB = ''; outC = ''; }
   if(!outB.trim()){
     status.textContent = 'GLM 未返回，改用 Kimi 生成差异化学题...';
     try{ outB = await callModelWithTimeout(sysB, usr, 2500, 'kimi-k3', 90000); }catch(e){ outB = ''; }
@@ -127352,13 +127355,43 @@ async function runTopicGen(){
     return;
   }
   const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">';
   html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:700;color:#7c3aed;margin-bottom:10px">💜 DeepSeek · 选题方案</div><div style="font-size:13px;line-height:1.9;color:#1f2937;white-space:pre-wrap">' + (outA.trim() ? esc(outA) : '（模型未返回）') + '</div></div>';
   html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:700;color:#2563eb;margin-bottom:10px">💙 GLM · 差异化选题</div><div style="font-size:13px;line-height:1.9;color:#1f2937;white-space:pre-wrap">' + (outB.trim() ? esc(outB) : '（模型未返回）') + '</div></div>';
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:700;color:#db2777;margin-bottom:10px">💗 Kimi · 政策与前沿选题</div><div style="font-size:13px;line-height:1.9;color:#1f2937;white-space:pre-wrap">' + (outC.trim() ? esc(outC) : '（模型未返回）') + '</div></div>';
   html += '</div>';
-  html += '<div style="background:#fefce8;border:1px solid #fde047;border-radius:12px;padding:16px;margin-top:14px;font-size:13px;color:#854d0e;line-height:1.9">💡 <b>使用建议：</b>把中意的选题复制到下方"申报书活页生成"，填写基金类型即可生成完整申报书初稿。<b>所有 AI 生成内容须人工复核后使用。</b></div>';
+  html += '<div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">'
+    + '<button onclick="adjudicateTopics()" style="background:#ea580c;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">⚖️ 混元裁决 · Top 3 综合排序</button>'
+    + '<span id="adjudicateStatus" style="font-size:12px;color:#6b7280"></span>'
+    + '</div>';
+  html += '<div style="background:#fefce8;border:1px solid #fde047;border-radius:12px;padding:16px;margin-top:14px;font-size:13px;color:#854d0e;line-height:1.9">💡 <b>使用建议：</b>先点"混元裁决"看综合排序，再把中意选题复制到下方"申报书活页生成"，填写基金类型即可生成完整申报书初稿。<b>所有 AI 生成内容须人工复核后使用。</b></div>';
   resEl.innerHTML = html;
+  window.__topics = { A: outA, B: outB, C: outC, dir: dir, base: base };
   status.textContent = '生成完成';
+}
+
+async function adjudicateTopics(){
+  const t = window.__topics || {};
+  const status = document.getElementById('adjudicateStatus');
+  const resEl = document.getElementById('topicResult');
+  if(!t.A && !t.B && !t.C){ if(status) status.textContent = '请先生成选题'; return; }
+  if(status) status.textContent = '混元裁决中（约40秒）...';
+  const sys = '你是体育科研基金评审委员会主席。综合多位选题专家的方案，对全部候选课题进行裁决排序：1.先列出全部候选题目（标注来源：DeepSeek/GLM/Kimi）2.按【新颖性、可行性、与政策契合度、发表与立项潜力、与申请人基础匹配】五维综合评分（每题总评）3.输出最终 Top 3 排序（第一名至第三名），每题附：最终排名、置信度（高/中/低）、一句话推荐理由、建议申报基金类型。语言专业、决策清晰。';
+  const usr = '研究方向：' + (t.dir || '') + (t.base ? '\n研究基础：' + t.base : '') + '\n\n=== DeepSeek 方案 ===\n' + (t.A || '（无）').slice(0, 4000) + '\n\n=== GLM 方案 ===\n' + (t.B || '（无）').slice(0, 4000) + '\n\n=== Kimi 方案 ===\n' + (t.C || '（无）').slice(0, 4000);
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 3000, 'hy3', 120000); }catch(e){ out = ''; }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 3000, 'deepseek-chat', 120000); }catch(e){ out = ''; } }
+  if(!out.trim()){ if(status) status.textContent = '⚠️ 裁决失败，请重试'; return; }
+  const esc = function(tt){ return tt.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  const blk = document.createElement('div');
+  blk.id = 'adjudicateBlock';
+  blk.style.cssText = 'background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-top:14px';
+  blk.innerHTML = '<div style="font-size:14px;font-weight:700;color:#c2410c;margin-bottom:8px">⚖️ 混元裁决 · 最终推荐排序</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div>';
+  const oldBlk = document.getElementById('adjudicateBlock');
+  if(oldBlk) oldBlk.remove();
+  resEl.appendChild(blk);
+  if(status) status.textContent = '✅ 裁决完成';
+  blk.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 // ========== 课题申报：申报书活页生成 ==========
