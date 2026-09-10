@@ -125285,11 +125285,19 @@ document.addEventListener('click', function(e) {
       var app = document.querySelector('.app') || document.getElementById('app');
       var main = document.querySelector('.main');
       if(!app || !main) return;
-      var tabs = app.querySelectorAll(':scope > .tab-content');
-      if(!tabs.length) return;
-      for(var i=0;i<tabs.length;i++){
-        main.appendChild(tabs[i]);
+      var kids = Array.prototype.slice.call(app.children);
+      var moved = 0;
+      for(var i=0;i<kids.length;i++){
+        var c = kids[i];
+        if(c === main) continue;
+        if(c.tagName === 'NAV') continue;
+        var cls = String(c.className);
+        var cid = c.id || '';
+        if(cls.indexOf('sidebar') >= 0 || cls.indexOf('overlay') >= 0 || cls.indexOf('modal') >= 0 || cid.indexOf('Modal') >= 0 || cid.indexOf('Overlay') >= 0) continue;
+        main.appendChild(c);
+        moved++;
       }
+      if(!moved) return;
     }catch(e){ console.log('fixTabPlacement:', e.message); }
   }
   if(document.readyState === 'loading'){
