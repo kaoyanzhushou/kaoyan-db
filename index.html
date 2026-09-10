@@ -127280,7 +127280,21 @@ async function askKnAi(){
 <script>
 // ========== 教师科研助手：子标签切换 ==========
 const TEACHER_SUBTABS = ['topic','lesson'];
+function renderBookMeta(){
+  try{
+    const meta = JSON.parse(localStorage.getItem('aiBookMeta') || 'null');
+    const book = localStorage.getItem('aiBookText') || '';
+    if(meta && book){
+      const st = document.getElementById('bookStatus');
+      if(st){
+        st.innerHTML = '📚 已上传书目：<b>' + meta.name + '</b>（' + (meta.chars/1000).toFixed(1) + 'K字，' + (meta.time||'') + '），输入章节关键词后点击"定位章节内容"';
+        st.style.color = '#16a34a';
+      }
+    }
+  }catch(e){}
+}
 function switchTeacherSubTab(name){
+  if(name === 'lesson'){ setTimeout(renderBookMeta, 200); }
   TEACHER_SUBTABS.forEach(function(t){
     var el = document.getElementById('teacherContent-' + t);
     if(el) el.style.display = (t === name) ? 'block' : 'none';
@@ -127568,9 +127582,14 @@ async function aiExtractChapter(){
   const contentEl = document.getElementById('lessonChapterContent');
   const raw = (contentEl.value||'').trim();
   const status = document.getElementById('bookStatus');
-  if(!raw){ alert('请先定位章节或粘贴内容，再 AI 提炼'); return; }
+  if(!raw){
+    status.innerHTML = '⚠️ <b>请先定位章节或粘贴内容，再 AI 提炼</b>';
+    status.style.color = '#dc2626';
+    return;
+  }
   if(raw.length > 8000){ status.textContent = '内容过长，AI 仅提炼前 8000 字...'; }
   status.textContent = 'AI 提炼中（约30秒）...';
+  status.style.color = '#6b7280';
   const sys = '你是运动科学教材解析专家。把用户提供的教材章节原文，提炼为结构化"教案知识点清单"，输出格式：\n一、核心概念（2-4个，一句话解释）\n二、关键机制/原理（分条，含关键指标与数据）\n三、重难点预判（本章易错点与教学重点）\n四、教学建议（如何导入、举例、活动设计）\n语言精炼专业，忠于原文，不虚构。';
   const usr = raw.slice(0, 8000);
   let out = '';
@@ -127657,13 +127676,26 @@ function uploadBookFile(){
   const file = fi.files[0];
   const status = document.getElementById('bookStatus');
   status.textContent = '解析中（整本教材较大，请稍候）...';
+  status.style.color = '#6b7280';
   parseBookFile(file, function(text){
-    if(!text || text.length < 50){ status.textContent = '⚠️ 解析内容过少，请检查文件或手动粘贴'; return; }
+    if(!text || text.length < 50){
+      status.innerHTML = '⚠️ <b>解析失败或内容过少</b>（' + (text?text.length:0) + '字）。可能原因：PDF 为扫描版无文字层 / 文件损坏。请换 .txt 教材，或直接在下方向区域粘贴本章节内容。';
+      status.style.color = '#dc2626';
+      return;
+    }
     // localStorage 限制约 5MB，教材文本存前 300KB
     let store = text;
     try{ localStorage.setItem('aiBookText', store); }
-    catch(e){ try{ localStorage.setItem('aiBookText', store.slice(0, 300000)); }catch(e2){ status.textContent = '⚠️ 书目过大无法存储，请手动粘贴章节内容'; return; } }
-    status.textContent = '✅ 书目已上传（' + (text.length/1000).toFixed(1) + 'K字），输入章节关键词点击"定位章节内容"';
+    catch(e){ try{ localStorage.setItem('aiBookText', store.slice(0, 300000)); }catch(e2){
+      status.innerHTML = '⚠️ <b>书目过大无法存储</b>，请手动粘贴章节内容';
+      status.style.color = '#dc2626';
+      return;
+    } }
+    try{
+      localStorage.setItem('aiBookMeta', JSON.stringify({name: file.name, chars: text.length, time: new Date().toLocaleString()}));
+    }catch(e){}
+    status.innerHTML = '✅ <b>书目已上传：</b>' + file.name + '（' + (text.length/1000).toFixed(1) + 'K字），输入章节关键词后点击"定位章节内容"';
+    status.style.color = '#16a34a';
   });
 }
 function locateChapter(){
@@ -127671,13 +127703,36 @@ function locateChapter(){
   const status = document.getElementById('bookStatus');
   let book = '';
   try{ book = localStorage.getItem('aiBookText') || ''; }catch(e){ book = ''; }
-  if(!book){ alert('请先上传书目'); return; }
-  if(!key){ alert('请输入章节关键词（如：无氧耐力、第六章）'); return; }
+  if(!book){
+    status.innerHTML = '⚠️ <b>请先上传书目</b>（在左侧选择文件后点"上传书目"，支持 .txt / .docx / .pdf）';
+    status.style.color = '#dc2626';
+    return;
+  }
+  if(!key){
+    status.innerHTML = '⚠️ <b>请输入章节关键词</b>，如：无氧耐力、肌肉、第八章';
+    status.style.color = '#dc2626';
+    return;
+  }
   // 跳过目录区域：从正文 1/8 之后开始找
   const start = Math.floor(book.length / 8);
   const idx = book.indexOf(key, start);
   if(idx < 0){
-    status.textContent = '未在书目中找到"' + key + '"，请换关键词或手动粘贴';
+    // 二次查找：全文再找一次（短书/目录区很短的情况）
+    const idx2 = book.indexOf(key);
+    if(idx2 < 0){
+      status.innerHTML = '⚠️ <b>书目中未找到"' + key + '"</b>。可尝试：① 更短的关键词（如"肌肉"）② 章节编号（如"第八章"）③ 直接在下方向区域粘贴本章节内容';
+      status.style.color = '#dc2626';
+      return;
+    }
+    status.innerHTML = '✅ 已定位并截取章节内容（目录区命中），可编辑后生成';
+    status.style.color = '#16a34a';
+    let seg2 = book.slice(idx2, idx2 + 3500);
+    const nm2 = seg2.slice(300).search(/第[一二三四五六七八九十百0-9]+[章节][^，。]{0,12}/);
+    if(nm2 >= 0){ seg2 = seg2.slice(0, 300 + nm2); }
+    const el2 = document.getElementById('lessonChapterContent');
+    el2.value = seg2.trim();
+    const ch2 = document.getElementById('lessonChapter');
+    if(!ch2.value.trim()){ ch2.value = key; }
     return;
   }
   let seg = book.slice(idx, idx + 3500);
@@ -127686,7 +127741,8 @@ function locateChapter(){
   if(nextMatch >= 0){ seg = seg.slice(0, 300 + nextMatch); }
   const el = document.getElementById('lessonChapterContent');
   el.value = seg.trim();
-  status.textContent = '✅ 已定位并截取章节内容（' + seg.length + '字），可编辑后生成';
+  status.innerHTML = '✅ <b>已定位并截取章节内容</b>（' + seg.length + '字），可编辑后生成';
+  status.style.color = '#16a34a';
   const ch = document.getElementById('lessonChapter');
   if(!ch.value.trim()){ ch.value = key; }
 }
