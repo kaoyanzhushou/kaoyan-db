@@ -13837,6 +13837,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('route')" id="paperTab-route" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">技术路线图</button>
       <button onclick="switchPaperSubTab('refcheck')" id="paperTab-refcheck" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">引用核验</button>
       <button onclick="switchPaperSubTab('pipeline')" id="paperTab-pipeline" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">写作流水线</button>
+      <button onclick="switchPaperSubTab('idea')" id="paperTab-idea" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">想法评估</button>
 
     </div>
 
@@ -15493,6 +15494,44 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       <div id="pipeProgress" style="display:none"></div>
 
       <div id="pipeOutput" style="display:none"></div>
+
+    </div>
+
+
+
+    <!-- 研究想法评估器（多模型四维打分） -->
+
+    <div id="paperContent-idea" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">💡 研究想法评估器</div>
+
+        <div style="font-size:13px;color:#059669">动笔之前先评估：两个大模型独立从 新颖性 / 可行性 / 发表潜力 / 导师契合度 四维打分，给出「值不值得做」结论与修改方向</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:8px">研究想法</label>
+
+        <textarea id="ideaInput" rows="4" placeholder="例如：研究八段锦联合有氧运动对老年2型糖尿病患者血糖控制与体适能的影响" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box"></textarea>
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:12px 0 8px">目标导师 / 方向（可选，用于契合度打分）</label>
+
+        <input id="ideaMentor" placeholder="例如：上海体育大学 运动康复方向" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+
+          <button onclick="runIdeaEval()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🚀 开始评估</button>
+
+          <span id="ideaStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+      </div>
+
+      <div id="ideaResult" style="display:none"></div>
 
     </div>
 
@@ -56078,7 +56117,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -125762,6 +125801,94 @@ async function pipeGenCover(){
   p.cover = r;
 }
 </script>
+<script>
+// ========== 研究想法评估器（多模型四维打分） ==========
+const IDEA_DIMS = [
+  {key:'novelty', name:'新颖性', color:'#16a34a'},
+  {key:'feasibility', name:'可行性', color:'#2563eb'},
+  {key:'publish', name:'发表潜力', color:'#7c3aed'},
+  {key:'fit', name:'导师契合度', color:'#ea580c'}
+];
+
+async function runIdeaEval(){
+  const idea = (document.getElementById('ideaInput').value||'').trim();
+  const mentor = (document.getElementById('ideaMentor').value||'').trim();
+  if(!idea){ alert('请先输入研究想法'); return; }
+  const status = document.getElementById('ideaStatus');
+  const resultEl = document.getElementById('ideaResult');
+  status.textContent = '两个大模型正在独立评估（约1-2分钟）...';
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ 评估中，请稍候...</div>';
+  const sys = '你是体育科学研究评审专家。评估给定的研究想法，从四个维度打分（0-100）：novelty新颖性、feasibility可行性、publish发表潜力、fit与目标导师/方向契合度（若未提供导师则给通用契合度）。同时给出：comment简短评语（60字内）、suggestion改进建议（80字内）、verdict结论（值得/谨慎/不建议）。严格只输出一个JSON对象，格式：{"novelty":分数,"feasibility":分数,"publish":分数,"fit":分数,"comment":"评语","suggestion":"建议","verdict":"结论"}，不要输出其他任何文字。';
+  const usr = '研究想法：' + idea + (mentor ? '\n目标导师/方向：' + mentor : '');
+  const models = ['deepseek-chat','glm-5.3'];
+  const parsed = {};
+  try{
+    const rs = await Promise.all(models.map(async function(m){
+      const r = await callDeepSeekAPI(sys, usr, 800, m);
+      return {model:m, text:(r||'')};
+    }));
+    rs.forEach(function(x){
+      const t = x.text;
+      const m2 = t.match(/\{[\s\S]*?\}/);
+      if(m2){ try{ parsed[x.model] = JSON.parse(m2[0]); }catch(e){ parsed[x.model] = null; } }
+      else { parsed[x.model] = null; }
+    });
+  }catch(e){
+    status.textContent = '评估失败：' + e.message;
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">评估失败：' + e.message + '</div>';
+    return;
+  }
+  const entries = Object.keys(parsed).filter(function(m){ return parsed[m]; });
+  if(!entries.length){
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 模型返回格式无法解析，请重试</div>';
+    status.textContent = '解析失败，请重试';
+    return;
+  }
+  const avg = {};
+  IDEA_DIMS.forEach(function(d){
+    let s = 0;
+    entries.forEach(function(m){ s += (parsed[m][d.key]||0); });
+    avg[d.key] = Math.round(s / entries.length);
+  });
+  const total = Math.round((avg.novelty + avg.feasibility + avg.publish + avg.fit) / 4);
+  const verdicts = entries.map(function(m){ return parsed[m].verdict || ''; });
+  const hasRecommend = verdicts.indexOf('值得') >= 0;
+  const hasCaution = verdicts.indexOf('谨慎') >= 0;
+  const finalVerdict = hasRecommend ? '✅ 值得做' : (hasCaution ? '⚠️ 谨慎考虑' : '🚫 暂不建议');
+  const verdictColor = hasRecommend ? '#047857' : (hasCaution ? '#b45309' : '#b91c1c');
+  const verdictBg = hasRecommend ? '#ecfdf5' : (hasCaution ? '#fffbeb' : '#fef2f2');
+  let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">';
+  html += '<div style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:14px">📊 四维评估结果（' + entries.length + ' 个模型）</div>';
+  IDEA_DIMS.forEach(function(d){
+    const v = avg[d.key];
+    html += '<div style="margin-bottom:10px">';
+    html += '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="color:#374151;font-weight:600">' + d.name + '</span><span style="color:' + d.color + ';font-weight:700">' + v + ' 分</span></div>';
+    html += '<div style="background:#f3f4f6;border-radius:6px;height:10px;overflow:hidden"><div style="background:linear-gradient(90deg,' + d.color + '88,' + d.color + ');height:100%;width:' + Math.max(v,4) + '%"></div></div>';
+    html += '</div>';
+  });
+  html += '<div style="display:flex;align-items:center;gap:14px;margin-top:16px;padding-top:14px;border-top:1px solid #f3f4f6">';
+  html += '<div style="font-size:28px;font-weight:800;color:#1f2937">' + total + '</div>';
+  html += '<div style="font-size:12px;color:#6b7280">综合评分<br>（四维平均）</div>';
+  html += '<div style="background:' + verdictBg + ';color:' + verdictColor + ';padding:10px 18px;border-radius:10px;font-size:15px;font-weight:700">' + finalVerdict + '</div>';
+  html += '</div></div>';
+  // 各模型独立意见
+  html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin:16px 0 10px">🤖 各模型独立意见</div>';
+  const modelNames = {'deepseek-chat':'DeepSeek V3', 'glm-5.3':'GLM-5.3'};
+  entries.forEach(function(m){
+    const pm = parsed[m];
+    html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:700;color:#374151">' + (modelNames[m]||m) + '</span><span style="font-size:12px;font-weight:600;color:#6b7280">' + pm.novelty + '/' + pm.feasibility + '/' + pm.publish + '/' + pm.fit + '（新/可/发/契）</span></div>';
+    if(pm.comment) html += '<div style="font-size:13px;color:#374151;line-height:1.7;margin-bottom:6px">💬 ' + pm.comment + '</div>';
+    if(pm.suggestion) html += '<div style="font-size:13px;color:#047857;line-height:1.7">💡 建议：' + pm.suggestion + '</div>';
+    if(pm.verdict) html += '<div style="font-size:12px;color:#6b7280;margin-top:6px">结论倾向：' + pm.verdict + '</div>';
+    html += '</div>';
+  });
+  resultEl.innerHTML = html;
+  status.textContent = '评估完成';
+}
+</script>
+
 
 
 
