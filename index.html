@@ -13845,6 +13845,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('ailog')" id="paperTab-ailog" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">决策日志</button>
       <button onclick="switchPaperSubTab('acadeng')" id="paperTab-acadeng" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">学术英语</button>
       <button onclick="switchPaperSubTab('ethics')" id="paperTab-ethics" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">伦理合规</button>
+      <button onclick="switchPaperSubTab('mentor')" id="paperTab-mentor" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">导师视角</button>
 
     </div>
 
@@ -15805,6 +15806,44 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="ethicsResult" style="display:none"></div>
+
+    </div>
+
+
+
+    <!-- AI导师视角审阅（论文版） -->
+
+    <div id="paperContent-mentor" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">🎓 AI 导师视角审阅</div>
+
+        <div style="font-size:13px;color:#059669">输入目标导师（姓名/研究方向）与论文，AI 模拟"以导师的口味看你的论文"：他会关注什么、可能提出什么问题、如何修改更贴合他的方向</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:8px">目标导师（姓名/研究方向/特点，可选）</label>
+
+        <input id="mentorInfo" placeholder="例如：上海体育大学 王XX教授，研究方向：运动康复与慢性病、体医融合" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:12px 0 8px">论文内容</label>
+
+        <textarea id="mentorPaper" rows="8" placeholder="粘贴论文摘要+正文关键部分..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+
+          <button onclick="runMentorReview()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🎓 导师视角审阅</button>
+
+          <span id="mentorStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+      </div>
+
+      <div id="mentorResult" style="display:none"></div>
 
     </div>
 
@@ -56390,7 +56429,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -126514,6 +126553,36 @@ async function runEthicsCheck(){
   status.textContent = '检查完成';
 }
 </script>
+<script>
+// ========== AI导师视角审阅（论文版） ==========
+async function runMentorReview(){
+  const mentor = (document.getElementById('mentorInfo').value||'').trim();
+  const paper = (document.getElementById('mentorPaper').value||'').trim();
+  if(!paper){ alert('请粘贴论文内容'); return; }
+  const status = document.getElementById('mentorStatus');
+  const resultEl = document.getElementById('mentorResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ 以导师视角审阅中（约1分钟）...</div>';
+  status.textContent = '审阅中...';
+  const sys = '你是学术导师模拟专家。根据给定的目标导师信息（研究方向/背景/特点），完全以该导师的视角和口味审阅论文：1.他会最关注论文的哪些方面（结合其研究方向）2.他可能提出的具体问题（针对性，含数据/方法/创新性）3.他会喜欢什么样的分析深度与表达风格 4.若他审这篇论文会给出什么评价（打分维度与主要扣分点）5.如何修改能让论文更贴合他的研究兴趣与风格。若未提供导师信息，则按体育科研领域典型博导视角审阅。专业、具体、直接可执行。';
+  const usr = (mentor ? '目标导师：' + mentor + '\n\n' : '（未提供具体导师，按体育科研典型博导视角）\n\n') + '论文内容：\n' + paper.slice(0,6000);
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 2500, 'deepseek-chat', 90000); }catch(e){ out = ''; }
+  if(!out.trim()){
+    status.textContent = 'DeepSeek 超时，改用 GLM 重试...';
+    try{ out = await callModelWithTimeout(sys, usr, 2500, 'glm-5.3', 90000); }catch(e){ out = ''; }
+  }
+  if(!out.trim()){
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 审阅失败（模型未返回），请重试</div>';
+    status.textContent = '审阅失败';
+    return;
+  }
+  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px"><div style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:12px">🎓 导师视角审阅报告</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
+  status.textContent = '审阅完成';
+}
+</script>
+
 
 
 
