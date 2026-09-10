@@ -13886,7 +13886,7 @@ console.log('✅ 学习工具入口已加载');
 
               <button onclick="document.getElementById('formatCheckText').value=''" style="background:#f3f4f6;color:#374151;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px">清空</button>
 
-              <span id="formatCheckWordCount" style="font-size:11px;color:#9ca3af;align-self:center">0字</span>
+              <select id="formatCheckModel" style="padding:6px 10px;border:1px solid #c7d2fe;border-radius:6px;font-size:12px;background:#fff;color:#4f46e5;outline:none;cursor:pointer" title="选择AI模型（空=跟随全局）"><option value="">🤖 AI模型（跟随全局）</option><option value="deepseek-v4-pro">DeepSeek V4 Pro</option><option value="deepseek-v4-flash">DeepSeek V4 Flash</option><option value="deepseek-chat">DeepSeek V3</option><option value="glm-5.3">GLM-5.3</option><option value="kimi-k3">Kimi K3</option><option value="hy3">混元 hy3</option><option value="hy4-preview">混元 V4 Preview</option></select><span id="formatCheckWordCount" style="font-size:11px;color:#9ca3af;align-self:center">0字</span>
 
             </div>
 
@@ -14070,7 +14070,7 @@ console.log('✅ 学习工具入口已加载');
 
             <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">综述主题</label>
 
-            <input type="text" id="litReviewTopic" placeholder="如：运动干预对2型糖尿病患者血糖控制的影响" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none">
+            <input type="text" id="litReviewTopic" placeholder="如：运动干预对2型糖尿病患者血糖控制的影响" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none"></div><div style="margin-bottom:14px"><label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">AI模型</label><select id="litReviewModel" style="padding:6px 10px;border:1px solid #c7d2fe;border-radius:6px;font-size:12px;background:#fff;color:#4f46e5;outline:none;cursor:pointer" title="选择AI模型（空=跟随全局）"><option value="">🤖 AI模型（跟随全局）</option><option value="deepseek-v4-pro">DeepSeek V4 Pro</option><option value="deepseek-v4-flash">DeepSeek V4 Flash</option><option value="deepseek-chat">DeepSeek V3</option><option value="glm-5.3">GLM-5.3</option><option value="kimi-k3">Kimi K3</option><option value="hy3">混元 hy3</option><option value="hy4-preview">混元 V4 Preview</option></select></div>
 
           </div>
 
@@ -14942,7 +14942,7 @@ console.log('✅ 学习工具入口已加载');
 
                 <button onclick="document.getElementById('reviewText').value='';document.getElementById('reviewResult').innerHTML='';" style="background:#f3f4f6;color:#374151;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px">清空</button>
 
-                <span id="reviewWordCount" style="font-size:11px;color:#9ca3af;align-self:center">0字</span>
+                <select id="reviewModel" style="padding:6px 10px;border:1px solid #c7d2fe;border-radius:6px;font-size:12px;background:#fff;color:#4f46e5;outline:none;cursor:pointer" title="选择AI模型（空=跟随全局）"><option value="">🤖 AI模型（跟随全局）</option><option value="deepseek-v4-pro">DeepSeek V4 Pro</option><option value="deepseek-v4-flash">DeepSeek V4 Flash</option><option value="deepseek-chat">DeepSeek V3</option><option value="glm-5.3">GLM-5.3</option><option value="kimi-k3">Kimi K3</option><option value="hy3">混元 hy3</option><option value="hy4-preview">混元 V4 Preview</option></select><span id="reviewWordCount" style="font-size:11px;color:#9ca3af;align-self:center">0字</span>
 
               </div>
 
@@ -55640,6 +55640,8 @@ function runFormatCheck() {
 
   var journal = document.getElementById('formatCheckJournal').value.trim();
 
+  var model = (document.getElementById('formatCheckModel') || {}).value || undefined;
+
   
 
   var btn = document.getElementById('formatCheckBtn');
@@ -55668,7 +55670,7 @@ function runFormatCheck() {
 
   
 
-  callDeepSeekAPI(systemPrompt, (journal ? '目标期刊：' + journal + '\n' : '') + '检查维度：' + dimList + '\n论文总字数：' + text.length + '字\n\n论文内容：\n' + text.substring(0, 8000), 6000).then(function(response) {
+  callDeepSeekAPI(systemPrompt, (journal ? '目标期刊：' + journal + '\n' : '') + '检查维度：' + dimList + '\n论文总字数：' + text.length + '字\n\n论文内容：\n' + text.substring(0, 8000, model), 6000).then(function(response) {
 
     btn.disabled = false;
 
@@ -57683,6 +57685,8 @@ function closeLitReviewModal() {
 
 function generateLitReview() {
 
+  var model = (document.getElementById('litReviewModel') || {}).value || undefined;
+
   var topic = document.getElementById('litReviewTopic').value.trim();
 
   var manual = document.getElementById('litReviewManual').value.trim();
@@ -57747,7 +57751,7 @@ function generateLitReview() {
 
 
 
-  callDeepSeekAPI(systemPrompt, '综述主题：' + (topic || '基于提供文献的综述') + '\n综述类型：' + typeNames[reviewType] + '\n\n参考文献：\n' + (litContent || '（用户未提供具体文献，请基于该主题的通用研究现状撰写）'), 5000).then(function(response) {
+  callDeepSeekAPI(systemPrompt, '综述主题：' + (topic || '基于提供文献的综述') + '\n综述类型：' + typeNames[reviewType] + '\n\n参考文献：\n' + (litContent || '（用户未提供具体文献，请基于该主题的通用研究现状撰写）', model), 5000).then(function(response) {
 
     btn.disabled = false;
 
@@ -57843,6 +57847,8 @@ function loadPaperForReview() {
 
 function runAIReview() {
 
+  var model = (document.getElementById('reviewModel') || {}).value || undefined;
+
   var text = document.getElementById('reviewText').value.trim();
 
   if (!text) { alert('请先输入或加载论文内容'); return; }
@@ -57881,7 +57887,7 @@ function runAIReview() {
 
 
 
-  callDeepSeekAPI(systemPrompt, '目标期刊：' + journalNames[journal] + '\n审稿人风格：' + styleNames[style] + '\n论文总字数：' + text.length + '字\n\n论文内容：\n' + text.substring(0, 8000), 6000).then(function(response) {
+  callDeepSeekAPI(systemPrompt, '目标期刊：' + journalNames[journal] + '\n审稿人风格：' + styleNames[style] + '\n论文总字数：' + text.length + '字\n\n论文内容：\n' + text.substring(0, 8000, model), 6000).then(function(response) {
 
     btn.disabled = false;
 
@@ -58551,7 +58557,7 @@ async function paperAIAssist() {
 
     
 
-    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000, (document.getElementById('paperEditorModel')||{}).value || undefined);
 
     resultEl.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px"><div style="font-size:14px;font-weight:700;color:#166534;margin-bottom:10px">AI写作建议</div><div class="md-content" style="font-size:13px;line-height:1.8;color:#1f2937">' + renderMarkdown(result) + '</div></div>';
 
@@ -58587,7 +58593,7 @@ async function paperAIRewrite() {
 
     
 
-    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 3000);
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 3000, (document.getElementById('paperEditorModel')||{}).value || undefined);
 
     resultEl.innerHTML = '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:16px"><div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">AI润色结果<button onclick="applyAIRewrite()" style="background:#f59e0b;color:#fff;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">应用到编辑器</button></div><div class="md-content" style="font-size:13px;line-height:1.8;color:#1f2937">' + renderMarkdown(result) + '</div></div>';
 
@@ -58867,7 +58873,7 @@ async function paperLitAISummary(id) {
 
     var userPrompt = '请对以下文献进行结构化总结：\n\n标题：' + l.title + '\n作者：' + (l.authors || '未知') + '\n期刊：' + (l.journal || '未知') + '\n年份：' + (l.year || '未知') + '\n摘要：' + (l.abstract || '无摘要') + '\n\n请输出：1. 研究目的 2. 研究方法 3. 主要结果 4. 核心结论 5. 创新点与局限 6. 对体育学研究的启示。使用中文，简洁专业。';
 
-    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 1500);
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 1500, (document.getElementById('paperEditorModel')||{}).value || undefined);
 
     resultEl.innerHTML = '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:12px"><div style="font-size:12px;font-weight:700;color:#0369a1;margin-bottom:8px">AI文献总结</div><div class="md-content" style="font-size:12px;line-height:1.7;color:#1f2937">' + renderMarkdown(result) + '</div></div>';
 
@@ -58899,7 +58905,7 @@ async function paperLitAISearch() {
 
     var userPrompt = '请围绕关键词"' + keyword + '"，推荐5-8篇体育学/运动科学领域的重要文献。每篇包含：标题、作者、期刊、年份、研究要点。优先推荐近5年的高影响力文献。使用中文。';
 
-    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000, (document.getElementById('paperEditorModel')||{}).value || undefined);
 
     list.innerHTML = '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:#0369a1;margin-bottom:8px">AI智能检索结果（关键词：' + keyword + '）</div><div class="md-content" style="font-size:13px;line-height:1.8;color:#1f2937">' + renderMarkdown(result) + '</div></div><div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:8px">以上为AI推荐文献，建议在PubMed/Europe PMC中核实后添加到文献库</div>';
 
