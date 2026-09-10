@@ -13835,6 +13835,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('check')" id="paperTab-check" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">论文查重</button>
 
       <button onclick="switchPaperSubTab('route')" id="paperTab-route" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">技术路线图</button>
+      <button onclick="switchPaperSubTab('refcheck')" id="paperTab-refcheck" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">引用核验</button>
 
     </div>
 
@@ -15415,6 +15416,46 @@ console.log('✅ 学习工具入口已加载');
   </div>
 
 </div>
+
+
+
+    <!-- 引用真实性核验（PMID/DOI 硬核验） -->
+
+    <div id="paperContent-refcheck" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">🔍 引用真实性核验（PMID/DOI）</div>
+
+        <div style="font-size:13px;color:#059669">逐条核验参考文献真实性：DOI 走 Crossref 官方数据库、PMID 走 PubMed 官方数据库硬校验，杜绝 AI 编文献。✅ 已验证 / ❌ 疑似虚构 / ⚠️ 待人工确认</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:8px">粘贴参考文献列表或论文文本（每行一条；含 DOI 或 PMID 的条目自动核验，无标识的标记为待人工确认）</label>
+
+        <textarea id="refCheckInput" rows="8" placeholder="示例：
+Smith J, et al. Exercise and health. J Sport Sci. 2020;38(5):511-520. doi: 10.1080/02640414.2020.1713312
+PMID: 32489765
+Liu Y. 运动干预研究. doi: 10.1007/s00421-019-04215-3
+Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;font-family:monospace;line-height:1.6;box-sizing:border-box"></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:12px">
+
+          <button onclick="runRefCheck()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">开始核验</button>
+
+          <button onclick="aiRefCheckReport()" style="background:#fff;color:#16a34a;border:1.5px solid #16a34a;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">AI 生成核验报告</button>
+
+          <span id="refCheckStatus" style="font-size:12px;color:#6b7280;align-self:center"></span>
+
+        </div>
+
+      </div>
+
+      <div id="refCheckResult" style="display:none"></div>
+
+    </div>
 
 
 
@@ -55998,7 +56039,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -125344,6 +125385,115 @@ document.addEventListener('click', function(e) {
   }
 })();
 </script>
+<script>
+// ========== 引用真实性核验（PMID/DOI 硬核验） ==========
+async function runRefCheck() {
+  const input = document.getElementById('refCheckInput').value.trim();
+  const status = document.getElementById('refCheckStatus');
+  const resultEl = document.getElementById('refCheckResult');
+  if (!input) { alert('请先粘贴参考文献列表'); return; }
+  status.textContent = '正在核验...';
+  resultEl.style.display = 'none';
+  const entries = [];
+  const lines = input.split('\n');
+  const dois = new Set();
+  const pmids = new Set();
+  lines.forEach(function(line){
+    const t = line.trim();
+    if (!t) return;
+    const doiMatch = t.match(/10\.\d{4,9}\/[-._;()\/:A-Z0-9]+/i);
+    const pmidMatch = t.match(/PMID[:#\s]*(\d+)/i) || t.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)/i) || t.match(/\[PubMed:?\s*(\d+)\]/i) || t.match(/PubMed ID[:\s]*(\d+)/i);
+    if (doiMatch) { const d = doiMatch[0].replace(/[.,;)]+$/,''); dois.add(d); entries.push({line:t, type:'doi', id:d}); }
+    else if (pmidMatch) { pmids.add(pmidMatch[1]); entries.push({line:t, type:'pmid', id:pmidMatch[1]}); }
+    else { entries.push({line:t, type:'none', id:''}); }
+  });
+  const doiResults = {};
+  await Promise.all(Array.from(dois).slice(0,30).map(async function(d){
+    try{
+      const r = await fetch('https://api.crossref.org/works/' + encodeURIComponent(d));
+      if (r.ok) {
+        const j = await r.json();
+        const m = j.message || {};
+        const title = (m.title && m.title[0]) ? m.title[0] : '';
+        const jour = (m['container-title'] && m['container-title'][0]) ? m['container-title'][0] : '';
+        const yr = m['published-print'] || m['published-online'] || m.issued || {};
+        const year = (yr['date-parts'] && yr['date-parts'][0] && yr['date-parts'][0][0]) ? yr['date-parts'][0][0] : '';
+        doiResults[d] = {ok:true, title:title, journal:jour, year:year};
+      } else {
+        doiResults[d] = {ok:false, title:'', journal:'', year:''};
+      }
+    }catch(e){ doiResults[d] = {ok:false, title:'', journal:'', year:''}; }
+  }));
+  const pmidResults = {};
+  for (const p of Array.from(pmids).slice(0,30)) {
+    try{
+      const r = await fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=' + p + '&retmode=json');
+      const j = await r.json();
+      const res = (j.result && j.result[p]) || null;
+      if (res && res.status !== '404' && res.title) {
+        pmidResults[p] = {ok:true, title:(res.title||''), journal:(res.fulljournalname||res.source||''), year:(res.pubdate||'').slice(0,4)};
+      } else {
+        pmidResults[p] = {ok:false, title:'', journal:'', year:''};
+      }
+    }catch(e){ pmidResults[p] = {ok:false, title:'', journal:'', year:''}; }
+  }
+  let verified=0, fake=0, pending=0;
+  const rows = entries.map(function(e){
+    if (e.type==='doi') {
+      const r = doiResults[e.id];
+      if (r && r.ok) { verified++; return {line:e.line, type:'DOI', id:e.id, state:'ok', title:r.title, extra:(r.journal?r.journal:'') + (r.year?' ('+r.year+')':'')}; }
+      fake++; return {line:e.line, type:'DOI', id:e.id, state:'fake', title:'', extra:'Crossref 查无此文'};
+    }
+    if (e.type==='pmid') {
+      const r = pmidResults[e.id];
+      if (r && r.ok) { verified++; return {line:e.line, type:'PMID', id:e.id, state:'ok', title:r.title, extra:(r.journal?r.journal:'') + (r.year?' ('+r.year+')':'')}; }
+      fake++; return {line:e.line, type:'PMID', id:e.id, state:'fake', title:'', extra:'PubMed 查无此文'};
+    }
+    pending++; return {line:e.line, type:'-', id:'', state:'pending', title:'', extra:'无 DOI/PMID，需人工确认'};
+  });
+  let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">';
+  html += '<div style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:12px">📊 核验结果</div>';
+  html += '<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">';
+  html += '<span style="background:#ecfdf5;color:#047857;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">✅ 已验证 '+verified+' 条</span>';
+  html += '<span style="background:#fef2f2;color:#b91c1c;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">❌ 疑似虚构 '+fake+' 条</span>';
+  html += '<span style="background:#fffbeb;color:#b45309;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">⚠️ 待人工确认 '+pending+' 条</span>';
+  html += '</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+  html += '<tr style="background:#f9fafb"><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb">引用条目</th><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb">标识</th><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb">状态</th><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb">核验信息</th></tr>';
+  rows.forEach(function(r){
+    const badge = r.state==='ok' ? '<span style="background:#ecfdf5;color:#047857;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">✅ 真实</span>'
+      : r.state==='fake' ? '<span style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">❌ 疑似虚构</span>'
+      : '<span style="background:#fffbeb;color:#b45309;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">⚠️ 待确认</span>';
+    const titleHtml = r.title ? '<div style="color:#1f2937;font-weight:500">'+r.title+'</div><div style="color:#6b7280">'+r.extra+'</div>' : '<div style="color:#6b7280">'+r.extra+'</div>';
+    html += '<tr><td style="padding:8px;border-bottom:1px solid #f3f4f6;max-width:320px;word-break:break-all">'+r.line.slice(0,120)+'</td><td style="padding:8px;border-bottom:1px solid #f3f4f6">'+(r.type==='DOI'||r.type==='PMID'?'<span style="background:#eef2ff;color:#4338ca;padding:2px 6px;border-radius:4px;font-size:11px">'+r.type+'</span>':'—')+'</td><td style="padding:8px;border-bottom:1px solid #f3f4f6">'+badge+'</td><td style="padding:8px;border-bottom:1px solid #f3f4f6">'+titleHtml+'</td></tr>';
+  });
+  html += '</table>';
+  html += '<div style="font-size:11px;color:#9ca3af;margin-top:12px">数据来源：Crossref（DOI）、NCBI PubMed（PMID）。核验的是标识存在性，具体引用格式请按目标期刊规范自行核对。</div>';
+  html += '</div>';
+  resultEl.innerHTML = html;
+  resultEl.style.display = 'block';
+  status.textContent = '核验完成：'+verified+' 真实 / '+fake+' 疑似虚构 / '+pending+' 待确认';
+  window._refCheckRows = rows;
+}
+
+async function aiRefCheckReport() {
+  const status = document.getElementById('refCheckStatus');
+  if (!window._refCheckRows || !window._refCheckRows.length) { alert('请先执行「开始核验」'); return; }
+  status.textContent = 'AI 正在生成核验报告...';
+  const rows = window._refCheckRows;
+  const verified = rows.filter(function(r){return r.state==='ok';}).length;
+  const fake = rows.filter(function(r){return r.state==='fake';}).length;
+  const pending = rows.filter(function(r){return r.state==='pending';}).length;
+  const fakeList = rows.filter(function(r){return r.state==='fake';}).map(function(r){return '- '+r.line.slice(0,100)+'（'+r.id+'）';}).join('\n');
+  const systemPrompt = '你是学术引用核验专家。基于机器核验结果给用户输出简洁的引用核验报告，包括：1.总体结论 2.疑似虚构引用的处理建议（如何检索真实文献替代）3.待人工确认条目的核验建议 4.参考文献规范化提示。语气专业直接。';
+  const userPrompt = '核验结果：已验证 '+verified+' 条，疑似虚构 '+fake+' 条，待人工确认 '+pending+' 条。\n疑似虚构条目：\n'+(fakeList||'（无）');
+  const result = await callDeepSeekAPI(systemPrompt, userPrompt, 1000);
+  const resultEl = document.getElementById('refCheckResult');
+  resultEl.innerHTML += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:16px"><div style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:10px">🤖 AI 核验报告</div><div style="font-size:13px;line-height:1.8;color:#374151;white-space:pre-wrap">'+result+'</div></div>';
+  status.textContent = 'AI 报告已生成';
+}
+</script>
+
 
 
 
