@@ -22,6 +22,12 @@
 
 .nav-group-paper{background:linear-gradient(90deg,#f0fdf4,#dcfce7);color:#166534;font-weight:600;padding:10px 20px;font-size:13px;margin-top:8px;border-radius:0 8px 8px 0;margin-right:12px}
 
+.nav-group-teacher{background:linear-gradient(90deg,rgba(124,58,237,0.18),transparent);border-left:3px solid #7c3aed;color:#ddd6fe;font-weight:600;padding:10px 20px;font-size:13px;margin-top:8px;border-radius:0 8px 8px 0;margin-right:12px}
+
+.nav-item-teacher{color:#e9d5ff}
+
+.nav-item-teacher:hover{background:rgba(124,58,237,0.2)}
+
 .nav-item-paper{color:#bbf7d0}
 
 .nav-item-paper:hover{background:rgba(22,163,74,0.2)}
@@ -10102,6 +10108,14 @@ console.log('✅ 学习工具入口已加载');
 
 
 
+  <div class="nav-group nav-group-teacher">🎓 教师科研助手<span class="nav-badge">NEW</span></div>
+
+  <div class="nav-item nav-item-teacher" data-tab="teacher" onclick="navigateToTeacherSubTab('topic')"><span class="icon">🎯</span><span>课题申报中心</span></div>
+
+  <div class="nav-item nav-item-teacher" data-tab="teacher" onclick="navigateToTeacherSubTab('lesson')"><span class="icon">📖</span><span>教案助手</span></div>
+
+
+
 </nav>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
@@ -16363,6 +16377,194 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
     <button class="phd-quiz-close" onclick="closePhdQuiz()">&times;</button>
 
     <div id="phdQuizBody"></div>
+
+  </div>
+
+</div>
+
+
+
+<!-- 教师科研助手模块 -->
+
+<div id="tab-teacher" class="tab-content">
+
+  <div style="max-width:1200px;margin:0 auto">
+
+    <!-- 头部 -->
+
+    <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;padding:24px 28px;border-radius:12px;margin-bottom:20px;box-shadow:0 4px 12px rgba(124,58,237,0.25)">
+
+      <div style="font-size:24px;font-weight:800">🎓 教师科研助手</div>
+
+      <div style="font-size:13px;opacity:0.9;margin-top:6px">课题申报 · 教案撰写 · 教学科研一体化</div>
+
+    </div>
+
+    <!-- 子标签栏 -->
+
+    <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid #e5e7eb;flex-wrap:wrap">
+
+      <button onclick="switchTeacherSubTab('topic')" id="teacherTab-topic" style="padding:10px 20px;border:none;background:#7c3aed;color:#fff;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🎯 课题申报</button>
+
+      <button onclick="switchTeacherSubTab('lesson')" id="teacherTab-lesson" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📖 教案助手</button>
+
+    </div>
+
+    <!-- 课题申报面板 -->
+
+    <div id="teacherContent-topic">
+
+      <div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#6b21a8;margin-bottom:4px">🎯 课题申报中心</div>
+
+        <div style="font-size:13px;color:#9333ea">AI 选题生成（多模型）· 申报书活页五段式生成（国社科/教育部/省社科/体育总局适配）</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">💡 AI 选题生成（DeepSeek + GLM 双模型）</div>
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">研究方向</label>
+
+        <input id="topicDir" placeholder="例如：体教融合背景下学校体育改革 / 运动干预与慢性病防控 / 体育数字化转型" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:12px 0 6px">研究基础（已发表论文/主持项目/可用的数据，可选）</label>
+
+        <textarea id="topicBase" rows="2" placeholder="例如：近3年发表 2 篇相关论文，有某市中学生体质监测数据" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+
+          <button onclick="runTopicGen()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">💡 生成选题</button>
+
+          <span id="topicStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+      </div>
+
+      <div id="topicResult" style="display:none"></div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">📋 申报书活页生成</div>
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">选题（建议从上方生成结果中选用）</label>
+
+        <input id="proposalTitle" placeholder="粘贴课题题目" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:12px 0 6px">基金类型</label>
+
+        <select id="proposalFund" style="border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px">
+
+          <option value="国社科">🏛️ 国家社科基金（体育学）</option>
+
+          <option value="教育部">📚 教育部人文社科基金</option>
+
+          <option value="省社科">🏢 省社科基金</option>
+
+          <option value="总局">🏅 国家体育总局决策咨询/局管课题</option>
+
+        </select>
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:12px 0 6px">补充信息（研究基础/数据/团队，可选）</label>
+
+        <textarea id="proposalExtra" rows="2" placeholder="已有的前期成果、可获得的样本/数据、团队成员等" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+
+          <button onclick="runProposalGen()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">📋 生成申报书活页</button>
+
+          <span id="proposalStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+      </div>
+
+      <div id="proposalResult" style="display:none"></div>
+
+    </div>
+
+    <!-- 教案助手面板 -->
+
+    <div id="teacherContent-lesson" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#6b21a8;margin-bottom:4px">📖 教案助手</div>
+
+        <div style="font-size:13px;color:#9333ea">上传以前的教案建立"风格参考库" → 输入科目/章节/教材内容 → AI 模仿你的风格撰写新教案</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">📁 教案风格参考库（上传旧教案，AI 学习你的风格）</div>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+
+          <input type="file" id="lessonFile" accept=".txt,.docx" style="font-size:13px">
+
+          <button onclick="readLessonFile()" style="background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">上传教案</button>
+
+          <span style="font-size:12px;color:#9ca3af">支持 .txt / .docx</span>
+
+        </div>
+
+        <textarea id="lessonRefInput" rows="3" placeholder="或直接粘贴旧教案文本..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
+
+          <input id="lessonRefTitle" placeholder="教案名称（如：运动生理学-有氧耐力教案）" style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+          <button onclick="saveLessonRef()" style="background:#16a34a;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">💾 存入风格库</button>
+
+          <span id="lessonRefStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+        <div id="lessonRefList" style="margin-top:10px"></div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">✨ 按科目章节撰写教案</div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+
+          <input id="lessonSubject" placeholder="科目，如：运动生理学" style="flex:1;min-width:140px;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+          <input id="lessonChapter" placeholder="章节，如：第六章 有氧耐力及其训练" style="flex:1.5;min-width:200px;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+          <select id="lessonStyleRef" style="border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px">
+
+            <option value="all">📚 综合全部风格教案</option>
+
+          </select>
+
+        </div>
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">教材/书籍章节内容（粘贴本章节教材要点）</label>
+
+        <textarea id="lessonChapterContent" rows="6" placeholder="粘贴教材该章节的核心内容：概念、原理、机制、要点...（AI 将基于此内容撰写教案）" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">
+
+          <button onclick="runLessonGen()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">✨ 生成教案</button>
+
+          <span id="lessonGenStatus" style="font-size:12px;color:#6b7280"></span>
+
+          <span style="font-size:12px;color:#9ca3af">生成约需 1-2 分钟</span>
+
+        </div>
+
+      </div>
+
+      <div id="lessonResult" style="display:none"></div>
+
+    </div>
 
   </div>
 
@@ -62880,7 +63082,7 @@ document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'
 
 document.getElementById('tab-'+tabName).classList.add('active');
 
-const titles = {dashboard:'科研总览',english:'英语（一）知识点',politics:'政治知识点',physio:'运动生理学知识点',anatomy:'运动解剖学知识点',plan:'备考规划',progress:'学习进度',quiz:'刷题模考',flashcard:'闪卡记忆',memorize:'背诵助手','pro-course':'专业课高效学习','ai-assistant':'AI学习助手','atlas':'人体解剖学图谱','physio-atlas':'生理学图谱'};
+const titles = {dashboard:'科研总览',english:'英语（一）知识点',politics:'政治知识点',physio:'运动生理学知识点',anatomy:'运动解剖学知识点',plan:'备考规划',progress:'学习进度',quiz:'刷题模考',flashcard:'闪卡记忆',memorize:'背诵助手','pro-course':'专业课高效学习','ai-assistant':'AI学习助手','atlas':'人体解剖学图谱','physio-atlas':'生理学图谱','teacher':'教师科研助手'};
 
 document.getElementById('pageTitle').textContent = titles[tabName] || '体育科研工作台';
 
@@ -126995,6 +127197,233 @@ async function askKnAi(){
   statusEl.textContent = '完成';
 }
 </script>
+<script>
+// ========== 教师科研助手：子标签切换 ==========
+const TEACHER_SUBTABS = ['topic','lesson'];
+function switchTeacherSubTab(name){
+  TEACHER_SUBTABS.forEach(function(t){
+    var el = document.getElementById('teacherContent-' + t);
+    if(el) el.style.display = (t === name) ? 'block' : 'none';
+    var btn = document.getElementById('teacherTab-' + t);
+    if(btn) btn.style.background = (t === name) ? '#7c3aed' : '#fff';
+    if(btn) btn.style.color = (t === name) ? '#fff' : '#7c3aed';
+  });
+}
+function navigateToTeacherSubTab(subTab){
+  switchTab('teacher');
+  setTimeout(function(){ switchTeacherSubTab(subTab); }, 120);
+}
+
+// ========== 课题申报：AI 选题生成（双模型并行） ==========
+async function runTopicGen(){
+  const dir = (document.getElementById('topicDir').value||'').trim();
+  if(!dir){ alert('请输入研究方向'); return; }
+  const base = (document.getElementById('topicBase').value||'').trim();
+  const status = document.getElementById('topicStatus');
+  const resEl = document.getElementById('topicResult');
+  resEl.style.display = 'block';
+  resEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ 双模型并行生成选题中（约1-2分钟）...</div>';
+  status.textContent = '生成中...';
+  const sysA = '你是体育科研课题选题专家。结合体育领域政策热点（体教融合、健康中国、全民健身计划、体育强国建设、新质生产力与体育、体育数字化转型、体卫融合、学校体育改革）与当前文献空白，针对给定研究方向与研究基础，生成 3 个可申报课题选题。每个选题输出：1.课题题目（精准、可申报）2.选题依据要点（政策依据+现实问题+学术价值）3.创新之处 4.适合的基金类型 5.初步可行性（数据/样本可得性）。结构化、专业、可直接修改使用。';
+  const sysB = '你是体育科研课题评审专家（与另一位选题专家不同视角）。针对同样的研究方向，从【现实落地性和创新差异化】角度，另生成 2-3 个与常见选题不同、更具差异化竞争力的课题选题，每个给出：课题题目、为什么差异化（别人没做/没做透）、政策契合点、实现路径。结构化输出。';
+  const usr = '研究方向：' + dir + (base ? '\n研究基础：' + base : '');
+  let outA = '', outB = '';
+  try{
+    const results = await Promise.allSettled([
+      callModelWithTimeout(sysA, usr, 3000, 'deepseek-chat', 90000),
+      callModelWithTimeout(sysB, usr, 3000, 'glm-5.3', 90000)
+    ]);
+    outA = (results[0].status === 'fulfilled' && results[0].value) ? results[0].value : '';
+    outB = (results[1].status === 'fulfilled' && results[1].value) ? results[1].value : '';
+  }catch(e){ outA = ''; outB = ''; }
+  if(!outB.trim()){
+    status.textContent = 'GLM 未返回，改用 Kimi 生成差异化学题...';
+    try{ outB = await callModelWithTimeout(sysB, usr, 2500, 'kimi-k3', 90000); }catch(e){ outB = ''; }
+  }
+  if(!outB.trim()){
+    status.textContent = 'Kimi 未返回，改用混元生成差异化学题...';
+    try{ outB = await callModelWithTimeout(sysB, usr, 2500, 'hy3', 90000); }catch(e){ outB = ''; }
+  }
+  if(!outA.trim()){
+    status.textContent = 'DeepSeek 失败，改用 V4-Pro 重试...';
+    try{ outA = await callModelWithTimeout(sysA, usr, 3000, 'deepseek-v4-pro', 90000); }catch(e){ outA = ''; }
+  }
+  if(!outA.trim() && !outB.trim()){
+    resEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 选题生成失败（模型未返回），请重试</div>';
+    status.textContent = '生成失败';
+    return;
+  }
+  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:700;color:#7c3aed;margin-bottom:10px">💜 DeepSeek · 选题方案</div><div style="font-size:13px;line-height:1.9;color:#1f2937;white-space:pre-wrap">' + (outA.trim() ? esc(outA) : '（模型未返回）') + '</div></div>';
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:700;color:#2563eb;margin-bottom:10px">💙 GLM · 差异化选题</div><div style="font-size:13px;line-height:1.9;color:#1f2937;white-space:pre-wrap">' + (outB.trim() ? esc(outB) : '（模型未返回）') + '</div></div>';
+  html += '</div>';
+  html += '<div style="background:#fefce8;border:1px solid #fde047;border-radius:12px;padding:16px;margin-top:14px;font-size:13px;color:#854d0e;line-height:1.9">💡 <b>使用建议：</b>把中意的选题复制到下方"申报书活页生成"，填写基金类型即可生成完整申报书初稿。<b>所有 AI 生成内容须人工复核后使用。</b></div>';
+  resEl.innerHTML = html;
+  status.textContent = '生成完成';
+}
+
+// ========== 课题申报：申报书活页生成 ==========
+async function runProposalGen(){
+  const title = (document.getElementById('proposalTitle').value||'').trim();
+  if(!title){ alert('请先填写课题题目'); return; }
+  const fund = document.getElementById('proposalFund').value;
+  const extra = (document.getElementById('proposalExtra').value||'').trim();
+  const status = document.getElementById('proposalStatus');
+  const resEl = document.getElementById('proposalResult');
+  resEl.style.display = 'block';
+  resEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ AI 撰写申报书活页中（约1-2分钟）...</div>';
+  status.textContent = '撰写中...';
+  const fundSpec = {
+    '国社科': '国家社科基金（体育学）活页要求：突出学术价值与现实意义，创新性要求高，论证严密，字数约6000-8000字，匿名评审',
+    '教育部': '教育部人文社科基金：重视理论与实践结合，体现学科交叉，青年项目/规划项目各有侧重',
+    '省社科': '省社科基金：紧扣省内实际需求与地方特色，突出可操作性与对策价值',
+    '总局': '国家体育总局课题：突出问题导向与决策咨询价值，服务体育强国建设实际需求'
+  }[fund];
+  const sys = '你是体育科研项目申报书撰写专家。针对给定课题，按【' + fund + '】基金要求（' + fundSpec + '）撰写申报书活页初稿，包含：一、选题依据（国内外研究现状述评、学术价值与应用价值、研究现状的不足）二、研究内容（总体框架、研究重点难点、主要目标）三、思路方法（基本思路、具体研究方法、技术路线描述）四、创新之处 五、预期成果（论文/报告/数据/政策建议等）。用规范学术语言，内容充实、逻辑严密，可直接在此基础上修改完善。';
+  const usr = '课题题目：' + title + (extra ? '\n补充信息：' + extra : '');
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
+  if(!out.trim()){
+    status.textContent = 'DeepSeek 超时，改用 V4-Pro 重试...';
+    try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-v4-pro', 120000); }catch(e){ out = ''; }
+  }
+  if(!out.trim()){
+    resEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 生成失败（模型未返回），请重试</div>';
+    status.textContent = '生成失败';
+    return;
+  }
+  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  resEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px"><div style="font-size:16px;font-weight:700;color:#6b21a8;margin-bottom:6px">📋 申报书活页初稿（' + fund + '）</div><div style="font-size:12px;color:#b45309;margin-bottom:12px">⚠️ AI 生成初稿，请逐项核对补充后提交</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
+  status.textContent = '生成完成';
+}
+</script>
+<script>
+// ========== 教案助手 ==========
+function getLessonRefs(){ try{ return JSON.parse(localStorage.getItem('aiLessonRefs') || '[]'); }catch(e){ return []; } }
+function saveLessonRefs(list){ try{ localStorage.setItem('aiLessonRefs', JSON.stringify(list || getLessonRefs())); }catch(e){} }
+function renderLessonRefs(){
+  const refs = getLessonRefs();
+  const listEl = document.getElementById('lessonRefList');
+  const sel = document.getElementById('lessonStyleRef');
+  if(!listEl || !sel) return;
+  if(!refs.length){
+    listEl.innerHTML = '<div style="font-size:12px;color:#9ca3af">风格库为空。上传或粘贴 1-3 份旧教案，AI 撰写新教案时将模仿其结构与风格。</div>';
+    return;
+  }
+  const selOld = sel.value;
+  sel.innerHTML = '<option value="all">📚 综合全部风格教案</option>' + refs.map(function(r, i){ return '<option value="' + i + '">' + (r.title || ('教案' + (i+1))) + '</option>'; }).join('');
+  sel.value = selOld;
+  listEl.innerHTML = refs.map(function(r, i){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:8px 12px;margin-bottom:6px">'
+      + '<span style="font-size:13px;color:#6b21a8;font-weight:600">📄 ' + (r.title || ('教案' + (i+1))) + '</span>'
+      + '<span style="font-size:11px;color:#9ca3af">' + (r.t||'') + ' · ' + (r.content||'').length + '字 <button onclick="delLessonRef(' + i + ')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:2px 8px;cursor:pointer;font-size:11px;margin-left:6px">删除</button></span>'
+      + '</div>';
+  }).join('');
+}
+function delLessonRef(idx){
+  const refs = getLessonRefs();
+  refs.splice(idx, 1);
+  saveLessonRefs(refs);
+  renderLessonRefs();
+}
+function saveLessonRef(){
+  const content = (document.getElementById('lessonRefInput').value||'').trim();
+  const title = (document.getElementById('lessonRefTitle').value||'').trim();
+  if(!content){ alert('请粘贴或上传教案内容'); return; }
+  const refs = getLessonRefs();
+  refs.unshift({ title: title || ('教案' + (refs.length + 1)), content: content, t: new Date().toLocaleString('zh-CN') });
+  if(refs.length > 10) refs.length = 10;
+  saveLessonRefs(refs);
+  document.getElementById('lessonRefInput').value = '';
+  document.getElementById('lessonRefTitle').value = '';
+  document.getElementById('lessonRefStatus').textContent = '✅ 已存入风格库';
+  renderLessonRefs();
+}
+function readLessonFile(){
+  const fileInput = document.getElementById('lessonFile');
+  if(!fileInput.files || !fileInput.files[0]){ alert('请先选择教案文件'); return; }
+  const file = fileInput.files[0];
+  const name = file.name.replace(/\.(txt|docx)$/i, '');
+  const reader = new FileReader();
+  if(file.name.toLowerCase().endsWith('.docx')){
+    // 动态加载 mammoth 解析 docx
+    if(window.mammoth){
+      reader.onload = function(e){
+        mammoth.extractRawText({ arrayBuffer: e.target.result }).then(function(result){
+          document.getElementById('lessonRefInput').value = result.value || '';
+          document.getElementById('lessonRefTitle').value = name;
+          document.getElementById('lessonRefStatus').textContent = '✅ ' + name + ' 已解析，可保存入风格库';
+        }).catch(function(err){ alert('docx 解析失败：' + err.message); });
+      };
+      reader.readAsArrayBuffer(file);
+    }else{
+      const sc = document.createElement('script');
+      sc.src = 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+      sc.onload = function(){
+        reader.onload = function(e){
+          mammoth.extractRawText({ arrayBuffer: e.target.result }).then(function(result){
+            document.getElementById('lessonRefInput').value = result.value || '';
+            document.getElementById('lessonRefTitle').value = name;
+            document.getElementById('lessonRefStatus').textContent = '✅ ' + name + ' 已解析，可保存入风格库';
+          }).catch(function(err){ alert('docx 解析失败：' + err.message); });
+        };
+        reader.readAsArrayBuffer(file);
+      };
+      sc.onerror = function(){ alert('无法加载 docx 解析库（需联网），请直接粘贴教案文本'); };
+      document.head.appendChild(sc);
+    }
+  }else{
+    reader.onload = function(e){
+      document.getElementById('lessonRefInput').value = e.target.result || '';
+      document.getElementById('lessonRefTitle').value = name;
+      document.getElementById('lessonRefStatus').textContent = '✅ ' + name + ' 已读取，可保存入风格库';
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+}
+
+// ========== 教案生成 ==========
+async function runLessonGen(){
+  const subject = (document.getElementById('lessonSubject').value||'').trim();
+  const chapter = (document.getElementById('lessonChapter').value||'').trim();
+  const chapterContent = (document.getElementById('lessonChapterContent').value||'').trim();
+  if(!subject || !chapter){ alert('请填写科目和章节'); return; }
+  if(!chapterContent){ alert('请粘贴教材/书籍章节内容'); return; }
+  const status = document.getElementById('lessonGenStatus');
+  const resEl = document.getElementById('lessonResult');
+  resEl.style.display = 'block';
+  resEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ AI 撰写教案中（约1-2分钟）...</div>';
+  status.textContent = '撰写中...';
+  const refs = getLessonRefs();
+  const selIdx = document.getElementById('lessonStyleRef').value;
+  let styleText = '';
+  if(selIdx !== 'all' && refs[parseInt(selIdx)]){
+    styleText = refs[parseInt(selIdx)].content;
+  }else if(refs.length){
+    styleText = refs.map(function(r){ return r.content; }).join('\n\n---\n\n').slice(0, 6000);
+  }
+  const sys = '你是高校体育专业理论课优秀教师，擅长教案撰写。根据提供的科目、章节、教材内容和风格参考教案（若有），撰写一份完整规范的教学教案，包括：一、教学目标（知识目标/能力目标/素养目标，用行为动词表述）二、教学重难点 三、学情分析 四、教学方法 五、教学准备 六、教学过程（导入→讲授新知→师生互动/课堂练习→巩固提高→小结，含时间分配）七、板书设计 八、课后作业与延伸。若提供了风格参考教案，模仿其结构、详略与表达风格；若未提供，按标准教案格式撰写。内容紧扣教材章节内容，专业准确。';
+  const usr = '科目：' + subject + '\n章节：' + chapter + '\n\n教材章节内容：\n' + chapterContent.slice(0, 6000) + (styleText ? '\n\n【风格参考教案（模仿其结构与风格）】\n' + styleText.slice(0, 5000) : '');
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
+  if(!out.trim()){
+    status.textContent = 'DeepSeek 超时，改用 V4-Pro 重试...';
+    try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-v4-pro', 120000); }catch(e){ out = ''; }
+  }
+  if(!out.trim()){
+    resEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 教案生成失败（模型未返回），请重试</div>';
+    status.textContent = '生成失败';
+    return;
+  }
+  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  resEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px"><div style="font-size:16px;font-weight:700;color:#6b21a8;margin-bottom:4px">📖 教案初稿：' + (subject||'') + ' · ' + (chapter||'') + '</div><div style="font-size:12px;color:#b45309;margin-bottom:12px">⚠️ AI 生成初稿，请结合班级学情复核调整后使用</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
+  status.textContent = '生成完成';
+  renderLessonRefs();
+}
+</script>
+
+
 
 
 
