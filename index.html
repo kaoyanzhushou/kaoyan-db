@@ -13838,6 +13838,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('refcheck')" id="paperTab-refcheck" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">引用核验</button>
       <button onclick="switchPaperSubTab('pipeline')" id="paperTab-pipeline" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">写作流水线</button>
       <button onclick="switchPaperSubTab('idea')" id="paperTab-idea" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">想法评估</button>
+      <button onclick="switchPaperSubTab('roundtable')" id="paperTab-roundtable" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">评审圆桌</button>
 
     </div>
 
@@ -15532,6 +15533,46 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="ideaResult" style="display:none"></div>
+
+    </div>
+
+
+
+    <!-- AI同行评审圆桌（4位专家+主持人决议） -->
+
+    <div id="paperContent-roundtable" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">🧑‍⚖️ AI 同行评审圆桌</div>
+
+        <div style="font-size:13px;color:#059669">四位专家并行评审（📊统计学家 / 🏃体育科学专家 / ✍️语言编辑 / 📚期刊编辑），主持人汇总成「圆桌决议」：必须改 / 建议改 / 可保留，附理由</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:8px">论文内容（粘贴全文或摘要+正文）</label>
+
+        <textarea id="roundInput" rows="10" placeholder="粘贴论文全文或摘要+正文..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:12px 0 8px">目标期刊（可选）</label>
+
+        <input id="roundJournal" placeholder="例如：Journal of Sports Sciences 或 中国体育科技" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+
+          <button onclick="runRoundTable()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🧑‍⚖️ 开始圆桌评审</button>
+
+          <span id="roundStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+      </div>
+
+      <div id="roundProgress" style="display:none"></div>
+
+      <div id="roundResult" style="display:none"></div>
 
     </div>
 
@@ -56117,7 +56158,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -125888,6 +125929,87 @@ async function runIdeaEval(){
   status.textContent = '评估完成';
 }
 </script>
+<script>
+// ========== AI同行评审圆桌（4位专家+主持人决议） ==========
+const ROUND_EXPERTS = [
+  {id:'stat', icon:'📊', name:'统计学家', sys:'你是资深生物统计学家，参与体育科学研究论文的同行评审。请从统计学角度评审：1.统计方法选择是否恰当 2.样本量/统计功效是否合理 3.数据分析与结果呈现的问题 4.统计相关修改建议。分点列出，具体、可操作，标注每条属于「必须改」「建议改」或「可保留」。'},
+  {id:'sport', icon:'🏃', name:'体育科学专家', sys:'你是体育科学领域资深专家，参与体育科学研究论文的同行评审。请从领域专业性角度评审：1.研究设计的科学性（分组/干预/指标）2.领域理论与文献对话是否充分 3.创新性与贡献 4.领域相关修改建议。分点列出，具体、可操作，标注每条属于「必须改」「建议改」或「可保留」。'},
+  {id:'lang', icon:'✍️', name:'语言编辑', sys:'你是学术英语/中文学术语言编辑，参与体育科学研究论文的评审。请从语言与表达角度评审：1.语言清晰度与学术规范性 2.结构逻辑（IMRaD）连贯性 3.标题/摘要/图表表述问题 4.语言修改建议。分点列出，标注每条属于「必须改」「建议改」或「可保留」。'},
+  {id:'journal', icon:'📚', name:'期刊编辑', sys:'你是学术期刊主编/编辑，参与体育科学研究论文的评审。请从期刊编辑角度评审：1.与目标期刊（若提供）的匹配度 2.录用概率估计与理由 3.编辑最关注的问题 4.投稿策略建议。分点列出，具体，标注每条属于「必须改」「建议改」或「可保留」。'}
+];
+
+async function runRoundTable(){
+  const input = (document.getElementById('roundInput').value||'').trim();
+  const journal = (document.getElementById('roundJournal').value||'').trim();
+  if(!input){ alert('请先粘贴论文内容'); return; }
+  const status = document.getElementById('roundStatus');
+  const progEl = document.getElementById('roundProgress');
+  const resultEl = document.getElementById('roundResult');
+  progEl.style.display = 'block';
+  resultEl.style.display = 'block';
+  const inputShort = input.length > 6000 ? input.slice(0,6000) : input;
+  const usr = (journal ? '目标期刊：' + journal + '\n\n' : '') + '论文内容：\n' + inputShort;
+  // 进度显示
+  const renderProg = function(){
+    let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">⏳ 评审进度</div>';
+    ROUND_EXPERTS.forEach(function(e){
+      const st = window._roundStates && window._roundStates[e.id];
+      html += '<div style="font-size:13px;color:' + (st==='done' ? '#047857' : st==='run' ? '#b45309' : '#6b7280') + ';margin-bottom:6px">' + (st==='done'?'✅':st==='run'?'⏳':'○') + ' ' + e.icon + ' ' + e.name + (st==='done'?' 完成':st==='run'?' 评审中...':' 等待') + '</div>';
+    });
+    html += '</div>';
+    progEl.innerHTML = html;
+  };
+  window._roundStates = {};
+  renderProg();
+  status.textContent = '4 位专家并行评审中（约2分钟）...';
+  const expertsOut = {};
+  try{
+    // 分2批并行（每批2位），降低并发
+    for(let b = 0; b < 2; b++){
+      const batch = ROUND_EXPERTS.slice(b*2, b*2+2);
+      await Promise.all(batch.map(async function(e){
+        window._roundStates[e.id] = 'run';
+        renderProg();
+        const r = await callDeepSeekAPI(e.sys, usr, 1800, 'deepseek-chat');
+        expertsOut[e.id] = r || '（未返回内容）';
+        window._roundStates[e.id] = 'done';
+        renderProg();
+      }));
+    }
+  }catch(err){
+    status.textContent = '专家评审失败：' + err.message;
+    return;
+  }
+  // 渲染专家意见
+  let html = '<div style="font-size:15px;font-weight:700;color:#1f2937;margin:6px 0 10px">👥 四位专家意见</div>';
+  ROUND_EXPERTS.forEach(function(e){
+    html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:8px">' + e.icon + ' ' + e.name + '</div>';
+    html += '<div style="font-size:13px;line-height:1.8;color:#374151;white-space:pre-wrap">' + (expertsOut[e.id]||'') + '</div>';
+    html += '</div>';
+  });
+  resultEl.innerHTML = html;
+  // 主持人决议
+  status.textContent = '主持人正在汇总圆桌决议...';
+  html += '<div style="text-align:center;color:#6b7280;padding:30px;font-size:14px">⏳ 主持人汇总决议中...</div>';
+  resultEl.innerHTML = html;
+  try{
+    const modSys = '你是学术论文评审会议主持人。四位专家已给出独立意见，请汇总成「圆桌决议」：1.【必须修改】（专家共识必须改的问题，去重合并）2.【建议修改】3.【可保留】4.【综合结论】一句话总结论文水平与修改后录用前景。简洁、有重点、可直接执行。';
+    const modUsr = '论文主题简介：' + inputShort.slice(0,300) + '\n\n--- 四位专家意见 ---\n\n' + ROUND_EXPERTS.map(function(e){ return '【' + e.name + '】\n' + (expertsOut[e.id]||''); }).join('\n\n');
+    const verdict = await callDeepSeekAPI(modSys, modUsr, 2000, 'glm-5.3');
+    html += '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px;margin-top:14px">';
+    html += '<div style="font-size:15px;font-weight:700;color:#065f46;margin-bottom:10px">🧑‍⚖️ 圆桌决议</div>';
+    html += '<div style="font-size:13px;line-height:1.9;color:#14532d;white-space:pre-wrap">' + verdict + '</div>';
+    html += '</div>';
+    resultEl.innerHTML = html;
+    status.textContent = '圆桌评审完成';
+  }catch(err){
+    status.textContent = '决议生成失败：' + err.message;
+  }
+}
+</script>
+
 
 
 
