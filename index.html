@@ -126108,10 +126108,16 @@ async function runReflectChain(){
       check = (await callDeepSeekAPI('你是学术质量审校专家。检查以下学术文本：1.逻辑漏洞与论证问题 2.专业术语准确性 3.引用/数据一致性问题 4.表达硬伤。分点列出具体问题（指出问题所在位置），不要修改原文。若确实无可改进，请明确输出「未发现明显问题」。', draft.slice(0,5000), 1500, 'deepseek-chat')) || '';
     }
     if(!check.trim()){ check = '（检查模型未返回内容，未发现明显问题）'; }
-    // 第三轮：第三模型修正
+    // 第三轮：第三模型修正（输入截断防超时，失败自动降级）
     show('第三轮：Kimi 根据检查意见修正...');
     const fixSys = '你是学术写作专家。根据审校意见修正以下文本：保留原意与专业内容，修正审校指出的问题；若审校意见为「未发现明显问题」则输出原文。输出修正后的完整版本。';
-    fixed = (await callDeepSeekAPI(fixSys, '【原文】\n' + draft + '\n\n【审校意见】\n' + check, 2500, 'kimi-k3')) || draft;
+    const fixInput = '【原文】\n' + draft.slice(0,3000) + '\n\n【审校意见】\n' + check.slice(0,1200);
+    fixed = (await callDeepSeekAPI(fixSys, fixInput, 1500, 'kimi-k3')) || '';
+    if(!fixed.trim()){
+      show('第三轮：Kimi 未返回，改用 DeepSeek 修正...');
+      fixed = (await callDeepSeekAPI(fixSys, fixInput, 1500, 'deepseek-chat')) || '';
+    }
+    if(!fixed.trim()){ fixed = draft; }
     // 渲染三阶段
     const esc = function(t){ return (t||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
     let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:14px">';
