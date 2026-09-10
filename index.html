@@ -16408,6 +16408,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
       <button onclick="switchTeacherSubTab('lesson')" id="teacherTab-lesson" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📖 教案助手</button>
 
+      <button onclick="switchTeacherSubTab('ppt')" id="teacherTab-ppt" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📊 PPT 课件</button>
+
     </div>
 
     <!-- 课题申报面板 -->
@@ -16647,6 +16649,60 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="lessonResult" style="display:none"></div>
+
+    </div>
+
+    <!-- PPT课件面板 -->
+    <div id="teacherContent-ppt" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:700;color:#1d4ed8;margin-bottom:4px">📊 PPT 课件智能生成</div>
+        <div style="font-size:13px;color:#2563eb">AI 生成课件大纲 · 逐页预览 · GLM 五维体检 · 多模型增强（P1）</div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:12px">📝 课件信息</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div>
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">科目 / 章节 *</label>
+            <input id="pptTopic" placeholder="例如：运动生理学 - 无氧耐力及其训练" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">教学对象</label>
+            <select id="pptAudience" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box;background:#fff">
+              <option value="undergrad">本科</option>
+              <option value="master">硕士研究生</option>
+              <option value="vocational">职业教育</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">课时数</label>
+            <input id="pptHours" type="number" value="1" min="1" max="8" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">课件风格</label>
+            <select id="pptStyle" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box;background:#fff">
+              <option value="academic">🎓 学术蓝</option>
+              <option value="fresh">🌿 清新绿</option>
+              <option value="dark">🔬 深色科技</option>
+              <option value="warm">☀️ 教育暖色</option>
+            </select>
+          </div>
+        </div>
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:14px 0 6px">教学要点 / 参考内容（可选）</label>
+        <textarea id="pptExtra" rows="2" placeholder="例如：重点讲磷酸原与糖酵解供能系统，结合100米/800米案例" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">
+          <button onclick="runPptGen()" style="background:#2563eb;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🚀 生成课件大纲</button>
+          <label style="font-size:12px;color:#4b5563;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="pptHealthCheck" checked style="vertical-align:middle">生成后 GLM 体检</label>
+          <span id="pptStatus" style="font-size:12px;color:#6b7280"></span>
+        </div>
+      </div>
+
+      <div id="pptResult" style="display:none"></div>
 
     </div>
 
@@ -127283,7 +127339,7 @@ async function askKnAi(){
 </script>
 <script>
 // ========== 教师科研助手：子标签切换 ==========
-const TEACHER_SUBTABS = ['topic','lesson'];
+const TEACHER_SUBTABS = ['topic','lesson','ppt'];
 function renderBookMeta(){
   try{
     const meta = JSON.parse(localStorage.getItem('aiBookMeta') || 'null');
@@ -127712,6 +127768,156 @@ async function hyStudentView(){
   resEl.appendChild(blk);
   if(status) status.textContent = '✅ 学生视角分析完成';
   blk.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// ========== PPT 课件生成 ==========
+let __pptSlides = [];
+let __pptCurrent = 0;
+let __pptGridView = false;
+
+async function runPptGen(){
+  const topic = (document.getElementById('pptTopic').value||'').trim();
+  if(!topic){ alert('请填写科目/章节'); return; }
+  const audience = document.getElementById('pptAudience').value;
+  const hours = document.getElementById('pptHours').value || '1';
+  const style = document.getElementById('pptStyle').value;
+  const extra = (document.getElementById('pptExtra').value||'').trim();
+  const status = document.getElementById('pptStatus');
+  const resEl = document.getElementById('pptResult');
+  resEl.style.display = 'block';
+  resEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ AI 生成课件大纲中（约1分钟）...</div>';
+  status.textContent = '生成中...';
+  const audienceMap = {undergrad:'本科生',master:'硕士研究生',vocational:'职业教育学生',other:'通用'};
+  const styleMap = {academic:'学术蓝（严谨专业）',fresh:'清新绿（明快活泼）',dark:'深色科技（现代感）',warm:'教育暖色（亲和）'};
+  const sys = '你是高校体育专业课件设计专家。针对给定科目章节，按【' + audienceMap[audience] + '】对象、' + hours + '课时、【' + styleMap[style] + '】风格，生成完整课件大纲。严格按以下固定格式输出，每页用 ===PAGE=== 分隔：\n===PAGE===\n【类型】封面|目录|导入|新授|案例|练习|小结|作业|结束\n【标题】页面标题\n【要点】要点1｜要点2｜要点3（新授页3-5个要点，其他页按需）\n【备注】教师讲稿提示（2-3句）\n===PAGE===\n...\n要求：封面1页+目录1页+导入1页+新授若干页（按知识点拆分）+案例1页+练习1页+小结1页+作业1页+结束1页，总页数约' + (parseInt(hours)*12) + '页左右。标题简洁，要点精炼可直接上PPT。';
+  const usr = '科目章节：' + topic + (extra ? '\n教学要点：' + extra : '');
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
+  if(!out.trim()){
+    status.textContent = 'DeepSeek 超时，改用 V4-Pro 重试...';
+    try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-v4-pro', 120000); }catch(e){ out = ''; }
+  }
+  if(!out.trim()){
+    resEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 生成失败（模型未返回），请重试</div>';
+    status.textContent = '生成失败';
+    return;
+  }
+  __pptSlides = parsePptOutline(out);
+  __pptCurrent = 0;
+  __pptGridView = false;
+  if(__pptSlides.length === 0){
+    resEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 大纲解析失败，请重试</div>';
+    status.textContent = '解析失败';
+    return;
+  }
+  renderPptSlides();
+  status.textContent = '生成完成（共' + __pptSlides.length + '页）';
+  const phc = document.getElementById('pptHealthCheck');
+  if(phc && phc.checked){
+    const hb = document.createElement('div');
+    hb.id = 'pptHealthBlock';
+    hb.style.cssText = 'background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin-top:16px';
+    hb.innerHTML = '<div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">🔍 课件体检中（GLM 五维评审，约1分钟）...</div><div style="font-size:12px;color:#1e40af">结构完整 · 知识准确 · 逻辑顺序 · 目标匹配 · 容量合理</div>';
+    resEl.appendChild(hb);
+    status.textContent = '生成完成，课件体检中...';
+    const health = await healthCheckPpt(out, __pptSlides.length, topic);
+    if(health && health.trim()){
+      const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+      hb.innerHTML = '<div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">🔍 课件体检报告（GLM 五维评审）</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(health) + '</div>';
+      status.textContent = '生成完成（含体检报告）';
+    }else{
+      hb.outerHTML = '';
+      status.textContent = '生成完成（体检未返回，可直接使用）';
+    }
+  }
+}
+
+function parsePptOutline(text){
+  const slides = [];
+  const parts = text.split('===PAGE===').filter(function(p){ return p.trim().length > 5; });
+  for(var i=0;i<parts.length;i++){
+    const p = parts[i];
+    const type = (p.match(/【类型】([^\n]+)/)||[])[1] || '新授';
+    const title = (p.match(/【标题】([^\n]+)/)||[])[1] || '';
+    const pointsRaw = (p.match(/【要点】([\s\S]*?)(?=\n【|$)/)||[])[1] || '';
+    const notes = (p.match(/【备注】([\s\S]*?)(?=\n【|$)/)||[])[1] || '';
+    const points = pointsRaw.split(/[｜|\n]/).map(function(x){ return x.trim(); }).filter(function(x){ return x.length > 0; });
+    if(title || points.length > 0){
+      slides.push({type:type.trim(), title:title.trim(), points:points, notes:notes.trim()});
+    }
+  }
+  return slides;
+}
+
+function renderPptSlides(){
+  const resEl = document.getElementById('pptResult');
+  if(!resEl) return;
+  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  const typeColor = {封面:'#7c3aed',目录:'#2563eb',导入:'#16a34a',新授:'#2563eb',案例:'#d97706',练习:'#dc2626',小结:'#0891b2',作业:'#7c3aed',结束:'#6b7280'};
+  let html = '';
+  // 工具栏
+  html += '<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">';
+  html += '<button onclick="pptPrevPage()" style="background:#fff;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">◀ 上一页</button>';
+  html += '<span id="pptPageInfo" style="font-size:14px;font-weight:600;color:#1f2937">' + (__pptCurrent+1) + ' / ' + __pptSlides.length + '</span>';
+  html += '<button onclick="pptNextPage()" style="background:#fff;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">下一页 ▶</button>';
+  html += '<button onclick="pptToggleGrid()" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">▦ 网格总览</button>';
+  html += '</div>';
+
+  if(__pptGridView){
+    // 网格视图
+    html += '<div id="pptGridArea" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">';
+    for(var i=0;i<__pptSlides.length;i++){
+      const sl = __pptSlides[i];
+      const c = typeColor[sl.type] || '#2563eb';
+      html += '<div onclick="pptGoPage(' + i + ')" style="background:#fff;border:2px solid ' + (i===__pptCurrent?c:'#e5e7eb') + ';border-radius:10px;padding:12px;cursor:pointer;min-height:140px">';
+      html += '<div style="font-size:10px;color:' + c + ';font-weight:700;margin-bottom:4px">' + esc(sl.type) + ' · P' + (i+1) + '</div>';
+      html += '<div style="font-size:12px;font-weight:700;color:#1f2937;margin-bottom:6px;line-height:1.4">' + esc(sl.title) + '</div>';
+      if(sl.points.length > 0){
+        html += '<div style="font-size:10px;color:#6b7280;line-height:1.5">' + esc(sl.points.slice(0,3).join(' · ')) + '</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  } else {
+    // 单页视图
+    const sl = __pptSlides[__pptCurrent];
+    const c = typeColor[sl.type] || '#2563eb';
+    html += '<div id="pptSlideArea" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">';
+    html += '<div style="background:' + c + ';color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center">';
+    html += '<span style="font-size:12px;font-weight:700;opacity:0.9">' + esc(sl.type) + '</span>';
+    html += '<span style="font-size:12px;opacity:0.8">第 ' + (__pptCurrent+1) + ' / ' + __pptSlides.length + ' 页</span>';
+    html += '</div>';
+    html += '<div style="padding:28px 32px;min-height:280px">';
+    html += '<div style="font-size:22px;font-weight:800;color:#1f2937;margin-bottom:20px;line-height:1.4">' + esc(sl.title) + '</div>';
+    if(sl.points.length > 0){
+      html += '<div style="display:flex;flex-direction:column;gap:12px">';
+      for(var j=0;j<sl.points.length;j++){
+        html += '<div style="display:flex;gap:10px;align-items:flex-start"><div style="width:8px;height:8px;background:' + c + ';border-radius:50%;margin-top:7px;flex-shrink:0"></div><div style="font-size:15px;color:#374151;line-height:1.7">' + esc(sl.points[j]) + '</div></div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    if(sl.notes){
+      html += '<div style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:14px 20px"><div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:4px">📝 教师备注</div><div style="font-size:13px;color:#4b5563;line-height:1.7">' + esc(sl.notes) + '</div></div>';
+    }
+    html += '</div>';
+  }
+  resEl.innerHTML = html;
+}
+
+function pptPrevPage(){ if(__pptCurrent > 0){ __pptCurrent--; __pptGridView=false; renderPptSlides(); } }
+function pptNextPage(){ if(__pptCurrent < __pptSlides.length-1){ __pptCurrent++; __pptGridView=false; renderPptSlides(); } }
+function pptGoPage(i){ __pptCurrent = i; __pptGridView = false; renderPptSlides(); }
+function pptToggleGrid(){ __pptGridView = !__pptGridView; renderPptSlides(); }
+
+async function healthCheckPpt(outlineText, pageCount, topic){
+  const sys = '你是高校课件评审专家。对课件大纲进行五维体检，输出：一、总体评价（一句话）二、五维评分（结构完整性/知识准确性/逻辑顺序/教学目标匹配度/容量合理性，各0-100分+扣分理由）三、逐页问题清单（具体到页号，说明问题）四、修改建议（可直接操作）。语言专业、犀利但建设性。';
+  const usr = '课件主题：' + topic + '，总页数：' + pageCount + '\n\n课件大纲：\n' + outlineText.slice(0, 8000);
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 2500, 'glm-5.3', 120000); }catch(e){ out = ''; }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'kimi-k3', 120000); }catch(e){ out = ''; } }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'hy3', 120000); }catch(e){ out = ''; } }
+  return out;
 }
 
 async function healthCheckLesson(lessonText, formatReq){
