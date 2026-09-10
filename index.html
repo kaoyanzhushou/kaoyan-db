@@ -60667,17 +60667,25 @@ async function startPolish() {
 
     
 
-    var result;
+    var result = null;
 
-    if (model) {
+    var lastErr = null;
 
-      result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000, model);
+    var callPolishOnce = function() {
 
-    } else {
+      return model ? callDeepSeekAPI(systemPrompt, userPrompt, 4000, model) : callDeepSeekAPI(systemPrompt, userPrompt, 4000);
 
-      result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+    };
+
+    for (var retryNum = 0; retryNum < 2; retryNum++) {
+
+      try { result = await callPolishOnce(); break; }
+
+      catch(e) { lastErr = e; if (retryNum < 1) await new Promise(function(r2) { setTimeout(r2, 2500); }); }
 
     }
+
+    if (!result) throw lastErr || new Error('润色失败');
 
     
 
@@ -61718,7 +61726,25 @@ async function startJournalPolish() {
 
     var polishModelSel = (document.getElementById('polishModel') || {}).value || '';
 
-    var result = polishModelSel ? await callDeepSeekAPI(systemPrompt, userPrompt, 4000, polishModelSel) : await callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+    var result = null;
+
+    var lastErr = null;
+
+    var callPolishOnce = function() {
+
+      return polishModelSel ? callDeepSeekAPI(systemPrompt, userPrompt, 4000, polishModelSel) : callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+
+    };
+
+    for (var retryNum = 0; retryNum < 2; retryNum++) {
+
+      try { result = await callPolishOnce(); break; }
+
+      catch(e) { lastErr = e; if (retryNum < 1) await new Promise(function(r2) { setTimeout(r2, 2500); }); }
+
+    }
+
+    if (!result) throw lastErr || new Error('润色失败');
 
     
 
