@@ -13836,6 +13836,7 @@ console.log('✅ 学习工具入口已加载');
 
       <button onclick="switchPaperSubTab('route')" id="paperTab-route" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">技术路线图</button>
       <button onclick="switchPaperSubTab('refcheck')" id="paperTab-refcheck" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">引用核验</button>
+      <button onclick="switchPaperSubTab('pipeline')" id="paperTab-pipeline" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">写作流水线</button>
 
     </div>
 
@@ -15454,6 +15455,44 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="refCheckResult" style="display:none"></div>
+
+    </div>
+
+
+
+    <!-- 论文写作流水线（Agent 工厂·7角色协作） -->
+
+    <div id="paperContent-pipeline" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">🏭 论文写作流水线（Agent 工厂）</div>
+
+        <div style="font-size:13px;color:#059669">七个 AI 角色协作完成一篇论文：💡选题 → 🔎检索（真实文献库）→ 📋大纲 → ✍️写作 → 🔬审稿 → 📚选刊 → ✉️回复。产物自动传递，全程可查看、可修正</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:8px">研究主题 / 方向</label>
+
+        <input id="pipeTopic" placeholder="例如：高强度间歇训练对青少年心肺适能的影响" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+        <div style="display:flex;gap:10px;margin-top:12px">
+
+          <button onclick="startPaperPipeline()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🚀 开始流水线</button>
+
+          <button onclick="runAutoPipeline()" style="background:#fff;color:#16a34a;border:1.5px solid #16a34a;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">⚡ 自动流水线（一键跑完）</button>
+
+          <span id="pipeStatus" style="font-size:12px;color:#6b7280;align-self:center"></span>
+
+        </div>
+
+      </div>
+
+      <div id="pipeProgress" style="display:none"></div>
+
+      <div id="pipeOutput" style="display:none"></div>
 
     </div>
 
@@ -56039,7 +56078,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -125493,6 +125532,228 @@ async function aiRefCheckReport() {
   status.textContent = 'AI 报告已生成';
 }
 </script>
+<script>
+// ========== 论文写作流水线（Agent 工厂·7角色协作） ==========
+const PIPE_STEPS = [
+  {id:'topic', name:'选题 Agent', icon:'💡', desc:'确定研究题目'},
+  {id:'search', name:'检索 Agent', icon:'🔎', desc:'检索真实文献（EuropePMC）'},
+  {id:'outline', name:'大纲 Agent', icon:'📋', desc:'搭建论文骨架'},
+  {id:'write', name:'写作 Agent', icon:'✍️', desc:'逐节撰写正文（4节）'},
+  {id:'review', name:'审稿 Agent', icon:'🔬', desc:'同行评审'},
+  {id:'journal', name:'选刊 Agent', icon:'📚', desc:'推荐目标期刊'},
+  {id:'cover', name:'回复 Agent', icon:'✉️', desc:'生成 Cover Letter'}
+];
+const PIPE_IDMAP = ['pipeSelTitle','pipeSearchResult','pipeOutlineResult','pipeWriteResult','pipeReviewResult','pipeJournalResult','pipeCoverResult'];
+
+function startPaperPipeline(){
+  const topic = (document.getElementById('pipeTopic').value||'').trim();
+  if(!topic){ alert('请先输入研究主题/方向'); return; }
+  window._pipe = { topic: topic, step: 0, title:'', refs:[], outline:'', sections:[], sectionIdx:0, review:'', journal:'', cover:'', running:false };
+  document.getElementById('pipeProgress').style.display='block';
+  document.getElementById('pipeOutput').style.display='block';
+  renderPipeProgress();
+  renderPipeStep(0);
+  document.getElementById('pipeStatus').textContent = '流水线已初始化，请执行第 1 步「选题 Agent」';
+}
+
+function renderPipeProgress(){
+  const p = window._pipe; if(!p) return;
+  const el = document.getElementById('pipeProgress');
+  let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px">';
+  html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">流水线进度</div>';
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+  PIPE_STEPS.forEach(function(s, i){
+    const done = p.step > i;
+    const cur = p.step === i;
+    html += '<div style="padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;' + (done ? 'background:#16a34a;color:#fff' : cur ? 'background:#fef3c7;color:#92400e;border:1.5px solid #f59e0b' : 'background:#f3f4f6;color:#9ca3af') + '">' + (done?'✅ ':'') + s.icon + ' ' + s.name + '</div>';
+  });
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+function renderPipeStep(cur){
+  const p = window._pipe; if(!p) return;
+  const el = document.getElementById('pipeOutput');
+  let html = '';
+  PIPE_STEPS.forEach(function(s, i){
+    let val = '', state = 'todo';
+    if(i < p.step){
+      state = 'done';
+      if(i===0) val = p.title||'';
+      else if(i===1) val = (p.refs||[]).map(function(x,j){ return (j+1)+'. '+(x.authors?x.authors+'. ':'')+x.title+(x.journal?' ['+x.journal+(x.year?' '+x.year:'')+']':'')+(x.doi?' doi:'+x.doi:'')+(x.pmid?' PMID:'+x.pmid:''); }).join('\n');
+      else if(i===2) val = p.outline||'';
+      else if(i===3) val = (p.sections||[]).join('\n\n');
+      else if(i===4) val = p.review||'';
+      else if(i===5) val = p.journal||'';
+      else if(i===6) val = p.cover||'';
+    } else if(i === cur){
+      state = 'current';
+    }
+    html += pipeStepCardHTML(s, i, val, state);
+  });
+  el.innerHTML = html;
+}
+
+function pipeStepCardHTML(s, i, val, state){
+  let html = '<div style="background:#fff;border:1px solid '+(state==='current'?'#f59e0b':state==='done'?'#16a34a':'#e5e7eb')+';border-radius:12px;padding:18px;margin-bottom:14px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+  html += '<div><span style="font-size:15px;font-weight:700;color:#1f2937">'+s.icon+' '+s.name+'</span> <span style="font-size:11px;color:#6b7280;margin-left:6px">'+s.desc+'</span></div>';
+  if(state==='done') html += '<span style="background:#ecfdf5;color:#047857;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600">✅ 已生成</span>';
+  else if(state==='current') html += '<span style="background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600">⏳ 当前步骤</span>';
+  else html += '<span style="background:#f3f4f6;color:#9ca3af;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600">待执行</span>';
+  html += '</div>';
+  if(state!=='todo'){
+    html += '<textarea id="'+PIPE_IDMAP[i]+'" rows="'+(i===1?8:i===3?12:7)+'" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.7;box-sizing:border-box;font-family:inherit">'+(val||'')+'</textarea>';
+  } else {
+    html += '<div style="font-size:12px;color:#9ca3af">完成上一步后自动解锁</div>';
+  }
+  if(state==='current'){
+    let btnText = '执行本步';
+    if(i===3){ btnText = '写下一节（' + ((window._pipe&&window._pipe.sectionIdx||0)+1) + '/4）'; }
+    html += '<button onclick="runPipeStep('+i+')" style="background:#16a34a;color:#fff;border:none;padding:9px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;margin-top:10px">'+btnText+'</button>';
+  }
+  html += '</div>';
+  return html;
+}
+
+async function runPipeStep(i){
+  const p = window._pipe; if(!p || p.running) return;
+  p.running = true;
+  const status = document.getElementById('pipeStatus');
+  try{
+    // 回读用户对已完成产物的编辑（可修正）
+    const gv = function(id){ const el = document.getElementById(id); return el ? el.value : null; };
+    if(p.step > 0) p.title = gv('pipeSelTitle') || p.title;
+    if(p.step > 1) { const t = gv('pipeSearchResult'); if(t) p.refs = t.split('\n').filter(function(x){return x.trim();}).map(function(x){return {title:x};}); }
+    if(p.step > 2) p.outline = gv('pipeOutlineResult') || p.outline;
+    if(p.step > 3) { const t = gv('pipeWriteResult'); if(t) p.sections = [t]; }
+    if(p.step > 4) p.review = gv('pipeReviewResult') || p.review;
+    if(p.step > 5) p.journal = gv('pipeJournalResult') || p.journal;
+    if(p.step > 6) p.cover = gv('pipeCoverResult') || p.cover;
+    status.textContent = '正在执行：' + PIPE_STEPS[i].name + '...';
+    if(i===0) await pipeSelectTopic();
+    else if(i===1) await pipeSearchLiterature();
+    else if(i===2) await pipeBuildOutline();
+    else if(i===3) await pipeWriteSection();
+    else if(i===4) await pipeReview();
+    else if(i===5) await pipeSuggestJournal();
+    else if(i===6) await pipeGenCover();
+    p.step = Math.min(i+1, 7);
+    renderPipeProgress();
+    if(p.step < 7){ renderPipeStep(p.step); status.textContent = '第'+(p.step+1)+'步待执行：'+PIPE_STEPS[p.step].name; }
+    else { renderPipeStep(6); status.textContent = '✅ 流水线完成！可编辑任意产物或重新执行'; }
+  }catch(e){
+    status.textContent = '本步失败：' + e.message;
+    alert('第'+(i+1)+'步执行失败：'+e.message);
+  }
+  p.running = false;
+}
+
+async function runAutoPipeline(){
+  const p = window._pipe;
+  if(!p){ alert('请先输入主题并点击「开始流水线」'); return; }
+  if(p.running) return;
+  p.running = true;
+  document.getElementById('pipeStatus').textContent = '⚡ 自动流水线运行中（约5-6分钟），请勿关闭页面...';
+  for(let i = 0; i < 7; i++){
+    if(p.step < i+1){
+      document.getElementById('pipeStatus').textContent = '正在执行：' + PIPE_STEPS[i].name + '...';
+      try{
+        if(i===0) await pipeSelectTopic();
+        else if(i===1) await pipeSearchLiterature();
+        else if(i===2) await pipeBuildOutline();
+        else if(i===3) { while(p.sectionIdx < 4){ await pipeWriteSection(); } }
+        else if(i===4) await pipeReview();
+        else if(i===5) await pipeSuggestJournal();
+        else if(i===6) await pipeGenCover();
+        p.step = i+1;
+        renderPipeProgress();
+      }catch(e){
+        alert('第'+(i+1)+'步「'+PIPE_STEPS[i].name+'」失败：'+e.message+'。流水线暂停，可修正后重试。');
+        break;
+      }
+    }
+  }
+  p.running = false;
+  renderPipeProgress();
+  if(p.step < 7){ renderPipeStep(p.step); document.getElementById('pipeStatus').textContent = '流水线暂停于第'+(p.step+1)+'步'; }
+  else { renderPipeStep(6); document.getElementById('pipeStatus').textContent = '✅ 流水线全部完成！'; }
+}
+
+// --- 选题 Agent ---
+async function pipeSelectTopic(){
+  const p = window._pipe;
+  const sys = '你是体育科学研究选题专家。基于用户的研究主题方向，给出1-2个具体、可操作、有创新点的研究题目，并简要说明每个题目的选题理由（创新点、可行性、发表潜力）。';
+  const usr = '研究方向：' + p.topic;
+  const r = await callDeepSeekAPI(sys, usr, 1200);
+  p.title = r;
+}
+
+// --- 检索 Agent（真实调用 EuropePMC） ---
+async function pipeSearchLiterature(){
+  const p = window._pipe;
+  const q = encodeURIComponent(p.topic + ' AND (sport OR exercise OR "physical activity" OR training OR physical education)');
+  const r = await fetch('https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=' + q + '&format=json&pageSize=8&resultType=core');
+  const j = await r.json();
+  const res = (j.resultList && j.resultList.result) || [];
+  p.refs = res.map(function(x){
+    return { title: x.title||'', journal: (x.journalInfo && x.journalInfo.journal && x.journalInfo.journal.title)||'', year: x.pubYear||'', doi: x.doi||'', pmid: x.pmid||'', authors: (x.authorString||'').slice(0,80) };
+  });
+  if(!p.refs.length){ p.refs = [{title:'（EuropePMC 未检索到文献，请调整主题关键词后重试）', journal:'', year:'', doi:'', pmid:'', authors:''}]; }
+}
+
+// --- 大纲 Agent ---
+async function pipeBuildOutline(){
+  const p = window._pipe;
+  const refsText = (p.refs||[]).map(function(x,i){ return (i+1)+'. '+x.title+(x.journal?' ('+x.journal+')':''); }).join('\n');
+  const sys = '你是体育科学研究设计专家。基于研究题目和真实文献，生成论文大纲（IMRaD结构）：1.标题建议 2.摘要要点 3.引言（背景-研究缺口-研究目的与假设）4.方法（研究对象/分组/干预方案/测量指标/统计方法）5.预期结果框架 6.讨论要点 7.局限性。每节用要点式条目，引用文献处标注[序号]。';
+  const usr = '研究题目：' + (p.title || p.topic) + '\n\n检索到的真实文献：\n' + refsText;
+  const r = await callDeepSeekAPI(sys, usr, 2000);
+  p.outline = r;
+}
+
+// --- 写作 Agent（分节） ---
+async function pipeWriteSection(){
+  const p = window._pipe;
+  const sections = ['引言','方法','结果（框架）','讨论'];
+  const idx = p.sectionIdx;
+  if(idx >= sections.length) return;
+  const sys = '你是体育科学论文写作专家。根据大纲和文献，撰写论文「'+sections[idx]+'」章节正文。要求：学术规范、逻辑清晰、引用文献处标注[序号]，约500-800字。只输出本章节内容，不要输出其他章节。';
+  const usr = '研究题目：' + (p.title || p.topic) + '\n\n大纲：\n' + (p.outline || '') + '\n\n文献列表：\n' + (p.refs||[]).map(function(x,i){ return (i+1)+'. '+x.title; }).join('\n');
+  const r = await callDeepSeekAPI(sys, usr, 1500);
+  p.sections[idx] = r;
+  p.sectionIdx++;
+}
+
+// --- 审稿 Agent ---
+async function pipeReview(){
+  const p = window._pipe;
+  const full = '题目：' + (p.title||p.topic) + '\n\n大纲：\n' + (p.outline||'') + '\n\n正文：\n' + (p.sections||[]).join('\n\n');
+  const sys = '你是体育科学期刊审稿人。对稿件给出结构化评审意见：1.【总体评价】2.【主要问题】必须修改项 3.【次要问题】建议修改项 4.【亮点】5.【录用建议】接收/小修/大修/拒稿。意见具体、可操作。';
+  const usr = full;
+  const r = await callDeepSeekAPI(sys, usr, 1800);
+  p.review = r;
+}
+
+// --- 选刊 Agent ---
+async function pipeSuggestJournal(){
+  const p = window._pipe;
+  const sys = '你是体育科学学术出版顾问。基于论文主题和内容，推荐3-5本合适的SCI/SSCI期刊或中文核心期刊，逐本说明推荐理由（方向匹配度、影响因子区间、审稿周期特点、投稿难度）。';
+  const usr = '研究主题：' + p.topic + '\n研究题目：' + (p.title||'') + '\n大纲摘要：\n' + (p.outline||'').slice(0,800);
+  const r = await callDeepSeekAPI(sys, usr, 1200);
+  p.journal = r;
+}
+
+// --- 回复 Agent ---
+async function pipeGenCover(){
+  const p = window._pipe;
+  const sys = '你是学术论文投稿专家。生成一封专业的英文 Cover Letter（投稿信）给目标期刊编辑：说明研究价值、创新点、与期刊方向匹配的理由。约200-300词，正式、简洁、有说服力。';
+  const usr = '目标期刊建议：\n' + (p.journal||'') + '\n\n研究题目：' + (p.title||p.topic) + '\n\n摘要/大纲：\n' + (p.outline||'').slice(0,600);
+  const r = await callDeepSeekAPI(sys, usr, 1000);
+  p.cover = r;
+}
+</script>
+
 
 
 
