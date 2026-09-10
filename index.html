@@ -16695,6 +16695,16 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
         <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:14px 0 6px">教学要点 / 参考内容（可选）</label>
         <textarea id="pptExtra" rows="2" placeholder="例如：重点讲磷酸原与糖酵解供能系统，结合100米/800米案例" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
 
+        <div style="margin-top:14px;padding:12px;background:#f9fafb;border:1px dashed #d1d5db;border-radius:8px">
+          <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:8px">📎 上传参考文件（教案/教材 PDF·Word·txt，可选，AI 将参考其内容生成课件）</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <input type="file" id="pptRefFile" accept=".pdf,.docx,.doc,.txt" style="display:none" onchange="readPptRefFile(this.files[0])">
+            <button onclick="document.getElementById('pptRefFile').click()" style="background:#fff;border:1px solid #2563eb;color:#2563eb;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">选择文件</button>
+            <span id="pptRefName" style="font-size:12px;color:#6b7280">未选择文件</span>
+            <button onclick="clearPptRef()" id="pptRefClear" style="display:none;background:#fff;border:1px solid #dc2626;color:#dc2626;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px">清除</button>
+          </div>
+        </div>
+
         <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">
           <button onclick="runPptGen()" style="background:#2563eb;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🚀 生成课件大纲</button>
           <label style="font-size:12px;color:#4b5563;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="pptHealthCheck" checked style="vertical-align:middle">生成后 GLM 体检</label>
@@ -127790,7 +127800,7 @@ async function runPptGen(){
   const audienceMap = {undergrad:'本科生',master:'硕士研究生',vocational:'职业教育学生',other:'通用'};
   const styleMap = {academic:'学术蓝（严谨专业）',fresh:'清新绿（明快活泼）',dark:'深色科技（现代感）',warm:'教育暖色（亲和）'};
   const sys = '你是高校体育专业课件设计专家。针对给定科目章节，按【' + audienceMap[audience] + '】对象、' + hours + '课时、【' + styleMap[style] + '】风格，生成完整课件大纲。严格按以下固定格式输出，每页用 ===PAGE=== 分隔：\n===PAGE===\n【类型】封面|目录|导入|新授|案例|练习|小结|作业|结束\n【标题】页面标题\n【要点】要点1｜要点2｜要点3（新授页3-5个要点，其他页按需）\n【备注】教师讲稿提示（2-3句）\n===PAGE===\n...\n要求：封面1页+目录1页+导入1页+新授若干页（按知识点拆分）+案例1页+练习1页+小结1页+作业1页+结束1页，总页数约' + (parseInt(hours)*12) + '页左右。标题简洁，要点精炼可直接上PPT。';
-  const usr = '科目章节：' + topic + (extra ? '\n教学要点：' + extra : '');
+  const usr = '科目章节：' + topic + (extra ? '\n教学要点：' + extra : '') + (__pptRefText ? '\n\n【参考文件内容】\n' + __pptRefText.slice(0, 6000) : '');
   let out = '';
   try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
   if(!out.trim()){
@@ -127861,6 +127871,8 @@ function renderPptSlides(){
   html += '<span id="pptPageInfo" style="font-size:14px;font-weight:600;color:#1f2937">' + (__pptCurrent+1) + ' / ' + __pptSlides.length + '</span>';
   html += '<button onclick="pptNextPage()" style="background:#fff;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">下一页 ▶</button>';
   html += '<button onclick="pptToggleGrid()" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">▦ 网格总览</button>';
+  html += '<button onclick="pptEnhanceAll()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🚀 六路全增强</button>';
+  html += '<span id="pptEnhanceStatus" style="font-size:11px;color:#6b7280"></span>';
   html += '</div>';
 
   if(__pptGridView){
@@ -127918,6 +127930,187 @@ async function healthCheckPpt(outlineText, pageCount, topic){
   if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'kimi-k3', 120000); }catch(e){ out = ''; } }
   if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'hy3', 120000); }catch(e){ out = ''; } }
   return out;
+}
+
+// ========== PPT 参考文件上传 ==========
+let __pptRefText = '';
+function readPptRefFile(file){
+  if(!file) return;
+  const nameEl = document.getElementById('pptRefName');
+  const clearEl = document.getElementById('pptRefClear');
+  nameEl.textContent = '解析中：' + file.name + '...';
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  if(ext === 'txt'){
+    reader.onload = function(e){
+      __pptRefText = (e.target.result || '').slice(0, 12000);
+      nameEl.textContent = '✅ ' + file.name + '（' + __pptRefText.length + ' 字）';
+      if(clearEl) clearEl.style.display = 'inline-block';
+    };
+    reader.readAsText(file, 'UTF-8');
+  } else if(ext === 'docx' || ext === 'doc'){
+    reader.onload = function(e){
+      if(typeof mammoth === 'undefined'){
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+        s.onload = function(){ parsePptDocx(e.target.result, file.name); };
+        document.head.appendChild(s);
+      } else { parsePptDocx(e.target.result, file.name); }
+    };
+    reader.readAsArrayBuffer(file);
+  } else if(ext === 'pdf'){
+    reader.onload = function(e){ parsePptPdf(e.target.result, file.name); };
+    reader.readAsArrayBuffer(file);
+  } else {
+    nameEl.textContent = '不支持的格式：' + ext;
+  }
+}
+function parsePptDocx(buf, name){
+  mammoth.extractRawText({arrayBuffer: buf}).then(function(res){
+    __pptRefText = (res.value || '').slice(0, 12000);
+    document.getElementById('pptRefName').textContent = '✅ ' + name + '（' + __pptRefText.length + ' 字）';
+    document.getElementById('pptRefClear').style.display = 'inline-block';
+  }).catch(function(){ document.getElementById('pptRefName').textContent = '⚠️ Word 解析失败'; });
+}
+function parsePptPdf(buf, name){
+  if(typeof pdfjsLib === 'undefined'){
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = function(){ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; doPptPdf(buf, name); };
+    document.head.appendChild(s);
+  } else { doPptPdf(buf, name); }
+}
+function doPptPdf(buf, name){
+  pdfjsLib.getDocument({data: buf}).promise.then(function(pdf){
+    let full = '';
+    let count = 0;
+    for(let i=1;i<=Math.min(pdf.numPages, 30);i++){
+      pdf.getPage(i).then(function(page){
+        page.getTextContent().then(function(tc){
+          full += tc.items.map(function(it){ return it.str; }).join(' ') + '\n';
+          count++;
+          if(count >= Math.min(pdf.numPages, 30)){
+            __pptRefText = full.slice(0, 12000);
+            document.getElementById('pptRefName').textContent = '✅ ' + name + '（' + __pptRefText.length + ' 字）';
+            document.getElementById('pptRefClear').style.display = 'inline-block';
+          }
+        });
+      });
+    }
+  }).catch(function(){ document.getElementById('pptRefName').textContent = '⚠️ PDF 解析失败（可能是扫描件）'; });
+}
+function clearPptRef(){
+  __pptRefText = '';
+  document.getElementById('pptRefFile').value = '';
+  document.getElementById('pptRefName').textContent = '未选择文件';
+  document.getElementById('pptRefClear').style.display = 'none';
+}
+
+// ========== PPT 六路并行增强 ==========
+function pptSlidesSummary(){
+  let lines = [];
+  for(var i=0;i<__pptSlides.length;i++){
+    const sl = __pptSlides[i];
+    lines.push('P' + (i+1) + '[' + sl.type + '] ' + sl.title + '：' + sl.points.join('；'));
+  }
+  return lines.join('\n').slice(0, 6000);
+}
+
+async function pptEnhanceKimi(){
+  const sys = '你是体育教学资源设计专家。基于课件大纲，为每页补充教学资源，输出格式：P页码｜【情境】导入情境｜【提问】2-3个课堂提问｜【易错】1个易错点。只输出有内容的页，简洁可操作。';
+  const usr = '课件大纲：\n' + pptSlidesSummary();
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 2000, 'kimi-k3', 90000); }catch(e){ out = ''; }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2000, 'deepseek-chat', 90000); }catch(e){ out = ''; } }
+  return out;
+}
+
+async function pptEnhanceHy(){
+  const sys = '你是经验丰富的体育教师，从学生视角审视课件。输出格式：P页码｜学生最可能卡壳处｜教师化解建议（一句话）。只输出有卡壳风险的页。';
+  const usr = '课件大纲：\n' + pptSlidesSummary();
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 1500, 'hy3', 90000); }catch(e){ out = ''; }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 1500, 'deepseek-chat', 90000); }catch(e){ out = ''; } }
+  return out;
+}
+
+async function pptEnhanceHy4(){
+  const sys = '你是高校授课讲稿撰写专家。为课件每页生成可直接照读的教师讲稿（含过渡语），输出格式：P页码｜讲稿内容（3-5句，口语化但专业）。覆盖所有页。';
+  const usr = '课件大纲：\n' + pptSlidesSummary();
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 3000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 3000, 'hy3', 120000); }catch(e){ out = ''; } }
+  return out;
+}
+
+async function pptEnhanceFlash(){
+  const sys = '你是体育科学术语核验专家。检查课件中出现的专业术语，输出核验报告：✅术语正确（列出）｜⚠️表述存疑（说明原因）｜❌疑似错误（给出正确表述）。只输出有问题或需确认的术语。';
+  const usr = '课件大纲：\n' + pptSlidesSummary();
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 1500, 'deepseek-chat', 90000); }catch(e){ out = ''; }
+  return out;
+}
+
+async function pptEnhancePro(){
+  const sys = '你是体育科学深度讲解专家。识别课件中的重难点页，为每页提供深入讲解思路（类比/图示/案例/拓展），输出格式：P页码｜【重难点】...｜【讲解思路】...。只输出重难点页（约3-5页）。';
+  const usr = '课件大纲：\n' + pptSlidesSummary();
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 2000, 'deepseek-v4-pro', 90000); }catch(e){ out = ''; }
+  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2000, 'deepseek-chat', 90000); }catch(e){ out = ''; } }
+  return out;
+}
+
+async function pptEnhanceAll(){
+  if(__pptSlides.length === 0){ alert('请先生成课件大纲'); return; }
+  const statusEl = document.getElementById('pptEnhanceStatus');
+  if(statusEl) statusEl.textContent = '六路并行中（GLM体检·Kimi资源·混元视角·讲稿·术语·重难点）...';
+  const resEl = document.getElementById('pptResult');
+  // 移除旧增强块
+  const oldBlk = document.getElementById('pptEnhanceBlock');
+  if(oldBlk) oldBlk.remove();
+  try{
+    const results = await Promise.allSettled([
+      healthCheckPpt(pptSlidesSummary(), __pptSlides.length, '课件'),
+      pptEnhanceKimi(),
+      pptEnhanceHy(),
+      pptEnhanceHy4(),
+      pptEnhanceFlash(),
+      pptEnhancePro()
+    ]);
+    const labels = ['GLM体检','Kimi资源','混元视角','讲稿润色','术语核验','重难点讲解'];
+    const outputs = results.map(function(r, i){ return r.status === 'fulfilled' ? r.value : ''; });
+    const okCount = outputs.filter(function(o){ return o && o.trim(); }).length;
+    // 注入讲稿到对应页备注
+    if(outputs[3] && outputs[3].trim()){
+      const lines = outputs[3].split('\n');
+      for(var i=0;i<lines.length;i++){
+        const m = lines[i].match(/P(\d+)[｜|\s]+(.+)/);
+        if(m){
+          const idx = parseInt(m[1]) - 1;
+          if(idx >= 0 && idx < __pptSlides.length){
+            __pptSlides[idx].notes = m[2].trim();
+          }
+        }
+      }
+    }
+    renderPptSlides();
+    // 渲染增强报告块
+    const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    let blkHtml = '<div id="pptEnhanceBlock" style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:20px;margin-top:16px">';
+    blkHtml += '<div style="font-size:14px;font-weight:700;color:#6b21a8;margin-bottom:10px">🚀 六路增强报告（' + okCount + '/6 路返回）</div>';
+    for(var j=0;j<6;j++){
+      if(outputs[j] && outputs[j].trim()){
+        blkHtml += '<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed #e9d5ff"><div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:6px">' + labels[j] + '</div><div style="font-size:12px;line-height:1.8;color:#1f2937;white-space:pre-wrap">' + esc(outputs[j].slice(0, 2000)) + '</div></div>';
+      } else {
+        blkHtml += '<div style="margin-bottom:10px;font-size:12px;color:#9ca3af">⚠️ ' + labels[j] + '未返回（模型超时，可单独重试）</div>';
+      }
+    }
+    blkHtml += '</div>';
+    resEl.insertAdjacentHTML('beforeend', blkHtml);
+    if(statusEl) statusEl.textContent = '✅ 六路增强完成（' + okCount + '/6）';
+  }catch(e){
+    if(statusEl) statusEl.textContent = '⚠️ 增强失败：' + e.message;
+  }
 }
 
 async function healthCheckLesson(lessonText, formatReq){
