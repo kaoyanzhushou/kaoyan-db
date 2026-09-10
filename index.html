@@ -13844,6 +13844,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('dataflow')" id="paperTab-dataflow" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">数据链路</button>
       <button onclick="switchPaperSubTab('ailog')" id="paperTab-ailog" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">决策日志</button>
       <button onclick="switchPaperSubTab('acadeng')" id="paperTab-acadeng" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">学术英语</button>
+      <button onclick="switchPaperSubTab('ethics')" id="paperTab-ethics" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">伦理合规</button>
 
     </div>
 
@@ -15766,6 +15767,44 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="acadResult" style="display:none"></div>
+
+    </div>
+
+
+
+    <!-- 伦理与合规检查 -->
+
+    <div id="paperContent-ethics" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">⚖️ 伦理与合规检查</div>
+
+        <div style="font-size:13px;color:#059669">逐项核查伦理声明 / 利益冲突 / 伦理编号 / 临床注册号 / 数据可用性等，对照目标期刊要求给出 ✅⚠️❌ 清单与修改建议</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:8px">论文内容（摘要+方法+声明部分即可）</label>
+
+        <textarea id="ethicsInput" rows="8" placeholder="粘贴论文全文或关键部分（方法/声明/脚注）..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:12px 0 8px">目标期刊（可选）</label>
+
+        <input id="ethicsJournal" placeholder="例如：International Journal of Environmental Research and Public Health" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+
+          <button onclick="runEthicsCheck()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">⚖️ 开始检查</button>
+
+          <span id="ethicsStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+      </div>
+
+      <div id="ethicsResult" style="display:none"></div>
 
     </div>
 
@@ -56351,7 +56390,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -126447,6 +126486,35 @@ async function runAcadEng(){
   status.textContent = '生成完成';
 }
 </script>
+<script>
+// ========== 伦理与合规检查 ==========
+async function runEthicsCheck(){
+  const input = (document.getElementById('ethicsInput').value||'').trim();
+  const journal = (document.getElementById('ethicsJournal').value||'').trim();
+  if(!input){ alert('请粘贴论文内容'); return; }
+  const status = document.getElementById('ethicsStatus');
+  const resultEl = document.getElementById('ethicsResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ AI 伦理合规检查中（约1分钟）...</div>';
+  status.textContent = '检查中...';
+  const sys = '你是学术期刊伦理与合规审查专家。逐项检查论文的伦理合规性，输出检查清单：\n1.伦理审批（人体/动物实验伦理委员会批号是否声明）\n2.知情同意（是否提及，含监护人同意如涉及未成年人）\n3.利益冲突声明\n4.临床试验注册号（如为RCT/干预试验）\n5.数据可用性声明\n6.资助来源与基金声明\n7.作者贡献与致谢\n8.其他期刊要求（如临床注册、数据共享政策）\n每项判定：✅符合 / ⚠️缺失需补充（给具体补写模板） / ❌问题（说明风险）。最后给出「修改建议清单」与「投稿前伦理自查要点」。' + (journal ? '目标期刊：' + journal : '');
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, '论文内容：\n' + input.slice(0,6000), 2500, 'deepseek-chat', 90000); }catch(e){ out = ''; }
+  if(!out.trim()){
+    status.textContent = 'DeepSeek 超时，改用 V4-Pro 重试...';
+    try{ out = await callModelWithTimeout(sys, '论文内容：\n' + input.slice(0,6000), 2500, 'deepseek-v4-pro', 90000); }catch(e){ out = ''; }
+  }
+  if(!out.trim()){
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 检查失败（模型未返回），请重试</div>';
+    status.textContent = '检查失败';
+    return;
+  }
+  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px"><div style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:12px">⚖️ 伦理与合规检查报告</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
+  status.textContent = '检查完成';
+}
+</script>
+
 
 
 
