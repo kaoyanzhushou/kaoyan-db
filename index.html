@@ -60667,21 +60667,23 @@ async function startPolish() {
 
     
 
+    var polishTokens = [4000, 2500, 1500];
+
     var result = null;
 
     var lastErr = null;
 
-    var callPolishOnce = function() {
+    var callPolishOnce = function(tk) {
 
-      return model ? callDeepSeekAPI(systemPrompt, userPrompt, 4000, model) : callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+      return model ? callDeepSeekAPI(systemPrompt, userPrompt, tk, model) : callDeepSeekAPI(systemPrompt, userPrompt, tk);
 
     };
 
-    for (var retryNum = 0; retryNum < 2; retryNum++) {
+    for (var retryNum = 0; retryNum < 3; retryNum++) {
 
-      try { result = await callPolishOnce(); break; }
+      try { result = await callPolishOnce(polishTokens[retryNum] || 1500); break; }
 
-      catch(e) { lastErr = e; if (retryNum < 1) await new Promise(function(r2) { setTimeout(r2, 2500); }); }
+      catch(e) { lastErr = e; if (retryNum < 2) await new Promise(function(r2) { setTimeout(r2, 2000); }); }
 
     }
 
@@ -61726,21 +61728,23 @@ async function startJournalPolish() {
 
     var polishModelSel = (document.getElementById('polishModel') || {}).value || '';
 
+    var polishTokens = [4000, 2500, 1500];
+
     var result = null;
 
     var lastErr = null;
 
-    var callPolishOnce = function() {
+    var callPolishOnce = function(tk) {
 
-      return polishModelSel ? callDeepSeekAPI(systemPrompt, userPrompt, 4000, polishModelSel) : callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+      return polishModelSel ? callDeepSeekAPI(systemPrompt, userPrompt, tk, polishModelSel) : callDeepSeekAPI(systemPrompt, userPrompt, tk);
 
     };
 
-    for (var retryNum = 0; retryNum < 2; retryNum++) {
+    for (var retryNum = 0; retryNum < 3; retryNum++) {
 
-      try { result = await callPolishOnce(); break; }
+      try { result = await callPolishOnce(polishTokens[retryNum] || 1500); break; }
 
-      catch(e) { lastErr = e; if (retryNum < 1) await new Promise(function(r2) { setTimeout(r2, 2500); }); }
+      catch(e) { lastErr = e; if (retryNum < 2) await new Promise(function(r2) { setTimeout(r2, 2000); }); }
 
     }
 
