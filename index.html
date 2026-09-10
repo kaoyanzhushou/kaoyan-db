@@ -62649,6 +62649,9 @@ function runPlagCheck() {
           '<button onclick="batchAiRewrite(\'medium\')" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">✏️ 批量中度降重</button>' +
 
           '<button onclick="batchAiRewrite(\'deep\')" style="background:#faf5ff;color:#7e22ce;border:1px solid #e9d5ff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔥 批量深度降重</button>' +
+          '<button onclick="batchAiRewrite(\'academic\')" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🎓 批量学术化</button>' +
+          '<button onclick="batchAiRewrite(\'concise\')" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📐 批量精炼</button>' +
+          '<button onclick="batchAiRewrite(\'expand\')" style="background:#fffbeb;color:#b45309;border:1px solid #fde68a;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔬 批量扩充</button>' +
 
         '</div>' +
 
@@ -62671,6 +62674,9 @@ function runPlagCheck() {
             '<button onclick="aiRewriteSentence(' + i + ',\'medium\')" style="background:#f5f3ff;color:#6d28d9;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">✏️ 中度降重</button>' +
 
             '<button onclick="aiRewriteSentence(' + i + ',\'deep\')" style="background:#faf5ff;color:#7e22ce;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">🔥 深度降重</button>' +
+            '<button onclick="aiRewriteSentence(' + i + ',\'academic\')" style="background:#f0f9ff;color:#0369a1;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">🎓 学术化</button>' +
+            '<button onclick="aiRewriteSentence(' + i + ',\'concise\')" style="background:#f0fdf4;color:#15803d;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">📐 精炼</button>' +
+            '<button onclick="aiRewriteSentence(' + i + ',\'expand\')" style="background:#fffbeb;color:#b45309;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">🔬 扩充</button>' +
 
             '</div>' +
 
@@ -62728,9 +62734,31 @@ var REWRITE_MODES = {
 
   medium: { label: '中度降重', desc: '调整语序与句式结构，替换常用表达，保持学术严谨', color: '#6d28d9', bg: '#f5f3ff' },
 
-  deep: { label: '深度降重', desc: '全面重写句子结构与表达方式，突出原创性，改动幅度最大', color: '#7e22ce', bg: '#faf5ff' }
+  deep: { label: '深度降重', desc: '全面重写句子结构与表达方式，突出原创性，改动幅度最大', color: '#7e22ce', bg: '#faf5ff' },
+
+  academic: { label: '学术化改写', desc: '在降重同时提升学术规范性与专业表达，优化措辞与术语使用，适合表述口语化或不够专业的句子', color: '#0369a1', bg: '#f0f9ff' },
+
+  concise: { label: '精炼降重', desc: '压缩冗余表述、删繁就简、合并重复信息，使句子更凝练同时降低重复度', color: '#15803d', bg: '#f0fdf4' },
+
+  expand: { label: '扩充改写', desc: '在保持原意基础上补充学术背景或机制描述，深化内容表达，通过重写与拓展降低重复度', color: '#b45309', bg: '#fffbeb' }
 
 };
+
+function getModelLabel(mid) {
+
+  var arr = (typeof AI_MODELS !== 'undefined') ? AI_MODELS : [];
+
+  for (var i = 0; i < arr.length; i++) {
+
+    if (arr[i].value === mid) return arr[i].label || mid;
+
+  }
+
+  var map = { 'deepseek-chat': 'DeepSeek V3', 'deepseek-v4-pro': 'DeepSeek V4 Pro', 'deepseek-v4-flash': 'DeepSeek V4 Flash', 'glm-5.3': 'GLM-5.3', 'kimi-k3': 'Kimi K3', 'hy3': '混元 hy3', 'hy4-preview': '混元 V4 Preview' };
+
+  return map[mid] || mid;
+
+}
 
 
 
@@ -62790,7 +62818,7 @@ function aiRewriteSentence(idx, mode) {
 
         resultEl.innerHTML = '<div style="padding:10px;background:' + cfg.bg + ';border:1px solid ' + cfg.color + '33;border-radius:6px">' +
 
-          '<div style="font-size:11px;color:' + cfg.color + ';font-weight:600;margin-bottom:6px">✨ ' + cfg.label + '降重结果</div>' +
+          '<div style="font-size:11px;color:' + cfg.color + ';font-weight:600;margin-bottom:6px">✨ ' + cfg.label + '降重结果 · 模型：' + getModelLabel(getPlagModel()) + '</div>' +
 
           '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">' +
 
