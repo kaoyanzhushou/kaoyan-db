@@ -126687,8 +126687,8 @@ async function runMentorReview(){
 <script>
 // ========== 个人学术知识库（沉淀+检索） ==========
 function getKn(){ try{ return JSON.parse(localStorage.getItem('aiKn') || '[]'); }catch(e){ return []; } }
-function saveKn(){
-  try{ localStorage.setItem('aiKn', JSON.stringify(getKn())); }catch(e){}
+function saveKn(list){
+  try{ localStorage.setItem('aiKn', JSON.stringify(list || getKn())); }catch(e){}
 }
 function saveKnItem(){
   const cat = document.getElementById('knCat').value;
@@ -126698,7 +126698,7 @@ function saveKnItem(){
   const items = getKn();
   items.unshift({ cat: cat, title: title, content: content, t: new Date().toLocaleString('zh-CN') });
   if(items.length > 500) items.length = 500;
-  saveKn();
+  saveKn(items);
   document.getElementById('knTitle').value = '';
   document.getElementById('knContent').value = '';
   document.getElementById('knStatus').textContent = '✅ 已沉淀到知识库';
@@ -126707,7 +126707,7 @@ function saveKnItem(){
 function delKnItem(idx){
   const items = getKn();
   items.splice(idx, 1);
-  saveKn();
+  saveKn(items);
   renderKn();
 }
 function renderKn(){
