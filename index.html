@@ -13846,6 +13846,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('acadeng')" id="paperTab-acadeng" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">学术英语</button>
       <button onclick="switchPaperSubTab('ethics')" id="paperTab-ethics" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">伦理合规</button>
       <button onclick="switchPaperSubTab('mentor')" id="paperTab-mentor" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">导师视角</button>
+      <button onclick="switchPaperSubTab('knowledge')" id="paperTab-knowledge" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">知识库</button>
 
     </div>
 
@@ -15844,6 +15845,62 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="mentorResult" style="display:none"></div>
+
+    </div>
+
+
+
+    <!-- 个人学术知识库（经验沉淀+检索复用） -->
+
+    <div id="paperContent-knowledge" style="display:none">
+
+      <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">📚 个人学术知识库</div>
+
+        <div style="font-size:13px;color:#059669">沉淀每次写作/审稿/返修/润色的经验（"上次审稿人抓了哪些点""这个机制上次怎么表达的"），下次写作直接检索复用</div>
+
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+
+        <div style="display:flex;gap:10px;margin-bottom:12px">
+
+          <select id="knCat" style="border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px">
+
+            <option value="写作表达">✍️ 写作表达</option>
+
+            <option value="审稿意见">🔍 审稿意见</option>
+
+            <option value="统计方法">📊 统计方法</option>
+
+            <option value="返修经验">🔧 返修经验</option>
+
+            <option value="其他">📌 其他</option>
+
+          </select>
+
+          <input id="knTitle" placeholder="条目标题（可选），如：审稿人对样本量的意见" style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+
+        </div>
+
+        <textarea id="knContent" rows="3" placeholder="经验内容，如：上次审稿人要求补充样本量计算过程，用G*Power给出效应量假设..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">
+
+          <button onclick="saveKnItem()" style="background:#16a34a;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">💾 沉淀到知识库</button>
+
+          <input id="knSearch" placeholder="🔍 检索知识库（关键词）" style="flex:1;min-width:200px;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key==='Enter')renderKn()">
+
+          <button onclick="renderKn()" style="background:#2563eb;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">检索</button>
+
+          <span id="knStatus" style="font-size:12px;color:#6b7280"></span>
+
+        </div>
+
+      </div>
+
+      <div id="knList" style="display:none"></div>
 
     </div>
 
@@ -56429,7 +56486,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -126582,6 +126639,61 @@ async function runMentorReview(){
   status.textContent = '审阅完成';
 }
 </script>
+<script>
+// ========== 个人学术知识库（沉淀+检索） ==========
+function getKn(){ try{ return JSON.parse(localStorage.getItem('aiKn') || '[]'); }catch(e){ return []; } }
+function saveKn(){
+  try{ localStorage.setItem('aiKn', JSON.stringify(getKn())); }catch(e){}
+}
+function saveKnItem(){
+  const cat = document.getElementById('knCat').value;
+  const title = (document.getElementById('knTitle').value||'').trim();
+  const content = (document.getElementById('knContent').value||'').trim();
+  if(!content){ alert('请填写经验内容'); return; }
+  const items = getKn();
+  items.unshift({ cat: cat, title: title, content: content, t: new Date().toLocaleString('zh-CN') });
+  if(items.length > 500) items.length = 500;
+  saveKn();
+  document.getElementById('knTitle').value = '';
+  document.getElementById('knContent').value = '';
+  document.getElementById('knStatus').textContent = '✅ 已沉淀到知识库';
+  renderKn();
+}
+function delKnItem(idx){
+  const items = getKn();
+  items.splice(idx, 1);
+  saveKn();
+  renderKn();
+}
+function renderKn(){
+  const listEl = document.getElementById('knList');
+  const statusEl = document.getElementById('knStatus');
+  const q = (document.getElementById('knSearch').value||'').trim().toLowerCase();
+  let items = getKn();
+  if(q){
+    items = items.filter(function(it){
+      return (it.content||'').toLowerCase().indexOf(q) >= 0 || (it.title||'').toLowerCase().indexOf(q) >= 0;
+    });
+  }
+  statusEl.textContent = q ? ('检索到 ' + items.length + ' 条') : ('共 ' + items.length + ' 条');
+  listEl.style.display = 'block';
+  if(!items.length){
+    listEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:30px;text-align:center;color:#9ca3af;font-size:13px">' + (q ? '未找到匹配条目' : '知识库为空。把写作/审稿/返修的经验沉淀下来，下次直接复用。') + '</div>';
+    return;
+  }
+  const catColor = {'写作表达':'#2563eb','审稿意见':'#b45309','统计方法':'#7c3aed','返修经验':'#dc2626','其他':'#6b7280'};
+  listEl.innerHTML = items.map(function(it, i){
+    return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:8px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+      + '<div style="display:flex;gap:8px;align-items:center"><span style="font-size:11px;font-weight:700;color:' + (catColor[it.cat]||'#6b7280') + ';background:#f3f4f6;padding:2px 8px;border-radius:8px">' + it.cat + '</span><span style="font-size:13px;font-weight:700;color:#1f2937">' + (it.title||'') + '</span></div>'
+      + '<span style="font-size:11px;color:#9ca3af">' + it.t + ' <button onclick="delKnItem(' + i + ')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:2px 8px;cursor:pointer;font-size:11px;margin-left:6px">删除</button></span>'
+      + '</div>'
+      + '<div style="font-size:13px;color:#374151;line-height:1.7">' + (it.content||'').replace(/</g,'&lt;') + '</div>'
+      + '</div>';
+  }).join('');
+}
+</script>
+
 
 
 
