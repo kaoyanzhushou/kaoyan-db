@@ -16880,10 +16880,73 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
       <!-- ===== 子 tab 2-4,6：占位（P1/P2 实现） ===== -->
       <div id="mechContent-anim" style="display:none">
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:40px;text-align:center">
-          <div style="font-size:48px;margin-bottom:16px">🎬</div>
-          <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:8px">机制动画</div>
-          <div style="font-size:13px;color:#64748b;max-width:500px;margin:0 auto;line-height:1.8">基于机制图一键生成交互动画：分步可控播放、双视图同步（动画+原理）、物质流动/酶激活/信号级联/负反馈模板、多格式导出（GIF/MP4/SVG/HTML）。P1 阶段上线。</div>
+        <!-- 数据源选择 -->
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+            <div style="font-size:14px;font-weight:700;color:#0f172a">🎬 机制动画生成器</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <label style="font-size:12px;color:#64748b">数据源：</label>
+              <select id="animSource" onchange="loadAnimSource()" style="border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;font-size:12px">
+                <option value="current">当前机制图</option>
+              </select>
+              <button onclick="refreshAnimFromCurrent()" style="background:#0891b2;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔄 从当前图生成</button>
+            </div>
+          </div>
+          <div id="animInfo" style="font-size:12px;color:#64748b">请先在"机制图生成"中生成或从素材库加载一张机制图，然后点击"从当前图生成"</div>
+        </div>
+
+        <!-- 动画区 -->
+        <div id="animArea" style="display:none">
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px">
+            <!-- 控制栏 -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+              <div style="display:flex;gap:6px;align-items:center">
+                <button onclick="animStep(-1)" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#334155;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">⏮ 上一步</button>
+                <button onclick="animTogglePlay()" id="animPlayBtn" style="background:#0891b2;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">▶ 自动播放</button>
+                <button onclick="animStep(1)" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#334155;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">下一步 ⏭</button>
+                <button onclick="animReset()" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#334155;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">🔄 重置</button>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <label style="font-size:12px;color:#64748b">速度：</label>
+                <input type="range" id="animSpeed" min="1" max="5" value="3" oninput="animSetSpeed(this.value)" style="width:80px">
+                <span id="animSpeedLabel" style="font-size:12px;color:#64748b;width:30px">3x</span>
+                <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;color:#64748b">
+                  <input type="checkbox" id="animDualView" checked onchange="animToggleDualView()">
+                  双视图（动画+原理）
+                </label>
+              </div>
+            </div>
+            <!-- 进度条 -->
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <span id="animStepInfo" style="font-size:12px;font-weight:600;color:#0891b2;min-width:80px">步骤 0/0</span>
+              <div style="flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden">
+                <div id="animProgress" style="height:100%;background:linear-gradient(90deg,#0891b2,#06b6d4);width:0%;transition:width 0.3s;border-radius:3px"></div>
+              </div>
+            </div>
+
+            <!-- 双视图容器 -->
+            <div id="animDualContainer" style="display:grid;grid-template-columns:1fr 300px;gap:16px">
+              <!-- 动画画布 -->
+              <div id="animSvgContainer" style="width:100%;overflow:auto;background:#0f172a;border-radius:8px;padding:20px;min-height:350px;display:flex;justify-content:center;align-items:center"></div>
+              <!-- 原理面板 -->
+              <div id="animPrinciplePanel" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;max-height:400px;overflow-y:auto">
+                <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px">📖 当前步骤原理</div>
+                <div id="animPrincipleContent" style="font-size:12px;color:#475569;line-height:1.8">点击"从当前图生成"开始</div>
+                <div id="animNodeInfo" style="margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 导出 -->
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-size:13px;font-weight:700;color:#0f172a">📤 导出动画</div>
+              <div style="display:flex;gap:8px">
+                <button onclick="exportAnimHTML()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🌐 导出交互式HTML</button>
+                <button onclick="exportAnimSVG()" style="background:#0891b2;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📐 导出SVG动画</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -127678,6 +127741,335 @@ function mechToast(msg){
   document.body.appendChild(t);
   setTimeout(function(){ t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(function(){ t.remove(); }, 300); }, 3000);
 }
+
+// ===== 运动科学机制库：机制动画（P1） =====
+var animData = null;
+var animSteps = [];
+var animCurrentStep = 0;
+var animPlaying = false;
+var animPlayTimer = null;
+var animSpeedMs = 1500;
+
+// 从当前机制图生成动画
+function refreshAnimFromCurrent(){
+  if(!mechCurrentData){
+    mechToast('请先生成或加载一张机制图');
+    return;
+  }
+  animData = JSON.parse(JSON.stringify(mechCurrentData));
+  animBuildSteps();
+  animCurrentStep = 0;
+  document.getElementById('animArea').style.display = 'block';
+  document.getElementById('animInfo').innerHTML = '✅ 已加载：' + animData.title + '（' + animData.nodes.length + '节点/' + animData.edges.length + '关系，共' + (animSteps.length - 1) + '步）';
+  animRender();
+  animUpdateControls();
+}
+
+function loadAnimSource(){
+  // 目前只有当前机制图，素材库选择后续扩展
+}
+
+// 构建动画步骤（按拓扑层级）
+function animBuildSteps(){
+  var nodes = animData.nodes || [];
+  var edges = animData.edges || [];
+
+  // 计算 layer
+  var layerMap = {};
+  nodes.forEach(function(n){ if(n.layer !== undefined){ layerMap[n.id] = n.layer; } });
+  if(Object.keys(layerMap).length === 0){
+    var inDeg = {};
+    nodes.forEach(function(n){ inDeg[n.id] = 0; });
+    edges.forEach(function(e){ if(inDeg[e.to] !== undefined){ inDeg[e.to]++; } });
+    var q = nodes.filter(function(n){ return inDeg[n.id] === 0; }).map(function(n){ return n.id; });
+    q.forEach(function(id){ layerMap[id] = 0; });
+    while(q.length > 0){
+      var c = q.shift();
+      edges.filter(function(e){ return e.from === c; }).forEach(function(e){
+        inDeg[e.to]--;
+        layerMap[e.to] = Math.max(layerMap[e.to] || 0, (layerMap[c] || 0) + 1);
+        if(inDeg[e.to] === 0){ q.push(e.to); }
+      });
+    }
+    nodes.forEach(function(n){ if(layerMap[n.id] === undefined){ layerMap[n.id] = 0; } });
+  }
+
+  // 按 layer 排序节点
+  var sortedNodes = nodes.slice().sort(function(a, b){
+    return (layerMap[a.id] || 0) - (layerMap[b.id] || 0);
+  });
+
+  // 构建步骤：每一步点亮一个节点
+  animSteps = [{litNodes: [], litEdges: [], node: null, edge: null}];
+  var litSet = {};
+  sortedNodes.forEach(function(n){
+    // 找到从已点亮节点到当前节点的边
+    var incoming = edges.filter(function(e){
+      return e.to === n.id && litSet[e.from];
+    });
+    litSet[n.id] = true;
+    animSteps.push({
+      litNodes: Object.keys(litSet),
+      litEdges: animSteps[animSteps.length - 1].litEdges.concat(incoming.map(function(e){ return e.from + '->' + e.to; })),
+      node: n,
+      incomingEdges: incoming
+    });
+  });
+  // 最后一步：全部点亮（包含剩余边）
+  var allEdges = edges.map(function(e){ return e.from + '->' + e.to; });
+  animSteps.push({
+    litNodes: nodes.map(function(n){ return n.id; }),
+    litEdges: allEdges,
+    node: null,
+    incomingEdges: [],
+    isFinal: true
+  });
+}
+
+// 渲染当前步骤
+function animRender(){
+  var container = document.getElementById('animSvgContainer');
+  if(!animData || animSteps.length === 0){ return; }
+  var step = animSteps[animCurrentStep];
+  var litNodes = {};
+  step.litNodes.forEach(function(id){ litNodes[id] = true; });
+  var litEdges = {};
+  step.litEdges.forEach(function(key){ litEdges[key] = true; });
+  var currentNodeId = step.node ? step.node.id : null;
+
+  // 计算布局（复用 renderMechSVG 的逻辑，但简化）
+  var nodes = animData.nodes;
+  var edges = animData.edges;
+  var layerMap = {};
+  nodes.forEach(function(n){ if(n.layer !== undefined){ layerMap[n.id] = n.layer; } });
+  if(Object.keys(layerMap).length === 0){
+    nodes.forEach(function(n, i){ layerMap[n.id] = i; });
+  }
+  var layers = {};
+  nodes.forEach(function(n){
+    var l = layerMap[n.id] || 0;
+    if(!layers[l]){ layers[l] = []; }
+    layers[l].push(n);
+  });
+  var maxLayer = Math.max.apply(null, Object.keys(layers).map(Number));
+  var nodeW = 120, nodeH = 48, hGap = 70, vGap = 28;
+  var svgW = (maxLayer + 1) * (nodeW + hGap) + hGap;
+  var maxN = Math.max.apply(null, Object.values(layers).map(function(a){ return a.length; }));
+  var svgH = maxN * (nodeH + vGap) + vGap + 30;
+
+  var pos = {};
+  Object.keys(layers).forEach(function(l){
+    var arr = layers[l];
+    var totalH = arr.length * nodeH + (arr.length - 1) * vGap;
+    var startY = (svgH - totalH) / 2;
+    arr.forEach(function(n, i){
+      pos[n.id] = {x: hGap + Number(l) * (nodeW + hGap), y: startY + i * (nodeH + vGap), cx: hGap + Number(l) * (nodeW + hGap) + nodeW / 2, cy: startY + i * (nodeH + vGap) + nodeH / 2};
+    });
+  });
+
+  var typeFill = {'酶':'#fef3c7','底物':'#dbeafe','转录因子':'#fce7f3','激素':'#dcfce7','受体':'#e0e7ff','其他':'#f1f5f9'};
+  var typeStroke = {'酶':'#f59e0b','底物':'#3b82f6','转录因子':'#ec4899','激素':'#22c55e','受体':'#6366f1','其他':'#94a3b8'};
+  var relColor = {'激活':'#22c55e','抑制':'#ef4444','底物转化':'#3b82f6','磷酸化':'#a855f7','表达上调':'#f97316'};
+
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + svgW + '" height="' + svgH + '" style="max-width:100%">';
+  svg += '<defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+
+  // 画边
+  edges.forEach(function(e){
+    var from = pos[e.from], to = pos[e.to];
+    if(!from || !to){ return; }
+    var key = e.from + '->' + e.to;
+    var isLit = litEdges[key];
+    var isCurrent = currentNodeId && (e.to === currentNodeId) && isLit;
+    var color = relColor[e.relation] || '#64748b';
+    var opacity = isLit ? '1' : '0.12';
+    var sw = isCurrent ? '3' : '2';
+    var dash = isCurrent ? 'stroke-dasharray="8 4" class="anim-flow"' : '';
+    var x1 = from.x + nodeW, y1 = from.cy, x2 = to.x, y2 = to.cy;
+    var mx = (x1 + x2) / 2;
+    svg += '<path d="M' + x1 + ',' + y1 + ' C' + mx + ',' + y1 + ' ' + mx + ',' + y2 + ' ' + x2 + ',' + y2 + '" fill="none" stroke="' + color + '" stroke-width="' + sw + '" opacity="' + opacity + '" ' + dash + '/>';
+    if(isLit){
+      svg += '<text x="' + mx + '" y="' + ((y1+y2)/2 - 4) + '" text-anchor="middle" font-size="9" fill="' + color + '" font-weight="600" opacity="' + opacity + '">' + e.relation + '</text>';
+    }
+  });
+
+  // 画节点
+  nodes.forEach(function(n){
+    var p = pos[n.id];
+    if(!p){ return; }
+    var isLit = litNodes[n.id];
+    var isCurrent = n.id === currentNodeId;
+    var fill = typeFill[n.type] || '#f1f5f9';
+    var stroke = typeStroke[n.type] || '#94a3b8';
+    var opacity = isLit ? '1' : '0.15';
+    var filter = isCurrent ? 'filter="url(#glow)"' : '';
+    var x = p.x, y = p.y, w = nodeW, h = nodeH;
+    var scale = isCurrent ? 1.08 : 1;
+    var cx = p.cx, cy = p.cy;
+    var sw = w * scale / 2, sh = h * scale / 2;
+
+    if(n.type === '转录因子'){
+      svg += '<polygon points="' + cx + ',' + (cy-sh) + ' ' + (cx+sw) + ',' + cy + ' ' + cx + ',' + (cy+sh) + ' ' + (cx-sw) + ',' + cy + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2" opacity="' + opacity + '" ' + filter + '/>';
+    } else if(n.type === '激素'){
+      svg += '<polygon points="' + cx + ',' + (cy-sh) + ' ' + (cx+sw) + ',' + (cy+sh) + ' ' + (cx-sw) + ',' + (cy+sh) + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2" opacity="' + opacity + '" ' + filter + '/>';
+    } else if(n.type === '酶'){
+      var hw = sw * 0.15;
+      svg += '<polygon points="' + (cx-sw+hw) + ',' + (cy-sh) + ' ' + (cx+sw-hw) + ',' + (cy-sh) + ' ' + (cx+sw) + ',' + cy + ' ' + (cx+sw-hw) + ',' + (cy+sh) + ' ' + (cx-sw+hw) + ',' + (cy+sh) + ' ' + (cx-sw) + ',' + cy + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2" opacity="' + opacity + '" ' + filter + '/>';
+    } else if(n.type === '底物'){
+      svg += '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + sw + '" ry="' + sh + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2" opacity="' + opacity + '" ' + filter + '/>';
+    } else {
+      svg += '<rect x="' + (cx-sw) + '" y="' + (cy-sh) + '" width="' + (sw*2) + '" height="' + (sh*2) + '" rx="8" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2" opacity="' + opacity + '" ' + filter + '/>';
+    }
+    var fs = n.label.length > 8 ? '9' : '11';
+    svg += '<text x="' + cx + '" y="' + (cy - 1) + '" text-anchor="middle" font-size="' + fs + '" font-weight="700" fill="#1e293b" opacity="' + opacity + '">' + n.label + '</text>';
+    if(n.abbreviation && n.label.length <= 8){
+      svg += '<text x="' + cx + '" y="' + (cy + 11) + '" text-anchor="middle" font-size="8" fill="#64748b" opacity="' + opacity + '">' + n.abbreviation + '</text>';
+    }
+  });
+
+  svg += '</svg>';
+  container.innerHTML = svg;
+  container._animSVG = svg;
+
+  // 更新原理面板
+  animUpdatePrinciple();
+}
+
+// 更新原理面板
+function animUpdatePrinciple(){
+  var step = animSteps[animCurrentStep];
+  var principleEl = document.getElementById('animPrincipleContent');
+  var nodeInfoEl = document.getElementById('animNodeInfo');
+  if(!step || step.isFinal){
+    principleEl.innerHTML = '<div style="color:#059669;font-weight:600">✅ 全部通路已点亮</div><div style="margin-top:8px">' + (animData.overallNarration || '机制演示完成。') + '</div>';
+    nodeInfoEl.innerHTML = '';
+    return;
+  }
+  if(!step.node){
+    principleEl.innerHTML = '<span style="color:#64748b">准备开始...</span>';
+    nodeInfoEl.innerHTML = '';
+    return;
+  }
+  var n = step.node;
+  principleEl.innerHTML = '<div style="font-weight:700;color:#0891b2;margin-bottom:6px">' + n.label + (n.abbreviation ? ' (' + n.abbreviation + ')' : '') + '</div><div style="color:#475569">' + (n.narration || '暂无讲解') + '</div>';
+  var info = '<div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:4px">节点信息</div>';
+  info += '<div style="font-size:11px;color:#475569">类型：' + (n.type || '') + ' | 置信度：<span style="color:' + (n.confidence === '高' ? '#22c55e' : n.confidence === '中' ? '#f59e0b' : '#ef4444') + ';font-weight:600">' + (n.confidence || '') + '</span></div>';
+  if(step.incomingEdges && step.incomingEdges.length > 0){
+    info += '<div style="font-size:11px;font-weight:600;color:#64748b;margin-top:8px;margin-bottom:4px">上游调节</div>';
+    step.incomingEdges.forEach(function(e){
+      var fromNode = (animData.nodes || []).find(function(nd){ return nd.id === e.from; });
+      info += '<div style="font-size:11px;color:#475569">← ' + (fromNode ? fromNode.label : e.from) + ' <span style="color:' + ({'激活':'#22c55e','抑制':'#ef4444'}[e.relation] || '#64748b') + ';font-weight:600">' + e.relation + '</span></div>';
+    });
+  }
+  nodeInfoEl.innerHTML = info;
+}
+
+// 控制
+function animStep(dir){
+  if(!animData){ return; }
+  animCurrentStep = Math.max(0, Math.min(animSteps.length - 1, animCurrentStep + dir));
+  animRender();
+  animUpdateControls();
+}
+
+function animTogglePlay(){
+  if(!animData){ return; }
+  animPlaying = !animPlaying;
+  var btn = document.getElementById('animPlayBtn');
+  if(animPlaying){
+    btn.innerHTML = '⏸ 暂停';
+    btn.style.background = '#f59e0b';
+    animPlayTimer = setInterval(function(){
+      if(animCurrentStep >= animSteps.length - 1){
+        animTogglePlay();
+        return;
+      }
+      animStep(1);
+    }, animSpeedMs);
+  } else {
+    btn.innerHTML = '▶ 自动播放';
+    btn.style.background = '#0891b2';
+    clearInterval(animPlayTimer);
+  }
+}
+
+function animReset(){
+  if(animPlaying){ animTogglePlay(); }
+  animCurrentStep = 0;
+  animRender();
+  animUpdateControls();
+}
+
+function animSetSpeed(val){
+  animSpeedMs = 2500 - val * 400; // 1=2100ms, 5=500ms
+  document.getElementById('animSpeedLabel').textContent = val + 'x';
+  if(animPlaying){
+    clearInterval(animPlayTimer);
+    animPlayTimer = setInterval(function(){
+      if(animCurrentStep >= animSteps.length - 1){ animTogglePlay(); return; }
+      animStep(1);
+    }, animSpeedMs);
+  }
+}
+
+function animToggleDualView(){
+  var checked = document.getElementById('animDualView').checked;
+  var container = document.getElementById('animDualContainer');
+  var panel = document.getElementById('animPrinciplePanel');
+  if(checked){
+    container.style.gridTemplateColumns = '1fr 300px';
+    panel.style.display = 'block';
+  } else {
+    container.style.gridTemplateColumns = '1fr';
+    panel.style.display = 'none';
+  }
+}
+
+function animUpdateControls(){
+  document.getElementById('animStepInfo').textContent = '步骤 ' + animCurrentStep + '/' + (animSteps.length - 1);
+  var pct = animSteps.length > 1 ? (animCurrentStep / (animSteps.length - 1)) * 100 : 0;
+  document.getElementById('animProgress').style.width = pct + '%';
+}
+
+// 导出交互式 HTML
+function exportAnimHTML(){
+  if(!animData){ mechToast('请先生成动画'); return; }
+  var svg = document.getElementById('animSvgContainer')._animSVG || '';
+  var stepsData = JSON.stringify(animSteps.map(function(s){
+    return {litNodes: s.litNodes, litEdges: s.litEdges, nodeLabel: s.node ? s.node.label : '', nodeNarration: s.node ? s.node.narration : '', isFinal: s.isFinal || false};
+  }));
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>机制动画 - ' + animData.title + '</title>';
+  html += '<style>body{font-family:sans-serif;background:#0f172a;color:#fff;margin:0;padding:20px}h2{color:#06b6d4}.controls{margin:16px 0}button{background:#0891b2;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin-right:8px;font-size:14px}button:hover{background:#0e7490}.step-info{color:#06b6d4;font-weight:bold;margin:12px 0}.principle{background:#1e293b;padding:16px;border-radius:8px;margin-top:16px;line-height:1.8}.svg-container{background:#0f172a;border-radius:8px;padding:20px;overflow:auto}</style>';
+  html += '</head><body>';
+  html += '<h2>🎬 ' + animData.title + '</h2>';
+  html += '<div class="controls"><button onclick="step(-1)">⏮ 上一步</button><button onclick="togglePlay()" id="playBtn">▶ 播放</button><button onclick="step(1)">下一步 ⏭</button><button onclick="reset()">🔄 重置</button></div>';
+  html += '<div class="step-info" id="stepInfo">步骤 0/' + (animSteps.length - 1) + '</div>';
+  html += '<div class="svg-container" id="svgContainer">' + svg + '</div>';
+  html += '<div class="principle" id="principle">点击播放开始演示</div>';
+  html += '<script>var steps=' + stepsData + ';var cur=0;var playing=false;var timer=null;';
+  html += 'function render(){var info=document.getElementById("stepInfo");info.textContent="步骤 "+cur+"/"+(steps.length-1);var p=steps[cur];var pr=document.getElementById("principle");if(p.isFinal){pr.innerHTML="<b style=color:#22c55e>✅ 全部通路已点亮</b><br>"+(' + JSON.stringify(animData.overallNarration || '') + ');}else if(p.nodeLabel){pr.innerHTML="<b style=color:#06b6d4>"+p.nodeLabel+"</b><br>"+(p.nodeNarration||"");}else{pr.textContent="准备开始...";}document.querySelectorAll("#svgContainer svg text, #svgContainer svg polygon, #svgContainer svg ellipse, #svgContainer svg rect, #svgContainer svg path").forEach(function(el){el.style.opacity="0.15";});}';
+  html += 'function step(d){cur=Math.max(0,Math.min(steps.length-1,cur+d));render();}function togglePlay(){playing=!playing;var b=document.getElementById("playBtn");if(playing){b.textContent="⏸ 暂停";timer=setInterval(function(){if(cur>=steps.length-1){togglePlay();return;}step(1);},1500);}else{b.textContent="▶ 播放";clearInterval(timer);}}function reset(){if(playing){togglePlay();}cur=0;render();}render();';
+  html += '<\/script></body></html>';
+  var blob = new Blob([html], {type: 'text/html'});
+  var link = document.createElement('a');
+  link.download = '机制动画_' + animData.title + '.html';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  mechToast('已导出交互式 HTML');
+}
+
+// 导出 SVG 动画（最终状态）
+function exportAnimSVG(){
+  if(!animData){ mechToast('请先生成动画'); return; }
+  var svg = document.getElementById('animSvgContainer')._animSVG || '';
+  var blob = new Blob([svg], {type: 'image/svg+xml'});
+  var link = document.createElement('a');
+  link.download = '机制动画_' + animData.title + '.svg';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  mechToast('已导出 SVG');
+}
+
 
 // 解析 AI 返回的 JSON（容错）
 function parseMechJSON(text){
