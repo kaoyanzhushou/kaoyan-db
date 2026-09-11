@@ -16690,6 +16690,12 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
               <option value="warm">☀️ 教育暖色</option>
             </select>
           </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">我的版式（收藏后可一键套用）</label>
+            <select id="pptLayoutSel" onchange="applyPptLayout(this.value)" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box;background:#fff">
+              <option value="">-- 选择套用 --</option>
+            </select>
+          </div>
         </div>
 
         <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:14px 0 6px">教学要点 / 参考内容（可选）</label>
@@ -16731,6 +16737,16 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
           <div id="pptLibraryList" style="font-size:12px;color:#6b7280">加载中...</div>
         </div>
       <div id="pptResult" style="display:none"></div>
+<div id="pptSlideShow" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:99999;flex-direction:column;justify-content:center;align-items:center">
+  <div id="pptShowContent" style="width:90%;max-width:1100px;color:#fff;padding:40px"></div>
+  <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:#6b7280;font-size:13px;display:flex;gap:20px;align-items:center">
+    <span id="pptShowPageNum">1 / 1</span>
+    <span style="font-size:11px">← → 翻页 · ESC 退出 · 点击左右翻页</span>
+  </div>
+  <div id="pptShowLeft" onclick="showPrevSlide()" style="position:absolute;left:0;top:0;width:15%;height:100%;cursor:pointer"></div>
+  <div id="pptShowRight" onclick="showNextSlide()" style="position:absolute;right:0;top:0;width:15%;height:100%;cursor:pointer"></div>
+  <button onclick="exitPptShow()" style="position:absolute;top:16px;right:20px;background:rgba(255,255,255,0.1);color:#9ca3af;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px">✕ 退出 (ESC)</button>
+</div>
 
     </div>
 
@@ -127894,6 +127910,10 @@ function renderPptSlides(){
   html += '<button onclick="pptEnhanceAll()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🚀 六路全增强</button>';
   html += '<button onclick="pptGenerateExercises()" style="background:#db2777;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📝 分层练习</button>';
   html += '<button onclick="pptAddIdeology()" style="background:#dc2626;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🇨🇳 思政融入</button>';
+  html += '<button onclick="pptApplyTermCheck()" style="background:#0d9488;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📌 术语标注</button>';
+  html += '<button onclick="pptGenerateDiagram()" style="background:#ea580c;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 生成图示</button>';
+  html += '<button onclick="startPptShow()" style="background:#111827;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">▶️ 放映</button>';
+  html += '<button onclick="savePptLayout()" style="background:#fff;border:1px solid #a16207;color:#a16207;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⭐ 收藏版式</button>';
   html += '<button onclick="downloadPptx()" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📥 下载 PPTX</button>';
   html += '<span id="pptEnhanceStatus" style="font-size:11px;color:#6b7280"></span>';
   html += '</div>';
@@ -128357,6 +128377,154 @@ async function pptAddIdeology(){
     if(btn) btn.textContent = '🇨🇳 思政融入';
     alert('思政融入失败：' + e.message);
   }
+}
+
+// ========== 术语标注到页 ==========
+let __pptTermCheck = null;
+function pptApplyTermCheck(){
+  const blk = document.getElementById('pptEnhanceBlock');
+  if(!blk || !__pptTermCheck){
+    // 尝试从增强报告块提取
+    if(blk){
+      const text = blk.innerText;
+      const termSection = text.match(/术语核验([\s\S]*?)(?=重难点讲解|$)/);
+      if(termSection){
+        __pptTermCheck = termSection[1];
+      }
+    }
+  }
+  if(!__pptTermCheck || !__pptTermCheck.trim()){ alert('请先运行"六路全增强"获取术语核验结果'); return; }
+  // 把术语标注注入到包含相关术语的页备注
+  const lines = __pptTermCheck.split('\n').filter(function(l){ return l.trim() && (l.indexOf('✅')>=0 || l.indexOf('⚠️')>=0 || l.indexOf('❌')>=0 || l.indexOf('术语')>=0); });
+  let applied = 0;
+  for(var i=0;i<__pptSlides.length;i++){
+    const pageText = __pptSlides[i].title + ' ' + __pptSlides[i].points.join(' ');
+    const matched = lines.filter(function(l){
+      const term = l.replace(/[✅⚠️❌]/g,'').trim().split(/[：:]/)[0].slice(0, 6);
+      return term && pageText.indexOf(term) >= 0;
+    });
+    if(matched.length > 0){
+      __pptSlides[i].notes = (__pptSlides[i].notes ? __pptSlides[i].notes + '\n' : '') + '【术语核验】\n' + matched.join('\n').slice(0, 300);
+      applied++;
+    }
+  }
+  renderPptSlides();
+  alert('术语标注已应用到 ' + applied + ' 页（查看教师备注）');
+}
+
+// ========== 图表示意生成 ==========
+async function pptGenerateDiagram(){
+  if(__pptSlides.length === 0){ alert('请先生成课件大纲'); return; }
+  const btn = document.querySelector('button[onclick="pptGenerateDiagram()"]');
+  if(btn) btn.textContent = '⏳ 生成中...';
+  try{
+    const sys = '你是体育科学可视化专家。基于课件重难点，生成2-3个图表示意（流程图/对比表/机制示意图/数据趋势）。每个图示用文字描述结构（如"左→右：刺激→传入神经→中枢→传出神经→效应器"），并说明适用页。输出格式：===图示1===\n标题：...\n类型：...\n结构：...\n适用页：P...\n===图示2===\n...';
+    const usr = '课件内容：\n' + pptSlidesSummary();
+    let out = '';
+    try{ out = await callModelWithTimeout(sys, usr, 2000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
+    if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2000, 'kimi-k3', 120000); }catch(e){ out = ''; } }
+    if(!out.trim()){ alert('图示生成失败，请重试'); return; }
+    const sections = out.match(/===图示[\d一二三四五]+===([\s\S]*?)(?===图示|$)/g) || [];
+    for(var i=0;i<Math.min(sections.length, 3);i++){
+      const sec = sections[i];
+      const titleM = sec.match(/标题[：:]\s*(.+)/);
+      const typeM = sec.match(/类型[：:]\s*(.+)/);
+      const structM = sec.match(/结构[：:]\s*([\s\S]*?)(?=适用页|$)/);
+      const title = titleM ? titleM[1].trim().slice(0, 40) : '图表示意 ' + (i+1);
+      const type = typeM ? typeM[1].trim() : '示意图';
+      const struct = structM ? structM[1].trim().split('\n').filter(function(l){return l.trim();}).slice(0, 4) : ['图示结构见备注'];
+      __pptSlides.push({type: '图示·' + type, title: title, points: struct, notes: sec.slice(0, 500)});
+    }
+    renderPptSlides();
+    if(btn) btn.textContent = '📊 生成图示';
+  }catch(e){
+    if(btn) btn.textContent = '📊 生成图示';
+    alert('图示生成失败：' + e.message);
+  }
+}
+
+// ========== 全屏放映 ==========
+let __pptShowListener = null;
+function startPptShow(){
+  if(__pptSlides.length === 0){ alert('请先生成课件大纲'); return; }
+  const overlay = document.getElementById('pptSlideShow');
+  overlay.style.display = 'flex';
+  __pptCurrent = 0;
+  renderShowSlide();
+  __pptShowListener = function(e){
+    if(e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown'){ e.preventDefault(); showNextSlide(); }
+    else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); showPrevSlide(); }
+    else if(e.key === 'Escape'){ exitPptShow(); }
+  };
+  document.addEventListener('keydown', __pptShowListener);
+}
+function exitPptShow(){
+  const overlay = document.getElementById('pptSlideShow');
+  overlay.style.display = 'none';
+  if(__pptShowListener){ document.removeEventListener('keydown', __pptShowListener); __pptShowListener = null; }
+}
+function showNextSlide(){
+  if(__pptCurrent < __pptSlides.length - 1){ __pptCurrent++; renderShowSlide(); }
+}
+function showPrevSlide(){
+  if(__pptCurrent > 0){ __pptCurrent--; renderShowSlide(); }
+}
+function renderShowSlide(){
+  const sl = __pptSlides[__pptCurrent];
+  if(!sl) return;
+  const content = document.getElementById('pptShowContent');
+  let html = '<div style="font-size:14px;color:#60a5fa;margin-bottom:12px;font-weight:600">' + sl.type + '</div>';
+  html += '<div style="font-size:36px;font-weight:700;color:#fff;margin-bottom:30px;line-height:1.3">' + sl.title + '</div>';
+  if(sl.points.length > 0){
+    html += '<div style="font-size:20px;color:#d1d5db;line-height:2">';
+    for(var i=0;i<sl.points.length;i++){
+      html += '<div style="margin-bottom:8px">▸ ' + sl.points[i] + '</div>';
+    }
+    html += '</div>';
+  }
+  if(sl.notes){
+    html += '<div style="margin-top:30px;padding:16px;background:rgba(255,255,255,0.05);border-left:3px solid #60a5fa;border-radius:4px;font-size:14px;color:#9ca3af;line-height:1.8"><span style="color:#60a5fa;font-weight:600">📝 教师备注：</span>' + sl.notes + '</div>';
+  }
+  content.innerHTML = html;
+  document.getElementById('pptShowPageNum').textContent = (__pptCurrent + 1) + ' / ' + __pptSlides.length;
+}
+
+// ========== 版式收藏 ==========
+const PPT_LAYOUT_KEY = 'pptLayouts_v1';
+function getPptLayouts(){
+  try{ return JSON.parse(localStorage.getItem(PPT_LAYOUT_KEY) || '[]'); }catch(e){ return []; }
+}
+function savePptLayout(){
+  const name = prompt('给这个版式起个名字：', '我的课件版式 ' + new Date().toLocaleDateString());
+  if(!name) return;
+  const layouts = getPptLayouts();
+  const item = {id: 'lay_' + Date.now(), name: name, topic: document.getElementById('pptTopic').value, style: document.getElementById('pptStyle').value, audience: document.getElementById('pptAudience') ? document.getElementById('pptAudience').value : '', hours: document.getElementById('pptHours') ? document.getElementById('pptHours').value : '', extra: document.getElementById('pptExtra').value};
+  layouts.unshift(item);
+  localStorage.setItem(PPT_LAYOUT_KEY, JSON.stringify(layouts.slice(0, 10)));
+  refreshPptLayoutSel();
+  alert('版式已收藏：' + name);
+}
+function refreshPptLayoutSel(){
+  const sel = document.getElementById('pptLayoutSel');
+  if(!sel) return;
+  const layouts = getPptLayouts();
+  let html = '<option value="">-- 选择套用 --</option>';
+  for(var i=0;i<layouts.length;i++){
+    html += '<option value="' + layouts[i].id + '">' + layouts[i].name + '</option>';
+  }
+  sel.innerHTML = html;
+}
+function applyPptLayout(id){
+  if(!id) return;
+  const layouts = getPptLayouts();
+  const it = layouts.find(function(x){ return x.id === id; });
+  if(!it) return;
+  document.getElementById('pptTopic').value = it.topic || '';
+  document.getElementById('pptStyle').value = it.style || 'academic';
+  if(document.getElementById('pptAudience') && it.audience) document.getElementById('pptAudience').value = it.audience;
+  if(document.getElementById('pptHours') && it.hours) document.getElementById('pptHours').value = it.hours;
+  document.getElementById('pptExtra').value = it.extra || '';
+  document.getElementById('pptLayoutSel').value = '';
 }
 
 async function healthCheckLesson(lessonText, formatReq){
