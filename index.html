@@ -16934,6 +16934,15 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
             <div id="mechStatsPanel" style="display:none;margin-top:16px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;padding:16px">
               <div style="font-size:14px;font-weight:700;color:#6d28d9;margin-bottom:12px">📊 我的机制图库统计</div>
               <div id="mechStatsContent"></div>
+              <!-- 数据导出/导入 -->
+              <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e9d5ff">
+                <div style="font-size:13px;font-weight:700;color:#6d28d9;margin-bottom:10px">💾 数据管理（跨设备迁移）</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <button onclick="exportMechAllData()" style="background:#6d28d9;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📤 导出全部数据</button>
+                  <button onclick="triggerMechImport()" style="background:#0891b2;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📥 导入数据备份</button>
+                </div>
+                <div style="margin-top:8px;font-size:11px;color:#94a3b8">导出包含：素材库全部机制图 + 生成计数。导入将覆盖当前数据，操作前建议先导出备份。</div>
+              </div>
             </div>
           </div>
         </div>
@@ -130115,6 +130124,117 @@ function insertMechImageToEditor(){
     mechToast('插入失败：' + e.message);
   }
 }
+
+// ===== 运动科学机制库：数据导出/导入（跨设备迁移） =====
+
+function exportMechAllData(){
+  try{
+    var data = {
+      version: '1.0',
+      exportTime: new Date().toISOString(),
+      app: '运动科学机制库',
+      mechLibrary: JSON.parse(localStorage.getItem('mechLibrary') || '[]'),
+      mechGenCount: parseInt(localStorage.getItem('mechGenCount') || '0'),
+      // 未来可扩展：用户设置、偏好等
+      _meta: {
+        libraryCount: JSON.parse(localStorage.getItem('mechLibrary') || '[]').length,
+        totalNodes: 0,
+        totalEdges: 0
+      }
+    };
+    // 统计节点和边数
+    var lib = data.mechLibrary;
+    lib.forEach(function(item){
+      if(item.data && item.data.nodes){ data._meta.totalNodes += item.data.nodes.length; }
+      if(item.data && item.data.edges){ data._meta.totalEdges += item.data.edges.length; }
+    });
+
+    var blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    a.href = url;
+    a.download = '机制库数据备份_' + dateStr + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    mechToast('✅ 数据已导出（' + lib.length + '份机制图，' + data.mechGenCount + '次生成记录）');
+  }catch(e){
+    mechToast('导出失败：' + e.message);
+  }
+}
+
+function importMechAllData(file){
+  if(!file){ return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var data = JSON.parse(e.target.result);
+      // 验证格式
+      if(!data.mechLibrary || !Array.isArray(data.mechLibrary)){
+        throw new Error('文件格式不正确：缺少 mechLibrary 数组');
+      }
+      if(data.app && data.app !== '运动科学机制库'){
+        if(!confirm('该文件不是机制库导出的备份，可能包含不兼容数据。确定要导入吗？')){
+          return;
+        }
+      }
+
+      // 统计导入内容
+      var libCount = data.mechLibrary.length;
+      var genCount = data.mechGenCount || 0;
+
+      // 确认覆盖
+      var currentLib = JSON.parse(localStorage.getItem('mechLibrary') || '[]');
+      var msg = '即将导入：\n';
+      msg += '• 机制图素材：' + libCount + '份';
+      if(currentLib.length > 0){
+        msg += '（当前已有 ' + currentLib.length + '份，将被覆盖）';
+      }
+      msg += '\n• 生成计数：' + genCount + '次';
+      msg += '\n\n确定导入吗？此操作不可撤销。';
+      if(!confirm(msg)){ return; }
+
+      // 写入 localStorage
+      localStorage.setItem('mechLibrary', JSON.stringify(data.mechLibrary));
+      if(data.mechGenCount !== undefined){
+        localStorage.setItem('mechGenCount', data.mechGenCount.toString());
+      }
+
+      mechToast('✅ 数据导入成功！页面即将刷新...');
+      // 刷新统计面板
+      if(typeof renderMechStats === 'function'){
+        try{ renderMechStats(); }catch(e){}
+      }
+      // 刷新素材库
+      if(typeof renderMechLibrary === 'function'){
+        try{ renderMechLibrary(); }catch(e){}
+      }
+      setTimeout(function(){ location.reload(); }, 1500);
+    }catch(err){
+      mechToast('导入失败：' + err.message);
+    }
+  };
+  reader.onerror = function(){
+    mechToast('文件读取失败');
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+// 触发文件选择
+function triggerMechImport(){
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = function(e){
+    if(e.target.files && e.target.files[0]){
+      importMechAllData(e.target.files[0]);
+    }
+  };
+  input.click();
+}
+
 
 
 
