@@ -16597,6 +16597,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
             <button onclick="togglePageRange()" id="bookPageRangeBtn" style="display:none;background:#fff;border:1px solid #9ca3af;color:#6b7280;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px">📄 页码范围</button>
 
+            <button onclick="togglePageBrowser()" id="bookPageBrowserBtn" style="display:none;background:#f0fdf4;border:1px solid #86efac;color:#166534;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px">📖 翻页选</button>
+
             <span id="bookStatus" style="font-size:12px;color:#6b7280"></span>
 
           </div>
@@ -16628,6 +16630,29 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
               <button onclick="locateByPageRange()" style="background:#2563eb;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px">截取范围</button>
               <span id="bookPageRangeInfo" style="font-size:11px;color:#9ca3af"></span>
             </div>
+          </div>
+
+          <!-- 页码浏览器面板 -->
+          <div id="bookPageBrowserPanel" style="display:none;margin-top:10px;background:#fff;border:1px solid #86efac;border-radius:8px;padding:10px;max-height:400px;overflow-y:auto">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+              <span style="font-size:12px;font-weight:600;color:#166534">📖 教材翻页选择（每页可单独勾选，勾选后合并内容）</span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                <span id="bookPageCountInfo" style="font-size:11px;color:#6b7280"></span>
+                <button onclick="selectAllPages(true)" style="font-size:11px;padding:3px 8px;border:1px solid #86efac;background:#f0fdf4;color:#166534;border-radius:4px;cursor:pointer">全选</button>
+                <button onclick="selectAllPages(false)" style="font-size:11px;padding:3px 8px;border:1px solid #d1d5db;background:#fff;color:#6b7280;border-radius:4px;cursor:pointer">清空</button>
+                <button onclick="invertPageSelection()" style="font-size:11px;padding:3px 8px;border:1px solid #fbbf24;background:#fffbeb;color:#92400e;border-radius:4px;cursor:pointer">反选</button>
+                <button onclick="mergeSelectedPages()" style="font-size:11px;padding:3px 8px;border:1px solid #16a34a;background:#dcfce7;color:#166534;border-radius:4px;cursor:pointer">合并选中页</button>
+              </div>
+            </div>
+            <!-- 页码范围快速选择 -->
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+              <span style="font-size:11px;color:#6b7280">快速选范围:</span>
+              <input type="number" id="quickPageStart" min="1" placeholder="起始页" style="width:70px;padding:4px;border:1px solid #d1d5db;border-radius:4px;font-size:11px">
+              <span style="font-size:11px;color:#6b7280">-</span>
+              <input type="number" id="quickPageEnd" min="1" placeholder="结束页" style="width:70px;padding:4px;border:1px solid #d1d5db;border-radius:4px;font-size:11px">
+              <button onclick="selectPageRange()" style="font-size:11px;padding:3px 8px;border:1px solid #2563eb;background:#eff6ff;color:#1e40af;border-radius:4px;cursor:pointer">勾选范围</button>
+            </div>
+            <div id="bookPageList" style="font-size:12px"></div>
           </div>
 
         </div>
@@ -133349,6 +133374,145 @@ function locateByPageRange(){
   }
 }
 
+
+// ========== 教材分页与页码浏览器功能 ==========
+let bookSelectedPages = new Set();
+
+function paginateBookText(text, charsPerPage){
+  if(!text) return [];
+  const pages = [];
+  const total = text.length;
+  let pageNum = 1;
+  for(let i = 0; i < total; i += charsPerPage){
+    const pageText = text.substring(i, Math.min(i + charsPerPage, total));
+    const preview = pageText.replace(/\s+/g, ' ').substring(0, 80);
+    pages.push({page: pageNum, text: pageText, preview: preview, start: i, end: Math.min(i + charsPerPage, total)});
+    pageNum++;
+  }
+  return pages;
+}
+
+function togglePageBrowser(){
+  const panel = document.getElementById('bookPageBrowserPanel');
+  if(!panel) return;
+  if(panel.style.display === 'none'){
+    panel.style.display = 'block';
+    renderPageBrowser();
+  }else{
+    panel.style.display = 'none';
+  }
+}
+
+function renderPageBrowser(){
+  const listEl = document.getElementById('bookPageList');
+  const countInfo = document.getElementById('bookPageCountInfo');
+  if(!listEl) return;
+  let pages = [];
+  try{ pages = JSON.parse(localStorage.getItem('aiBookPages') || '[]'); }catch(e){ pages = []; }
+  if(!pages || pages.length === 0){
+    listEl.innerHTML = '<div style="color:#9ca3af;padding:10px;text-align:center">暂无分页数据，请重新上传教材</div>';
+    if(countInfo) countInfo.textContent = '';
+    return;
+  }
+  if(countInfo) countInfo.textContent = '共' + pages.length + '页，已选' + bookSelectedPages.size + '页';
+  
+  let html = '';
+  pages.forEach((p, idx) => {
+    const checked = bookSelectedPages.has(p.page) ? 'checked' : '';
+    const isSelected = bookSelectedPages.has(p.page);
+    const bgColor = isSelected ? '#f0fdf4' : '#fff';
+    const borderColor = isSelected ? '#86efac' : '#e5e7eb';
+    html += '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;margin-bottom:4px;border:1px solid ' + borderColor + ';border-radius:6px;background:' + bgColor + ';cursor:pointer" onclick="togglePageSelect(' + p.page + ')">' +
+      '<input type="checkbox" ' + checked + ' style="cursor:pointer;margin-top:2px" onclick="event.stopPropagation(); togglePageSelect(' + p.page + ')">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-weight:600;color:#166534;font-size:12px">第 ' + p.page + ' 页 <span style="color:#9ca3af;font-weight:400;font-size:11px">(' + p.text.length + '字)</span></div>' +
+        '<div style="color:#6b7280;font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.preview + '...</div>' +
+      '</div>' +
+    '</div>';
+  });
+  listEl.innerHTML = html;
+}
+
+function togglePageSelect(page){
+  if(bookSelectedPages.has(page)){
+    bookSelectedPages.delete(page);
+  }else{
+    bookSelectedPages.add(page);
+  }
+  renderPageBrowser();
+}
+
+function selectAllPages(select){
+  let pages = [];
+  try{ pages = JSON.parse(localStorage.getItem('aiBookPages') || '[]'); }catch(e){ pages = []; }
+  if(select){
+    pages.forEach(p => bookSelectedPages.add(p.page));
+  }else{
+    bookSelectedPages.clear();
+  }
+  renderPageBrowser();
+}
+
+function invertPageSelection(){
+  let pages = [];
+  try{ pages = JSON.parse(localStorage.getItem('aiBookPages') || '[]'); }catch(e){ pages = []; }
+  const newSet = new Set();
+  pages.forEach(p => {
+    if(!bookSelectedPages.has(p.page)) newSet.add(p.page);
+  });
+  bookSelectedPages = newSet;
+  renderPageBrowser();
+}
+
+function selectPageRange(){
+  const start = parseInt(document.getElementById('quickPageStart').value);
+  const end = parseInt(document.getElementById('quickPageEnd').value);
+  if(!start || !end || start > end){
+    mechToast('请输入有效的起始页和结束页', 'warn');
+    return;
+  }
+  for(let p = start; p <= end; p++){
+    bookSelectedPages.add(p);
+  }
+  renderPageBrowser();
+  mechToast('已勾选第' + start + '-' + end + '页（共' + (end-start+1) + '页）', 'success');
+}
+
+function mergeSelectedPages(){
+  if(bookSelectedPages.size === 0){
+    mechToast('请先勾选需要的页码', 'warn');
+    return;
+  }
+  let pages = [];
+  try{ pages = JSON.parse(localStorage.getItem('aiBookPages') || '[]'); }catch(e){ pages = []; }
+  if(!pages || pages.length === 0){
+    mechToast('暂无分页数据，请重新上传教材', 'warn');
+    return;
+  }
+  
+  const sortedPages = Array.from(bookSelectedPages).sort((a,b) => a-b);
+  let mergedContent = '';
+  let foundCount = 0;
+  
+  for(const pageNum of sortedPages){
+    const p = pages.find(x => x.page === pageNum);
+    if(p){
+      mergedContent += '\n\n=== 第 ' + p.page + ' 页 ===\n\n' + p.text;
+      foundCount++;
+    }
+  }
+  
+  if(mergedContent){
+    const contentEl = document.getElementById('lessonChapterContent');
+    if(contentEl) contentEl.value = mergedContent.trim();
+    const chapterEl = document.getElementById('lessonChapter');
+    if(chapterEl) chapterEl.value = '已选' + foundCount + '页';
+    mechToast('已合并 ' + foundCount + ' 页（' + mergedContent.trim().length + '字）', 'success');
+  }else{
+    mechToast('合并失败，请检查选中页码', 'warn');
+  }
+}
+
 async function aiExtractChapter(){
   const contentEl = document.getElementById('lessonChapterContent');
   const raw = (contentEl.value||'').trim();
@@ -133530,11 +133694,16 @@ function renderBookChapterSelect(chapters){
     if(key) key.style.display = 'none';
     if(btn) btn.style.display = 'none';
     if(toggle) toggle.style.display = 'inline-block';
-    // 同时显示目录面板和页码范围按钮
+    // 同时显示目录面板、页码范围和翻页选按钮
     const tocBtn = document.getElementById('bookTOCBtn');
     const pageBtn = document.getElementById('bookPageRangeBtn');
+    const pbBtn = document.getElementById('bookPageBrowserBtn');
     if(tocBtn) tocBtn.style.display = 'inline-block';
     if(pageBtn) pageBtn.style.display = 'inline-block';
+    // 只有存在分页数据时才显示翻页选按钮
+    let hasPages = false;
+    try{ hasPages = !!(localStorage.getItem('aiBookPages') && JSON.parse(localStorage.getItem('aiBookPages')).length > 0); }catch(e){}
+    if(pbBtn && hasPages) pbBtn.style.display = 'inline-block';
   }else{
     // 目录解析失败，降级为关键词模式
     sel.style.display = 'none';
