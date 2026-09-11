@@ -131419,6 +131419,7 @@ function appendLessonAIOps(lessonText){
     + '<button onclick="kimiAddResources()" style="background:#7e22ce;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🧩 Kimi 补教学资源</button>'
     + '<button onclick="hyStudentView()" style="background:#0e7490;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🎓 混元学生视角预判</button>'
     + '<button onclick="lessonToPpt()" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 转课件大纲</button>'
+    + '<button onclick="renderLessonTimeline()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⏱️ 教学时间轴</button>'
     + '<span id="lessonOpsStatus" style="font-size:12px;color:#6b7280"></span>';
   const oldOps = document.getElementById('lessonAIOps');
   if(oldOps) oldOps.remove();
@@ -131577,6 +131578,7 @@ function renderPptSlides(){
   html += '<button onclick="startPptShow()" style="background:#111827;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">▶️ 放映</button>';
   html += '<button onclick="pptStructureDiagnosis()" style="background:#0891b2;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 结构诊断</button>';
   html += '<button onclick="pptTimeAllocation()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⏱️ 时间分配</button>';
+  html += '<button onclick="pptEnhanceNotes()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🎤 增强备注</button>';
   html += '<button onclick="pptGenerateTransitions()" style="background:#d97706;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔗 过渡语</button>';
   html += '<button onclick="pptGenerateInteractions()" style="background:#db2777;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">❓ 互动题</button>';
   html += '<button onclick="pptExportPDF()" style="background:#1e40af;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📄 导出PDF</button>';
@@ -131638,6 +131640,31 @@ function renderPptSlides(){
   resEl.innerHTML = html;
   if(__pptJustGenerated && __pptSlides.length > 0){ try{ savePptToLibrary(); }catch(e){} __pptJustGenerated = false; }
 }
+
+
+
+// 增强演讲者备注：AI为当前页生成详细讲稿
+async function pptEnhanceNotes(){
+  if(!__pptSlides || __pptSlides.length === 0){ alert('请先生成课件'); return; }
+  const sl = __pptSlides[__pptCurrent];
+  const status = document.getElementById('pptEnhanceStatus');
+  if(status) status.textContent = 'AI 生成详细讲稿中（约30秒）...';
+  const sys = '你是高校体育专业理论课资深教师。根据当前PPT页面的标题和要点，撰写一份可直接照读的详细讲稿。要求：1)开头有过渡语（承接上一页内容）2)每个要点展开讲解2-3句，用通俗语言解释专业概念 3)适当加入课堂互动提示（如"请同学们思考一下"）4)结尾有引出下一页的过渡语 5)总字数200-350字，口语化但专业准确。直接输出讲稿内容，不要加标题或说明。';
+  const usr = '页面类型：' + sl.type + '\n页面标题：' + sl.title + '\n页面要点：' + sl.points.join('；') + (sl.notes ? '\n已有备注提示：' + sl.notes : '');
+  let out = '';
+  try{ out = await callModelWithTimeout(sys, usr, 1500, 'glm-5.3', 90000); }catch(e){ out = ''; }
+  if(!out.trim()){
+    try{ out = await callModelWithTimeout(sys, usr, 1500, 'deepseek-chat', 90000); }catch(e){ out = ''; }
+  }
+  if(out.trim()){
+    __pptSlides[__pptCurrent].notes = out.trim();
+    renderPptSlides();
+    if(status) status.textContent = '✅ 第' + (__pptCurrent+1) + '页讲稿已增强';
+  }else{
+    if(status) status.textContent = '⚠️ 讲稿生成失败，请重试';
+  }
+}
+
 
 function pptPrevPage(){ if(__pptCurrent > 0){ __pptCurrent--; __pptGridView=false; renderPptSlides(); } }
 function pptNextPage(){ if(__pptCurrent < __pptSlides.length-1){ __pptCurrent++; __pptGridView=false; renderPptSlides(); } }
@@ -131906,15 +131933,122 @@ function clearPptTemplate(){
 // ========== 教案转课件 ==========
 function lessonToPpt(){
   const text = window.__lastLessonText || '';
-  const firstLine = text.split('\n')[0].slice(0, 40) || '教案转课件';
+  if(!text){ alert('请先生成教案'); return; }
+  // 智能提取主题：优先找"科目""章节"相关行
+  let topic = '';
+  const lines = text.split('\n');
+  for(const l of lines){
+    if(l.indexOf('科目') >= 0 || l.indexOf('章节') >= 0 || l.indexOf('课题') >= 0){
+      topic = l.replace(/.*[：:]/, '').trim().slice(0, 50);
+      break;
+    }
+  }
+  if(!topic) topic = lines[0].replace(/^[一二三四五六七八九十\d、.\s]+/, '').trim().slice(0, 50) || '教案转课件';
   switchTab('teacher');
   setTimeout(function(){
     switchTeacherSubTab('ppt');
-    document.getElementById('pptTopic').value = firstLine;
-    document.getElementById('pptExtra').value = text.slice(0, 2000);
-    document.getElementById('pptTopic').scrollIntoView({behavior:'smooth', block:'center'});
-  }, 250);
+    const topicEl = document.getElementById('pptTopic');
+    if(topicEl) topicEl.value = topic;
+    // 完整教案作为参考内容
+    window.__pptRefText = text;
+    const refName = document.getElementById('pptRefName');
+    if(refName) refName.textContent = '📄 已载入教案内容（' + text.length + '字）';
+    const refClear = document.getElementById('pptRefClear');
+    if(refClear) refClear.style.display = 'inline-block';
+    // 自动生成
+    setTimeout(function(){
+      if(typeof runPptGen === 'function'){
+        runPptGen();
+        const status = document.getElementById('pptStatus');
+        if(status) status.textContent = '教案转PPT：自动生成中...';
+      }
+    }, 300);
+
+
+// 教学时间轴可视化
+function renderLessonTimeline(){
+  const text = window.__lastLessonText || '';
+  if(!text){ alert('请先生成教案'); return; }
+  const resEl = document.getElementById('lessonResult');
+  if(!resEl) return;
+  // 提取教学过程各环节
+  const phases = [];
+  const phasePatterns = [
+    {name: '导入', keywords: ['导入', '新课导入', '情境导入', '课堂导入']},
+    {name: '新授', keywords: ['新授', '新课讲授', '讲授新课', '新知探究', '新课学习', '知识讲解']},
+    {name: '巩固', keywords: ['巩固', '巩固练习', '课堂练习', '练习', '随堂练习']},
+    {name: '小结', keywords: ['小结', '课堂小结', '总结', '归纳总结']},
+    {name: '作业', keywords: ['作业', '布置作业', '课后作业']}
+  ];
+  const lines = text.split('\n');
+  let currentPhase = null;
+  let currentContent = [];
+  for(const line of lines){
+    let matched = null;
+    for(const p of phasePatterns){
+      for(const kw of p.keywords){
+        if(line.indexOf(kw) >= 0 && line.length < 60){
+          matched = p.name;
+          break;
+        }
+      }
+      if(matched) break;
+    }
+    if(matched){
+      if(currentPhase) phases.push({name: currentPhase, content: currentContent.join('\n').slice(0, 200)});
+      currentPhase = matched;
+      currentContent = [line];
+    } else if(currentPhase && line.trim()){
+      currentContent.push(line);
+    }
+  }
+  if(currentPhase) phases.push({name: currentPhase, content: currentContent.join('\n').slice(0, 200)});
+
+  // 默认时间分配（如果未检测到）
+  const defaultTimes = {'导入': 5, '新授': 25, '巩固': 10, '小结': 5, '作业': 0};
+  const colors = {'导入': '#f59e0b', '新授': '#3b82f6', '巩固': '#10b981', '小结': '#8b5cf6', '作业': '#ef4444'};
+
+  let html = '<div id="lessonTimelineBlock" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:15px;font-weight:700;color:#059669">⏱️ 教学时间轴</div><button onclick="document.getElementById(\'lessonTimelineBlock\').remove()" style="background:#f3f4f6;border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:12px">×</button></div>';
+
+  if(phases.length === 0){
+    html += '<div style="text-align:center;color:#9ca3af;padding:20px;font-size:13px">未检测到教学环节，请确保教案包含"导入/新授/巩固/小结"等环节标题</div>';
+  } else {
+    // 横向时间轴
+    let totalTime = 0;
+    phases.forEach(function(p){ totalTime += (defaultTimes[p.name] || 5); });
+    html += '<div style="display:flex;height:48px;border-radius:8px;overflow:hidden;margin-bottom:16px">';
+    phases.forEach(function(p){
+      const t = defaultTimes[p.name] || 5;
+      const pct = Math.round(t / totalTime * 100);
+      html += '<div style="flex:' + pct + ';background:' + (colors[p.name] || '#6b7280') + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer" title="' + p.name + ' ' + t + '分钟">' + p.name + '<br>' + t + 'min</div>';
+    });
+    html += '</div>';
+    html += '<div style="text-align:right;font-size:11px;color:#9ca3af;margin-bottom:14px">总课时约 ' + totalTime + ' 分钟</div>';
+
+    // 各环节详情
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+    phases.forEach(function(p, idx){
+      const t = defaultTimes[p.name] || 5;
+      html += '<div style="border-left:3px solid ' + (colors[p.name] || '#6b7280') + ';padding:10px 14px;background:#f9fafb;border-radius:0 8px 8px 0">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+      html += '<span style="font-size:13px;font-weight:700;color:#1f2937">' + (idx+1) + '. ' + p.name + '</span>';
+      html += '<span style="font-size:11px;background:' + (colors[p.name] || '#6b7280') + '20;color:' + (colors[p.name] || '#6b7280') + ';padding:2px 8px;border-radius:4px;font-weight:600">' + t + ' min</span>';
+      html += '</div>';
+      html += '<div style="font-size:11px;color:#6b7280;line-height:1.6;max-height:80px;overflow:hidden">' + (p.content || '').replace(/</g,'&lt;') + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // 插入到结果区域
+  const oldBlock = document.getElementById('lessonTimelineBlock');
+  if(oldBlock) oldBlock.remove();
+  resEl.insertAdjacentHTML('beforeend', html);
+  document.getElementById('lessonTimelineBlock').scrollIntoView({behavior:'smooth', block:'center'});
 }
+
 
 // ========== 课件库（localStorage） ==========
 const PPT_LIB_KEY = 'pptLibrary_v1';
