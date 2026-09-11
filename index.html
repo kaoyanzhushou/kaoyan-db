@@ -133208,30 +133208,25 @@ function extractBookTOC(text){
   for(const pat of patterns){
     const matches = tocArea.match(pat) || [];
     for(const m of matches){
-      let clean = m.trim().replace(/\s+/g, ' ');
-      // 去掉末尾的点线和页码（如"第二章 肌肉............15" → "第二章 肌肉"）
-      clean = clean.replace(/[\.．…·\-_]{2,}\s*\d*\s*$/, '').trim();
+      const raw = m.trim();
+      // 先从原始匹配中提取末尾页码（如"第二章 肌肉............15" → 15）
+      let page = null;
+      const pageMatch = raw.match(/[\.．…·\s](\d{1,4})\s*$/);
+      if(pageMatch && parseInt(pageMatch[1]) > 0 && parseInt(pageMatch[1]) < 9999){
+        page = parseInt(pageMatch[1]);
+      }
+      // 再清理标题：去掉末尾的点线和页码
+      let clean = raw.replace(/\s+/g, ' ').replace(/[\.．…·\-_]{2,}\s*\d*\s*$/, '').trim();
+      // 严格过滤：只保留以"第X章/节/篇"开头的章节标题，过滤正文中的数字编号列表
+      const isChapter = /^第[一二三四五六七八九十百零〇\d]+[章节篇]/.test(clean);
+      if(!isChapter) continue;
       if(clean.length >= 3 && clean.length <= 60 && !seen.has(clean)){
-        // 过滤掉明显不是章节标题的
-        if(!/^\d+$/.test(clean) && clean.length >= 3){
-          seen.add(clean);
-          chapters.push(clean);
-        }
+        seen.add(clean);
+        chapters.push({title: clean, page: page});
       }
     }
   }
-  // 解析每个章节的页码（目录中通常有"第二章 肌肉............15"）
-  const chaptersWithPage = [];
-  for(const ch of chapters.slice(0, 40)){
-    let page = null;
-    // 从原始匹配中提取末尾页码
-    const pageMatch = ch.match(/(\d+)\s*$/);
-    if(pageMatch && parseInt(pageMatch[1]) > 0 && parseInt(pageMatch[1]) < 9999){
-      page = parseInt(pageMatch[1]);
-    }
-    chaptersWithPage.push({title: ch, page: page});
-  }
-  return chaptersWithPage; // 返回带页码的章节列表
+  return chapters.slice(0, 40); // 返回带页码的章节列表
 }
 
 // 渲染章节下拉框
@@ -133241,9 +133236,9 @@ function renderBookChapterSelect(chapters){
   const btn = document.getElementById('bookLocateBtn');
   const toggle = document.getElementById('bookKeyToggle');
   if(!sel) return;
-  // 兼容旧格式（字符串数组）和新格式（对象数组）
-  const chapList = (chapters && chapters.length > 0 && typeof chapters[0] === 'object') ? chapters : chapters.map(function(c){ return {title: c, page: null}; });
-  if(chapList && chapList.length >= 3){
+  // chapters 格式: [{title, page}]
+  const chapList = chapters || [];
+  if(chapList.length >= 3){
     sel.innerHTML = '<option value="">📖 选择章节（共' + chapList.length + '章）</option>';
     chapList.forEach(function(ch, idx){
       const opt = document.createElement('option');
