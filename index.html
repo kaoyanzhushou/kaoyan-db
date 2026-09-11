@@ -13857,6 +13857,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('polish')" id="paperTab-polish" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">论文润色</button>
 
       <button onclick="switchPaperSubTab('publish')" id="paperTab-publish" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿中心</button>
+      <button onclick="switchPaperSubTab('review')" id="paperTab-review" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🤖 审稿人模拟器</button>
 
       <button onclick="switchPaperSubTab('sports')" id="paperTab-sports" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">体育学特色</button>
 
@@ -15092,7 +15093,42 @@ console.log('✅ 学习工具入口已加载');
 
     <!-- 投稿中心页面 -->
 
-    <div id="paperContent-publish" style="display:none">
+    <div id="paperContent-review" style="display:none">
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #bae6fd">
+        <h2 style="margin:0 0 8px 0;font-size:20px;color:#0c4a6e">🤖 审稿人模拟器</h2>
+        <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">三位AI审稿人（方法学专家+领域专家+编辑视角）并行评审，生成结构化审稿报告，支持回复信自动生成和多轮迭代审稿。投稿前先过一遍AI审稿，大幅降低真实审稿被拒风险。</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📝 论文输入</div>
+        <textarea id="reviewPaperInput" placeholder="粘贴论文全文（支持中英文，建议包含摘要、引言、方法、结果、讨论、结论）..." style="width:100%;min-height:200px;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none"></textarea>
+        <div style="display:flex;gap:15px;margin-top:15px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <label style="font-size:12px;color:#6b7280;font-weight:600">目标期刊（可选）</label>
+            <input type="text" id="reviewJournalInput" placeholder="如：体育科学、Medicine & Science in Sports & Exercise" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none">
+          </div>
+          <div style="min-width:150px">
+            <label style="font-size:12px;color:#6b7280;font-weight:600">审稿严格度</label>
+            <select id="reviewStrictness" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+              <option value="loose">宽松（主要问题）</option>
+              <option value="medium" selected>中等（主要+次要）</option>
+              <option value="strict">严格（所有问题）</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:15px;display:flex;gap:10px">
+          <button onclick="generatePeerReview()" style="padding:12px 30px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🔍 开始AI审稿（三模型并行）</button>
+          <button onclick="document.getElementById('reviewPaperInput').value='';document.getElementById('reviewResult').innerHTML='';document.getElementById('reviewStatus').style.display='none'" style="padding:12px 20px;background:#fff;border:1px solid #d1d5db;color:#6b7280;border-radius:8px;cursor:pointer;font-size:14px">清空</button>
+        </div>
+      </div>
+
+      <div id="reviewStatus" style="display:none;margin-bottom:20px"></div>
+      <div id="reviewResult" style="display:none;margin-bottom:20px"></div>
+    </div>
+  </div>
+
+  <div id="paperContent-publish" style="display:none">
 
       <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:16px;margin-bottom:16px">
 
@@ -57515,7 +57551,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','review','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -125729,6 +125765,539 @@ const AI_MODELS = [
   { value: 'qwen3.5-flash', label: 'Qwen3.5 Flash（阿里云·快速多模态）', provider: '阿里云百炼', tag: '快速多模态' }
 
 ];
+
+// ========== 智能模型路由系统 ==========
+// 模型能力画像（1-10分，基于模型特性和历史表现）
+const MODEL_CAPABILITY = {
+  'deepseek-chat': { cnWriting: 7, enWriting: 8, logic: 8, longContext: 7, code: 8, multimodal: 0, creative: 7, structured: 7, instruction: 7, academic: 8, speed: 8, contextWindow: 32768 },
+  'deepseek-v4-pro': { cnWriting: 7, enWriting: 9, logic: 10, longContext: 8, code: 9, multimodal: 0, creative: 6, structured: 8, instruction: 8, academic: 9, speed: 6, contextWindow: 32768 },
+  'deepseek-v4-flash': { cnWriting: 6, enWriting: 7, logic: 7, longContext: 7, code: 7, multimodal: 0, creative: 6, structured: 7, instruction: 7, academic: 7, speed: 10, contextWindow: 32768 },
+  'glm-5.3': { cnWriting: 10, enWriting: 7, logic: 8, longContext: 7, code: 7, multimodal: 0, creative: 8, structured: 8, instruction: 8, academic: 8, speed: 7, contextWindow: 32768 },
+  'kimi-k3': { cnWriting: 8, enWriting: 7, logic: 7, longContext: 10, code: 6, multimodal: 0, creative: 7, structured: 7, instruction: 7, academic: 7, speed: 6, contextWindow: 200000 },
+  'hy3': { cnWriting: 7, enWriting: 6, logic: 7, longContext: 6, code: 6, multimodal: 0, creative: 8, structured: 7, instruction: 7, academic: 6, speed: 8, contextWindow: 32768 },
+  'hy4-preview': { cnWriting: 8, enWriting: 7, logic: 7, longContext: 7, code: 7, multimodal: 8, creative: 9, structured: 7, instruction: 7, academic: 7, speed: 7, contextWindow: 32768 },
+  'qwen-flash': { cnWriting: 7, enWriting: 7, logic: 7, longContext: 7, code: 7, multimodal: 7, creative: 7, structured: 8, instruction: 8, academic: 7, speed: 10, contextWindow: 32768 },
+  'qwen3.5-plus': { cnWriting: 8, enWriting: 8, logic: 8, longContext: 9, code: 8, multimodal: 10, creative: 8, structured: 10, instruction: 10, academic: 8, speed: 7, contextWindow: 128000 },
+  'qwen3.5-flash': { cnWriting: 7, enWriting: 7, logic: 7, longContext: 8, code: 7, multimodal: 9, creative: 7, structured: 9, instruction: 9, academic: 7, speed: 10, contextWindow: 32768 }
+};
+
+// 任务类型定义（每种任务的关键能力维度和权重）
+const TASK_PROFILES = {
+  'summary': { name: '摘要生成', keyDims: ['longContext', 'cnWriting', 'structured'], weights: [0.4, 0.3, 0.3], chain: ['kimi-k3', 'glm-5.3', 'qwen3.5-plus'] },
+  'introduction': { name: '引言写作', keyDims: ['cnWriting', 'logic', 'academic'], weights: [0.4, 0.3, 0.3], chain: ['kimi-k3', 'deepseek-v4-pro', 'glm-5.3', 'hy4-preview'] },
+  'methods': { name: '方法写作', keyDims: ['logic', 'academic', 'structured'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro', 'qwen3.5-plus'] },
+  'results': { name: '结果写作', keyDims: ['structured', 'academic', 'cnWriting'], weights: [0.4, 0.3, 0.3], chain: ['qwen3.5-plus', 'deepseek-chat'] },
+  'discussion': { name: '讨论写作', keyDims: ['cnWriting', 'logic', 'creative'], weights: [0.4, 0.3, 0.3], chain: ['glm-5.3', 'deepseek-v4-pro', 'hy4-preview'] },
+  'conclusion': { name: '结论写作', keyDims: ['cnWriting', 'structured', 'academic'], weights: [0.4, 0.3, 0.3], chain: ['glm-5.3', 'qwen3.5-plus'] },
+  'polish_language': { name: '语言润色', keyDims: ['cnWriting', 'creative', 'instruction'], weights: [0.4, 0.3, 0.3], chain: ['hy4-preview', 'glm-5.3', 'qwen3.5-plus'] },
+  'polish_logic': { name: '逻辑润色', keyDims: ['logic', 'academic', 'cnWriting'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro', 'glm-5.3'] },
+  'review_method': { name: '方法学审稿', keyDims: ['logic', 'academic', 'code'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro'] },
+  'review_field': { name: '领域审稿', keyDims: ['academic', 'longContext', 'logic'], weights: [0.4, 0.3, 0.3], chain: ['glm-5.3', 'kimi-k3'] },
+  'review_editor': { name: '编辑视角审稿', keyDims: ['cnWriting', 'structured', 'instruction'], weights: [0.4, 0.3, 0.3], chain: ['hy4-preview', 'qwen3.5-plus'] },
+  'topic_eval': { name: '选题评估', keyDims: ['logic', 'academic', 'creative'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro', 'glm-5.3', 'kimi-k3'] },
+  'literature_read': { name: '文献阅读', keyDims: ['longContext', 'academic', 'cnWriting'], weights: [0.5, 0.3, 0.2], chain: ['kimi-k3', 'qwen3.5-plus'] },
+  'data_analysis': { name: '数据分析', keyDims: ['code', 'logic', 'structured'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro', 'qwen3.5-plus'] },
+  'chart_understand': { name: '图表理解', keyDims: ['multimodal', 'academic', 'logic'], weights: [0.5, 0.3, 0.2], chain: ['qwen3.5-plus', 'hy4-preview'] },
+  'format_check': { name: '格式检查', keyDims: ['instruction', 'structured', 'cnWriting'], weights: [0.5, 0.3, 0.2], chain: ['qwen3.5-plus', 'qwen3.5-flash'] },
+  'rewrite': { name: '降重改写', keyDims: ['cnWriting', 'creative', 'instruction'], weights: [0.4, 0.3, 0.3], chain: ['glm-5.3', 'hy4-preview', 'deepseek-chat'] },
+  'cover_letter': { name: 'Cover Letter', keyDims: ['enWriting', 'cnWriting', 'creative'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro', 'glm-5.3'] },
+  'response_letter': { name: '回复信', keyDims: ['cnWriting', 'logic', 'instruction'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro', 'glm-5.3', 'hy4-preview'] },
+  'trend_analysis': { name: '趋势分析', keyDims: ['longContext', 'logic', 'structured'], weights: [0.4, 0.3, 0.3], chain: ['kimi-k3', 'deepseek-v4-pro', 'qwen3.5-plus'] },
+  'general': { name: '通用任务', keyDims: ['cnWriting', 'logic', 'instruction'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-chat', 'glm-5.3', 'qwen3.5-plus'] }
+};
+
+// 路由开关（默认开启自动路由）
+let autoRouterEnabled = true;
+try { autoRouterEnabled = localStorage.getItem('auto_router_enabled') !== 'false'; } catch(e) {}
+
+// 计算模型在特定任务上的综合得分
+function calcModelScore(modelId, taskType) {
+  const cap = MODEL_CAPABILITY[modelId];
+  const task = TASK_PROFILES[taskType] || TASK_PROFILES['general'];
+  if (!cap) return 0;
+  let score = 0;
+  task.keyDims.forEach((dim, i) => {
+    score += (cap[dim] || 0) * task.weights[i];
+  });
+  return score;
+}
+
+// 自动路由：为特定任务选择最优模型
+function routeModel(taskType) {
+  if (!autoRouterEnabled) {
+    return currentAiModel || 'deepseek-chat';
+  }
+  const task = TASK_PROFILES[taskType] || TASK_PROFILES['general'];
+  // 如果有预设的链式模型，返回第一个（单模型调用场景）
+  if (task.chain && task.chain.length > 0) {
+    return task.chain[0];
+  }
+  // 否则按得分选择
+  let bestModel = 'deepseek-chat';
+  let bestScore = 0;
+  AI_MODELS.forEach(m => {
+    const score = calcModelScore(m.value, taskType);
+    if (score > bestScore) {
+      bestScore = score;
+      bestModel = m.value;
+    }
+  });
+  return bestModel;
+}
+
+// 获取任务的链式模型列表（用于多模型协作）
+function getModelChain(taskType) {
+  const task = TASK_PROFILES[taskType] || TASK_PROFILES['general'];
+  return task.chain || [routeModel(taskType)];
+}
+
+// 获取任务的Top N模型（用于多模型并行/辩论）
+function getTopNModels(taskType, n) {
+  n = n || 3;
+  const scored = AI_MODELS.map(m => ({
+    model: m.value,
+    score: calcModelScore(m.value, taskType)
+  })).sort((a, b) => b.score - a.score);
+  return scored.slice(0, n).map(s => s.model);
+}
+
+// 切换自动路由开关
+function toggleAutoRouter() {
+  autoRouterEnabled = !autoRouterEnabled;
+  try { localStorage.setItem('auto_router_enabled', autoRouterEnabled ? 'true' : 'false'); } catch(e) {}
+  const btn = document.getElementById('autoRouterBtn');
+  if (btn) {
+    btn.textContent = autoRouterEnabled ? '🤖 自动路由: 开' : '👤 自动路由: 关';
+    btn.style.background = autoRouterEnabled ? '#0891b2' : '#64748b';
+  }
+  return autoRouterEnabled;
+}
+
+// 显示模型路由信息（当前任务用什么模型）
+function showRouteInfo(taskType) {
+  const task = TASK_PROFILES[taskType] || TASK_PROFILES['general'];
+  const model = routeModel(taskType);
+  const modelInfo = AI_MODELS.find(m => m.value === model);
+  const chain = getModelChain(taskType);
+  let info = `任务: ${task.name} | 主模型: ${modelInfo ? modelInfo.label : model}`;
+  if (chain.length > 1) {
+    info += ` | 链式: ${chain.map(m => (AI_MODELS.find(x => x.value === m) || {}).label || m).join(' → ')}`;
+  }
+  return info;
+}
+
+// 带路由的AI调用（自动选择模型）
+async function callAIRouted(taskType, systemPrompt, userPrompt, maxTokens) {
+  const model = routeModel(taskType);
+  // 记录路由日志
+  try {
+    const log = JSON.parse(localStorage.getItem('router_log') || '[]');
+    log.push({ task: taskType, model: model, time: Date.now() });
+    if (log.length > 100) log.shift();
+    localStorage.setItem('router_log', JSON.stringify(log));
+  } catch(e) {}
+  return callDeepSeekAPI(systemPrompt, userPrompt, maxTokens || 2000, model);
+}
+
+// ========== 审稿人模拟器 ==========
+let peerReviewData = { reviews: [], paperText: '', targetJournal: '', strictness: 'medium', round: 0 };
+
+// 生成多角色审稿意见
+async function generatePeerReview() {
+  const paperText = document.getElementById('reviewPaperInput').value.trim();
+  if (!paperText) { mechToast('请输入或粘贴论文全文', 'warn'); return; }
+  
+  const targetJournal = document.getElementById('reviewJournalInput').value.trim() || '通用体育科学期刊';
+  const strictness = document.getElementById('reviewStrictness').value || 'medium';
+  
+  peerReviewData = { reviews: [], paperText: paperText, targetJournal: targetJournal, strictness: strictness, round: peerReviewData.round + 1 };
+  
+  const statusEl = document.getElementById('reviewStatus');
+  const resultEl = document.getElementById('reviewResult');
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1;margin-bottom:8px">🤖 三位审稿人正在并行评审...</div><div id="reviewProgress"></div></div>';
+  
+  const progressEl = document.getElementById('reviewProgress');
+  
+  // 三位审稿人配置
+  const reviewers = [
+    { id: 'A', role: '方法学专家', model: 'deepseek-v4-pro', taskType: 'review_method', focus: '研究设计、样本量、统计方法、变量控制、可重复性' },
+    { id: 'B', role: '领域专家', model: 'glm-5.3', taskType: 'review_field', focus: '创新性、学术贡献、与已有研究的关系、理论框架' },
+    { id: 'C', role: '编辑视角', model: 'hy4-preview', taskType: 'review_editor', focus: '写作质量、结构逻辑、图表质量、参考文献完整性、期刊适配' }
+  ];
+  
+  const strictDesc = { loose: '宽松（主要问题）', medium: '中等（主要+次要问题）', strict: '严格（所有问题，包括小问题）' };
+  
+  // 并行生成三位审稿人意见
+  const promises = reviewers.map(async (r) => {
+    progressEl.innerHTML += `<div id="review-${r.id}" style="margin:5px 0;color:#64748b;font-size:13px">⏳ 审稿人${r.id}（${r.role}）正在评审...</div>`;
+    
+    const systemPrompt = `你是一位严格的${r.role}，正在为${targetJournal}审稿。
+审稿严格度：${strictDesc[strictness]}。
+请重点关注：${r.focus}。
+请以JSON格式输出审稿意见，包含以下字段：
+{
+  "overallScore": 1-10分的总体评分,
+  "recommendation": "接收/小修/大修/拒稿",
+  "summary": "一句话总结论文的核心优势和主要问题",
+  "majorIssues": [{"issue": "问题描述", "suggestion": "具体修改建议", "severity": "高/中/低"}],
+  "minorIssues": [{"issue": "问题描述", "suggestion": "具体修改建议", "severity": "高/中/低"}],
+  "strengths": ["论文的优点1", "优点2"],
+  "commentsToEditor": "给编辑的私密意见"
+}
+只输出JSON，不要其他文字。`;
+    
+    const userPrompt = `论文全文：
+
+${paperText.substring(0, 15000)}${paperText.length > 15000 ? '
+
+...（论文过长，已截断）' : ''}`;
+    
+    try {
+      const result = await callDeepSeekAPI(systemPrompt, userPrompt, 3000, r.model);
+      const parsed = parseReviewJSON(result);
+      progressEl.innerHTML = progressEl.innerHTML.replace(`⏳ 审稿人${r.id}（${r.role}）正在评审...`, `✅ 审稿人${r.id}（${r.role}）完成：${parsed.recommendation || '已评审'}`);
+      return { ...r, data: parsed, raw: result, error: null };
+    } catch(e) {
+      progressEl.innerHTML = progressEl.innerHTML.replace(`⏳ 审稿人${r.id}（${r.role}）正在评审...`, `❌ 审稿人${r.id}（${r.role}）失败：${e.message}`);
+      return { ...r, data: null, raw: null, error: e.message };
+    }
+  });
+  
+  const results = await Promise.all(promises);
+  peerReviewData.reviews = results;
+  
+  // 生成汇总报告
+  renderPeerReviewReport();
+  resultEl.style.display = 'block';
+  statusEl.style.display = 'none';
+  mechToast('审稿完成！查看审稿报告', 'success');
+}
+
+// 解析审稿JSON
+function parseReviewJSON(text) {
+  try {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+  } catch(e) {}
+  // 降级：返回基本结构
+  return {
+    overallScore: 6,
+    recommendation: '大修',
+    summary: 'AI解析失败，请查看原始回复',
+    majorIssues: [{ issue: '解析失败', suggestion: '请人工查看原始回复', severity: '中' }],
+    minorIssues: [],
+    strengths: [],
+    commentsToEditor: ''
+  };
+}
+
+// 渲染审稿报告
+function renderPeerReviewReport() {
+  const resultEl = document.getElementById('reviewResult');
+  if (!resultEl) return;
+  const reviews = peerReviewData.reviews.filter(r => r.data);
+  if (reviews.length === 0) {
+    resultEl.innerHTML = '<div style="padding:20px;text-align:center;color:#dc2626">所有审稿人均生成失败，请重试</div>';
+    return;
+  }
+  
+  // 计算共识和分歧
+  const allMajor = [];
+  reviews.forEach(r => {
+    (r.data.majorIssues || []).forEach(iss => {
+      allMajor.push({ ...iss, reviewer: r.id });
+    });
+  });
+  
+  // 按问题内容聚类（简单匹配）
+  const consensusIssues = [];
+  const uniqueIssues = [];
+  allMajor.forEach(iss => {
+    const found = consensusIssues.find(c => iss.issue.substring(0, 10) === c.issue.substring(0, 10));
+    if (found) {
+      if (!found.reviewers.includes(iss.reviewer)) found.reviewers.push(iss.reviewer);
+    } else {
+      consensusIssues.push({ ...iss, reviewers: [iss.reviewer] });
+    }
+  });
+  
+  const avgScore = (reviews.reduce((sum, r) => sum + (r.data.overallScore || 5), 0) / reviews.length).toFixed(1);
+  const recommendations = reviews.map(r => r.data.recommendation);
+  const overallRec = recommendations.includes('拒稿') ? '拒稿' : recommendations.includes('大修') ? '大修' : recommendations.includes('小修') ? '小修' : '接收';
+  
+  let html = '';
+  
+  // 总体评价
+  html += '<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #bae6fd">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">';
+  html += '<div><div style="font-size:18px;font-weight:700;color:#0c4a6e">📋 审稿报告（第' + peerReviewData.round + '轮）</div>';
+  html += '<div style="font-size:13px;color:#64748b;margin-top:4px">目标期刊：' + peerReviewData.targetJournal + ' | 严格度：' + peerReviewData.strictness + '</div></div>';
+  html += '<div style="text-align:right"><div style="font-size:32px;font-weight:800;color:' + (avgScore >= 7 ? '#16a34a' : avgScore >= 5 ? '#f59e0b' : '#dc2626') + '">' + avgScore + '</div><div style="font-size:12px;color:#64748b">综合评分/10</div></div>';
+  html += '</div>';
+  html += '<div style="margin-top:12px;padding:10px 15px;background:#fff;border-radius:8px;display:inline-block"><span style="font-weight:600;color:' + (overallRec === '接收' ? '#16a34a' : overallRec === '小修' ? '#0891b2' : overallRec === '大修' ? '#f59e0b' : '#dc2626') + '">综合建议：' + overallRec + '</span></div>';
+  html += '</div>';
+  
+  // 共识问题
+  const highConsensus = consensusIssues.filter(c => c.reviewers.length >= 2);
+  if (highConsensus.length > 0) {
+    html += '<div style="background:#fef2f2;padding:15px;border-radius:10px;margin-bottom:20px;border:1px solid #fecaca">';
+    html += '<div style="font-weight:700;color:#991b1b;margin-bottom:10px">🔴 共识问题（多位审稿人都提到，必须修改）</div>';
+    highConsensus.forEach((iss, i) => {
+      html += '<div style="background:#fff;padding:10px 12px;border-radius:6px;margin-bottom:8px;border-left:3px solid #dc2626">';
+      html += '<div style="font-weight:600;color:#1f2937;font-size:13px">' + (i+1) + '. ' + iss.issue + '</div>';
+      html += '<div style="font-size:12px;color:#6b7280;margin-top:4px">💡 建议：' + iss.suggestion + '</div>';
+      html += '<div style="font-size:11px;color:#9ca3af;margin-top:2px">审稿人：' + iss.reviewers.join('、') + ' | 严重度：' + iss.severity + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  
+  // 各位审稿人详细意见
+  html += '<div style="display:flex;gap:15px;flex-wrap:wrap">';
+  reviews.forEach(r => {
+    const d = r.data;
+    const scoreColor = d.overallScore >= 7 ? '#16a34a' : d.overallScore >= 5 ? '#f59e0b' : '#dc2626';
+    html += '<div style="flex:1;min-width:300px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">';
+    html += '<div style="padding:12px 15px;background:linear-gradient(135deg,' + (r.id === 'A' ? '#0891b2' : r.id === 'B' ? '#7c3aed' : '#f59e0b') + ',#fff);color:#fff;display:flex;justify-content:space-between;align-items:center">';
+    html += '<div><span style="font-weight:700">审稿人' + r.id + '</span> <span style="font-size:12px;opacity:0.9">(' + r.role + ')</span></div>';
+    html += '<div style="text-align:right"><div style="font-size:20px;font-weight:800">' + (d.overallScore || '?') + '</div><div style="font-size:10px;opacity:0.8">' + (d.recommendation || '') + '</div></div>';
+    html += '</div>';
+    html += '<div style="padding:12px 15px">';
+    if (d.summary) html += '<div style="font-size:12px;color:#374151;margin-bottom:10px;padding:8px;background:#f9fafb;border-radius:6px">📝 ' + d.summary + '</div>';
+    if (d.strengths && d.strengths.length > 0) {
+      html += '<div style="font-size:12px;font-weight:600;color:#16a34a;margin-bottom:4px">✅ 优点</div>';
+      d.strengths.forEach(s => { html += '<div style="font-size:11px;color:#6b7280;margin:2px 0">• ' + s + '</div>'; });
+    }
+    if (d.majorIssues && d.majorIssues.length > 0) {
+      html += '<div style="font-size:12px;font-weight:600;color:#dc2626;margin:10px 0 4px">🔴 主要问题</div>';
+      d.majorIssues.forEach((iss, i) => {
+        html += '<div style="font-size:11px;color:#374151;margin:4px 0;padding:6px 8px;background:#fef2f2;border-radius:4px"><b>' + (i+1) + '.</b> ' + iss.issue + '<br><span style="color:#6b7280">💡 ' + iss.suggestion + '</span></div>';
+      });
+    }
+    if (d.minorIssues && d.minorIssues.length > 0) {
+      html += '<div style="font-size:12px;font-weight:600;color:#f59e0b;margin:10px 0 4px">🟡 次要问题</div>';
+      d.minorIssues.forEach((iss, i) => {
+        html += '<div style="font-size:11px;color:#6b7280;margin:2px 0">• ' + iss.issue + ' <span style="color:#9ca3af">(' + iss.suggestion + ')</span></div>';
+      });
+    }
+    html += '</div></div>';
+  });
+  html += '</div>';
+  
+  // 操作按钮
+  html += '<div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">';
+  html += '<button onclick="generateResponseLetter()" style="padding:10px 20px;background:#0891b2;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">✉️ 生成回复信</button>';
+  html += '<button onclick="iterateReview()" style="padding:10px 20px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">🔄 多轮迭代审稿</button>';
+  html += '<button onclick="exportReviewReport()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">📥 导出审稿报告</button>';
+  html += '</div>';
+  html += '<div id="responseLetterResult" style="margin-top:20px"></div>';
+  html += '<div id="iterateReviewResult" style="margin-top:20px"></div>';
+  
+  resultEl.innerHTML = html;
+}
+
+// 生成回复信
+async function generateResponseLetter() {
+  const resultEl = document.getElementById('responseLetterResult');
+  if (!resultEl) return;
+  if (peerReviewData.reviews.length === 0) { mechToast('请先生成审稿意见', 'warn'); return; }
+  
+  resultEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px">✉️ 正在生成回复信...</div>';
+  
+  // 收集所有审稿意见
+  let allComments = '';
+  peerReviewData.reviews.forEach(r => {
+    if (r.data) {
+      allComments += '
+
+=== 审稿人' + r.id + '（' + r.role + '）===
+';
+      allComments += '总体评价：' + (r.data.recommendation || '') + '，评分：' + (r.data.overallScore || '') + '/10
+';
+      (r.data.majorIssues || []).forEach((iss, i) => {
+        allComments += '主要问题' + (i+1) + '：' + iss.issue + '
+建议：' + iss.suggestion + '
+';
+      });
+      (r.data.minorIssues || []).forEach((iss, i) => {
+        allComments += '次要问题' + (i+1) + '：' + iss.issue + '
+建议：' + iss.suggestion + '
+';
+      });
+    }
+  });
+  
+  const systemPrompt = `你是一位经验丰富的学术论文作者，正在撰写审稿回复信。
+要求：
+1. 逐条回应每位审稿人的每个问题
+2. 态度诚恳、有理有据，不卑不亢
+3. 对于合理的建议，说明已修改及修改位置
+4. 对于不同意的意见，礼貌地说明理由并提供证据
+5. 格式：审稿意见原文 → 回复内容 → 修改位置（如有）
+6. 用中文撰写
+7. 开头有称呼，结尾有致谢`;
+  
+  const userPrompt = `目标期刊：${peerReviewData.targetJournal}
+
+审稿意见：${allComments}
+
+论文要点：${peerReviewData.paperText.substring(0, 3000)}`;
+  
+  try {
+    const result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000, 'glm-5.3');
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden"><div style="padding:12px 15px;background:#0891b2;color:#fff;font-weight:600">✉️ 回复信（可编辑后导出）</div><textarea id="responseLetterText" style="width:100%;min-height:400px;padding:15px;border:none;outline:none;font-size:13px;line-height:1.8;font-family:inherit">' + result.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea><div style="padding:10px 15px;border-top:1px solid #e5e7eb;display:flex;gap:10px"><button onclick="downloadResponseLetter()" style="padding:8px 16px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer">📥 下载Word</button></div></div>';
+    mechToast('回复信生成完成', 'success');
+  } catch(e) {
+    resultEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">回复信生成失败：' + e.message + '</div>';
+  }
+}
+
+// 下载回复信
+function downloadResponseLetter() {
+  const text = document.getElementById('responseLetterText').value;
+  const blob = new Blob(['﻿' + text], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '审稿回复信.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 多轮迭代审稿
+async function iterateReview() {
+  const resultEl = document.getElementById('iterateReviewResult');
+  if (!resultEl) return;
+  
+  const modifiedText = prompt('请粘贴修改后的论文全文（用于第二轮审稿）：', peerReviewData.paperText);
+  if (!modifiedText) return;
+  
+  peerReviewData.paperText = modifiedText;
+  resultEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px">🔄 正在进行第二轮审稿，评估修改是否到位...</div>';
+  
+  // 生成修改评估提示
+  const previousIssues = [];
+  peerReviewData.reviews.forEach(r => {
+    if (r.data) {
+      (r.data.majorIssues || []).forEach(iss => previousIssues.push(iss.issue));
+      (r.data.minorIssues || []).forEach(iss => previousIssues.push(iss.issue));
+    }
+  });
+  
+  const systemPrompt = `你是一位严格的审稿人，正在进行第二轮审稿。
+第一轮审稿提出了以下问题：
+${previousIssues.map((iss, i) => (i+1) + '. ' + iss).join('
+')}
+
+请评估修改后的论文：
+1. 第一轮的问题是否都已解决？
+2. 修改是否到位（还是只是表面修改）？
+3. 是否引入了新问题？
+4. 给出最终的审稿建议
+
+以JSON格式输出：
+{
+  "resolvedCount": 已解决问题数,
+  "partialCount": 部分解决问题数,
+  "unresolvedCount": 未解决问题数,
+  "newIssues": ["新问题1", "新问题2"],
+  "assessment": "详细评估说明",
+  "finalRecommendation": "接收/小修/大修/拒稿"
+}`;
+  
+  const userPrompt = `修改后的论文：
+
+${modifiedText.substring(0, 15000)}`;
+  
+  try {
+    const result = await callDeepSeekAPI(systemPrompt, userPrompt, 2500, 'deepseek-v4-pro');
+    const parsed = parseReviewJSON(result);
+    
+    let html = '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:20px;border-radius:12px;border:1px solid #bbf7d0">';
+    html += '<div style="font-size:18px;font-weight:700;color:#166534;margin-bottom:12px">🔄 第二轮审稿评估</div>';
+    html += '<div style="display:flex;gap:20px;margin-bottom:15px;flex-wrap:wrap">';
+    html += '<div style="text-align:center;background:#fff;padding:10px 20px;border-radius:8px"><div style="font-size:24px;font-weight:800;color:#16a34a">' + (parsed.resolvedCount || '?') + '</div><div style="font-size:11px;color:#6b7280">已解决</div></div>';
+    html += '<div style="text-align:center;background:#fff;padding:10px 20px;border-radius:8px"><div style="font-size:24px;font-weight:800;color:#f59e0b">' + (parsed.partialCount || '?') + '</div><div style="font-size:11px;color:#6b7280">部分解决</div></div>';
+    html += '<div style="text-align:center;background:#fff;padding:10px 20px;border-radius:8px"><div style="font-size:24px;font-weight:800;color:#dc2626">' + (parsed.unresolvedCount || '?') + '</div><div style="font-size:11px;color:#6b7280">未解决</div></div>';
+    html += '</div>';
+    if (parsed.assessment) html += '<div style="font-size:13px;color:#374151;background:#fff;padding:12px;border-radius:8px;margin-bottom:10px">📝 ' + parsed.assessment + '</div>';
+    if (parsed.newIssues && parsed.newIssues.length > 0) {
+      html += '<div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:5px">⚠️ 新发现问题</div>';
+      parsed.newIssues.forEach(iss => { html += '<div style="font-size:12px;color:#6b7280;margin:2px 0">• ' + iss + '</div>'; });
+    }
+    html += '<div style="margin-top:12px;font-weight:700;color:' + (parsed.finalRecommendation === '接收' ? '#16a34a' : parsed.finalRecommendation === '小修' ? '#0891b2' : '#f59e0b') + '">最终建议：' + (parsed.finalRecommendation || '待评估') + '</div>';
+    html += '</div>';
+    
+    resultEl.innerHTML = html;
+    mechToast('第二轮审稿完成', 'success');
+  } catch(e) {
+    resultEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">迭代审稿失败：' + e.message + '</div>';
+  }
+}
+
+// 导出审稿报告
+function exportReviewReport() {
+  const resultEl = document.getElementById('reviewResult');
+  if (!resultEl || !resultEl.innerHTML) { mechToast('请先生成审稿报告', 'warn'); return; }
+  
+  let text = '审稿报告
+';
+  text += '目标期刊：' + peerReviewData.targetJournal + '
+';
+  text += '严格度：' + peerReviewData.strictness + '
+';
+  text += '第' + peerReviewData.round + '轮
+
+';
+  
+  peerReviewData.reviews.forEach(r => {
+    if (r.data) {
+      text += '=== 审稿人' + r.id + '（' + r.role + '）===
+';
+      text += '评分：' + (r.data.overallScore || '?') + '/10
+';
+      text += '建议：' + (r.data.recommendation || '') + '
+';
+      text += '总结：' + (r.data.summary || '') + '
+
+';
+      if (r.data.strengths) { text += '优点：
+' + r.data.strengths.map(s => '- ' + s).join('
+') + '
+
+'; }
+      if (r.data.majorIssues) {
+        text += '主要问题：
+';
+        r.data.majorIssues.forEach((iss, i) => { text += (i+1) + '. ' + iss.issue + '
+   建议：' + iss.suggestion + '
+'; });
+        text += '
+';
+      }
+      if (r.data.minorIssues) {
+        text += '次要问题：
+';
+        r.data.minorIssues.forEach((iss, i) => { text += (i+1) + '. ' + iss.issue + '
+   建议：' + iss.suggestion + '
+'; });
+        text += '
+';
+      }
+    }
+  });
+  
+  const blob = new Blob(['﻿' + text], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '审稿报告.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+  mechToast('审稿报告已导出', 'success');
+}
 
 function setAiModel(model) {
 
