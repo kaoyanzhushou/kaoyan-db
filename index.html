@@ -13865,6 +13865,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('pipeline2')" id="paperTab-pipeline2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🔗 模型流水线</button>
       <button onclick="switchPaperSubTab('chart')" id="paperTab-chart" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📊 图表生成</button>
       <button onclick="switchPaperSubTab('knowledge2')" id="paperTab-knowledge2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📚 个人知识库</button>
+      <button onclick="switchPaperSubTab('debate2')" id="paperTab-debate2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">⚖️ 模型辩论</button>
       <button onclick="switchPaperSubTab('format2')" id="paperTab-format2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📝 格式排版</button>
 
       <button onclick="switchPaperSubTab('sports')" id="paperTab-sports" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">体育学特色</button>
@@ -15444,6 +15445,42 @@ console.log('✅ 学习工具入口已加载');
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="paperContent-debate2" style="display:none">
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #c7d2fe">
+        <h2 style="margin:0 0 8px 0;font-size:20px;color:#3730a3">⚖️ 模型辩论2.0</h2>
+        <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">DeepSeek（正方）vs GLM（反方）多轮对立辩论，Kimi（裁决）中立总结，帮助你从多角度审视学术问题，发现思维盲区。</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">⚙️ 辩论设置</div>
+        <div style="margin-bottom:15px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">辩论主题</label>
+          <textarea id="debateTopic" placeholder="输入要辩论的学术问题，例如：有氧运动比力量训练更有利于减脂吗？" style="width:100%;min-height:80px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none;margin-top:4px"></textarea>
+        </div>
+        <div style="display:flex;gap:15px;align-items:flex-end;margin-bottom:15px">
+          <div style="min-width:150px">
+            <label style="font-size:12px;color:#6b7280;font-weight:600">辩论轮数</label>
+            <select id="debateRounds" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+              <option value="1">1轮</option>
+              <option value="2" selected>2轮</option>
+              <option value="3">3轮</option>
+            </select>
+          </div>
+          <button onclick="startDebate()" style="padding:12px 30px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">⚖️ 开始辩论</button>
+        </div>
+        <div style="display:flex;gap:20px;padding:12px;background:#f9fafb;border-radius:8px;font-size:11px;color:#6b7280">
+          <div><span style="color:#3b82f6;font-weight:700">🔵 正方</span>：DeepSeek - 支持性论点</div>
+          <div><span style="color:#ef4444;font-weight:700">🔴 反方</span>：GLM - 反驳性论点</div>
+          <div><span style="color:#10b981;font-weight:700">🟢 裁决</span>：Kimi - 中立总结</div>
+        </div>
+      </div>
+
+      <div id="debateStatus" style="display:none;margin-bottom:20px"></div>
+      <div id="debateResult" style="display:none;margin-bottom:20px"></div>
     </div>
   </div>
 
@@ -57901,7 +57938,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','format2','literature','literature2','design','assist','polish','publish','journalmatch','review','trend','writing','pipeline2','chart','knowledge2','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
+  ['projects','editor','format','format2','literature','literature2','design','assist','polish','publish','journalmatch','review','trend','writing','pipeline2','chart','knowledge2','debate2','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -128334,7 +128371,111 @@ function exportKnowledgeBase() {
   mechToast('已导出', 'success');
 }
 
-// 初始化知识库渲染
+// ========== 模型辩论2.0 ==========
+// 辩论模型配置
+const DEBATE_MODELS = [
+  { id: 'deepseek-v4-flash', name: 'DeepSeek', role: '正方', color: '#3b82f6' },
+  { id: 'glm-5.3', name: 'GLM', role: '反方', color: '#ef4444' },
+  { id: 'kimi-k3', name: 'Kimi', role: '裁决', color: '#10b981' }
+];
+
+// 开始辩论
+async function startDebate() {
+  const topic = document.getElementById('debateTopic').value.trim();
+  const rounds = parseInt(document.getElementById('debateRounds').value) || 2;
+  
+  if (!topic) { mechToast('请输入辩论主题', 'warn'); return; }
+  
+  const statusEl = document.getElementById('debateStatus');
+  const resultEl = document.getElementById('debateResult');
+  
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">⚖️ 辩论进行中，多模型正在思考...</div></div>';
+  
+  let debateHistory = [];
+  let allHtml = '';
+  
+  try {
+    for (let round = 1; round <= rounds; round++) {
+      statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">⚖️ 第' + round + '轮辩论中...</div></div>';
+      
+      // 正方发言
+      const proContext = debateHistory.length > 0 ? '历史辩论：
+' + debateHistory.map((h, i) => (i % 2 === 0 ? '正方：' : '反方：') + h).join('
+') + '
+
+' : '';
+      const proResult = await callDeepSeekAPI(
+        '你是正方辩手。请针对以下主题提出支持性论点，要求逻辑严密、有学术依据、条理清晰。如果有历史辩论，请针对反方观点进行反驳。',
+        proContext + '辩论主题：' + topic,
+        1500, 'deepseek-v4-flash'
+      );
+      debateHistory.push(proResult);
+      
+      // 反方发言
+      const conContext = '正方观点：
+' + proResult + '
+
+请针对正方观点进行反驳，提出反对性论点。';
+      const conResult = await callDeepSeekAPI(
+        '你是反方辩手。请针对正方观点进行反驳，提出反对性论点，要求逻辑严密、有学术依据、条理清晰。',
+        '辩论主题：' + topic + '
+
+' + conContext,
+        1500, 'glm-5.3'
+      );
+      debateHistory.push(conResult);
+      
+      // 生成本轮HTML
+      allHtml += '<div style="margin-bottom:20px">';
+      allHtml += '<div style="text-align:center;font-weight:700;color:#6b7280;margin-bottom:10px">—— 第' + round + '轮 ——</div>';
+      allHtml += '<div style="background:#eff6ff;border-left:4px solid #3b82f6;padding:12px 15px;border-radius:0 8px 8px 0;margin-bottom:10px">';
+      allHtml += '<div style="font-weight:700;color:#1e40af;margin-bottom:5px">🔵 正方（DeepSeek）</div>';
+      allHtml += '<div style="font-size:12px;color:#374151;line-height:1.8">' + proResult.replace(/
+/g, '<br>') + '</div></div>';
+      allHtml += '<div style="background:#fef2f2;border-left:4px solid #ef4444;padding:12px 15px;border-radius:0 8px 8px 0">';
+      allHtml += '<div style="font-weight:700;color:#991b1b;margin-bottom:5px">🔴 反方（GLM）</div>';
+      allHtml += '<div style="font-size:12px;color:#374151;line-height:1.8">' + conResult.replace(/
+/g, '<br>') + '</div></div>';
+      allHtml += '</div>';
+    }
+    
+    // 裁决总结
+    statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">⚖️ 裁决模型正在总结...</div></div>';
+    const judgeContext = '辩论主题：' + topic + '
+
+辩论过程：
+' + debateHistory.map((h, i) => (i % 2 === 0 ? '正方：' : '反方：') + h).join('
+
+');
+    const judgeResult = await callDeepSeekAPI(
+      '你是中立的裁决者。请总结这场辩论，包括：1.双方核心观点 2.共识点 3.分歧点 4.你的综合判断和建议。要求客观公正、条理清晰。',
+      judgeContext,
+      2000, 'kimi-k3'
+    );
+    
+    let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">';
+    html += '<div style="padding:15px 20px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff">';
+    html += '<div style="font-weight:700;font-size:16px">⚖️ 模型辩论结果</div>';
+    html += '<div style="font-size:12px;opacity:0.9;margin-top:4px">主题：' + topic + ' | ' + rounds + '轮辩论 | DeepSeek vs GLM | Kimi裁决</div></div>';
+    html += '<div style="padding:20px">' + allHtml + '</div>';
+    html += '<div style="padding:15px 20px;border-top:2px solid #e5e7eb;background:#f9fafb">';
+    html += '<div style="font-weight:700;color:#047857;margin-bottom:10px">🟢 裁决总结（Kimi）</div>';
+    html += '<div style="font-size:12px;color:#374151;line-height:1.8">' + judgeResult.replace(/
+/g, '<br>') + '</div></div>';
+    html += '</div>';
+    
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    mechToast('辩论完成！', 'success');
+  } catch(e) {
+    statusEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">辩论失败：' + e.message + '</div>';
+  }
+}
+
+function setAiModel(model) {
 if (typeof knowledgeItems !== 'undefined') {
   setTimeout(function() {
     if (document.getElementById('kbList')) {
