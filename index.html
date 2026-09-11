@@ -15270,6 +15270,8 @@ console.log('✅ 学习工具入口已加载');
 
               <button onclick="aiPlagCheck()" id="aiPlagBtn" style="background:#7c3aed;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;flex:1;min-width:120px">🤖 AI智能查重</button>
 
+              <button onclick="aiPlagDeepCheck()" id="aiPlagDeepBtn" style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;flex:1;min-width:140px" title="V4-Pro深度分析 + GLM-5.3智能改写高重复句子">🔥 深度查重+改写</button>
+
               <select id="plagNgramSize" style="padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
 
                 <option value="6">6-gram（标准）</option>
@@ -64928,6 +64930,204 @@ function aiPlagCheck() {
 
 }
 
+
+
+
+// ========== 深度查重+智能改写（v4-pro分析 + glm-5.3改写） ==========
+var __aiPlagDeepRunning = false;
+
+async function aiPlagDeepCheck() {
+  if (__aiPlagDeepRunning) { alert('深度查重正在进行中，请稍候'); return; }
+
+  var textEl = document.getElementById('plagCheckText');
+  var text = textEl ? textEl.value.trim() : '';
+  if (text.length < 50) { alert('请输入至少50字的论文内容'); return; }
+
+  var resultEl = document.getElementById('aiPlagResult');
+  if (!resultEl) return;
+
+  // 分句
+  var sentences = text.split(/[。！？；;\n]/).map(function(s){return s.trim();}).filter(function(s){ return s.length > 8; });
+  if (sentences.length === 0) { alert('未检测到有效句子'); return; }
+  var totalSentences = sentences.length;
+  if (sentences.length > 20) sentences = sentences.slice(0, 20);
+
+  __aiPlagDeepRunning = true;
+  var btn = document.getElementById('aiPlagDeepBtn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280">' +
+    '<div style="font-size:28px;margin-bottom:8px">🔥</div>' +
+    '<div style="font-size:13px;margin-bottom:6px">V4-Pro 正在深度逐句分析 ' + sentences.length + ' 句...</div>' +
+    '<div id="deepPlagProgress" style="font-size:12px;color:#dc2626;font-weight:600"></div>' +
+    '<div style="width:100%;max-width:300px;height:6px;background:#fee2e2;border-radius:3px;margin:12px auto 0;overflow:hidden"><div id="deepPlagBar" style="height:100%;width:0%;background:#dc2626;border-radius:3px;transition:width .3s"></div></div>' +
+  '</div>';
+
+  try {
+    // ===== 第一步：v4-pro 逐句分析 =====
+    var batchSize = 4;
+    var batches = [];
+    for (var i = 0; i < sentences.length; i += batchSize) batches.push(sentences.slice(i, i + batchSize));
+
+    var allResults = [];
+    var sys = '你是体育学学术论文查重专家，精通运动人体科学、运动训练学、体育教育训练学、运动康复等领域的学术写作规范。' +
+      '用户给你一批论文中的句子，请逐句判断其语义重复风险：' +
+      '1) level：高/中/低/无 —— 判断该句是否与学术惯用表述高度雷同（包括换词不换意、同义替换等隐性重复），' +
+      '2) type：语义重复/学术套话/原创表达' +
+      '3) suggestion：若为高或中重复，给出不超过25字的具体改写方向；若为低或无重复，给出空字符串。' +
+      '严格只输出JSON数组：[{"idx":0,"level":"高","type":"语义重复","suggestion":"改写方向"}]，不要输出任何其他文字。';
+
+    for (var bi = 0; bi < batches.length; bi++) {
+      var batch = batches[bi];
+      var pEl = document.getElementById('deepPlagProgress');
+      var barEl = document.getElementById('deepPlagBar');
+      if (pEl) pEl.textContent = '分析第 ' + (bi*batchSize+1) + '-' + Math.min((bi+1)*batchSize, sentences.length) + ' 句（' + (bi+1) + '/' + batches.length + '批）';
+      if (barEl) barEl.style.width = Math.round(bi / batches.length * 60) + '%';
+
+      var user = batch.map(function(s, j) { return '[' + (bi*batchSize+j) + '] ' + s; }).join('\n');
+      try {
+        var resp = await callDeepSeekAPI(sys, user, 1200, 'deepseek-v4-pro');
+        var parsed = parseAiPlagResponse(resp, bi * batchSize, batch.length);
+        allResults = allResults.concat(parsed);
+      } catch(e) {
+        allResults.push({idx: bi*batchSize, level: '?', type: '调用失败', suggestion: (e.message||'').substring(0,40)});
+      }
+    }
+
+    // ===== 第二步：收集高/中重复句子，用 glm-5.3 改写 =====
+    var highRisk = allResults.filter(function(r) { return r.level === '高' || r.level === '中'; });
+
+    if (highRisk.length > 0) {
+      if (pEl) pEl.textContent = 'V4-Pro分析完成！GLM-5.3 正在改写 ' + highRisk.length + ' 个高重复句子...';
+      if (barEl) barEl.style.width = '75%';
+
+      // 分批改写（每批3句）
+      var rewriteBatchSize = 3;
+      var rewriteMap = {};
+      for (var ri = 0; ri < highRisk.length; ri += rewriteBatchSize) {
+        var rbatch = highRisk.slice(ri, ri + rewriteBatchSize);
+        var rSys = '你是体育学学术论文改写专家。请对以下高重复风险句子进行学术化改写，要求：保持原意不变、提升学术表达、避免与原文雷同、使用专业术语。严格只输出JSON数组：[{"idx":0,"rewritten":"改写后的句子"}]，不要输出任何其他文字。';
+        var rUser = rbatch.map(function(r) {
+          var orig = sentences[r.idx] || '';
+          return '[' + r.idx + '] 原句：' + orig + '\n风险：' + r.level + '（' + r.type + '）\n建议方向：' + (r.suggestion || '');
+        }).join('\n\n');
+
+        try {
+          var rResp = await callDeepSeekAPI(rSys, rUser, 1500, 'glm-5.3');
+          var rCleaned = (rResp||'').replace(/```json/gi,'').replace(/```/g,'').trim();
+          var rMatch = rCleaned.match(/\[[\s\S]*\]/);
+          if (rMatch) {
+            var rArr = JSON.parse(rMatch[0]);
+            rArr.forEach(function(item) {
+              if (item.rewritten) rewriteMap[item.idx] = item.rewritten;
+            });
+          }
+        } catch(e) { /* 忽略单批失败 */ }
+      }
+    }
+
+    if (barEl) barEl.style.width = '100%';
+
+    // ===== 第三步：渲染结果 =====
+    renderDeepPlagResult(allResults, sentences, totalSentences, rewriteMap);
+
+  } catch(error) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;color:#b91c1c;font-size:13px">❌ 深度查重失败：' + error.message + '</div>';
+  }
+
+  __aiPlagDeepRunning = false;
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+function renderDeepPlagResult(results, sentences, total, rewriteMap) {
+  var resultEl = document.getElementById('aiPlagResult');
+  if (!resultEl) return;
+
+  var high = results.filter(function(r){return r.level==='高';}).length;
+  var mid = results.filter(function(r){return r.level==='中';}).length;
+  var low = results.filter(function(r){return r.level==='低';}).length;
+  var none = results.filter(function(r){return r.level==='无';}).length;
+  var riskRate = Math.round((high + mid) / results.length * 100);
+
+  var html = '';
+  html += '<div style="background:#fff;border:1px solid #fecaca;border-radius:12px;padding:16px;margin-bottom:12px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html += '<div style="font-size:15px;font-weight:700;color:#b91c1c">🔥 深度查重+智能改写报告</div>';
+  html += '<div style="font-size:11px;color:#9ca3af">V4-Pro分析 + GLM-5.3改写</div>';
+  html += '</div>';
+
+  // 统计
+  html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px">';
+  html += '<div style="text-align:center;padding:8px;background:#fef2f2;border-radius:6px"><div style="font-size:18px;font-weight:700;color:#dc2626">' + high + '</div><div style="font-size:10px;color:#991b1b">高重复</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#fffbeb;border-radius:6px"><div style="font-size:18px;font-weight:700;color:#d97706">' + mid + '</div><div style="font-size:10px;color:#92400e">中重复</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#f0fdf4;border-radius:6px"><div style="font-size:18px;font-weight:700;color:#16a34a">' + low + '</div><div style="font-size:10px;color:#166534">低重复</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#f0f9ff;border-radius:6px"><div style="font-size:18px;font-weight:700;color:#0284c7">' + none + '</div><div style="font-size:10px;color:#075985">原创</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#fdf2f8;border-radius:6px"><div style="font-size:18px;font-weight:700;color:#db2777">' + riskRate + '%</div><div style="font-size:10px;color:#9d174d">重复风险率</div></div>';
+  html += '</div>';
+
+  // 逐句结果
+  html += '<div style="max-height:500px;overflow-y:auto">';
+  results.forEach(function(r) {
+    var orig = sentences[r.idx] || '';
+    var levelColor = r.level==='高' ? '#dc2626' : (r.level==='中' ? '#d97706' : (r.level==='低' ? '#16a34a' : '#0284c7'));
+    var bgColor = r.level==='高' ? '#fef2f2' : (r.level==='中' ? '#fffbeb' : (r.level==='低' ? '#f0fdf4' : '#f0f9ff'));
+    var rewritten = rewriteMap[r.idx];
+
+    html += '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:8px;background:' + bgColor + '">';
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">';
+    html += '<span style="background:' + levelColor + ';color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600">' + r.level + '重复</span>';
+    html += '<span style="font-size:10px;color:#6b7280">' + (r.type||'') + '</span>';
+    html += '<span style="font-size:10px;color:#9ca3af;margin-left:auto">第' + (r.idx+1) + '句</span>';
+    html += '</div>';
+    html += '<div style="font-size:12px;color:#374151;line-height:1.6;margin-bottom:4px">原文：' + orig + '</div>';
+    if (r.suggestion) html += '<div style="font-size:11px;color:#6b7280;margin-bottom:4px">💡 改写方向：' + r.suggestion + '</div>';
+    if (rewritten) {
+      html += '<div style="background:#fff;border:1px solid #86efac;border-radius:6px;padding:8px;margin-top:6px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+      html += '<span style="font-size:10px;font-weight:600;color:#16a34a">✨ GLM-5.3 改写版本</span>';
+      html += '<button onclick="copyDeepRewrite(' + r.idx + ')" style="background:#f0fdf4;color:#16a34a;border:1px solid #86efac;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:10px">复制</button>';
+      html += '</div>';
+      html += '<div style="font-size:12px;color:#1e293b;line-height:1.6" id="deepRewrite-' + r.idx + '">' + rewritten + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // 一键复制所有改写
+  var rewrittenCount = Object.keys(rewriteMap||{}).length;
+  if (rewrittenCount > 0) {
+    html += '<div style="margin-top:12px;text-align:center">';
+    html += '<button onclick="copyAllDeepRewrites()" style="background:#16a34a;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📋 复制全部 ' + rewrittenCount + ' 句改写版本</button>';
+    html += '</div>';
+  }
+
+  html += '</div>';
+  resultEl.innerHTML = html;
+
+  // 保存改写数据到全局
+  window._deepRewriteMap = rewriteMap;
+}
+
+function copyDeepRewrite(idx) {
+  var el = document.getElementById('deepRewrite-' + idx);
+  if (!el) return;
+  var text = el.textContent;
+  if (navigator.clipboard) navigator.clipboard.writeText(text);
+  else { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  alert('已复制改写版本');
+}
+
+function copyAllDeepRewrites() {
+  if (!window._deepRewriteMap) return;
+  var text = Object.keys(window._deepRewriteMap).map(function(k) {
+    return '第' + (parseInt(k,10)+1) + '句改写：' + window._deepRewriteMap[k];
+  }).join('\n\n');
+  if (navigator.clipboard) navigator.clipboard.writeText(text);
+  else { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+  alert('已复制全部 ' + Object.keys(window._deepRewriteMap).length + ' 句改写版本');
+}
 
 
 function parseAiPlagResponse(resp, startIdx, count) {
