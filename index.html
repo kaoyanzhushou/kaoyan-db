@@ -16593,11 +16593,42 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
             <button onclick="toggleBookKeyMode()" id="bookKeyToggle" style="display:none;background:#fff;border:1px solid #9ca3af;color:#6b7280;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px">关键词模式</button>
 
+            <button onclick="toggleBookTOCPanel()" id="bookTOCBtn" style="display:none;background:#ede9fe;border:1px solid #a78bfa;color:#5b21b6;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px">📋 目录</button>
+
+            <button onclick="togglePageRange()" id="bookPageRangeBtn" style="display:none;background:#fff;border:1px solid #9ca3af;color:#6b7280;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px">📄 页码范围</button>
+
             <span id="bookStatus" style="font-size:12px;color:#6b7280"></span>
 
           </div>
 
           <div style="font-size:11px;color:#9ca3af;margin-top:6px">支持 .txt / .docx / .pdf · 选择文件后自动上传并解析目录，点击章节即可自动定位+AI提炼（可编辑）</div>
+
+          <!-- 可视化目录面板 -->
+          <div id="bookTOCPanel" style="display:none;margin-top:10px;background:#fff;border:1px solid #e9d5ff;border-radius:8px;padding:10px;max-height:300px;overflow-y:auto">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+              <span style="font-size:12px;font-weight:600;color:#5b21b6">📚 教材目录（点击章节名定位，勾选可批量处理）</span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button onclick="selectAllChapters(true)" style="font-size:11px;padding:3px 8px;border:1px solid #a78bfa;background:#ede9fe;color:#5b21b6;border-radius:4px;cursor:pointer">全选</button>
+                <button onclick="selectAllChapters(false)" style="font-size:11px;padding:3px 8px;border:1px solid #d1d5db;background:#fff;color:#6b7280;border-radius:4px;cursor:pointer">清空</button>
+                <button onclick="locateSelectedChapters()" style="font-size:11px;padding:3px 8px;border:1px solid #16a34a;background:#dcfce7;color:#166534;border-radius:4px;cursor:pointer">定位选中</button>
+                <button onclick="mergeSelectedChapters()" style="font-size:11px;padding:3px 8px;border:1px solid #d97706;background:#fef3c7;color:#92400e;border-radius:4px;cursor:pointer">合并选中</button>
+              </div>
+            </div>
+            <div id="bookTOCList" style="font-size:12px"></div>
+          </div>
+
+          <!-- 页码范围截取面板 -->
+          <div id="bookPageRangePanel" style="display:none;margin-top:10px;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:10px">
+            <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:8px">📄 按页码范围截取内容</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <span style="font-size:12px;color:#6b7280">起始页</span>
+              <input type="number" id="bookPageStart" min="1" placeholder="如：18" style="width:80px;padding:6px;border:1px solid #d1d5db;border-radius:6px;font-size:12px">
+              <span style="font-size:12px;color:#6b7280">结束页</span>
+              <input type="number" id="bookPageEnd" min="1" placeholder="如：30" style="width:80px;padding:6px;border:1px solid #d1d5db;border-radius:6px;font-size:12px">
+              <button onclick="locateByPageRange()" style="background:#2563eb;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px">截取范围</button>
+              <span id="bookPageRangeInfo" style="font-size:11px;color:#9ca3af"></span>
+            </div>
+          </div>
 
         </div>
 
@@ -133072,7 +133103,254 @@ async function healthCheckLesson(lessonText, formatReq){
   return out;
 }
 
-async function aiExtractChapter(){
+async 
+// ========== 可视化目录面板功能 ==========
+let bookSelectedChapters = new Set();
+
+function toggleBookTOCPanel(){
+  const panel = document.getElementById('bookTOCPanel');
+  if(!panel) return;
+  if(panel.style.display === 'none'){
+    panel.style.display = 'block';
+    renderBookTOCPanel();
+  }else{
+    panel.style.display = 'none';
+  }
+}
+
+function renderBookTOCPanel(){
+  const listEl = document.getElementById('bookTOCList');
+  if(!listEl) return;
+  let toc = [];
+  try{ toc = JSON.parse(localStorage.getItem('aiBookTOC') || '[]'); }catch(e){ toc = []; }
+  if(!toc || toc.length === 0){
+    listEl.innerHTML = '<div style="color:#9ca3af;padding:10px;text-align:center">暂无目录数据，请先上传教材</div>';
+    return;
+  }
+  let html = '';
+  toc.forEach((ch, idx) => {
+    const isChapter = /^第[一二三四五六七八九十百零〇\d]+[章节篇]/.test(ch.title);
+    const indent = isChapter ? '' : 'margin-left:20px';
+    const pageStr = ch.page ? ` <span style="color:#9ca3af;font-size:11px">(p.${ch.page})</span>` : '';
+    const checked = bookSelectedChapters.has(idx) ? 'checked' : '';
+    const fontWeight = isChapter ? 'font-weight:600;color:#374151' : 'color:#6b7280';
+    html += `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #f3f4f6;${indent}">
+      <input type="checkbox" ${checked} onchange="toggleChapterSelect(${idx})" style="cursor:pointer">
+      <span onclick="locateByChapterTitle(${idx})" style="cursor:pointer;${fontWeight};flex:1" onmouseover="this.style.color='#5b21b6'" onmouseout="this.style.color='${isChapter ? '#374151' : '#6b7280'}'">${ch.title}${pageStr}</span>
+    </div>`;
+  });
+  listEl.innerHTML = html;
+}
+
+function locateByChapterTitle(idx){
+  let toc = [];
+  try{ toc = JSON.parse(localStorage.getItem('aiBookTOC') || '[]'); }catch(e){ toc = []; }
+  if(!toc[idx]) return;
+  const title = toc[idx].title;
+  // 用章节标题定位（复用locateChapter的逻辑，但直接设置关键词）
+  const keyInput = document.getElementById('bookChapterKey');
+  if(keyInput){
+    keyInput.value = title;
+    // 如果当前是目录选择模式，先切换到关键词模式
+    const select = document.getElementById('bookChapterSelect');
+    if(select && select.style.display !== 'none'){
+      toggleBookKeyMode();
+    }
+    setTimeout(() => locateChapter(), 100);
+  }
+}
+
+function toggleChapterSelect(idx){
+  if(bookSelectedChapters.has(idx)){
+    bookSelectedChapters.delete(idx);
+  }else{
+    bookSelectedChapters.add(idx);
+  }
+}
+
+function selectAllChapters(select){
+  let toc = [];
+  try{ toc = JSON.parse(localStorage.getItem('aiBookTOC') || '[]'); }catch(e){ toc = []; }
+  if(select){
+    toc.forEach((_, idx) => bookSelectedChapters.add(idx));
+  }else{
+    bookSelectedChapters.clear();
+  }
+  renderBookTOCPanel();
+}
+
+function locateSelectedChapters(){
+  if(bookSelectedChapters.size === 0){
+    mechToast('请先勾选需要的章节', 'warn');
+    return;
+  }
+  let toc = [];
+  try{ toc = JSON.parse(localStorage.getItem('aiBookTOC') || '[]'); }catch(e){ toc = []; }
+  let book = '';
+  try{ book = localStorage.getItem('aiBookText') || ''; }catch(e){ book = ''; }
+  if(!book){ mechToast('请先上传教材', 'warn'); return; }
+  
+  // 按顺序定位选中的章节并合并
+  const sortedIdx = Array.from(bookSelectedChapters).sort((a,b) => a-b);
+  let mergedContent = '';
+  let foundCount = 0;
+  
+  for(const idx of sortedIdx){
+    const ch = toc[idx];
+    if(!ch) continue;
+    const content = extractChapterContent(book, ch.title);
+    if(content){
+      mergedContent += `\n\n=== ${ch.title} ===\n\n${content}`;
+      foundCount++;
+    }
+  }
+  
+  if(mergedContent){
+    const contentEl = document.getElementById('lessonChapterContent');
+    if(contentEl) contentEl.value = mergedContent.trim();
+    // 自动填充科目和章节
+    const subjectEl = document.getElementById('lessonSubject');
+    const chapterEl = document.getElementById('lessonChapter');
+    if(subjectEl && !subjectEl.value) subjectEl.value = '多章节合并';
+    if(chapterEl) chapterEl.value = `已选${foundCount}个章节`;
+    mechToast(`已定位并合并 ${foundCount} 个章节（${mergedContent.length}字）`, 'success');
+  }else{
+    mechToast('未找到选中章节的内容', 'warn');
+  }
+}
+
+function mergeSelectedChapters(){
+  // 与locateSelectedChapters相同，但不添加章节标题分隔
+  if(bookSelectedChapters.size === 0){
+    mechToast('请先勾选需要的章节', 'warn');
+    return;
+  }
+  let toc = [];
+  try{ toc = JSON.parse(localStorage.getItem('aiBookTOC') || '[]'); }catch(e){ toc = []; }
+  let book = '';
+  try{ book = localStorage.getItem('aiBookText') || ''; }catch(e){ book = ''; }
+  if(!book){ mechToast('请先上传教材', 'warn'); return; }
+  
+  const sortedIdx = Array.from(bookSelectedChapters).sort((a,b) => a-b);
+  let mergedContent = '';
+  let foundCount = 0;
+  
+  for(const idx of sortedIdx){
+    const ch = toc[idx];
+    if(!ch) continue;
+    const content = extractChapterContent(book, ch.title);
+    if(content){
+      mergedContent += content + '\n\n';
+      foundCount++;
+    }
+  }
+  
+  if(mergedContent){
+    const contentEl = document.getElementById('lessonChapterContent');
+    if(contentEl) contentEl.value = mergedContent.trim();
+    const chapterEl = document.getElementById('lessonChapter');
+    if(chapterEl) chapterEl.value = `合并${foundCount}章`;
+    mechToast(`已合并 ${foundCount} 个章节（${mergedContent.trim().length}字）`, 'success');
+  }else{
+    mechToast('未找到选中章节的内容', 'warn');
+  }
+}
+
+// 辅助函数：从教材中提取指定章节内容
+function extractChapterContent(book, title){
+  if(!book || !title) return '';
+  const start = Math.floor(book.length / 8);
+  // 生成关键词变体
+  const variants = [title];
+  const cnNumMap = {'一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','七':'7','八':'8','九':'9','十':'10'};
+  let arabic = title;
+  for(const cn in cnNumMap){ arabic = arabic.split(cn).join(cnNumMap[cn]); }
+  if(arabic !== title) variants.push(arabic);
+  const pure = title.replace(/^第[一二三四五六七八九十百零〇\d]+[章节篇]\s*/, '').trim();
+  if(pure && pure.length >= 2) variants.push(pure);
+  
+  for(const v of variants){
+    const pos = book.indexOf(v, start);
+    if(pos >= 0){
+      // 截取3500字
+      return book.substring(pos, Math.min(pos + 3500, book.length)).trim();
+    }
+  }
+  return '';
+}
+
+// ========== 页码范围截取功能 ==========
+function togglePageRange(){
+  const panel = document.getElementById('bookPageRangePanel');
+  if(!panel) return;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  // 显示目录页码范围信息
+  const info = document.getElementById('bookPageRangeInfo');
+  if(info && panel.style.display === 'block'){
+    let toc = [];
+    try{ toc = JSON.parse(localStorage.getItem('aiBookTOC') || '[]'); }catch(e){ toc = []; }
+    const pages = toc.filter(c => c.page).map(c => c.page);
+    if(pages.length > 0){
+      info.textContent = `目录页码范围：${Math.min(...pages)} - ${Math.max(...pages)}`;
+    }
+  }
+}
+
+function locateByPageRange(){
+  const startPage = parseInt(document.getElementById('bookPageStart').value);
+  const endPage = parseInt(document.getElementById('bookPageEnd').value);
+  if(!startPage || !endPage || startPage > endPage){
+    mechToast('请输入有效的起始页和结束页', 'warn');
+    return;
+  }
+  let toc = [];
+  try{ toc = JSON.parse(localStorage.getItem('aiBookTOC') || '[]'); }catch(e){ toc = []; }
+  let book = '';
+  try{ book = localStorage.getItem('aiBookText') || ''; }catch(e){ book = ''; }
+  if(!book){ mechToast('请先上传教材', 'warn'); return; }
+  
+  // 找到页码范围内的所有章节
+  const chaptersInRange = toc.filter(ch => ch.page && ch.page >= startPage && ch.page <= endPage);
+  if(chaptersInRange.length === 0){
+    // 如果没有精确匹配，找最接近的章节
+    let closest = null, minDiff = 9999;
+    for(const ch of toc){
+      if(ch.page){
+        const diff = Math.abs(ch.page - startPage);
+        if(diff < minDiff){ minDiff = diff; closest = ch; }
+      }
+    }
+    if(closest && minDiff <= 10){
+      chaptersInRange.push(closest);
+    }
+  }
+  
+  if(chaptersInRange.length === 0){
+    mechToast(`页码 ${startPage}-${endPage} 范围内未找到章节`, 'warn');
+    return;
+  }
+  
+  // 合并范围内的章节内容
+  let mergedContent = '';
+  for(const ch of chaptersInRange){
+    const content = extractChapterContent(book, ch.title);
+    if(content){
+      mergedContent += `\n\n=== ${ch.title} (p.${ch.page}) ===\n\n${content}`;
+    }
+  }
+  
+  if(mergedContent){
+    const contentEl = document.getElementById('lessonChapterContent');
+    if(contentEl) contentEl.value = mergedContent.trim();
+    const chapterEl = document.getElementById('lessonChapter');
+    if(chapterEl) chapterEl.value = `页码${startPage}-${endPage}（${chaptersInRange.length}章）`;
+    mechToast(`已截取页码 ${startPage}-${endPage}（${chaptersInRange.length}个章节，${mergedContent.trim().length}字）`, 'success');
+  }else{
+    mechToast('截取失败，请检查页码范围', 'warn');
+  }
+}
+
+function aiExtractChapter(){
   const contentEl = document.getElementById('lessonChapterContent');
   const raw = (contentEl.value||'').trim();
   const status = document.getElementById('bookStatus');
@@ -133200,10 +133478,12 @@ function extractBookTOC(text){
   const tocArea = text.slice(0, Math.floor(text.length * 0.3));
   // 匹配模式：第X章/第X节/第X篇 + 标题
   const patterns = [
-    /第[一二三四五六七八九十百零〇\d]+[章节篇]\s*[^。，；\n\r]{0,40}/g,
+    /第[一二三四五六七八九十百零〇\d]+[章节篇讲]\s*[^。，；\n\r]{0,40}/g,
+    /(?:专题|单元|模块|主题)[一二三四五六七八九十百零〇\d]+\s*[^。，；\n\r]{0,40}/g,
+    /(?:Chapter|Part|Module|Lesson|Unit)\s*\d+\s*[^。，；\n\r]{0,40}/gi,
     /^\s*[一二三四五六七八九十百零〇]+[、\.．]\s*[^。，；\n\r]{2,40}/gm,
     /^\s*\d+[\.、．]\s*[^。，；\n\r]{2,40}/gm,
-    /^\s*第[一二三四五六七八九十百零〇\d]+[章节篇]\s*[:：]?\s*[^。，；\n\r]{0,40}/gm
+    /^\s*第[一二三四五六七八九十百零〇\d]+[章节篇讲]\s*[:：]?\s*[^。，；\n\r]{0,40}/gm
   ];
   for(const pat of patterns){
     const matches = tocArea.match(pat) || [];
@@ -133217,8 +133497,9 @@ function extractBookTOC(text){
       }
       // 再清理标题：去掉末尾的点线和页码
       let clean = raw.replace(/\s+/g, ' ').replace(/[\.．…·\-_]{2,}\s*\d*\s*$/, '').trim();
-      // 严格过滤：只保留以"第X章/节/篇"开头的章节标题，过滤正文中的数字编号列表
-      const isChapter = /^第[一二三四五六七八九十百零〇\d]+[章节篇]/.test(clean);
+      // 严格过滤：只保留章节标题，过滤正文中的数字编号列表
+      // 支持格式：第X章/节/篇/讲、专题X、单元X、Chapter X、Part X、Module X、Lesson X
+      const isChapter = /^(第[一二三四五六七八九十百零〇\d]+[章节篇讲]|(?:专题|单元|模块|主题)[一二三四五六七八九十百零〇\d]+|(?:Chapter|Part|Module|Lesson|Unit)\s*\d+)/i.test(clean);
       if(!isChapter) continue;
       if(clean.length >= 3 && clean.length <= 60 && !seen.has(clean)){
         seen.add(clean);
@@ -133250,6 +133531,11 @@ function renderBookChapterSelect(chapters){
     if(key) key.style.display = 'none';
     if(btn) btn.style.display = 'none';
     if(toggle) toggle.style.display = 'inline-block';
+    // 同时显示目录面板和页码范围按钮
+    const tocBtn = document.getElementById('bookTOCBtn');
+    const pageBtn = document.getElementById('bookPageRangeBtn');
+    if(tocBtn) tocBtn.style.display = 'inline-block';
+    if(pageBtn) pageBtn.style.display = 'inline-block';
   }else{
     // 目录解析失败，降级为关键词模式
     sel.style.display = 'none';
