@@ -13860,6 +13860,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('review')" id="paperTab-review" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🤖 审稿人模拟器</button>
       <button onclick="switchPaperSubTab('trend')" id="paperTab-trend" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📊 研究趋势</button>
       <button onclick="switchPaperSubTab('writing')" id="paperTab-writing" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">✍️ 写作助手</button>
+      <button onclick="switchPaperSubTab('literature2')" id="paperTab-literature2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📚 文献增强</button>
 
       <button onclick="switchPaperSubTab('sports')" id="paperTab-sports" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">体育学特色</button>
 
@@ -15233,6 +15234,40 @@ console.log('✅ 学习工具入口已加载');
       <div id="writingVersionsResult" style="display:none;margin-bottom:15px"></div>
       <div id="writingSuggestionsResult" style="display:none;margin-bottom:15px"></div>
       <div id="writingOutlineResult" style="display:none;margin-bottom:15px"></div>
+    </div>
+  </div>
+
+  <div id="paperContent-literature2" style="display:none">
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #bae6fd">
+        <h2 style="margin:0 0 8px 0;font-size:20px;color:#0c4a6e">📚 文献管理增强（AI驱动）</h2>
+        <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">智能文献聚类、综述对比矩阵、文献对话问答——让文献管理从"收藏夹"变成"研究助手"。</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:10px;font-size:15px">📝 文献输入</div>
+        <p style="font-size:12px;color:#6b7280;margin:0 0 10px 0">每篇文献占一段（空行分隔），第一行为标题，后续行为摘要或要点。</p>
+        <textarea id="literatureInput" placeholder="文献1标题&#10;文献1摘要内容...&#10;&#10;文献2标题&#10;文献2摘要内容..." style="width:100%;min-height:150px;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none"></textarea>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <button onclick="clusterLiterature()" style="padding:10px 20px;background:#0891b2;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔬 智能文献聚类</button>
+          <button onclick="generateReviewMatrix()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 生成综述矩阵</button>
+        </div>
+      </div>
+
+      <div id="litStatus" style="display:none;margin-bottom:20px"></div>
+      <div id="litClusterResult" style="display:none;margin-bottom:20px"></div>
+      <div id="litMatrixResult" style="display:none;margin-bottom:20px"></div>
+
+      <!-- 文献对话 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:10px;font-size:15px">💬 文献对话</div>
+        <p style="font-size:12px;color:#6b7280;margin:0 0 10px 0">基于上方输入的文献，进行问答对话。</p>
+        <div id="litChatHistory" style="display:none;max-height:300px;overflow-y:auto;padding:15px;background:#f9fafb;border-radius:8px;margin-bottom:10px"></div>
+        <div style="display:flex;gap:10px">
+          <input type="text" id="litChatInput" placeholder="例如：这些文献的研究方法有什么异同？" onkeypress="if(event.key==='Enter')literatureChat()" style="flex:1;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none">
+          <button onclick="literatureChat()" style="padding:10px 20px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">发送</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -57659,7 +57694,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','review','trend','writing','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
+  ['projects','editor','format','literature','literature2','design','assist','polish','publish','review','trend','writing','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -127120,7 +127155,295 @@ async function generateWritingOutline() {
     resultEl.innerHTML = html;
     mechToast('写作大纲生成完成！', 'success');
   } catch(e) {
-    resultEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">大纲生成失败：' + e.message + '</div>';
+  mechToast('修改版本已应用', 'success');
+  } else {
+    mechToast('请先选中要替换的文字', 'warn');
+  }
+}
+
+// ========== 文献管理增强 ==========
+let literatureData = [];
+let litConversationHistory = [];
+
+// 解析文献输入
+function parseLiteratureInput() {
+  const input = document.getElementById('literatureInput').value.trim();
+  if (!input) { mechToast('请输入文献信息', 'warn'); return []; }
+  
+  // 按空行分割文献
+  const blocks = input.split(/
+\s*
+/);
+  const papers = [];
+  blocks.forEach((block, i) => {
+    const lines = block.trim().split('
+');
+    if (lines.length >= 1 && lines[0].trim()) {
+      papers.push({
+        id: i + 1,
+        title: lines[0].trim(),
+        abstract: lines.slice(1).join(' ').trim(),
+        authors: '',
+        year: '',
+        journal: ''
+      });
+    }
+  });
+  
+  // 如果没有空行分割，尝试按行分割
+  if (papers.length === 0) {
+    const lines = input.split('
+').filter(l => l.trim());
+    lines.forEach((line, i) => {
+      papers.push({ id: i + 1, title: line.trim(), abstract: '', authors: '', year: '', journal: '' });
+    });
+  }
+  
+  return papers;
+}
+
+// 智能文献聚类
+async function clusterLiterature() {
+  const papers = parseLiteratureInput();
+  if (papers.length === 0) return;
+  
+  literatureData = papers;
+  const statusEl = document.getElementById('litStatus');
+  const resultEl = document.getElementById('litClusterResult');
+  
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">🔬 正在对' + papers.length + '篇文献进行智能聚类...</div></div>';
+  
+  // 构建文献摘要文本
+  const litText = papers.map(p => `文献${p.id}：${p.title}
+摘要：${p.abstract || '无'}`).join('
+
+');
+  
+  try {
+    const result = await callDeepSeekAPI(
+      `你是一位文献计量学专家。请对以下文献进行智能聚类分析。
+要求：
+1. 根据研究主题将文献分为若干组
+2. 每组给出组名、核心主题、包含的文献ID
+3. 分析各组之间的关系
+4. 识别研究热点和空白
+以JSON格式输出：
+{
+  "clusters": [{"name": "组名", "theme": "核心主题", "paperIds": [1,2], "description": "组描述"}],
+  "hotTopics": ["热点1", "热点2"],
+  "researchGaps": ["空白1", "空白2"],
+  "clusterRelations": "各组之间的关系描述"
+}
+只输出JSON。`,
+      `文献列表：
+
+${litText.substring(0, 8000)}`,
+      2500, 'kimi-k3'
+    );
+    
+    const parsed = parseTrendJSON(result);
+    
+    let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">';
+    html += '<div style="padding:15px 20px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff">';
+    html += '<div style="font-weight:700;font-size:16px">🔬 文献智能聚类分析</div>';
+    html += '<div style="font-size:12px;opacity:0.9;margin-top:3px">共' + papers.length + '篇文献，分为' + (parsed.clusters ? parsed.clusters.length : 0) + '个研究主题组</div>';
+    html += '</div>';
+    html += '<div style="padding:20px">';
+    
+    if (parsed.clusters && parsed.clusters.length > 0) {
+      const colors = ['#0891b2', '#7c3aed', '#16a34a', '#f59e0b', '#dc2626', '#db2777'];
+      parsed.clusters.forEach((c, i) => {
+        const color = colors[i % colors.length];
+        html += '<div style="margin-bottom:15px;padding:15px;border-radius:10px;border-left:4px solid ' + color + ';background:' + color + '08">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">';
+        html += '<div style="font-weight:700;font-size:14px;color:' + color + '">📂 主题组' + (i+1) + '：' + c.name + '</div>';
+        html += '<div style="display:flex;gap:5px;flex-wrap:wrap">';
+        (c.paperIds || []).forEach(id => {
+          const paper = papers.find(p => p.id === id);
+          html += '<span style="padding:2px 8px;background:#fff;border:1px solid ' + color + '33;border-radius:10px;font-size:11px;color:#374151" title="' + (paper ? paper.title : '') + '">文献' + id + '</span>';
+        });
+        html += '</div></div>';
+        if (c.theme) html += '<div style="font-size:12px;color:#6b7280;margin-top:6px">🎯 核心主题：' + c.theme + '</div>';
+        if (c.description) html += '<div style="font-size:12px;color:#374151;margin-top:4px">📝 ' + c.description + '</div>';
+        html += '</div>';
+      });
+    }
+    
+    if (parsed.clusterRelations) {
+      html += '<div style="margin-top:15px;padding:12px 15px;background:#f0f9ff;border-radius:8px"><span style="font-size:12px;font-weight:600;color:#0369a1">🔗 组间关系：</span><span style="font-size:12px;color:#374151">' + parsed.clusterRelations + '</span></div>';
+    }
+    
+    if (parsed.hotTopics && parsed.hotTopics.length > 0) {
+      html += '<div style="margin-top:12px"><span style="font-size:12px;font-weight:600;color:#dc2626">🔥 研究热点：</span>';
+      parsed.hotTopics.forEach(t => { html += '<span style="display:inline-block;margin:2px 4px;padding:3px 10px;background:#fef2f2;color:#dc2626;border-radius:12px;font-size:11px">' + t + '</span>'; });
+      html += '</div>';
+    }
+    
+    if (parsed.researchGaps && parsed.researchGaps.length > 0) {
+      html += '<div style="margin-top:10px"><span style="font-size:12px;font-weight:600;color:#16a34a">💡 研究空白：</span>';
+      parsed.researchGaps.forEach(t => { html += '<span style="display:inline-block;margin:2px 4px;padding:3px 10px;background:#f0fdf4;color:#16a34a;border-radius:12px;font-size:11px">' + t + '</span>'; });
+      html += '</div>';
+    }
+    
+    html += '</div></div>';
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    mechToast('文献聚类完成！', 'success');
+  } catch(e) {
+    statusEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">聚类失败：' + e.message + '</div>';
+  }
+}
+
+// 生成综述矩阵
+async function generateReviewMatrix() {
+  const papers = parseLiteratureInput();
+  if (papers.length === 0) return;
+  
+  literatureData = papers;
+  const statusEl = document.getElementById('litStatus');
+  const resultEl = document.getElementById('litMatrixResult');
+  
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">📊 正在生成文献综述对比矩阵...</div></div>';
+  
+  const litText = papers.map(p => `文献${p.id}：${p.title}
+摘要：${p.abstract || '无'}`).join('
+
+');
+  
+  try {
+    const result = await callDeepSeekAPI(
+      `你是一位综述写作专家。请基于以下文献生成综述对比矩阵。
+要求：
+1. 对比维度：研究对象、研究方法、样本量、核心发现、局限性
+2. 每篇文献在每个维度上给出简要说明
+3. 最后给出综合比较和研究趋势总结
+以JSON格式输出：
+{
+  "matrix": [
+    {"paperId": 1, "subject": "研究对象", "method": "研究方法", "sample": "样本量", "finding": "核心发现", "limitation": "局限性"}
+  ],
+  "comparison": "综合比较分析",
+  "trends": "研究趋势总结"
+}
+只输出JSON。`,
+      `文献列表：
+
+${litText.substring(0, 8000)}`,
+      3000, 'glm-5.3'
+    );
+    
+    const parsed = parseTrendJSON(result);
+    
+    let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">';
+    html += '<div style="padding:15px 20px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff">';
+    html += '<div style="font-weight:700;font-size:16px">📊 文献综述对比矩阵</div>';
+    html += '<div style="font-size:12px;opacity:0.9;margin-top:3px">共' + papers.length + '篇文献，多维度对比分析</div>';
+    html += '</div>';
+    html += '<div style="padding:15px;overflow-x:auto">';
+    
+    if (parsed.matrix && parsed.matrix.length > 0) {
+      html += '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+      html += '<thead><tr style="background:#f0fdf4">';
+      html += '<th style="padding:8px;border:1px solid #bbf7d0;text-align:left;color:#166534">文献</th>';
+      html += '<th style="padding:8px;border:1px solid #bbf7d0;text-align:left;color:#166534">研究对象</th>';
+      html += '<th style="padding:8px;border:1px solid #bbf7d0;text-align:left;color:#166534">研究方法</th>';
+      html += '<th style="padding:8px;border:1px solid #bbf7d0;text-align:left;color:#166534">样本量</th>';
+      html += '<th style="padding:8px;border:1px solid #bbf7d0;text-align:left;color:#166534">核心发现</th>';
+      html += '<th style="padding:8px;border:1px solid #bbf7d0;text-align:left;color:#166534">局限性</th>';
+      html += '</tr></thead><tbody>';
+      
+      parsed.matrix.forEach((row, i) => {
+        const paper = papers.find(p => p.id === row.paperId);
+        html += '<tr style="' + (i % 2 === 0 ? 'background:#f9fafb' : '') + '">';
+        html += '<td style="padding:8px;border:1px solid #e5e7eb;font-weight:600;color:#1f2937;max-width:120px">' + (paper ? paper.title.substring(0, 30) + '...' : '文献' + row.paperId) + '</td>';
+        html += '<td style="padding:8px;border:1px solid #e5e7eb;color:#374151">' + (row.subject || '-') + '</td>';
+        html += '<td style="padding:8px;border:1px solid #e5e7eb;color:#374151">' + (row.method || '-') + '</td>';
+        html += '<td style="padding:8px;border:1px solid #e5e7eb;color:#374151">' + (row.sample || '-') + '</td>';
+        html += '<td style="padding:8px;border:1px solid #e5e7eb;color:#374151">' + (row.finding || '-') + '</td>';
+        html += '<td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626">' + (row.limitation || '-') + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+    
+    if (parsed.comparison) {
+      html += '<div style="margin-top:15px;padding:12px 15px;background:#f0f9ff;border-radius:8px"><div style="font-size:12px;font-weight:600;color:#0369a1;margin-bottom:5px">🔍 综合比较</div><div style="font-size:12px;color:#374151;line-height:1.8">' + parsed.comparison + '</div></div>';
+    }
+    if (parsed.trends) {
+      html += '<div style="margin-top:10px;padding:12px 15px;background:#fefce8;border-radius:8px"><div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:5px">📈 研究趋势</div><div style="font-size:12px;color:#374151;line-height:1.8">' + parsed.trends + '</div></div>';
+    }
+    
+    html += '</div></div>';
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    mechToast('综述矩阵生成完成！', 'success');
+  } catch(e) {
+    statusEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">矩阵生成失败：' + e.message + '</div>';
+  }
+}
+
+// 文献对话
+async function literatureChat() {
+  const question = document.getElementById('litChatInput').value.trim();
+  if (!question) { mechToast('请输入问题', 'warn'); return; }
+  if (literatureData.length === 0) {
+    literatureData = parseLiteratureInput();
+    if (literatureData.length === 0) return;
+  }
+  
+  const historyEl = document.getElementById('litChatHistory');
+  historyEl.style.display = 'block';
+  
+  // 添加用户问题
+  const userMsg = document.createElement('div');
+  userMsg.style.cssText = 'background:#dbeafe;padding:10px 15px;border-radius:10px;margin-bottom:10px;max-width:80%;margin-left:auto';
+  userMsg.innerHTML = '<div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:3px">你</div><div style="font-size:13px;color:#1f2937">' + question + '</div>';
+  historyEl.appendChild(userMsg);
+  
+  document.getElementById('litChatInput').value = '';
+  
+  // 添加AI回复占位
+  const aiMsg = document.createElement('div');
+  aiMsg.style.cssText = 'background:#f0fdf4;padding:10px 15px;border-radius:10px;margin-bottom:10px;max-width:80%';
+  aiMsg.innerHTML = '<div style="font-size:12px;font-weight:600;color:#166534;margin-bottom:3px">AI文献助手</div><div style="font-size:13px;color:#6b7280">正在分析文献并回答...</div>';
+  historyEl.appendChild(aiMsg);
+  historyEl.scrollTop = historyEl.scrollHeight;
+  
+  const litText = literatureData.map(p => `文献${p.id}：${p.title}
+摘要：${p.abstract || '无'}`).join('
+
+');
+  
+  try {
+    const result = await callDeepSeekAPI(
+      `你是一位文献助手。请基于以下文献内容回答用户的问题。
+要求：
+1. 回答必须基于提供的文献内容
+2. 引用相关文献时标注文献ID
+3. 如果文献中没有相关信息，明确说明
+4. 回答要简洁、准确、有条理`,
+      `文献内容：
+
+${litText.substring(0, 8000)}
+
+用户问题：${question}`,
+      2000, 'qwen3.5-plus'
+    );
+    
+    aiMsg.innerHTML = '<div style="font-size:12px;font-weight:600;color:#166534;margin-bottom:3px">AI文献助手</div><div style="font-size:13px;color:#1f2937;line-height:1.8">' + result.replace(/
+/g, '<br>') + '</div>';
+    historyEl.scrollTop = historyEl.scrollHeight;
+    
+    litConversationHistory.push({ role: 'user', content: question });
+    litConversationHistory.push({ role: 'assistant', content: result });
+  } catch(e) {
+    aiMsg.innerHTML = '<div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:3px">AI文献助手</div><div style="font-size:13px;color:#dc2626">回答失败：' + e.message + '</div>';
   }
 }
 
