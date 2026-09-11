@@ -16216,38 +16216,172 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
     <div id="paperContent-acadeng" style="display:none">
 
       <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:12px;padding:20px;margin-bottom:16px">
-
-        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">🇬🇧 学术英语专项</div>
-
-        <div style="font-size:13px;color:#059669">运动科学中英术语对照（含缩写/搭配/例句）· 学术写作句型库（摘要/引言/方法/结果/讨论/局限性等场景）</div>
-
+        <div style="font-size:18px;font-weight:700;color:#065f46;margin-bottom:4px">🇬🇧 学术英语专项（增强版）</div>
+        <div style="font-size:13px;color:#059669">中式英语检测 · 术语对照 · 句型库 · 写作辅助 · 一致性检查 · 个人词库 — 多模型协作，体育学专业增强</div>
       </div>
 
-      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+      <!-- 功能选项卡 -->
+      <div style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;background:#f9fafb;padding:8px;border-radius:10px;border:1px solid #e5e7eb">
+        <button onclick="switchAcadTab('chinglish')" id="acadTab-chinglish" class="acad-tab-btn" style="padding:8px 14px;border:none;background:#16a34a;color:#fff;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">✍️ 中式英语检测</button>
+        <button onclick="switchAcadTab('term')" id="acadTab-term" class="acad-tab-btn" style="padding:8px 14px;border:none;background:#fff;color:#374151;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">🔤 术语对照</button>
+        <button onclick="switchAcadTab('phrase')" id="acadTab-phrase" class="acad-tab-btn" style="padding:8px 14px;border:none;background:#fff;color:#374151;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">📖 句型库</button>
+        <button onclick="switchAcadTab('writing')" id="acadTab-writing" class="acad-tab-btn" style="padding:8px 14px;border:none;background:#fff;color:#374151;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">📝 写作辅助</button>
+        <button onclick="switchAcadTab('consistency')" id="acadTab-consistency" class="acad-tab-btn" style="padding:8px 14px;border:none;background:#fff;color:#374151;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">🔍 一致性检查</button>
+        <button onclick="switchAcadTab('personal')" id="acadTab-personal" class="acad-tab-btn" style="padding:8px 14px;border:none;background:#fff;color:#374151;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">⭐ 个人词库</button>
+      </div>
 
-        <div style="display:flex;gap:20px;margin-bottom:12px">
+      <!-- ========== 1. 中式英语检测与改写 ========== -->
+      <div id="acadPanel-chinglish" class="acad-panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-weight:700;color:#16a34a;margin-bottom:12px;font-size:15px">✍️ 中式英语检测与地道改写</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:12px">粘贴英文段落，AI逐句检测中式英语/语法/搭配问题，给出修改前后对比 + 多版本改写</div>
 
-          <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="acadMode" value="term" checked> 🔤 中英术语对照</label>
-
-          <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="acadMode" value="phrase"> 📖 学术句型库</label>
-
+        <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="chinglishVersion" value="conservative" checked> 保守版（最小改动）</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="chinglishVersion" value="standard"> 标准版</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="chinglishVersion" value="native"> 母语化（地道改写）</label>
         </div>
 
-        <input id="acadInput" placeholder="术语模式：输入中/英文学术术语（如：最大摄氧量、心肺适能）；句型模式：输入场景（如：局限性、摘要开头、讨论）" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+        <textarea id="chinglishInput" rows="6" placeholder="粘贴需要检查的英文段落（建议200-500词）..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit;resize:vertical"></textarea>
 
         <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
+          <button onclick="runChinglishCheck()" style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">🔍 开始检测改写</button>
+          <span id="chinglishStatus" style="font-size:12px;color:#6b7280"></span>
+        </div>
+      </div>
+      <div id="chinglishResult" style="display:none;margin-bottom:16px"></div>
 
-          <button onclick="runAcadEng()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🇬🇧 生成</button>
+      <!-- ========== 2. 中英术语对照（增强版） ========== -->
+      <div id="acadPanel-term" class="acad-panel" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-weight:700;color:#065f46;margin-bottom:12px;font-size:15px">🔤 中英术语对照（体育学专业增强）</div>
 
-          <span id="acadStatus" style="font-size:12px;color:#6b7280"></span>
-
+        <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+          <label style="font-size:12px;font-weight:600;color:#374151">二级学科：</label>
+          <select id="termCategory" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px">
+            <option value="general">通用/综合</option>
+            <option value="physiology">运动生理学</option>
+            <option value="biochemistry">运动生物化学</option>
+            <option value="anatomy">运动解剖学</option>
+            <option value="psychology">运动心理学</option>
+            <option value="training">运动训练学</option>
+            <option value="education">体育教育学</option>
+            <option value="medicine">运动医学/康复</option>
+            <option value="biomechanics">运动生物力学</option>
+            <option value="sociology">体育社会学</option>
+          </select>
         </div>
 
+        <input id="termInput" placeholder="输入中/英文学术术语（如：最大摄氧量、VO2max、心肺适能、延迟性肌肉酸痛）" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box;margin-bottom:12px">
+
+        <div style="display:flex;gap:10px;align-items:center">
+          <button onclick="runTermLookup()" style="background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">🔍 查询术语</button>
+          <span id="termStatus" style="font-size:12px;color:#6b7280"></span>
+        </div>
+      </div>
+      <div id="termResult" style="display:none;margin-bottom:16px"></div>
+
+      <!-- ========== 3. 学术句型库（增强版） ========== -->
+      <div id="acadPanel-phrase" class="acad-panel" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-weight:700;color:#7c3aed;margin-bottom:12px;font-size:15px">📖 学术句型库（多维分类）</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">论文章节</label>
+            <select id="phraseSection" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px">
+              <option value="abstract">摘要</option>
+              <option value="introduction">引言</option>
+              <option value="methods">方法</option>
+              <option value="results">结果</option>
+              <option value="discussion">讨论</option>
+              <option value="conclusion">结论</option>
+              <option value="limitation">局限性</option>
+              <option value="coverletter">Cover Letter</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">逻辑功能</label>
+            <select id="phraseFunction" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px">
+              <option value="any">不限</option>
+              <option value="contrast">对比/转折</option>
+              <option value="causality">因果</option>
+              <option value="progression">递进</option>
+              <option value="example">举例</option>
+              <option value="summary">总结</option>
+              <option value="emphasis">强调</option>
+              <option value="speculation">推测</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">语气强度</label>
+            <select id="phraseTone" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px">
+              <option value="any">不限</option>
+              <option value="certain">肯定</option>
+              <option value="cautious">谨慎/客观</option>
+              <option value="tentative">推测性</option>
+            </select>
+          </div>
+        </div>
+
+        <input id="phraseInput" placeholder="可选：输入具体场景或关键词（如：运动干预效果、组间差异显著、机制解释）" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box;margin-bottom:12px">
+
+        <div style="display:flex;gap:10px;align-items:center">
+          <button onclick="runPhraseLookup()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">📖 生成句型</button>
+          <span id="phraseStatus" style="font-size:12px;color:#6b7280"></span>
+        </div>
+      </div>
+      <div id="phraseResult" style="display:none;margin-bottom:16px"></div>
+
+      <!-- ========== 4. 学术写作辅助 ========== -->
+      <div id="acadPanel-writing" class="acad-panel" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-weight:700;color:#ea580c;margin-bottom:12px;font-size:15px">📝 学术写作辅助工具</div>
+
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <button onclick="setWritingMode('cn2en')" id="writeMode-cn2en" style="padding:7px 14px;border:2px solid #ea580c;background:#fff7ed;color:#ea580c;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">🌐 中译英段落</button>
+          <button onclick="setWritingMode('polish')" id="writeMode-polish" style="padding:7px 14px;border:2px solid #e5e7eb;background:#fff;color:#374151;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">✨ 句子多版润色</button>
+          <button onclick="setWritingMode('connector')" id="writeMode-connector" style="padding:7px 14px;border:2px solid #e5e7eb;background:#fff;color:#374151;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">🔗 连接词推荐</button>
+          <button onclick="setWritingMode('vocab')" id="writeMode-vocab" style="padding:7px 14px;border:2px solid #e5e7eb;background:#fff;color:#374151;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">📈 学术词汇升级</button>
+        </div>
+
+        <div id="writingHint" style="font-size:12px;color:#6b7280;margin-bottom:10px;padding:8px 12px;background:#fff7ed;border-radius:6px;border:1px solid #fed7aa">输入中文段落，AI翻译为地道英文学术段落（保留学术逻辑，避免中式英语）</div>
+
+        <textarea id="writingInput" rows="5" placeholder="在此输入内容..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit;resize:vertical;margin-bottom:12px"></textarea>
+
+        <div style="display:flex;gap:10px;align-items:center">
+          <button onclick="runWritingAssist()" style="background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">🚀 开始生成</button>
+          <span id="writingStatus" style="font-size:12px;color:#6b7280"></span>
+        </div>
+      </div>
+      <div id="writingResult" style="display:none;margin-bottom:16px"></div>
+
+      <!-- ========== 5. 术语一致性检查 ========== -->
+      <div id="acadPanel-consistency" class="acad-panel" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-weight:700;color:#dc2626;margin-bottom:12px;font-size:15px">🔍 术语一致性检查</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:12px">粘贴论文全文，AI检测同一概念的术语使用是否一致（如VO2max/最大摄氧量混用、exercise/intervention混用），给出统一建议</div>
+
+        <textarea id="consistencyInput" rows="8" placeholder="粘贴论文全文或主要章节（建议1000词以上效果更好）..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit;resize:vertical;margin-bottom:12px"></textarea>
+
+        <div style="display:flex;gap:10px;align-items:center">
+          <button onclick="runConsistencyCheck()" style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">🔍 开始检查</button>
+          <span id="consistencyStatus" style="font-size:12px;color:#6b7280"></span>
+        </div>
+      </div>
+      <div id="consistencyResult" style="display:none;margin-bottom:16px"></div>
+
+      <!-- ========== 6. 个人术语/句型库 ========== -->
+      <div id="acadPanel-personal" class="acad-panel" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-weight:700;color:#d97706;margin-bottom:12px;font-size:15px">⭐ 个人术语/句型库</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:12px">收藏的术语和句型自动保存在本地浏览器，随时查阅和导出</div>
+
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button onclick="showPersonalLib('terms')" id="personalTab-terms" style="padding:7px 16px;border:none;background:#d97706;color:#fff;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">📚 收藏的术语</button>
+          <button onclick="showPersonalLib('phrases')" id="personalTab-phrases" style="padding:7px 16px;border:none;background:#f3f4f6;color:#374151;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">📝 收藏的句型</button>
+          <button onclick="exportPersonalLib()" style="padding:7px 16px;border:1px solid #d97706;background:#fff;color:#d97706;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;margin-left:auto">📤 导出</button>
+          <button onclick="clearPersonalLib()" style="padding:7px 16px;border:1px solid #dc2626;background:#fff;color:#dc2626;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">🗑️ 清空</button>
+        </div>
+
+        <div id="personalLibContent" style="min-height:200px"></div>
       </div>
 
-      <div id="acadResult" style="display:none"></div>
-
-    </div>
+    </div>    </div>
 
 
 
@@ -22257,7 +22391,6 @@ function renderPoliticsTemplate() {
   POLITICS_TEMPLATE_DATA.forEach((cat, idx) => {
 
     html += `<button onclick="showPoliticsTemplateCategory(${idx})" style="padding:8px 16px;border-radius:20px;border:2px solid ${cat.color};background:#fff;color:${cat.color};cursor:pointer;font-size:13px;font-weight:600" id="politicsTplCat${idx}">${cat.icon} ${cat.category}</button>`;
-
   });
 
   html += '</div><div id="politicsTemplateContent"></div>';
@@ -22325,7 +22458,6 @@ function showPoliticsTemplateCategory(idx) {
       </div>
 
     `;
-
   });
 
   content.innerHTML = html;
@@ -22441,7 +22573,6 @@ function renderPoliticsHotspot() {
   categories.forEach((cat, idx) => {
 
     html += `<button onclick="filterPoliticsHotspot('${cat}')" style="padding:6px 14px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-size:12px;font-weight:600" id="hotspotFilter${idx}">${cat}</button>`;
-
   });
 
   html += '</div><div id="politicsHotspotList"></div>';
@@ -22637,7 +22768,6 @@ function renderPoliticsMnemonic() {
   POLITICS_MNEMONIC_DATA.forEach((cat, idx) => {
 
     html += `<button onclick="showPoliticsMnemonicCategory(${idx})" style="padding:8px 16px;border-radius:20px;border:2px solid ${cat.color};background:#fff;color:${cat.color};cursor:pointer;font-size:13px;font-weight:600" id="mnemonicCat${idx}">${cat.color === '#dc2626' ? '🔴' : cat.color === '#ea580c' ? '🟠' : cat.color === '#eab308' ? '🟡' : '🟢'} ${cat.category}</button>`;
-
   });
 
   html += '</div><div id="politicsMnemonicList"></div>';
@@ -22947,7 +23077,6 @@ function renderPoliticsQuiz() {
       <span style="font-weight:700;margin-right:8px">${String.fromCharCode(65+i)}.</span>${opt}
 
     </div>`;
-
   }).join('');
 
   
@@ -22999,8 +23128,7 @@ function renderPoliticsQuiz() {
     </div>
 
   `;
-
-}
+  }
 
 
 
@@ -45843,8 +45971,7 @@ document.getElementById('countdown').innerHTML = `
 <div class="cd-box"><div class="num">${mins}</div><div class="label">分</div></div>
 
 `;
-
-}
+  }
 
 function renderDashboard(){
 
@@ -45967,8 +46094,7 @@ const done = tasks.filter(t=>t.done).length;
 const statCards = document.querySelectorAll('#statsRow .stat-card');
 
 if(statCards[2]) statCards[2].querySelector('.val').textContent = `${done}/${tasks.length}`;
-
-}
+  }
 
 function resetTodayTasks(){
 
@@ -46021,8 +46147,7 @@ return `<div style="margin-bottom:14px">
 <div class="progress-bar"><div class="fill" style="width:${pct}%;background:${s.color}"></div></div>
 
 </div>`;
-
-}).join('');
+  }).join('');
 
 }
 
@@ -48789,8 +48914,7 @@ ${relatedItems.map(item => `<span class="related-tag" onclick="jumpToKnowledge('
 </div>
 
 </div>`;
-
-}
+  }
 
 
 
@@ -49295,24 +49419,21 @@ extra += `<div style="background:#fef3c7;padding:10px 14px;border-radius:6px;mar
 <ul style="margin:0;padding-left:18px;font-size:13px">${enh.highfreq.map(h=>`<li>${h}</li>`).join('')}</ul>
 
 </div>`;
-
-}
+  }
 
 if(enh.terms){
 
 extra += `<h4 style="color:#dc2626;margin:14px 0 6px">📖 核心名词解释</h4>
 
 <div style="font-size:13px;line-height:1.8">${enh.terms.map(t=>`<p style="margin-bottom:4px"><b>${t.name}</b>：${t.def}</p>`).join('')}</div>`;
-
-}
+  }
 
 if(enh.questions){
 
 extra += `<h4 style="color:#2563eb;margin:14px 0 6px">✍️ 简答题/论述题预测</h4>
 
 <ol style="padding-left:20px;font-size:13px;line-height:1.8">${enh.questions.map(q=>`<li style="margin-bottom:4px">${q}</li>`).join('')}</ol>`;
-
-}
+  }
 
 if(enh.compare){
 
@@ -49321,8 +49442,7 @@ extra += `<h4 style="color:#7c3aed;margin:14px 0 6px">⚖️ 易混淆点对比<
 <table class="compare-table"><tr>${enh.compare.headers.map(h=>`<th>${h}</th>`).join('')}</tr>
 
 ${enh.compare.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>`;
-
-}
+  }
 
 if(enh.tips){
 
@@ -49333,8 +49453,7 @@ extra += `<div style="background:#f0fdf4;padding:10px 14px;border-radius:6px;mar
 <ul style="margin:0;padding-left:18px;font-size:13px">${enh.tips.map(t=>`<li>${t}</li>`).join('')}</ul>
 
 </div>`;
-
-}
+  }
 
 const note = pdfNotes[item.id];
 
@@ -49345,8 +49464,7 @@ if(note.defs && note.defs.length){
 extra += `<h4 style="color:#0891b2;margin:14px 0 6px">📚 笔记精确定义（来自专业课笔记）</h4>
 
 <div style="font-size:13px;line-height:1.8">${note.defs.map(t=>`<p style="margin-bottom:6px;padding:6px 10px;background:#ecfeff;border-radius:4px;border-left:3px solid #06b6d4"><b>${t.n}</b>：${t.d}</p>`).join('')}</div>`;
-
-}
+  }
 
 if(note.data && note.data.length){
 
@@ -49355,8 +49473,7 @@ extra += `<h4 style="color:#d97706;margin:14px 0 6px">📊 笔记关键数据</h
 <table class="compare-table"><tr><th style="width:40%">项目</th><th>内容</th></tr>
 
 ${note.data.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join('')}</table>`;
-
-}
+  }
 
 if(note.mnemonic && note.mnemonic.length){
 
@@ -49367,16 +49484,14 @@ extra += `<div style="background:#fdf4ff;padding:10px 14px;border-radius:6px;mar
 <ul style="margin:0;padding-left:18px;font-size:13px">${note.mnemonic.map(t=>`<li>${t}</li>`).join('')}</ul>
 
 </div>`;
-
-}
+  }
 
 if(note.qa && note.qa.length){
 
 extra += `<h4 style="color:#be185d;margin:14px 0 6px">📝 笔记真题与详解</h4>
 
 <div style="font-size:13px;line-height:1.9">${note.qa.map((q,i)=>`<div style="margin-bottom:10px;padding:8px 12px;background:#fdf2f8;border-radius:6px"><b style="color:#9d174d">${i+1}.</b> ${q}</div>`).join('')}</div>`;
-
-}
+  }
 
 const dqa = detailedQA[item.id];
 
@@ -49385,8 +49500,7 @@ if(dqa && dqa.length){
 extra += `<h4 style="color:#be185d;margin:14px 0 6px">📚 提高笔记详细真题（${dqa.length}道完整问答）</h4>
 
 <div style="font-size:13px;line-height:1.9">${dqa.map((q,i)=>`<div style="margin-bottom:12px;padding:10px 14px;background:#fff1f2;border-radius:8px;border-left:4px solid #f43f5e">${q}</div>`).join('')}</div>`;
-
-}
+  }
 
 const danat = detailedAnatomy[item.id];
 
@@ -49395,8 +49509,7 @@ if(danat && danat.length){
 extra += `<h4 style="color:#7c3aed;margin:14px 0 6px">📖 解剖笔记详细知识点（${danat.length}段）</h4>
 
 <div style="font-size:13px;line-height:1.9">${danat.map((s,i)=>`<div style="margin-bottom:12px;padding:10px 14px;background:#faf5ff;border-radius:8px;border-left:4px solid #8b5cf6">${s}</div>`).join('')}</div>`;
-
-}
+  }
 
 }
 
@@ -49441,8 +49554,7 @@ ${(detailedAnatomy[item.id]&&detailedAnatomy[item.id].length)?'<span style="font
 <div class="knowledge-body">${item.content}${extra}${getKnowledgeRelatedHTML(item.id)}</div>
 
 </div>`;
-
-}).join('');
+  }).join('');
 
 if(blurMode) setTimeout(applyBlurToTerms, 50);
 
@@ -49493,10 +49605,7 @@ const done = Object.values(appState.knowledge).filter(v=>v).length;
 const statCards = document.querySelectorAll('#statsRow .stat-card');
 
 if(statCards[1]) statCards[1].querySelector('.val').textContent = `${done}/${total}`;
-
-
-
-if(typeof updatePhysioProgressStats === 'function') updatePhysioProgressStats(); if(typeof updatePoliticsProgressStats === 'function') updatePoliticsProgressStats();
+  if(typeof updatePhysioProgressStats === 'function') updatePhysioProgressStats(); if(typeof updatePoliticsProgressStats === 'function') updatePoliticsProgressStats();
 
 if(typeof updateAnatomyProgressStats === 'function') updateAnatomyProgressStats();
 
@@ -49527,8 +49636,7 @@ return `<div class="tl-item ${cls}">
 <div class="tl-desc">${p.desc}</div>
 
 </div>`;
-
-}).join('');
+  }).join('');
 
 document.getElementById('phaseDetails').innerHTML = phases.map(p=>`
 
@@ -49615,8 +49723,7 @@ return `<div style="margin-bottom:20px">
 <div>${items}</div>
 
 </div>`;
-
-}).join('');
+  }).join('');
 
 }
 
@@ -52927,8 +53034,7 @@ return `<div class="quiz-option ${selected?'selected':''}" onclick="selectQuizOp
 <span class="letter">${String.fromCharCode(65+i)}</span>${opt}
 
 </div>`;
-
-}).join('');
+  }).join('');
 
 document.getElementById('quizOptions').innerHTML = optionsHtml + (isMulti ? '<div style="font-size:12px;color:var(--text2);margin-top:8px">💡 多选题，可选择多个答案</div>' : '');
 
@@ -53127,8 +53233,7 @@ weakAreas.map(w=>`
 if(weakAreas[0] && weakAreas[0].rate < 0.6){
 
 weakHtml += `<div style="margin-top:12px;padding:10px 14px;background:#fef3c7;border-radius:8px;font-size:13px;color:#92400e">⚠️ 薄弱环节：${quizCategoryNames[weakAreas[0].cat]||weakAreas[0].cat}，建议重点复习！</div>`;
-
-}
+  }
 
 }
 
@@ -53259,10 +53364,8 @@ ${qs.map((q,i)=>`
 `).join('')}
 
 </div>`;
-
-}).join('') + `<div style="margin-top:16px;text-align:center"><button class="btn btn-outline" onclick="clearQuizWrong()">🗑️ 清空错题本</button></div>`;
-
-}
+  }).join('') + `<div style="margin-top:16px;text-align:center"><button class="btn btn-outline" onclick="clearQuizWrong()">🗑️ 清空错题本</button></div>`;
+  }
 
 function hideQuizWrongBook(){
 
@@ -53609,8 +53712,7 @@ ${results.slice(0, 30).map(r => `
 </div>
 
 `;
-
-}
+  }
 
 function jumpToKnowledgeById(id) {
 
@@ -53693,8 +53795,7 @@ const m = Math.floor(quizTimer.seconds / 60);
 const s = quizTimer.seconds % 60;
 
 el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-
-}
+  }
 
 }
 
@@ -53827,8 +53928,7 @@ container.innerHTML = `
 </div>
 
 `;
-
-}
+  }
 
 let reviewSession = {active: false, items: [], current: 0, correct: 0};
 
@@ -53909,8 +54009,7 @@ container.innerHTML = `
 </div>
 
 `;
-
-}
+  }
 
 function reviewSessionAnswer(remembered) {
 
@@ -54107,8 +54206,7 @@ return `<div class="quiz-setup-item ${fcState.selectedSubject===s.key?'selected'
 <div class="count">${count} 张卡片</div>
 
 </div>`;
-
-}).join('');
+  }).join('');
 
 }
 
@@ -54359,8 +54457,7 @@ const card = currentFlashcards[flashcardIndex];
 if(!card) return;
 
 const cardId = card.word || `card_${flashcardIndex}`;
-
-if(typeof rateFlashcard === 'function') rateFlashcard(cardId, rating);
+  if(typeof rateFlashcard === 'function') rateFlashcard(cardId, rating);
 
 appState.flashcardKnown[card.word] = rating >= 2;
 
@@ -54761,8 +54858,7 @@ document.getElementById('fibFinishBtn').style.display = 'none';
 document.getElementById('fibPrevBtn').style.display = fibState.current > 0 ? 'inline-block' : 'none';
 
 document.getElementById('fibScore').textContent = `得分: ${fibState.score}`;
-
-}
+  }
 
 function submitFibAnswer(){
 
@@ -54797,8 +54893,7 @@ feedback.style.background = '#dcfce7';
 feedback.style.color = '#166534';
 
 feedback.innerHTML = `✅ 正确！${q.exp}`;
-
-} else {
+  } else {
 
 blank.textContent = q.answer;
 
@@ -54819,8 +54914,7 @@ addToWrongNotebook(q.q, input, q.answer, fibState.subject, q.exp);
 document.getElementById('fibInput').style.display = 'none';
 
 document.getElementById('fibScore').textContent = `得分: ${fibState.score}`;
-
-if(fibState.current < fibState.questions.length - 1){
+  if(fibState.current < fibState.questions.length - 1){
 
 document.getElementById('fibNextBtn').style.display = 'inline-block';
 
@@ -54907,14 +55001,12 @@ ${!correct?`<div style="font-size:13px;color:#166534;margin-top:2px">正确答�
 <div style="font-size:12px;color:var(--text2);margin-top:4px">${q.exp}</div>
 
 </div>`;
-
-}).join('')}
+  }).join('')}
 
 </div>
 
 `;
-
-}
+  }
 
 function resetFibQuiz(){
 
@@ -55121,8 +55213,7 @@ ${info.concepts.map(c => `<span class="core-concept-tag">${c}</span>`).join('')}
 </div>
 
 `;
-
-}
+  }
 
 function toggleKnowledgeMastery(id, btn) {
 
@@ -55265,8 +55356,7 @@ stroke-dashoffset="${offset}"/>
 </div>
 
 `;
-
-}).join('');
+  }).join('');
 
 }
 
@@ -55383,8 +55473,7 @@ return `
 </div>
 
 `;
-
-}).join('');
+  }).join('');
 
 }
 
@@ -55433,8 +55522,7 @@ const m = Math.floor(dictTimer.seconds / 60);
 const s = dictTimer.seconds % 60;
 
 el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-
-}
+  }
 
 function speakDictationQuestion() {
 
@@ -55585,8 +55673,7 @@ container.innerHTML = `
 <div class="wrong-stat-card"><div class="wrong-stat-num" style="color:#dc2626">${politicsCount}</div><div class="wrong-stat-lbl">政治</div></div>
 
 `;
-
-}
+  }
 
 let wrongRedoState = {active:false, current:0, questions:[], correct:0};
 
@@ -55651,8 +55738,7 @@ area.innerHTML = `
 <div id="wrongRedoResult" style="margin-top:12px"></div>
 
 `;
-
-}
+  }
 
 function submitWrongRedo() {
 
@@ -55683,12 +55769,10 @@ if (isCorrect) {
 wrongRedoState.correct++;
 
 result.innerHTML = `<div style="background:#dcfce7;color:#16a34a;padding:12px;border-radius:8px">✅ 回答正确！关键词匹配 ${matchCount}/${keywords.length}</div>`;
-
-} else {
+  } else {
 
 result.innerHTML = `<div style="background:#fee2e2;color:#dc2626;padding:12px;border-radius:8px">❌ 回答有误。关键词匹配 ${matchCount}/${keywords.length}<br><br><b>正确答案：</b>${correctAnswer}</div>`;
-
-}
+  }
 
 setTimeout(() => {
 
@@ -55715,8 +55799,7 @@ const q = wrongRedoState.questions[wrongRedoState.current];
 const result = document.getElementById('wrongRedoResult');
 
 result.innerHTML = `<div style="background:#fef3c7;color:#92400e;padding:12px;border-radius:8px"><b>参考答案：</b><br>${q.correctAnswer || '暂无参考答案'}</div>`;
-
-}
+  }
 
 function finishWrongRedo() {
 
@@ -55737,8 +55820,7 @@ document.getElementById('wrongRedoArea').innerHTML = `
 </div>
 
 `;
-
-}
+  }
 
 function exitWrongRedo() {
 
@@ -55903,8 +55985,7 @@ sessionArea.innerHTML = `
 </div>
 
 `;
-
-} else if (!reviewSession.active) {
+  } else if (!reviewSession.active) {
 
 sessionArea.innerHTML = '';
 
@@ -56355,8 +56436,7 @@ if(isToday) cls += ' today';
 if(isFuture) cls += ' future';
 
 html += `<div class="${cls}">${d}</div>`;
-
-}
+  }
 
 html += '</div>';
 
@@ -56553,8 +56633,7 @@ const min = Math.floor(pomodoro.time / 60);
 const sec = pomodoro.time % 60;
 
 document.getElementById('pomodoroTimer').textContent = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-
-if(appState.pomodoroCount){
+  if(appState.pomodoroCount){
 
 document.getElementById('pomodoroCount').textContent = appState.pomodoroCount;
 
@@ -56739,8 +56818,7 @@ ${be.chart_essay.map(l => `<div>${l}</div>`).join('')}
 <ul style="font-size:13px;line-height:1.8;padding-left:20px">${be.common_sentences.conclusion.map(s => `<li>${s}</li>`).join('')}</ul>
 
 `;
-
-}
+  }
 
 function renderEpVocabRoots(){
 
@@ -56829,8 +56907,7 @@ document.getElementById('ep-translation-structures').innerHTML = `
 <ul style="font-size:13px;line-height:2;padding-left:20px">${d.keyStructures.map(s => `<li>${s}</li>`).join('')}</ul>
 
 `;
-
-}
+  }
 
 function renderEpReading(){
 
@@ -56871,8 +56948,7 @@ document.getElementById('ep-reading-steps').innerHTML = `
 <ol style="font-size:14px;line-height:2;padding-left:20px">${d.steps.map(s => `<li>${s}</li>`).join('')}</ol>
 
 `;
-
-}
+  }
 
 function renderEpPhrases(){
 
@@ -56903,8 +56979,7 @@ document.getElementById('ep-phrases-list').innerHTML = phrases.map(p => `
 </div>
 
 `).join('') + `<div style="text-align:center;padding:12px;font-size:13px;color:var(--text2)">共 ${phrases.length} 个短语</div>`;
-
-}
+  }
 
 let loadingProgress = 0;
 
@@ -67529,8 +67604,7 @@ container.innerHTML = `
 </div>
 
 `;
-
-}
+  }
 
 function startProQuiz(subject){
 
@@ -67641,8 +67715,7 @@ ${q.options.map((opt,i)=>`
 </div>
 
 `;
-
-}
+  }
 
 function selectProQuizOption(idx){
 
@@ -67783,8 +67856,7 @@ ${s.wrongList.map((q,i)=>`
 </div>
 
 `;
-
-}
+  }
 
 function initProFibSetup(){
 
@@ -67841,8 +67913,7 @@ container.innerHTML = `
 </div>
 
 `;
-
-}
+  }
 
 function startProFib(subject){
 
@@ -68035,8 +68106,7 @@ actions.innerHTML = `
 <button class="btn btn-primary" onclick="nextFibQuestion()">下一题 →</button>
 
 `;
-
-}
+  }
 
 function nextFibQuestion(){
 
@@ -68087,8 +68157,7 @@ document.getElementById('proFibArea').innerHTML = `
 </div>
 
 `;
-
-}
+  }
 
 let currentCompareFilter = 'all';
 
@@ -68147,8 +68216,7 @@ ${c.rows.map((row,ri)=>`
 `).join('')}
 
 `;
-
-}
+  }
 
 function toggleCompareCard(idx){
 
@@ -68353,8 +68421,7 @@ return `
 </div>
 
 `;
-
-}).join('')}
+  }).join('')}
 
 <div style="margin-top:20px;text-align:center">
 
@@ -68363,8 +68430,7 @@ return `
 </div>
 
 `;
-
-}
+  }
 
 function openReviewModal(id){
 
@@ -68565,8 +68631,7 @@ container.innerHTML = `
 <div id="pathResult"></div>
 
 `;
-
-}
+  }
 
 function generateStudyPath(){
 
@@ -69101,8 +69166,7 @@ pdfState.blanks.push(blank);
 blankIndex++;
 
 return `__BLANK_${blank.index}__`;
-
-}
+  }
 
 return token;
 
@@ -69249,8 +69313,7 @@ const pct = total > 0 ? Math.round(correct / total * 100) : 0;
 document.getElementById('pdfProgressFill').style.width = pct + '%';
 
 document.getElementById('pdfBlankProgress').textContent = `已填 ${filled}/${total} | 正确 ${correct} | 错误 ${wrong} | 正确率 ${pct}%`;
-
-if(filled >= total){
+  if(filled >= total){
 
 setTimeout(() => showPdfResult(correct, wrong, total, pct), 500);
 
@@ -70973,8 +71036,7 @@ ${username !== 'admin' ? `<button class="admin-action-btn" style="background:#fe
 </td>
 
 </tr>`;
-
-}
+  }
 
 if(count === 0){
 
@@ -71155,8 +71217,7 @@ const roleText = data.role === 'admin' ? '管理员' : '普通用户';
 const regTime = data.registerTime ? new Date(data.registerTime).toLocaleDateString() : '未知';
 
 html += `<tr><td><strong>${username}</strong></td><td><span class="admin-badge ${role}">${roleText}</span></td><td>${studyDataSize} 项</td><td>${regTime}</td></tr>`;
-
-}
+  }
 
 html += '</tbody></table>';
 
@@ -71319,8 +71380,7 @@ let html = '';
 logs.forEach(log => {
 
 html += `<div>[${log.time}] <span style="color:#60a5fa">${log.user}</span> - ${log.action}</div>`;
-
-});
+  });
 
 document.getElementById('adminLogContent').innerHTML = html;
 
@@ -71599,8 +71659,7 @@ ${invite.status === 'unused' ? `<button class="admin-action-btn delete" onclick=
 </td>
 
 </tr>`;
-
-});
+  });
 
 html += '</tbody></table>';
 
@@ -72085,8 +72144,7 @@ html += `<div class="achievement-card ${unlocked ? 'unlocked' : ''}">
 <div class="desc">${ach.desc}</div>
 
 </div>`;
-
-});
+  });
 
 html += '</div></div>';
 
@@ -72285,8 +72343,7 @@ return `
 </div>
 
 `;
-
-}
+  }
 
 const DAILY_GOAL_KEY = 'kaoyan_daily_goal';
 
@@ -72373,8 +72430,7 @@ html += `<div style="margin-bottom:8px">
 <div class="xp-bar-container" style="height:6px"><div class="xp-bar-fill" style="width:${percent}%;background:linear-gradient(90deg,#22c55e,#16a34a)"></div></div>
 
 </div>`;
-
-});
+  });
 
 html += '</div>';
 
@@ -72415,8 +72471,7 @@ if(activity > 300) level = 4;
 if(activity > 500) level = 5;
 
 html += `<div class="heatmap-cell level${level}" title="${dateStr}: ${activity}活动值"></div>`;
-
-}
+  }
 
 html += '</div>';
 
@@ -72427,8 +72482,7 @@ html += '<span>少</span>';
 for(let i = 0; i <= 5; i++){
 
 html += `<div class="heatmap-cell level${i}" style="width:10px;height:10px"></div>`;
-
-}
+  }
 
 html += '<span>多</span></div>';
 
@@ -72583,14 +72637,10 @@ return;
 let scoresHtml = '';
 
 if(settings.politics) scoresHtml += `<div class="target-score-item"><div class="score-val">${settings.politics}</div><div class="score-label">政治</div></div>`;
-
-if(settings.english) scoresHtml += `<div class="target-score-item"><div class="score-val">${settings.english}</div><div class="score-label">英语</div></div>`;
-
-if(settings.pro1) scoresHtml += `<div class="target-score-item"><div class="score-val">${settings.pro1}</div><div class="score-label">专业课一</div></div>`;
-
-if(settings.pro2) scoresHtml += `<div class="target-score-item"><div class="score-val">${settings.pro2}</div><div class="score-label">专业课二</div></div>`;
-
-if(settings.total) scoresHtml += `<div class="target-score-item"><div class="score-val" style="color:#fbbf24;font-size:22px">${settings.total}</div><div class="score-label">总分目标</div></div>`;
+  if(settings.english) scoresHtml += `<div class="target-score-item"><div class="score-val">${settings.english}</div><div class="score-label">英语</div></div>`;
+  if(settings.pro1) scoresHtml += `<div class="target-score-item"><div class="score-val">${settings.pro1}</div><div class="score-label">专业课一</div></div>`;
+  if(settings.pro2) scoresHtml += `<div class="target-score-item"><div class="score-val">${settings.pro2}</div><div class="score-label">专业课二</div></div>`;
+  if(settings.total) scoresHtml += `<div class="target-score-item"><div class="score-val" style="color:#fbbf24;font-size:22px">${settings.total}</div><div class="score-label">总分目标</div></div>`;
 
 container.innerHTML = `
 
@@ -72609,8 +72659,7 @@ container.innerHTML = `
 <button class="target-edit-btn" onclick="openTargetModal()">✏️ 修改</button>
 
 </div>`;
-
-}
+  }
 
 document.addEventListener('click', function(e){
 
@@ -73233,22 +73282,16 @@ html += `<span class="atlas-tag region">📍 ${regionData.name}</span>`;
 html += `</div>`;
 
 html += `<p style="margin-bottom:8px"><strong>概述：</strong>${s.desc}</p>`;
-
-if(s.origin !== '-') html += `<p style="margin-bottom:4px"><strong>起点：</strong><span class="highlight">${s.origin}</span></p>`;
-
-if(s.insertion !== '-') html += `<p style="margin-bottom:4px"><strong>止点：</strong><span class="highlight">${s.insertion}</span></p>`;
-
-if(s.action !== '-') html += `<p style="margin-bottom:4px"><strong>功能：</strong>${s.action}</p>`;
-
-if(s.nerve !== '-') html += `<p style="margin-bottom:4px"><strong>神经支配：</strong>${s.nerve}</p>`;
-
-if(s.blood !== '-') html += `<p style="margin-bottom:4px"><strong>血液供应：</strong>${s.blood}</p>`;
+  if(s.origin !== '-') html += `<p style="margin-bottom:4px"><strong>起点：</strong><span class="highlight">${s.origin}</span></p>`;
+  if(s.insertion !== '-') html += `<p style="margin-bottom:4px"><strong>止点：</strong><span class="highlight">${s.insertion}</span></p>`;
+  if(s.action !== '-') html += `<p style="margin-bottom:4px"><strong>功能：</strong>${s.action}</p>`;
+  if(s.nerve !== '-') html += `<p style="margin-bottom:4px"><strong>神经支配：</strong>${s.nerve}</p>`;
+  if(s.blood !== '-') html += `<p style="margin-bottom:4px"><strong>血液供应：</strong>${s.blood}</p>`;
 
 html += `<div class="atlas-sports-card"><h5>🏃 运动解剖学意义</h5><p>${s.sports}</p></div>`;
 
 html += `</div>`;
-
-});
+  });
 
 panel.innerHTML = html;
 
@@ -73319,8 +73362,7 @@ html += `<h4>${getSystemIcon(s.system)} ${s.name} <span class="atlas-tag region"
 html += `<p style="font-size:12px;color:#64748b;margin:0">${s.desc.substring(0,80)}...</p>`;
 
 html += `</div>`;
-
-});
+  });
 
 panel.innerHTML = html;
 
@@ -73395,20 +73437,16 @@ html += `<div class="atlas-detail-section">`;
 html += `<h4>📖 概述 ${found.examFreq ? '<span style="color:' + (found.examFreq==='★★★'?'#dc2626':found.examFreq==='★★'?'#f59e0b':'#94a3b8') + ';font-size:16px;margin-left:8px">' + found.examFreq + ' 考研考频</span>' : ''}</h4><p>${found.desc}</p>`;
 
 html += `</div>`;
-
-if(found.origin !== '-' || found.insertion !== '-'){
+  if(found.origin !== '-' || found.insertion !== '-'){
 
 html += `<div class="atlas-detail-section">`;
 
 html += `<h4>📍 起止点</h4>`;
-
-if(found.origin !== '-') html += `<p><strong>起点：</strong><span class="highlight">${found.origin}</span></p>`;
-
-if(found.insertion !== '-') html += `<p><strong>止点：</strong><span class="highlight">${found.insertion}</span></p>`;
+  if(found.origin !== '-') html += `<p><strong>起点：</strong><span class="highlight">${found.origin}</span></p>`;
+  if(found.insertion !== '-') html += `<p><strong>止点：</strong><span class="highlight">${found.insertion}</span></p>`;
 
 html += `</div>`;
-
-}
+  }
 
 if(found.action !== '-'){
 
@@ -73417,22 +73455,18 @@ html += `<div class="atlas-detail-section">`;
 html += `<h4>⚡ 功能</h4><p>${found.action}</p>`;
 
 html += `</div>`;
-
-}
+  }
 
 if(found.nerve !== '-' || found.blood !== '-'){
 
 html += `<div class="atlas-detail-section">`;
 
 html += `<h4>🔬 神经与血供</h4>`;
-
-if(found.nerve !== '-') html += `<p><strong>神经支配：</strong>${found.nerve}</p>`;
-
-if(found.blood !== '-') html += `<p><strong>血液供应：</strong>${found.blood}</p>`;
+  if(found.nerve !== '-') html += `<p><strong>神经支配：</strong>${found.nerve}</p>`;
+  if(found.blood !== '-') html += `<p><strong>血液供应：</strong>${found.blood}</p>`;
 
 html += `</div>`;
-
-}
+  }
 
 html += `<div class="atlas-sports-card"><h5>🏃 运动解剖学意义</h5><p>${found.sports}</p></div>`;
 
@@ -73589,8 +73623,7 @@ html += `<h4>${getSystemIcon(found.system)} ${found.name} <span class="atlas-tag
 html += `<p style="font-size:12px;color:#64748b;margin:0">${found.desc.substring(0,80)}...</p>`;
 
 html += `</div>`;
-
-}
+  }
 
 });
 
@@ -73649,8 +73682,7 @@ html += `<h4>${getSystemIcon(s.system)} ${s.name} <span class="atlas-tag region"
 html += `<p style="font-size:12px;color:#64748b;margin:0">${s.desc.substring(0,100)}...</p>`;
 
 html += `</div>`;
-
-});
+  });
 
 panel.innerHTML = html;
 
@@ -78417,8 +78449,7 @@ Object.entries(systemCounts).forEach(([sys, count]) => {
 const color = sysColors[sys] || '#64748b';
 
 html += `<span onclick="filterAtlasBySystem('${sys}')" style="cursor:pointer;background:${color}15;color:${color};border:1px solid ${color}30;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500">${sysNames[sys]||sys} ${count}</span>`;
-
-});
+  });
 
 html += '</div>';
 
@@ -78563,14 +78594,11 @@ html += `<div class="atlas-detail-section" style="border-left:3px solid ${freqCo
 html += `<h4>${getSystemIcon(s.system)} ${s.name} <span style="color:${freqColor};font-size:14px">${s.examFreq}</span> <span class="atlas-tag region" style="font-size:10px">📍 ${s.region}</span></h4>`;
 
 html += `<p style="font-size:12px;color:#64748b;margin:0">${s.desc.substring(0,100)}...</p>`;
-
-if(s.origin !== '-') html += `<p style="font-size:11px;color:#92400e;margin:4px 0 0"><strong>起点：</strong>${s.origin.substring(0,50)}...</p>`;
-
-if(s.action !== '-') html += `<p style="font-size:11px;color:#1e40af;margin:2px 0 0"><strong>功能：</strong>${s.action.substring(0,60)}...</p>`;
+  if(s.origin !== '-') html += `<p style="font-size:11px;color:#92400e;margin:4px 0 0"><strong>起点：</strong>${s.origin.substring(0,50)}...</p>`;
+  if(s.action !== '-') html += `<p style="font-size:11px;color:#1e40af;margin:2px 0 0"><strong>功能：</strong>${s.action.substring(0,60)}...</p>`;
 
 html += `</div>`;
-
-});
+  });
 
 panel.innerHTML = html;
 
@@ -79157,8 +79185,7 @@ if(atlasQuizState.answered){
 const correctIdx = q.options.indexOf(q.answer);
 
 html += `<div id="quiz-feedback" style="padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:13px">`;
-
-if(atlasQuizState.lastCorrect){
+  if(atlasQuizState.lastCorrect){
 
 html += '<div style="color:#059669;font-weight:600">✅ 回答正确！</div>';
 
@@ -79167,14 +79194,12 @@ html += '<div style="color:#059669;font-weight:600">✅ 回答正确！</div>';
 html += `<div style="color:#dc2626;font-weight:600">❌ 回答错误</div>`;
 
 html += `<div style="color:#334155;margin-top:4px">正确答案：${q.answer}</div>`;
-
-}
+  }
 
 html += '</div>';
 
 html += `<button onclick="nextAtlasQuiz()" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">${atlasQuizState.current < atlasQuizState.total-1 ? '下一题 →' : '查看结果 🏆'}</button>`;
-
-}
+  }
 
 panel.innerHTML = html;
 
@@ -79521,8 +79546,7 @@ const quickActions = ['哑铃卧推','引体向上','壶铃摇摆','保加利亚
 quickActions.forEach(action => {
 
 html += `<button onclick="document.getElementById('customMovementName').value='${action}';generateCustomAnalysis()" style="padding:8px 14px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:20px;font-size:12px;color:#475569;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='#ede9fe';this.style.color='#6d28d9';this.style.borderColor='#7c3aed'" onmouseout="this.style.background='#f1f5f9';this.style.color='#475569';this.style.borderColor='#e2e8f0'">${action}</button>`;
-
-});
+  });
 
 html += '</div>';
 
@@ -81143,8 +81167,7 @@ ${passages.map(([key, data]) => `
 </div>
 
 `;
-
-}
+  }
 
 function showReadingPassageById(key){
 
@@ -81281,8 +81304,7 @@ ${Object.entries(q.options || {}).map(([opt, text]) => `
 </div>
 
 `;
-
-}
+  }
 
 
 
@@ -81319,8 +81341,7 @@ ${fullData.translation || '暂无翻译'}
 </div>
 
 `;
-
-}
+  }
 
 
 
@@ -81345,8 +81366,7 @@ ${vocabList.map(v => `<span style="background:#fff;color:#1e40af;padding:4px 10p
 </div>
 
 `;
-
-}
+  }
 
 
 
@@ -81375,8 +81395,7 @@ ${sentenceList.map((s, i) => `
 </div>
 
 `;
-
-}
+  }
 
 
 
@@ -81413,8 +81432,7 @@ ${sentencesHtml}
 </div>
 
 `;
-
-}
+  }
 
 
 
@@ -85149,7 +85167,6 @@ function addPhdAIMessage(role, content, isKnowledge = false) {
     msgDiv.style.textAlign = 'right';
 
     msgDiv.innerHTML = `<div style="display:inline-block;background:#667eea;color:#fff;padding:10px 16px;border-radius:12px 12px 0 12px;max-width:80%;text-align:left;font-size:14px;white-space:pre-wrap">${content}</div>`;
-
   } else {
 
     let knowledgeTag = isKnowledge ? '<div style="font-size:11px;color:#667eea;margin-bottom:4px;font-weight:600">📚 来自考博知识库</div>' : '';
@@ -85159,7 +85176,6 @@ function addPhdAIMessage(role, content, isKnowledge = false) {
     let renderedContent = isKnowledge ? content.replace(/\n/g, '<br>') : renderMarkdown(content);
 
     msgDiv.innerHTML = `${knowledgeTag}<div style="display:inline-block;background:#fff;border:1px solid #e5e7eb;padding:12px 18px;border-radius:12px 12px 12px 0;max-width:92%;font-size:14px;color:#374151;line-height:1.7">${renderedContent}</div>`;
-
   }
 
   
@@ -89427,7 +89443,6 @@ function buildPhdDocReviewPrompt(docType, content) {
 - 结合体育学/运动人体科学学科特点进行评审
 
 - 回答长度至少800字，复杂文档1000-1500字`;
-
   } else if (docType === 'resume') {
 
     typeSpecificPrompt = `
@@ -89471,7 +89486,6 @@ function buildPhdDocReviewPrompt(docType, content) {
 - 结合体育学/运动人体科学考博特点
 
 - 回答长度至少600字`;
-
   } else if (docType === 'statement') {
 
     typeSpecificPrompt = `
@@ -89517,7 +89531,6 @@ function buildPhdDocReviewPrompt(docType, content) {
 - 结合体育学/运动人体科学考博特点
 
 - 回答长度至少600字`;
-
   } else {
 
     typeSpecificPrompt = `
@@ -89549,7 +89562,6 @@ function buildPhdDocReviewPrompt(docType, content) {
 - 必须使用标准Markdown格式
 
 - 回答长度至少500字`;
-
   }
 
   
@@ -108051,8 +108063,7 @@ function renderTaociGuide(){
     <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:13px;color:#991b1b;line-height:1.7">❌ <b>不读论文就套磁</b>：必须至少读导师近3年2-3篇代表作，能说出具体观点。</div>
 
   </div>`;
-
-}
+  }
 
 
 
@@ -108175,8 +108186,7 @@ function renderTaociAI(){
     <div id="taociScorePanel" style="display:none;margin-top:16px"></div>
 
   </div>`;
-
-}
+  }
 
 function onTaociSupChange(){
 
@@ -108377,8 +108387,7 @@ function renderTaociReplyAnalysis(){
     <div id="replyAnalyzeResult" style="margin-top:20px"></div>
 
   </div>`;
-
-}
+  }
 
 
 
@@ -108411,8 +108420,7 @@ function renderTaociPhrases(){
     <div id="phraseContentArea">${phraseContent(keys[0])}</div>
 
   </div>`;
-
-}
+  }
 
 
 
@@ -108841,8 +108849,7 @@ function renderTaociAttach(){
     </div>
 
   </div>`;
-
-}
+  }
 
 
 
@@ -122283,8 +122290,7 @@ ${mentorInstr}
       // P2：第一题必须是自我介绍
 
       userPrompt = `这是面试的第一个环节【自我介绍】。请用面试官的口吻说："请做一个2-3分钟的自我介绍，包括你的教育背景、研究经历、报考动机和个人优势。" 直接输出这句话，不要加其他内容。`;
-
-    } else {
+  } else {
 
       const lastAnswer = state.conversation.filter(m => m.role === 'candidate').slice(-1)[0];
 
@@ -122339,8 +122345,7 @@ ${_stageReq}
 5. 这是第${state.questionIndex + 1}个问题，总共${state.config.questionCount}个问题
 
 6. 问题必须符合当前环节【${_stageType}】的要求`;
-
-    if (isFollowup) {
+  if (isFollowup) {
 
       userPrompt += '\n\n【追问模式】这是对上一个问题的深入追问，请针对考生刚才回答中的某个具体概念、机制或漏洞，提出一个更深入的追问问题（如"你刚才提到XX，能否详细说明...？"）。不要换话题，要在同一知识点上深挖。';
 
@@ -122766,8 +122771,7 @@ async function endPhdAIMockInterview() {
       const role = m.role === 'interviewer' ? '面试官' : '考生';
 
       return `【${role}】${m.content}`;
-
-    }).join('\n\n');
+  }).join('\n\n');
 
     
 
@@ -122784,8 +122788,7 @@ async function endPhdAIMockInterview() {
       return `第${i+1}题：${q.content}
 
 【考生回答】${candidateAnswer.content || '（未回答）'}`;
-
-    }).join('\n\n');
+  }).join('\n\n');
 
 
 
@@ -126770,15 +126773,14 @@ function exportTrendReport() {
 分析周期：近${d.yearRange}年
 
 `;
-  
   if (d.hotTopics && d.hotTopics.hotTopics) {
     text += `=== 研究热点主题 ===
 `;
     d.hotTopics.hotTopics.forEach(t => { 
       text += `- ${t.topic}（热度：${t.heat}/10，趋势：${t.trend}）
   ${t.description || ''}
-`; 
-    });
+`;
+  });
     text += `
 `;
   }
@@ -126790,8 +126792,8 @@ function exportTrendReport() {
   应用：${m.description || ''}
   优势：${m.pros || ''}
   局限：${m.cons || ''}
-`; 
-    });
+`;
+  });
     text += `
 `;
   }
@@ -126802,8 +126804,8 @@ function exportTrendReport() {
       text += `- ${j.name}（${j.tier}）
   关注：${j.focus || ''}
   难度：${j.acceptance || ''}
-`; 
-    });
+`;
+  });
     text += `
 `;
   }
@@ -126815,8 +126817,8 @@ function exportTrendReport() {
   原因：${g.reason || ''}
   机会：${g.opportunity || ''}
   可行性：${g.feasibility || ''}
-`; 
-    });
+`;
+  });
   }
   
   const blob = new Blob(['\ufeff' + text], { type: 'application/msword' });
@@ -135911,7 +135913,7 @@ function togglePageRange(){
     const pages = toc.filter(c => c.page).map(c => c.page);
     if(pages.length > 0){
       info.textContent = `目录页码范围：${Math.min(...pages)} - ${Math.max(...pages)}`;
-    }
+  }
   }
 }
 
@@ -135955,7 +135957,7 @@ function locateByPageRange(){
     const content = extractChapterContent(book, ch.title);
     if(content){
       mergedContent += `\n\n=== ${ch.title} (p.${ch.page}) ===\n\n${content}`;
-    }
+  }
   }
   
   if(mergedContent){
@@ -137127,5 +137129,271 @@ function rateAIOutput(modelId, rating) {
 
 </script>
 
+
+<script>
+// ========== 学术英语增强版功能 ==========
+var currentAcadTab = 'chinglish';
+var currentWritingMode = 'cn2en';
+
+function switchAcadTab(tabName) {
+  currentAcadTab = tabName;
+  document.querySelectorAll('.acad-tab-btn').forEach(function(btn) {
+    btn.style.background = '#fff';
+    btn.style.color = '#374151';
+  });
+  var activeBtn = document.getElementById('acadTab-' + tabName);
+  if (activeBtn) { activeBtn.style.background = '#16a34a'; activeBtn.style.color = '#fff'; }
+  document.querySelectorAll('.acad-panel').forEach(function(panel) { panel.style.display = 'none'; });
+  var activePanel = document.getElementById('acadPanel-' + tabName);
+  if (activePanel) activePanel.style.display = 'block';
+}
+
+function saveTerm(termData) {
+  try {
+    var lib = JSON.parse(localStorage.getItem('personal_terms') || '[]');
+    lib.unshift(termData);
+    localStorage.setItem('personal_terms', JSON.stringify(lib.slice(0, 200)));
+    alert('✅ 术语已收藏到个人词库');
+  } catch(e) { alert('收藏失败'); }
+}
+
+function savePhrase(phraseData) {
+  try {
+    var lib = JSON.parse(localStorage.getItem('personal_phrases') || '[]');
+    lib.unshift(phraseData);
+    localStorage.setItem('personal_phrases', JSON.stringify(lib.slice(0, 200)));
+    alert('✅ 句型已收藏到个人词库');
+  } catch(e) { alert('收藏失败'); }
+}
+
+function showPersonalLib(type) {
+  document.getElementById('personalTab-terms').style.background = type === 'terms' ? '#d97706' : '#f3f4f6';
+  document.getElementById('personalTab-terms').style.color = type === 'terms' ? '#fff' : '#374151';
+  document.getElementById('personalTab-phrases').style.background = type === 'phrases' ? '#d97706' : '#f3f4f6';
+  document.getElementById('personalTab-phrases').style.color = type === 'phrases' ? '#fff' : '#374151';
+  var container = document.getElementById('personalLibContent');
+  var key = type === 'terms' ? 'personal_terms' : 'personal_phrases';
+  var lib = [];
+  try { lib = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  if (lib.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:40px;font-size:13px">暂无收藏内容<br><span style="font-size:11px">在术语查询或句型生成结果中点击⭐收藏按钮添加</span></div>';
+    return;
+  }
+  var html = '<div style="display:flex;flex-direction:column;gap:10px">';
+  lib.forEach(function(item, idx) {
+    html += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px;position:relative">';
+    html += '<button onclick="removePersonalItem(\'' + type + '\',' + idx + ')" style="position:absolute;top:8px;right:8px;background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px">×</button>';
+    if (type === 'terms') {
+      html += '<div style="font-weight:700;color:#92400e;font-size:14px;margin-bottom:6px">' + (item.term || '') + '</div>';
+      html += '<div style="font-size:12px;color:#374151;line-height:1.8;white-space:pre-wrap">' + (item.detail || '').substring(0, 300) + '</div>';
+    } else {
+      html += '<div style="font-weight:700;color:#92400e;font-size:13px;margin-bottom:6px">' + (item.scene || '') + '</div>';
+      html += '<div style="font-size:12px;color:#374151;line-height:1.8;white-space:pre-wrap">' + (item.content || '').substring(0, 300) + '</div>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function removePersonalItem(type, idx) {
+  var key = type === 'terms' ? 'personal_terms' : 'personal_phrases';
+  var lib = [];
+  try { lib = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  lib.splice(idx, 1);
+  localStorage.setItem(key, JSON.stringify(lib));
+  showPersonalLib(type);
+}
+
+function exportPersonalLib() {
+  var terms = [];
+  var phrases = [];
+  try { terms = JSON.parse(localStorage.getItem('personal_terms') || '[]'); } catch(e) {}
+  try { phrases = JSON.parse(localStorage.getItem('personal_phrases') || '[]'); } catch(e) {}
+  var text = '===== 个人学术术语库 =====\n\n';
+  terms.forEach(function(t, i) { text += (i+1) + '. ' + (t.term || '') + '\n' + (t.detail || '') + '\n\n'; });
+  text += '\n===== 个人学术句型库 =====\n\n';
+  phrases.forEach(function(p, i) { text += (i+1) + '. [' + (p.scene || '') + ']\n' + (p.content || '') + '\n\n'; });
+  var blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = '个人学术英语词库.txt'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearPersonalLib() {
+  if (!confirm('确定要清空所有收藏的术语和句型吗？此操作不可恢复。')) return;
+  localStorage.removeItem('personal_terms');
+  localStorage.removeItem('personal_phrases');
+  showPersonalLib('terms');
+  alert('✅ 已清空');
+}
+
+function setWritingMode(mode) {
+  currentWritingMode = mode;
+  var modes = ['cn2en', 'polish', 'connector', 'vocab'];
+  var hints = {
+    cn2en: '输入中文段落，AI翻译为地道英文学术段落（保留学术逻辑，避免中式英语）',
+    polish: '输入英文句子，AI给出3个润色版本（保守/标准/地道），附修改说明',
+    connector: '输入上下文或描述逻辑关系（如"转折"、"因果"、"递进"），AI推荐合适的连接词和句型',
+    vocab: '输入普通英文词汇或句子，AI推荐更学术的替换表达（含例句和适用场景）'
+  };
+  modes.forEach(function(m) {
+    var btn = document.getElementById('writeMode-' + m);
+    if (btn) {
+      btn.style.borderColor = m === mode ? '#ea580c' : '#e5e7eb';
+      btn.style.background = m === mode ? '#fff7ed' : '#fff';
+      btn.style.color = m === mode ? '#ea580c' : '#374151';
+    }
+  });
+  document.getElementById('writingHint').textContent = hints[mode];
+}
+
+function escHtml(t) { return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function runChinglishCheck() {
+  var input = document.getElementById('chinglishInput').value.trim();
+  if (!input) { alert('请粘贴需要检查的英文段落'); return; }
+  var version = (document.querySelector('input[name="chinglishVersion"]:checked')||{}).value || 'standard';
+  var versionNames = {conservative: '保守版（最小改动）', standard: '标准版', native: '母语化（地道改写）'};
+  var status = document.getElementById('chinglishStatus');
+  var resultEl = document.getElementById('chinglishResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ AI检测改写中（约30-60秒）...</div>';
+  status.textContent = '检测中...';
+  var sys = '你是资深学术英语编辑，专注体育科学领域。请对以下英文文本进行中式英语检测和地道改写。要求：\n1.逐句分析，找出所有问题：中式英语表达、语法错误、介词/冠词误用、搭配不当、时态问题、语序问题\n2.每个问题标注类型（如：搭配错误/中式英语/语法错误/介词误用）\n3.给出修改前后对比（原文 → 修改后）\n4.最后给出完整的改写版本（' + versionNames[version] + '）\n5.体育学专业术语保持准确\n输出格式清晰，使用编号列表。';
+  var out = '';
+  try { out = await callModelWithTimeout(sys, '待检查文本：\n' + input, 3000, 'deepseek-v4-pro', 100000); } catch(e) { out = ''; }
+  if (!out.trim()) {
+    status.textContent = 'V4-Pro超时，改用DeepSeek V3...';
+    try { out = await callModelWithTimeout(sys, '待检查文本：\n' + input, 3000, 'deepseek-chat', 100000); } catch(e) { out = ''; }
+  }
+  if (!out.trim()) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 生成失败，请重试</div>';
+    status.textContent = '生成失败';
+    return;
+  }
+  resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><div style="padding:14px 18px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>✍️ 中式英语检测与改写结果（' + versionNames[version] + '）</span><button onclick="document.getElementById(\'chinglishResult\').style.display=\'none\'" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px">关闭</button></div><div style="padding:18px;font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + escHtml(out) + '</div></div>';
+  status.textContent = '✅ 检测完成';
+}
+
+async function runTermLookup() {
+  var input = document.getElementById('termInput').value.trim();
+  if (!input) { alert('请输入术语'); return; }
+  var category = document.getElementById('termCategory').value;
+  var categoryNames = {general:'通用/综合', physiology:'运动生理学', biochemistry:'运动生物化学', anatomy:'运动解剖学', psychology:'运动心理学', training:'运动训练学', education:'体育教育学', medicine:'运动医学/康复', biomechanics:'运动生物力学', sociology:'体育社会学'};
+  var status = document.getElementById('termStatus');
+  var resultEl = document.getElementById('termResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ 查询中...</div>';
+  status.textContent = '查询中...';
+  var sys = '你是' + (categoryNames[category] || '体育学') + '领域学术英语术语专家。请查询术语"' + input + '"，输出：\n1.规范英文表达（含常用缩写，如有多个请列出）\n2.同义词/近义词辨析（2-3个，说明区别）\n3.常见搭配短语（5-8个，学术语境）\n4.学术例句（2-3个，标准论文句式）\n5.使用注意事项（易犯错误、体育学特殊用法）\n格式清晰，可直接用于论文写作。';
+  var out = '';
+  try { out = await callModelWithTimeout(sys, '术语：' + input, 2500, 'deepseek-chat', 80000); } catch(e) { out = ''; }
+  if (!out.trim()) {
+    status.textContent = '超时，改用V4-Pro...';
+    try { out = await callModelWithTimeout(sys, '术语：' + input, 2500, 'deepseek-v4-pro', 80000); } catch(e) { out = ''; }
+  }
+  if (!out.trim()) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 查询失败，请重试</div>';
+    status.textContent = '查询失败';
+    return;
+  }
+  resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><div style="padding:14px 18px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>🔤 ' + escHtml(input) + ' — ' + (categoryNames[category] || '') + '</span><div style="display:flex;gap:8px"><button onclick="saveTerm({term:\'' + escHtml(input).replace(/'/g, "\\'") + '\',detail:\'' + escHtml(out).replace(/'/g, "\\'").substring(0, 500) + '\'})" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px">⭐ 收藏</button><button onclick="document.getElementById(\'termResult\').style.display=\'none\'" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px">关闭</button></div></div><div style="padding:18px;font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + escHtml(out) + '</div></div>';
+  status.textContent = '✅ 查询完成';
+}
+
+async function runPhraseLookup() {
+  var section = document.getElementById('phraseSection').value;
+  var func = document.getElementById('phraseFunction').value;
+  var tone = document.getElementById('phraseTone').value;
+  var input = document.getElementById('phraseInput').value.trim();
+  var sectionNames = {abstract:'摘要', introduction:'引言', methods:'方法', results:'结果', discussion:'讨论', conclusion:'结论', limitation:'局限性', coverletter:'Cover Letter'};
+  var funcNames = {any:'不限功能', contrast:'对比/转折', causality:'因果', progression:'递进', example:'举例', summary:'总结', emphasis:'强调', speculation:'推测'};
+  var toneNames = {any:'不限语气', certain:'肯定', cautious:'谨慎/客观', tentative:'推测性'};
+  var status = document.getElementById('phraseStatus');
+  var resultEl = document.getElementById('phraseResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ 生成句型中...</div>';
+  status.textContent = '生成中...';
+  var sys = '你是学术写作句型库专家，专注体育科学领域。请针对以下写作场景生成常用学术句型：\n论文章节：' + (sectionNames[section] || '') + '\n逻辑功能：' + (funcNames[func] || '') + '\n语气强度：' + (toneNames[tone] || '') + '\n' + (input ? '具体场景/关键词：' + input + '\n' : '') + '要求：\n1.生成10-15条最常用、最地道的学术句型\n2.每条包含：句型模板（用[...]标注可替换部分）+ 一个完整示例句（体育学语境）\n3.按逻辑功能分组\n4.避免中式英语，使用母语学者常用表达\n格式清晰。';
+  var out = '';
+  try { out = await callModelWithTimeout(sys, '生成句型', 2500, 'deepseek-chat', 90000); } catch(e) { out = ''; }
+  if (!out.trim()) {
+    status.textContent = '超时，改用V4-Pro...';
+    try { out = await callModelWithTimeout(sys, '生成句型', 2500, 'deepseek-v4-pro', 90000); } catch(e) { out = ''; }
+  }
+  if (!out.trim()) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 生成失败，请重试</div>';
+    status.textContent = '生成失败';
+    return;
+  }
+  var sceneLabel = (sectionNames[section] || '') + (func !== 'any' ? ' · ' + (funcNames[func] || '') : '') + (tone !== 'any' ? ' · ' + (toneNames[tone] || '') : '');
+  resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><div style="padding:14px 18px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>📖 学术句型库 — ' + sceneLabel + '</span><div style="display:flex;gap:8px"><button onclick="savePhrase({scene:\'' + sceneLabel.replace(/'/g, "\\'") + '\',content:\'' + escHtml(out).replace(/'/g, "\\'").substring(0, 500) + '\'})" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px">⭐ 收藏</button><button onclick="document.getElementById(\'phraseResult\').style.display=\'none\'" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px">关闭</button></div></div><div style="padding:18px;font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + escHtml(out) + '</div></div>';
+  status.textContent = '✅ 生成完成';
+}
+
+async function runWritingAssist() {
+  var input = document.getElementById('writingInput').value.trim();
+  if (!input) { alert('请输入内容'); return; }
+  var modeNames = {cn2en:'🌐 中译英段落', polish:'✨ 句子多版润色', connector:'🔗 连接词推荐', vocab:'📈 学术词汇升级'};
+  var status = document.getElementById('writingStatus');
+  var resultEl = document.getElementById('writingResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ 生成中...</div>';
+  status.textContent = '生成中...';
+  var sys = '';
+  if (currentWritingMode === 'cn2en') {
+    sys = '你是体育学SCI论文翻译专家。请将以下中文段落翻译为地道的英文学术段落。要求：\n1.保留原文学术逻辑和专业术语\n2.使用地道学术英语表达，避免中式英语\n3.体育学专业术语准确（如运动干预、生理指标、心理量表等）\n4.输出完整英文段落，然后给出3-5个关键翻译点说明（为什么这么翻）';
+  } else if (currentWritingMode === 'polish') {
+    sys = '你是学术英语润色专家。请对以下英文句子/段落给出3个润色版本：\n1.保守版：最小改动，只修正明显错误\n2.标准版：优化表达和流畅度\n3.母语化版：地道学术英语表达\n每个版本后附修改说明（改了什么、为什么）。体育学术语保持准确。';
+  } else if (currentWritingMode === 'connector') {
+    sys = '你是学术写作连接词专家。根据以下上下文或逻辑关系，推荐合适的学术连接词和过渡句型。要求：\n1.按逻辑关系分类（转折/因果/递进/举例/总结等）\n2.每类给出3-5个连接词 + 2-3个完整句型\n3.说明正式程度和适用场景\n4.体育学论文语境';
+  } else {
+    sys = '你是学术词汇升级专家。请将以下普通英文词汇/表达升级为更学术的表达。要求：\n1.每个词给出2-3个学术替换词\n2.说明词义差别和适用语境\n3.给出学术例句（体育学语境）\n4.标注正式程度（中/高/极高）';
+  }
+  var out = '';
+  try { out = await callModelWithTimeout(sys, input, 2500, 'deepseek-v4-pro', 90000); } catch(e) { out = ''; }
+  if (!out.trim()) {
+    status.textContent = 'V4-Pro超时，改用DeepSeek V3...';
+    try { out = await callModelWithTimeout(sys, input, 2500, 'deepseek-chat', 90000); } catch(e) { out = ''; }
+  }
+  if (!out.trim()) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 生成失败，请重试</div>';
+    status.textContent = '生成失败';
+    return;
+  }
+  resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><div style="padding:14px 18px;background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>' + (modeNames[currentWritingMode] || '') + ' — 结果</span><button onclick="document.getElementById(\'writingResult\').style.display=\'none\'" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px">关闭</button></div><div style="padding:18px;font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + escHtml(out) + '</div></div>';
+  status.textContent = '✅ 生成完成';
+}
+
+async function runConsistencyCheck() {
+  var input = document.getElementById('consistencyInput').value.trim();
+  if (!input) { alert('请粘贴论文内容'); return; }
+  var status = document.getElementById('consistencyStatus');
+  var resultEl = document.getElementById('consistencyResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ 术语一致性检查中（约1分钟）...</div>';
+  status.textContent = '检查中...';
+  var sys = '你是学术论文术语一致性审查专家，专注体育科学领域。请检查以下论文文本的术语使用一致性：\n1.找出同一概念使用了不同术语的情况（如VO2max/最大摄氧量混用、exercise/intervention混用、subjects/participants混用）\n2.体育学专业术语的规范使用检查\n3.缩写首次出现是否标注全称\n4.前后术语是否统一\n输出格式：\n❌ 不一致问题（列出原文位置、使用的不同术语、建议统一为哪个）\n⚠️ 需注意的术语问题\n✅ 术语统一建议清单\n最后给出全文术语统一表（推荐术语 + 缩写 + 中文释义）';
+  var out = '';
+  try { out = await callModelWithTimeout(sys, '论文内容：\n' + input.slice(0, 8000), 3000, 'deepseek-v4-pro', 100000); } catch(e) { out = ''; }
+  if (!out.trim()) {
+    status.textContent = 'V4-Pro超时，改用DeepSeek V3...';
+    try { out = await callModelWithTimeout(sys, '论文内容：\n' + input.slice(0, 8000), 3000, 'deepseek-chat', 100000); } catch(e) { out = ''; }
+  }
+  if (!out.trim()) {
+    resultEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 检查失败，请重试</div>';
+    status.textContent = '检查失败';
+    return;
+  }
+  resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><div style="padding:14px 18px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center"><span>🔍 术语一致性检查结果</span><button onclick="document.getElementById(\'consistencyResult\').style.display=\'none\'" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px">关闭</button></div><div style="padding:18px;font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + escHtml(out) + '</div></div>';
+  status.textContent = '✅ 检查完成';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('personalLibContent')) showPersonalLib('terms');
+});
+</script>
 </body>
 </html>
