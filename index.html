@@ -16585,7 +16585,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
               <option value="">📖 选择章节（自动解析）</option>
             </select>
 
-            <input id="bookChapterKey" placeholder="章节关键词，如：无氧耐力" style="display:none;flex:1;min-width:160px;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key==='Enter')locateChapter()">
+            <input id="bookChapterKey" placeholder="章节关键词或页码，如：肌肉、第八章、15、p15" style="display:none;flex:1;min-width:160px;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key==='Enter')locateChapter()">
 
             <button onclick="locateChapter()" id="bookLocateBtn" style="display:none;background:#16a34a;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">定位章节</button>
 
@@ -128488,6 +128488,7 @@ function renderBookMeta(){
       // 自动解析目录
       setTimeout(function(){
         const chapters = extractBookTOC(book);
+        try{ localStorage.setItem('aiBookTOC', JSON.stringify(chapters)); }catch(e){}
         renderBookChapterSelect(chapters);
         if(st && chapters.length >= 3){
           st.innerHTML = '📚 已上传书目：<b>' + meta.name + '</b>（' + (meta.chars/1000).toFixed(1) + 'K字），已解析 <b>' + chapters.length + '</b> 个章节，请选择';
@@ -133219,7 +133220,18 @@ function extractBookTOC(text){
       }
     }
   }
-  return chapters.slice(0, 40); // 最多40章
+  // 解析每个章节的页码（目录中通常有"第二章 肌肉............15"）
+  const chaptersWithPage = [];
+  for(const ch of chapters.slice(0, 40)){
+    let page = null;
+    // 从原始匹配中提取末尾页码
+    const pageMatch = ch.match(/(\d+)\s*$/);
+    if(pageMatch && parseInt(pageMatch[1]) > 0 && parseInt(pageMatch[1]) < 9999){
+      page = parseInt(pageMatch[1]);
+    }
+    chaptersWithPage.push({title: ch, page: page});
+  }
+  return chaptersWithPage; // 返回带页码的章节列表
 }
 
 // 渲染章节下拉框
@@ -133229,12 +133241,14 @@ function renderBookChapterSelect(chapters){
   const btn = document.getElementById('bookLocateBtn');
   const toggle = document.getElementById('bookKeyToggle');
   if(!sel) return;
-  if(chapters && chapters.length >= 3){
-    sel.innerHTML = '<option value="">📖 选择章节（共' + chapters.length + '章）</option>';
-    chapters.forEach(function(ch, idx){
+  // 兼容旧格式（字符串数组）和新格式（对象数组）
+  const chapList = (chapters && chapters.length > 0 && typeof chapters[0] === 'object') ? chapters : chapters.map(function(c){ return {title: c, page: null}; });
+  if(chapList && chapList.length >= 3){
+    sel.innerHTML = '<option value="">📖 选择章节（共' + chapList.length + '章）</option>';
+    chapList.forEach(function(ch, idx){
       const opt = document.createElement('option');
-      opt.value = ch;
-      opt.textContent = ch;
+      opt.value = ch.title;
+      opt.textContent = ch.title + (ch.page ? '  (p.' + ch.page + ')' : '');
       sel.appendChild(opt);
     });
     sel.style.display = 'inline-block';
@@ -133322,6 +133336,8 @@ function uploadBookFile(){
     // 自动解析目录并渲染章节下拉框
     setTimeout(function(){
       const chapters = extractBookTOC(text);
+      // 保存目录到localStorage（供页码匹配使用）
+      try{ localStorage.setItem('aiBookTOC', JSON.stringify(chapters)); }catch(e){}
       renderBookChapterSelect(chapters);
       if(chapters.length >= 3){
         status.innerHTML = '✅ <b>书目已上传：</b>' + file.name + '（' + (text.length/1000).toFixed(1) + 'K字），已解析 <b>' + chapters.length + '</b> 个章节，请在下拉框选择';
@@ -133342,9 +133358,40 @@ function locateChapter(){
     return;
   }
   if(!key){
-    status.innerHTML = '⚠️ <b>请输入章节关键词</b>，如：无氧耐力、肌肉、第八章';
+    status.innerHTML = '⚠️ <b>请输入章节关键词或页码</b>，如：肌肉、第八章、15（页码）、p15';
     status.style.color = '#dc2626';
     return;
+  }
+  // 检查是否是页码输入（纯数字或 p+数字）
+  const pageMatch = key.match(/^p?\s*(\d{1,4})$/i);
+  let targetPage = null;
+  if(pageMatch){
+    targetPage = parseInt(pageMatch[1]);
+  }
+  // 如果是页码输入，从目录中找到对应章节标题
+  let searchKey = key;
+  if(targetPage !== null){
+    try{
+      const tocData = JSON.parse(localStorage.getItem('aiBookTOC') || '[]');
+      if(tocData && tocData.length > 0){
+        // 找到页码最接近的章节
+        let bestMatch = null, minDiff = 9999;
+        for(const ch of tocData){
+          if(ch.page !== null){
+            const diff = Math.abs(ch.page - targetPage);
+            if(diff < minDiff){ minDiff = diff; bestMatch = ch; }
+          }
+        }
+        if(bestMatch && minDiff <= 5){
+          searchKey = bestMatch.title;
+          status.innerHTML = '📖 页码 ' + targetPage + ' 对应章节：<b>' + bestMatch.title + '</b>，正在定位...';
+          status.style.color = '#6b7280';
+        }else{
+          status.innerHTML = '⚠️ 目录中未找到页码 ' + targetPage + ' 附近的章节，尝试全文搜索 "' + key + '"';
+          status.style.color = '#d97706';
+        }
+      }
+    }catch(e){}
   }
   // 跳过目录区域：从正文 1/8 之后开始找
   const start = Math.floor(book.length / 8);
