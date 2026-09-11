@@ -59560,477 +59560,6 @@ function paperPreviewVersion(id) {
   var w = window.open('', '_blank');
   if (!w) { alert('浏览器拦截了弹窗，请允许后重试'); return; }
   w.document.write('<html><head><title>版本预览</title><meta charset="utf-8"><style>body{font-family:"Microsoft YaHei",sans-serif;max-width:760px;margin:20px auto;padding:0 20px;line-height:1.8;color:#1f2937} h2{color:#16a34a;border-bottom:1px solid #e5e7eb;padding-bottom:4px} pre{white-space:pre-wrap;font-family:inherit}</style></head><body><h1>' + (project.title || '') + '</h1>' + text.split('\n\n').map(function(b){ return b.trim() ? '<pre>' + b.replace(/</g,'&lt;') + '</pre>' : ''; }).join('') + '</body></html>');
-}
-</script>
-<!-- ========== 模型档案库弹窗 ========== -->
-<div id="modelArchiveModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999999;font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:16px;width:90%;max-width:900px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
-    <!-- 头部 -->
-    <div style="padding:16px 20px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <div style="font-size:16px;font-weight:700">📊 AI 模型档案库</div>
-        <div style="font-size:11px;opacity:0.85;margin-top:2px">10大模型详细档案 · 9项能力评分 · 动态路由依据</div>
-      </div>
-      <button onclick="closeModelArchive()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">×</button>
-    </div>
-    <!-- 模型标签栏 -->
-    <div id="modelArchiveTabs" style="padding:10px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;gap:6px;flex-wrap:wrap;overflow-x:auto"></div>
-    <!-- 模型详情内容 -->
-    <div id="modelArchiveContent" style="flex:1;overflow-y:auto;padding:20px"></div>
-    <!-- 底部说明 -->
-    <div style="padding:10px 20px;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center">
-      评分基于官方参数+实际使用反馈动态更新 · 数据存储于本地浏览器
-    </div>
-  </div>
-</div>
-
-
-<script>
-// ========== 模型档案库数据 ==========
-var MODEL_ARCHIVE_DATA = [
-  {
-    id: 'deepseek-v4-pro',
-    name: 'DeepSeek V4 Pro',
-    provider: '深度求索',
-    params: '671B (MoE)',
-    context: '128K',
-    maxOutput: '8K',
-    languages: '中/英/日/韩等',
-    multimodal: '文本',
-    tag: '深度推理',
-    scores: { chineseWriting: 7, englishWriting: 9, logic: 9, longText: 8, code: 9, multimodal: 0, creative: 7, structured: 8, instruction: 8 },
-    cost: '输入 ¥2.5/百万token，输出 ¥8/百万token',
-    speed: '约3-5秒/千字',
-    scenarios: ['深度推理', '代码生成', '英文写作', '复杂分析', '数学计算'],
-    description: 'DeepSeek最强模型，擅长深度推理和代码生成，英文写作能力突出，适合需要复杂逻辑分析的任务。'
-  },
-  {
-    id: 'deepseek-v4-flash',
-    name: 'DeepSeek V4 Flash',
-    provider: '深度求索',
-    params: '精简版',
-    context: '32K',
-    maxOutput: '4K',
-    languages: '中/英等',
-    multimodal: '文本',
-    tag: '快速响应',
-    scores: { chineseWriting: 6, englishWriting: 8, logic: 7, longText: 6, code: 8, multimodal: 0, creative: 6, structured: 7, instruction: 7 },
-    cost: '输入 ¥0.5/百万token，输出 ¥1.5/百万token',
-    speed: '约1-2秒/千字',
-    scenarios: ['快速问答', '日常写作', '代码补全', '简单翻译', '批量处理'],
-    description: 'DeepSeek快速版，响应速度快，成本低，适合日常快速问答和批量处理任务。'
-  },
-  {
-    id: 'deepseek-chat',
-    name: 'DeepSeek V3',
-    provider: '深度求索',
-    params: '671B (MoE)',
-    context: '64K',
-    maxOutput: '8K',
-    languages: '中/英等',
-    multimodal: '文本',
-    tag: '均衡通用',
-    scores: { chineseWriting: 7, englishWriting: 8, logic: 8, longText: 7, code: 9, multimodal: 0, creative: 7, structured: 8, instruction: 8 },
-    cost: '输入 ¥1/百万token，输出 ¥2/百万token',
-    speed: '约2-3秒/千字',
-    scenarios: ['通用对话', '代码生成', '文本写作', '知识问答', '数据分析'],
-    description: 'DeepSeek经典V3模型，综合能力均衡，代码生成能力强，性价比高。'
-  },
-  {
-    id: 'glm-5.3',
-    name: 'GLM-5.3',
-    provider: '智谱AI',
-    params: '未知',
-    context: '128K',
-    maxOutput: '4K',
-    languages: '中/英等',
-    multimodal: '文本',
-    tag: '中文写作',
-    scores: { chineseWriting: 9, englishWriting: 7, logic: 8, longText: 7, code: 7, multimodal: 0, creative: 8, structured: 7, instruction: 8 },
-    cost: '输入 ¥1/百万token，输出 ¥2/百万token',
-    speed: '约2-4秒/千字',
-    scenarios: ['中文写作', '学术润色', '创意生成', '长文理解', '对话交互'],
-    description: '智谱AI最新模型，中文写作能力最强，学术润色效果好，适合中文学术写作和创意生成。'
-  },
-  {
-    id: 'kimi-k3',
-    name: 'Kimi K3',
-    provider: '月之暗面',
-    params: '未知',
-    context: '200K+',
-    maxOutput: '8K',
-    languages: '中/英等',
-    multimodal: '文本',
-    tag: '长文本',
-    scores: { chineseWriting: 7, englishWriting: 7, logic: 7, longText: 10, code: 6, multimodal: 0, creative: 7, structured: 7, instruction: 8 },
-    cost: '输入 ¥0.5/百万token，输出 ¥1.2/百万token',
-    speed: '约3-5秒/千字',
-    scenarios: ['长文档分析', '论文阅读', '书籍总结', '多文件对比', '深度研究'],
-    description: 'Kimi最新模型，超长上下文窗口(200K+)，长文本理解能力最强，适合论文阅读和长文档分析。'
-  },
-  {
-    id: 'hy3',
-    name: '混元 hy3',
-    provider: '腾讯',
-    params: '未知',
-    context: '32K',
-    maxOutput: '4K',
-    languages: '中/英等',
-    multimodal: '文本',
-    tag: '稳定通用',
-    scores: { chineseWriting: 7, englishWriting: 7, logic: 7, longText: 6, code: 7, multimodal: 0, creative: 8, structured: 7, instruction: 7 },
-    cost: '免费/按量',
-    speed: '约2-3秒/千字',
-    scenarios: ['通用对话', '日常问答', '创意写作', '简单翻译', '内容生成'],
-    description: '腾讯混元3代模型，稳定性好，创意生成能力不错，适合日常通用对话和内容生成。'
-  },
-  {
-    id: 'hy4-preview',
-    name: '混元 V4 Preview',
-    provider: '腾讯',
-    params: '未知',
-    context: '256K',
-    maxOutput: '8K',
-    languages: '中/英等',
-    multimodal: '文本',
-    tag: '创意生成',
-    scores: { chineseWriting: 8, englishWriting: 7, logic: 7, longText: 8, code: 7, multimodal: 0, creative: 9, structured: 7, instruction: 7 },
-    cost: '预览版免费',
-    speed: '约3-5秒/千字',
-    scenarios: ['创意生成', '长文写作', '故事创作', '营销文案', '多轮对话'],
-    description: '腾讯混元4代预览版，创意生成能力最强，超长上下文，适合创意写作和营销文案生成。'
-  },
-  {
-    id: 'qwen-flash',
-    name: 'Qwen Flash',
-    provider: '阿里通义',
-    params: '未知',
-    context: '32K',
-    maxOutput: '2K',
-    languages: '中/英等',
-    multimodal: '文本',
-    tag: '极速响应',
-    scores: { chineseWriting: 6, englishWriting: 6, logic: 6, longText: 5, code: 7, multimodal: 0, creative: 6, structured: 8, instruction: 9 },
-    cost: '免费',
-    speed: '约0.5-1秒/千字',
-    scenarios: ['极速问答', '简单分类', '格式转换', '关键词提取', '批量预处理'],
-    description: '阿里通义千问Flash版，响应速度极快，指令遵循能力强，适合简单快速任务和批量预处理。'
-  },
-  {
-    id: 'qwen3.5-plus',
-    name: 'Qwen3.5 Plus',
-    provider: '阿里通义',
-    params: '未知',
-    context: '128K',
-    maxOutput: '8K',
-    languages: '中/英等',
-    multimodal: '文本',
-    tag: '结构化输出',
-    scores: { chineseWriting: 7, englishWriting: 8, logic: 7, longText: 7, code: 8, multimodal: 0, creative: 7, structured: 9, instruction: 9 },
-    cost: '输入 ¥0.8/百万token，输出 ¥2/百万token',
-    speed: '约2-3秒/千字',
-    scenarios: ['结构化输出', 'JSON生成', '代码编写', '数据分析', '工具调用'],
-    description: '阿里通义千问3.5 Plus，结构化输出和指令遵循能力最强，适合JSON生成、工具调用和数据分析。'
-  },
-  {
-    id: 'qwen3.5-flash',
-    name: 'Qwen3.5 Flash',
-    provider: '阿里通义',
-    params: '未知',
-    context: '32K',
-    maxOutput: '4K',
-    languages: '中/英等',
-    multimodal: '文本',
-    tag: '高性价比',
-    scores: { chineseWriting: 6, englishWriting: 7, logic: 6, longText: 6, code: 7, multimodal: 0, creative: 6, structured: 8, instruction: 8 },
-    cost: '输入 ¥0.3/百万token，输出 ¥0.6/百万token',
-    speed: '约1-2秒/千字',
-    scenarios: ['日常问答', '简单写作', '格式处理', '分类标签', '低成本批量'],
-    description: '阿里通义千问3.5 Flash，高性价比，结构化输出能力不错，适合日常任务和低成本批量处理。'
-  }
-];
-
-// 能力评分维度名称
-var SCORE_DIMENSIONS = [
-  { key: 'chineseWriting', name: '中文写作', icon: '✍️' },
-  { key: 'englishWriting', name: '英文写作', icon: '📝' },
-  { key: 'logic', name: '逻辑推理', icon: '🧠' },
-  { key: 'longText', name: '长文本理解', icon: '📚' },
-  { key: 'code', name: '代码生成', icon: '💻' },
-  { key: 'multimodal', name: '多模态理解', icon: '🖼️' },
-  { key: 'creative', name: '创意生成', icon: '💡' },
-  { key: 'structured', name: '结构化输出', icon: '📊' },
-  { key: 'instruction', name: '指令遵循', icon: '🎯' }
-];
-
-var currentArchiveModel = 'deepseek-v4-pro';
-
-// 打开模型档案库
-function openModelArchive() {
-  var modal = document.getElementById('modelArchiveModal');
-  if (modal) {
-    modal.style.display = 'flex';
-    renderModelArchiveTabs();
-    renderModelDetail(currentArchiveModel);
-  }
-  // 关闭全局模型面板
-  var panel = document.getElementById('globalModelPanel');
-  if (panel) panel.style.display = 'none';
-}
-
-// 关闭模型档案库
-function closeModelArchive() {
-  var modal = document.getElementById('modelArchiveModal');
-  if (modal) modal.style.display = 'none';
-}
-
-// 渲染模型标签栏
-function renderModelArchiveTabs() {
-  var tabs = document.getElementById('modelArchiveTabs');
-  if (!tabs) return;
-  var html = '';
-  for (var i = 0; i < MODEL_ARCHIVE_DATA.length; i++) {
-    var m = MODEL_ARCHIVE_DATA[i];
-    var isActive = currentArchiveModel === m.id;
-    html += '<button onclick="selectArchiveModel(\'' + m.id + '\')" style="padding:6px 12px;border-radius:6px;border:1px solid ' + (isActive ? '#7c3aed' : '#e5e7eb') + ';background:' + (isActive ? '#7c3aed' : '#fff') + ';color:' + (isActive ? '#fff' : '#374151') + ';font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">' + m.name + '</button>';
-  }
-  tabs.innerHTML = html;
-}
-
-// 选择模型
-function selectArchiveModel(modelId) {
-  currentArchiveModel = modelId;
-  renderModelArchiveTabs();
-  renderModelDetail(modelId);
-}
-
-// 获取动态评分
-function getDynamicScores(modelId) {
-  try {
-    var data = localStorage.getItem('model_dynamic_scores');
-    if (data) {
-      var scores = JSON.parse(data);
-      if (scores[modelId]) return scores[modelId];
-    }
-  } catch(e) {}
-  return null;
-}
-
-// 渲染模型详情
-function renderModelDetail(modelId) {
-  var content = document.getElementById('modelArchiveContent');
-  if (!content) return;
-  var model = null;
-  for (var i = 0; i < MODEL_ARCHIVE_DATA.length; i++) {
-    if (MODEL_ARCHIVE_DATA[i].id === modelId) {
-      model = MODEL_ARCHIVE_DATA[i];
-      break;
-    }
-  }
-  if (!model) return;
-
-  var dynamicScores = getDynamicScores(modelId);
-  var callCount = 0;
-  var avgRating = 0;
-  try {
-    var history = localStorage.getItem('model_call_history');
-    if (history) {
-      var calls = JSON.parse(history);
-      var modelCalls = calls.filter(function(c) { return c.model === modelId; });
-      callCount = modelCalls.length;
-      var rated = modelCalls.filter(function(c) { return c.rating; });
-      if (rated.length > 0) {
-        var sum = 0;
-        for (var j = 0; j < rated.length; j++) sum += rated[j].rating;
-        avgRating = (sum / rated.length).toFixed(1);
-      }
-    }
-  } catch(e) {}
-
-  var html = '';
-  // 基础信息卡片
-  html += '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:12px;padding:16px;margin-bottom:16px">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">';
-  html += '<div>';
-  html += '<div style="font-size:18px;font-weight:700;color:#1f2937">' + model.name + '</div>';
-  html += '<div style="font-size:12px;color:#6b7280;margin-top:2px">' + model.provider + ' · ' + model.tag + '</div>';
-  html += '</div>';
-  html += '<span style="padding:4px 10px;background:#7c3aed;color:#fff;border-radius:12px;font-size:11px;font-weight:600">' + model.tag + '</span>';
-  html += '</div>';
-  html += '<div style="font-size:12px;color:#4b5563;line-height:1.6;margin-bottom:12px">' + model.description + '</div>';
-  // 基础参数网格
-  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">';
-  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">参数量</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.params + '</div></div>';
-  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">上下文窗口</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.context + '</div></div>';
-  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">最大输出</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.maxOutput + '</div></div>';
-  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">支持语言</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.languages + '</div></div>';
-  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">多模态</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.multimodal + '</div></div>';
-  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">响应速度</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.speed + '</div></div>';
-  html += '</div>';
-  html += '</div>';
-
-  // 调用统计
-  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">';
-  html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#16a34a">' + callCount + '</div><div style="font-size:10px;color:#16a34a">累计调用次数</div></div>';
-  html += '<div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#ca8a04">' + (avgRating || '-') + '</div><div style="font-size:10px;color:#ca8a04">用户平均评分</div></div>';
-  html += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#2563eb">' + model.cost.split('，')[0].replace('输入 ','') + '</div><div style="font-size:10px;color:#2563eb">输入价格</div></div>';
-  html += '</div>';
-
-  // 能力评分
-  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
-  html += '<div style="font-size:14px;font-weight:700;color:#1f2937">📊 9项能力评分（点击±调整，越用越准）</div>';
-  html += '<button onclick="resetUserRatings(\'' + modelId + '\')" style="padding:4px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;color:#dc2626;font-size:10px;font-weight:600;cursor:pointer">↺ 重置评分</button>';
-  html += '</div>';
-  for (var k = 0; k < SCORE_DIMENSIONS.length; k++) {
-    var dim = SCORE_DIMENSIONS[k];
-    var baseScore = model.scores[dim.key] || 0;
-    var userAdj = getUserRatingAdjustment(modelId);
-    var adjValue = userAdj && userAdj[dim.key] ? userAdj[dim.key] : 0;
-    var finalScore = Math.min(10, Math.max(0, baseScore + adjValue));
-    var color = finalScore >= 8 ? '#16a34a' : finalScore >= 6 ? '#f59e0b' : '#ef4444';
-    html += '<div style="margin-bottom:10px;padding:8px;background:#f9fafb;border-radius:8px">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:4px">';
-    html += '<span style="color:#374151;font-weight:600">' + dim.icon + ' ' + dim.name + '</span>';
-    html += '<span style="color:' + color + ';font-weight:700;font-size:13px">' + finalScore.toFixed(1) + '/10';
-    if (adjValue !== 0) html += ' <span style="font-size:9px;color:' + (adjValue > 0 ? '#16a34a' : '#ef4444') + '">(' + (adjValue > 0 ? '+' : '') + adjValue + ')</span>';
-    html += '</span>';
-    html += '</div>';
-    html += '<div style="display:flex;align-items:center;gap:8px">';
-    html += '<div style="flex:1;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + (finalScore * 10) + '%;background:' + color + ';border-radius:3px;transition:width 0.3s"></div></div>';
-    html += '<button onclick="decreaseScore(\'' + modelId + '\', \'' + dim.key + '\')" style="width:24px;height:24px;background:#fef2f2;border:1px solid #fecaca;border-radius:4px;color:#dc2626;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">−</button>';
-    html += '<button onclick="increaseScore(\'' + modelId + '\', \'' + dim.key + '\')" style="width:24px;height:24px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;color:#16a34a;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">+</button>';
-    html += '</div>';
-    html += '<div style="font-size:9px;color:#9ca3af;margin-top:3px">基础分: ' + baseScore + '/10 · 你的调整会影响智能路由推荐</div>';
-    html += '</div>';
-  }
-  html += '</div>';
-
-  // 适用场景
-  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px">';
-  html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">🎯 适用场景</div>';
-  html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
-  for (var s = 0; s < model.scenarios.length; s++) {
-    html += '<span style="padding:4px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;font-size:11px;color:#0369a1;font-weight:500">' + model.scenarios[s] + '</span>';
-  }
-  html += '</div></div>';
-
-  // 成本信息
-  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px">';
-  html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:8px">💰 成本信息</div>';
-  html += '<div style="font-size:12px;color:#4b5563;line-height:1.6">' + model.cost + '</div>';
-  html += '</div>';
-
-  content.innerHTML = html;
-}
-
-// 点击遮罩关闭
-document.addEventListener('click', function(e) {
-  var modal = document.getElementById('modelArchiveModal');
-  if (modal && e.target === modal) closeModelArchive();
-});
-
-// ========== 动态评分系统 ==========
-
-// 获取用户评分调整
-function getUserRatingAdjustment(modelId) {
-  try {
-    var data = localStorage.getItem('model_user_ratings');
-    if (data) {
-      var ratings = JSON.parse(data);
-      if (ratings[modelId]) return ratings[modelId];
-    }
-  } catch(e) {}
-  return null;
-}
-
-// 保存用户评分调整
-function saveUserRatingAdjustment(modelId, dimension, adjustment) {
-  try {
-    var data = localStorage.getItem('model_user_ratings');
-    var ratings = data ? JSON.parse(data) : {};
-    if (!ratings[modelId]) ratings[modelId] = {};
-    ratings[modelId][dimension] = adjustment;
-    localStorage.setItem('model_user_ratings', JSON.stringify(ratings));
-  } catch(e) {}
-}
-
-// 重置用户评分
-function resetUserRatings(modelId) {
-  try {
-    var data = localStorage.getItem('model_user_ratings');
-    if (data) {
-      var ratings = JSON.parse(data);
-      if (modelId) {
-        delete ratings[modelId];
-      } else {
-        ratings = {};
-      }
-      localStorage.setItem('model_user_ratings', JSON.stringify(ratings));
-    }
-  } catch(e) {}
-  if (modelId) {
-    renderModelDetail(modelId);
-  }
-}
-
-// 增加评分
-function increaseScore(modelId, dimension) {
-  var current = getUserRatingAdjustment(modelId);
-  var adj = current && current[dimension] ? current[dimension] : 0;
-  adj = Math.min(2, adj + 0.5);
-  saveUserRatingAdjustment(modelId, dimension, adj);
-  renderModelDetail(modelId);
-}
-
-// 减少评分
-function decreaseScore(modelId, dimension) {
-  var current = getUserRatingAdjustment(modelId);
-  var adj = current && current[dimension] ? current[dimension] : 0;
-  adj = Math.max(-2, adj - 0.5);
-  saveUserRatingAdjustment(modelId, dimension, adj);
-  renderModelDetail(modelId);
-}
-
-// 记录AI调用（供统计用）
-function recordAICall(modelId, inputLen, outputLen, success) {
-  try {
-    var data = localStorage.getItem('model_call_history');
-    var history = data ? JSON.parse(data) : [];
-    history.push({
-      model: modelId,
-      time: Date.now(),
-      inputLen: inputLen || 0,
-      outputLen: outputLen || 0,
-      success: success !== false
-    });
-    // 只保留最近500条
-    if (history.length > 500) history = history.slice(-500);
-    localStorage.setItem('model_call_history', JSON.stringify(history));
-  } catch(e) {}
-}
-
-// 给AI输出评分
-function rateAIOutput(modelId, rating) {
-  try {
-    var data = localStorage.getItem('model_call_history');
-    if (data) {
-      var history = JSON.parse(data);
-      // 给最近一次该模型的调用评分
-      for (var i = history.length - 1; i >= 0; i--) {
-        if (history[i].model === modelId && !history[i].rating) {
-          history[i].rating = rating;
-          break;
-        }
-      }
-      localStorage.setItem('model_call_history', JSON.stringify(history));
-    }
-  } catch(e) {}
-}
-
-</script>
-
-</body></html>');
   w.document.close();
   w.focus();
 }
@@ -137126,5 +136655,467 @@ async function convertLessonFormat(){
     <button onclick="sendGlobalMessage()" style="padding:8px 16px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">发送</button>
   </div>
 </div>
+
+<!-- ========== 模型档案库弹窗 ========== -->
+<div id="modelArchiveModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999999;font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:90%;max-width:900px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <!-- 头部 -->
+    <div style="padding:16px 20px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:16px;font-weight:700">📊 AI 模型档案库</div>
+        <div style="font-size:11px;opacity:0.85;margin-top:2px">10大模型详细档案 · 9项能力评分 · 动态路由依据</div>
+      </div>
+      <button onclick="closeModelArchive()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <!-- 模型标签栏 -->
+    <div id="modelArchiveTabs" style="padding:10px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;gap:6px;overflow-x:auto;white-space:nowrap"></div>
+    <!-- 模型详情内容 -->
+    <div id="modelArchiveContent" style="flex:1;overflow-y:auto;padding:20px"></div>
+    <!-- 底部说明 -->
+    <div style="padding:10px 20px;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center">
+      评分基于官方参数+实际使用反馈动态更新 · 数据存储于本地浏览器
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ========== 模型档案库数据 ==========
+var MODEL_ARCHIVE_DATA = [
+  {
+    id: 'deepseek-v4-pro',
+    name: 'DeepSeek V4 Pro',
+    provider: '深度求索',
+    params: '671B (MoE)',
+    context: '128K',
+    maxOutput: '8K',
+    languages: '中/英/日/韩等',
+    multimodal: '文本',
+    tag: '深度推理',
+    scores: { chineseWriting: 7, englishWriting: 9, logic: 9, longText: 8, code: 9, multimodal: 0, creative: 7, structured: 8, instruction: 8 },
+    cost: '输入 ¥2.5/百万token，输出 ¥8/百万token',
+    speed: '约3-5秒/千字',
+    scenarios: ['深度推理', '代码生成', '英文写作', '复杂分析', '数学计算'],
+    description: 'DeepSeek最强模型，擅长深度推理和代码生成，英文写作能力突出，适合需要复杂逻辑分析的任务。'
+  },
+  {
+    id: 'deepseek-v4-flash',
+    name: 'DeepSeek V4 Flash',
+    provider: '深度求索',
+    params: '精简版',
+    context: '32K',
+    maxOutput: '4K',
+    languages: '中/英等',
+    multimodal: '文本',
+    tag: '快速响应',
+    scores: { chineseWriting: 6, englishWriting: 8, logic: 7, longText: 6, code: 8, multimodal: 0, creative: 6, structured: 7, instruction: 7 },
+    cost: '输入 ¥0.5/百万token，输出 ¥1.5/百万token',
+    speed: '约1-2秒/千字',
+    scenarios: ['快速问答', '日常写作', '代码补全', '简单翻译', '批量处理'],
+    description: 'DeepSeek快速版，响应速度快，成本低，适合日常快速问答和批量处理任务。'
+  },
+  {
+    id: 'deepseek-chat',
+    name: 'DeepSeek V3',
+    provider: '深度求索',
+    params: '671B (MoE)',
+    context: '64K',
+    maxOutput: '8K',
+    languages: '中/英等',
+    multimodal: '文本',
+    tag: '均衡通用',
+    scores: { chineseWriting: 7, englishWriting: 8, logic: 8, longText: 7, code: 9, multimodal: 0, creative: 7, structured: 8, instruction: 8 },
+    cost: '输入 ¥1/百万token，输出 ¥2/百万token',
+    speed: '约2-3秒/千字',
+    scenarios: ['通用对话', '代码生成', '文本写作', '知识问答', '数据分析'],
+    description: 'DeepSeek经典V3模型，综合能力均衡，代码生成能力强，性价比高。'
+  },
+  {
+    id: 'glm-5.3',
+    name: 'GLM-5.3',
+    provider: '智谱AI',
+    params: '未知',
+    context: '128K',
+    maxOutput: '4K',
+    languages: '中/英等',
+    multimodal: '文本',
+    tag: '中文写作',
+    scores: { chineseWriting: 9, englishWriting: 7, logic: 8, longText: 7, code: 7, multimodal: 0, creative: 8, structured: 7, instruction: 8 },
+    cost: '输入 ¥1/百万token，输出 ¥2/百万token',
+    speed: '约2-4秒/千字',
+    scenarios: ['中文写作', '学术润色', '创意生成', '长文理解', '对话交互'],
+    description: '智谱AI最新模型，中文写作能力最强，学术润色效果好，适合中文学术写作和创意生成。'
+  },
+  {
+    id: 'kimi-k3',
+    name: 'Kimi K3',
+    provider: '月之暗面',
+    params: '未知',
+    context: '200K+',
+    maxOutput: '8K',
+    languages: '中/英等',
+    multimodal: '文本',
+    tag: '长文本',
+    scores: { chineseWriting: 7, englishWriting: 7, logic: 7, longText: 10, code: 6, multimodal: 0, creative: 7, structured: 7, instruction: 8 },
+    cost: '输入 ¥0.5/百万token，输出 ¥1.2/百万token',
+    speed: '约3-5秒/千字',
+    scenarios: ['长文档分析', '论文阅读', '书籍总结', '多文件对比', '深度研究'],
+    description: 'Kimi最新模型，超长上下文窗口(200K+)，长文本理解能力最强，适合论文阅读和长文档分析。'
+  },
+  {
+    id: 'hy3',
+    name: '混元 hy3',
+    provider: '腾讯',
+    params: '未知',
+    context: '32K',
+    maxOutput: '4K',
+    languages: '中/英等',
+    multimodal: '文本',
+    tag: '稳定通用',
+    scores: { chineseWriting: 7, englishWriting: 7, logic: 7, longText: 6, code: 7, multimodal: 0, creative: 8, structured: 7, instruction: 7 },
+    cost: '免费/按量',
+    speed: '约2-3秒/千字',
+    scenarios: ['通用对话', '日常问答', '创意写作', '简单翻译', '内容生成'],
+    description: '腾讯混元3代模型，稳定性好，创意生成能力不错，适合日常通用对话和内容生成。'
+  },
+  {
+    id: 'hy4-preview',
+    name: '混元 V4 Preview',
+    provider: '腾讯',
+    params: '未知',
+    context: '256K',
+    maxOutput: '8K',
+    languages: '中/英等',
+    multimodal: '文本',
+    tag: '创意生成',
+    scores: { chineseWriting: 8, englishWriting: 7, logic: 7, longText: 8, code: 7, multimodal: 0, creative: 9, structured: 7, instruction: 7 },
+    cost: '预览版免费',
+    speed: '约3-5秒/千字',
+    scenarios: ['创意生成', '长文写作', '故事创作', '营销文案', '多轮对话'],
+    description: '腾讯混元4代预览版，创意生成能力最强，超长上下文，适合创意写作和营销文案生成。'
+  },
+  {
+    id: 'qwen-flash',
+    name: 'Qwen Flash',
+    provider: '阿里通义',
+    params: '未知',
+    context: '32K',
+    maxOutput: '2K',
+    languages: '中/英等',
+    multimodal: '文本',
+    tag: '极速响应',
+    scores: { chineseWriting: 6, englishWriting: 6, logic: 6, longText: 5, code: 7, multimodal: 0, creative: 6, structured: 8, instruction: 9 },
+    cost: '免费',
+    speed: '约0.5-1秒/千字',
+    scenarios: ['极速问答', '简单分类', '格式转换', '关键词提取', '批量预处理'],
+    description: '阿里通义千问Flash版，响应速度极快，指令遵循能力强，适合简单快速任务和批量预处理。'
+  },
+  {
+    id: 'qwen3.5-plus',
+    name: 'Qwen3.5 Plus',
+    provider: '阿里通义',
+    params: '未知',
+    context: '128K',
+    maxOutput: '8K',
+    languages: '中/英等',
+    multimodal: '文本',
+    tag: '结构化输出',
+    scores: { chineseWriting: 7, englishWriting: 8, logic: 7, longText: 7, code: 8, multimodal: 0, creative: 7, structured: 9, instruction: 9 },
+    cost: '输入 ¥0.8/百万token，输出 ¥2/百万token',
+    speed: '约2-3秒/千字',
+    scenarios: ['结构化输出', 'JSON生成', '代码编写', '数据分析', '工具调用'],
+    description: '阿里通义千问3.5 Plus，结构化输出和指令遵循能力最强，适合JSON生成、工具调用和数据分析。'
+  },
+  {
+    id: 'qwen3.5-flash',
+    name: 'Qwen3.5 Flash',
+    provider: '阿里通义',
+    params: '未知',
+    context: '32K',
+    maxOutput: '4K',
+    languages: '中/英等',
+    multimodal: '文本',
+    tag: '高性价比',
+    scores: { chineseWriting: 6, englishWriting: 7, logic: 6, longText: 6, code: 7, multimodal: 0, creative: 6, structured: 8, instruction: 8 },
+    cost: '输入 ¥0.3/百万token，输出 ¥0.6/百万token',
+    speed: '约1-2秒/千字',
+    scenarios: ['日常问答', '简单写作', '格式处理', '分类标签', '低成本批量'],
+    description: '阿里通义千问3.5 Flash，高性价比，结构化输出能力不错，适合日常任务和低成本批量处理。'
+  }
+];
+
+// 能力评分维度名称
+var SCORE_DIMENSIONS = [
+  { key: 'chineseWriting', name: '中文写作', icon: '✍️' },
+  { key: 'englishWriting', name: '英文写作', icon: '📝' },
+  { key: 'logic', name: '逻辑推理', icon: '🧠' },
+  { key: 'longText', name: '长文本理解', icon: '📚' },
+  { key: 'code', name: '代码生成', icon: '💻' },
+  { key: 'multimodal', name: '多模态理解', icon: '🖼️' },
+  { key: 'creative', name: '创意生成', icon: '💡' },
+  { key: 'structured', name: '结构化输出', icon: '📊' },
+  { key: 'instruction', name: '指令遵循', icon: '🎯' }
+];
+
+var currentArchiveModel = 'deepseek-v4-pro';
+
+// 打开模型档案库
+function openModelArchive() {
+  var modal = document.getElementById('modelArchiveModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    renderModelArchiveTabs();
+    renderModelDetail(currentArchiveModel);
+  }
+  // 关闭全局模型面板
+  var panel = document.getElementById('globalModelPanel');
+  if (panel) panel.style.display = 'none';
+}
+
+// 关闭模型档案库
+function closeModelArchive() {
+  var modal = document.getElementById('modelArchiveModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// 渲染模型标签栏
+function renderModelArchiveTabs() {
+  var tabs = document.getElementById('modelArchiveTabs');
+  if (!tabs) return;
+  var html = '';
+  for (var i = 0; i < MODEL_ARCHIVE_DATA.length; i++) {
+    var m = MODEL_ARCHIVE_DATA[i];
+    var isActive = currentArchiveModel === m.id;
+    html += '<button onclick="selectArchiveModel(\'' + m.id + '\')" style="padding:6px 12px;border-radius:6px;border:1px solid ' + (isActive ? '#7c3aed' : '#e5e7eb') + ';background:' + (isActive ? '#7c3aed' : '#fff') + ';color:' + (isActive ? '#fff' : '#374151') + ';font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">' + m.name + '</button>';
+  }
+  tabs.innerHTML = html;
+}
+
+// 选择模型
+function selectArchiveModel(modelId) {
+  currentArchiveModel = modelId;
+  renderModelArchiveTabs();
+  renderModelDetail(modelId);
+}
+
+// 获取动态评分
+function getDynamicScores(modelId) {
+  try {
+    var data = localStorage.getItem('model_dynamic_scores');
+    if (data) {
+      var scores = JSON.parse(data);
+      if (scores[modelId]) return scores[modelId];
+    }
+  } catch(e) {}
+  return null;
+}
+
+// 渲染模型详情
+function renderModelDetail(modelId) {
+  var content = document.getElementById('modelArchiveContent');
+  if (!content) return;
+  var model = null;
+  for (var i = 0; i < MODEL_ARCHIVE_DATA.length; i++) {
+    if (MODEL_ARCHIVE_DATA[i].id === modelId) {
+      model = MODEL_ARCHIVE_DATA[i];
+      break;
+    }
+  }
+  if (!model) return;
+
+  var dynamicScores = getDynamicScores(modelId);
+  var callCount = 0;
+  var avgRating = 0;
+  try {
+    var history = localStorage.getItem('model_call_history');
+    if (history) {
+      var calls = JSON.parse(history);
+      var modelCalls = calls.filter(function(c) { return c.model === modelId; });
+      callCount = modelCalls.length;
+      var rated = modelCalls.filter(function(c) { return c.rating; });
+      if (rated.length > 0) {
+        var sum = 0;
+        for (var j = 0; j < rated.length; j++) sum += rated[j].rating;
+        avgRating = (sum / rated.length).toFixed(1);
+      }
+    }
+  } catch(e) {}
+
+  var html = '';
+  // 基础信息卡片
+  html += '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:12px;padding:16px;margin-bottom:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">';
+  html += '<div>';
+  html += '<div style="font-size:18px;font-weight:700;color:#1f2937">' + model.name + '</div>';
+  html += '<div style="font-size:12px;color:#6b7280;margin-top:2px">' + model.provider + ' · ' + model.tag + '</div>';
+  html += '</div>';
+  html += '<span style="padding:4px 10px;background:#7c3aed;color:#fff;border-radius:12px;font-size:11px;font-weight:600">' + model.tag + '</span>';
+  html += '</div>';
+  html += '<div style="font-size:12px;color:#4b5563;line-height:1.6;margin-bottom:12px">' + model.description + '</div>';
+  // 基础参数网格
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">';
+  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">参数量</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.params + '</div></div>';
+  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">上下文窗口</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.context + '</div></div>';
+  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">最大输出</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.maxOutput + '</div></div>';
+  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">支持语言</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.languages + '</div></div>';
+  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">多模态</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.multimodal + '</div></div>';
+  html += '<div style="background:#fff;padding:8px 10px;border-radius:6px"><div style="font-size:10px;color:#9ca3af">响应速度</div><div style="font-size:12px;font-weight:600;color:#1f2937">' + model.speed + '</div></div>';
+  html += '</div>';
+  html += '</div>';
+
+  // 调用统计
+  html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px">';
+  html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#16a34a">' + callCount + '</div><div style="font-size:10px;color:#16a34a">累计调用次数</div></div>';
+  html += '<div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#ca8a04">' + (avgRating || '-') + '</div><div style="font-size:10px;color:#ca8a04">用户平均评分</div></div>';
+  html += '</div>';
+
+  // 能力评分
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html += '<div style="font-size:14px;font-weight:700;color:#1f2937">📊 9项能力评分（点击±调整，越用越准）</div>';
+  html += '<button onclick="resetUserRatings(\'' + modelId + '\')" style="padding:4px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;color:#dc2626;font-size:10px;font-weight:600;cursor:pointer">↺ 重置评分</button>';
+  html += '</div>';
+  for (var k = 0; k < SCORE_DIMENSIONS.length; k++) {
+    var dim = SCORE_DIMENSIONS[k];
+    var baseScore = model.scores[dim.key] || 0;
+    var userAdj = getUserRatingAdjustment(modelId);
+    var adjValue = userAdj && userAdj[dim.key] ? userAdj[dim.key] : 0;
+    var finalScore = Math.min(10, Math.max(0, baseScore + adjValue));
+    var color = finalScore >= 8 ? '#16a34a' : finalScore >= 6 ? '#f59e0b' : '#ef4444';
+    html += '<div style="margin-bottom:10px;padding:8px;background:#f9fafb;border-radius:8px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:4px">';
+    html += '<span style="color:#374151;font-weight:600">' + dim.icon + ' ' + dim.name + '</span>';
+    html += '<span style="color:' + color + ';font-weight:700;font-size:13px">' + finalScore.toFixed(1) + '/10';
+    if (adjValue !== 0) html += ' <span style="font-size:9px;color:' + (adjValue > 0 ? '#16a34a' : '#ef4444') + '">(' + (adjValue > 0 ? '+' : '') + adjValue + ')</span>';
+    html += '</span>';
+    html += '</div>';
+    html += '<div style="display:flex;align-items:center;gap:8px">';
+    html += '<div style="flex:1;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + (finalScore * 10) + '%;background:' + color + ';border-radius:3px;transition:width 0.3s"></div></div>';
+    html += '<button onclick="decreaseScore(\'' + modelId + '\', \'' + dim.key + '\')" style="width:24px;height:24px;background:#fef2f2;border:1px solid #fecaca;border-radius:4px;color:#dc2626;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">−</button>';
+    html += '<button onclick="increaseScore(\'' + modelId + '\', \'' + dim.key + '\')" style="width:24px;height:24px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;color:#16a34a;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">+</button>';
+    html += '</div>';
+    html += '<div style="font-size:9px;color:#9ca3af;margin-top:3px">基础分: ' + baseScore + '/10 · 你的调整会影响智能路由推荐</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // 适用场景
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px">';
+  html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">🎯 适用场景</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+  for (var s = 0; s < model.scenarios.length; s++) {
+    html += '<span style="padding:4px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;font-size:11px;color:#0369a1;font-weight:500">' + model.scenarios[s] + '</span>';
+  }
+  html += '</div></div>';
+
+  content.innerHTML = html;
+}
+
+// 点击遮罩关闭
+document.addEventListener('click', function(e) {
+  var modal = document.getElementById('modelArchiveModal');
+  if (modal && e.target === modal) closeModelArchive();
+});
+
+// ========== 动态评分系统 ==========
+
+// 获取用户评分调整
+function getUserRatingAdjustment(modelId) {
+  try {
+    var data = localStorage.getItem('model_user_ratings');
+    if (data) {
+      var ratings = JSON.parse(data);
+      if (ratings[modelId]) return ratings[modelId];
+    }
+  } catch(e) {}
+  return null;
+}
+
+// 保存用户评分调整
+function saveUserRatingAdjustment(modelId, dimension, adjustment) {
+  try {
+    var data = localStorage.getItem('model_user_ratings');
+    var ratings = data ? JSON.parse(data) : {};
+    if (!ratings[modelId]) ratings[modelId] = {};
+    ratings[modelId][dimension] = adjustment;
+    localStorage.setItem('model_user_ratings', JSON.stringify(ratings));
+  } catch(e) {}
+}
+
+// 重置用户评分
+function resetUserRatings(modelId) {
+  try {
+    var data = localStorage.getItem('model_user_ratings');
+    if (data) {
+      var ratings = JSON.parse(data);
+      if (modelId) {
+        delete ratings[modelId];
+      } else {
+        ratings = {};
+      }
+      localStorage.setItem('model_user_ratings', JSON.stringify(ratings));
+    }
+  } catch(e) {}
+  if (modelId) {
+    renderModelDetail(modelId);
+  }
+}
+
+// 增加评分
+function increaseScore(modelId, dimension) {
+  var current = getUserRatingAdjustment(modelId);
+  var adj = current && current[dimension] ? current[dimension] : 0;
+  adj = Math.min(2, adj + 0.5);
+  saveUserRatingAdjustment(modelId, dimension, adj);
+  renderModelDetail(modelId);
+}
+
+// 减少评分
+function decreaseScore(modelId, dimension) {
+  var current = getUserRatingAdjustment(modelId);
+  var adj = current && current[dimension] ? current[dimension] : 0;
+  adj = Math.max(-2, adj - 0.5);
+  saveUserRatingAdjustment(modelId, dimension, adj);
+  renderModelDetail(modelId);
+}
+
+// 记录AI调用（供统计用）
+function recordAICall(modelId, inputLen, outputLen, success) {
+  try {
+    var data = localStorage.getItem('model_call_history');
+    var history = data ? JSON.parse(data) : [];
+    history.push({
+      model: modelId,
+      time: Date.now(),
+      inputLen: inputLen || 0,
+      outputLen: outputLen || 0,
+      success: success !== false
+    });
+    // 只保留最近500条
+    if (history.length > 500) history = history.slice(-500);
+    localStorage.setItem('model_call_history', JSON.stringify(history));
+  } catch(e) {}
+}
+
+// 给AI输出评分
+function rateAIOutput(modelId, rating) {
+  try {
+    var data = localStorage.getItem('model_call_history');
+    if (data) {
+      var history = JSON.parse(data);
+      // 给最近一次该模型的调用评分
+      for (var i = history.length - 1; i >= 0; i--) {
+        if (history[i].model === modelId && !history[i].rating) {
+          history[i].rating = rating;
+          break;
+        }
+      }
+      localStorage.setItem('model_call_history', JSON.stringify(history));
+    }
+  } catch(e) {}
+}
+
+</script>
+
 </body>
 </html>
