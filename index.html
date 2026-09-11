@@ -128321,6 +128321,7 @@ function renderPptLibrary(){
     html += '<div style="flex:1"><div style="font-size:13px;font-weight:600;color:#1f2937">' + it.title + '</div>';
     html += '<div style="font-size:11px;color:#6b7280;margin-top:2px">' + (it.subject||'未分类') + ' · ' + it.slidesCount + ' 页 · ' + dateStr + '</div></div>';
     html += '<div style="display:flex;gap:6px">';
+    html += '<button onclick="comparePptVersion(\'' + it.id + '\')" style="background:#fff;border:1px solid #8b5cf6;color:#8b5cf6;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">⚖️ 对比</button>';
     html += '<button onclick="loadPptFromLibrary(\'' + it.id + '\')" style="background:#0891b2;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px">加载</button>';
     html += '<button onclick="rebuildPptFromLibrary(\'' + it.id + '\')" style="background:#7c3aed;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px">重编</button>';
     html += '<button onclick="deletePptFromLibrary(\'' + it.id + '\')" style="background:#fff;border:1px solid #dc2626;color:#dc2626;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px">删除</button>';
@@ -128880,8 +128881,7 @@ function pptExportPDF(){
       html += '<div>• ' + sl.points[j] + '</div>';
     }
     html += '</div>';
-    if(sl.notes){ html += '<div class="snotes">📝 ' + sl.notes.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/
-/g,'<br>') + '</div>'; }
+    if(sl.notes){ html += '<div class="snotes">📝 ' + sl.notes.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>') + '</div>'; }
     html += '<div class="pagenum">第 ' + (i+1) + ' / ' + __pptSlides.length + ' 页</div>';
     html += '</div>';
   }
@@ -128892,8 +128892,68 @@ function pptExportPDF(){
   setTimeout(function(){ try{ w.print(); }catch(e){ alert('请按 Ctrl+P 打印为PDF'); } }, 800);
 }
 
+// ========== 课件版本对比 ==========
+let __pptCompareBase = null;
+function comparePptVersion(id){
+  const lib = getPptLibrary();
+  const item = lib.find(function(it){ return it.id === id; });
+  if(!item) return;
+  if(!__pptCompareBase){
+    __pptCompareBase = item;
+    alert('已选择对比基准：' + item.title + '（' + item.slidesCount + '页）\n请再点击另一个课件的"对比"按钮');
+    return;
+  }
+  if(__pptCompareBase.id === id){ alert('不能对比同一个版本'); return; }
+  const a = __pptCompareBase;
+  const b = item;
+  __pptCompareBase = null;
+  // 生成对比报告
+  const resEl = document.getElementById('pptResult');
+  const old = document.getElementById('pptCompareBlock');
+  if(old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'pptCompareBlock';
+  div.style.cssText = 'background:#f5f3ff;border:1px solid #ddd6fe;border-radius:12px;padding:16px;margin-top:16px';
+  let html = '<div style="font-size:14px;font-weight:700;color:#5b21b6;margin-bottom:12px">⚖️ 版本对比报告</div>';
+  // 基本信息
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">';
+  html += '<div style="background:#fff;padding:12px;border-radius:8px;border-left:3px solid #8b5cf6"><div style="font-size:11px;color:#6b7280">版本A</div><div style="font-size:13px;font-weight:600;color:#1f2937">' + a.title + '</div><div style="font-size:11px;color:#6b7280;margin-top:4px">' + a.slidesCount + ' 页 · ' + new Date(a.createdAt).toLocaleString() + '</div></div>';
+  html += '<div style="background:#fff;padding:12px;border-radius:8px;border-left:3px solid #ec4899"><div style="font-size:11px;color:#6b7280">版本B</div><div style="font-size:13px;font-weight:600;color:#1f2937">' + b.title + '</div><div style="font-size:11px;color:#6b7280;margin-top:4px">' + b.slidesCount + ' 页 · ' + new Date(b.createdAt).toLocaleString() + '</div></div>';
+  html += '</div>';
+  // 页数差异
+  const diff = b.slidesCount - a.slidesCount;
+  const diffColor = diff > 0 ? '#059669' : (diff < 0 ? '#dc2626' : '#6b7280');
+  html += '<div style="font-size:13px;color:#374151;margin-bottom:8px">📄 页数：' + a.slidesCount + ' → ' + b.slidesCount + ' 页（<span style="color:' + diffColor + ';font-weight:700">' + (diff>0?'+':'') + diff + '</span>）</div>';
+  // 标题差异（前10页）
+  const maxPages = Math.max(a.slides.length, b.slides.length, 10);
+  let titleDiffs = 0;
+  html += '<div style="font-size:12px;color:#6b7280;margin-bottom:6px;margin-top:10px">📝 标题差异（前10页）：</div>';
+  html += '<div style="max-height:250px;overflow-y:auto">';
+  for(var i=0;i<Math.min(maxPages,10);i++){
+    const ta = a.slides[i] ? a.slides[i].title : '（无此页）';
+    const tb = b.slides[i] ? b.slides[i].title : '（无此页）';
+    const same = ta === tb;
+    if(!same) titleDiffs++;
+    html += '<div style="display:grid;grid-template-columns:40px 1fr 1fr;gap:8px;padding:6px 8px;background:' + (same?'#f9fafb':'#fef3c7') + ';border-radius:6px;margin-bottom:4px;font-size:11px">';
+    html += '<span style="color:#6b7280;font-weight:600">P' + (i+1) + '</span>';
+    html += '<span style="color:#374151">' + ta.slice(0,25) + '</span>';
+    html += '<span style="color:' + (same?'#374151':'#b45309') + ';font-weight:' + (same?'400':'600') + '">' + tb.slice(0,25) + '</span>';
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<div style="font-size:11px;color:#6b7280;margin-top:8px">共 ' + titleDiffs + ' 页标题不同（黄色高亮）</div>';
+  div.innerHTML = html;
+  resEl.appendChild(div);
+  resEl.style.display = 'block';
+  // 滚动到结果区
+  resEl.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
 // ========== 术语标注到页 ==========
 let __pptTermCheck = null;
+let __pptSpeakerView = false;
+let __pptSpeakerStart = null;
+let __pptCompareIds = [];
 function pptApplyTermCheck(){
   const blk = document.getElementById('pptEnhanceBlock');
   if(!blk || !__pptTermCheck){
@@ -128968,10 +129028,13 @@ function startPptShow(){
     if(e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown'){ e.preventDefault(); showNextSlide(); }
     else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); showPrevSlide(); }
     else if(e.key === 'Escape'){ exitPptShow(); }
+    else if(e.key === 's' || e.key === 'S'){ e.preventDefault(); toggleSpeakerView(); }
   };
   document.addEventListener('keydown', __pptShowListener);
 }
 function exitPptShow(){
+  __pptSpeakerView = false;
+  __pptSpeakerStart = null;
   const overlay = document.getElementById('pptSlideShow');
   overlay.style.display = 'none';
   if(__pptShowListener){ document.removeEventListener('keydown', __pptShowListener); __pptShowListener = null; }
@@ -128986,6 +129049,11 @@ function renderShowSlide(){
   const sl = __pptSlides[__pptCurrent];
   if(!sl) return;
   const content = document.getElementById('pptShowContent');
+  if(__pptSpeakerView){
+    content.innerHTML = renderSpeakerView(sl);
+    document.getElementById('pptShowPageNum').textContent = (__pptCurrent + 1) + ' / ' + __pptSlides.length + '  👨‍🏫 演讲者视图（S键切换）';
+    return;
+  }
   let html = '<div style="font-size:14px;color:#60a5fa;margin-bottom:12px;font-weight:600">' + sl.type + '</div>';
   html += '<div style="font-size:36px;font-weight:700;color:#fff;margin-bottom:30px;line-height:1.3">' + sl.title + '</div>';
   if(sl.points.length > 0){
@@ -129000,6 +129068,59 @@ function renderShowSlide(){
   }
   content.innerHTML = html;
   document.getElementById('pptShowPageNum').textContent = (__pptCurrent + 1) + ' / ' + __pptSlides.length;
+}
+
+function toggleSpeakerView(){
+  __pptSpeakerView = !__pptSpeakerView;
+  if(__pptSpeakerView && !__pptSpeakerStart){ __pptSpeakerStart = Date.now(); }
+  renderShowSlide();
+  if(__pptSpeakerView){
+    if(__pptSpeakerTimer){ clearInterval(__pptSpeakerTimer); }
+    __pptSpeakerTimer = setInterval(function(){
+      const el = document.getElementById('pptSpeakerTimer');
+      if(el && __pptSpeakerStart){
+        const sec = Math.floor((Date.now() - __pptSpeakerStart) / 1000);
+        el.textContent = '⏱️ ' + Math.floor(sec/60) + ':' + (sec%60<10?'0':'') + (sec%60);
+      }
+    }, 1000);
+  } else {
+    if(__pptSpeakerTimer){ clearInterval(__pptSpeakerTimer); __pptSpeakerTimer = null; }
+  }
+}
+
+function renderSpeakerView(sl){
+  const nextSl = __pptCurrent < __pptSlides.length - 1 ? __pptSlides[__pptCurrent + 1] : null;
+  let html = '<div style="display:flex;height:100vh;gap:16px;padding:20px;box-sizing:border-box">';
+  // 左侧：当前页（模拟投影，白底）
+  html += '<div style="flex:2;background:#fff;border-radius:12px;padding:40px;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.3)">';
+  html += '<div style="font-size:14px;color:#2563eb;margin-bottom:16px;font-weight:600;letter-spacing:1px">' + sl.type + '</div>';
+  html += '<div style="font-size:32px;font-weight:700;color:#1f2937;margin-bottom:24px;line-height:1.3">' + sl.title + '</div>';
+  html += '<div style="font-size:18px;color:#374151;line-height:2">';
+  for(var i=0;i<sl.points.length;i++){
+    html += '<div style="margin-bottom:8px">▸ ' + sl.points[i] + '</div>';
+  }
+  html += '</div></div>';
+  // 右侧：下一页预览 + 备注 + 计时器
+  html += '<div style="flex:1;display:flex;flex-direction:column;gap:12px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:#9ca3af;font-weight:600">下一页预览</span><span id="pptSpeakerTimer" style="font-size:14px;color:#fbbf24;font-weight:700">⏱️ 0:00</span></div>';
+  if(nextSl){
+    html += '<div style="background:rgba(255,255,255,0.08);border-radius:8px;padding:16px;opacity:0.7">';
+    html += '<div style="font-size:11px;color:#60a5fa;margin-bottom:6px">' + nextSl.type + '</div>';
+    html += '<div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:8px">' + nextSl.title + '</div>';
+    html += '<div style="font-size:12px;color:#9ca3af;line-height:1.6">';
+    for(var j=0;j<Math.min(nextSl.points.length,3);j++){
+      html += '<div>• ' + nextSl.points[j] + '</div>';
+    }
+    html += '</div></div>';
+  } else {
+    html += '<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:16px;text-align:center;color:#6b7280;font-size:13px">已是最后一页</div>';
+  }
+  // 备注
+  html += '<div style="flex:1;background:rgba(255,255,255,0.05);border-left:3px solid #60a5fa;border-radius:8px;padding:16px;overflow-y:auto">';
+  html += '<div style="font-size:11px;color:#60a5fa;font-weight:600;margin-bottom:8px">📝 教师备注</div>';
+  html += '<div style="font-size:13px;color:#d1d5db;line-height:1.8;white-space:pre-wrap">' + (sl.notes || '（无备注）') + '</div>';
+  html += '</div></div></div>';
+  return html;
 }
 
 // ========== 版式收藏 ==========
