@@ -13866,6 +13866,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('chart')" id="paperTab-chart" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📊 图表生成</button>
       <button onclick="switchPaperSubTab('knowledge2')" id="paperTab-knowledge2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📚 个人知识库</button>
       <button onclick="switchPaperSubTab('debate2')" id="paperTab-debate2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">⚖️ 模型辩论</button>
+      <button onclick="switchPaperSubTab('toolbox')" id="paperTab-toolbox" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🧰 学术工具箱</button>
       <button onclick="switchPaperSubTab('format2')" id="paperTab-format2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📝 格式排版</button>
 
       <button onclick="switchPaperSubTab('sports')" id="paperTab-sports" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">体育学特色</button>
@@ -15481,6 +15482,61 @@ console.log('✅ 学习工具入口已加载');
 
       <div id="debateStatus" style="display:none;margin-bottom:20px"></div>
       <div id="debateResult" style="display:none;margin-bottom:20px"></div>
+    </div>
+  </div>
+
+  <div id="paperContent-toolbox" style="display:none">
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#f0fdfa,#ccfbf1);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #99f6e4">
+        <h2 style="margin:0 0 8px 0;font-size:20px;color:#115e59">🧰 学术工具箱</h2>
+        <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">集成学术英语检查、伦理合规审查、AI导师视角审阅等实用工具，助力论文全流程质量提升。</p>
+      </div>
+
+      <div style="display:flex;gap:20px;flex-wrap:wrap">
+        <!-- 学术英语检查 -->
+        <div style="flex:1;min-width:320px">
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+            <div style="font-weight:700;color:#0e7490;margin-bottom:12px;font-size:15px">📝 学术英语检查</div>
+            <div style="margin-bottom:12px">
+              <textarea id="engInput" placeholder="粘贴英文文本，AI将检测中式英语、语法错误、不地道用词..." style="width:100%;min-height:100px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none"></textarea>
+            </div>
+            <button onclick="academicEnglishCheck()" style="width:100%;padding:10px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">开始检查</button>
+            <div id="engResult" style="display:none;margin-top:15px"></div>
+          </div>
+        </div>
+
+        <!-- 伦理合规检查 -->
+        <div style="flex:1;min-width:320px">
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+            <div style="font-weight:700;color:#15803d;margin-bottom:12px;font-size:15px">✅ 伦理合规检查</div>
+            <div style="margin-bottom:12px">
+              <textarea id="ethicsInput" placeholder="粘贴论文内容，AI将检查伦理声明、知情同意、利益冲突、数据可用性等合规项..." style="width:100%;min-height:100px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none"></textarea>
+            </div>
+            <button onclick="ethicsCheck()" style="width:100%;padding:10px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">开始检查</button>
+            <div id="ethicsResult" style="display:none;margin-top:15px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI导师视角审阅 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;color:#b45309;margin-bottom:12px;font-size:15px">👨‍🏫 AI导师视角审阅</div>
+        <div style="display:flex;gap:15px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="min-width:200px">
+            <label style="font-size:12px;color:#6b7280;font-weight:600">导师风格</label>
+            <select id="mentorStyle" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+              <option value="strict">严格型（要求高，重细节）</option>
+              <option value="encouraging">鼓励型（先肯定，再建议）</option>
+              <option value="practical">实务型（重方法，重可操作）</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:12px">
+          <textarea id="mentorInput" placeholder="粘贴论文内容或摘要，AI将以导师视角给出审阅意见和修改建议..." style="width:100%;min-height:120px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none"></textarea>
+        </div>
+        <button onclick="mentorReview()" style="padding:10px 30px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">开始审阅</button>
+        <div id="mentorResult" style="display:none;margin-top:15px"></div>
+      </div>
     </div>
   </div>
 
@@ -57938,7 +57994,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','format2','literature','literature2','design','assist','polish','publish','journalmatch','review','trend','writing','pipeline2','chart','knowledge2','debate2','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
+  ['projects','editor','format','format2','literature','literature2','design','assist','polish','publish','journalmatch','review','trend','writing','pipeline2','chart','knowledge2','debate2','toolbox','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -128475,7 +128531,87 @@ async function startDebate() {
   }
 }
 
-function setAiModel(model) {
+// ========== 学术工具箱 ==========
+// 学术英语润色
+async function academicEnglishCheck() {
+  const text = document.getElementById('engInput').value.trim();
+  if (!text) { mechToast('请输入英文文本', 'warn'); return; }
+  
+  const resultEl = document.getElementById('engResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">正在检查学术英语...</div></div>';
+  
+  try {
+    const result = await callDeepSeekAPI(
+      '你是一位资深学术英语编辑。请检查以下英文文本，找出：1.中式英语表达 2.语法错误 3.不地道的用词 4.学术规范问题。然后给出修改后的地道版本和修改说明。',
+      text.substring(0, 3000),
+      2000, 'qwen3.5-plus'
+    );
+    
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><div style="padding:12px 15px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;font-weight:700">📝 学术英语检查结果</div><div style="padding:15px;font-size:12px;color:#374151;line-height:1.8">' + result.replace(/
+/g, '<br>') + '</div></div>';
+    mechToast('检查完成！', 'success');
+  } catch(e) {
+    resultEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">检查失败：' + e.message + '</div>';
+  }
+}
+
+// 伦理合规检查
+async function ethicsCheck() {
+  const text = document.getElementById('ethicsInput').value.trim();
+  if (!text) { mechToast('请输入论文内容', 'warn'); return; }
+  
+  const resultEl = document.getElementById('ethicsResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">正在检查伦理合规...</div></div>';
+  
+  try {
+    const result = await callDeepSeekAPI(
+      '你是一位学术伦理审查专家。请检查以下论文内容，列出需要补充的伦理声明和合规项：1.伦理审批声明 2.知情同意声明 3.利益冲突声明 4.数据可用性声明 5.作者贡献声明 6.资金来源声明 7.动物/人体实验伦理（如适用）。逐项检查并给出建议。',
+      text.substring(0, 3000),
+      1500, 'glm-5.3'
+    );
+    
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><div style="padding:12px 15px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-weight:700">✅ 伦理合规检查结果</div><div style="padding:15px;font-size:12px;color:#374151;line-height:1.8">' + result.replace(/
+/g, '<br>') + '</div></div>';
+    mechToast('检查完成！', 'success');
+  } catch(e) {
+    resultEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">检查失败：' + e.message + '</div>';
+  }
+}
+
+// AI导师视角审阅
+async function mentorReview() {
+  const text = document.getElementById('mentorInput').value.trim();
+  const mentorStyle = document.getElementById('mentorStyle').value;
+  if (!text) { mechToast('请输入论文内容', 'warn'); return; }
+  
+  const resultEl = document.getElementById('mentorResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">导师正在审阅...</div></div>';
+  
+  try {
+    const styleDesc = {
+      'strict': '严格型导师：要求高，注重细节，会直接指出问题',
+      'encouraging': '鼓励型导师：先肯定优点，再温和指出改进方向',
+      'practical': '实务型导师：关注研究设计、方法严谨性和可操作性'
+    };
+    
+    const result = await callDeepSeekAPI(
+      '你是一位' + styleDesc[mentorStyle] + '。请以导师的视角审阅以下论文内容，给出你的意见和建议，包括：1.整体评价 2.主要优点 3.需要改进的问题 4.具体修改建议 5.下一步研究方向。语气要符合导师身份。',
+      text.substring(0, 4000),
+      2500, 'kimi-k3'
+    );
+    
+    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><div style="padding:12px 15px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:700">👨‍🏫 AI导师视角审阅</div><div style="padding:15px;font-size:12px;color:#374151;line-height:1.8">' + result.replace(/
+/g, '<br>') + '</div></div>';
+    mechToast('审阅完成！', 'success');
+  } catch(e) {
+    resultEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">审阅失败：' + e.message + '</div>';
+  }
+}
+
+// 初始化知识库渲染
 if (typeof knowledgeItems !== 'undefined') {
   setTimeout(function() {
     if (document.getElementById('kbList')) {
