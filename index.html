@@ -16866,7 +16866,11 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
                 <button onclick="exportMechPNG()" style="background:#059669;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📷 导出PNG</button>
                 <button onclick="exportMechSVG()" style="background:#0891b2;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📐 导出SVG</button>
                 <button onclick="saveMechToLibrary()" style="background:#7c3aed;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">💾 存素材库</button>
+                <button onclick="exportMechPDF()" style="background:#dc2626;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📄 导出PDF</button>
+                <button onclick="exportMechPPT()" style="background:#ea580c;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📊 导出PPT</button>
+                <button onclick="optimizeMechLayout()" style="background:#059669;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔧 优化布局</button>
               </div>
+              <div id="mechLayoutSuggestion" style="display:none;margin-top:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;font-size:12px;color:#166534;line-height:1.6"></div>
             </div>
             <div id="mechSvgContainer" style="width:100%;overflow:auto;background:#f8fafc;border-radius:8px;padding:20px;min-height:300px;display:flex;justify-content:center;align-items:center"></div>
             <div id="mechLegend" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0"></div>
@@ -129199,6 +129203,195 @@ function generatePaperMechanism(){
   }, 200);
   mechToast('已切换到机制图生成面板，正在生成...');
 }
+
+// ===== 运动科学机制库 P3：导出增强 + 智能优化布局 =====
+
+// 导出 PDF（新窗口打印，用户可选"另存为PDF"）
+function exportMechPDF(){
+  if(!mechCurrentData){ mechToast('请先生成机制图'); return; }
+  var svgContainer = document.getElementById('mechSvgContainer');
+  var svg = svgContainer ? svgContainer.innerHTML : '';
+  var title = (mechCurrentData.title || '机制图').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var subject = (mechCurrentData.subject || '运动科学').replace(/</g,'&lt;');
+  var narration = (mechCurrentData.overallNarration || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var nodeList = '';
+  if(mechCurrentData.nodes){
+    nodeList = '<h3 style="color:#0f172a;margin-top:20px">节点说明</h3><table style="width:100%;border-collapse:collapse;font-size:11px"><tr style="background:#f1f5f9"><th style="border:1px solid #e2e8f0;padding:6px;text-align:left">节点</th><th style="border:1px solid #e2e8f0;padding:6px;text-align:left">类型</th><th style="border:1px solid #e2e8f0;padding:6px;text-align:left">说明</th></tr>';
+    mechCurrentData.nodes.forEach(function(n){
+      nodeList += '<tr><td style="border:1px solid #e2e8f0;padding:6px;font-weight:600">' + (n.label||'').replace(/</g,'&lt;') + '</td><td style="border:1px solid #e2e8f0;padding:6px">' + (n.type||'') + '</td><td style="border:1px solid #e2e8f0;padding:6px">' + (n.narration||'').replace(/</g,'&lt;') + '</td></tr>';
+    });
+    nodeList += '</table>';
+  }
+  var win = window.open('', '_blank');
+  win.document.write('<html><head><meta charset="UTF-8"><title>' + title + '</title><style>@page{size:A4 landscape;margin:15mm}body{font-family:"Microsoft YaHei",sans-serif;max-width:1000px;margin:0 auto;padding:20px;color:#1e293b}h2{color:#0891b2;text-align:center;font-size:20px;margin-bottom:4px}.subtitle{text-align:center;color:#64748b;font-size:12px;margin-bottom:16px}.svg-box{text-align:center;background:#f8fafc;padding:16px;border-radius:8px;margin:16px 0}.svg-box svg{max-width:100%;height:auto}h3{color:#0f172a;font-size:14px;border-left:3px solid #0891b2;padding-left:8px}p{line-height:1.8;font-size:12px;text-indent:2em;color:#475569}.footer{text-align:center;color:#94a3b8;font-size:10px;margin-top:30px}</style></head><body><h2>' + title + '</h2><div class="subtitle">科目：' + subject + '</div><div class="svg-box">' + svg + '</div><h3>机制说明</h3><p>' + narration + '</p>' + nodeList + '<div class="footer">由体育科研工作台 · 运动科学机制库生成</div></body></html>');
+  win.document.close();
+  setTimeout(function(){ win.print(); }, 800);
+  mechToast('已打开打印预览，可选择"另存为PDF"');
+}
+
+// 导出 PPT（动态加载 pptxgenjs）
+function exportMechPPT(){
+  if(!mechCurrentData){ mechToast('请先生成机制图'); return; }
+  if(typeof PptxGenJS === 'undefined'){
+    mechToast('正在加载 PPT 生成库...');
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+    script.onload = function(){ doExportMechPPT(); };
+    script.onerror = function(){ mechToast('PPT 库加载失败，请检查网络'); };
+    document.head.appendChild(script);
+  } else {
+    doExportMechPPT();
+  }
+}
+
+function doExportMechPPT(){
+  try{
+    var pptx = new PptxGenJS();
+    pptx.layout = 'LAYOUT_16x9';
+    var slide = pptx.addSlide();
+    // 背景
+    slide.background = {color:'FFFFFF'};
+    // 标题
+    slide.addText(mechCurrentData.title || '机制图', {x:0.3, y:0.2, w:9.4, h:0.5, fontSize:22, bold:true, color:'0891b2', align:'center'});
+    // 科目
+    slide.addText('科目：' + (mechCurrentData.subject || '运动科学'), {x:0.3, y:0.65, w:9.4, h:0.3, fontSize:11, color:'64748b', align:'center'});
+    // SVG 转 PNG 插入
+    var svgEl = document.querySelector('#mechSvgContainer svg');
+    if(!svgEl){ mechToast('未找到机制图'); return; }
+    var svgData = new XMLSerializer().serializeToString(svgEl);
+    var svgBlob = new Blob([svgData], {type:'image/svg+xml;charset=utf-8'});
+    var url = URL.createObjectURL(svgBlob);
+    var img = new Image();
+    img.onload = function(){
+      var canvas = document.createElement('canvas');
+      var scale = 2;
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      var ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, img.width, img.height);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      var dataUrl = canvas.toDataURL('image/png');
+      // 计算图片位置（居中）
+      var imgW = 9.0;
+      var imgH = (img.height / img.width) * imgW;
+      if(imgH > 3.8){ imgH = 3.8; imgW = (img.width / img.height) * imgH; }
+      slide.addImage({data:dataUrl, x:(10-imgW)/2, y:1.1, w:imgW, h:imgH});
+      // 讲解词作为备注
+      slide.addNotes(mechCurrentData.overallNarration || '');
+      // 第二页：节点说明表
+      if(mechCurrentData.nodes && mechCurrentData.nodes.length > 0){
+        var slide2 = pptx.addSlide();
+        slide2.background = {color:'FFFFFF'};
+        slide2.addText('节点说明', {x:0.3, y:0.2, w:9.4, h:0.4, fontSize:18, bold:true, color:'0891b2'});
+        var rows = [];
+        rows.push([{text:'节点',options:{bold:true,fill:'0891b2',color:'FFFFFF'}},{text:'类型',options:{bold:true,fill:'0891b2',color:'FFFFFF'}},{text:'说明',options:{bold:true,fill:'0891b2',color:'FFFFFF'}}]);
+        mechCurrentData.nodes.forEach(function(n){
+          rows.push([n.label || '', n.type || '', n.narration || '']);
+        });
+        slide2.addTable(rows, {x:0.3, y:0.8, w:9.4, fontSize:10, border:{pt:0.5, color:'CBD5E1'}, colW:[2.0, 1.5, 5.9]});
+      }
+      var fileName = (mechCurrentData.title || '机制图').replace(/[\\/:*?"<>|]/g, '_') + '.pptx';
+      pptx.writeFile({fileName:fileName});
+      mechToast('✅ PPT 已开始下载');
+    };
+    img.onerror = function(){ mechToast('图片转换失败'); URL.revokeObjectURL(url); };
+    img.src = url;
+  }catch(e){
+    mechToast('PPT 导出失败：' + e.message);
+  }
+}
+
+// AI/算法智能优化布局
+async function optimizeMechLayout(){
+  if(!mechCurrentData){ mechToast('请先生成机制图'); return; }
+  mechToast('🔧 正在优化布局（拓扑重排+减少交叉）...');
+  try{
+    var data = JSON.parse(JSON.stringify(mechCurrentData));
+    var nodes = data.nodes;
+    var edges = data.edges;
+    // 构建邻接表
+    var nodeMap = {};
+    nodes.forEach(function(n){ nodeMap[n.id] = n; });
+    var outEdges = {};
+    var inEdges = {};
+    nodes.forEach(function(n){ outEdges[n.id] = []; inEdges[n.id] = []; });
+    edges.forEach(function(e){
+      if(outEdges[e.from]) outEdges[e.from].push(e.to);
+      if(inEdges[e.to]) inEdges[e.to].push(e.from);
+    });
+    // 拓扑排序计算 layer（最长路径）
+    var visited = {};
+    var tempMark = {};
+    function calcLayer(nodeId){
+      if(visited[nodeId] !== undefined) return visited[nodeId];
+      if(tempMark[nodeId]) return 0; // 环，返回0
+      tempMark[nodeId] = true;
+      var maxUp = 0;
+      (inEdges[nodeId] || []).forEach(function(upId){
+        maxUp = Math.max(maxUp, calcLayer(upId) + 1);
+      });
+      tempMark[nodeId] = false;
+      visited[nodeId] = maxUp;
+      return maxUp;
+    }
+    nodes.forEach(function(n){ n.layer = calcLayer(n.id); });
+    // 按层级分组
+    var layers = {};
+    nodes.forEach(function(n){
+      var l = n.layer || 0;
+      if(!layers[l]) layers[l] = [];
+      layers[l].push(n);
+    });
+    // 同层节点排序（按入边来源的平均位置，减少交叉）
+    var layerKeys = Object.keys(layers).sort(function(a,b){ return parseInt(a)-parseInt(b); });
+    var posMap = {};
+    layerKeys.forEach(function(l, li){
+      var layerNodes = layers[l];
+      // 计算每个节点的"重心"（入边来源的平均位置）
+      layerNodes.forEach(function(n){
+        var ups = inEdges[n.id] || [];
+        if(ups.length > 0){
+          var avgPos = 0;
+          ups.forEach(function(upId){ avgPos += (posMap[upId] !== undefined ? posMap[upId] : layerNodes.length/2); });
+          n._sortKey = avgPos / ups.length;
+        } else {
+          n._sortKey = layerNodes.indexOf(n);
+        }
+      });
+      layerNodes.sort(function(a,b){ return a._sortKey - b._sortKey; });
+      layerNodes.forEach(function(n, ni){ posMap[n.id] = ni; });
+    });
+    // 重新组装 nodes 数组（按层级顺序）
+    var newNodes = [];
+    layerKeys.forEach(function(l){ layers[l].forEach(function(n){ delete n._sortKey; newNodes.push(n); }); });
+    data.nodes = newNodes;
+    // 重新渲染
+    mechCurrentData = data;
+    renderMechSVG(data);
+    renderMechLegend();
+    renderMechNodeList(data);
+    // AI 生成布局优化建议（异步，不阻塞）
+    try{
+      var layoutPrompt = '当前机制图有' + newNodes.length + '个节点、' + edges.length + '条关系，分为' + layerKeys.length + '个层级。请用2-3句话给出机制图布局和可视化的优化建议（如颜色使用、节点分组、箭头方向、重点突出等）。不要输出JSON。';
+      callModelWithTimeout('你是科学可视化和信息设计专家。', layoutPrompt, 200, 'deepseek-chat', 15000).then(function(suggestion){
+        if(suggestion){
+          var suggestEl = document.getElementById('mechLayoutSuggestion');
+          if(suggestEl){
+            suggestEl.innerHTML = '💡 <b>AI 布局建议：</b>' + suggestion;
+            suggestEl.style.display = 'block';
+          }
+        }
+      }).catch(function(){});
+    }catch(e){}
+    mechToast('✅ 布局已优化（拓扑重排' + layerKeys.length + '层+减少交叉）');
+  }catch(e){
+    mechToast('优化失败：' + e.message);
+  }
+}
+
 
 
 
