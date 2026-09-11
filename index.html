@@ -89571,8 +89571,13 @@ function renderPhdPublish(containerId) {
   html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#374151;cursor:pointer;background:#fff;border:1px solid #e5e7eb;padding:6px 10px;border-radius:6px"><input type="checkbox" class="pubMultiModelCk" value="hy3"> 混元 Turbo（hy3）</label>';
   html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#374151;cursor:pointer;background:#fff;border:1px solid #e5e7eb;padding:6px 10px;border-radius:6px"><input type="checkbox" class="pubMultiModelCk" value="hy4-preview"> 混元 V4 Preview</label>';
   html += '</div>';
-  html += '<button onclick="publishMultiModels()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px 28px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">⚖️ 开始多模型选刊评审</button>';
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">';
+  html += '<button onclick="publishMultiModels()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚖️ 多模型评审（投票聚合）</button>';
+  html += '<button onclick="publishDebateVerdict()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚔️ 辩论裁决（v4-pro vs GLM → 混元裁决）</button>';
+  html += '<span style="font-size:11px;color:#7c3aed">两模型各抒己见 → 互相质疑 → 第三方综合裁决，比单纯投票更深入</span>';
+  html += '</div>';
   html += '<div id="pubMultiResult" style="margin-top:16px"></div>';
+  html += '<div id="pubDebateResult" style="margin-top:16px"></div>';
   html += '</div>';
 
   html += '</div>';
@@ -92822,6 +92827,193 @@ async function publishMultiModels() {
 
   renderPubMultiReport(results, modelNames);
 }
+
+
+
+// ========== 选刊辩论裁决模式（v4-pro vs glm-5.3 → hy3综合裁决） ==========
+async function publishDebateVerdict() {
+  var title = (document.getElementById('pubTitle') || {}).value || '';
+  var abstract = (document.getElementById('pubAbstract') || {}).value || '';
+  var type = (document.getElementById('pubType') || {}).value || '原创研究';
+  var direction = (document.getElementById('pubDirection') || {}).value || '运动康复';
+  var goal = (document.getElementById('pubGoal') || {}).value || '求稳妥';
+  if (!title && !abstract) { alert('请先输入文章标题或摘要'); return; }
+
+  var resultDiv = document.getElementById('pubDebateResult');
+  resultDiv.innerHTML = '<div style="background:#fff;border:1px solid #ddd6fe;border-radius:12px;padding:24px;text-align:center"><div style="font-size:28px;margin-bottom:8px">⚔️</div><div style="font-size:14px;color:#6d28d9;font-weight:600">辩论裁决进行中...</div><div style="font-size:12px;color:#9ca3af;margin-top:6px" id="debateProgress">第一步：DeepSeek V4 Pro 独立推荐中...</div></div>';
+
+  try {
+    // 规则预筛选候选池
+    var minIF = parseFloat((document.getElementById('pubMinIF') || {}).value) || 0;
+    var maxIF = parseFloat((document.getElementById('pubMaxIF') || {}).value) || 999;
+    var candidates = PHD_JOURNALS.filter(function(j) {
+      if (j.if > 0 && (j.if < minIF || j.if > maxIF)) return false;
+      return true;
+    });
+    if (candidates.length < 3) candidates = PHD_JOURNALS.slice();
+    var pool = candidates.slice(0, 12).map(function(j, i) {
+      return (i+1) + '. ' + j.name + ' [IF:' + j.if + ', ' + j.jcr + ', 审稿:' + j.reviewDays + '天, 录用率:' + j.acceptRate + '%, OA:' + j.oa + ']\n   范围: ' + j.scope.substring(0, 80);
+    }).join('\n\n');
+
+    var articleInfo = '论文标题：' + title + '\n研究类型：' + type + '\n研究方向：' + direction + '\n投稿目标：' + goal + '\n摘要：' + (abstract ? abstract.substring(0, 800) : '（未提供）');
+
+    // ===== 第一步：两个模型独立推荐（并行） =====
+    var sysA = '你是一位体育学领域的资深期刊编辑，以严谨挑剔著称。请从候选期刊中精选3本最适合该论文的期刊，分别标注冲刺/稳妥/保底。每本给出匹配度(0-100)、录用难度(0-100)、一句话理由。只输出JSON：{"journals":[{"name":"","tier":"冲刺|稳妥|保底","match":0,"difficulty":0,"reason":""}]}';
+    var sysB = '你是一位运动科学领域的投稿顾问，以务实接地气著称。请从候选期刊中精选3本最适合该论文的期刊，分别标注冲刺/稳妥/保底。每本给出匹配度(0-100)、录用难度(0-100)、一句话理由。只输出JSON：{"journals":[{"name":"","tier":"冲刺|稳妥|保底","match":0,"difficulty":0,"reason":""}]}';
+
+    var userMsg = articleInfo + '\n\n候选期刊列表：\n' + pool;
+
+    var pA = callDeepSeekAPI(sysA, userMsg, 2500, 'deepseek-v4-pro');
+    var pB = callDeepSeekAPI(sysB, userMsg, 2500, 'glm-5.3');
+
+    var dp = document.getElementById('debateProgress');
+    if (dp) dp.textContent = '第一步：DeepSeek V4 Pro 和 GLM-5.3 并行独立推荐中...';
+
+    var results = await Promise.all([pA, pB]);
+    var textA = results[0], textB = results[1];
+
+    // 解析JSON
+    function parseJournalJSON(txt) {
+      try {
+        var t = (txt || '').trim().replace(/^```json\s*/i,'').replace(/```\s*$/,'').replace(/^```\s*/,'');
+        var st = t.indexOf('{'), en = t.lastIndexOf('}');
+        if (st >= 0 && en > st) t = t.substring(st, en + 1);
+        var m = JSON.parse(t);
+        if (m && Array.isArray(m.journals)) return m.journals;
+      } catch(e) {}
+      return [];
+    }
+
+    var journalsA = parseJournalJSON(textA);
+    var journalsB = parseJournalJSON(textB);
+
+    if (dp) dp.textContent = '第一步完成！V4-Pro推荐' + journalsA.length + '本，GLM推荐' + journalsB.length + '本。第二步：互相质疑中...';
+
+    // ===== 第二步：两个模型互相质疑对方的推荐 =====
+    var challengeSys = '你是一位严格的审稿人。阅读另一位顾问的期刊推荐列表，指出其中可能存在的问题（如匹配度高估、录用难度低估、方向不匹配、IF虚高等），并给出你的补充建议。简洁有力，每本期刊一句话。';
+
+    var challengeUserA = '【另一位顾问的推荐】\n' + textA + '\n\n【论文信息】\n' + articleInfo + '\n\n请质疑以上推荐的合理性。';
+    var challengeUserB = '【另一位顾问的推荐】\n' + textB + '\n\n【论文信息】\n' + articleInfo + '\n\n请质疑以上推荐的合理性。';
+
+    var pC1 = callDeepSeekAPI(challengeSys, challengeUserA, 1500, 'glm-5.3');
+    var pC2 = callDeepSeekAPI(challengeSys, challengeUserB, 1500, 'deepseek-v4-pro');
+    var challenges = await Promise.all([pC1, pC2]);
+    var challengeOnA = challenges[0], challengeOnB = challenges[1];
+
+    if (dp) dp.textContent = '第二步完成！双方已互相质疑。第三步：混元Turbo综合裁决中...';
+
+    // ===== 第三步：hy3 综合裁决 =====
+    var verdictSys = '你是一位德高望重的期刊主编，负责最终裁决。阅读两位顾问的独立推荐、他们对彼此的质疑，综合给出最终的投稿排序（5本）。要求：\n1. 综合两位顾问的共识和分歧\n2. 吸收质疑中的合理意见\n3. 每本给出最终推荐指数(0-100)和裁决理由\n4. 标注投稿优先级（第一投/备选/保底）\n只输出JSON：{"verdict":[{"name":"","priority":"第一投|备选|保底","finalScore":0,"reason":""}]}';
+
+    var verdictUser = '【论文信息】\n' + articleInfo +
+      '\n\n【顾问A（V4-Pro）推荐】\n' + textA +
+      '\n\n【顾问B（GLM-5.3）推荐】\n' + textB +
+      '\n\n【GLM对V4-Pro推荐的质疑】\n' + challengeOnA +
+      '\n\n【V4-Pro对GLM推荐的质疑】\n' + challengeOnB +
+      '\n\n请综合以上所有信息，给出最终裁决。';
+
+    var verdictText = await callDeepSeekAPI(verdictSys, verdictUser, 3000, 'hy3');
+
+    // 解析裁决
+    var verdictList = [];
+    try {
+      var vt = verdictText.trim().replace(/^```json\s*/i,'').replace(/```\s*$/,'').replace(/^```\s*/,'');
+      var vst = vt.indexOf('{'), ven = vt.lastIndexOf('}');
+      if (vst >= 0 && ven > vst) vt = vt.substring(vst, ven + 1);
+      var vm = JSON.parse(vt);
+      if (vm && Array.isArray(vm.verdict)) verdictList = vm.verdict;
+    } catch(e) {}
+
+    // ===== 渲染结果 =====
+    var html = '';
+    html += '<div style="background:#fff;border:1px solid #ddd6fe;border-radius:12px;padding:20px;margin-bottom:12px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">';
+    html += '<div style="font-size:16px;font-weight:700;color:#6d28d9">⚔️ 辩论裁决报告</div>';
+    html += '<div style="font-size:11px;color:#9ca3af">V4-Pro vs GLM-5.3 → 混元Turbo裁决</div>';
+    html += '</div>';
+
+    // 最终裁决（最上方突出显示）
+    if (verdictList.length > 0) {
+      html += '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:10px;padding:14px;margin-bottom:14px">';
+      html += '<div style="font-size:13px;font-weight:700;color:#5b21b6;margin-bottom:10px">🏆 主编最终裁决（投稿优先级排序）</div>';
+      verdictList.forEach(function(v, i) {
+        var priColor = v.priority === '第一投' ? '#059669' : (v.priority === '保底' ? '#dc2626' : '#d97706');
+        var scoreColor = v.finalScore >= 75 ? '#059669' : (v.finalScore >= 50 ? '#d97706' : '#dc2626');
+        html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px dashed #c4b5fd">';
+        html += '<div style="min-width:24px;height:24px;background:' + priColor + ';color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">' + (i+1) + '</div>';
+        html += '<div style="flex:1">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+        html += '<span style="font-size:13px;font-weight:600;color:#1e293b">' + (v.name || '未知') + '</span>';
+        html += '<span style="font-size:11px;background:' + priColor + '20;color:' + priColor + ';padding:2px 8px;border-radius:4px;font-weight:600">' + (v.priority || '未标注') + '</span>';
+        html += '</div>';
+        html += '<div style="font-size:11px;color:#64748b;margin-top:3px">推荐指数: <span style="color:' + scoreColor + ';font-weight:700">' + (v.finalScore || 0) + '</span>/100</div>';
+        if (v.reason) html += '<div style="font-size:11px;color:#475569;margin-top:3px;line-height:1.5">' + v.reason + '</div>';
+        html += '</div></div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px;font-size:12px;color:#92400e;margin-bottom:14px">⚠️ 裁决模型返回格式异常，以下为原始裁决文本：<br><pre style="white-space:pre-wrap;font-size:11px;margin-top:6px;color:#78350f">' + (verdictText || '').substring(0, 1000) + '</pre></div>';
+    }
+
+    // 双方独立推荐对比
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">';
+    // 顾问A
+    html += '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px">';
+    html += '<div style="font-size:12px;font-weight:700;color:#0369a1;margin-bottom:8px">🔵 顾问A：DeepSeek V4 Pro（严谨挑剔）</div>';
+    if (journalsA.length > 0) {
+      journalsA.forEach(function(j) {
+        var tierColor = j.tier === '冲刺' ? '#dc2626' : (j.tier === '保底' ? '#059669' : '#d97706');
+        html += '<div style="padding:5px 0;border-bottom:1px dashed #bae6fd;font-size:11px">';
+        html += '<span style="font-weight:600;color:#1e293b">' + (j.name || '') + '</span>';
+        html += ' <span style="background:' + tierColor + '20;color:' + tierColor + ';padding:1px 5px;border-radius:3px;font-size:10px">' + (j.tier || '') + '</span>';
+        html += '<br><span style="color:#64748b">匹配:' + (j.match || 0) + ' 难度:' + (j.difficulty || 0) + '</span>';
+        if (j.reason) html += '<br><span style="color:#475569">' + j.reason + '</span>';
+        html += '</div>';
+      });
+    } else {
+      html += '<div style="font-size:11px;color:#94a3b8">解析失败，原始文本：' + (textA || '').substring(0, 200) + '</div>';
+    }
+    html += '</div>';
+
+    // 顾问B
+    html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px">';
+    html += '<div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:8px">🟢 顾问B：GLM-5.3（务实接地气）</div>';
+    if (journalsB.length > 0) {
+      journalsB.forEach(function(j) {
+        var tierColor = j.tier === '冲刺' ? '#dc2626' : (j.tier === '保底' ? '#059669' : '#d97706');
+        html += '<div style="padding:5px 0;border-bottom:1px dashed #bbf7d0;font-size:11px">';
+        html += '<span style="font-weight:600;color:#1e293b">' + (j.name || '') + '</span>';
+        html += ' <span style="background:' + tierColor + '20;color:' + tierColor + ';padding:1px 5px;border-radius:3px;font-size:10px">' + (j.tier || '') + '</span>';
+        html += '<br><span style="color:#64748b">匹配:' + (j.match || 0) + ' 难度:' + (j.difficulty || 0) + '</span>';
+        if (j.reason) html += '<br><span style="color:#475569">' + j.reason + '</span>';
+        html += '</div>';
+      });
+    } else {
+      html += '<div style="font-size:11px;color:#94a3b8">解析失败，原始文本：' + (textB || '').substring(0, 200) + '</div>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    // 互相质疑
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+    html += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px">';
+    html += '<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ GLM 对 V4-Pro 推荐的质疑</div>';
+    html += '<div style="font-size:11px;color:#78350f;line-height:1.7;white-space:pre-wrap">' + (challengeOnA || '').substring(0, 500) + '</div>';
+    html += '</div>';
+    html += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px">';
+    html += '<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ V4-Pro 对 GLM 推荐的质疑</div>';
+    html += '<div style="font-size:11px;color:#78350f;line-height:1.7;white-space:pre-wrap">' + (challengeOnB || '').substring(0, 500) + '</div>';
+    html += '</div>';
+    html += '</div>';
+
+    html += '</div>';
+    resultDiv.innerHTML = html;
+
+  } catch(error) {
+    resultDiv.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;color:#b91c1c;font-size:13px">❌ 辩论裁决失败：' + error.message + '</div>';
+  }
+}
+
 
 function renderPubMultiReport(results, modelNames) {
   var resultDiv = document.getElementById('pubMultiResult');
