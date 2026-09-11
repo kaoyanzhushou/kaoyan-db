@@ -13861,6 +13861,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('trend')" id="paperTab-trend" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📊 研究趋势</button>
       <button onclick="switchPaperSubTab('writing')" id="paperTab-writing" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">✍️ 写作助手</button>
       <button onclick="switchPaperSubTab('literature2')" id="paperTab-literature2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📚 文献增强</button>
+      <button onclick="switchPaperSubTab('pipeline2')" id="paperTab-pipeline2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🔗 模型流水线</button>
 
       <button onclick="switchPaperSubTab('sports')" id="paperTab-sports" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">体育学特色</button>
 
@@ -15268,6 +15269,36 @@ console.log('✅ 学习工具入口已加载');
           <button onclick="literatureChat()" style="padding:10px 20px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">发送</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="paperContent-pipeline2" style="display:none">
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #ddd6fe">
+        <h2 style="margin:0 0 8px 0;font-size:20px;color:#6b21a8">🔗 模型链式协作（多模型流水线）</h2>
+        <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">预设学术流水线模板，多模型串联协作，前一个模型的输出是后一个模型的输入，实现从选题到成稿的全流程自动化。</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">⚙️ 流水线设置</div>
+        <div style="margin-bottom:15px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">选择流水线模板</label>
+          <select id="pipelineTemplate" onchange="updatePipelineDesc()" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+            <option value="paper_writing">论文写作全流程（选题→大纲→各章节→润色，7步）</option>
+            <option value="review_response">审稿回复全流程（意见分析→策略→逐条回复→润色，4步）</option>
+            <option value="literature_review">文献综述全流程（检索→框架→撰写→润色，4步）</option>
+          </select>
+          <div id="pipelineDesc" style="font-size:11px;color:#6b7280;margin-top:5px">选题→大纲→引言→方法→结果→讨论→润色</div>
+        </div>
+        <div style="margin-bottom:15px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">初始输入（研究方向/审稿意见/综述主题）</label>
+          <textarea id="pipelineInput" placeholder="例如：运动性疲劳的生物机制研究..." style="width:100%;min-height:80px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none;margin-top:4px"></textarea>
+        </div>
+        <button onclick="runPipeline()" style="padding:12px 30px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🚀 运行流水线</button>
+      </div>
+
+      <div id="pipelineStatus" style="display:none;margin-bottom:20px"></div>
+      <div id="pipelineResult" style="display:none;margin-bottom:20px"></div>
     </div>
   </div>
 
@@ -57694,7 +57725,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','literature2','design','assist','polish','publish','review','trend','writing','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
+  ['projects','editor','format','literature','literature2','design','assist','polish','publish','review','trend','writing','pipeline2','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -58350,7 +58381,33 @@ function exportRouteWord() {
 
   }
 
-  html += '</body></html>';
+  html += '<!-- 全局AI学术助手 -->
+<div id="globalAssistantBtn" onclick="toggleGlobalAssistant()" style="position:fixed;bottom:30px;right:30px;width:56px;height:56px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,0.4);z-index:99999;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">🤖</div>
+<div id="globalAssistantPanel" style="display:none;position:fixed;bottom:100px;right:30px;width:380px;height:520px;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.2);z-index:99998;overflow:hidden;display:flex;flex-direction:column">
+  <div style="padding:12px 16px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-weight:700;font-size:14px">🤖 AI学术助手</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="clearGlobalChat()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">清空</button>
+      <button onclick="toggleGlobalAssistant()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">✕</button>
+    </div>
+  </div>
+  <div style="padding:8px 12px;background:#faf5ff;border-bottom:1px solid #e9d5ff;display:flex;flex-wrap:wrap;gap:4px">
+    <button onclick="useQuickCommand('✍️ 帮我写摘要')" style="padding:3px 8px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;cursor:pointer;font-size:10px;color:#6b21a8">✍️ 写摘要</button>
+    <button onclick="useQuickCommand('📝 帮我写引言')" style="padding:3px 8px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;cursor:pointer;font-size:10px;color:#6b21a8">📝 写引言</button>
+    <button onclick="useQuickCommand('✨ 帮我润色')" style="padding:3px 8px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;cursor:pointer;font-size:10px;color:#6b21a8">✨ 润色</button>
+    <button onclick="useQuickCommand('🔍 文献检索建议')" style="padding:3px 8px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;cursor:pointer;font-size:10px;color:#6b21a8">🔍 检索</button>
+    <button onclick="useQuickCommand('📊 统计方法建议')" style="padding:3px 8px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;cursor:pointer;font-size:10px;color:#6b21a8">📊 统计</button>
+    <button onclick="useQuickCommand('💡 选题建议')" style="padding:3px 8px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;cursor:pointer;font-size:10px;color:#6b21a8">💡 选题</button>
+    <button onclick="useQuickCommand('📋 大纲生成')" style="padding:3px 8px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;cursor:pointer;font-size:10px;color:#6b21a8">📋 大纲</button>
+    <button onclick="useQuickCommand('🎯 期刊推荐')" style="padding:3px 8px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;cursor:pointer;font-size:10px;color:#6b21a8">🎯 期刊</button>
+  </div>
+  <div id="globalChatHistory" style="flex:1;overflow-y:auto;padding:12px;background:#fff"></div>
+  <div style="padding:10px 12px;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;gap:8px">
+    <input type="text" id="globalChatInput" placeholder="输入问题，按回车发送..." onkeypress="if(event.key==='Enter')sendGlobalMessage()" style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;outline:none">
+    <button onclick="sendGlobalMessage()" style="padding:8px 16px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">发送</button>
+  </div>
+</div>
+</body></html>';
 
   const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
 
@@ -127445,6 +127502,277 @@ ${litText.substring(0, 8000)}
   } catch(e) {
     aiMsg.innerHTML = '<div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:3px">AI文献助手</div><div style="font-size:13px;color:#dc2626">回答失败：' + e.message + '</div>';
   }
+}
+
+// ========== 模型链式协作 ==========
+let pipelineResult = null;
+
+// 预设流水线模板
+const PIPELINE_TEMPLATES = {
+  'paper_writing': {
+    name: '论文写作全流程',
+    description: '选题→大纲→引言→方法→结果→讨论→润色',
+    steps: [
+      { model: 'kimi-k3', task: '选题生成', prompt: '基于以下研究方向，生成3个具体的论文选题，每个选题包含题目、研究问题、创新点。研究方向：{input}' },
+      { model: 'deepseek-v4-pro', task: '大纲生成', prompt: '基于以下选题，生成详细的论文写作大纲，包含各章节核心要点。选题：{prev}' },
+      { model: 'glm-5.3', task: '引言写作', prompt: '基于以下大纲，撰写论文引言部分，约500字。大纲：{prev}' },
+      { model: 'deepseek-v4-pro', task: '方法写作', prompt: '基于以下内容，撰写研究方法部分，约400字。内容：{prev}' },
+      { model: 'qwen3.5-plus', task: '结果写作', prompt: '基于以下内容，撰写研究结果部分，约400字。内容：{prev}' },
+      { model: 'hy4-preview', task: '讨论写作', prompt: '基于以下内容，撰写讨论部分，约500字。内容：{prev}' },
+      { model: 'glm-5.3', task: '最终润色', prompt: '请对以下论文内容进行语言润色，保持学术规范，修正语法错误。论文：{prev}' }
+    ]
+  },
+  'review_response': {
+    name: '审稿回复全流程',
+    description: '审稿意见分析→回复策略→逐条回复→最终润色',
+    steps: [
+      { model: 'deepseek-v4-pro', task: '意见分析', prompt: '分析以下审稿意见，总结主要问题和次要问题，标注哪些必须修改。审稿意见：{input}' },
+      { model: 'glm-5.3', task: '回复策略', prompt: '基于以下审稿意见分析，制定回复策略，包括哪些接受、哪些反驳、如何解释。分析：{prev}' },
+      { model: 'kimi-k3', task: '逐条回复', prompt: '基于以下回复策略，撰写逐条回复信，态度诚恳，有理有据。策略：{prev}' },
+      { model: 'hy4-preview', task: '最终润色', prompt: '请润色以下回复信，确保语言得体、逻辑清晰。回复信：{prev}' }
+    ]
+  },
+  'literature_review': {
+    name: '文献综述全流程',
+    description: '文献检索→内容提取→主题聚类→综述撰写',
+    steps: [
+      { model: 'kimi-k3', task: '文献检索建议', prompt: '基于以下研究主题，给出文献检索策略和关键词。主题：{input}' },
+      { model: 'deepseek-v4-pro', task: '研究框架', prompt: '基于以下主题，构建文献综述的研究框架和逻辑结构。主题：{prev}' },
+      { model: 'glm-5.3', task: '综述撰写', prompt: '基于以下框架，撰写文献综述正文，约800字。框架：{prev}' },
+      { model: 'qwen3.5-plus', task: '深度润色', prompt: '请深度润色以下文献综述，确保逻辑连贯、引用规范。综述：{prev}' }
+    ]
+  }
+};
+
+// 运行流水线
+async function runPipeline() {
+  const templateId = document.getElementById('pipelineTemplate').value;
+  const input = document.getElementById('pipelineInput').value.trim();
+  if (!input) { mechToast('请输入初始内容', 'warn'); return; }
+  
+  const template = PIPELINE_TEMPLATES[templateId];
+  if (!template) { mechToast('请选择流水线模板', 'warn'); return; }
+  
+  const statusEl = document.getElementById('pipelineStatus');
+  const resultEl = document.getElementById('pipelineResult');
+  
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  
+  let currentOutput = input;
+  const stepResults = [];
+  
+  for (let i = 0; i < template.steps.length; i++) {
+    const step = template.steps[i];
+    statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1;margin-bottom:10px">🔄 正在运行流水线（' + (i+1) + '/' + template.steps.length + '）</div><div style="font-size:13px;color:#374151">步骤' + (i+1) + '：' + step.task + '（模型：' + step.model + '）</div><div style="margin-top:10px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + ((i+1)/template.steps.length*100) + '%;background:linear-gradient(90deg,#0891b2,#06b6d4);transition:width 0.3s"></div></div></div>';
+    
+    try {
+      const prompt = step.prompt.replace('{input}', input).replace('{prev}', currentOutput);
+      const result = await callDeepSeekAPI(
+        '你是一位专业的学术助手，请完成以下任务，只输出任务结果，不要其他说明。',
+        prompt,
+        2500,
+        step.model
+      );
+      currentOutput = result.trim();
+      stepResults.push({ step: step, output: currentOutput, error: null });
+    } catch(e) {
+      stepResults.push({ step: step, output: '', error: e.message });
+      statusEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">步骤' + (i+1) + '失败：' + e.message + '</div>';
+      break;
+    }
+  }
+  
+  pipelineResult = { template: template, input: input, steps: stepResults, finalOutput: currentOutput };
+  
+  // 渲染结果
+  let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">';
+  html += '<div style="padding:15px 20px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff">';
+  html += '<div style="font-weight:700;font-size:16px">🔗 模型链式协作结果</div>';
+  html += '<div style="font-size:12px;opacity:0.9;margin-top:3px">' + template.name + ' · 共' + stepResults.length + '步 · ' + (stepResults.filter(s => !s.error).length) + '步成功</div>';
+  html += '</div>';
+  html += '<div style="padding:20px">';
+  
+  // 各步骤结果
+  stepResults.forEach((sr, i) => {
+    const color = sr.error ? '#dc2626' : '#16a34a';
+    html += '<div style="margin-bottom:15px;padding:12px 15px;border-radius:8px;border-left:3px solid ' + color + ';background:' + color + '08">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">';
+    html += '<div style="font-weight:700;font-size:13px;color:' + color + '">步骤' + (i+1) + '：' + sr.step.task + ' <span style="font-weight:400;font-size:11px;opacity:0.7">(' + sr.step.model + ')</span></div>';
+    html += '<span style="font-size:11px;padding:2px 8px;background:#fff;border-radius:10px;color:' + color + '">' + (sr.error ? '❌ 失败' : '✅ 成功') + '</span>';
+    html += '</div>';
+    if (sr.error) {
+      html += '<div style="font-size:12px;color:#dc2626;margin-top:5px">错误：' + sr.error + '</div>';
+    } else {
+      html += '<div style="font-size:12px;color:#374151;margin-top:8px;max-height:150px;overflow-y:auto;background:#fff;padding:10px;border-radius:6px;line-height:1.8">' + sr.output.substring(0, 500) + (sr.output.length > 500 ? '...' : '') + '</div>';
+    }
+    html += '</div>';
+  });
+  
+  // 最终结果
+  html += '<div style="margin-top:15px;padding:15px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:8px;border:1px solid #bbf7d0">';
+  html += '<div style="font-weight:700;font-size:14px;color:#166534;margin-bottom:10px">🎯 最终输出</div>';
+  html += '<textarea style="width:100%;min-height:200px;padding:12px;border:1px solid #bbf7d0;border-radius:6px;font-size:13px;line-height:1.8;font-family:inherit;outline:none;background:#fff">' + currentOutput + '</textarea>';
+  html += '<div style="margin-top:10px;display:flex;gap:10px">';
+  html += '<button onclick="copyPipelineOutput()" style="padding:8px 16px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📋 复制最终结果</button>';
+  html += '<button onclick="downloadPipelineOutput()" style="padding:8px 16px;background:#0891b2;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📥 下载完整流程</button>';
+  html += '</div></div>';
+  
+  html += '</div></div>';
+  resultEl.innerHTML = html;
+  resultEl.style.display = 'block';
+  statusEl.style.display = 'none';
+  mechToast('流水线运行完成！', 'success');
+}
+
+// 复制最终结果
+function copyPipelineOutput() {
+  if (!pipelineResult) return;
+  navigator.clipboard.writeText(pipelineResult.finalOutput).then(() => {
+    mechToast('已复制到剪贴板', 'success');
+  });
+}
+
+// 下载完整流程
+function downloadPipelineOutput() {
+  if (!pipelineResult) return;
+  let text = '模型链式协作报告
+';
+  text += '流水线：' + pipelineResult.template.name + '
+';
+  text += '初始输入：' + pipelineResult.input + '
+
+';
+  pipelineResult.steps.forEach((sr, i) => {
+    text += '=== 步骤' + (i+1) + '：' + sr.step.task + '（' + sr.step.model + '）===
+';
+    text += (sr.error ? '失败：' + sr.error : sr.output) + '
+
+';
+  });
+  text += '=== 最终输出 ===
+' + pipelineResult.finalOutput;
+  
+  const blob = new Blob(['﻿' + text], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '模型流水线结果.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+  mechToast('已下载', 'success');
+}
+
+function updatePipelineDesc() {
+  const t = document.getElementById('pipelineTemplate').value;
+  const descs = {
+    'paper_writing': '选题→大纲→引言→方法→结果→讨论→润色（7步，调用Kimi/DeepSeek/GLM/Qwen/混元）',
+    'review_response': '意见分析→回复策略→逐条回复→最终润色（4步）',
+    'literature_review': '检索建议→研究框架→综述撰写→深度润色（4步）'
+  };
+  mechToast('已下载', 'success');
+}
+
+// ========== 全局AI学术助手 ==========
+let globalAssistantOpen = false;
+let globalChatHistory = [];
+
+// 快捷指令
+const ASSISTANT_QUICK_COMMANDS = [
+  { label: '✍️ 帮我写摘要', prompt: '请帮我写一个论文摘要，包含研究背景、目的、方法、结果、结论。' },
+  { label: '📝 帮我写引言', prompt: '请帮我撰写论文引言部分，从研究背景逐步聚焦到研究问题。' },
+  { label: '✨ 帮我润色', prompt: '请帮我润色以下文字，保持学术规范，修正语法错误，提升表达。' },
+  { label: '🔍 文献检索建议', prompt: '请给我文献检索的关键词和数据库建议。' },
+  { label: '📊 统计方法建议', prompt: '请根据我的研究设计，推荐合适的统计分析方法。' },
+  { label: '💡 选题建议', prompt: '请给我一些论文选题建议，要求具有创新性和可行性。' },
+  { label: '📋 大纲生成', prompt: '请帮我生成论文的详细写作大纲。' },
+  { label: '🎯 期刊推荐', prompt: '请根据我的研究内容，推荐合适的投稿期刊。' }
+];
+
+// 切换全局助手
+function toggleGlobalAssistant() {
+  globalAssistantOpen = !globalAssistantOpen;
+  const panel = document.getElementById('globalAssistantPanel');
+  const btn = document.getElementById('globalAssistantBtn');
+  if (panel) {
+    panel.style.display = globalAssistantOpen ? 'block' : 'none';
+    if (globalAssistantOpen) {
+      const input = document.getElementById('globalChatInput');
+      if (input) input.focus();
+    }
+  }
+  if (btn) {
+    btn.textContent = globalAssistantOpen ? '✕' : '🤖';
+  }
+}
+
+// 发送全局助手消息
+async function sendGlobalMessage() {
+  const input = document.getElementById('globalChatInput');
+  const historyEl = document.getElementById('globalChatHistory');
+  if (!input || !historyEl) return;
+  
+  const message = input.value.trim();
+  if (!message) return;
+  
+  // 添加用户消息
+  const userMsg = document.createElement('div');
+  userMsg.style.cssText = 'background:#dbeafe;padding:8px 12px;border-radius:10px;margin-bottom:8px;max-width:85%;margin-left:auto;font-size:12px;color:#1f2937';
+  userMsg.textContent = message;
+  historyEl.appendChild(userMsg);
+  
+  globalChatHistory.push({ role: 'user', content: message });
+  input.value = '';
+  historyEl.scrollTop = historyEl.scrollHeight;
+  
+  // 添加AI回复占位
+  const aiMsg = document.createElement('div');
+  aiMsg.style.cssText = 'background:#f0fdf4;padding:8px 12px;border-radius:10px;margin-bottom:8px;max-width:85%;font-size:12px;color:#6b7280';
+  aiMsg.textContent = '正在思考...';
+  historyEl.appendChild(aiMsg);
+  historyEl.scrollTop = historyEl.scrollHeight;
+  
+  try {
+    // 构建对话历史
+    let historyText = '';
+    globalChatHistory.slice(-6).forEach(m => {
+      historyText += (m.role === 'user' ? '用户：' : '助手：') + m.content + '
+';
+    });
+    
+    const result = await callAIRouted('general',
+      '你是一位专业的学术助手，擅长论文写作、文献检索、研究方法、统计分析等学术问题。回答要简洁、准确、有条理。如果用户要求写作，直接给出内容。',
+      historyText + '用户：' + message,
+      1500
+    );
+    
+    aiMsg.style.color = '#1f2937';
+    aiMsg.style.lineHeight = '1.7';
+    aiMsg.innerHTML = result.replace(/
+/g, '<br>');
+    globalChatHistory.push({ role: 'assistant', content: result });
+  } catch(e) {
+    aiMsg.style.color = '#dc2626';
+    aiMsg.textContent = '回答失败：' + e.message;
+  }
+  historyEl.scrollTop = historyEl.scrollHeight;
+}
+
+// 使用快捷指令
+function useQuickCommand(cmd) {
+  const input = document.getElementById('globalChatInput');
+  if (input) {
+    input.value = cmd;
+    sendGlobalMessage();
+  }
+}
+
+// 清空对话
+function clearGlobalChat() {
+  const historyEl = document.getElementById('globalChatHistory');
+  if (historyEl) historyEl.innerHTML = '';
+  globalChatHistory = [];
+  mechToast('对话已清空', 'success');
 }
 
 function setAiModel(model) {
