@@ -13858,6 +13858,8 @@ console.log('✅ 学习工具入口已加载');
 
       <button onclick="switchPaperSubTab('publish')" id="paperTab-publish" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿中心</button>
       <button onclick="switchPaperSubTab('review')" id="paperTab-review" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🤖 审稿人模拟器</button>
+      <button onclick="switchPaperSubTab('trend')" id="paperTab-trend" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📊 研究趋势</button>
+      <button onclick="switchPaperSubTab('writing')" id="paperTab-writing" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">✍️ 写作助手</button>
 
       <button onclick="switchPaperSubTab('sports')" id="paperTab-sports" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">体育学特色</button>
 
@@ -15125,6 +15127,112 @@ console.log('✅ 学习工具入口已加载');
 
       <div id="reviewStatus" style="display:none;margin-bottom:20px"></div>
       <div id="reviewResult" style="display:none;margin-bottom:20px"></div>
+    </div>
+  </div>
+
+  <div id="paperContent-trend" style="display:none">
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #bbf7d0">
+        <h2 style="margin:0 0 8px 0;font-size:20px;color:#166534">📊 研究趋势与热点分析</h2>
+        <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">四模型并行分析（Kimi长文本+DeepSeek推理+GLM中文+混元创意），生成热点主题、研究方法、重要期刊、研究空白四维报告，支持基于趋势自动生成选题。</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">🔍 分析设置</div>
+        <div style="display:flex;gap:15px;flex-wrap:wrap">
+          <div style="flex:2;min-width:250px">
+            <label style="font-size:12px;color:#6b7280;font-weight:600">研究领域 / 关键词</label>
+            <input type="text" id="trendKeyword" placeholder="例如：运动性疲劳、青少年体质健康、运动损伤预防" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none">
+          </div>
+          <div style="flex:1;min-width:120px">
+            <label style="font-size:12px;color:#6b7280;font-weight:600">分析年限</label>
+            <select id="trendYearRange" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+              <option value="3">近3年</option>
+              <option value="5" selected>近5年</option>
+              <option value="10">近10年</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:15px">
+          <button onclick="generateTrendAnalysis()" style="padding:12px 30px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🚀 开始趋势分析（四模型并行）</button>
+        </div>
+      </div>
+
+      <div id="trendStatus" style="display:none;margin-bottom:20px"></div>
+      <div id="trendResult" style="display:none;margin-bottom:20px"></div>
+    </div>
+  </div>
+
+  <div id="paperContent-writing" style="display:none">
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #ddd6fe">
+        <h2 style="margin:0 0 8px 0;font-size:20px;color:#6b21a8">✍️ AI写作助手（增强版）</h2>
+        <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">智能续写、多版本并行生成、风格迁移、实时写作建议、大纲生成——全方位提升论文写作效率。</p>
+      </div>
+
+      <div style="display:flex;gap:15px;flex-wrap:wrap">
+        <!-- 左侧：编辑器 -->
+        <div style="flex:2;min-width:400px">
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:15px;margin-bottom:15px">
+            <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+              <select id="writingSection" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;outline:none;background:#fff">
+                <option value="摘要">摘要</option>
+                <option value="引言">引言</option>
+                <option value="方法">研究方法</option>
+                <option value="结果">研究结果</option>
+                <option value="讨论">讨论</option>
+                <option value="结论">结论</option>
+                <option value="正文" selected>正文</option>
+              </select>
+              <select id="writingStyle" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;outline:none;background:#fff">
+                <option value="academic" selected>学术严谨</option>
+                <option value="concise">简洁明了</option>
+                <option value="narrative">叙事流畅</option>
+                <option value="persuasive">论证有力</option>
+              </select>
+              <button onclick="smartContinueWriting()" style="padding:8px 16px;background:#7c3aed;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">✨ 智能续写</button>
+            </div>
+            <textarea id="writingEditor" oninput="document.getElementById('writingWordCount').textContent=this.value.length" placeholder="在这里开始写作，或粘贴已有内容。选中文字可获取AI建议..." style="width:100%;min-height:400px;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;line-height:1.8;resize:vertical;font-family:inherit;outline:none"></textarea>
+            <div style="margin-top:8px;font-size:11px;color:#9ca3af">字数：<span id="writingWordCount">0</span> | 选中文字后可获取AI建议</div>
+          </div>
+          <div id="writingStatus" style="display:none;margin-bottom:15px"></div>
+        </div>
+
+        <!-- 右侧：工具面板 -->
+        <div style="flex:1;min-width:280px">
+          <!-- 多版本生成 -->
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:15px;margin-bottom:15px">
+            <div style="font-weight:700;color:#1f2937;margin-bottom:10px;font-size:14px">🔄 多版本并行生成</div>
+            <textarea id="writingTopic" placeholder="输入写作主题或要点..." style="width:100%;min-height:60px;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;resize:vertical;font-family:inherit;outline:none;margin-bottom:8px"></textarea>
+            <button onclick="generateMultiVersions()" style="width:100%;padding:8px;background:#0891b2;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">生成3个版本（三模型并行）</button>
+            <button onclick="generateWritingOutline()" style="width:100%;padding:8px;background:#16a34a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;margin-top:6px">📋 生成详细写作大纲</button>
+          </div>
+
+          <!-- 风格迁移 -->
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:15px;margin-bottom:15px">
+            <div style="font-weight:700;color:#1f2937;margin-bottom:10px;font-size:14px">🎨 风格迁移</div>
+            <select id="styleTarget" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;outline:none;background:#fff;margin-bottom:8px">
+              <option value="nature">《自然》期刊风格</option>
+              <option value="science">《科学》期刊风格</option>
+              <option value="sportsci" selected>体育科学期刊风格</option>
+              <option value="popular">科普通俗风格</option>
+            </select>
+            <button onclick="styleTransfer()" style="width:100%;padding:8px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">转换选中文字风格</button>
+          </div>
+
+          <!-- 实时建议 -->
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:15px;margin-bottom:15px">
+            <div style="font-weight:700;color:#1f2937;margin-bottom:10px;font-size:14px">💡 实时写作建议</div>
+            <p style="font-size:11px;color:#6b7280;margin:0 0 8px 0">在编辑器中选中文字，点击下方按钮获取AI修改建议</p>
+            <button onclick="getWritingSuggestions()" style="width:100%;padding:8px;background:#dc2626;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">获取选中文字建议</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 结果区域 -->
+      <div id="writingVersionsResult" style="display:none;margin-bottom:15px"></div>
+      <div id="writingSuggestionsResult" style="display:none;margin-bottom:15px"></div>
+      <div id="writingOutlineResult" style="display:none;margin-bottom:15px"></div>
     </div>
   </div>
 
@@ -57551,7 +57659,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','design','assist','polish','publish','review','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
+  ['projects','editor','format','literature','design','assist','polish','publish','review','trend','writing','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -126297,6 +126405,723 @@ function exportReviewReport() {
   a.click();
   URL.revokeObjectURL(url);
   mechToast('审稿报告已导出', 'success');
+}
+
+// ========== 研究趋势与热点分析 ==========
+let trendAnalysisData = null;
+
+// 生成研究趋势分析
+async function generateTrendAnalysis() {
+  const keyword = document.getElementById('trendKeyword').value.trim();
+  if (!keyword) { mechToast('请输入研究领域或关键词', 'warn'); return; }
+  
+  const yearRange = document.getElementById('trendYearRange').value || '5';
+  const statusEl = document.getElementById('trendStatus');
+  const resultEl = document.getElementById('trendResult');
+  
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">🔍 正在分析「' + keyword + '」的研究趋势...</div><div style="font-size:12px;color:#64748b;margin-top:5px">调用多模型并行分析：热点主题 + 研究方法 + 重要期刊 + 研究空白</div></div>';
+  
+  // 并行生成四个维度的分析
+  const promises = [
+    // 维度1：热点主题与演进
+    callDeepSeekAPI(
+      `你是一位体育科学领域的文献计量学专家。请分析「${keyword}」领域近${yearRange}年的研究热点和演进趋势。
+以JSON格式输出：
+{
+  "hotTopics": [{"topic": "热点主题", "heat": 1-10, "trend": "上升/稳定/下降", "description": "简述"}],
+  "evolution": [{"period": "时间段", "focus": "研究重点", "milestone": "标志性进展"}],
+  "emergingTopics": ["新兴主题1", "新兴主题2"],
+  "decliningTopics": ["衰退主题1", "衰退主题2"]
+}
+只输出JSON。`,
+      `研究领域：${keyword}，时间范围：近${yearRange}年`,
+      2500, 'kimi-k3'
+    ),
+    // 维度2：研究方法与技术
+    callDeepSeekAPI(
+      `你是一位体育科学研究方法专家。请分析「${keyword}」领域常用的研究方法和技术。
+以JSON格式输出：
+{
+  "methods": [{"method": "研究方法", "frequency": "高/中/低", "description": "应用场景", "pros": "优势", "cons": "局限"}],
+  "techniques": ["常用技术1", "常用技术2"],
+  "statisticalMethods": ["统计方法1", "统计方法2"],
+  "emergingMethods": ["新兴方法1", "新兴方法2"],
+  "methodGaps": "方法学上的不足或空白"
+}
+只输出JSON。`,
+      `研究领域：${keyword}`,
+      2000, 'deepseek-v4-pro'
+    ),
+    // 维度3：重要期刊与学者
+    callDeepSeekAPI(
+      `你是一位体育科学领域的学术出版专家。请分析「${keyword}」领域的重要期刊和代表性学者。
+以JSON格式输出：
+{
+  "journals": [{"name": "期刊名", "tier": "顶刊/核心/普通", "focus": "关注方向", "acceptance": "录用难度"}],
+  "conferences": ["重要会议1", "重要会议2"],
+  "institutions": ["顶尖机构1", "顶尖机构2"],
+  "representativeScholars": ["代表性学者1", "代表性学者2"],
+  "citationHotspots": ["高被引主题1", "高被引主题2"]
+}
+只输出JSON。`,
+      `研究领域：${keyword}`,
+      2000, 'glm-5.3'
+    ),
+    // 维度4：研究空白与机会
+    callDeepSeekAPI(
+      `你是一位具有前瞻性的体育科学研究者。请分析「${keyword}」领域的研究空白和未来机会。
+以JSON格式输出：
+{
+  "researchGaps": [{"gap": "研究空白", "reason": "为什么是空白", "opportunity": "研究机会", "feasibility": "高/中/低"}],
+  "futureDirections": ["未来方向1", "未来方向2"],
+  "interdisciplinary": ["跨学科机会1", "跨学科机会2"],
+  "methodologicalOpportunities": ["方法学创新机会1"],
+  "fundingTrends": ["基金资助热点1"],
+  "noveltyScore": 1-10,
+  "summary": "一句话总结该领域的研究机会"
+}
+只输出JSON。`,
+      `研究领域：${keyword}，时间范围：近${yearRange}年`,
+      2500, 'hy4-preview'
+    )
+  ];
+  
+  try {
+    const results = await Promise.all(promises);
+    
+    // 解析各维度结果
+    trendAnalysisData = {
+      keyword: keyword,
+      yearRange: yearRange,
+      hotTopics: parseTrendJSON(results[0]),
+      methods: parseTrendJSON(results[1]),
+      journals: parseTrendJSON(results[2]),
+      gaps: parseTrendJSON(results[3])
+    };
+    
+    renderTrendReport();
+    resultEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    mechToast('趋势分析完成！', 'success');
+  } catch(e) {
+    statusEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">分析失败：' + e.message + '</div>';
+  }
+}
+
+// 解析趋势分析JSON
+function parseTrendJSON(text) {
+  try {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+  } catch(e) {}
+  return {};
+}
+
+// 渲染趋势分析报告
+function renderTrendReport() {
+  const resultEl = document.getElementById('trendResult');
+  if (!resultEl || !trendAnalysisData) return;
+  
+  const d = trendAnalysisData;
+  let html = '';
+  
+  // 标题区
+  html += '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #bbf7d0">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">';
+  html += '<div><h2 style="margin:0 0 5px 0;font-size:20px;color:#166534">📊 「' + d.keyword + '」研究趋势分析</h2>';
+  html += '<div style="font-size:13px;color:#64748b">分析周期：近' + d.yearRange + '年 | 四模型并行分析</div></div>';
+  if (d.gaps && d.gaps.noveltyScore) {
+    html += '<div style="text-align:center"><div style="font-size:28px;font-weight:800;color:#16a34a">' + d.gaps.noveltyScore + '</div><div style="font-size:11px;color:#6b7280">创新机会指数</div></div>';
+  }
+  html += '</div></div>';
+  
+  // 热点主题词云
+  if (d.hotTopics && d.hotTopics.hotTopics && d.hotTopics.hotTopics.length > 0) {
+    html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">';
+    html += '<div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">🔥 研究热点主题（按热度）</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:15px">';
+    d.hotTopics.hotTopics.forEach(t => {
+      const size = 12 + (t.heat || 5) * 1.5;
+      const color = t.trend === '上升' ? '#dc2626' : t.trend === '下降' ? '#6b7280' : '#0891b2';
+      const bg = t.trend === '上升' ? '#fef2f2' : t.trend === '下降' ? '#f3f4f6' : '#f0f9ff';
+      html += '<span style="padding:6px 14px;background:' + bg + ';color:' + color + ';border-radius:20px;font-size:' + size + 'px;font-weight:600;border:1px solid ' + color + '22" title="' + (t.description || '') + '">' + t.topic + ' ' + (t.trend === '上升' ? '↑' : t.trend === '下降' ? '↓' : '→') + '</span>';
+    });
+    html += '</div>';
+    
+    // 新兴vs衰退
+    if (d.hotTopics.emergingTopics && d.hotTopics.emergingTopics.length > 0) {
+      html += '<div style="margin-top:10px"><span style="font-size:12px;font-weight:600;color:#16a34a">🌱 新兴主题：</span>';
+      d.hotTopics.emergingTopics.forEach(t => { html += '<span style="display:inline-block;margin:2px 4px;padding:3px 10px;background:#f0fdf4;color:#16a34a;border-radius:12px;font-size:11px">' + t + '</span>'; });
+      html += '</div>';
+    }
+    if (d.hotTopics.decliningTopics && d.hotTopics.decliningTopics.length > 0) {
+      html += '<div style="margin-top:8px"><span style="font-size:12px;font-weight:600;color:#6b7280">📉 衰退主题：</span>';
+      d.hotTopics.decliningTopics.forEach(t => { html += '<span style="display:inline-block;margin:2px 4px;padding:3px 10px;background:#f3f4f6;color:#6b7280;border-radius:12px;font-size:11px">' + t + '</span>'; });
+      html += '</div>';
+    }
+    
+    // 演进时间线
+    if (d.hotTopics.evolution && d.hotTopics.evolution.length > 0) {
+      html += '<div style="margin-top:15px;padding-top:15px;border-top:1px solid #e5e7eb">';
+      html += '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:10px">📅 研究演进时间线</div>';
+      html += '<div style="position:relative;padding-left:20px">';
+      d.hotTopics.evolution.forEach((e, i) => {
+        html += '<div style="position:relative;margin-bottom:12px;padding-left:15px;border-left:2px solid #16a34a">';
+        html += '<div style="position:absolute;left:-6px;top:0;width:10px;height:10px;background:#16a34a;border-radius:50%"></div>';
+        html += '<div style="font-size:12px;font-weight:700;color:#16a34a">' + e.period + '</div>';
+        html += '<div style="font-size:12px;color:#374151;margin-top:2px"><b>研究重点：</b>' + e.focus + '</div>';
+        if (e.milestone) html += '<div style="font-size:11px;color:#6b7280;margin-top:1px">🏆 ' + e.milestone + '</div>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    }
+    html += '</div>';
+  }
+  
+  // 研究方法 + 重要期刊（两列）
+  html += '<div style="display:flex;gap:15px;flex-wrap:wrap;margin-bottom:20px">';
+  
+  // 研究方法
+  if (d.methods && d.methods.methods && d.methods.methods.length > 0) {
+    html += '<div style="flex:1;min-width:300px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">';
+    html += '<div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">🔬 常用研究方法</div>';
+    d.methods.methods.forEach((m, i) => {
+      const freqColor = m.frequency === '高' ? '#16a34a' : m.frequency === '中' ? '#f59e0b' : '#6b7280';
+      html += '<div style="padding:10px;background:#f9fafb;border-radius:8px;margin-bottom:8px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;font-size:13px;color:#1f2937">' + (i+1) + '. ' + m.method + '</span><span style="font-size:11px;padding:2px 8px;background:' + freqColor + '15;color:' + freqColor + ';border-radius:10px">' + m.frequency + '频</span></div>';
+      if (m.description) html += '<div style="font-size:11px;color:#6b7280;margin-top:3px">📝 ' + m.description + '</div>';
+      if (m.pros) html += '<div style="font-size:11px;color:#16a34a;margin-top:2px">✅ ' + m.pros + '</div>';
+      if (m.cons) html += '<div style="font-size:11px;color:#dc2626;margin-top:1px">⚠️ ' + m.cons + '</div>';
+      html += '</div>';
+    });
+    if (d.methods.emergingMethods && d.methods.emergingMethods.length > 0) {
+      html += '<div style="margin-top:10px;padding:8px 12px;background:#f0fdf4;border-radius:6px"><span style="font-size:11px;font-weight:600;color:#16a34a">🚀 新兴方法：</span><span style="font-size:11px;color:#374151">' + d.methods.emergingMethods.join('、') + '</span></div>';
+    }
+    if (d.methods.methodGaps) {
+      html += '<div style="margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px"><span style="font-size:11px;font-weight:600;color:#dc2626">🔍 方法学空白：</span><span style="font-size:11px;color:#374151">' + d.methods.methodGaps + '</span></div>';
+    }
+    html += '</div>';
+  }
+  
+  // 重要期刊
+  if (d.journals && d.journals.journals && d.journals.journals.length > 0) {
+    html += '<div style="flex:1;min-width:300px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">';
+    html += '<div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📰 重要期刊与发表阵地</div>';
+    d.journals.journals.forEach((j, i) => {
+      const tierColor = j.tier === '顶刊' ? '#dc2626' : j.tier === '核心' ? '#f59e0b' : '#6b7280';
+      html += '<div style="padding:10px;background:#f9fafb;border-radius:8px;margin-bottom:8px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;font-size:13px;color:#1f2937">' + (i+1) + '. ' + j.name + '</span><span style="font-size:11px;padding:2px 8px;background:' + tierColor + '15;color:' + tierColor + ';border-radius:10px">' + j.tier + '</span></div>';
+      if (j.focus) html += '<div style="font-size:11px;color:#6b7280;margin-top:3px">🎯 ' + j.focus + '</div>';
+      if (j.acceptance) html += '<div style="font-size:11px;color:#f59e0b;margin-top:1px">📊 录用难度：' + j.acceptance + '</div>';
+      html += '</div>';
+    });
+    if (d.journals.conferences && d.journals.conferences.length > 0) {
+      html += '<div style="margin-top:10px;padding:8px 12px;background:#f0f9ff;border-radius:6px"><span style="font-size:11px;font-weight:600;color:#0891b2">🏛️ 重要会议：</span><span style="font-size:11px;color:#374151">' + d.journals.conferences.join('、') + '</span></div>';
+    }
+    if (d.journals.institutions && d.journals.institutions.length > 0) {
+      html += '<div style="margin-top:8px;padding:8px 12px;background:#faf5ff;border-radius:6px"><span style="font-size:11px;font-weight:600;color:#7c3aed">🏫 顶尖机构：</span><span style="font-size:11px;color:#374151">' + d.journals.institutions.join('、') + '</span></div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  
+  // 研究空白与机会
+  if (d.gaps && d.gaps.researchGaps && d.gaps.researchGaps.length > 0) {
+    html += '<div style="background:linear-gradient(135deg,#fefce8,#fef9c3);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #fde68a">';
+    html += '<div style="font-weight:700;color:#92400e;margin-bottom:15px;font-size:15px">💡 研究空白与创新机会（投稿/选题核心参考）</div>';
+    if (d.gaps.summary) html += '<div style="font-size:13px;color:#78350f;background:#fff;padding:10px 15px;border-radius:8px;margin-bottom:15px">📝 ' + d.gaps.summary + '</div>';
+    
+    d.gaps.researchGaps.forEach((g, i) => {
+      const feasColor = g.feasibility === '高' ? '#16a34a' : g.feasibility === '中' ? '#f59e0b' : '#dc2626';
+      html += '<div style="background:#fff;padding:12px 15px;border-radius:8px;margin-bottom:10px;border-left:4px solid #f59e0b">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div style="font-weight:600;font-size:13px;color:#1f2937">空白' + (i+1) + '：' + g.gap + '</div><span style="font-size:11px;padding:2px 8px;background:' + feasColor + '15;color:' + feasColor + ';border-radius:10px;white-space:nowrap">可行性：' + (g.feasibility || '中') + '</span></div>';
+      if (g.reason) html += '<div style="font-size:12px;color:#6b7280;margin-top:5px">🔍 原因：' + g.reason + '</div>';
+      if (g.opportunity) html += '<div style="font-size:12px;color:#16a34a;margin-top:3px">🚀 机会：' + g.opportunity + '</div>';
+      html += '</div>';
+    });
+    
+    // 未来方向 + 跨学科
+    html += '<div style="display:flex;gap:15px;flex-wrap:wrap;margin-top:15px">';
+    if (d.gaps.futureDirections && d.gaps.futureDirections.length > 0) {
+      html += '<div style="flex:1;min-width:200px"><div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:5px">🔮 未来方向</div>';
+      d.gaps.futureDirections.forEach(f => { html += '<div style="font-size:11px;color:#78350f;margin:2px 0">• ' + f + '</div>'; });
+      html += '</div>';
+    }
+    if (d.gaps.interdisciplinary && d.gaps.interdisciplinary.length > 0) {
+      html += '<div style="flex:1;min-width:200px"><div style="font-size:12px;font-weight:600;color:#7c3aed;margin-bottom:5px">🌐 跨学科机会</div>';
+      d.gaps.interdisciplinary.forEach(f => { html += '<div style="font-size:11px;color:#6b21a8;margin:2px 0">• ' + f + '</div>'; });
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '</div>';
+  }
+  
+  // 操作按钮
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">';
+  html += '<button onclick="generateTrendAnalysis()" style="padding:10px 20px;background:#0891b2;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">🔄 重新分析</button>';
+  html += '<button onclick="exportTrendReport()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">📥 导出趋势报告</button>';
+  html += '<button onclick="generateTopicFromTrend()" style="padding:10px 20px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">💡 基于趋势生成选题</button>';
+  html += '</div>';
+  
+  resultEl.innerHTML = html;
+}
+
+// 导出趋势报告
+function exportTrendReport() {
+  if (!trendAnalysisData) { mechToast('请先生成趋势分析', 'warn'); return; }
+  const d = trendAnalysisData;
+  let text = '研究趋势分析报告
+';
+  text += '研究领域：' + d.keyword + '
+';
+  text += '分析周期：近' + d.yearRange + '年
+
+';
+  
+  if (d.hotTopics && d.hotTopics.hotTopics) {
+    text += '=== 研究热点主题 ===
+';
+    d.hotTopics.hotTopics.forEach(t => { text += '- ' + t.topic + '（热度：' + t.heat + '/10，趋势：' + t.trend + '）
+  ' + (t.description || '') + '
+'; });
+    text += '
+';
+  }
+  if (d.methods && d.methods.methods) {
+    text += '=== 常用研究方法 ===
+';
+    d.methods.methods.forEach(m => { text += '- ' + m.method + '（频率：' + m.frequency + '）
+  应用：' + (m.description || '') + '
+  优势：' + (m.pros || '') + '
+  局限：' + (m.cons || '') + '
+'; });
+    text += '
+';
+  }
+  if (d.journals && d.journals.journals) {
+    text += '=== 重要期刊 ===
+';
+    d.journals.journals.forEach(j => { text += '- ' + j.name + '（' + j.tier + '）
+  关注：' + (j.focus || '') + '
+  难度：' + (j.acceptance || '') + '
+'; });
+    text += '
+';
+  }
+  if (d.gaps && d.gaps.researchGaps) {
+    text += '=== 研究空白与机会 ===
+';
+    d.gaps.researchGaps.forEach(g => { text += '- ' + g.gap + '
+  原因：' + (g.reason || '') + '
+  机会：' + (g.opportunity || '') + '
+  可行性：' + (g.feasibility || '') + '
+'; });
+  }
+  
+  const blob = new Blob(['﻿' + text], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '研究趋势分析报告_' + d.keyword + '.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+  mechToast('趋势报告已导出', 'success');
+}
+
+// 基于趋势生成选题
+async function generateTopicFromTrend() {
+  if (!trendAnalysisData) { mechToast('请先生成趋势分析', 'warn'); return; }
+  const gaps = trendAnalysisData.gaps || {};
+  const gapText = (gaps.researchGaps || []).map(g => g.gap + '：' + g.opportunity).join('；');
+  
+  mechToast('正在基于研究空白生成选题建议...', 'info');
+  
+  try {
+    const result = await callDeepSeekAPI(
+      `你是一位体育科学领域的选题专家。基于以下研究空白，生成5个具体的论文选题建议。
+要求：
+1. 每个选题包含：题目、研究问题、创新点、可行性评估、建议方法
+2. 选题要具体、可操作，不要太宽泛
+3. 优先选择可行性高的研究空白
+4. 以JSON格式输出：{"topics":[{"title":"题目","researchQuestion":"研究问题","innovation":"创新点","feasibility":"高/中/低","method":"建议方法"}]}`,
+      `研究领域：${trendAnalysisData.keyword}
+研究空白：${gapText}
+未来方向：${(gaps.futureDirections || []).join('、')}`,
+      3000, 'glm-5.3'
+    );
+    
+    const parsed = parseTrendJSON(result);
+    if (parsed.topics && parsed.topics.length > 0) {
+      let html = '<div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);padding:20px;border-radius:12px;margin-top:15px;border:1px solid #ddd6fe">';
+      html += '<div style="font-weight:700;color:#6b21a8;margin-bottom:15px">💡 基于研究趋势的选题建议</div>';
+      parsed.topics.forEach((t, i) => {
+        const feasColor = t.feasibility === '高' ? '#16a34a' : t.feasibility === '中' ? '#f59e0b' : '#dc2626';
+        html += '<div style="background:#fff;padding:12px 15px;border-radius:8px;margin-bottom:10px">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div style="font-weight:700;font-size:14px;color:#1f2937">选题' + (i+1) + '：' + t.title + '</div><span style="font-size:11px;padding:2px 8px;background:' + feasColor + '15;color:' + feasColor + ';border-radius:10px;white-space:nowrap">可行性：' + (t.feasibility || '中') + '</span></div>';
+        if (t.researchQuestion) html += '<div style="font-size:12px;color:#6b7280;margin-top:5px">❓ 研究问题：' + t.researchQuestion + '</div>';
+        if (t.innovation) html += '<div style="font-size:12px;color:#16a34a;margin-top:3px">✨ 创新点：' + t.innovation + '</div>';
+        if (t.method) html += '<div style="font-size:12px;color:#0891b2;margin-top:3px">🔬 建议方法：' + t.method + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      
+      const resultEl = document.getElementById('trendResult');
+      resultEl.insertAdjacentHTML('beforeend', html);
+      mechToast('选题建议生成完成！', 'success');
+    }
+  } catch(e) {
+    mechToast('选题生成失败：' + e.message, 'error');
+  }
+}
+
+// ========== 写作助手增强 ==========
+let writingVersions = [];
+let writingHistory = [];
+
+// 智能续写
+async function smartContinueWriting() {
+  const editor = document.getElementById('writingEditor');
+  if (!editor) return;
+  const text = editor.value;
+  if (!text.trim()) { mechToast('请先输入一些内容', 'warn'); return; }
+  
+  const section = document.getElementById('writingSection').value || '正文';
+  const style = document.getElementById('writingStyle').value || 'academic';
+  
+  const statusEl = document.getElementById('writingStatus');
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = '<div style="padding:10px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0369a1">✍️ AI正在续写...</div>';
+  
+  const styleDesc = {
+    academic: '严谨学术风格，使用专业术语，逻辑严密',
+    concise: '简洁明了，避免冗余，直击要点',
+    narrative: '叙事性强，有故事感，可读性高',
+    persuasive: '论证有力，说服力强，适合讨论部分'
+  };
+  
+  try {
+    const result = await callAIRouted('introduction' in {introduction:1} ? 'introduction' : 'general',
+      `你是一位体育科学领域的资深论文作者。请基于已有内容续写下一段。
+写作风格：${styleDesc[style] || styleDesc.academic}
+当前章节：${section}
+要求：
+1. 与前文内容自然衔接
+2. 保持学术写作规范
+3. 字数约200-300字
+4. 不要重复前文内容
+5. 只输出续写的内容，不要其他说明`,
+      `已有内容（最后500字）：
+
+${text.substring(Math.max(0, text.length - 500))}`,
+      1500
+    );
+    
+    // 插入到光标位置或末尾
+    const cursorPos = editor.selectionStart || editor.value.length;
+    const before = editor.value.substring(0, cursorPos);
+    const after = editor.value.substring(cursorPos);
+    editor.value = before + '
+
+' + result.trim() + '
+
+' + after;
+    
+    // 记录历史
+    writingHistory.push({ action: 'continue', content: result, time: Date.now() });
+    if (writingHistory.length > 50) writingHistory.shift();
+    
+    statusEl.innerHTML = '<div style="padding:10px;background:#f0fdf4;border-radius:8px;font-size:13px;color:#16a34a">✅ 续写完成，已插入到光标位置</div>';
+    setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+  } catch(e) {
+    statusEl.innerHTML = '<div style="padding:10px;background:#fef2f2;border-radius:8px;font-size:13px;color:#dc2626">续写失败：' + e.message + '</div>';
+  }
+}
+
+// 多版本并行生成
+async function generateMultiVersions() {
+  const topic = document.getElementById('writingTopic').value.trim();
+  if (!topic) { mechToast('请输入写作主题或要点', 'warn'); return; }
+  
+  const section = document.getElementById('writingSection').value || '正文';
+  const statusEl = document.getElementById('writingStatus');
+  const resultEl = document.getElementById('writingVersionsResult');
+  
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  statusEl.innerHTML = '<div style="padding:10px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0369a1">🔄 三个模型并行生成不同风格版本...</div>';
+  
+  // 三个模型，三种风格
+  const configs = [
+    { model: 'glm-5.3', style: '学术严谨', desc: '逻辑严密，术语规范，适合期刊投稿' },
+    { model: 'hy4-preview', style: '流畅易读', desc: '表达流畅，可读性强，适合会议报告' },
+    { model: 'deepseek-v4-pro', style: '深度论证', desc: '论证深入，观点犀利，适合讨论部分' }
+  ];
+  
+  try {
+    const promises = configs.map(async (cfg) => {
+      const result = await callDeepSeekAPI(
+        `你是一位体育科学领域的论文作者。请根据以下主题撰写一段${cfg.style}风格的内容。
+当前章节：${section}
+风格特点：${cfg.desc}
+要求：
+1. 紧扣主题，内容充实
+2. 字数约250-350字
+3. 只输出正文内容，不要标题或其他说明`,
+        `写作主题/要点：${topic}`,
+        1500, cfg.model
+      );
+      return { ...cfg, content: result.trim() };
+    });
+    
+    writingVersions = await Promise.all(promises);
+    
+    // 渲染版本对比
+    let html = '<div style="display:flex;gap:15px;flex-wrap:wrap">';
+    writingVersions.forEach((v, i) => {
+      const colors = ['#0891b2', '#7c3aed', '#dc2626'];
+      html += '<div style="flex:1;min-width:280px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">';
+      html += '<div style="padding:10px 15px;background:' + colors[i] + ';color:#fff;display:flex;justify-content:space-between;align-items:center">';
+      html += '<div><span style="font-weight:700">版本' + (i+1) + '</span> <span style="font-size:11px;opacity:0.9">(' + v.style + ' · ' + v.model + ')</span></div>';
+      html += '<button onclick="useWritingVersion(' + i + ')" style="padding:4px 10px;background:#fff;color:' + colors[i] + ';border:none;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">使用此版本</button>';
+      html += '</div>';
+      html += '<div style="padding:12px 15px;font-size:12px;line-height:1.8;color:#374151;max-height:300px;overflow-y:auto">' + v.content.replace(/
+/g, '<br>') + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    mechToast('三个版本生成完成！', 'success');
+  } catch(e) {
+    statusEl.innerHTML = '<div style="padding:10px;background:#fef2f2;border-radius:8px;font-size:13px;color:#dc2626">生成失败：' + e.message + '</div>';
+  }
+}
+
+// 使用某个版本
+function useWritingVersion(index) {
+  const editor = document.getElementById('writingEditor');
+  if (!editor || !writingVersions[index]) return;
+  const cursorPos = editor.selectionStart || editor.value.length;
+  const before = editor.value.substring(0, cursorPos);
+  const after = editor.value.substring(cursorPos);
+  editor.value = before + '
+
+' + writingVersions[index].content + '
+
+' + after;
+  mechToast('版本' + (index+1) + '已插入到编辑器', 'success');
+}
+
+// 风格迁移
+async function styleTransfer() {
+  const editor = document.getElementById('writingEditor');
+  if (!editor) return;
+  const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd) || editor.value;
+  if (!selectedText.trim()) { mechToast('请选中要转换风格的文字，或确保编辑器有内容', 'warn'); return; }
+  
+  const targetStyle = document.getElementById('styleTarget').value || 'nature';
+  const statusEl = document.getElementById('writingStatus');
+  
+  const styleMap = {
+    nature: '《自然》期刊风格：简洁、精准、创新性强',
+    science: '《科学》期刊风格：严谨、广泛影响力、跨学科',
+    sportsci: '体育科学期刊风格：实证导向、方法严谨、应用性强',
+    popular: '科普风格：通俗易懂、生动有趣、适合大众'
+  };
+  
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = '<div style="padding:10px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0369a1">🎨 正在进行风格迁移...</div>';
+  
+  try {
+    const result = await callDeepSeekAPI(
+      `你是一位专业的学术写作编辑。请将以下文字转换为目标风格。
+目标风格：${styleMap[targetStyle] || styleMap.nature}
+要求：
+1. 保持原文的核心内容和观点不变
+2. 调整语言表达、句式结构、用词习惯以匹配目标风格
+3. 不要添加原文没有的新观点
+4. 只输出转换后的文字，不要其他说明`,
+      `原文：
+
+${selectedText.substring(0, 3000)}`,
+      2000, 'glm-5.3'
+    );
+    
+    // 替换选中的文字
+    if (editor.selectionStart !== editor.selectionEnd) {
+      const before = editor.value.substring(0, editor.selectionStart);
+      const after = editor.value.substring(editor.selectionEnd);
+      editor.value = before + result.trim() + after;
+    } else {
+      editor.value = result.trim();
+    }
+    
+    statusEl.innerHTML = '<div style="padding:10px;background:#f0fdf4;border-radius:8px;font-size:13px;color:#16a34a">✅ 风格迁移完成</div>';
+    setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+  } catch(e) {
+    statusEl.innerHTML = '<div style="padding:10px;background:#fef2f2;border-radius:8px;font-size:13px;color:#dc2626">风格迁移失败：' + e.message + '</div>';
+  }
+}
+
+// 实时建议（选中文字获取建议）
+async function getWritingSuggestions() {
+  const editor = document.getElementById('writingEditor');
+  if (!editor) return;
+  const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
+  if (!selectedText.trim()) { mechToast('请先选中要获取建议的文字', 'warn'); return; }
+  
+  const resultEl = document.getElementById('writingSuggestionsResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0369a1">💡 正在分析并生成建议...</div>';
+  
+  try {
+    const result = await callDeepSeekAPI(
+      `你是一位资深的学术论文编辑。请对以下选中文字给出修改建议。
+从以下几个维度分析：
+1. 语言表达：用词是否准确、句式是否多样、是否有冗余
+2. 逻辑结构：论证是否严密、过渡是否自然、层次是否清晰
+3. 学术规范：术语使用是否准确、引用格式是否正确
+4. 改进建议：给出具体的修改版本
+
+以JSON格式输出：
+{
+  "overall": "总体评价",
+  "language": {"issues": ["问题1"], "suggestions": ["建议1"]},
+  "logic": {"issues": ["问题1"], "suggestions": ["建议1"]},
+  "academic": {"issues": ["问题1"], "suggestions": ["建议1"]},
+  "revisedVersion": "修改后的版本"
+}
+只输出JSON。`,
+      `选中文字：
+
+${selectedText.substring(0, 2000)}`,
+      2000, 'deepseek-v4-pro'
+    );
+    
+    const parsed = parseTrendJSON(result);
+    
+    let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">';
+    html += '<div style="padding:12px 15px;background:#7c3aed;color:#fff;font-weight:700">💡 AI写作建议</div>';
+    html += '<div style="padding:15px">';
+    if (parsed.overall) html += '<div style="font-size:13px;color:#374151;margin-bottom:12px;padding:10px;background:#faf5ff;border-radius:6px">📝 ' + parsed.overall + '</div>';
+    
+    const dimensions = [
+      { key: 'language', label: '语言表达', icon: '📝', color: '#0891b2' },
+      { key: 'logic', label: '逻辑结构', icon: '🔗', color: '#16a34a' },
+      { key: 'academic', label: '学术规范', icon: '🎓', color: '#f59e0b' }
+    ];
+    
+    dimensions.forEach(d => {
+      const data = parsed[d.key] || {};
+      if (data.issues && data.issues.length > 0) {
+        html += '<div style="margin-bottom:12px">';
+        html += '<div style="font-size:12px;font-weight:700;color:' + d.color + ';margin-bottom:5px">' + d.icon + ' ' + d.label + '</div>';
+        data.issues.forEach((iss, i) => {
+          html += '<div style="font-size:11px;color:#dc2626;margin:2px 0">❌ ' + iss + '</div>';
+          if (data.suggestions && data.suggestions[i]) {
+            html += '<div style="font-size:11px;color:#16a34a;margin:1px 0 4px 15px">✅ ' + data.suggestions[i] + '</div>';
+          }
+        });
+        html += '</div>';
+      }
+    });
+    
+    if (parsed.revisedVersion) {
+      html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb">';
+      html += '<div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:8px">✨ 修改后版本</div>';
+      html += '<div style="font-size:12px;line-height:1.8;color:#374151;background:#faf5ff;padding:10px;border-radius:6px">' + parsed.revisedVersion.replace(/
+/g, '<br>') + '</div>';
+      html += '<button onclick="applyRevisedVersion()" style="margin-top:8px;padding:6px 14px;background:#7c3aed;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">应用修改版本</button>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+    
+    resultEl.innerHTML = html;
+    window._lastRevisedVersion = parsed.revisedVersion;
+  } catch(e) {
+    resultEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">建议生成失败：' + e.message + '</div>';
+  }
+}
+
+// 应用修改版本
+function applyRevisedVersion() {
+  const editor = document.getElementById('writingEditor');
+  if (!editor || !window._lastRevisedVersion) return;
+  if (editor.selectionStart !== editor.selectionEnd) {
+    const before = editor.value.substring(0, editor.selectionStart);
+    const after = editor.value.substring(editor.selectionEnd);
+    editor.value = before + window._lastRevisedVersion.trim() + after;
+    mechToast('修改版本已应用', 'success');
+  } else {
+    mechToast('请先选中要替换的文字', 'warn');
+  }
+}
+
+// 生成写作大纲
+async function generateWritingOutline() {
+  const topic = document.getElementById('writingTopic').value.trim();
+  if (!topic) { mechToast('请输入写作主题', 'warn'); return; }
+  
+  const resultEl = document.getElementById('writingOutlineResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0369a1">📋 正在生成详细写作大纲...</div>';
+  
+  try {
+    const result = await callDeepSeekAPI(
+      `你是一位体育科学领域的论文写作导师。请为以下主题生成详细的论文写作大纲。
+要求：
+1. 包含完整的论文章节结构
+2. 每个章节列出核心要点和写作建议
+3. 标注每个部分的建议字数
+4. 给出研究方法建议
+5. 以JSON格式输出：
+{
+  "title": "建议论文题目",
+  "sections": [
+    {"name": "章节名", "wordCount": "建议字数", "keyPoints": ["要点1", "要点2"], "writingTips": "写作建议"}
+  ],
+  "methods": "研究方法建议",
+  "innovation": "创新点建议"
+}
+只输出JSON。`,
+      `论文主题：${topic}`,
+      2500, 'kimi-k3'
+    );
+    
+    const parsed = parseTrendJSON(result);
+    
+    let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">';
+    html += '<div style="padding:12px 15px;background:#16a34a;color:#fff;font-weight:700">📋 论文写作大纲</div>';
+    html += '<div style="padding:15px">';
+    if (parsed.title) html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:12px;padding:10px;background:#f0fdf4;border-radius:6px">📝 建议题目：' + parsed.title + '</div>';
+    
+    if (parsed.sections && parsed.sections.length > 0) {
+      parsed.sections.forEach((sec, i) => {
+        html += '<div style="margin-bottom:12px;padding:10px 12px;background:#f9fafb;border-radius:6px;border-left:3px solid #16a34a">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:13px;color:#1f2937">' + (i+1) + '. ' + sec.name + '</span><span style="font-size:11px;color:#6b7280">建议' + (sec.wordCount || '?') + '字</span></div>';
+        if (sec.keyPoints && sec.keyPoints.length > 0) {
+          html += '<div style="margin-top:6px"><span style="font-size:11px;font-weight:600;color:#374151">核心要点：</span>';
+          sec.keyPoints.forEach(p => { html += '<span style="display:inline-block;margin:2px 4px;padding:2px 8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;font-size:11px;color:#6b7280">' + p + '</span>'; });
+          html += '</div>';
+        }
+        if (sec.writingTips) html += '<div style="font-size:11px;color:#16a34a;margin-top:4px">💡 ' + sec.writingTips + '</div>';
+        html += '</div>';
+      });
+    }
+    
+    if (parsed.methods) html += '<div style="margin-top:10px;padding:10px 12px;background:#f0f9ff;border-radius:6px"><span style="font-size:12px;font-weight:600;color:#0369a1">🔬 研究方法：</span><span style="font-size:12px;color:#374151">' + parsed.methods + '</span></div>';
+    if (parsed.innovation) html += '<div style="margin-top:8px;padding:10px 12px;background:#fefce8;border-radius:6px"><span style="font-size:12px;font-weight:600;color:#92400e">✨ 创新点：</span><span style="font-size:12px;color:#374151">' + parsed.innovation + '</span></div>';
+    
+    html += '</div></div>';
+    resultEl.innerHTML = html;
+    mechToast('写作大纲生成完成！', 'success');
+  } catch(e) {
+    resultEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">大纲生成失败：' + e.message + '</div>';
+  }
 }
 
 function setAiModel(model) {
