@@ -17024,10 +17024,45 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="mechContent-paper" style="display:none">
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:40px;text-align:center">
-          <div style="font-size:48px;margin-bottom:16px">📝</div>
-          <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:8px">论文机制图</div>
-          <div style="font-size:13px;color:#64748b;max-width:500px;margin:0 auto;line-height:1.8">期刊风格适配（JAPL/Sports Med/Cell 系列）、出版级输出（300dpi/CMYK/矢量）、图注自动生成、图号管理、图文一致性检查、审稿人视角审查、修改版本对比。P2 阶段上线。</div>
+        <!-- 论文信息输入 -->
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:16px">
+          <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:12px">📝 从论文提取机制图</div>
+          <div style="margin-bottom:12px">
+            <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">论文标题</label>
+            <input type="text" id="paperMechTitle" placeholder="例如：运动诱导骨骼肌线粒体生物发生的分子机制" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px">
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">论文摘要（可选，提供后提取更准确）</label>
+            <textarea id="paperMechAbstract" rows="4" placeholder="粘贴论文摘要，AI 将从中提取核心分子机制通路..." style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;resize:vertical"></textarea>
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">科目</label>
+            <select id="paperMechSubject" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;background:#fff">
+              <option value="运动生物化学">运动生物化学</option>
+              <option value="运动生理学">运动生理学</option>
+              <option value="运动医学">运动医学</option>
+              <option value="运动康复学">运动康复学</option>
+              <option value="体育教育训练学">体育教育训练学</option>
+              <option value="运动人体科学">运动人体科学</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <button onclick="extractMechanismFromPaper()" style="background:#7c3aed;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">🧠 AI 提取核心机制</button>
+        </div>
+
+        <!-- 提取状态 -->
+        <div id="paperMechStatus" style="display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:#0369a1"></div>
+
+        <!-- 提取结果 -->
+        <div id="paperMechResult" style="display:none">
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px">
+            <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:8px">📋 AI 提取的机制描述（可编辑）</div>
+            <textarea id="paperMechExtracted" rows="5" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;resize:vertical;background:#f8fafc"></textarea>
+            <div style="margin-top:12px;display:flex;gap:10px">
+              <button onclick="generatePaperMechanism()" style="background:#0891b2;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">🎨 生成机制图</button>
+              <span style="font-size:11px;color:#94a3b8;align-self:center">将自动切换到机制图生成面板，调用七模型协作生成</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -129114,6 +129149,57 @@ function previewMechPathway(id){
   var win = window.open('', '_blank');
   win.document.write('<html><head><meta charset="UTF-8"><title>' + p.name + '</title><style>body{font-family:sans-serif;max-width:1000px;margin:30px auto;padding:20px}h2{color:#0891b2}p{color:#475569;line-height:1.8}.svg-box{background:#f8fafc;padding:20px;border-radius:10px;overflow:auto}</style></head><body><h2>' + p.name + '</h2><p><b>科目：</b>' + p.subject + ' | <b>分类：</b>' + p.category + '</p><p>' + p.description + '</p><div class="svg-box">' + svg + '</div><h3 style="color:#0f172a;margin-top:24px">整体机制讲解</h3><p style="color:#475569;line-height:1.8">' + (p.data.overallNarration || '') + '</p></body></html>');
 }
+
+// ===== 运动科学机制库：论文机制图（P2） =====
+// 从论文标题/摘要/关键词中提取核心机制，自动生成机制图
+
+async function extractMechanismFromPaper(){
+  var title = document.getElementById('paperMechTitle').value.trim();
+  var abstract = document.getElementById('paperMechAbstract').value.trim();
+  var subject = document.getElementById('paperMechSubject').value;
+  if(!title && !abstract){ mechToast('请输入论文标题或摘要'); return; }
+
+  var statusEl = document.getElementById('paperMechStatus');
+  var resultEl = document.getElementById('paperMechResult');
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  statusEl.innerHTML = '🧠 <b>deepseek-v4-pro</b> 正在分析论文，提取核心机制通路...';
+
+  try{
+    var prompt = '你是运动科学论文机制分析专家。请分析以下论文信息，提取其中的核心分子机制通路，用1-2段话详细描述（包含关键分子、信号通路、调节关系、运动适应变化）。不要输出JSON，只输出机制描述文字。\\n\\n';
+    if(title){ prompt += '论文标题：' + title + '\\n'; }
+    if(abstract){ prompt += '论文摘要：' + abstract + '\\n'; }
+    if(subject){ prompt += '科目：' + subject + '\\n'; }
+
+    var mechanism = await callModelWithTimeout('你是运动生物化学与运动生理学专家，擅长从论文中提取分子机制。', prompt, 800, 'deepseek-v4-pro', 30000);
+    if(!mechanism){ throw new Error('提取失败，请重试'); }
+
+    statusEl.innerHTML = '✅ 机制提取完成！已自动填入机制图生成面板，点击下方按钮生成机制图。';
+    document.getElementById('paperMechExtracted').value = mechanism;
+    resultEl.style.display = 'block';
+
+  }catch(e){
+    statusEl.innerHTML = '❌ 提取失败：' + e.message + '。请检查输入内容或重试。';
+  }
+}
+
+function generatePaperMechanism(){
+  var mechanism = document.getElementById('paperMechExtracted').value.trim();
+  var subject = document.getElementById('paperMechSubject').value;
+  if(!mechanism){ mechToast('请先提取机制描述'); return; }
+
+  // 填入机制图生成面板
+  document.getElementById('mechDesc').value = mechanism;
+  document.getElementById('mechSubject').value = subject || '运动科学';
+  // 切换到机制图生成面板
+  switchMechanismSubTab('gen');
+  // 延迟调用生成（等待面板切换）
+  setTimeout(function(){
+    generateMechanism();
+  }, 200);
+  mechToast('已切换到机制图生成面板，正在生成...');
+}
+
 
 
 
