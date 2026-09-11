@@ -127818,6 +127818,7 @@ async function hyStudentView(){
 // ========== PPT 课件生成 ==========
 let __pptSlides = [];
 let __pptEnhanceResults = null;
+let __pptSlidesBeforeEnhance = null;
 let __pptCurrent = 0;
 let __pptGridView = false;
 
@@ -128439,6 +128440,7 @@ function applyAllEnhancements(){
   if(!__pptEnhanceResults){ alert('请先运行"六路全增强"'); return; }
   let appliedPages = 0;
   const er = __pptEnhanceResults;
+  __pptSlidesBeforeEnhance = JSON.parse(JSON.stringify(__pptSlides));
 
   // Kimi 资源 → 备注
   const kimiMap = parseEnhanceByPage(er.kimi);
@@ -128500,7 +128502,87 @@ function applyAllEnhancements(){
   }
 
   renderPptSlides();
-  alert('六路增强结果已全部应用到课件（涉及 ' + Math.min(appliedPages, __pptSlides.length) + ' 页 + 重难点追加页）');
+  renderEnhanceChangeLog();
+  alert('六路增强结果已全部应用到课件（涉及 ' + Math.min(appliedPages, __pptSlides.length) + ' 页 + 重难点追加页）。可在下方变更记录中逐条撤销或全部回退。');
+}
+
+// ========== 增强变更记录与撤销 ==========
+function renderEnhanceChangeLog(){
+  if(!__pptSlidesBeforeEnhance) return;
+  const resEl = document.getElementById('pptResult');
+  if(!resEl) return;
+  // 移除旧记录
+  const old = document.getElementById('pptChangeLog');
+  if(old) old.remove();
+  const before = __pptSlidesBeforeEnhance;
+  const changes = [];
+  // 原有页备注变化
+  for(var i=0;i<before.length;i++){
+    if(i < __pptSlides.length){
+      const beforeNotes = before[i].notes || '';
+      const afterNotes = __pptSlides[i].notes || '';
+      if(afterNotes !== beforeNotes && afterNotes.length > beforeNotes.length){
+        const added = afterNotes.substring(beforeNotes.length).trim();
+        changes.push({type:'note', pageIdx:i, pageNum:i+1, title:before[i].title, added:added.slice(0, 120)});
+      }
+    }
+  }
+  // 新增页
+  for(var j=before.length;j<__pptSlides.length;j++){
+    changes.push({type:'added', slideIdx:j, pageNum:j+1, title:__pptSlides[j].title, slideType:__pptSlides[j].type});
+  }
+  if(changes.length === 0) return;
+  const div = document.createElement('div');
+  div.id = 'pptChangeLog';
+  div.style.cssText = 'background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px;margin-top:16px';
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html += '<div style="font-size:14px;font-weight:700;color:#92400e">📋 增强应用变更记录（' + changes.length + ' 项变更，可逐条撤销）</div>';
+  html += '<button onclick="undoAllEnhancements()" style="background:#dc2626;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">↩️ 全部回退</button>';
+  html += '</div>';
+  for(var k=0;k<changes.length;k++){
+    const c = changes[k];
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px;background:#fff;border:1px solid #fde68a;border-radius:8px;margin-bottom:8px">';
+    html += '<div style="flex:1">';
+    if(c.type === 'note'){
+      html += '<div style="font-size:12px;font-weight:600;color:#92400e">第 ' + c.pageNum + ' 页 · 备注新增（' + c.title.slice(0,20) + '）</div>';
+      html += '<div style="font-size:11px;color:#78716c;margin-top:4px;line-height:1.6">' + c.added + '...</div>';
+    } else {
+      html += '<div style="font-size:12px;font-weight:600;color:#92400e">追加页 · 第 ' + c.pageNum + ' 页（' + c.slideType + '）</div>';
+      html += '<div style="font-size:11px;color:#78716c;margin-top:4px">' + c.title.slice(0,40) + '</div>';
+    }
+    html += '</div>';
+    if(c.type === 'note'){
+      html += '<button onclick="undoPageEnhancement(' + c.pageIdx + ')" style="background:#fff;border:1px solid #d97706;color:#d97706;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;margin-left:10px;flex-shrink:0">撤销此页</button>';
+    } else {
+      html += '<button onclick="removeAddedPage(' + c.slideIdx + ')" style="background:#fff;border:1px solid #dc2626;color:#dc2626;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;margin-left:10px;flex-shrink:0">删除此页</button>';
+    }
+    html += '</div>';
+  }
+  div.innerHTML = html;
+  resEl.appendChild(div);
+}
+
+function undoPageEnhancement(pageIdx){
+  if(!__pptSlidesBeforeEnhance || pageIdx >= __pptSlidesBeforeEnhance.length) return;
+  __pptSlides[pageIdx].notes = __pptSlidesBeforeEnhance[pageIdx].notes || '';
+  renderPptSlides();
+  renderEnhanceChangeLog();
+}
+
+function removeAddedPage(slideIdx){
+  if(slideIdx < __pptSlidesBeforeEnhance.length) return; // 不能删原有页
+  __pptSlides.splice(slideIdx, 1);
+  renderPptSlides();
+  renderEnhanceChangeLog();
+}
+
+function undoAllEnhancements(){
+  if(!__pptSlidesBeforeEnhance){ alert('没有可回退的增强记录'); return; }
+  if(!confirm('确认回退全部增强，恢复到应用前的课件？')) return;
+  __pptSlides = JSON.parse(JSON.stringify(__pptSlidesBeforeEnhance));
+  __pptSlidesBeforeEnhance = null;
+  __pptCurrent = 0;
+  renderPptSlides();
 }
 
 // ========== 术语标注到页 ==========
