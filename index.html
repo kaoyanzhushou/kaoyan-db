@@ -16871,6 +16871,10 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
                 <button onclick="optimizeMechLayout()" style="background:#059669;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔧 优化布局</button>
                 <button onclick="toggleMechCompare()" style="background:#db2777;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">⚖️ 对比分析</button>
                 <button onclick="toggleMechBatch()" style="background:#65a30d;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📦 批量生成</button>
+                <button onclick="toggleMechChat()" style="background:#0891b2;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">💬 AI问答</button>
+                <button onclick="toggleMechStats()" style="background:#7c3aed;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📊 我的统计</button>
+                <button onclick="exportMechJSON()" style="background:#475569;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📋 导出JSON</button>
+                <button onclick="exportMechSBML()" style="background:#334155;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🧬 导出SBML</button>
               </div>
               <div id="mechLayoutSuggestion" style="display:none;margin-top:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;font-size:12px;color:#166534;line-height:1.6"></div>
             </div>
@@ -16909,6 +16913,26 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
                 <div style="font-size:12px;font-weight:600;color:#4d7c0f;margin-bottom:8px">生成结果（点击缩略图加载到编辑面板）</div>
                 <div id="mechBatchGrid"></div>
               </div>
+            </div>
+
+            <!-- AI 智能问答面板 -->
+            <div id="mechChatPanel" style="display:none;margin-top:16px;background:#fff;border:1px solid #bae6fd;border-radius:12px;padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <div style="font-size:14px;font-weight:700;color:#0369a1">💬 机制图 AI 智能问答</div>
+                <button onclick="clearMechChat()" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px">清空对话</button>
+              </div>
+              <div id="mechChatHistory" style="max-height:250px;overflow-y:auto;background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:12px;min-height:100px"></div>
+              <div style="display:flex;gap:8px">
+                <input type="text" id="mechChatInput" placeholder="例如：AMPK的上游激活因子有哪些？这个通路在急性运动中有什么变化？" style="flex:1;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px" onkeydown="if(event.key==='Enter')askMechChat()">
+                <button onclick="askMechChat()" style="background:#0284c7;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">发送</button>
+              </div>
+              <div style="margin-top:8px;font-size:10px;color:#94a3b8">AI 基于当前机制图的节点、关系和讲解词回答问题（deepseek-chat）</div>
+            </div>
+
+            <!-- 个人机制图库统计面板 -->
+            <div id="mechStatsPanel" style="display:none;margin-top:16px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;padding:16px">
+              <div style="font-size:14px;font-weight:700;color:#6d28d9;margin-bottom:12px">📊 我的机制图库统计</div>
+              <div id="mechStatsContent"></div>
             </div>
           </div>
         </div>
@@ -127875,6 +127899,8 @@ async function generateMechanism(){
     log('   ✅ 四路并行完成');
 
     mechCurrentData = mechData;
+    // 累计生成计数
+    try{ var gc = parseInt(localStorage.getItem('mechGenCount') || '0'); localStorage.setItem('mechGenCount', (gc+1).toString()); }catch(e){}
     renderMechSVG(mechData);
     renderMechLegend();
     renderMechNodeList(mechData);
@@ -129625,6 +129651,217 @@ function loadMechBatchResult(idx){
   document.getElementById('mechStatus').style.display = 'none';
   mechToast('已加载第' + (idx+1) + '个机制图到编辑面板');
 }
+
+// ===== 运动科学机制库 P4 批次1：AI问答 + 个人统计 + 数据导出 =====
+
+// ===== AI 智能问答 =====
+var mechChatHistory = [];
+
+function toggleMechChat(){
+  var panel = document.getElementById('mechChatPanel');
+  if(panel.style.display === 'none' || !panel.style.display){
+    panel.style.display = 'block';
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+async function askMechChat(){
+  if(!mechCurrentData){ mechToast('请先生成机制图'); return; }
+  var input = document.getElementById('mechChatInput');
+  var question = input.value.trim();
+  if(!question){ mechToast('请输入问题'); return; }
+
+  var historyEl = document.getElementById('mechChatHistory');
+  // 添加用户问题
+  historyEl.innerHTML += '<div style="background:#e0f2fe;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:#0c4a6e;max-width:85%;margin-left:auto"><b>你：</b>' + question.replace(/</g,'&lt;') + '</div>';
+  input.value = '';
+  historyEl.scrollTop = historyEl.scrollHeight;
+
+  // 构建机制图上下文
+  var context = '当前机制图：' + (mechCurrentData.title || '') + '（科目：' + (mechCurrentData.subject || '运动科学') + '）。';
+  context += '节点：' + mechCurrentData.nodes.map(function(n){ return n.label + '[' + n.type + ']：' + (n.narration || ''); }).join('；') + '。';
+  context += '关系：' + mechCurrentData.edges.map(function(e){ var fn = mechCurrentData.nodes.find(function(n){return n.id===e.from;}); var tn = mechCurrentData.nodes.find(function(n){return n.id===e.to;}); return (fn?fn.label:e.from) + ' →[' + e.relation + ']→ ' + (tn?tn.label:e.to); }).join('；') + '。';
+  if(mechCurrentData.overallNarration){ context += '整体讲解：' + mechCurrentData.overallNarration; }
+
+  // 历史记录（最近3轮）
+  var historyText = mechChatHistory.slice(-6).map(function(m){ return (m.role === 'user' ? '用户' : '助手') + '：' + m.content; }).join('\\n');
+
+  var prompt = context + '\\n\\n对话历史：\\n' + historyText + '\\n\\n用户问题：' + question + '\\n\\n请基于上述机制图数据，用简洁专业的语言回答用户问题。如果问题涉及机制图中没有的信息，请明确说明并给出相关推测。不要输出JSON。';
+
+  try{
+    var answer = await callModelWithTimeout('你是运动生物化学与运动生理学专家，擅长讲解分子机制通路。请基于提供的机制图数据回答问题。', prompt, 600, 'deepseek-chat', 25000);
+    if(!answer){ answer = '抱歉，未能生成回答，请重试。'; }
+    mechChatHistory.push({role:'user', content:question});
+    mechChatHistory.push({role:'assistant', content:answer});
+    historyEl.innerHTML += '<div style="background:#f0fdf4;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:#14532d;max-width:90%"><b>AI：</b>' + answer.replace(/</g,'&lt;') + '</div>';
+    historyEl.scrollTop = historyEl.scrollHeight;
+  }catch(e){
+    historyEl.innerHTML += '<div style="background:#fef2f2;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:#991b1b;max-width:90%"><b>错误：</b>' + e.message + '</div>';
+  }
+}
+
+function clearMechChat(){
+  mechChatHistory = [];
+  document.getElementById('mechChatHistory').innerHTML = '';
+  mechToast('对话已清空');
+}
+
+// ===== 个人机制图库统计 =====
+function renderMechStats(){
+  var panel = document.getElementById('mechStatsPanel');
+  if(!panel) return;
+  // 统计素材库
+  var lib = [];
+  try{ lib = JSON.parse(localStorage.getItem('mechLibrary') || '[]'); }catch(e){}
+  // 统计生成记录（从 localStorage 读取，如果有的话）
+  var genCount = 0;
+  try{ genCount = parseInt(localStorage.getItem('mechGenCount') || '0'); }catch(e){}
+
+  // 科目统计
+  var subjectCount = {};
+  var categoryCount = {};
+  var nodeTypeCount = {};
+  var totalNodes = 0;
+  var totalEdges = 0;
+  lib.forEach(function(item){
+    var d = item.data || {};
+    var subj = d.subject || '未分类';
+    subjectCount[subj] = (subjectCount[subj] || 0) + 1;
+    (d.nodes || []).forEach(function(n){
+      totalNodes++;
+      var t = n.type || '其他';
+      nodeTypeCount[t] = (nodeTypeCount[t] || 0) + 1;
+    });
+    (d.edges || []).forEach(function(){ totalEdges++; });
+  });
+
+  // 渲染统计
+  var html = '';
+  // 概览卡片
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">';
+  html += '<div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:800;color:#0284c7">' + genCount + '</div><div style="font-size:11px;color:#64748b;margin-top:4px">累计生成</div></div>';
+  html += '<div style="background:#f0fdf4;border-radius:10px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:800;color:#16a34a">' + lib.length + '</div><div style="font-size:11px;color:#64748b;margin-top:4px">素材库数量</div></div>';
+  html += '<div style="background:#fefce8;border-radius:10px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:800;color:#ca8a04">' + totalNodes + '</div><div style="font-size:11px;color:#64748b;margin-top:4px">总节点数</div></div>';
+  html += '<div style="background:#fdf2f8;border-radius:10px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:800;color:#db2777">' + totalEdges + '</div><div style="font-size:11px;color:#64748b;margin-top:4px">总关系数</div></div>';
+  html += '</div>';
+
+  // 科目分布
+  var subjectEntries = Object.entries(subjectCount).sort(function(a,b){ return b[1]-a[1]; });
+  if(subjectEntries.length > 0){
+    var maxSubj = subjectEntries[0][1];
+    html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:12px">';
+    html += '<div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:10px">📚 科目分布</div>';
+    subjectEntries.forEach(function(entry){
+      var pct = (entry[1] / maxSubj * 100).toFixed(0);
+      html += '<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:11px;color:#475569;margin-bottom:2px"><span>' + entry[0] + '</span><span>' + entry[1] + '张</span></div><div style="background:#f1f5f9;border-radius:4px;height:8px"><div style="background:#0284c7;height:8px;border-radius:4px;width:' + pct + '%"></div></div></div>';
+    });
+    html += '</div>';
+  }
+
+  // 节点类型分布
+  var typeEntries = Object.entries(nodeTypeCount).sort(function(a,b){ return b[1]-a[1]; });
+  if(typeEntries.length > 0){
+    var maxType = typeEntries[0][1];
+    var typeColors = {'酶':'#0891b2','转录因子':'#7c3aed','激素':'#dc2626','受体':'#ea580c','底物':'#059669','其他':'#64748b'};
+    html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px">';
+    html += '<div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:10px">🔬 节点类型分布</div>';
+    typeEntries.forEach(function(entry){
+      var pct = (entry[1] / maxType * 100).toFixed(0);
+      var color = typeColors[entry[0]] || '#64748b';
+      html += '<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:11px;color:#475569;margin-bottom:2px"><span>' + entry[0] + '</span><span>' + entry[1] + '个</span></div><div style="background:#f1f5f9;border-radius:4px;height:8px"><div style="background:' + color + ';height:8px;border-radius:4px;width:' + pct + '%"></div></div></div>';
+    });
+    html += '</div>';
+  }
+
+  if(lib.length === 0 && genCount === 0){
+    html = '<div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px">📊 暂无统计数据，生成并保存机制图后这里会显示你的个人机制图库统计</div>';
+  }
+
+  panel.innerHTML = html;
+}
+
+function toggleMechStats(){
+  var panel = document.getElementById('mechStatsPanel');
+  if(panel.style.display === 'none' || !panel.style.display){
+    panel.style.display = 'block';
+    renderMechStats();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+// ===== 数据导出 =====
+function exportMechJSON(){
+  if(!mechCurrentData){ mechToast('请先生成机制图'); return; }
+  var data = JSON.parse(JSON.stringify(mechCurrentData));
+  delete data._desc;
+  delete data._index;
+  var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (mechCurrentData.title || '机制图').replace(/[\\/:*?"<>|]/g, '_') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  mechToast('✅ JSON 已下载');
+}
+
+function exportMechSBML(){
+  if(!mechCurrentData){ mechToast('请先生成机制图'); return; }
+  var data = mechCurrentData;
+  var sbml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  sbml += '<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1">\n';
+  sbml += '  <model id="' + (data.title || 'mechanism').replace(/[^a-zA-Z0-9]/g, '_') + '" name="' + (data.title || '机制图').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') + '">\n';
+  sbml += '    <notes>\n      <body xmlns="http://www.w3.org/1999/xhtml">\n';
+  sbml += '        <p>科目：' + (data.subject || '运动科学') + '</p>\n';
+  if(data.overallNarration){ sbml += '        <p>' + data.overallNarration.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>\n'; }
+  sbml += '      </body>\n    </notes>\n';
+  // 物种（节点）
+  sbml += '    <listOfSpecies>\n';
+  (data.nodes || []).forEach(function(n){
+    var id = 'species_' + n.id;
+    var name = (n.label || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    var sboTerm = '';
+    if(n.type === '酶') sboTerm = ' SBO:0000014';
+    else if(n.type === '转录因子') sboTerm = ' SBO:0000169';
+    else if(n.type === '激素') sboTerm = ' SBO:0000125';
+    else if(n.type === '受体') sboTerm = ' SBO:0000165';
+    sbml += '      <species id="' + id + '" name="' + name + '" compartment="compartment1"' + sboTerm + ' initialConcentration="1" constant="false"/>\n';
+  });
+  sbml += '    </listOfSpecies>\n';
+  // 反应（关系）
+  sbml += '    <listOfReactions>\n';
+  (data.edges || []).forEach(function(e, idx){
+    var rid = 'reaction_' + idx;
+    var fromNode = (data.nodes || []).find(function(n){ return n.id === e.from; });
+    var toNode = (data.nodes || []).find(function(n){ return n.id === e.to; });
+    var fromId = fromNode ? 'species_' + fromNode.id : '';
+    var toId = toNode ? 'species_' + toNode.id : '';
+    var relName = (e.relation || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    sbml += '      <reaction id="' + rid + '" name="' + relName + '" reversible="false">\n';
+    if(fromId){ sbml += '        <listOfReactants><speciesReference species="' + fromId + '" stoichiometry="1"/></listOfReactants>\n'; }
+    if(toId){ sbml += '        <listOfProducts><speciesReference species="' + toId + '" stoichiometry="1"/></listOfProducts>\n'; }
+    sbml += '      </reaction>\n';
+  });
+  sbml += '    </listOfReactions>\n';
+  sbml += '    <listOfCompartments>\n      <compartment id="compartment1" name="细胞" constant="true"/>\n    </listOfCompartments>\n';
+  sbml += '  </model>\n</sbml>';
+
+  var blob = new Blob([sbml], {type:'application/xml'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (mechCurrentData.title || '机制图').replace(/[\\/:*?"<>|]/g, '_') + '.sbml';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  mechToast('✅ SBML 已下载（可用系统生物学工具打开）');
+}
+
 
 
 
