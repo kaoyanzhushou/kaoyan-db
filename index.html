@@ -127817,6 +127817,7 @@ async function hyStudentView(){
 
 // ========== PPT 课件生成 ==========
 let __pptSlides = [];
+let __pptEnhanceResults = null;
 let __pptCurrent = 0;
 let __pptGridView = false;
 
@@ -127908,6 +127909,7 @@ function renderPptSlides(){
   html += '<button onclick="pptNextPage()" style="background:#fff;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">下一页 ▶</button>';
   html += '<button onclick="pptToggleGrid()" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">▦ 网格总览</button>';
   html += '<button onclick="pptEnhanceAll()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🚀 六路全增强</button>';
+  html += '<button onclick="applyAllEnhancements()" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">✅ 全部应用</button>';
   html += '<button onclick="pptGenerateExercises()" style="background:#db2777;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📝 分层练习</button>';
   html += '<button onclick="pptAddIdeology()" style="background:#dc2626;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🇨🇳 思政融入</button>';
   html += '<button onclick="pptApplyTermCheck()" style="background:#0d9488;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📌 术语标注</button>';
@@ -127954,6 +127956,17 @@ function renderPptSlides(){
     html += '</div>';
     if(sl.notes){
       html += '<div style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:14px 20px"><div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:4px">📝 教师备注</div><div style="font-size:13px;color:#4b5563;line-height:1.7">' + esc(sl.notes) + '</div></div>';
+    }
+    var pageEnh = getPageEnhancements(__pptCurrent);
+    if(pageEnh.length > 0){
+      html += '<div style="margin-top:12px;padding:12px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px">';
+      html += '<div style="font-size:11px;font-weight:600;color:#6b21a8;margin-bottom:8px;cursor:pointer" onclick="var b=this.nextElementSibling;b.style.display=b.style.display==\'none\'?\'block\':\'none\'">📊 六路增强（' + pageEnh.length + ' 路涉及本页）▼</div>';
+      html += '<div style="display:block">';
+      for(var ei=0;ei<pageEnh.length;ei++){
+        html += '<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:' + pageEnh[ei].color + ';background:' + pageEnh[ei].color + '15;padding:2px 8px;border-radius:4px">' + pageEnh[ei].name + '</span>';
+        html += '<div style="font-size:12px;color:#374151;line-height:1.6;margin-top:4px;white-space:pre-wrap">' + esc(pageEnh[ei].content) + '</div></div>';
+      }
+      html += '</div></div>';
     }
     html += '</div>';
   }
@@ -128124,6 +128137,7 @@ async function pptEnhanceAll(){
     const labels = ['GLM体检','Kimi资源','混元视角','讲稿润色','术语核验','重难点讲解'];
     const outputs = results.map(function(r, i){ return r.status === 'fulfilled' ? r.value : ''; });
     const okCount = outputs.filter(function(o){ return o && o.trim(); }).length;
+    __pptEnhanceResults = {glm: outputs[0]||'', kimi: outputs[1]||'', hy: outputs[2]||'', hy4: outputs[3]||'', flash: outputs[4]||'', pro: outputs[5]||''};
     // 注入讲稿到对应页备注
     if(outputs[3] && outputs[3].trim()){
       const lines = outputs[3].split('\n');
@@ -128377,6 +128391,116 @@ async function pptAddIdeology(){
     if(btn) btn.textContent = '🇨🇳 思政融入';
     alert('思政融入失败：' + e.message);
   }
+}
+
+// ========== 六路增强结果深度应用 ==========
+function parseEnhanceByPage(text){
+  const map = {};
+  if(!text || !text.trim()) return map;
+  const lines = text.split('\n');
+  let curPage = -1;
+  for(var i=0;i<lines.length;i++){
+    const line = lines[i].trim();
+    if(!line) continue;
+    const m = line.match(/P(\d+)[｜|:：\s]/);
+    if(m){
+      curPage = parseInt(m[1]) - 1;
+      if(!map[curPage]) map[curPage] = [];
+      map[curPage].push(line);
+    } else if(curPage >= 0){
+      map[curPage].push(line);
+    }
+  }
+  return map;
+}
+
+function getPageEnhancements(pageIdx){
+  if(!__pptEnhanceResults) return [];
+  const items = [];
+  const labels = [
+    {key:'glm', name:'GLM体检', color:'#2563eb'},
+    {key:'kimi', name:'Kimi资源', color:'#7c3aed'},
+    {key:'hy', name:'混元视角', color:'#0e7490'},
+    {key:'flash', name:'术语核验', color:'#0d9488'},
+    {key:'pro', name:'重难点', color:'#ea580c'}
+  ];
+  for(var i=0;i<labels.length;i++){
+    const text = __pptEnhanceResults[labels[i].key];
+    if(!text || !text.trim()) continue;
+    const map = parseEnhanceByPage(text);
+    if(map[pageIdx] && map[pageIdx].length > 0){
+      items.push({name: labels[i].name, color: labels[i].color, content: map[pageIdx].join('\n').slice(0, 400)});
+    }
+  }
+  return items;
+}
+
+function applyAllEnhancements(){
+  if(!__pptEnhanceResults){ alert('请先运行"六路全增强"'); return; }
+  let appliedPages = 0;
+  const er = __pptEnhanceResults;
+
+  // Kimi 资源 → 备注
+  const kimiMap = parseEnhanceByPage(er.kimi);
+  for(var idx in kimiMap){
+    const i = parseInt(idx);
+    if(i >= 0 && i < __pptSlides.length){
+      const content = kimiMap[idx].join('\n');
+      __pptSlides[i].notes = (__pptSlides[i].notes ? __pptSlides[i].notes + '\n' : '') + '【Kimi教学资源】\n' + content.slice(0, 300);
+      appliedPages = Math.max(appliedPages, i+1);
+    }
+  }
+
+  // 混元视角 → 备注
+  const hyMap = parseEnhanceByPage(er.hy);
+  for(var idx2 in hyMap){
+    const i2 = parseInt(idx2);
+    if(i2 >= 0 && i2 < __pptSlides.length){
+      const content2 = hyMap[idx2].join('\n');
+      __pptSlides[i2].notes = (__pptSlides[i2].notes ? __pptSlides[i2].notes + '\n' : '') + '【学生视角】\n' + content2.slice(0, 300);
+      appliedPages = Math.max(appliedPages, i2+1);
+    }
+  }
+
+  // 术语核验 → 备注
+  if(er.flash && er.flash.trim()){
+    const flashLines = er.flash.split('\n').filter(function(l){ return l.trim() && (l.indexOf('✅')>=0 || l.indexOf('⚠️')>=0 || l.indexOf('❌')>=0); });
+    if(flashLines.length > 0){
+      for(var j=0;j<__pptSlides.length;j++){
+        const pageText = __pptSlides[j].title + ' ' + __pptSlides[j].points.join(' ');
+        const matched = flashLines.filter(function(l){
+          const term = l.replace(/[✅⚠️❌]/g,'').trim().split(/[：:｜|]/)[0].slice(0, 5);
+          return term && pageText.indexOf(term) >= 0;
+        });
+        if(matched.length > 0){
+          __pptSlides[j].notes = (__pptSlides[j].notes ? __pptSlides[j].notes + '\n' : '') + '【术语核验】\n' + matched.join('\n').slice(0, 300);
+          appliedPages = Math.max(appliedPages, j+1);
+        }
+      }
+    }
+  }
+
+  // 重难点 → 追加"深入讲解"页
+  if(er.pro && er.pro.trim()){
+    const proMap = parseEnhanceByPage(er.pro);
+    for(var idx3 in proMap){
+      const content3 = proMap[idx3].join('\n');
+      const titleM = content3.match(/【重难点】(.+?)(?:\n|$)/);
+      const title = titleM ? titleM[1].trim().slice(0, 30) : '重难点深入讲解';
+      __pptSlides.push({type: '深入讲解', title: title, points: content3.split('\n').filter(function(l){return l.trim() && l.indexOf('重难点')<0;}).slice(0, 4), notes: content3.slice(0, 500)});
+    }
+  }
+
+  // 体检 → 第一页备注加提示
+  if(er.glm && er.glm.trim() && er.glm.indexOf('问题') >= 0){
+    const issues = er.glm.split('\n').filter(function(l){ return l.indexOf('问题')>=0 || l.indexOf('不足')>=0 || l.indexOf('建议')>=0; }).slice(0, 3);
+    if(issues.length > 0 && __pptSlides.length > 0){
+      __pptSlides[0].notes = (__pptSlides[0].notes ? __pptSlides[0].notes + '\n' : '') + '【体检提示】\n' + issues.join('\n').slice(0, 300);
+    }
+  }
+
+  renderPptSlides();
+  alert('六路增强结果已全部应用到课件（涉及 ' + Math.min(appliedPages, __pptSlides.length) + ' 页 + 重难点追加页）');
 }
 
 // ========== 术语标注到页 ==========
