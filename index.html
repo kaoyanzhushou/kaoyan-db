@@ -1910,15 +1910,6 @@ menu.classList.remove('show');
 
 
 
-try{
-
-localStorage.setItem(LAST_TAB_KEY, tabName);
-
-}catch(e){}
-
-};
-
-
 
 window.addEventListener('load', function(){
 
@@ -126931,11 +126922,7 @@ ${text.substring(Math.max(0, text.length - 500))}`,
     const cursorPos = editor.selectionStart || editor.value.length;
     const before = editor.value.substring(0, cursorPos);
     const after = editor.value.substring(cursorPos);
-    editor.value = before + '
-
-' + result.trim() + '
-
-' + after;
+    editor.value = before + '\n\n' + result.trim() + '\n\n' + after;
     
     // 记录历史
     writingHistory.push({ action: 'continue', content: result, time: Date.now() });
@@ -127223,9 +127210,7 @@ async function generateWritingOutline() {
     resultEl.innerHTML = html;
     mechToast('写作大纲生成完成！', 'success');
   } catch(e) {
-  mechToast('修改版本已应用', 'success');
-  } else {
-    mechToast('请先选中要替换的文字', 'warn');
+    resultEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">写作大纲生成失败：' + e.message + '</div>';
   }
 }
 
@@ -127239,9 +127224,7 @@ function parseLiteratureInput() {
   if (!input) { mechToast('请输入文献信息', 'warn'); return []; }
   
   // 按空行分割文献
-  const blocks = input.split(/
-\s*
-/);
+  const blocks = input.split(/\n\s*\n/);
   const papers = [];
   blocks.forEach((block, i) => {
     const lines = block.trim().split('\n');
@@ -127282,10 +127265,7 @@ async function clusterLiterature() {
   statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">🔬 正在对' + papers.length + '篇文献进行智能聚类...</div></div>';
   
   // 构建文献摘要文本
-  const litText = papers.map(p => `文献${p.id}：${p.title}
-摘要：${p.abstract || '无'}`).join('
-
-');
+  const litText = papers.map(p => `文献${p.id}：${p.title}\n摘要：${p.abstract || '无'}`).join('\n\n');
   
   try {
     const result = await callDeepSeekAPI(
@@ -127376,10 +127356,7 @@ async function generateReviewMatrix() {
   resultEl.style.display = 'none';
   statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">📊 正在生成文献综述对比矩阵...</div></div>';
   
-  const litText = papers.map(p => `文献${p.id}：${p.title}
-摘要：${p.abstract || '无'}`).join('
-
-');
+  const litText = papers.map(p => `文献${p.id}：${p.title}\n摘要：${p.abstract || '无'}`).join('\n\n');
   
   try {
     const result = await callDeepSeekAPI(
@@ -127481,10 +127458,7 @@ async function literatureChat() {
   historyEl.appendChild(aiMsg);
   historyEl.scrollTop = historyEl.scrollHeight;
   
-  const litText = literatureData.map(p => `文献${p.id}：${p.title}
-摘要：${p.abstract || '无'}`).join('
-
-');
+  const litText = literatureData.map(p => `文献${p.id}：${p.title}\n摘要：${p.abstract || '无'}`).join('\n\n');
   
   try {
     const result = await callDeepSeekAPI(
@@ -128159,13 +128133,6 @@ function exportKnowledgeBase() {
   mechToast('已导出', 'success');
 }
 
-// ========== 模型辩论2.0 ==========
-// 辩论模型配置
-const DEBATE_MODELS = [
-  { id: 'deepseek-v4-flash', name: 'DeepSeek', role: '正方', color: '#3b82f6' },
-  { id: 'glm-5.3', name: 'GLM', role: '反方', color: '#ef4444' },
-  { id: 'kimi-k3', name: 'Kimi', role: '裁决', color: '#10b981' }
-];
 
 // 开始辩论
 async function startDebate() {
