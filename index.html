@@ -16875,6 +16875,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
                 <button onclick="toggleMechStats()" style="background:#7c3aed;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📊 我的统计</button>
                 <button onclick="exportMechJSON()" style="background:#475569;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📋 导出JSON</button>
                 <button onclick="exportMechSBML()" style="background:#334155;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🧬 导出SBML</button>
+                <button onclick="insertMechToPaper()" style="background:#b45309;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📝 插入到论文</button>
               </div>
               <div id="mechLayoutSuggestion" style="display:none;margin-top:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;font-size:12px;color:#166534;line-height:1.6"></div>
             </div>
@@ -17004,7 +17005,9 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
               <div style="display:flex;gap:8px">
                 <button onclick="exportAnimHTML()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🌐 导出交互式HTML</button>
                 <button onclick="exportAnimSVG()" style="background:#0891b2;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📐 导出SVG动画</button>
+                <button onclick="exportMechAnimationVideo()" style="background:#dc2626;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🎬 导出视频WebM</button>
               </div>
+              <div id="mechAnimExportStatus" style="display:none;margin-top:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:8px;font-size:11px;color:#0369a1"></div>
             </div>
           </div>
         </div>
@@ -129861,6 +129864,258 @@ function exportMechSBML(){
   URL.revokeObjectURL(url);
   mechToast('✅ SBML 已下载（可用系统生物学工具打开）');
 }
+
+// ===== 运动科学机制库 P4 批次2：动画导出视频 + 论文工作台联动 =====
+
+// ===== 动画导出 WebM 视频 =====
+var mechAnimRecorder = null;
+var mechAnimChunks = [];
+
+async function exportMechAnimationVideo(){
+  if(!mechCurrentData){ mechToast('请先生成机制图'); return; }
+  if(!animData || animSteps.length === 0){ mechToast('请先生成动画（在机制动画面板）'); return; }
+
+  var statusEl = document.getElementById('mechAnimExportStatus');
+  if(!statusEl){
+    // 创建状态提示
+    var btn = event.target;
+    var div = document.createElement('div');
+    div.id = 'mechAnimExportStatus';
+    div.style.cssText = 'margin-top:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:8px;font-size:11px;color:#0369a1';
+    btn.parentNode.appendChild(div);
+    statusEl = div;
+  }
+
+  try{
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = '🎬 正在录制动画视频...';
+
+    // 获取 SVG 容器
+    var svgContainer = document.getElementById('mechSvgContainer');
+    var svgEl = svgContainer.querySelector('svg');
+    if(!svgEl){ throw new Error('未找到机制图'); }
+
+    // 创建 canvas 用于录制
+    var canvas = document.createElement('canvas');
+    var svgRect = svgEl.getBoundingClientRect();
+    canvas.width = svgRect.width * 2;
+    canvas.height = svgRect.height * 2;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, svgRect.width, svgRect.height);
+
+    // 将 SVG 转为图片
+    var svgData = new XMLSerializer().serializeToString(svgEl);
+    var svgBlob = new Blob([svgData], {type:'image/svg+xml;charset=utf-8'});
+    var svgUrl = URL.createObjectURL(svgBlob);
+    var img = new Image();
+    await new Promise(function(resolve, reject){
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = svgUrl;
+    });
+
+    // 初始化 MediaRecorder
+    var stream = canvas.captureStream(10); // 10fps
+    mechAnimChunks = [];
+    mechAnimRecorder = new MediaRecorder(stream, {mimeType: 'video/webm;codecs=vp9'});
+    mechAnimRecorder.ondataavailable = function(e){ if(e.data.size > 0) mechAnimChunks.push(e.data); };
+
+    var recordedFrames = 0;
+    var totalFrames = animSteps.length;
+
+    mechAnimRecorder.onstop = function(){
+      var blob = new Blob(mechAnimChunks, {type: 'video/webm'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = (mechCurrentData.title || '机制动画').replace(/[\\/:*?"<>|]/g, '_') + '.webm';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(svgUrl);
+      statusEl.innerHTML = '✅ 动画视频已下载（WebM格式，' + totalFrames + '帧）';
+      mechToast('✅ 动画视频已下载');
+    };
+
+    mechAnimRecorder.start();
+
+    // 逐帧录制
+    for(var i = 0; i < totalFrames; i++){
+      // 渲染第 i 帧
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, svgRect.width, svgRect.height);
+      ctx.drawImage(img, 0, 0, svgRect.width, svgRect.height);
+
+      // 高亮当前步骤的节点和边
+      var step = animSteps[i];
+      if(step){
+        // 绘制高亮节点
+        (step.nodes || []).forEach(function(nid){
+          var node = mechCurrentData.nodes.find(function(n){ return n.id === nid; });
+          if(node && node._x && node._y){
+            ctx.beginPath();
+            ctx.arc(node._x, node._y, 25, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(8, 145, 178, 0.3)';
+            ctx.fill();
+            ctx.strokeStyle = '#0891b2';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+          }
+        });
+        // 绘制步骤文字
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText('步骤 ' + (i+1) + '/' + totalFrames + ': ' + (step.label || ''), 10, 25);
+      }
+
+      await new Promise(function(r){ setTimeout(r, 500); }); // 每帧500ms
+    }
+
+    mechAnimRecorder.stop();
+
+  }catch(e){
+    statusEl.innerHTML = '❌ 录制失败：' + e.message + '（请确保浏览器支持 MediaRecorder）';
+    mechToast('录制失败：' + e.message);
+  }
+}
+
+// ===== 与论文工作台联动 =====
+function insertMechToPaper(){
+  if(!mechCurrentData){ mechToast('请先生成机制图'); return; }
+
+  // 将机制图转为 PNG 并保存到 localStorage
+  var svgContainer = document.getElementById('mechSvgContainer');
+  var svgEl = svgContainer.querySelector('svg');
+  if(!svgEl){ mechToast('未找到机制图'); return; }
+
+  var svgData = new XMLSerializer().serializeToString(svgEl);
+  var svgBlob = new Blob([svgData], {type:'image/svg+xml;charset=utf-8'});
+  var svgUrl = URL.createObjectURL(svgBlob);
+  var img = new Image();
+
+  img.onload = function(){
+    var canvas = document.createElement('canvas');
+    var scale = 2;
+    canvas.width = img.width * scale;
+    canvas.height = img.height * scale;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(svgUrl);
+
+    var dataUrl = canvas.toDataURL('image/png');
+    // 保存到 localStorage（带时间戳）
+    var mechImage = {
+      dataUrl: dataUrl,
+      title: mechCurrentData.title || '机制图',
+      subject: mechCurrentData.subject || '运动科学',
+      narration: mechCurrentData.overallNarration || '',
+      timestamp: Date.now()
+    };
+    try{
+      localStorage.setItem('mechToPaper', JSON.stringify(mechImage));
+      mechToast('✅ 机制图已保存，切换到论文工作台即可插入');
+      // 尝试切换到论文工作台
+      if(typeof switchTab === 'function'){
+        switchTab('paper');
+        // 延迟提示论文工作台检测
+        setTimeout(function(){
+          if(typeof checkMechToPaper === 'function'){ checkMechToPaper(); }
+        }, 500);
+      }
+    }catch(e){
+      mechToast('保存失败：' + e.message);
+    }
+  };
+  img.onerror = function(){
+    URL.revokeObjectURL(svgUrl);
+    mechToast('图片转换失败');
+  };
+  img.src = svgUrl;
+}
+
+// 论文工作台侧：检测并插入机制图
+function checkMechToPaper(){
+  try{
+    var mechImage = JSON.parse(localStorage.getItem('mechToPaper') || 'null');
+    if(!mechImage) return;
+
+    // 查找论文编辑器
+    var editor = document.querySelector('.paper-editor-content, [contenteditable="true"], #paperEditor, .ql-editor');
+    if(!editor){
+      // 如果没有找到编辑器，显示一个插入提示条
+      var banner = document.getElementById('mechPaperBanner');
+      if(!banner){
+        banner = document.createElement('div');
+        banner.id = 'mechPaperBanner';
+        banner.style.cssText = 'background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center';
+        banner.innerHTML = '<div><span style="font-weight:700;color:#166534">📊 检测到机制图：</span><span style="color:#15803d">' + mechImage.title + '</span></div><button onclick="insertMechImageToEditor()" style="background:#16a34a;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">插入到论文</button>';
+        var paperContent = document.querySelector('#tab-paper, .paper-workspace');
+        if(paperContent){ paperContent.insertBefore(banner, paperContent.firstChild); }
+      }
+      return;
+    }
+
+    // 直接插入图片到编辑器
+    insertMechImageToEditor();
+  }catch(e){ console.error('checkMechToPaper error:', e); }
+}
+
+function insertMechImageToEditor(){
+  try{
+    var mechImage = JSON.parse(localStorage.getItem('mechToPaper') || 'null');
+    if(!mechImage){ mechToast('没有待插入的机制图'); return; }
+
+    var editor = document.querySelector('.paper-editor-content, [contenteditable="true"], #paperEditor, .ql-editor');
+    if(editor){
+      // 插入图片
+      var img = document.createElement('img');
+      img.src = mechImage.dataUrl;
+      img.alt = mechImage.title;
+      img.style.cssText = 'max-width:100%;height:auto;border-radius:8px;margin:12px 0;display:block';
+
+      // 插入图注
+      var caption = document.createElement('div');
+      caption.style.cssText = 'text-align:center;font-size:12px;color:#64748b;margin-bottom:16px';
+      caption.textContent = '图：' + mechImage.title + (mechImage.subject ? '（' + mechImage.subject + '）' : '');
+
+      // 在光标位置插入
+      if(editor.isContentEditable){
+        var selection = window.getSelection();
+        if(selection.rangeCount > 0){
+          var range = selection.getRangeAt(0);
+          range.deleteContents();
+          range.insertNode(caption);
+          range.insertNode(img);
+          range.collapse(false);
+        } else {
+          editor.appendChild(img);
+          editor.appendChild(caption);
+        }
+      } else {
+        editor.appendChild(img);
+        editor.appendChild(caption);
+      }
+
+      // 清除 localStorage
+      localStorage.removeItem('mechToPaper');
+      // 移除提示条
+      var banner = document.getElementById('mechPaperBanner');
+      if(banner){ banner.remove(); }
+      mechToast('✅ 机制图已插入到论文');
+    } else {
+      mechToast('未找到论文编辑器，请先打开论文工作台');
+    }
+  }catch(e){
+    mechToast('插入失败：' + e.message);
+  }
+}
+
 
 
 
