@@ -133787,6 +133787,13 @@ function uploadBookFile(){
       const chapters = extractBookTOC(text);
       // 保存目录到localStorage（供页码匹配使用）
       try{ localStorage.setItem('aiBookTOC', JSON.stringify(chapters)); }catch(e){}
+      // 分页处理：按字数估算分页（每页约600字），保存到localStorage
+      try{
+        const pages = paginateBookText(store, 600);
+        localStorage.setItem('aiBookPages', JSON.stringify(pages));
+        const pbBtn = document.getElementById('bookPageBrowserBtn');
+        if(pbBtn) pbBtn.style.display = 'inline-block';
+      }catch(e){}
       renderBookChapterSelect(chapters);
       if(chapters.length >= 3){
         status.innerHTML = '✅ <b>书目已上传：</b>' + file.name + '（' + (text.length/1000).toFixed(1) + 'K字），已解析 <b>' + chapters.length + '</b> 个章节，请在下拉框选择';
