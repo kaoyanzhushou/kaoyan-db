@@ -127916,6 +127916,7 @@ function renderPptSlides(){
   html += '<button onclick="pptApplyTermCheck()" style="background:#0d9488;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📌 术语标注</button>';
   html += '<button onclick="pptGenerateDiagram()" style="background:#ea580c;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 生成图示</button>';
   html += '<button onclick="startPptShow()" style="background:#111827;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">▶️ 放映</button>';
+  html += '<button onclick="pptStructureDiagnosis()" style="background:#0891b2;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 结构诊断</button>';
   html += '<button onclick="savePptLayout()" style="background:#fff;border:1px solid #a16207;color:#a16207;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⭐ 收藏版式</button>';
   html += '<button onclick="downloadPptx()" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📥 下载 PPTX</button>';
   html += '<span id="pptEnhanceStatus" style="font-size:11px;color:#6b7280"></span>';
@@ -128538,6 +128539,7 @@ function renderEnhanceChangeLog(){
   let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
   html += '<div style="font-size:14px;font-weight:700;color:#92400e">📋 增强应用变更记录（' + changes.length + ' 项变更，可逐条撤销）</div>';
   html += '<button onclick="undoAllEnhancements()" style="background:#dc2626;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">↩️ 全部回退</button>';
+  html += '<button onclick="pptRecheckAfterEnhance()" style="background:#7c3aed;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;margin-left:8px">🔄 增强后复检</button>';
   html += '</div>';
   for(var k=0;k<changes.length;k++){
     const c = changes[k];
@@ -128583,6 +128585,106 @@ function undoAllEnhancements(){
   __pptSlidesBeforeEnhance = null;
   __pptCurrent = 0;
   renderPptSlides();
+}
+
+// ========== 页面结构诊断 ==========
+function pptStructureDiagnosis(){
+  if(__pptSlides.length === 0){ alert('请先生成课件大纲'); return; }
+  const issues = [];
+  const typeCount = {};
+  let lastType = '';
+  let sameTypeStreak = 0;
+  for(var i=0;i<__pptSlides.length;i++){
+    const sl = __pptSlides[i];
+    const pointCount = sl.points.length;
+    const totalText = (sl.title || '') + ' ' + sl.points.join(' ');
+    const charCount = totalText.length;
+    // 要点过多
+    if(pointCount > 5){
+      issues.push({page:i+1, level:'warn', title:sl.title, msg:'要点 ' + pointCount + ' 条，信息密度过高，建议拆分为 2 页'});
+    }
+    // 要点过少（非封面/目录/结束页）
+    if(pointCount < 2 && sl.type.indexOf('封面')<0 && sl.type.indexOf('目录')<0 && sl.type.indexOf('结束')<0 && sl.type.indexOf('小结')<0){
+      issues.push({page:i+1, level:'warn', title:sl.title, msg:'仅 ' + pointCount + ' 条要点，内容偏薄，建议补充案例或数据'});
+    }
+    // 字数过多
+    if(charCount > 300){
+      issues.push({page:i+1, level:'info', title:sl.title, msg:'正文约 ' + charCount + ' 字，单页信息量偏大，讲授时建议配合板书分步呈现'});
+    }
+    // 类型连续重复
+    if(sl.type === lastType){
+      sameTypeStreak++;
+      if(sameTypeStreak >= 3){
+        issues.push({page:i-2+1, level:'info', title:sl.type, msg:'连续 ' + sameTypeStreak + ' 页同为「' + sl.type + '」，建议穿插案例/互动/图示页调节节奏'});
+      }
+    } else {
+      sameTypeStreak = 1;
+    }
+    lastType = sl.type;
+    typeCount[sl.type] = (typeCount[sl.type] || 0) + 1;
+  }
+  // 渲染诊断报告
+  const resEl = document.getElementById('pptResult');
+  const old = document.getElementById('pptDiagBlock');
+  if(old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'pptDiagBlock';
+  div.style.cssText = 'background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:16px;margin-top:16px';
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html += '<div style="font-size:14px;font-weight:700;color:#0369a1">🔍 课件结构诊断（共 ' + __pptSlides.length + ' 页，' + issues.length + ' 项提示）</div>';
+  html += '</div>';
+  // 类型分布
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+  for(var t in typeCount){
+    html += '<span style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:12px">' + t + '：' + typeCount[t] + ' 页</span>';
+  }
+  html += '</div>';
+  if(issues.length === 0){
+    html += '<div style="font-size:13px;color:#059669;padding:10px">✅ 课件结构良好，未发现明显问题</div>';
+  } else {
+    for(var k=0;k<issues.length;k++){
+      const iss = issues[k];
+      const color = iss.level === 'warn' ? '#b45309' : '#0284c7';
+      const bg = iss.level === 'warn' ? '#fffbeb' : '#f0f9ff';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px;background:' + bg + ';border-left:3px solid ' + color + ';border-radius:6px;margin-bottom:8px">';
+      html += '<div><span style="font-size:11px;font-weight:700;color:' + color + '">第 ' + iss.page + ' 页 · ' + iss.title.slice(0,20) + '</span>';
+      html += '<div style="font-size:12px;color:#374151;margin-top:4px">' + iss.msg + '</div></div>';
+      html += '<button onclick="pptGoPage(' + (iss.page-1) + ')" style="background:#fff;border:1px solid ' + color + ';color:' + color + ';padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;margin-left:10px;flex-shrink:0">跳转</button>';
+      html += '</div>';
+    }
+  }
+  div.innerHTML = html;
+  resEl.appendChild(div);
+}
+
+// ========== 增强后复检 ==========
+async function pptRecheckAfterEnhance(){
+  if(__pptSlides.length === 0){ alert('请先生成课件'); return; }
+  const resEl = document.getElementById('pptResult');
+  // 创建复检状态块
+  const old = document.getElementById('pptRecheckBlock');
+  if(old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'pptRecheckBlock';
+  div.style.cssText = 'background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:16px;margin-top:16px';
+  div.innerHTML = '<div style="font-size:14px;font-weight:700;color:#6b21a8">🔄 增强后复检中（GLM 五维评审，约1分钟）...</div>';
+  resEl.appendChild(div);
+  try{
+    const summary = (function(){ let lines=[]; for(var i=0;i<__pptSlides.length;i++){lines.push('P'+(i+1)+'['+__pptSlides[i].type+'] '+__pptSlides[i].title+'：'+__pptSlides[i].points.join('；'));} return lines.join('\n').slice(0,6000); })();
+    let report = '';
+    try{ report = await healthCheckPpt(summary, __pptSlides.length, '增强后复检'); }catch(e){ report = ''; }
+    if(!report || !report.trim()){
+      try{ report = await callModelWithTimeout('你是体育高校课件评审专家。从结构完整性、知识准确性、逻辑连贯性、教学目标达成、内容容量五个维度评分（每项0-20分，总分100），并给出问题和改进建议。', '课件内容：\n' + summary, 1500, 'kimi-k3', 120000); }catch(e){ report = ''; }
+    }
+    if(!report || !report.trim()){
+      div.innerHTML = '<div style="font-size:13px;color:#dc2626">⚠️ 复检失败（模型超时），请稍后重试</div>';
+      return;
+    }
+    const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    div.innerHTML = '<div style="font-size:14px;font-weight:700;color:#6b21a8;margin-bottom:10px">🔄 增强后复检报告</div><div style="font-size:12px;line-height:1.8;color:#1f2937;white-space:pre-wrap;max-height:400px;overflow-y:auto">' + esc(report.slice(0, 3000)) + '</div>';
+  }catch(e){
+    div.innerHTML = '<div style="font-size:13px;color:#dc2626">⚠️ 复检出错：' + e.message + '</div>';
+  }
 }
 
 // ========== 术语标注到页 ==========
