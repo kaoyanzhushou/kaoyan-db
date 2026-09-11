@@ -127917,6 +127917,9 @@ function renderPptSlides(){
   html += '<button onclick="pptGenerateDiagram()" style="background:#ea580c;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 生成图示</button>';
   html += '<button onclick="startPptShow()" style="background:#111827;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">▶️ 放映</button>';
   html += '<button onclick="pptStructureDiagnosis()" style="background:#0891b2;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 结构诊断</button>';
+  html += '<button onclick="pptTimeAllocation()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⏱️ 时间分配</button>';
+  html += '<button onclick="pptGenerateTransitions()" style="background:#d97706;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔗 过渡语</button>';
+  html += '<button onclick="pptGenerateInteractions()" style="background:#db2777;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">❓ 互动题</button>';
   html += '<button onclick="savePptLayout()" style="background:#fff;border:1px solid #a16207;color:#a16207;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⭐ 收藏版式</button>';
   html += '<button onclick="downloadPptx()" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📥 下载 PPTX</button>';
   html += '<span id="pptEnhanceStatus" style="font-size:11px;color:#6b7280"></span>';
@@ -128684,6 +128687,147 @@ async function pptRecheckAfterEnhance(){
     div.innerHTML = '<div style="font-size:14px;font-weight:700;color:#6b21a8;margin-bottom:10px">🔄 增强后复检报告</div><div style="font-size:12px;line-height:1.8;color:#1f2937;white-space:pre-wrap;max-height:400px;overflow-y:auto">' + esc(report.slice(0, 3000)) + '</div>';
   }catch(e){
     div.innerHTML = '<div style="font-size:13px;color:#dc2626">⚠️ 复检出错：' + e.message + '</div>';
+  }
+}
+
+// ========== 时间分配建议 ==========
+function pptTimeAllocation(){
+  if(__pptSlides.length === 0){ alert('请先生成课件大纲'); return; }
+  // 从输入区读课时
+  const hoursEl = document.getElementById('pptHours');
+  let hours = 1;
+  if(hoursEl && hoursEl.value){ hours = parseInt(hoursEl.value) || 1; }
+  const totalMins = hours * 45;
+  const totalSec = totalMins * 60;
+  // 页面类型权重
+  const weights = {'封面':0.5,'目录':0.5,'导入':0.8,'新授':1.5,'案例':1.3,'练习':1.2,'小结':0.8,'作业':0.5,'结束':0.3,'深入讲解':1.2,'互动':1.0,'思政':0.6};
+  let totalWeight = 0;
+  const pageWeights = [];
+  for(var i=0;i<__pptSlides.length;i++){
+    const w = weights[__pptSlides[i].type] || 1.0;
+    pageWeights.push(w);
+    totalWeight += w;
+  }
+  // 渲染
+  const resEl = document.getElementById('pptResult');
+  const old = document.getElementById('pptTimeBlock');
+  if(old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'pptTimeBlock';
+  div.style.cssText = 'background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:16px;margin-top:16px';
+  let html = '<div style="font-size:14px;font-weight:700;color:#065f46;margin-bottom:12px">⏱️ 教学时间分配建议（总课时 ' + totalMins + ' 分钟 / ' + __pptSlides.length + ' 页）</div>';
+  html += '<div style="max-height:350px;overflow-y:auto">';
+  let accSec = 0;
+  for(var j=0;j<__pptSlides.length;j++){
+    const sec = Math.round(totalSec * pageWeights[j] / totalWeight);
+    accSec += sec;
+    const mm = Math.floor(sec/60);
+    const ss = sec%60;
+    const accMm = Math.floor(accSec/60);
+    const accSs = accSec%60;
+    html += '<div style="display:flex;align-items:center;padding:8px 12px;background:#fff;border-radius:8px;margin-bottom:6px">';
+    html += '<span style="font-size:11px;font-weight:700;color:#059669;width:50px">P' + (j+1) + '</span>';
+    html += '<span style="font-size:11px;background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;width:60px;text-align:center">' + __pptSlides[j].type + '</span>';
+    html += '<span style="font-size:12px;color:#374151;flex:1;margin-left:10px">' + __pptSlides[j].title.slice(0,30) + '</span>';
+    html += '<span style="font-size:12px;font-weight:700;color:#059669;width:80px;text-align:right">' + mm + '分' + (ss>0?ss+'秒':'') + '</span>';
+    html += '<span style="font-size:10px;color:#9ca3af;width:70px;text-align:right">累计 ' + accMm + ':' + (accSs<10?'0':'') + accSs + '</span>';
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<div style="font-size:11px;color:#6b7280;margin-top:8px">💡 权重：新授1.5× / 案例1.3× / 练习1.2× / 导入0.8× / 封面目录0.5× / 结束0.3×，可根据实际课堂节奏调整</div>';
+  div.innerHTML = html;
+  resEl.appendChild(div);
+}
+
+// ========== 页间过渡语（AI生成，注入备注） ==========
+async function pptGenerateTransitions(){
+  if(__pptSlides.length < 2){ alert('课件至少需要2页才能生成过渡语'); return; }
+  const resEl = document.getElementById('pptResult');
+  const old = document.getElementById('pptTransBlock');
+  if(old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'pptTransBlock';
+  div.style.cssText = 'background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px;margin-top:16px';
+  div.innerHTML = '<div style="font-size:14px;font-weight:700;color:#92400e">🔗 正在生成页间过渡语（hy4讲稿模型，约1分钟）...</div>';
+  resEl.appendChild(div);
+  try{
+    // 构建页标题列表
+    const titles = [];
+    for(var i=0;i<__pptSlides.length;i++){
+      titles.push('P'+(i+1)+'['+__pptSlides[i].type+'] '+__pptSlides[i].title);
+    }
+    const prompt = '以下是一份体育高校课件的页面顺序，请为每两页之间生成一句自然流畅的过渡语（承上启下，符合教师讲课口吻，每句不超过50字）。格式严格为：P2→P3｜过渡语内容\nP3→P4｜过渡语内容\n...\n\n页面列表：\n' + titles.join('\n');
+    let result = '';
+    try{ result = await callModelWithTimeout('你是资深体育高校教师，擅长课堂讲授和页面衔接。', prompt, 1500, 'hy4-preview', 120000); }catch(e){ result = ''; }
+    if(!result || !result.trim()){
+      try{ result = await callModelWithTimeout('你是资深体育高校教师。', prompt, 1500, 'deepseek-chat', 120000); }catch(e){ result = ''; }
+    }
+    if(!result || !result.trim()){
+      div.innerHTML = '<div style="font-size:13px;color:#dc2626">⚠️ 过渡语生成失败（模型超时），请稍后重试</div>';
+      return;
+    }
+    // 解析 P2→P3｜内容
+    const lines = result.split('\n');
+    let count = 0;
+    for(var k=0;k<lines.length;k++){
+      const m = lines[k].match(/P(\d+)\s*[→>\-]+\s*P(\d+)[｜|:：]\s*(.+)/);
+      if(m){
+        const toPage = parseInt(m[2]) - 1;
+        const transText = m[3].trim().slice(0, 100);
+        if(toPage >= 0 && toPage < __pptSlides.length){
+          __pptSlides[toPage].notes = (__pptSlides[toPage].notes ? __pptSlides[toPage].notes + '\n' : '') + '【过渡语】' + transText;
+          count++;
+        }
+      }
+    }
+    const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    div.innerHTML = '<div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px">🔗 过渡语生成完成（已注入 ' + count + ' 页备注）</div><div style="font-size:12px;line-height:1.8;color:#1f2937;white-space:pre-wrap;max-height:300px;overflow-y:auto">' + esc(result.slice(0, 2000)) + '</div>';
+    renderPptSlides();
+  }catch(e){
+    div.innerHTML = '<div style="font-size:13px;color:#dc2626">⚠️ 过渡语生成出错：' + e.message + '</div>';
+  }
+}
+
+// ========== 课堂互动题（AI生成，追加互动页） ==========
+async function pptGenerateInteractions(){
+  if(__pptSlides.length === 0){ alert('请先生成课件大纲'); return; }
+  const resEl = document.getElementById('pptResult');
+  const old = document.getElementById('pptInterBlock');
+  if(old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'pptInterBlock';
+  div.style.cssText = 'background:#fdf2f8;border:1px solid #fbcfe8;border-radius:12px;padding:16px;margin-top:16px';
+  div.innerHTML = '<div style="font-size:14px;font-weight:700;color:#9d174d">❓ 正在生成课堂互动题（kimi资源模型，约1分钟）...</div>';
+  resEl.appendChild(div);
+  try{
+    const summary = (function(){ let lines=[]; for(var i=0;i<__pptSlides.length;i++){lines.push('P'+(i+1)+'['+__pptSlides[i].type+'] '+__pptSlides[i].title+'：'+__pptSlides[i].points.join('；'));} return lines.join('\n').slice(0,5000); })();
+    const prompt = '基于以下体育高校课件内容，生成3-5道课堂互动题（选择题或思考题，附参考答案），用于课堂提问和讨论。每道题标注适合插入的页码（P数字）。格式严格为：P3｜题目：...｜答案：...\nP5｜题目：...｜答案：...\n\n课件内容：\n' + summary;
+    let result = '';
+    try{ result = await callModelWithTimeout('你是体育高校教学专家，擅长设计课堂互动问题。', prompt, 1500, 'kimi-k3', 120000); }catch(e){ result = ''; }
+    if(!result || !result.trim()){
+      try{ result = await callModelWithTimeout('你是体育高校教学专家。', prompt, 1500, 'hy3', 120000); }catch(e){ result = ''; }
+    }
+    if(!result || !result.trim()){
+      div.innerHTML = '<div style="font-size:13px;color:#dc2626">⚠️ 互动题生成失败（模型超时），请稍后重试</div>';
+      return;
+    }
+    // 解析 P3｜题目：...｜答案：...
+    const lines = result.split('\n');
+    let count = 0;
+    for(var k=0;k<lines.length;k++){
+      const m = lines[k].match(/P(\d+)[｜|:：]\s*题目[：:]\s*(.+?)[｜|:：]\s*答案[：:]\s*(.+)/);
+      if(m){
+        const q = m[2].trim().slice(0, 150);
+        const a = m[3].trim().slice(0, 200);
+        __pptSlides.push({type:'互动', title:'课堂互动：' + q.slice(0,30), points:[q, '参考答案：' + a], notes:'互动题，建议课堂提问后给学生1-2分钟思考，再公布答案'});
+        count++;
+      }
+    }
+    const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    div.innerHTML = '<div style="font-size:14px;font-weight:700;color:#9d174d;margin-bottom:10px">❓ 互动题生成完成（已追加 ' + count + ' 个互动页）</div><div style="font-size:12px;line-height:1.8;color:#1f2937;white-space:pre-wrap;max-height:300px;overflow-y:auto">' + esc(result.slice(0, 2000)) + '</div>';
+    renderPptSlides();
+  }catch(e){
+    div.innerHTML = '<div style="font-size:13px;color:#dc2626">⚠️ 互动题生成出错：' + e.message + '</div>';
   }
 }
 
