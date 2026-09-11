@@ -16579,25 +16579,40 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
 
-            <input type="file" id="bookFile" accept=".txt,.docx,.pdf" style="font-size:13px">
+            <input type="file" id="bookFile" accept=".txt,.docx,.pdf" style="font-size:13px" onchange="autoUploadBook()">
 
-            <button onclick="uploadBookFile()" style="background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">上传书目</button>
+            <select id="bookChapterSelect" style="display:none;flex:1;min-width:200px;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px;box-sizing:border-box;background:#fff" onchange="onBookChapterSelect()">
+              <option value="">📖 选择章节（自动解析）</option>
+            </select>
 
-            <input id="bookChapterKey" placeholder="章节关键词，如：无氧耐力" style="flex:1;min-width:160px;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key==='Enter')locateChapter()">
+            <input id="bookChapterKey" placeholder="章节关键词，如：无氧耐力" style="display:none;flex:1;min-width:160px;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px;box-sizing:border-box" onkeydown="if(event.key==='Enter')locateChapter()">
 
-            <button onclick="locateChapter()" style="background:#16a34a;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">定位章节内容</button>
+            <button onclick="locateChapter()" id="bookLocateBtn" style="display:none;background:#16a34a;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">定位章节</button>
 
-            <button onclick="aiExtractChapter()" style="background:#d97706;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">✨ AI 提炼本章要点</button>
+            <button onclick="aiExtractChapter()" style="background:#d97706;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">✨ AI 提炼要点</button>
+
+            <button onclick="toggleBookKeyMode()" id="bookKeyToggle" style="display:none;background:#fff;border:1px solid #9ca3af;color:#6b7280;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px">关键词模式</button>
 
             <span id="bookStatus" style="font-size:12px;color:#6b7280"></span>
 
           </div>
 
-          <div style="font-size:11px;color:#9ca3af;margin-top:6px">支持 .txt / .docx / .pdf · 上传后输入章节关键词即可自动截取本章节内容填入下方（可编辑）</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:6px">支持 .txt / .docx / .pdf · 选择文件后自动上传并解析目录，点击章节即可自动定位+AI提炼（可编辑）</div>
 
         </div>
 
+        <div onclick="var b=document.getElementById('lessonAdvancedBody');b.style.display=b.style.display==='none'?'block':'none';this.querySelector('.adv-arrow').textContent=b.style.display==='none'?'▶':'▼'" style="cursor:pointer;font-size:13px;font-weight:600;color:#6b7280;margin-bottom:8px;user-select:none">⚙️ 高级选项 <span class="adv-arrow" style="font-size:11px">▼</span></div>
+
+        <div id="lessonAdvancedBody" style="display:block;margin-bottom:10px">
+
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;align-items:flex-start">
+
+          <select id="lessonCourseType" style="border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px" title="课型影响教学过程设计">
+            <option value="new">📖 新授课</option>
+            <option value="review">🔄 复习课</option>
+            <option value="experiment">🔬 实验课</option>
+            <option value="exercise">📝 讲评课</option>
+          </select>
 
           <select id="lessonFormat" onchange="toggleFormatCustom()" style="border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px">
 
@@ -16614,6 +16629,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
           </select>
 
           <textarea id="lessonFormatCustom" rows="2" placeholder="选择"自定义格式"时，粘贴学校/学院的教案格式要求（如：需含教学目标、重难点、教学过程、板书、作业，字号小四...）" style="display:none;flex:2;min-width:260px;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+        </div>
 
         </div>
 
@@ -128171,7 +128188,7 @@ async function runAcadEng(){
   }
   const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
   resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px"><div style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:12px">' + (mode==='term' ? '🔤 中英术语对照' : '📖 学术句型库') + '</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
-  status.textContent = '生成完成';
+  status.innerHTML = '✅ <b>步骤' + (multiCollab ? '2/3' : '1/2') + '</b> 教案生成完成';
 }
 </script>
 <script>
@@ -128465,9 +128482,17 @@ function renderBookMeta(){
     if(meta && book){
       const st = document.getElementById('bookStatus');
       if(st){
-        st.innerHTML = '📚 已上传书目：<b>' + meta.name + '</b>（' + (meta.chars/1000).toFixed(1) + 'K字，' + (meta.time||'') + '），输入章节关键词后点击"定位章节内容"';
+        st.innerHTML = '📚 已上传书目：<b>' + meta.name + '</b>（' + (meta.chars/1000).toFixed(1) + 'K字，' + (meta.time||'') + '）';
         st.style.color = '#16a34a';
       }
+      // 自动解析目录
+      setTimeout(function(){
+        const chapters = extractBookTOC(book);
+        renderBookChapterSelect(chapters);
+        if(st && chapters.length >= 3){
+          st.innerHTML = '📚 已上传书目：<b>' + meta.name + '</b>（' + (meta.chars/1000).toFixed(1) + 'K字），已解析 <b>' + chapters.length + '</b> 个章节，请选择';
+        }
+      }, 400);
     }
   }catch(e){}
 }
@@ -131328,7 +131353,7 @@ async function runLessonGen(){
   const resEl = document.getElementById('lessonResult');
   resEl.style.display = 'block';
   resEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ AI 撰写教案中（约1-2分钟）...</div>';
-  status.textContent = '撰写中...';
+  status.innerHTML = multiCollab ? '🔄 多模型协作：准备中...' : '✨ <b>步骤1/2</b> AI 撰写教案中...';
   const refs = getLessonRefs();
   const selIdx = document.getElementById('lessonStyleRef').value;
   let styleText = '';
@@ -131349,12 +131374,14 @@ async function runLessonGen(){
     }
   }
   const classInfo = (document.getElementById('lessonClassInfo').value||'').trim();
-  const sys = '你是高校体育专业理论课优秀教师，擅长教案撰写。根据提供的科目、章节、教材内容和风格参考教案（若有），撰写一份教学教案。' + fmtReq + (classInfo ? '授课对象学情：' + classInfo + '。教案难度、活动设计与评价方式须贴合该学情。' : '') + '若提供了风格参考教案，在满足格式要求的前提下模仿其详略与表达风格；内容紧扣教材章节内容，专业准确。';
+  const courseType = (document.getElementById('lessonCourseType') || {}).value || 'new';
+  const courseTypeMap = {new:'新授课（以新知讲授为主，教学过程侧重概念讲解+例题演示+课堂练习）',review:'复习课（以知识梳理为主，教学过程侧重体系构建+易错点辨析+综合训练）',experiment:'实验课（以实验操作为主，教学过程侧重实验目的+原理讲解+操作演示+数据记录+结果分析）',exercise:'讲评课（以习题讲解为主，教学过程侧重错题统计+典型题精讲+方法归纳+变式训练）'};
+  const sys = '你是高校体育专业理论课优秀教师，擅长教案撰写。本课型为【' + courseTypeMap[courseType] + '】。根据提供的科目、章节、教材内容和风格参考教案（若有），撰写一份教学教案。' + fmtReq + (classInfo ? '授课对象学情：' + classInfo + '。教案难度、活动设计与评价方式须贴合该学情。' : '') + '若提供了风格参考教案，在满足格式要求的前提下模仿其详略与表达风格；内容紧扣教材章节内容，专业准确。';
   const usr = '科目：' + subject + '\n章节：' + chapter + (classInfo ? '\n学情：' + classInfo : '') + '\n\n教材章节内容：\n' + chapterContent.slice(0, 6000) + (styleText ? '\n\n【风格参考教案（模仿其结构与风格）】\n' + styleText.slice(0, 5000) : '');
   let out = '';
   if(multiCollab){
     // 多模型协作：V4-Pro 搭框架 → GLM-5.3 填内容
-    status.textContent = '多模型协作：V4-Pro 正在搭建教案框架...';
+    status.innerHTML = '🔄 多模型协作：<b>步骤1/3</b> V4-Pro 正在搭建教案框架...';
     const frameSys = '你是高校体育专业理论课教研室主任，擅长教案结构设计。根据提供的科目、章节、教材内容，设计一份完整的教案框架（只列结构和要点，不写详细内容）。包括：教学目标（知识/能力/素养）、教学重难点、教学过程（导入/新授/巩固/小结各环节的时间分配和要点）、板书设计提纲、作业布置要点。要求结构清晰、环节完整、重点突出。';
     const frameUsr = '科目：' + subject + '\n章节：' + chapter + '\n\n教材章节内容：\n' + chapterContent.slice(0, 4000);
     let frame = '';
@@ -131363,7 +131390,7 @@ async function runLessonGen(){
       status.textContent = 'V4-Pro 框架生成超时，改用单模型模式...';
       try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
     }else{
-      status.textContent = '框架完成！GLM-5.3 正在填充详细内容...';
+      status.innerHTML = '🔄 多模型协作：<b>步骤2/3</b> 框架完成！GLM-5.3 正在填充详细内容...';
       const fillSys = '你是高校体育专业理论课优秀教师，擅长撰写详细教案。根据教研室主任设计的教案框架和教材内容，填充每个环节的详细内容（教学活动设计、师生互动、讲解要点、时间分配）。要求内容详实、可操作性强、专业准确，严格按框架结构展开。' + fmtReq + (classInfo ? '授课对象学情：' + classInfo + '。' : '');
       const fillUsr = '科目：' + subject + '\n章节：' + chapter + '\n\n【教案框架】\n' + frame + '\n\n【教材章节内容】\n' + chapterContent.slice(0, 5000) + (styleText ? '\n\n【风格参考教案】\n' + styleText.slice(0, 3000) : '');
       try{ out = await callModelWithTimeout(fillSys, fillUsr, 4500, 'glm-5.3', 120000); }catch(e){ out = ''; }
@@ -131385,13 +131412,27 @@ async function runLessonGen(){
     return;
   }
   const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-  let resHtml = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:700;color:#7c3aed;margin-bottom:10px">📖 教案初稿：' + esc(subject) + ' · ' + esc(chapter) + '</div><div style="font-size:12px;color:#b45309;margin-bottom:12px">⚠️ AI 生成初稿，请结合班级学情复核调整后使用</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
+  const wordCount = out.replace(/\s/g,'').length;
+  const estMinutes = Math.max(40, Math.round(wordCount / 15));
+  let modelInfo = '';
+  if(multiCollab){ modelInfo = '<span style="font-size:11px;background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:4px;margin-left:8px">🤖 V4-Pro框架 + GLM-5.3内容</span>'; }
+  let resHtml = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">'
+    + '<div style="font-size:15px;font-weight:700;color:#7c3aed">📖 教案初稿：' + esc(subject) + ' · ' + esc(chapter) + modelInfo + '</div>'
+    + '<div style="display:flex;gap:6px;align-items:center">'
+    + '<span style="font-size:11px;color:#9ca3af">' + wordCount + '字 · 约' + estMinutes + '分钟讲稿</span>'
+    + '<button onclick="copyLessonText()" style="background:#f3f4f6;border:1px solid #d1d5db;color:#374151;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">📋 复制</button>'
+    + '<button onclick="downloadLessonTxt()" style="background:#f3f4f6;border:1px solid #d1d5db;color:#374151;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">📄 导出TXT</button>'
+    + '<button onclick="regenerateLesson()" style="background:#fef3c7;border:1px solid #fcd34d;color:#92400e;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">🔄 换模型重生成</button>'
+    + '</div></div>'
+    + '<div style="font-size:12px;color:#b45309;margin-bottom:12px">⚠️ AI 生成初稿，请结合班级学情复核调整后使用</div>'
+    + '<div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
   status.textContent = '生成完成';
   const hc = document.getElementById('lessonHealthCheck');
   if(hc && hc.checked){
     resHtml += '<div id="healthBlock" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin-top:16px"><div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">🔍 AI 教案体检中（约1-2分钟，GLM 独立评审）...</div><div style="font-size:12px;color:#6b7280">对照格式逐环节核查 · 质量评分 · 问题清单 · 补写建议</div></div>';
     resEl.innerHTML = resHtml;
-    status.textContent = '生成完成，AI 体检中（约1-2分钟）...';
+    status.innerHTML = '🔍 <b>步骤' + (multiCollab ? '3/3' : '2/2') + '</b> AI 体检中（GLM 五维评审，约1分钟）...';
     const health = await healthCheckLesson(out, fmtReq);
     if(health && health.trim()){
       const hb = document.getElementById('healthBlock');
@@ -131409,6 +131450,54 @@ async function runLessonGen(){
   renderLessonRefs();
 }
 
+// 复制教案全文
+function copyLessonText(){
+  const text = window.__lastLessonText || '';
+  if(!text){ alert('暂无教案内容'); return; }
+  navigator.clipboard.writeText(text).then(function(){
+    const status = document.getElementById('lessonGenStatus');
+    if(status){ status.textContent = '✅ 已复制到剪贴板'; setTimeout(function(){ if(status) status.textContent = ''; }, 2000); }
+  }).catch(function(){
+    // 降级方案
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const status = document.getElementById('lessonGenStatus');
+    if(status){ status.textContent = '✅ 已复制到剪贴板'; setTimeout(function(){ if(status) status.textContent = ''; }, 2000); }
+  });
+}
+
+// 导出教案为TXT
+function downloadLessonTxt(){
+  const text = window.__lastLessonText || '';
+  if(!text){ alert('暂无教案内容'); return; }
+  const subject = (document.getElementById('lessonSubject') || {}).value || '教案';
+  const chapter = (document.getElementById('lessonChapter') || {}).value || '';
+  const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = subject + '-' + chapter + '-教案.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 换模型重生成（切换模型后重新生成）
+function regenerateLesson(){
+  const multiCheck = document.getElementById('lessonMultiCollab');
+  if(multiCheck){
+    multiCheck.checked = !multiCheck.checked;
+    const status = document.getElementById('lessonGenStatus');
+    if(status) status.textContent = multiCheck.checked ? '🔄 已切换为多模型协作模式，重新生成中...' : '🔄 已切换为单模型模式，重新生成中...';
+  }
+  setTimeout(function(){ runLessonGen(); }, 300);
+}
+
 function appendLessonAIOps(lessonText){
   const resEl = document.getElementById('lessonResult');
   if(!resEl) return;
@@ -131416,15 +131505,32 @@ function appendLessonAIOps(lessonText){
   ops.id = 'lessonAIOps';
   ops.style.cssText = 'margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center';
   ops.innerHTML = '<span style="font-size:12px;color:#6b7280">多模型增强：</span>'
-    + '<button onclick="kimiAddResources()" style="background:#7e22ce;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🧩 Kimi 补教学资源</button>'
-    + '<button onclick="hyStudentView()" style="background:#0e7490;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🎓 混元学生视角预判</button>'
-    + '<button onclick="lessonToPpt()" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 转课件大纲</button>'
-    + '<button onclick="renderLessonTimeline()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⏱️ 教学时间轴</button>'
+    + '<button onclick="enhanceAllLesson()" style="background:#dc2626;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🚀 一键全增强</button>'
+    + '<button onclick="kimiAddResources()" style="background:#7e22ce;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🧩 Kimi 补资源</button>'
+    + '<button onclick="hyStudentView()" style="background:#0e7490;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🎓 混元学生视角</button>'
+    + '<button onclick="lessonToPpt()" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 转课件</button>'
+    + '<button onclick="renderLessonTimeline()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⏱️ 时间轴</button>'
     + '<span id="lessonOpsStatus" style="font-size:12px;color:#6b7280"></span>';
   const oldOps = document.getElementById('lessonAIOps');
   if(oldOps) oldOps.remove();
   resEl.appendChild(ops);
   window.__lastLessonText = lessonText;
+}
+
+// 一键全增强：同时执行Kimi补资源+混元学生视角
+async function enhanceAllLesson(){
+  const status = document.getElementById('lessonOpsStatus');
+  if(status) status.textContent = '🚀 一键全增强中（Kimi+混元，约1分钟）...';
+  // 并行执行两个增强
+  try{
+    await Promise.all([
+      kimiAddResources().catch(function(e){}),
+      hyStudentView().catch(function(e){})
+    ]);
+    if(status) status.textContent = '✅ 全增强完成！';
+  }catch(e){
+    if(status) status.textContent = '⚠️ 部分增强失败，可单独重试';
+  }
 }
 
 async function kimiAddResources(){
@@ -133046,6 +133152,138 @@ function parseBookFile(file, cb){
     reader.readAsText(file, 'utf-8');
   }
 }
+// 选择文件后自动上传
+function autoUploadBook(){
+  const fi = document.getElementById('bookFile');
+  if(fi && fi.files && fi.files[0]){
+    uploadBookFile();
+  }
+}
+
+// 切换关键词模式（降级方案）
+function toggleBookKeyMode(){
+  const sel = document.getElementById('bookChapterSelect');
+  const key = document.getElementById('bookChapterKey');
+  const btn = document.getElementById('bookLocateBtn');
+  const toggle = document.getElementById('bookKeyToggle');
+  if(sel.style.display === 'none'){
+    sel.style.display = 'inline-block';
+    key.style.display = 'none';
+    if(btn) btn.style.display = 'none';
+    if(toggle) toggle.textContent = '关键词模式';
+  }else{
+    sel.style.display = 'none';
+    key.style.display = 'inline-block';
+    if(btn) btn.style.display = 'inline-block';
+    if(toggle) toggle.textContent = '返回目录选择';
+  }
+}
+
+// 从教材文本提取目录（章节列表）
+function extractBookTOC(text){
+  if(!text || text.length < 500) return [];
+  const chapters = [];
+  const seen = new Set();
+  // 只在前30%文本中查找目录（目录通常在书的前部）
+  const tocArea = text.slice(0, Math.floor(text.length * 0.3));
+  // 匹配模式：第X章/第X节/第X篇 + 标题
+  const patterns = [
+    /第[一二三四五六七八九十百零〇\d]+章\s*[^
+。，；]{2,40}/g,
+    /第[一二三四五六七八九十百零〇\d]+节\s*[^
+。，；]{2,40}/g,
+    /^[一二三四五六七八九十]+、\s*[^
+。，；]{2,40}/gm,
+    /^\d+[\.、]\s*[^
+。，；]{2,40}/gm
+  ];
+  for(const pat of patterns){
+    const matches = tocArea.match(pat) || [];
+    for(const m of matches){
+      const clean = m.trim().replace(/\s+/g, ' ');
+      if(clean.length >= 4 && clean.length <= 50 && !seen.has(clean)){
+        // 过滤掉明显不是章节标题的（如"第一节 前言"太短或太长）
+        if(!/^\d+$/.test(clean) && clean.indexOf('....') < 0 && clean.indexOf('……') < 0){
+          seen.add(clean);
+          chapters.push(clean);
+        }
+      }
+    }
+  }
+  return chapters.slice(0, 40); // 最多40章
+}
+
+// 渲染章节下拉框
+function renderBookChapterSelect(chapters){
+  const sel = document.getElementById('bookChapterSelect');
+  const key = document.getElementById('bookChapterKey');
+  const btn = document.getElementById('bookLocateBtn');
+  const toggle = document.getElementById('bookKeyToggle');
+  if(!sel) return;
+  if(chapters && chapters.length >= 3){
+    sel.innerHTML = '<option value="">📖 选择章节（共' + chapters.length + '章）</option>';
+    chapters.forEach(function(ch, idx){
+      const opt = document.createElement('option');
+      opt.value = ch;
+      opt.textContent = ch;
+      sel.appendChild(opt);
+    });
+    sel.style.display = 'inline-block';
+    if(key) key.style.display = 'none';
+    if(btn) btn.style.display = 'none';
+    if(toggle) toggle.style.display = 'inline-block';
+  }else{
+    // 目录解析失败，降级为关键词模式
+    sel.style.display = 'none';
+    if(key) key.style.display = 'inline-block';
+    if(btn) btn.style.display = 'inline-block';
+    if(toggle) toggle.style.display = 'none';
+  }
+}
+
+// 选择章节后自动定位+AI提炼
+async function onBookChapterSelect(){
+  const sel = document.getElementById('bookChapterSelect');
+  if(!sel || !sel.value) return;
+  const chapterName = sel.value;
+  const status = document.getElementById('bookStatus');
+  // 提取关键词：去掉"第X章"前缀，取标题部分
+  let keyword = chapterName.replace(/^第[一二三四五六七八九十百零〇\d]+[章节]\s*/, '').trim();
+  if(!keyword || keyword.length < 2) keyword = chapterName;
+  // 填入关键词输入框（隐藏但可用）
+  const keyInput = document.getElementById('bookChapterKey');
+  if(keyInput) keyInput.value = keyword;
+  // 智能自动填充科目和章节
+  const subjEl = document.getElementById('lessonSubject');
+  const chapEl = document.getElementById('lessonChapter');
+  if(subjEl && !subjEl.value.trim()){
+    // 从教材元信息中获取科目
+    try{
+      const meta = JSON.parse(localStorage.getItem('aiBookMeta') || 'null');
+      if(meta && meta.name){
+        // 从文件名提取科目（如"运动生理学.pdf"→"运动生理学"）
+        const name = meta.name.replace(/\.(txt|docx|pdf)$/i, '').replace(/[（(].*?[）)]/g, '').trim();
+        if(name.length >= 2 && name.length <= 20) subjEl.value = name;
+      }
+    }catch(e){}
+  }
+  if(chapEl && !chapEl.value.trim()){
+    chapEl.value = chapterName;
+  }
+  if(status){ status.textContent = '📌 正在定位章节：' + chapterName + '...'; status.style.color = '#6b7280'; }
+  // 执行定位
+  locateChapter();
+  // 延迟后自动AI提炼
+  setTimeout(async function(){
+    const contentEl = document.getElementById('lessonChapterContent');
+    if(contentEl && contentEl.value.trim().length > 50){
+      if(status){ status.textContent = '✨ 定位成功，AI 提炼要点中...'; status.style.color = '#d97706'; }
+      await aiExtractChapter();
+      if(status){ status.innerHTML = '✅ <b>已完成：</b>' + chapterName + ' 章节定位+AI提炼'; status.style.color = '#16a34a'; }
+    }
+  }, 800);
+}
+
 function uploadBookFile(){
   const fi = document.getElementById('bookFile');
   if(!fi.files || !fi.files[0]){ alert('请先选择书目文件'); return; }
@@ -133070,8 +133308,18 @@ function uploadBookFile(){
     try{
       localStorage.setItem('aiBookMeta', JSON.stringify({name: file.name, chars: text.length, time: new Date().toLocaleString()}));
     }catch(e){}
-    status.innerHTML = '✅ <b>书目已上传：</b>' + file.name + '（' + (text.length/1000).toFixed(1) + 'K字），输入章节关键词后点击"定位章节内容"';
+    status.innerHTML = '✅ <b>书目已上传：</b>' + file.name + '（' + (text.length/1000).toFixed(1) + 'K字），正在解析目录...';
     status.style.color = '#16a34a';
+    // 自动解析目录并渲染章节下拉框
+    setTimeout(function(){
+      const chapters = extractBookTOC(text);
+      renderBookChapterSelect(chapters);
+      if(chapters.length >= 3){
+        status.innerHTML = '✅ <b>书目已上传：</b>' + file.name + '（' + (text.length/1000).toFixed(1) + 'K字），已解析 <b>' + chapters.length + '</b> 个章节，请在下拉框选择';
+      }else{
+        status.innerHTML = '✅ <b>书目已上传：</b>' + file.name + '（目录解析较少，已切换关键词模式，请输入章节关键词后点"定位章节"）';
+      }
+    }, 300);
   });
 }
 function locateChapter(){
