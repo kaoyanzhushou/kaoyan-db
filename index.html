@@ -131273,9 +131273,22 @@ function readLessonFile(){
   if(!fileInput.files || !fileInput.files[0]){ alert('请先选择教案文件'); return; }
   const file = fileInput.files[0];
   const name = file.name.replace(/\.(txt|docx|pdf)$/i, '');
+  const statusEl = document.getElementById('lessonRefStatus');
   const reader = new FileReader();
+
+  // 解析成功后的统一处理
+  function onParseSuccess(text, extraInfo){
+    document.getElementById('lessonRefInput').value = text || '';
+    document.getElementById('lessonRefTitle').value = name;
+    if(statusEl) statusEl.textContent = '✅ ' + name + (extraInfo || '') + ' 已解析并保存入风格库';
+    try{ saveLessonRef(); }catch(e){}
+    try{ renderLessonRefs(); }catch(e){}
+  }
+
   if(file.name.toLowerCase().endsWith('.pdf')){
+    if(statusEl) statusEl.textContent = '⏳ 正在加载 PDF 解析库...';
     loadPdfjs(function(){
+      if(statusEl) statusEl.textContent = '⏳ 正在解析 PDF...';
       reader.onload = function(e){
         var arr = e.target.result;
         try{
@@ -131287,56 +131300,52 @@ function readLessonFile(){
               var textPromises = pages.map(function(p){ return p.getTextContent(); });
               Promise.all(textPromises).then(function(contents){
                 var txt = contents.map(function(c){ return c.items.map(function(it){ return it.str; }).join(' '); }).join('\n');
-                document.getElementById('lessonRefInput').value = txt || '';
-                document.getElementById('lessonRefTitle').value = name;
-                document.getElementById('lessonRefStatus').textContent = '✅ ' + name + '（' + pdf.numPages + '页）已解析并自动保存入风格库';
-                  saveLessonRef();
-                  renderLessonRefs();
-              }).catch(function(err){ alert('PDF 文本提取失败：' + err.message); });
-            }).catch(function(err){ alert('PDF 页面读取失败：' + err.message); });
-          }).catch(function(err){ alert('PDF 解析失败：' + err.message); });
-        }catch(err){ alert('PDF 解析异常：' + err.message); }
+                onParseSuccess(txt, '（' + pdf.numPages + '页）');
+              }).catch(function(err){ if(statusEl) statusEl.textContent = '⚠️ PDF 文本提取失败：' + err.message; });
+            }).catch(function(err){ if(statusEl) statusEl.textContent = '⚠️ PDF 页面读取失败：' + err.message; });
+          }).catch(function(err){ if(statusEl) statusEl.textContent = '⚠️ PDF 解析失败：' + err.message; });
+        }catch(err){ if(statusEl) statusEl.textContent = '⚠️ PDF 解析异常：' + err.message; }
       };
       reader.readAsArrayBuffer(file);
     });
   }else if(file.name.toLowerCase().endsWith('.docx')){
-    // 动态加载 mammoth 解析 docx
-    if(window.mammoth){
+    if(statusEl) statusEl.textContent = '⏳ 正在加载 docx 解析库（首次使用需下载，约3秒）...';
+    function parseDocx(){
+      if(statusEl) statusEl.textContent = '⏳ 正在解析 docx...';
       reader.onload = function(e){
         mammoth.extractRawText({ arrayBuffer: e.target.result }).then(function(result){
-          document.getElementById('lessonRefInput').value = result.value || '';
-          document.getElementById('lessonRefTitle').value = name;
-          document.getElementById('lessonRefStatus').textContent = '✅ ' + name + ' 已解析并自动保存入风格库';
-            saveLessonRef();
-            renderLessonRefs();
-        }).catch(function(err){ alert('docx 解析失败：' + err.message); });
+          onParseSuccess(result.value, '');
+        }).catch(function(err){
+          if(statusEl) statusEl.textContent = '⚠️ docx 解析失败：' + err.message + '，请直接粘贴教案文本';
+        });
       };
       reader.readAsArrayBuffer(file);
+    }
+    if(window.mammoth){
+      parseDocx();
     }else{
-      const sc = document.createElement('script');
+      var loaded = false;
+      var sc = document.createElement('script');
       sc.src = 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
-      sc.onload = function(){
-        reader.onload = function(e){
-          mammoth.extractRawText({ arrayBuffer: e.target.result }).then(function(result){
-            document.getElementById('lessonRefInput').value = result.value || '';
-            document.getElementById('lessonRefTitle').value = name;
-            document.getElementById('lessonRefStatus').textContent = '✅ ' + name + ' 已解析并自动保存入风格库';
-            saveLessonRef();
-            renderLessonRefs();
-          }).catch(function(err){ alert('docx 解析失败：' + err.message); });
-        };
-        reader.readAsArrayBuffer(file);
+      sc.onload = function(){ loaded = true; parseDocx(); };
+      sc.onerror = function(){
+        if(statusEl) statusEl.textContent = '⚠️ 无法加载 docx 解析库（网络问题），请直接粘贴教案文本，或改用 .txt 格式';
       };
-      sc.onerror = function(){ alert('无法加载 docx 解析库（需联网），请直接粘贴教案文本'); };
       document.head.appendChild(sc);
+      // 8秒超时
+      setTimeout(function(){
+        if(!loaded && statusEl && statusEl.textContent.indexOf('加载') >= 0){
+          statusEl.textContent = '⚠️ 解析库加载超时（网络较慢），请重试或直接粘贴教案文本';
+        }
+      }, 8000);
     }
   }else{
+    if(statusEl) statusEl.textContent = '⏳ 正在读取文件...';
     reader.onload = function(e){
-      document.getElementById('lessonRefInput').value = e.target.result || '';
-      document.getElementById('lessonRefTitle').value = name;
-      document.getElementById('lessonRefStatus').textContent = '✅ ' + name + ' 已读取并自动保存入风格库';
-      saveLessonRef();
-      renderLessonRefs();
+      onParseSuccess(e.target.result, '');
+    };
+    reader.onerror = function(){
+      if(statusEl) statusEl.textContent = '⚠️ 文件读取失败，请重试';
     };
     reader.readAsText(file, 'utf-8');
   }
