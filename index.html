@@ -16951,10 +16951,75 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="mechContent-understand" style="display:none">
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:40px;text-align:center">
-          <div style="font-size:48px;margin-bottom:16px">📖</div>
-          <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:8px">图解理解</div>
-          <div style="font-size:13px;color:#64748b;max-width:500px;margin:0 auto;line-height:1.8">上传教材/文献机制图→AI 识别结构→难度分级讲解（本科/研究生/专家）→挖空自测→提取为可编辑节点回存素材库→一键生成课件页。P1 阶段上线。</div>
+        <!-- 上传区 -->
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:16px">
+          <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:12px">📤 上传机制图</div>
+          <div id="undUploadArea" style="border:2px dashed #cbd5e1;border-radius:10px;padding:30px;text-align:center;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='#0891b2'" onmouseout="this.style.borderColor='#cbd5e1'" onclick="document.getElementById('undFileInput').click()">
+            <div style="font-size:36px;margin-bottom:8px">🖼️</div>
+            <div style="font-size:13px;color:#64748b">点击或拖拽上传机制图（PNG/JPG）</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px">支持教材截图、文献机制图、手绘草图</div>
+          </div>
+          <input type="file" id="undFileInput" accept="image/png,image/jpeg" style="display:none" onchange="undHandleUpload(this.files[0])">
+          <div id="undPreviewArea" style="display:none;margin-top:14px">
+            <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+              <img id="undPreviewImg" style="max-width:300px;max-height:250px;border-radius:8px;border:1px solid #e2e8f0">
+              <div style="flex:1;min-width:200px">
+                <div style="font-size:12px;font-weight:600;color:#475569;margin-bottom:8px">图片信息</div>
+                <div id="undImgInfo" style="font-size:12px;color:#64748b;line-height:1.8"></div>
+                <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+                  <button onclick="undRecognize()" style="background:#0891b2;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔍 AI 识别结构</button>
+                  <button onclick="undResetUpload()" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#64748b;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px">重新上传</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 识别状态 -->
+        <div id="undStatus" style="display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:14px;margin-bottom:16px">
+          <div id="undStatusText" style="font-size:13px;color:#0369a1"></div>
+        </div>
+
+        <!-- 识别结果 -->
+        <div id="undResult" style="display:none">
+          <!-- 提取的结构 -->
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:700;color:#0f172a">🔬 AI 提取的机制结构</div>
+              <div style="display:flex;gap:8px">
+                <button onclick="undSaveToLibrary()" style="background:#7c3aed;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">💾 回存素材库</button>
+                <button onclick="undToPPT()" style="background:#db2777;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📊 生成课件页</button>
+              </div>
+            </div>
+            <div id="undStructInfo" style="font-size:12px;color:#64748b;margin-bottom:10px"></div>
+            <div id="undStructNodes" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+            <div id="undStructEdges" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+
+          <!-- 难度分级讲解 -->
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-size:14px;font-weight:700;color:#0f172a">📚 难度分级讲解（三模型协作）</div>
+              <button onclick="undExplain()" style="background:#0891b2;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🤖 生成讲解</button>
+            </div>
+            <div style="display:flex;gap:4px;margin-bottom:12px">
+              <button onclick="undSwitchLevel('undergrad')" id="undTab-undergrad" style="flex:1;padding:8px;border:1px solid #0891b2;background:#0891b2;color:#fff;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px;font-weight:600">🎓 本科版（hy3）</button>
+              <button onclick="undSwitchLevel('grad')" id="undTab-grad" style="flex:1;padding:8px;border:1px solid #e2e8f0;background:#fff;color:#64748b;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px;font-weight:600">📖 研究生版（deepseek）</button>
+              <button onclick="undSwitchLevel('expert')" id="undTab-expert" style="flex:1;padding:8px;border:1px solid #e2e8f0;background:#fff;color:#64748b;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px;font-weight:600">🔬 专家版（v4-pro）</button>
+            </div>
+            <div id="undExplain-undergrad" style="font-size:13px;color:#475569;line-height:1.9;min-height:80px;padding:12px;background:#f8fafc;border-radius:0 8px 8px 8px">点击"生成讲解"开始</div>
+            <div id="undExplain-grad" style="display:none;font-size:13px;color:#475569;line-height:1.9;min-height:80px;padding:12px;background:#f8fafc;border-radius:0 8px 8px 8px"></div>
+            <div id="undExplain-expert" style="display:none;font-size:13px;color:#475569;line-height:1.9;min-height:80px;padding:12px;background:#f8fafc;border-radius:0 8px 8px 8px"></div>
+          </div>
+
+          <!-- 挖空自测 -->
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-size:14px;font-weight:700;color:#0f172a">✏️ 挖空自测</div>
+              <button onclick="undGenerateQuiz()" style="background:#f59e0b;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🎯 生成题目</button>
+            </div>
+            <div id="undQuizArea" style="font-size:13px;color:#475569;line-height:1.9">点击"生成题目"，AI 自动识别关键节点挖空</div>
+          </div>
         </div>
       </div>
 
@@ -128070,482 +128135,264 @@ function exportAnimSVG(){
   mechToast('已导出 SVG');
 }
 
+// ===== 运动科学机制库：图解理解（P1） =====
+var undCurrentData = null;
+var undImageBase64 = null;
+var undQuizData = [];
 
-// 解析 AI 返回的 JSON（容错）
-function parseMechJSON(text){
+// 处理上传
+function undHandleUpload(file){
+  if(!file || !file.type.startsWith('image/')){ mechToast('请上传图片文件'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var img = new Image();
+    img.onload = function(){
+      // 压缩到最大宽度 1024px
+      var maxW = 1024;
+      var w = img.width, h = img.height;
+      if(w > maxW){ h = h * maxW / w; w = maxW; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      undImageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById('undPreviewImg').src = undImageBase64;
+      document.getElementById('undPreviewArea').style.display = 'block';
+      document.getElementById('undUploadArea').style.display = 'none';
+      document.getElementById('undImgInfo').innerHTML = '文件名：' + file.name + '<br>原始尺寸：' + img.width + '×' + img.height + '<br>压缩后：' + w + '×' + h + '<br>大小：' + (undImageBase64.length / 1024).toFixed(0) + ' KB';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function undResetUpload(){
+  undImageBase64 = null;
+  undCurrentData = null;
+  document.getElementById('undPreviewArea').style.display = 'none';
+  document.getElementById('undUploadArea').style.display = 'none';
+  document.getElementById('undUploadArea').style.display = 'block';
+  document.getElementById('undResult').style.display = 'none';
+  document.getElementById('undStatus').style.display = 'none';
+  document.getElementById('undFileInput').value = '';
+}
+
+// AI 识别机制图结构（多模态）
+async function undRecognize(){
+  if(!undImageBase64){ mechToast('请先上传图片'); return; }
+  var statusEl = document.getElementById('undStatus');
+  var statusText = document.getElementById('undStatusText');
+  statusEl.style.display = 'block';
+  statusText.innerHTML = '🔍 <b>deepseek-v4-pro</b> 正在识别机制图结构（节点/关系/层级）...';
+
   try{
-    var start = text.indexOf('{');
-    var end = text.lastIndexOf('}');
-    if(start !== -1 && end !== -1){
-      return JSON.parse(text.substring(start, end + 1));
-    }
-  }catch(e){}
-  // 兜底：简单结构
-  return {nodes: [{id:'n1', label:'解析失败', type:'其他', layer:0, confidence:'低', narration:'', abbreviation:''}], edges: []};
-}
-
-// 渲染机制图 SVG
-function renderMechSVG(data){
-  var container = document.getElementById('mechSvgContainer');
-  var nodes = data.nodes || [];
-  var edges = data.edges || [];
-
-  // 自动计算 layer（如果没有）
-  var layerMap = {};
-  nodes.forEach(function(n){ if(n.layer !== undefined){ layerMap[n.id] = n.layer; } });
-  if(Object.keys(layerMap).length === 0){
-    // 拓扑排序计算 layer
-    var inDegree = {};
-    nodes.forEach(function(n){ inDegree[n.id] = 0; });
-    edges.forEach(function(e){ if(inDegree[e.to] !== undefined){ inDegree[e.to]++; } });
-    var queue = nodes.filter(function(n){ return inDegree[n.id] === 0; }).map(function(n){ return n.id; });
-    queue.forEach(function(id){ layerMap[id] = 0; });
-    while(queue.length > 0){
-      var cur = queue.shift();
-      edges.filter(function(e){ return e.from === cur; }).forEach(function(e){
-        inDegree[e.to]--;
-        layerMap[e.to] = Math.max(layerMap[e.to] || 0, (layerMap[cur] || 0) + 1);
-        if(inDegree[e.to] === 0){ queue.push(e.to); }
-      });
-    }
-    nodes.forEach(function(n){ if(layerMap[n.id] === undefined){ layerMap[n.id] = 0; } });
-  }
-
-  // 按 layer 分组
-  var layers = {};
-  nodes.forEach(function(n){
-    var l = layerMap[n.id] || 0;
-    if(!layers[l]){ layers[l] = []; }
-    layers[l].push(n);
-  });
-  var maxLayer = Math.max.apply(null, Object.keys(layers).map(Number));
-  var nodeWidth = 130, nodeHeight = 50, hGap = 80, vGap = 30;
-  var svgWidth = (maxLayer + 1) * (nodeWidth + hGap) + hGap;
-  var maxNodesInLayer = Math.max.apply(null, Object.values(layers).map(function(arr){ return arr.length; }));
-  var svgHeight = maxNodesInLayer * (nodeHeight + vGap) + vGap + 40;
-
-  // 计算每个节点坐标
-  var pos = {};
-  Object.keys(layers).forEach(function(l){
-    var arr = layers[l];
-    var totalH = arr.length * nodeHeight + (arr.length - 1) * vGap;
-    var startY = (svgHeight - totalH) / 2;
-    arr.forEach(function(n, i){
-      pos[n.id] = {
-        x: hGap + Number(l) * (nodeWidth + hGap),
-        y: startY + i * (nodeHeight + vGap),
-        cx: hGap + Number(l) * (nodeWidth + hGap) + nodeWidth / 2,
-        cy: startY + i * (nodeHeight + vGap) + nodeHeight / 2
-      };
+    // 直接调用后端，构造多模态消息
+    var backend = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/chat';
+    var body = {
+      model: 'deepseek-v4-pro',
+      messages: [
+        {role: 'system', content: '你是运动科学机制图识别专家。请识别图片中的机制图，提取所有分子节点和它们之间的关系。只输出JSON，不要其他文字。JSON格式：{"title":"机制名称","subject":"科目","nodes":[{"label":"名称","type":"酶/底物/转录因子/激素/受体/其他","layer":0,"confidence":"高/中/低","narration":"1句讲解","abbreviation":"缩写"}],"edges":[{"from":"源节点label","to":"目标节点label","relation":"激活/抑制/底物转化/磷酸化/表达上调","confidence":"高/中/低","acute":true,"chronic":true}]}'},
+        {role: 'user', content: [
+          {type: 'text', text: '识别这张运动科学机制图，提取节点和关系。只输出JSON。'},
+          {type: 'image_url', image_url: {url: undImageBase64}}
+        ]}
+      ],
+      temperature: 0.3,
+      max_tokens: 2000
+    };
+    var resp = await fetch(backend, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
     });
-  });
+    var data = await resp.json();
+    var content = data.data ? data.data.content : (data.choices ? data.choices[0].message.content : '');
+    if(!content){ throw new Error('识别返回为空'); }
 
-  // 颜色配置
-  var typeColors = {
-    '酶': '#fef3c7', '底物': '#dbeafe', '转录因子': '#fce7f3',
-    '激素': '#dcfce7', '受体': '#e0e7ff', '其他': '#f1f5f9'
-  };
-  var typeStroke = {
-    '酶': '#f59e0b', '底物': '#3b82f6', '转录因子': '#ec4899',
-    '激素': '#22c55e', '受体': '#6366f1', '其他': '#94a3b8'
-  };
-  var relationColors = {
-    '激活': '#22c55e', '抑制': '#ef4444', '底物转化': '#3b82f6',
-    '磷酸化': '#a855f7', '表达上调': '#f97316'
-  };
-
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + svgWidth + '" height="' + svgHeight + '" style="max-width:100%">';
-  svg += '<defs><marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#22c55e"/></marker>';
-  svg += '<marker id="arrow-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/></marker>';
-  svg += '<marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6"/></marker>';
-  svg += '<marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#a855f7"/></marker>';
-  svg += '<marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#f97316"/></marker></defs>';
-
-  // 画边
-  edges.forEach(function(e){
-    var from = pos[e.from], to = pos[e.to];
-    if(!from || !to){ return; }
-    var color = relationColors[e.relation] || '#64748b';
-    var markerId = 'arrow-' + (e.relation === '激活' ? 'green' : e.relation === '抑制' ? 'red' : e.relation === '底物转化' ? 'blue' : e.relation === '磷酸化' ? 'purple' : 'orange');
-    var dash = (e.confidence === '低') ? 'stroke-dasharray="5,3"' : '';
-    var acuteStyle = (e.acute && !e.chronic) ? 'stroke-width="2.5" opacity="0.8"' : 'stroke-width="2"';
-    // 贝塞尔曲线
-    var x1 = from.x + nodeWidth, y1 = from.cy;
-    var x2 = to.x, y2 = to.cy;
-    var mx = (x1 + x2) / 2;
-    svg += '<path d="M' + x1 + ',' + y1 + ' C' + mx + ',' + y1 + ' ' + mx + ',' + y2 + ' ' + x2 + ',' + y2 + '" fill="none" stroke="' + color + '" ' + dash + ' ' + acuteStyle + ' marker-end="url(#' + markerId + ')"/>';
-    // 关系标签
-    var labelColor = (e.confidence === '低') ? '#f59e0b' : color;
-    svg += '<text x="' + mx + '" y="' + ((y1+y2)/2 - 5) + '" text-anchor="middle" font-size="10" fill="' + labelColor + '" font-weight="600">' + e.relation + '</text>';
-  });
-
-  // 画节点
-  nodes.forEach(function(n){
-    var p = pos[n.id];
-    if(!p){ return; }
-    var fill = typeColors[n.type] || '#f1f5f9';
-    var stroke = typeStroke[n.type] || '#94a3b8';
-    var confStroke = (n.confidence === '低') ? 'stroke-dasharray="4,2" stroke="#f59e0b"' : '';
-    var x = p.x, y = p.y, w = nodeWidth, h = nodeHeight;
-    // 按类型画形状
-    if(n.type === '转录因子'){
-      // 菱形
-      svg += '<polygon points="' + (x+w/2) + ',' + y + ' ' + (x+w) + ',' + (y+h/2) + ' ' + (x+w/2) + ',' + (y+h) + ' ' + x + ',' + (y+h/2) + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2" ' + confStroke + '/>';
-    } else if(n.type === '激素'){
-      // 三角形
-      svg += '<polygon points="' + (x+w/2) + ',' + y + ' ' + (x+w) + ',' + (y+h) + ' ' + x + ',' + (y+h) + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2" ' + confStroke + '/>';
-    } else if(n.type === '酶'){
-      // 六边形
-      var hw = w * 0.15;
-      svg += '<polygon points="' + (x+hw) + ',' + y + ' ' + (x+w-hw) + ',' + y + ' ' + (x+w) + ',' + (y+h/2) + ' ' + (x+w-hw) + ',' + (y+h) + ' ' + (x+hw) + ',' + (y+h) + ' ' + x + ',' + (y+h/2) + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2" ' + confStroke + '/>';
-    } else {
-      // 矩形/圆形
-      if(n.type === '底物'){
-        svg += '<ellipse cx="' + (x+w/2) + '" cy="' + (y+h/2) + '" rx="' + (w/2) + '" ry="' + (h/2) + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2" ' + confStroke + '/>';
-      } else {
-        svg += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="8" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2" ' + confStroke + '/>';
-      }
-    }
-    // 节点文字
-    var fontSize = n.label.length > 8 ? '10' : '12';
-    svg += '<text x="' + (x+w/2) + '" y="' + (y+h/2 - 2) + '" text-anchor="middle" font-size="' + fontSize + '" font-weight="700" fill="#1e293b">' + n.label + '</text>';
-    if(n.abbreviation){
-      svg += '<text x="' + (x+w/2) + '" y="' + (y+h/2 + 12) + '" text-anchor="middle" font-size="9" fill="#64748b">' + n.abbreviation + '</text>';
-    }
-  });
-
-  svg += '</svg>';
-  container.innerHTML = svg;
-  container._svgContent = svg;
-}
-
-// 渲染图例
-function renderMechLegend(){
-  var legend = document.getElementById('mechLegend');
-  var html = '<span style="font-size:11px;font-weight:600;color:#475569">节点类型：</span>';
-  html += '<span style="font-size:11px;color:#475569"><span style="display:inline-block;width:12px;height:12px;background:#fef3c7;border:2px solid #f59e0b;border-radius:2px;vertical-align:middle"></span> 酶</span>';
-  html += '<span style="font-size:11px;color:#475569"><span style="display:inline-block;width:12px;height:12px;background:#dbeafe;border:2px solid #3b82f6;border-radius:50%;vertical-align:middle"></span> 底物</span>';
-  html += '<span style="font-size:11px;color:#475569"><span style="display:inline-block;width:12px;height:12px;background:#fce7f3;border:2px solid #ec4899;transform:rotate(45deg);vertical-align:middle"></span> 转录因子</span>';
-  html += '<span style="font-size:11px;color:#475569"><span style="display:inline-block;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid #22c55e;vertical-align:middle"></span> 激素</span>';
-  html += '<span style="font-size:11px;color:#475569"><span style="display:inline-block;width:12px;height:12px;background:#e0e7ff;border:2px solid #6366f1;border-radius:2px;vertical-align:middle"></span> 受体</span>';
-  html += '<span style="font-size:11px;font-weight:600;color:#475569;margin-left:12px">关系：</span>';
-  html += '<span style="font-size:11px;color:#22c55e">→ 激活</span>';
-  html += '<span style="font-size:11px;color:#ef4444">—⊣ 抑制</span>';
-  html += '<span style="font-size:11px;color:#3b82f6">→ 底物转化</span>';
-  html += '<span style="font-size:11px;color:#a855f7">⇢ 磷酸化</span>';
-  html += '<span style="font-size:11px;color:#f59e0b;margin-left:12px">┄ 低置信度（建议人工复核）</span>';
-  legend.innerHTML = html;
-}
-
-// 渲染节点列表
-function renderMechNodeList(data){
-  var list = document.getElementById('mechNodeList');
-  var html = '';
-  if(data.overallNarration){
-    html += '<div style="background:#f0f9ff;border-left:3px solid #0891b2;padding:10px 14px;margin-bottom:12px;border-radius:0 6px 6px 0"><div style="font-size:11px;font-weight:700;color:#0369a1;margin-bottom:4px">🎤 整体机制讲解（hy4）</div><div style="font-size:12px;color:#0c4a6e;line-height:1.7">' + data.overallNarration + '</div></div>';
-  }
-  if(data.review){
-    if(data.review.glm && data.review.glm.indexOf('无明显问题') === -1){
-      html += '<div style="background:#fef2f2;border-left:3px solid #ef4444;padding:10px 14px;margin-bottom:12px;border-radius:0 6px 6px 0"><div style="font-size:11px;font-weight:700;color:#b91c1c;margin-bottom:4px">🔍 glm 独立评审发现的问题</div><div style="font-size:12px;color:#7f1d1d;line-height:1.7;white-space:pre-wrap">' + data.review.glm + '</div></div>';
-    }
-    if(data.review.hy3 && data.review.hy3.indexOf('理解连贯') === -1){
-      html += '<div style="background:#fffbeb;border-left:3px solid #f59e0b;padding:10px 14px;margin-bottom:12px;border-radius:0 6px 6px 0"><div style="font-size:11px;font-weight:700;color:#b45309;margin-bottom:4px">🎓 hy3 学生视角建议</div><div style="font-size:12px;color:#78350f;line-height:1.7;white-space:pre-wrap">' + data.review.hy3 + '</div></div>';
-    }
-  }
-  html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f8fafc"><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">节点</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">类型</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">置信度</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">讲解词</th></tr></thead><tbody>';
-  (data.nodes || []).forEach(function(n){
-    var confColor = n.confidence === '高' ? '#22c55e' : n.confidence === '中' ? '#f59e0b' : '#ef4444';
-    html += '<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9;font-weight:600;color:#1e293b">' + n.label + (n.abbreviation ? ' (' + n.abbreviation + ')' : '') + '</td><td style="padding:8px;border-bottom:1px solid #f1f5f9;color:#64748b">' + (n.type || '') + '</td><td style="padding:8px;border-bottom:1px solid #f1f5f9"><span style="color:' + confColor + ';font-weight:600">' + (n.confidence || '') + '</span></td><td style="padding:8px;border-bottom:1px solid #f1f5f9;color:#475569;font-size:11px">' + (n.narration || '') + '</td></tr>';
-  });
-  html += '</tbody></table>';
-  if(data.edges && data.edges.length > 0){
-    html += '<div style="margin-top:16px;font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px">关系列表（' + data.edges.length + ' 条）</div>';
-    html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
-    data.edges.forEach(function(e){
-      var fromNode = (data.nodes || []).find(function(n){return n.id === e.from;});
-      var toNode = (data.nodes || []).find(function(n){return n.id === e.to;});
-      var relColor = e.relation === '激活' ? '#22c55e' : e.relation === '抑制' ? '#ef4444' : e.relation === '底物转化' ? '#3b82f6' : '#a855f7';
-      var tags = '';
-      if(e.acute){ tags += '<span style="background:#fee2e2;color:#b91c1c;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:4px">急性</span>'; }
-      if(e.chronic){ tags += '<span style="background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:4px">慢性</span>'; }
-      html += '<span style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;font-size:11px;color:#475569">' + (fromNode?fromNode.label:e.from) + ' <span style="color:' + relColor + ';font-weight:600">' + e.relation + '</span> ' + (toNode?toNode.label:e.to) + tags + '</span>';
+    // 解析 JSON
+    var parsed = parseMechJSON(content);
+    // 转换 edges 的 from/to 从 label 到 id
+    var nodeMap = {};
+    (parsed.nodes || []).forEach(function(n, i){
+      n.id = n.id || ('u' + i);
+      nodeMap[n.label] = n.id;
     });
-    html += '</div>';
+    (parsed.edges || []).forEach(function(e){
+      e.from = nodeMap[e.from] || e.from;
+      e.to = nodeMap[e.to] || e.to;
+    });
+    parsed.title = parsed.title || '识别的机制图';
+    parsed.subject = parsed.subject || '运动科学';
+    parsed.createdAt = new Date().toISOString();
+    undCurrentData = parsed;
+
+    statusText.innerHTML = '✅ 识别完成：' + (parsed.nodes || []).length + ' 个节点，' + (parsed.edges || []).length + ' 条关系。现在可以生成难度分级讲解或挖空自测。';
+    undRenderStruct();
+    document.getElementById('undResult').style.display = 'block';
+
+  }catch(e){
+    statusText.innerHTML = '⚠️ 多模态识别失败（' + e.message + '）。请改用"手动输入描述"模式：在下方输入机制图的文字描述，AI 将基于文本生成讲解。<br><textarea id="undTextDesc" rows="3" placeholder="输入机制图的文字描述，例如：AMPK激活PGC-1α，p38磷酸化PGC-1α，最终诱导线粒体生物发生" style="width:100%;margin-top:8px;border:1px solid #cbd5e1;border-radius:6px;padding:8px;font-size:12px"></textarea><button onclick="undRecognizeFromText()" style="margin-top:8px;background:#0891b2;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px">基于文本识别</button>';
   }
-  list.innerHTML = html;
 }
 
-// 清空
-function clearMechanism(){
-  document.getElementById('mechDesc').value = '';
-  document.getElementById('mechResult').style.display = 'none';
-  document.getElementById('mechStatus').style.display = 'none';
-  mechCurrentData = null;
+// 基于文本识别（降级模式）
+async function undRecognizeFromText(){
+  var desc = document.getElementById('undTextDesc').value.trim();
+  if(!desc){ mechToast('请输入描述'); return; }
+  var statusText = document.getElementById('undStatusText');
+  statusText.innerHTML = '✍️ <b>deepseek-chat</b> 正在基于文本描述生成机制结构...';
+  try{
+    var result = await callModelWithTimeout('你是运动科学机制图生成专家，严格按JSON格式输出。', '基于以下描述生成机制图JSON。要求：nodes含id/label/type/layer/confidence/narration/abbreviation，edges含from/to/relation/confidence/acute/chronic。只输出JSON。\\n\\n描述：' + desc, 1800, 'deepseek-chat', 35000);
+    if(!result){ throw new Error('生成失败'); }
+    var parsed = parseMechJSON(result);
+    parsed.title = desc.substring(0, 30) + (desc.length > 30 ? '...' : '');
+    parsed.subject = '运动科学';
+    parsed.createdAt = new Date().toISOString();
+    undCurrentData = parsed;
+    statusText.innerHTML = '✅ 生成完成：' + (parsed.nodes || []).length + ' 个节点，' + (parsed.edges || []).length + ' 条关系。';
+    undRenderStruct();
+    document.getElementById('undResult').style.display = 'block';
+  }catch(e){
+    statusText.innerHTML = '❌ 失败：' + e.message;
+  }
 }
 
-// 导出 PNG
-function exportMechPNG(){
-  var container = document.getElementById('mechSvgContainer');
-  var svg = container.querySelector('svg');
-  if(!svg){ mechToast('请先生成机制图'); return; }
-  var svgData = new XMLSerializer().serializeToString(svg);
-  var canvas = document.createElement('canvas');
-  var scale = 2;
-  canvas.width = svg.getAttribute('width') * scale;
-  canvas.height = svg.getAttribute('height') * scale;
-  var ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  var img = new Image();
-  img.onload = function(){
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    var link = document.createElement('a');
-    link.download = '机制图_' + new Date().getTime() + '.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  };
-  img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+// 渲染提取的结构
+function undRenderStruct(){
+  var d = undCurrentData;
+  if(!d){ return; }
+  document.getElementById('undStructInfo').innerHTML = '<b>' + d.title + '</b> | ' + d.subject + ' | ' + (d.nodes || []).length + '节点 / ' + (d.edges || []).length + '关系';
+  var typeColor = {'酶':'#fef3c7','底物':'#dbeafe','转录因子':'#fce7f3','激素':'#dcfce7','受体':'#e0e7ff','其他':'#f1f5f9'};
+  var nodesHtml = '';
+  (d.nodes || []).forEach(function(n){
+    nodesHtml += '<span style="background:' + (typeColor[n.type] || '#f1f5f9') + ';border:1px solid #e2e8f0;padding:4px 10px;border-radius:6px;font-size:11px;color:#1e293b;font-weight:600">' + n.label + (n.abbreviation ? ' (' + n.abbreviation + ')' : '') + ' <span style="color:#94a3b8;font-weight:400">' + (n.type || '') + '</span></span>';
+  });
+  document.getElementById('undStructNodes').innerHTML = nodesHtml;
+  var relColor = {'激活':'#22c55e','抑制':'#ef4444','底物转化':'#3b82f6','磷酸化':'#a855f7','表达上调':'#f97316'};
+  var edgesHtml = '';
+  (d.edges || []).forEach(function(e){
+    var fromN = (d.nodes || []).find(function(n){return n.id === e.from;});
+    var toN = (d.nodes || []).find(function(n){return n.id === e.to;});
+    edgesHtml += '<span style="background:#f8fafc;border:1px solid #e2e8f0;padding:3px 8px;border-radius:5px;font-size:10px;color:#475569">' + (fromN?fromN.label:e.from) + ' <span style="color:' + (relColor[e.relation] || '#64748b') + ';font-weight:700">' + e.relation + '</span> ' + (toN?toN.label:e.to) + '</span>';
+  });
+  document.getElementById('undStructEdges').innerHTML = edgesHtml;
 }
 
-// 导出 SVG
-function exportMechSVG(){
-  var container = document.getElementById('mechSvgContainer');
-  var svg = container.querySelector('svg');
-  if(!svg){ mechToast('请先生成机制图'); return; }
-  var svgData = new XMLSerializer().serializeToString(svg);
-  var blob = new Blob([svgData], {type: 'image/svg+xml'});
-  var link = document.createElement('a');
-  link.download = '机制图_' + new Date().getTime() + '.svg';
-  link.href = URL.createObjectURL(blob);
-  link.click();
+// 难度分级讲解（三路并行）
+async function undExplain(){
+  if(!undCurrentData){ mechToast('请先识别机制图'); return; }
+  var structStr = JSON.stringify(undCurrentData).substring(0, 2500);
+  var levels = ['undergrad', 'grad', 'expert'];
+  levels.forEach(function(l){
+    document.getElementById('undExplain-' + l).innerHTML = '<span style="color:#94a3b8">生成中...</span>';
+  });
+
+  var pUndergrad = callModelWithTimeout('你是运动科学专业本科生，用通俗的语言和类比解释复杂机制。', '用通俗的语言（适合本科生）解释以下机制图，包含核心逻辑、关键分子的作用、运动时的变化。300字左右。\\n\\n机制结构：' + structStr, 500, 'hy3', 20000);
+  var pGrad = callModelWithTimeout('你是运动科学研究生，用专业术语解释分子机制。', '用专业术语（适合研究生）解释以下机制图，包含分子机制、信号通路、时间动力学、调节因素。400字左右。\\n\\n机制结构：' + structStr, 600, 'deepseek-chat', 20000);
+  var pExpert = callModelWithTimeout('你是运动科学领域专家，关注前沿研究和未解决问题。', '从专家视角解释以下机制图，包含最新研究进展、存在的争议、未解决的科学问题、未来研究方向。400字左右。\\n\\n机制结构：' + structStr, 600, 'deepseek-v4-pro', 20000);
+
+  var results = await Promise.allSettled([pUndergrad, pGrad, pExpert]);
+  document.getElementById('undExplain-undergrad').innerHTML = (results[0].status === 'fulfilled' && results[0].value) ? results[0].value.replace(/\\n/g, '<br>') : '<span style="color:#ef4444">生成失败</span>';
+  document.getElementById('undExplain-grad').innerHTML = (results[1].status === 'fulfilled' && results[1].value) ? results[1].value.replace(/\\n/g, '<br>') : '<span style="color:#ef4444">生成失败</span>';
+  document.getElementById('undExplain-expert').innerHTML = (results[2].status === 'fulfilled' && results[2].value) ? results[2].value.replace(/\\n/g, '<br>') : '<span style="color:#ef4444">生成失败</span>';
+  mechToast('三路讲解已生成');
 }
 
-// 存素材库
-function saveMechToLibrary(){
-  if(!mechCurrentData){ mechToast('请先生成机制图'); return; }
+function undSwitchLevel(level){
+  ['undergrad', 'grad', 'expert'].forEach(function(l){
+    document.getElementById('undExplain-' + l).style.display = (l === level) ? 'block' : 'none';
+    var btn = document.getElementById('undTab-' + l);
+    if(btn){
+      btn.style.background = (l === level) ? '#0891b2' : '#fff';
+      btn.style.color = (l === level) ? '#fff' : '#64748b';
+      btn.style.borderColor = (l === level) ? '#0891b2' : '#e2e8f0';
+    }
+  });
+}
+
+// 挖空自测
+async function undGenerateQuiz(){
+  if(!undCurrentData){ mechToast('请先识别机制图'); return; }
+  var area = document.getElementById('undQuizArea');
+  area.innerHTML = '<span style="color:#94a3b8">🎯 deepseek-chat 正在生成挖空题目...</span>';
+  var structStr = JSON.stringify(undCurrentData).substring(0, 2000);
+  try{
+    var result = await callModelWithTimeout('你是运动科学考试出题专家。', '基于以下机制图生成5道填空题，挖掉关键分子名称。每题格式：题目（用____表示挖空）|答案|解析。只输出题目，每行一道，用|分隔。\\n\\n机制结构：' + structStr, 800, 'deepseek-chat', 25000);
+    if(!result){ throw new Error('生成失败'); }
+    var lines = result.trim().split('\\n').filter(function(l){ return l.indexOf('|') !== -1; });
+    undQuizData = [];
+    var html = '';
+    lines.forEach(function(line, i){
+      var parts = line.split('|');
+      var q = parts[0] || '';
+      var a = (parts[1] || '').trim();
+      var exp = (parts[2] || '').trim();
+      undQuizData.push({answer: a, explanation: exp});
+      html += '<div style="margin-bottom:14px;padding:12px;background:#fffbeb;border-radius:8px;border-left:3px solid #f59e0b">';
+      html += '<div style="font-weight:600;color:#78350f;margin-bottom:6px">第' + (i+1) + '题</div>';
+      html += '<div style="color:#475569;margin-bottom:8px">' + q + '</div>';
+      html += '<div style="display:flex;gap:8px;align-items:center"><input type="text" id="undQuizAns' + i + '" placeholder="输入答案" style="flex:1;border:1px solid #fcd34d;border-radius:4px;padding:6px 10px;font-size:12px"><button onclick="undCheckQuiz(' + i + ')" style="background:#f59e0b;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px">提交</button></div>';
+      html += '<div id="undQuizResult' + i + '" style="margin-top:6px;font-size:12px"></div>';
+      html += '</div>';
+    });
+    area.innerHTML = html || '<span style="color:#ef4444">未能生成题目，请重试</span>';
+  }catch(e){
+    area.innerHTML = '<span style="color:#ef4444">生成失败：' + e.message + '</span>';
+  }
+}
+
+function undCheckQuiz(idx){
+  var input = document.getElementById('undQuizAns' + idx);
+  var result = document.getElementById('undQuizResult' + idx);
+  var userAns = input.value.trim();
+  var data = undQuizData[idx] || {};
+  var answer = data.answer || '';
+  var explanation = data.explanation || '';
+  if(!userAns){ result.innerHTML = '<span style="color:#f59e0b">请输入答案</span>'; return; }
+  if(userAns === answer || answer.indexOf(userAns) !== -1 || userAns.indexOf(answer) !== -1){
+    result.innerHTML = '<span style="color:#22c55e;font-weight:600">✅ 正确！</span> ' + (explanation ? '<span style="color:#475569">解析：' + explanation + '</span>' : '');
+  } else {
+    result.innerHTML = '<span style="color:#ef4444;font-weight:600">❌ 错误。</span> <span style="color:#475569">正确答案：' + answer + (explanation ? '。解析：' + explanation : '') + '</span>';
+  }
+}
+
+// 回存素材库
+function undSaveToLibrary(){
+  if(!undCurrentData){ mechToast('没有可保存的机制图'); return; }
   var lib = JSON.parse(localStorage.getItem('mechLibrary') || '[]');
   var item = {
     id: 'mech_' + new Date().getTime(),
-    title: mechCurrentData.title || '未命名',
-    subject: mechCurrentData.subject || '',
-    template: mechCurrentData.template || '',
-    data: mechCurrentData,
+    title: undCurrentData.title || '识别的机制图',
+    subject: undCurrentData.subject || '运动科学',
+    template: 'recognized',
+    data: undCurrentData,
     savedAt: new Date().toISOString(),
-    tags: [mechCurrentData.subject].concat((mechCurrentData.nodes || []).slice(0, 3).map(function(n){return n.label;}))
+    tags: [undCurrentData.subject].concat((undCurrentData.nodes || []).slice(0, 3).map(function(n){return n.label;}))
   };
   lib.unshift(item);
   if(lib.length > 20){ lib = lib.slice(0, 20); }
   localStorage.setItem('mechLibrary', JSON.stringify(lib));
-  mechToast('已保存到素材库（共 ' + lib.length + ' 份）');
-  renderMechLibrary();
+  mechToast('已回存素材库（共 ' + lib.length + ' 份），可在"机制图生成"中加载编辑');
 }
 
-// 渲染素材库
-function renderMechLibrary(){
-  var listEl = document.getElementById('mechLibraryList');
-  var search = (document.getElementById('mechLibSearch') || {value:''}).value.toLowerCase();
-  var lib = JSON.parse(localStorage.getItem('mechLibrary') || '[]');
-  if(search){
-    lib = lib.filter(function(item){
-      return (item.title + item.subject + (item.tags||[]).join(' ')).toLowerCase().indexOf(search) !== -1;
-    });
-  }
-  if(lib.length === 0){
-    listEl.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px">📭 素材库为空，生成机制图后点击"存素材库"保存</div>';
-    return;
-  }
-  var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">';
-  lib.forEach(function(item){
-    var nodeCount = (item.data && item.data.nodes) ? item.data.nodes.length : 0;
-    var edgeCount = (item.data && item.data.edges) ? item.data.edges.length : 0;
-    var date = new Date(item.savedAt);
-    var dateStr = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + (date.getMinutes()<10?'0':'') + date.getMinutes();
-    html += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;transition:box-shadow 0.2s" onmouseover="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,0.1)\'" onmouseout="this.style.boxShadow=\'none\'">';
-    html += '<div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + item.title + '</div>';
-    html += '<div style="font-size:11px;color:#64748b;margin-bottom:8px">' + item.subject + ' · ' + nodeCount + '节点/' + edgeCount + '关系 · ' + dateStr + '</div>';
-    html += '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">';
-    (item.tags || []).forEach(function(t){
-      html += '<span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:10px;font-size:10px">' + t + '</span>';
-    });
-    html += '</div>';
-    html += '<div style="display:flex;gap:6px">';
-    html += '<button onclick="loadMechFromLibrary(\'' + item.id + '\')" style="flex:1;background:#0891b2;color:#fff;border:none;padding:6px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">加载编辑</button>';
-    html += '<button onclick="deleteMechFromLibrary(\'' + item.id + '\')" style="background:#fee2e2;color:#b91c1c;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px">删除</button>';
-    html += '</div></div>';
-  });
-  html += '</div>';
-  listEl.innerHTML = html;
-}
-
-// 从素材库加载
-function loadMechFromLibrary(id){
-  var lib = JSON.parse(localStorage.getItem('mechLibrary') || '[]');
-  var item = lib.find(function(i){ return i.id === id; });
-  if(!item){ mechToast('未找到'); return; }
-  mechCurrentData = item.data;
-  document.getElementById('mechDesc').value = item.title;
-  switchMechanismSubTab('gen');
-  renderMechSVG(item.data);
-  renderMechLegend();
-  renderMechNodeList(item.data);
-  document.getElementById('mechResult').style.display = 'block';
-  document.getElementById('mechStatus').style.display = 'none';
-}
-
-// 从素材库删除
-function deleteMechFromLibrary(id){
-  if(!confirm('确定删除这份机制图？')){ return; }
-  var lib = JSON.parse(localStorage.getItem('mechLibrary') || '[]');
-  lib = lib.filter(function(i){ return i.id !== id; });
-  localStorage.setItem('mechLibrary', JSON.stringify(lib));
-  renderMechLibrary();
-}
-
-
-// ========== 课题申报：AI 选题生成（双模型并行） ==========
-async function runTopicGen(){
-  const dir = (document.getElementById('topicDir').value||'').trim();
-  if(!dir){ alert('请输入研究方向'); return; }
-  const base = (document.getElementById('topicBase').value||'').trim();
-  const status = document.getElementById('topicStatus');
-  const resEl = document.getElementById('topicResult');
-  resEl.style.display = 'block';
-  resEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ 双模型并行生成选题中（约1-2分钟）...</div>';
-  status.textContent = '生成中...';
-  const sysA = '你是体育科研课题选题专家。结合体育领域政策热点（体教融合、健康中国、全民健身计划、体育强国建设、新质生产力与体育、体育数字化转型、体卫融合、学校体育改革）与当前文献空白，针对给定研究方向与研究基础，生成 3 个可申报课题选题。每个选题输出：1.课题题目（精准、可申报）2.选题依据要点（政策依据+现实问题+学术价值）3.创新之处 4.适合的基金类型 5.初步可行性（数据/样本可得性）。结构化、专业、可直接修改使用。';
-  const sysB = '你是体育科研课题评审专家（与另一位选题专家不同视角）。针对同样的研究方向，从【现实落地性和创新差异化】角度，另生成 2-3 个与常见选题不同、更具差异化竞争力的课题选题，每个给出：课题题目、为什么差异化（别人没做/没做透）、政策契合点、实现路径。结构化输出。';
-  const usr = '研究方向：' + dir + (base ? '\n研究基础：' + base : '');
-  const sysC = '你是体育科研政策与前沿追踪专家（与前两位视角都不同）。针对同样的研究方向，从【国家政策文件最新表述、国际研究前沿动态、地方/行业实际需求】角度，再生成 2 个有政策依据支撑的课题选题，每个给出：课题题目、对应政策文件及条款（如健康中国2030/全民健身计划/体育强国纲要等）、国际研究对标（国外怎么做的）、申报价值。结构化输出。';
-  let outA = '', outB = '', outC = '';
+// 生成课件页
+async function undToPPT(){
+  if(!undCurrentData){ mechToast('没有可生成课件的机制图'); return; }
+  var structStr = JSON.stringify(undCurrentData).substring(0, 2000);
+  mechToast('🤖 hy4 正在生成课件页内容...');
   try{
-    const results = await Promise.allSettled([
-      callModelWithTimeout(sysA, usr, 3000, 'deepseek-chat', 90000),
-      callModelWithTimeout(sysB, usr, 3000, 'glm-5.3', 90000),
-      callModelWithTimeout(sysC, usr, 2500, 'kimi-k3', 90000)
-    ]);
-    outA = (results[0].status === 'fulfilled' && results[0].value) ? results[0].value : '';
-    outB = (results[1].status === 'fulfilled' && results[1].value) ? results[1].value : '';
-    outC = (results[2].status === 'fulfilled' && results[2].value) ? results[2].value : '';
-  }catch(e){ outA = ''; outB = ''; outC = ''; }
-  if(!outB.trim()){
-    status.textContent = 'GLM 未返回，改用 Kimi 生成差异化学题...';
-    try{ outB = await callModelWithTimeout(sysB, usr, 2500, 'kimi-k3', 90000); }catch(e){ outB = ''; }
-  }
-  if(!outB.trim()){
-    status.textContent = 'Kimi 未返回，改用混元生成差异化学题...';
-    try{ outB = await callModelWithTimeout(sysB, usr, 2500, 'hy3', 90000); }catch(e){ outB = ''; }
-  }
-  if(!outA.trim()){
-    status.textContent = 'DeepSeek 失败，改用 V4-Pro 重试...';
-    try{ outA = await callModelWithTimeout(sysA, usr, 3000, 'deepseek-v4-pro', 90000); }catch(e){ outA = ''; }
-  }
-  if(!outA.trim() && !outB.trim()){
-    resEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 选题生成失败（模型未返回），请重试</div>';
-    status.textContent = '生成失败';
-    return;
-  }
-  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">';
-  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:700;color:#7c3aed;margin-bottom:10px">💜 DeepSeek · 选题方案</div><div style="font-size:13px;line-height:1.9;color:#1f2937;white-space:pre-wrap">' + (outA.trim() ? esc(outA) : '（模型未返回）') + '</div></div>';
-  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:700;color:#2563eb;margin-bottom:10px">💙 GLM · 差异化选题</div><div style="font-size:13px;line-height:1.9;color:#1f2937;white-space:pre-wrap">' + (outB.trim() ? esc(outB) : '（模型未返回）') + '</div></div>';
-  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:700;color:#db2777;margin-bottom:10px">💗 Kimi · 政策与前沿选题</div><div style="font-size:13px;line-height:1.9;color:#1f2937;white-space:pre-wrap">' + (outC.trim() ? esc(outC) : '（模型未返回）') + '</div></div>';
-  html += '</div>';
-  html += '<div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">'
-    + '<button onclick="adjudicateTopics()" style="background:#ea580c;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">⚖️ 混元裁决 · Top 3 综合排序</button>'
-    + '<span id="adjudicateStatus" style="font-size:12px;color:#6b7280"></span>'
-    + '</div>';
-  html += '<div style="background:#fefce8;border:1px solid #fde047;border-radius:12px;padding:16px;margin-top:14px;font-size:13px;color:#854d0e;line-height:1.9">💡 <b>使用建议：</b>先点"混元裁决"看综合排序，再把中意选题复制到下方"申报书活页生成"，填写基金类型即可生成完整申报书初稿。<b>所有 AI 生成内容须人工复核后使用。</b></div>';
-  resEl.innerHTML = html;
-  window.__topics = { A: outA, B: outB, C: outC, dir: dir, base: base };
-  status.textContent = '生成完成';
-}
-
-async function adjudicateTopics(){
-  const t = window.__topics || {};
-  const status = document.getElementById('adjudicateStatus');
-  const resEl = document.getElementById('topicResult');
-  if(!t.A && !t.B && !t.C){ if(status) status.textContent = '请先生成选题'; return; }
-  if(status) status.textContent = '混元裁决中（约40秒）...';
-  const sys = '你是体育科研基金评审委员会主席。综合多位选题专家的方案，对全部候选课题进行裁决排序：1.先列出全部候选题目（标注来源：DeepSeek/GLM/Kimi）2.按【新颖性、可行性、与政策契合度、发表与立项潜力、与申请人基础匹配】五维综合评分（每题总评）3.输出最终 Top 3 排序（第一名至第三名），每题附：最终排名、置信度（高/中/低）、一句话推荐理由、建议申报基金类型。语言专业、决策清晰。';
-  const usr = '研究方向：' + (t.dir || '') + (t.base ? '\n研究基础：' + t.base : '') + '\n\n=== DeepSeek 方案 ===\n' + (t.A || '（无）').slice(0, 4000) + '\n\n=== GLM 方案 ===\n' + (t.B || '（无）').slice(0, 4000) + '\n\n=== Kimi 方案 ===\n' + (t.C || '（无）').slice(0, 4000);
-  let out = '';
-  try{ out = await callModelWithTimeout(sys, usr, 3000, 'hy3', 120000); }catch(e){ out = ''; }
-  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 3000, 'deepseek-chat', 120000); }catch(e){ out = ''; } }
-  if(!out.trim()){ if(status) status.textContent = '⚠️ 裁决失败，请重试'; return; }
-  const esc = function(tt){ return tt.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-  const blk = document.createElement('div');
-  blk.id = 'adjudicateBlock';
-  blk.style.cssText = 'background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-top:14px';
-  blk.innerHTML = '<div style="font-size:14px;font-weight:700;color:#c2410c;margin-bottom:8px">⚖️ 混元裁决 · 最终推荐排序</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div>';
-  const oldBlk = document.getElementById('adjudicateBlock');
-  if(oldBlk) oldBlk.remove();
-  resEl.appendChild(blk);
-  if(status) status.textContent = '✅ 裁决完成';
-  blk.scrollIntoView({behavior:'smooth', block:'nearest'});
-}
-
-// ========== 课题申报：申报书活页生成 ==========
-async function runProposalGen(){
-  const title = (document.getElementById('proposalTitle').value||'').trim();
-  if(!title){ alert('请先填写课题题目'); return; }
-  const fund = document.getElementById('proposalFund').value;
-  const extra = (document.getElementById('proposalExtra').value||'').trim();
-  const status = document.getElementById('proposalStatus');
-  const resEl = document.getElementById('proposalResult');
-  resEl.style.display = 'block';
-  resEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ AI 撰写申报书活页中（约1-2分钟）...</div>';
-  status.textContent = '撰写中...';
-  const fundSpec = {
-    '国社科': '国家社科基金（体育学）活页要求：突出学术价值与现实意义，创新性要求高，论证严密，字数约6000-8000字，匿名评审',
-    '教育部': '教育部人文社科基金：重视理论与实践结合，体现学科交叉，青年项目/规划项目各有侧重',
-    '省社科': '省社科基金：紧扣省内实际需求与地方特色，突出可操作性与对策价值',
-    '总局': '国家体育总局课题：突出问题导向与决策咨询价值，服务体育强国建设实际需求'
-  }[fund];
-  const sys = '你是体育科研项目申报书撰写专家。针对给定课题，按【' + fund + '】基金要求（' + fundSpec + '）撰写申报书活页初稿，包含：一、选题依据（国内外研究现状述评、学术价值与应用价值、研究现状的不足）二、研究内容（总体框架、研究重点难点、主要目标）三、思路方法（基本思路、具体研究方法、技术路线描述）四、创新之处 五、预期成果（论文/报告/数据/政策建议等）。用规范学术语言，内容充实、逻辑严密，可直接在此基础上修改完善。';
-  const usr = '课题题目：' + title + (extra ? '\n补充信息：' + extra : '');
-  let out = '';
-  try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
-  if(!out.trim()){
-    status.textContent = 'DeepSeek 超时，改用 V4-Pro 重试...';
-    try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-v4-pro', 120000); }catch(e){ out = ''; }
-  }
-  if(!out.trim()){
-    resEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 生成失败（模型未返回），请重试</div>';
-    status.textContent = '生成失败';
-    return;
-  }
-  const esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-  let resHtml = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px"><div style="font-size:16px;font-weight:700;color:#6b21a8;margin-bottom:6px">📋 申报书活页初稿（' + fund + '）</div><div style="font-size:12px;color:#b45309;margin-bottom:12px">⚠️ AI 生成初稿，请逐项核对补充后提交</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(out) + '</div></div>';
-  status.textContent = '生成完成';
-  const phc = document.getElementById('proposalHealthCheck');
-  if(phc && phc.checked){
-    resHtml += '<div id="proposalHealthBlock" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-top:16px"><div style="font-size:14px;font-weight:700;color:#c2410c;margin-bottom:8px">🔍 申报书体检中（约1-2分钟，GLM/Kimi 独立评审）...</div><div style="font-size:12px;color:#9a3412">选题价值 · 论证逻辑 · 创新性 · 可行性 · 经费合理性 · 修改建议</div></div>';
-    resEl.innerHTML = resHtml;
-    status.textContent = '生成完成，申报书体检中（约1-2分钟）...';
-    const health = await healthCheckProposal(out, fund, fundSpec);
-    if(health && health.trim()){
-      const hb = document.getElementById('proposalHealthBlock');
-      if(hb){ hb.outerHTML = '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px;margin-top:16px"><div style="font-size:14px;font-weight:700;color:#c2410c;margin-bottom:8px">🔍 申报书体检报告（GLM/Kimi 独立评审）</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(health) + '</div></div>'; }
-      status.textContent = '生成完成（含体检报告）';
-    }else{
-      const hb = document.getElementById('proposalHealthBlock');
-      if(hb){ hb.outerHTML = ''; }
-      status.textContent = '生成完成（体检未返回，可直接使用）';
-    }
-  } else {
-    resEl.innerHTML = resHtml;
+    var result = await callModelWithTimeout('你是运动科学课程教师，擅长制作课件。', '基于以下机制图生成一页课件内容。格式：\\n标题：\\n要点（3-5条）：\\n讲解备注（2-3句）：\\n互动题（1道）：\\n\\n机制结构：' + structStr, 600, 'hy4-preview', 20000);
+    if(!result){ throw new Error('生成失败'); }
+    // 显示生成的课件内容，让用户复制
+    var win = window.open('', '_blank');
+    win.document.write('<html><head><meta charset="UTF-8"><title>课件页 - ' + undCurrentData.title + '</title><style>body{font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.8}h2{color:#0891b2}pre{background:#f8fafc;padding:16px;border-radius:8px;white-space:pre-wrap;word-wrap:break-word}</style></head><body><h2>📊 课件页内容</h2><p>可复制到 PPT 课件模块中使用：</p><pre>' + result.replace(/</g, '&lt;') + '</pre></body></html>');
+    mechToast('课件页已生成，在新窗口中查看');
+  }catch(e){
+    mechToast('生成失败：' + e.message);
   }
 }
 
-async function healthCheckProposal(proposalText, fund, fundSpec){
-  const sys = '你是国家社科/教育部基金评审专家，熟悉申报书评审标准。对照基金要求对申报书活页进行体检，输出四部分：一、总体评价（一句话定性+总评）二、五维评分（选题价值、论证逻辑、创新性、可行性、经费预算合理性，各0-100分，含扣分理由）三、问题清单与逐条修改建议（具体可操作）四、可直接粘贴的补写/改写段落（针对最薄弱环节）。语言专业、犀利但建设性。';
-  const usr = '基金类型：' + (fund||'') + '，基金要求：' + (fundSpec||'') + '\n\n申报书内容：\n' + proposalText.slice(0, 9000);
-  let out = '';
-  try{ out = await callModelWithTimeout(sys, usr, 2500, 'glm-5.3', 120000); }catch(e){ out = ''; }
-  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'kimi-k3', 120000); }catch(e){ out = ''; } }
-  if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'hy3', 120000); }catch(e){ out = ''; } }
-  return out;
-}
+
 </script>
 <script>
 // ========== 教案助手 ==========
