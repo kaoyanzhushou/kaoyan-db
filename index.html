@@ -16851,6 +16851,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
           </div>
           <div style="display:flex;gap:10px;margin-top:14px">
             <button onclick="generateMechanism()" style="background:#0891b2;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;flex:1">🧬 生成机制图（七模型协作）</button>
+            <button onclick="generateMechanismDual()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600" title="Qwen3.5-Plus + V4-Pro 双模型并行生成，对比选择最优版本">⚡ 双版本对比生成</button>
             <button onclick="clearMechanism()" style="background:#fff;border:1px solid #cbd5e1;color:#64748b;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">清空</button>
           </div>
         </div>
@@ -128494,6 +128495,213 @@ async function generateMechanism(){
     mechToast('生成失败：' + e.message + '，请重试或简化描述');
   }
 }
+
+
+// ========== 机制图双版本对比生成（qwen3.5-plus + v4-pro 并行） ==========
+var _dualMechData = {versionA: null, versionB: null, active: 'A'};
+
+async function generateMechanismDual(){
+  var desc = document.getElementById('mechDesc').value.trim();
+  if(!desc){ mechToast('请输入机制描述'); return; }
+  var subject = document.getElementById('mechSubject').value;
+
+  var statusEl = document.getElementById('mechStatus');
+  var detailEl = document.getElementById('mechStatusDetail');
+  var resultEl = document.getElementById('mechResult');
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  detailEl.innerHTML = '';
+
+  function log(msg){ detailEl.innerHTML += '<div>' + msg + '</div>'; }
+
+  try{
+    var genPrompt = '你是运动科学机制图生成专家。请拆解机制描述，确定核心分子节点和层级结构，生成完整的机制图JSON。\n\n要求：\n1. nodes数组：每个节点含id(字符串),label(名称),type(酶/底物/转录因子/激素/受体/其他),layer(层级数字,从0开始),confidence(高/中/低),narration(1-2句教学讲解词),abbreviation(缩写,无则空)\n2. edges数组：每条边含from(源节点id),to(目标节点id),relation(激活/抑制/底物转化/磷酸化/表达上调),confidence(高/中/低),acute(是否急性运动相关,true/false),chronic(是否长期训练相关,true/false),pmid(文献PMID,不确定则空)\n3. 只输出JSON，不要其他文字\n\n科目：' + subject + '\n机制描述：' + desc;
+
+    log('⚡ <b>Qwen3.5-Plus</b> 和 <b>V4-Pro</b> 正在并行生成机制图...');
+
+    // 双模型并行生成
+    var pA = callQwenChat([{role:'system', content:'你是运动科学机制图生成专家，严格按JSON格式输出。'}, {role:'user', content: genPrompt}], 'qwen3.5-plus', 0.7, 1800)
+      .then(function(r){ return {data: parseMechJSON(r), raw: r, error: null}; })
+      .catch(function(e){ return {data: null, raw: null, error: e.message}; });
+
+    var pB = callDeepSeekAPI('你是运动科学机制图生成专家，严格按JSON格式输出。', genPrompt, 1800, 'deepseek-v4-pro')
+      .then(function(r){ return {data: parseMechJSON(r), raw: r, error: null}; })
+      .catch(function(e){ return {data: null, raw: null, error: e.message}; });
+
+    var results = await Promise.all([pA, pB]);
+    var resA = results[0], resB = results[1];
+
+    if(!resA.data && !resB.data){
+      throw new Error('两个模型均生成失败：' + (resA.error||'') + ' / ' + (resB.error||''));
+    }
+
+    if(resA.data){
+      resA.data.title = '[Qwen3.5-Plus] ' + desc.substring(0,25) + (desc.length>25?'...':'');
+      resA.data.subject = subject;
+      resA.data.createdAt = new Date().toISOString();
+      log('   ✅ Qwen3.5-Plus: ' + resA.data.nodes.length + ' 节点, ' + resA.data.edges.length + ' 关系');
+    } else {
+      log('   ❌ Qwen3.5-Plus 失败: ' + (resA.error||'未知'));
+    }
+
+    if(resB.data){
+      resB.data.title = '[V4-Pro] ' + desc.substring(0,25) + (desc.length>25?'...':'');
+      resB.data.subject = subject;
+      resB.data.createdAt = new Date().toISOString();
+      log('   ✅ V4-Pro: ' + resB.data.nodes.length + ' 节点, ' + resB.data.edges.length + ' 关系');
+    } else {
+      log('   ❌ V4-Pro 失败: ' + (resB.error||'未知'));
+    }
+
+    _dualMechData = {versionA: resA.data, versionB: resB.data, active: resA.data ? 'A' : 'B'};
+
+    // 渲染双版本对比界面
+    renderDualMechCompare();
+    resultEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    log('✅ 双版本生成完成！可切换对比或合并');
+
+  }catch(e){
+    statusEl.style.display = 'none';
+    mechToast('双版本生成失败：' + e.message);
+  }
+}
+
+function renderDualMechCompare(){
+  var resultEl = document.getElementById('mechResult');
+  if(!resultEl) return;
+  var d = _dualMechData;
+  var hasA = !!d.versionA, hasB = !!d.versionB;
+
+  var html = '';
+  // 版本切换栏
+  html += '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">';
+  if(hasA){
+    var activeA = d.active === 'A';
+    html += '<button onclick="switchDualMech(\'A\')" style="background:' + (activeA?'#0891b2':'#f1f5f9') + ';color:' + (activeA?'#fff':'#475569') + ';border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">A: Qwen3.5-Plus（' + d.versionA.nodes.length + '节点/' + d.versionA.edges.length + '关系）</button>';
+  }
+  if(hasB){
+    var activeB = d.active === 'B';
+    html += '<button onclick="switchDualMech(\'B\')" style="background:' + (activeB?'#7c3aed':'#f1f5f9') + ';color:' + (activeB?'#fff':'#475569') + ';border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">B: V4-Pro（' + d.versionB.nodes.length + '节点/' + d.versionB.edges.length + '关系）</button>';
+  }
+  if(hasA && hasB){
+    html += '<button onclick="mergeDualMech()" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔗 合并两版本独有节点</button>';
+    html += '<button onclick="showDualMechDiff()" style="background:#f59e0b;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📊 版本差异分析</button>';
+  }
+  html += '</div>';
+
+  // SVG 容器
+  html += '<div id="dualMechSvgContainer"></div>';
+  html += '<div id="dualMechDiffContainer" style="display:none;margin-top:14px"></div>';
+
+  resultEl.innerHTML = html;
+
+  // 渲染当前版本
+  var activeData = d.active === 'A' ? d.versionA : d.versionB;
+  if(activeData){
+    mechCurrentData = activeData;
+    var container = document.getElementById('dualMechSvgContainer');
+    if(container){
+      // 复用现有渲染逻辑
+      renderMechSVG(activeData);
+      renderMechLegend();
+      renderMechNodeList(activeData);
+    }
+  }
+}
+
+function switchDualMech(ver){
+  _dualMechData.active = ver;
+  var data = ver === 'A' ? _dualMechData.versionA : _dualMechData.versionB;
+  if(!data) return;
+  mechCurrentData = data;
+  renderDualMechCompare();
+}
+
+function mergeDualMech(){
+  var d = _dualMechData;
+  if(!d.versionA || !d.versionB) return;
+
+  var aLabels = new Set(d.versionA.nodes.map(function(n){return n.label;}));
+  var bLabels = new Set(d.versionB.nodes.map(function(n){return n.label;}));
+
+  // 合并：A的所有节点 + B中A没有的节点
+  var mergedNodes = d.versionA.nodes.slice();
+  var idMap = {};
+  d.versionA.nodes.forEach(function(n){ idMap[n.label] = n.id; });
+  var nextId = d.versionA.nodes.length + 1;
+
+  d.versionB.nodes.forEach(function(n){
+    if(!aLabels.has(n.label)){
+      var newId = 'm' + (nextId++);
+      idMap[n.label] = newId;
+      mergedNodes.push({id:newId, label:n.label, type:n.type, layer:n.layer, confidence:n.confidence, narration:n.narration, abbreviation:n.abbreviation});
+    }
+  });
+
+  // 合并关系：A的所有关系 + B中A没有的关系
+  var mergedEdges = d.versionA.edges.slice();
+  var edgeKeys = new Set(d.versionA.edges.map(function(e){return e.from+'->'+e.to;}));
+  d.versionB.edges.forEach(function(e){
+    var fromLabel = (d.versionB.nodes.find(function(n){return n.id===e.from;})||{}).label;
+    var toLabel = (d.versionB.nodes.find(function(n){return n.id===e.to;})||{}).label;
+    var newFrom = idMap[fromLabel];
+    var newTo = idMap[toLabel];
+    if(newFrom && newTo){
+      var key = newFrom+'->'+newTo;
+      if(!edgeKeys.has(key)){
+        edgeKeys.add(key);
+        mergedEdges.push({from:newFrom, to:newTo, relation:e.relation, confidence:e.confidence, acute:e.acute, chronic:e.chronic, pmid:e.pmid});
+      }
+    }
+  });
+
+  var merged = {
+    nodes: mergedNodes,
+    edges: mergedEdges,
+    title: '[合并版] ' + (d.versionA.title||'').replace(/^\[.*?\]\s*/,''),
+    subject: d.versionA.subject,
+    createdAt: new Date().toISOString()
+  };
+
+  mechCurrentData = merged;
+  mechToast('合并完成：' + mergedNodes.length + ' 节点, ' + mergedEdges.length + ' 关系');
+
+  // 直接渲染合并版
+  var resultEl = document.getElementById('mechResult');
+  if(resultEl){
+    resultEl.innerHTML = '<div style="margin-bottom:10px"><span style="background:#16a34a;color:#fff;padding:4px 12px;border-radius:4px;font-size:12px;font-weight:600">🔗 合并版本（' + mergedNodes.length + '节点/' + mergedEdges.length + '关系）</span></div><div id="dualMechSvgContainer"></div>';
+    renderMechSVG(merged);
+    renderMechLegend();
+    renderMechNodeList(merged);
+  }
+}
+
+function showDualMechDiff(){
+  var d = _dualMechData;
+  if(!d.versionA || !d.versionB) return;
+
+  var aLabels = new Set(d.versionA.nodes.map(function(n){return n.label;}));
+  var bLabels = new Set(d.versionB.nodes.map(function(n){return n.label;}));
+  var onlyA = d.versionA.nodes.filter(function(n){return !bLabels.has(n.label);});
+  var onlyB = d.versionB.nodes.filter(function(n){return !aLabels.has(n.label);});
+  var common = d.versionA.nodes.filter(function(n){return bLabels.has(n.label);});
+
+  var html = '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px">';
+  html += '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px">📊 版本差异分析</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">';
+  html += '<div style="text-align:center;padding:8px;background:#f0f9ff;border-radius:6px"><div style="font-size:16px;font-weight:700;color:#0284c7">' + common.length + '</div><div style="font-size:10px;color:#075985">共有节点</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#fef3c7;border-radius:6px"><div style="font-size:16px;font-weight:700;color:#d97706">' + onlyA.length + '</div><div style="font-size:10px;color:#92400e">仅Qwen版本</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#f3e8ff;border-radius:6px"><div style="font-size:16px;font-weight:700;color:#7c3aed">' + onlyB.length + '</div><div style="font-size:10px;color:#5b21b6">仅V4-Pro版本</div></div>';
+  html += '</div>';
+  if(onlyA.length){ html += '<div style="margin-top:8px;font-size:11px;color:#92400e">仅Qwen: ' + onlyA.map(function(n){return n.label;}).join('、') + '</div>'; }
+  if(onlyB.length){ html += '<div style="margin-top:4px;font-size:11px;color:#5b21b6">仅V4-Pro: ' + onlyB.map(function(n){return n.label;}).join('、') + '</div>'; }
+  html += '</div>';
+
+  var container = document.getElementById('dualMechDiffContainer');
+  if(container){ container.innerHTML = html; container.style.display = 'block'; }
+}
+
 
 // 解析 AI 返回的 JSON（容错）
 function parseMechJSON(text){
