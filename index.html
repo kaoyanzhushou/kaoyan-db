@@ -131359,6 +131359,7 @@ async function runLessonGen(){
   if(!subject || !chapter){ alert('请填写科目和章节'); return; }
   if(!chapterContent){ alert('请粘贴教材/书籍章节内容'); return; }
   const status = document.getElementById('lessonGenStatus');
+  const multiCollab = document.getElementById('lessonMultiCollab') && document.getElementById('lessonMultiCollab').checked;
   const resEl = document.getElementById('lessonResult');
   resEl.style.display = 'block';
   resEl.innerHTML = '<div style="text-align:center;color:#6b7280;padding:40px;font-size:14px">⏳ AI 撰写教案中（约1-2分钟）...</div>';
@@ -131374,7 +131375,6 @@ async function runLessonGen(){
   let fmtReq = '';
   try{ fmtReq = getLessonFormatReq(); }catch(e){ fmtReq = ''; }
   const strictFmt = document.getElementById('lessonStrictFormat') && document.getElementById('lessonStrictFormat').checked;
-  const multiCollab = document.getElementById('lessonMultiCollab') && document.getElementById('lessonMultiCollab').checked;
   if(strictFmt){
     if(selIdx !== 'all' && refs[parseInt(selIdx)]){
       fmtReq = '【格式基准（最高优先级）】不要使用其他教案模板，严格按所选参考教案的结构与格式逐环节生成：标题层级、段落组织、小节编号、环节顺序与参考教案完全一致，仅将具体内容替换为本章节教材内容，不得增删结构环节，不得套用标准教案格式。';
@@ -132078,6 +132078,8 @@ function lessonToPpt(){
         if(status) status.textContent = '教案转PPT：自动生成中...';
       }
     }, 300);
+  }, 300);
+}
 
 
 // 教学时间轴可视化
@@ -133197,14 +133199,10 @@ function extractBookTOC(text){
   const tocArea = text.slice(0, Math.floor(text.length * 0.3));
   // 匹配模式：第X章/第X节/第X篇 + 标题
   const patterns = [
-    /第[一二三四五六七八九十百零〇\d]+章\s*[^
-。，；]{2,40}/g,
-    /第[一二三四五六七八九十百零〇\d]+节\s*[^
-。，；]{2,40}/g,
-    /^[一二三四五六七八九十]+、\s*[^
-。，；]{2,40}/gm,
-    /^\d+[\.、]\s*[^
-。，；]{2,40}/gm
+    /第[一二三四五六七八九十百零〇\d]+章\s*[^。，；\n\r]{2,40}/g,
+    /第[一二三四五六七八九十百零〇\d]+节\s*[^。，；\n\r]{2,40}/g,
+    /^[一二三四五六七八九十]+、\s*[^。，；\n\r]{2,40}/gm,
+    /^\d+[\.、]\s*[^。，；\n\r]{2,40}/gm
   ];
   for(const pat of patterns){
     const matches = tocArea.match(pat) || [];
