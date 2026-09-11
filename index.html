@@ -133199,18 +133199,20 @@ function extractBookTOC(text){
   const tocArea = text.slice(0, Math.floor(text.length * 0.3));
   // 匹配模式：第X章/第X节/第X篇 + 标题
   const patterns = [
-    /第[一二三四五六七八九十百零〇\d]+章\s*[^。，；\n\r]{2,40}/g,
-    /第[一二三四五六七八九十百零〇\d]+节\s*[^。，；\n\r]{2,40}/g,
-    /^[一二三四五六七八九十]+、\s*[^。，；\n\r]{2,40}/gm,
-    /^\d+[\.、]\s*[^。，；\n\r]{2,40}/gm
+    /第[一二三四五六七八九十百零〇\d]+[章节篇]\s*[^。，；\n\r]{0,40}/g,
+    /^\s*[一二三四五六七八九十百零〇]+[、\.．]\s*[^。，；\n\r]{2,40}/gm,
+    /^\s*\d+[\.、．]\s*[^。，；\n\r]{2,40}/gm,
+    /^\s*第[一二三四五六七八九十百零〇\d]+[章节篇]\s*[:：]?\s*[^。，；\n\r]{0,40}/gm
   ];
   for(const pat of patterns){
     const matches = tocArea.match(pat) || [];
     for(const m of matches){
-      const clean = m.trim().replace(/\s+/g, ' ');
-      if(clean.length >= 4 && clean.length <= 50 && !seen.has(clean)){
-        // 过滤掉明显不是章节标题的（如"第一节 前言"太短或太长）
-        if(!/^\d+$/.test(clean) && clean.indexOf('....') < 0 && clean.indexOf('……') < 0){
+      let clean = m.trim().replace(/\s+/g, ' ');
+      // 去掉末尾的点线和页码（如"第二章 肌肉............15" → "第二章 肌肉"）
+      clean = clean.replace(/[\.．…·\-_]{2,}\s*\d*\s*$/, '').trim();
+      if(clean.length >= 3 && clean.length <= 60 && !seen.has(clean)){
+        // 过滤掉明显不是章节标题的
+        if(!/^\d+$/.test(clean) && clean.length >= 3){
           seen.add(clean);
           chapters.push(clean);
         }
@@ -133346,16 +133348,44 @@ function locateChapter(){
   }
   // 跳过目录区域：从正文 1/8 之后开始找
   const start = Math.floor(book.length / 8);
-  const idx = book.indexOf(key, start);
+  // 生成多种关键词变体（支持"第二章"匹配"第2章"等）
+  const keyVariants = [key];
+  const cnNumMap = {'一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','七':'7','八':'8','九':'9','十':'10','零':'0','〇':'0'};
+  // 中文数字转阿拉伯数字
+  let arabicKey = key;
+  for(const cn in cnNumMap){ arabicKey = arabicKey.split(cn).join(cnNumMap[cn]); }
+  if(arabicKey !== key) keyVariants.push(arabicKey);
+  // 阿拉伯数字转中文数字（简单情况）
+  if(/\d/.test(key)){
+    let cnKey = key;
+    for(const cn in cnNumMap){ cnKey = cnKey.split(cnNumMap[cn]).join(cn); }
+    if(cnKey !== key) keyVariants.push(cnKey);
+  }
+  // 去掉"第"和"章/节"后的纯标题关键词
+  const pureTitle = key.replace(/^第[一二三四五六七八九十百零〇\d]+[章节篇]\s*/, '').trim();
+  if(pureTitle && pureTitle.length >= 2 && pureTitle !== key) keyVariants.push(pureTitle);
+  
+  // 尝试所有变体查找
+  let idx = -1, foundKey = '';
+  for(const kv of keyVariants){
+    if(!kv || kv.length < 1) continue;
+    const t = book.indexOf(kv, start);
+    if(t >= 0){ idx = t; foundKey = kv; break; }
+  }
   if(idx < 0){
-    // 二次查找：全文再找一次（短书/目录区很短的情况）
-    const idx2 = book.indexOf(key);
+    // 二次查找：全文再找一次
+    let idx2 = -1;
+    for(const kv of keyVariants){
+      if(!kv || kv.length < 1) continue;
+      const t = book.indexOf(kv);
+      if(t >= 0){ idx2 = t; foundKey = kv; break; }
+    }
     if(idx2 < 0){
-      status.innerHTML = '⚠️ <b>书目中未找到"' + key + '"</b>。可尝试：① 更短的关键词（如"肌肉"）② 章节编号（如"第八章"）③ 直接在下方向区域粘贴本章节内容';
+      status.innerHTML = '⚠️ <b>书目中未找到"' + key + '"</b>（已尝试' + keyVariants.length + '种变体）。可尝试：① 更短的关键词（如"肌肉"）② 直接在下方区域粘贴本章节内容';
       status.style.color = '#dc2626';
       return;
     }
-    status.innerHTML = '✅ 已定位并截取章节内容（目录区命中），可编辑后生成';
+    status.innerHTML = '✅ 已定位并截取章节内容（变体"' + foundKey + '"命中），可编辑后生成';
     status.style.color = '#16a34a';
     let seg2 = book.slice(idx2, idx2 + 3500);
     const nm2 = seg2.slice(300).search(/第[一二三四五六七八九十百0-9]+[章节][^，。]{0,12}/);
