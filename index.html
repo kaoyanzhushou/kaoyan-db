@@ -16625,7 +16625,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
           <button onclick="runLessonGen()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">✨ 生成教案</button>
 
-          <label style="font-size:12px;color:#4b5563;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="lessonHealthCheck" checked style="vertical-align:middle">生成后 AI 体检</label>
+          <label style="font-size:12px;color:#4b5563;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="lessonMultiCollab"> <span style="font-size:12px;color:#7c3aed">⚡ 多模型协作（V4-Pro框架+GLM填充）</span></label><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="lessonHealthCheck" checked style="vertical-align:middle">生成后 AI 体检</label>
 
           <label style="font-size:12px;color:#4b5563;display:flex;align-items:center;gap:4px;cursor:pointer" title="勾选后，AI 严格按所选参考教案的结构格式生成（标题层级/段落组织/环节顺序一致），仅替换内容"><input type="checkbox" id="lessonStrictFormat" style="vertical-align:middle">📌 严格套用参考教案格式</label>
 
@@ -131340,6 +131340,7 @@ async function runLessonGen(){
   let fmtReq = '';
   try{ fmtReq = getLessonFormatReq(); }catch(e){ fmtReq = ''; }
   const strictFmt = document.getElementById('lessonStrictFormat') && document.getElementById('lessonStrictFormat').checked;
+  const multiCollab = document.getElementById('lessonMultiCollab') && document.getElementById('lessonMultiCollab').checked;
   if(strictFmt){
     if(selIdx !== 'all' && refs[parseInt(selIdx)]){
       fmtReq = '【格式基准（最高优先级）】不要使用其他教案模板，严格按所选参考教案的结构与格式逐环节生成：标题层级、段落组织、小节编号、环节顺序与参考教案完全一致，仅将具体内容替换为本章节教材内容，不得增删结构环节，不得套用标准教案格式。';
@@ -131351,10 +131352,32 @@ async function runLessonGen(){
   const sys = '你是高校体育专业理论课优秀教师，擅长教案撰写。根据提供的科目、章节、教材内容和风格参考教案（若有），撰写一份教学教案。' + fmtReq + (classInfo ? '授课对象学情：' + classInfo + '。教案难度、活动设计与评价方式须贴合该学情。' : '') + '若提供了风格参考教案，在满足格式要求的前提下模仿其详略与表达风格；内容紧扣教材章节内容，专业准确。';
   const usr = '科目：' + subject + '\n章节：' + chapter + (classInfo ? '\n学情：' + classInfo : '') + '\n\n教材章节内容：\n' + chapterContent.slice(0, 6000) + (styleText ? '\n\n【风格参考教案（模仿其结构与风格）】\n' + styleText.slice(0, 5000) : '');
   let out = '';
-  try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
-  if(!out.trim()){
-    status.textContent = 'DeepSeek 超时，改用 V4-Pro 重试...';
-    try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-v4-pro', 120000); }catch(e){ out = ''; }
+  if(multiCollab){
+    // 多模型协作：V4-Pro 搭框架 → GLM-5.3 填内容
+    status.textContent = '多模型协作：V4-Pro 正在搭建教案框架...';
+    const frameSys = '你是高校体育专业理论课教研室主任，擅长教案结构设计。根据提供的科目、章节、教材内容，设计一份完整的教案框架（只列结构和要点，不写详细内容）。包括：教学目标（知识/能力/素养）、教学重难点、教学过程（导入/新授/巩固/小结各环节的时间分配和要点）、板书设计提纲、作业布置要点。要求结构清晰、环节完整、重点突出。';
+    const frameUsr = '科目：' + subject + '\n章节：' + chapter + '\n\n教材章节内容：\n' + chapterContent.slice(0, 4000);
+    let frame = '';
+    try{ frame = await callModelWithTimeout(frameSys, frameUsr, 2000, 'deepseek-v4-pro', 90000); }catch(e){ frame = ''; }
+    if(!frame.trim()){
+      status.textContent = 'V4-Pro 框架生成超时，改用单模型模式...';
+      try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
+    }else{
+      status.textContent = '框架完成！GLM-5.3 正在填充详细内容...';
+      const fillSys = '你是高校体育专业理论课优秀教师，擅长撰写详细教案。根据教研室主任设计的教案框架和教材内容，填充每个环节的详细内容（教学活动设计、师生互动、讲解要点、时间分配）。要求内容详实、可操作性强、专业准确，严格按框架结构展开。' + fmtReq + (classInfo ? '授课对象学情：' + classInfo + '。' : '');
+      const fillUsr = '科目：' + subject + '\n章节：' + chapter + '\n\n【教案框架】\n' + frame + '\n\n【教材章节内容】\n' + chapterContent.slice(0, 5000) + (styleText ? '\n\n【风格参考教案】\n' + styleText.slice(0, 3000) : '');
+      try{ out = await callModelWithTimeout(fillSys, fillUsr, 4500, 'glm-5.3', 120000); }catch(e){ out = ''; }
+      if(!out.trim()){
+        status.textContent = 'GLM 填充超时，改用 V4-Pro 直接生成...';
+        try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-v4-pro', 120000); }catch(e){ out = ''; }
+      }
+    }
+  }else{
+    try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
+    if(!out.trim()){
+      status.textContent = 'DeepSeek 超时，改用 V4-Pro 重试...';
+      try{ out = await callModelWithTimeout(sys, usr, 4000, 'deepseek-v4-pro', 120000); }catch(e){ out = ''; }
+    }
   }
   if(!out.trim()){
     resEl.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;color:#b91c1c;font-size:13px">⚠️ 教案生成失败（模型未返回），请重试</div>';
