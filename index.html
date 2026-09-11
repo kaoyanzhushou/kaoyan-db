@@ -16924,7 +16924,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
           </div>
           <div style="display:flex;gap:10px;margin-top:14px">
             <button onclick="generateMechanism()" style="background:#0891b2;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;flex:1">🧬 生成机制图（七模型协作）</button>
-            <button onclick="generateMechanismDual()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600" title="Qwen3.5-Plus + V4-Pro 双模型并行生成，对比选择最优版本">⚡ 双版本对比生成</button>
+            <button onclick="generateMechanismDual()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600" title="Qwen3.5-Plus + DeepSeek 双模型并行生成，对比选择最优版本">⚡ 双版本对比生成</button>
             <button onclick="clearMechanism()" style="background:#fff;border:1px solid #cbd5e1;color:#64748b;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">清空</button>
           </div>
         </div>
@@ -128679,14 +128679,14 @@ async function generateMechanismDual(){
   try{
     var genPrompt = '你是运动科学机制图生成专家。请拆解机制描述，确定核心分子节点和层级结构，生成完整的机制图JSON。\n\n要求：\n1. nodes数组：每个节点含id(字符串),label(名称),type(酶/底物/转录因子/激素/受体/其他),layer(层级数字,从0开始),confidence(高/中/低),narration(1-2句教学讲解词),abbreviation(缩写,无则空)\n2. edges数组：每条边含from(源节点id),to(目标节点id),relation(激活/抑制/底物转化/磷酸化/表达上调),confidence(高/中/低),acute(是否急性运动相关,true/false),chronic(是否长期训练相关,true/false),pmid(文献PMID,不确定则空)\n3. 只输出JSON，不要其他文字\n\n科目：' + subject + '\n机制描述：' + desc;
 
-    log('⚡ <b>Qwen3.5-Plus</b> 和 <b>V4-Pro</b> 正在并行生成机制图...');
+    log('⚡ <b>Qwen3.5-Plus</b> 和 <b>DeepSeek</b> 正在并行生成机制图...');
 
     // 双模型并行生成
     var pA = callQwenChat([{role:'system', content:'你是运动科学机制图生成专家，严格按JSON格式输出。'}, {role:'user', content: genPrompt}], 'qwen3.5-plus', 0.7, 1800)
       .then(function(r){ return {data: parseMechJSON(r), raw: r, error: null}; })
       .catch(function(e){ return {data: null, raw: null, error: e.message}; });
 
-    var pB = callDeepSeekAPI('你是运动科学机制图生成专家，严格按JSON格式输出。', genPrompt, 1800, 'deepseek-v4-pro')
+    var pB = callDeepSeekAPI('你是运动科学机制图生成专家，严格按JSON格式输出。', genPrompt, 1800, 'deepseek-chat')
       .then(function(r){ return {data: parseMechJSON(r), raw: r, error: null}; })
       .catch(function(e){ return {data: null, raw: null, error: e.message}; });
 
@@ -128707,7 +128707,7 @@ async function generateMechanismDual(){
     }
 
     if(resB.data){
-      resB.data.title = '[V4-Pro] ' + desc.substring(0,25) + (desc.length>25?'...':'');
+      resB.data.title = '[DeepSeek] ' + desc.substring(0,25) + (desc.length>25?'...':'');
       resB.data.subject = subject;
       resB.data.createdAt = new Date().toISOString();
       log('   ✅ V4-Pro: ' + resB.data.nodes.length + ' 节点, ' + resB.data.edges.length + ' 关系');
@@ -128744,7 +128744,7 @@ function renderDualMechCompare(){
   }
   if(hasB){
     var activeB = d.active === 'B';
-    html += '<button onclick="switchDualMech(\'B\')" style="background:' + (activeB?'#7c3aed':'#f1f5f9') + ';color:' + (activeB?'#fff':'#475569') + ';border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">B: V4-Pro（' + d.versionB.nodes.length + '节点/' + d.versionB.edges.length + '关系）</button>';
+    html += '<button onclick="switchDualMech(\'B\')" style="background:' + (activeB?'#7c3aed':'#f1f5f9') + ';color:' + (activeB?'#fff':'#475569') + ';border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">B: DeepSeek（' + d.versionB.nodes.length + '节点/' + d.versionB.edges.length + '关系）</button>';
   }
   if(hasA && hasB){
     html += '<button onclick="mergeDualMech()" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔗 合并两版本独有节点</button>';
@@ -128764,10 +128764,14 @@ function renderDualMechCompare(){
     mechCurrentData = activeData;
     var container = document.getElementById('dualMechSvgContainer');
     if(container){
-      // 复用现有渲染逻辑
-      renderMechSVG(activeData);
-      renderMechLegend();
-      renderMechNodeList(activeData);
+      try{
+        // 复用现有渲染逻辑
+        renderMechSVG(activeData);
+        renderMechLegend();
+        renderMechNodeList(activeData);
+      }catch(e){
+        container.innerHTML = '<div style="padding:20px;text-align:center;color:#dc2626;background:#fef2f2;border-radius:8px">机制图渲染出错：' + e.message + '<br><span style="font-size:12px;color:#6b7280">数据已生成，可尝试切换版本或合并</span></div>';
+      }
     }
   }
 }
