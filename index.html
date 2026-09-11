@@ -13862,6 +13862,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('writing')" id="paperTab-writing" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">✍️ 写作助手</button>
       <button onclick="switchPaperSubTab('literature2')" id="paperTab-literature2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📚 文献增强</button>
       <button onclick="switchPaperSubTab('pipeline2')" id="paperTab-pipeline2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🔗 模型流水线</button>
+      <button onclick="switchPaperSubTab('chart')" id="paperTab-chart" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📊 图表生成</button>
 
       <button onclick="switchPaperSubTab('sports')" id="paperTab-sports" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">体育学特色</button>
 
@@ -15299,6 +15300,42 @@ console.log('✅ 学习工具入口已加载');
 
       <div id="pipelineStatus" style="display:none;margin-bottom:20px"></div>
       <div id="pipelineResult" style="display:none;margin-bottom:20px"></div>
+    </div>
+  </div>
+
+  <div id="paperContent-chart" style="display:none">
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #bae6fd">
+        <h2 style="margin:0 0 8px 0;font-size:20px;color:#0c4a6e">📊 AI图表生成与优化</h2>
+        <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">输入数据，AI自动生成学术风格SVG图表，支持柱状图/折线图/饼图/散点图，附带图表说明（Figure Caption），可下载SVG/PNG。</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">⚙️ 图表设置</div>
+        <div style="display:flex;gap:15px;flex-wrap:wrap;margin-bottom:15px">
+          <div style="flex:1;min-width:200px">
+            <label style="font-size:12px;color:#6b7280;font-weight:600">图表标题</label>
+            <input type="text" id="chartTitle" placeholder="例如：不同运动强度下的心率变化" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none">
+          </div>
+          <div style="min-width:150px">
+            <label style="font-size:12px;color:#6b7280;font-weight:600">图表类型</label>
+            <select id="chartType" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+              <option value="bar">柱状图</option>
+              <option value="line">折线图</option>
+              <option value="pie">饼图</option>
+              <option value="scatter">散点图</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:15px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">图表数据（每行一组，格式：标签,数值）</label>
+          <textarea id="chartData" placeholder="对照组,65&#10;低强度组,78&#10;中强度组,85&#10;高强度组,92" style="width:100%;min-height:120px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none;margin-top:4px"></textarea>
+        </div>
+        <button onclick="generateChart()" style="padding:12px 30px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🚀 生成图表</button>
+      </div>
+
+      <div id="chartStatus" style="display:none;margin-bottom:20px"></div>
+      <div id="chartResult" style="display:none;margin-bottom:20px"></div>
     </div>
   </div>
 
@@ -57725,7 +57762,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','literature2','design','assist','polish','publish','review','trend','writing','pipeline2','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
+  ['projects','editor','format','literature','literature2','design','assist','polish','publish','review','trend','writing','pipeline2','chart','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -127772,7 +127809,128 @@ function clearGlobalChat() {
   const historyEl = document.getElementById('globalChatHistory');
   if (historyEl) historyEl.innerHTML = '';
   globalChatHistory = [];
-  mechToast('对话已清空', 'success');
+  historyEl.scrollTop = historyEl.scrollHeight;
+}
+
+// ========== 图表生成与优化 ==========
+let chartSVG = '';
+
+// 生成图表
+async function generateChart() {
+  const data = document.getElementById('chartData').value.trim();
+  const chartType = document.getElementById('chartType').value;
+  const title = document.getElementById('chartTitle').value.trim() || '研究结果图表';
+  
+  if (!data) { mechToast('请输入图表数据', 'warn'); return; }
+  
+  const statusEl = document.getElementById('chartStatus');
+  const resultEl = document.getElementById('chartResult');
+  
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">📊 正在生成图表...</div></div>';
+  
+  const typeDesc = {
+    'bar': '柱状图，适合比较不同组别的数值',
+    'line': '折线图，适合展示趋势变化',
+    'pie': '饼图，适合展示占比分布',
+    'scatter': '散点图，适合展示两个变量的关系'
+  };
+  
+  try {
+    const result = await callDeepSeekAPI(
+      `你是一位数据可视化专家。请根据以下数据生成一个${typeDesc[chartType] || chartType}。
+要求：
+1. 输出完整的SVG代码，宽度600，高度400
+2. 包含标题、坐标轴、数据标签、图例
+3. 使用学术论文风格的配色（蓝色系为主）
+4. 字体清晰，布局美观
+5. 只输出SVG代码，不要其他说明
+6. SVG必须是完整的，以<svg开头，以</svg>结尾`,
+      `图表标题：${title}
+图表类型：${chartType}
+数据：
+${data.substring(0, 2000)}`,
+      3000, 'qwen3.5-plus'
+    );
+    
+    // 提取SVG
+    const svgMatch = result.match(/<svg[\s\S]*<\/svg>/);
+    chartSVG = svgMatch ? svgMatch[0] : result;
+    
+    // 生成图表说明
+    const captionResult = await callDeepSeekAPI(
+      '你是一位学术论文编辑。请为以下图表写一段图表说明（Figure Caption），要求包含图表类型、主要发现、数据来源，约100-150字。',
+      `图表标题：${title}
+图表类型：${chartType}
+数据：${data.substring(0, 1000)}
+SVG预览：${chartSVG.substring(0, 500)}`,
+      800, 'glm-5.3'
+    );
+    
+    let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">';
+    html += '<div style="padding:15px 20px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;display:flex;justify-content:space-between;align-items:center">';
+    html += '<div style="font-weight:700;font-size:16px">📊 图表生成结果</div>';
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button onclick="downloadChartSVG()" style="padding:6px 12px;background:#fff;color:#0891b2;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📥 下载SVG</button>';
+    html += '<button onclick="downloadChartPNG()" style="padding:6px 12px;background:#fff;color:#0891b2;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📥 下载PNG</button>';
+    html += '</div></div>';
+    html += '<div style="padding:20px;text-align:center;background:#f9fafb"><div style="display:inline-block;background:#fff;padding:15px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)">' + chartSVG + '</div></div>';
+    html += '<div style="padding:15px 20px;border-top:1px solid #e5e7eb">';
+    html += '<div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:8px">📝 图表说明（Figure Caption）</div>';
+    html += '<textarea id="chartCaption" style="width:100%;min-height:80px;padding:10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;line-height:1.8;font-family:inherit;outline:none;resize:vertical">' + captionResult.trim() + '</textarea>';
+    html += '</div></div>';
+    
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    mechToast('图表生成完成！', 'success');
+  } catch(e) {
+    statusEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">图表生成失败：' + e.message + '</div>';
+  }
+}
+
+// 下载SVG
+function downloadChartSVG() {
+  if (!chartSVG) { mechToast('请先生成图表', 'warn'); return; }
+  const blob = new Blob([chartSVG], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'chart.svg';
+  a.click();
+  URL.revokeObjectURL(url);
+  mechToast('SVG已下载', 'success');
+}
+
+// 下载PNG（通过canvas转换）
+function downloadChartPNG() {
+  if (!chartSVG) { mechToast('请先生成图表', 'warn'); return; }
+  const canvas = document.createElement('canvas');
+  canvas.width = 1200;
+  canvas.height = 800;
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  const svgBlob = new Blob([chartSVG], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+  img.onload = function() {
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(function(blob) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'chart.png';
+      a.click();
+      URL.revokeObjectURL(url);
+      mechToast('PNG已下载', 'success');
+    }, 'image/png');
+  };
+  img.onerror = function() {
+    mechToast('PNG转换失败，请下载SVG', 'warn');
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
 }
 
 function setAiModel(model) {
