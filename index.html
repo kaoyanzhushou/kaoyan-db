@@ -13863,6 +13863,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('literature2')" id="paperTab-literature2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📚 文献增强</button>
       <button onclick="switchPaperSubTab('pipeline2')" id="paperTab-pipeline2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🔗 模型流水线</button>
       <button onclick="switchPaperSubTab('chart')" id="paperTab-chart" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📊 图表生成</button>
+      <button onclick="switchPaperSubTab('format2')" id="paperTab-format2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📝 格式排版</button>
 
       <button onclick="switchPaperSubTab('sports')" id="paperTab-sports" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">体育学特色</button>
 
@@ -15336,6 +15337,37 @@ console.log('✅ 学习工具入口已加载');
 
       <div id="chartStatus" style="display:none;margin-bottom:20px"></div>
       <div id="chartResult" style="display:none;margin-bottom:20px"></div>
+    </div>
+  </div>
+
+  <div id="paperContent-format2" style="display:none">
+    <div style="max-width:1100px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #bbf7d0">
+        <h2 style="margin:0 0 8px 0;font-size:20px;color:#166534">📝 全文格式自动排版</h2>
+        <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">选择目标期刊模板，AI自动识别论文结构并按期刊要求重新排版，支持参考文献格式转换，一键下载排版后文档。</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">⚙️ 排版设置</div>
+        <div style="margin-bottom:15px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">目标期刊模板</label>
+          <select id="formatTemplate" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+            <option value="nature">Nature（编号制参考文献）</option>
+            <option value="science">Science（作者-年份参考文献）</option>
+            <option value="sportsci" selected>体育科学（GB/T 7714）</option>
+            <option value="jssm">J Sports Sci Med（Vancouver）</option>
+            <option value="general">通用学术格式</option>
+          </select>
+        </div>
+        <div style="margin-bottom:15px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">论文内容（粘贴全文）</label>
+          <textarea id="formatInput" placeholder="粘贴论文全文，包括标题、作者、摘要、关键词、正文、参考文献..." style="width:100%;min-height:200px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none;margin-top:4px"></textarea>
+        </div>
+        <button onclick="formatPaper()" style="padding:12px 30px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🚀 开始排版</button>
+      </div>
+
+      <div id="formatStatus" style="display:none;margin-bottom:20px"></div>
+      <div id="formatResult" style="display:none;margin-bottom:20px"></div>
     </div>
   </div>
 
@@ -57762,7 +57794,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','literature','literature2','design','assist','polish','publish','review','trend','writing','pipeline2','chart','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
+  ['projects','editor','format','format2','literature','literature2','design','assist','polish','publish','review','trend','writing','pipeline2','chart','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
@@ -127931,6 +127963,77 @@ function downloadChartPNG() {
     URL.revokeObjectURL(url);
   };
   img.src = url;
+}
+
+// ========== 全文格式自动排版 ==========
+// 期刊模板
+const JOURNAL_TEMPLATES = {
+  'nature': { name: 'Nature', font: 'Times New Roman', fontSize: '11pt', lineHeight: '1.5', titleSize: '16pt', abstractSize: '9pt', refStyle: 'Nature编号制' },
+  'science': { name: 'Science', font: 'Times New Roman', fontSize: '10pt', lineHeight: '1.4', titleSize: '15pt', abstractSize: '9pt', refStyle: 'Science作者-年份' },
+  'sportsci': { name: '体育科学', font: '宋体', fontSize: '10.5pt', lineHeight: '1.5', titleSize: '16pt', abstractSize: '9pt', refStyle: 'GB/T 7714' },
+  'jssm': { name: 'J Sports Sci Med', font: 'Times New Roman', fontSize: '10pt', lineHeight: '1.5', titleSize: '14pt', abstractSize: '9pt', refStyle: 'Vancouver编号制' },
+  'general': { name: '通用学术格式', font: 'Times New Roman', fontSize: '11pt', lineHeight: '1.5', titleSize: '14pt', abstractSize: '10pt', refStyle: '通用格式' }
+};
+
+// 格式排版
+async function formatPaper() {
+  const text = document.getElementById('formatInput').value.trim();
+  const templateId = document.getElementById('formatTemplate').value;
+  if (!text) { mechToast('请输入论文内容', 'warn'); return; }
+  
+  const template = JOURNAL_TEMPLATES[templateId];
+  const statusEl = document.getElementById('formatStatus');
+  const resultEl = document.getElementById('formatResult');
+  
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">📝 正在按' + template.name + '格式排版...</div></div>';
+  
+  try {
+    const result = await callDeepSeekAPI(
+      `你是一位专业的学术排版编辑。请将以下论文内容重新整理为${template.name}期刊的标准格式。
+要求：
+1. 识别并标注：标题、作者、摘要、关键词、引言、方法、结果、讨论、结论、参考文献
+2. 按照${template.refStyle}格式整理参考文献
+3. 修正明显的格式错误
+4. 保持原文内容不变，只调整格式和结构
+5. 输出结构化的排版后内容，每个部分用【】标注
+6. 最后给出格式检查清单和修改建议`,
+      `论文内容：
+
+${text.substring(0, 8000)}`,
+      4000, 'glm-5.3'
+    );
+    
+    let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">';
+    html += '<div style="padding:15px 20px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;display:flex;justify-content:space-between;align-items:center">';
+    html += '<div style="font-weight:700;font-size:16px">📝 格式排版结果（' + template.name + '）</div>';
+    html += '<button onclick="downloadFormattedPaper()" style="padding:6px 12px;background:#fff;color:#16a34a;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📥 下载排版后文档</button>';
+    html += '</div>';
+    html += '<div style="padding:20px"><div style="font-family:' + template.font + ';font-size:' + template.fontSize + ';line-height:' + template.lineHeight + ';color:#1f2937;white-space:pre-wrap">' + result.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div></div>';
+    html += '</div>';
+    
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.style.display = 'none';
+    window._formattedPaper = result;
+    mechToast('格式排版完成！', 'success');
+  } catch(e) {
+    statusEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">排版失败：' + e.message + '</div>';
+  }
+}
+
+// 下载排版后文档
+function downloadFormattedPaper() {
+  if (!window._formattedPaper) { mechToast('请先生成排版结果', 'warn'); return; }
+  const blob = new Blob(['﻿' + window._formattedPaper], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '排版后论文.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+  mechToast('已下载', 'success');
 }
 
 function setAiModel(model) {
