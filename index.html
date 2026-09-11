@@ -17038,9 +17038,18 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
               <div style="flex:1;min-width:200px">
                 <div style="font-size:12px;font-weight:600;color:#475569;margin-bottom:8px">图片信息</div>
                 <div id="undImgInfo" style="font-size:12px;color:#64748b;line-height:1.8"></div>
-                <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-                  <button onclick="undRecognize()" style="background:#0891b2;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔍 AI 识别结构</button>
-                  <button onclick="undResetUpload()" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#64748b;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px">重新上传</button>
+                <div style="margin-top:12px">
+                  <div style="font-size:11px;color:#64748b;margin-bottom:6px;font-weight:600">识别模型（阿里云Qwen多模态 · 直接调用）</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                    <select id="undModelSelect" style="padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;background:#fff;color:#0f172a;cursor:pointer;min-width:220px">
+                      <option value="qwen3.5-plus">Qwen3.5-Plus（推荐·最强识别）</option>
+                      <option value="qwen3.5-flash">Qwen3.5-Flash（快速·省钱）</option>
+                      <option value="dual">双模型对比（Plus+Flash·高保真）</option>
+                      <option value="deepseek-v4-flash">DeepSeek-V4-Flash（原有兜底）</option>
+                    </select>
+                    <button onclick="undRecognize()" style="background:#0891b2;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔍 AI 识别结构</button>
+                    <button onclick="undResetUpload()" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#64748b;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px">重新上传</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -128636,41 +128645,69 @@ function undResetUpload(){
   document.getElementById('undFileInput').value = '';
 }
 
+
+// ========== 阿里云百炼API（Qwen多模态）直接调用 ==========
+const QWEN_API_KEY = 'sk-ws-H.PDYXLXI.K3jv.MEUCIQDjP7RKLlok-AieT0PBMcJyRT_7ns7kFFwIHipq2GMATgIgdCgpITgBxKxsOVaLJfAKYoVlyFA9qjw1OQnfIUadpfA';
+const QWEN_API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+
+async function callQwenChat(messages, model='qwen3.5-plus', temperature=0.3, maxTokens=2000){
+  var body = {
+    model: model,
+    messages: messages,
+    temperature: temperature,
+    max_tokens: maxTokens
+  };
+  var resp = await fetch(QWEN_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + QWEN_API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  var data = await resp.json();
+  if(data.choices && data.choices[0] && data.choices[0].message){
+    return data.choices[0].message.content;
+  }
+  throw new Error(data.error ? data.error.message : 'Qwen API返回为空');
+}
+
+// 双模型结果对比：返回一致率和差异点
+function compareMechResults(r1, r2){
+  var nodes1 = (r1.nodes||[]).map(function(n){return n.label;});
+  var nodes2 = (r2.nodes||[]).map(function(n){return n.label;});
+  var common = nodes1.filter(function(n){return nodes2.indexOf(n) >= 0;});
+  var only1 = nodes1.filter(function(n){return nodes2.indexOf(n) < 0;});
+  var only2 = nodes2.filter(function(n){return nodes1.indexOf(n) < 0;});
+  var total = Math.max(nodes1.length, nodes2.length);
+  var agreeRate = total > 0 ? Math.round(common.length / total * 100) : 0;
+  return {agreeRate: agreeRate, common: common, only1: only1, only2: only2};
+}
+
 // AI 识别机制图结构（多模态）
 async function undRecognize(){
   if(!undImageBase64){ mechToast('请先上传图片'); return; }
   var statusEl = document.getElementById('undStatus');
   var statusText = document.getElementById('undStatusText');
   statusEl.style.display = 'block';
-  statusText.innerHTML = '🔍 <b>deepseek-v4-flash</b> 正在识别机制图结构（节点/关系/层级）...';
 
-  try{
-    // 直接调用后端，构造多模态消息
-    var backend = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/chat';
-    var body = {
-      model: 'deepseek-v4-flash',
-      messages: [
-        {role: 'system', content: '你是运动科学机制图识别专家。请识别图片中的机制图，提取所有分子节点和它们之间的关系。只输出JSON，不要其他文字。JSON格式：{"title":"机制名称","subject":"科目","nodes":[{"label":"名称","type":"酶/底物/转录因子/激素/受体/其他","layer":0,"confidence":"高/中/低","narration":"1句讲解","abbreviation":"缩写"}],"edges":[{"from":"源节点label","to":"目标节点label","relation":"激活/抑制/底物转化/磷酸化/表达上调","confidence":"高/中/低","acute":true,"chronic":true}]}'},
-        {role: 'user', content: [
-          {type: 'text', text: '识别这张运动科学机制图，提取节点和关系。只输出JSON。'},
-          {type: 'image_url', image_url: {url: undImageBase64}}
-        ]}
-      ],
-      temperature: 0.3,
-      max_tokens: 2000
-    };
-    var resp = await fetch(backend, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(body)
-    });
-    var data = await resp.json();
-    var content = data.content || (data.data ? data.data.content : (data.choices ? data.choices[0].message.content : ''));
-    if(!content){ throw new Error('识别返回为空'); }
+  var modelSel = document.getElementById('undModelSelect');
+  var selectedModel = modelSel ? modelSel.value : 'qwen3.5-plus';
 
-    // 解析 JSON
+  var systemPrompt = '你是运动科学机制图识别专家。请识别图片中的机制图，提取所有分子节点和它们之间的关系。只输出JSON，不要其他文字。JSON格式：{"title":"机制名称","subject":"科目","nodes":[{"label":"名称","type":"酶/底物/转录因子/激素/受体/其他","layer":0,"confidence":"高/中/低","narration":"1句讲解","abbreviation":"缩写"}],"edges":[{"from":"源节点label","to":"目标节点label","relation":"激活/抑制/底物转化/磷酸化/表达上调","confidence":"高/中/低","acute":true,"chronic":true}]}';
+
+  function buildMessages(){
+    return [
+      {role: 'system', content: systemPrompt},
+      {role: 'user', content: [
+        {type: 'text', text: '识别这张运动科学机制图，提取节点和关系。只输出JSON。'},
+        {type: 'image_url', image_url: {url: undImageBase64}}
+      ]}
+    ];
+  }
+
+  function processResult(content, modelName){
     var parsed = parseMechJSON(content);
-    // 转换 edges 的 from/to 从 label 到 id
     var nodeMap = {};
     (parsed.nodes || []).forEach(function(n, i){
       n.id = n.id || ('u' + i);
@@ -128683,9 +128720,70 @@ async function undRecognize(){
     parsed.title = parsed.title || '识别的机制图';
     parsed.subject = parsed.subject || '运动科学';
     parsed.createdAt = new Date().toISOString();
-    undCurrentData = parsed;
+    parsed._model = modelName;
+    return parsed;
+  }
 
-    statusText.innerHTML = '✅ 识别完成：' + (parsed.nodes || []).length + ' 个节点，' + (parsed.edges || []).length + ' 条关系。现在可以生成难度分级讲解或挖空自测。';
+  try{
+    if(selectedModel === 'dual'){
+      // 双模型对比模式
+      statusText.innerHTML = '🔬 <b>双模型对比</b>：Qwen3.5-Plus + Qwen3.5-Flash 同时识别中...';
+
+      var pPlus = callQwenChat(buildMessages(), 'qwen3.5-plus', 0.3, 2000);
+      var pFlash = callQwenChat(buildMessages(), 'qwen3.5-flash', 0.3, 2000);
+      var results = await Promise.all([pPlus, pFlash]);
+
+      var parsedPlus = processResult(results[0], 'qwen3.5-plus');
+      var parsedFlash = processResult(results[1], 'qwen3.5-flash');
+      var cmp = compareMechResults(parsedPlus, parsedFlash);
+
+      // 以Plus结果为主（更强），附加对比信息
+      undCurrentData = parsedPlus;
+      undCurrentData._dualCompare = {
+        plus: parsedPlus,
+        flash: parsedFlash,
+        agreeRate: cmp.agreeRate,
+        onlyPlus: cmp.only1,
+        onlyFlash: cmp.only2
+      };
+
+      var agreeColor = cmp.agreeRate >= 80 ? '#22c55e' : (cmp.agreeRate >= 60 ? '#f59e0b' : '#ef4444');
+      statusText.innerHTML = '✅ <b>双模型识别完成</b> | 一致率：<span style="color:' + agreeColor + ';font-weight:700">' + cmp.agreeRate + '%</span> | Plus: ' + (parsedPlus.nodes||[]).length + '节点/' + (parsedPlus.edges||[]).length + '关系 | Flash: ' + (parsedFlash.nodes||[]).length + '节点/' + (parsedFlash.edges||[]).length + '关系' +
+        (cmp.only1.length > 0 ? '<br><span style="color:#f59e0b">⚠️ 仅Plus识别到：' + cmp.only1.join('、') + '</span>' : '') +
+        (cmp.only2.length > 0 ? '<br><span style="color:#f59e0b">⚠️ 仅Flash识别到：' + cmp.only2.join('、') + '</span>' : '');
+
+    } else if(selectedModel === 'deepseek-v4-flash'){
+      // 原有DeepSeek模式（走SCF后端）
+      statusText.innerHTML = '🔍 <b>deepseek-v4-flash</b> 正在识别机制图结构...';
+      var backend = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/chat';
+      var body = {
+        model: 'deepseek-v4-flash',
+        messages: buildMessages(),
+        temperature: 0.3,
+        max_tokens: 2000
+      };
+      var resp = await fetch(backend, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body)
+      });
+      var data = await resp.json();
+      var content = data.content || (data.data ? data.data.content : (data.choices ? data.choices[0].message.content : ''));
+      if(!content){ throw new Error('识别返回为空'); }
+      undCurrentData = processResult(content, 'deepseek-v4-flash');
+      statusText.innerHTML = '✅ 识别完成（deepseek-v4-flash）：' + (undCurrentData.nodes || []).length + ' 个节点，' + (undCurrentData.edges || []).length + ' 条关系。';
+
+    } else {
+      // 阿里云Qwen单模型模式
+      var modelLabel = selectedModel === 'qwen3.5-plus' ? 'Qwen3.5-Plus（最强识别）' : 'Qwen3.5-Flash（快速省钱）';
+      statusText.innerHTML = '🔍 <b>' + modelLabel + '</b> 正在识别机制图结构（节点/关系/层级）...';
+
+      var content = await callQwenChat(buildMessages(), selectedModel, 0.3, 2000);
+      undCurrentData = processResult(content, selectedModel);
+
+      statusText.innerHTML = '✅ 识别完成（' + modelLabel + '）：' + (undCurrentData.nodes || []).length + ' 个节点，' + (undCurrentData.edges || []).length + ' 条关系。现在可以生成难度分级讲解或挖空自测。';
+    }
+
     undRenderStruct();
     document.getElementById('undResult').style.display = 'block';
 
