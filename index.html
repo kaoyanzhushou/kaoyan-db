@@ -16717,11 +16717,19 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
         <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">
           <button onclick="runPptGen()" style="background:#2563eb;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🚀 生成课件大纲</button>
+          <button onclick="togglePptLibrary()" style="background:#fff;border:1px solid #0891b2;color:#0891b2;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📚 课件库</button>
           <label style="font-size:12px;color:#4b5563;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="pptHealthCheck" checked style="vertical-align:middle">生成后 GLM 体检</label>
           <span id="pptStatus" style="font-size:12px;color:#6b7280"></span>
         </div>
       </div>
 
+        <div id="pptLibraryPanel" style="display:none;background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:16px;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:14px;font-weight:700;color:#0f766e">📚 我的课件库（localStorage 本地存档，最多 20 份）</div>
+            <button onclick="togglePptLibrary()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:16px">✕</button>
+          </div>
+          <div id="pptLibraryList" style="font-size:12px;color:#6b7280">加载中...</div>
+        </div>
       <div id="pptResult" style="display:none"></div>
 
     </div>
@@ -127824,6 +127832,7 @@ async function runPptGen(){
     return;
   }
   __pptSlides = parsePptOutline(out);
+  __pptJustGenerated = true;
   __pptCurrent = 0;
   __pptGridView = false;
   if(__pptSlides.length === 0){
@@ -127883,6 +127892,8 @@ function renderPptSlides(){
   html += '<button onclick="pptNextPage()" style="background:#fff;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">下一页 ▶</button>';
   html += '<button onclick="pptToggleGrid()" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">▦ 网格总览</button>';
   html += '<button onclick="pptEnhanceAll()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🚀 六路全增强</button>';
+  html += '<button onclick="pptGenerateExercises()" style="background:#db2777;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📝 分层练习</button>';
+  html += '<button onclick="pptAddIdeology()" style="background:#dc2626;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🇨🇳 思政融入</button>';
   html += '<button onclick="downloadPptx()" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📥 下载 PPTX</button>';
   html += '<span id="pptEnhanceStatus" style="font-size:11px;color:#6b7280"></span>';
   html += '</div>';
@@ -127927,6 +127938,7 @@ function renderPptSlides(){
     html += '</div>';
   }
   resEl.innerHTML = html;
+  if(__pptJustGenerated && __pptSlides.length > 0){ try{ savePptToLibrary(); }catch(e){} __pptJustGenerated = false; }
 }
 
 function pptPrevPage(){ if(__pptCurrent > 0){ __pptCurrent--; __pptGridView=false; renderPptSlides(); } }
@@ -128203,6 +128215,148 @@ function lessonToPpt(){
     document.getElementById('pptExtra').value = text.slice(0, 2000);
     document.getElementById('pptTopic').scrollIntoView({behavior:'smooth', block:'center'});
   }, 250);
+}
+
+// ========== 课件库（localStorage） ==========
+const PPT_LIB_KEY = 'pptLibrary_v1';
+let __pptJustGenerated = false;
+function getPptLibrary(){
+  try{ return JSON.parse(localStorage.getItem(PPT_LIB_KEY) || '[]'); }catch(e){ return []; }
+}
+function savePptLibrary(lib){
+  localStorage.setItem(PPT_LIB_KEY, JSON.stringify(lib.slice(0, 20)));
+}
+function savePptToLibrary(){
+  if(!__pptSlides || __pptSlides.length === 0) return;
+  const lib = getPptLibrary();
+  const title = (document.getElementById('pptTopic').value || '未命名课件').slice(0, 50);
+  const subject = (document.getElementById('pptTopic') ? document.getElementById('pptTopic').value : '').slice(0, 30);
+  const style = (document.getElementById('pptStyle').value || 'academic');
+  const item = {id: 'ppt_' + Date.now(), title: title, subject: subject, style: style, createdAt: new Date().toISOString(), slidesCount: __pptSlides.length, slides: __pptSlides};
+  lib.unshift(item);
+  savePptLibrary(lib);
+}
+function togglePptLibrary(){
+  const panel = document.getElementById('pptLibraryPanel');
+  if(!panel) return;
+  if(panel.style.display === 'none'){
+    panel.style.display = 'block';
+    renderPptLibrary();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+function renderPptLibrary(){
+  const listEl = document.getElementById('pptLibraryList');
+  if(!listEl) return;
+  const lib = getPptLibrary();
+  if(lib.length === 0){ listEl.innerHTML = '<div style="padding:12px;color:#9ca3af">暂无存档，生成课件后将自动保存</div>'; return; }
+  let html = '';
+  for(var i=0;i<lib.length;i++){
+    const it = lib[i];
+    const d = new Date(it.createdAt);
+    const dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px">';
+    html += '<div style="flex:1"><div style="font-size:13px;font-weight:600;color:#1f2937">' + it.title + '</div>';
+    html += '<div style="font-size:11px;color:#6b7280;margin-top:2px">' + (it.subject||'未分类') + ' · ' + it.slidesCount + ' 页 · ' + dateStr + '</div></div>';
+    html += '<div style="display:flex;gap:6px">';
+    html += '<button onclick="loadPptFromLibrary(\'' + it.id + '\')" style="background:#0891b2;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px">加载</button>';
+    html += '<button onclick="rebuildPptFromLibrary(\'' + it.id + '\')" style="background:#7c3aed;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px">重编</button>';
+    html += '<button onclick="deletePptFromLibrary(\'' + it.id + '\')" style="background:#fff;border:1px solid #dc2626;color:#dc2626;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px">删除</button>';
+    html += '</div></div>';
+  }
+  listEl.innerHTML = html;
+}
+function loadPptFromLibrary(id){
+  const lib = getPptLibrary();
+  const it = lib.find(function(x){ return x.id === id; });
+  if(!it) return;
+  __pptSlides = it.slides;
+  __pptCurrent = 0;
+  __pptGridView = false;
+  __pptJustGenerated = false;
+  document.getElementById('pptTopic').value = it.title;
+  renderPptSlides();
+  document.getElementById('pptLibraryPanel').style.display = 'none';
+}
+function rebuildPptFromLibrary(id){
+  const lib = getPptLibrary();
+  const it = lib.find(function(x){ return x.id === id; });
+  if(!it) return;
+  document.getElementById('pptTopic').value = it.title;
+  document.getElementById('pptExtra').value = '基于已有课件重新生成，原课件共' + it.slidesCount + '页，请优化结构、补充内容、提升深度。原课件要点：' + it.slides.map(function(s){ return s.title + ':' + s.points.join('、'); }).join('；').slice(0, 2000);
+  document.getElementById('pptLibraryPanel').style.display = 'none';
+  runPptGen();
+}
+function deletePptFromLibrary(id){
+  if(!confirm('确认删除这份课件存档？')) return;
+  let lib = getPptLibrary();
+  lib = lib.filter(function(x){ return x.id !== id; });
+  savePptLibrary(lib);
+  renderPptLibrary();
+}
+
+// ========== 分层练习生成 ==========
+async function pptGenerateExercises(){
+  if(__pptSlides.length === 0){ alert('请先生成课件大纲'); return; }
+  const btn = document.querySelector('button[onclick="pptGenerateExercises()"]');
+  if(btn) btn.textContent = '⏳ 生成中...';
+  try{
+    const sys = '你是体育高校习题设计专家。基于课件内容，生成三层练习题：基础题（3道，考查概念记忆）、进阶题（3道，考查理解应用）、拓展题（2道，考查综合分析）。每题含题干和参考答案。输出格式严格为：===基础===\n1. 题干\n答：...\n===进阶===\n...\n===拓展===\n...';
+    const usr = '课件内容：\n' + pptSlidesSummary();
+    let out = '';
+    try{ out = await callModelWithTimeout(sys, usr, 2500, 'deepseek-chat', 120000); }catch(e){ out = ''; }
+    if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2500, 'kimi-k3', 120000); }catch(e){ out = ''; } }
+    if(!out.trim()){ alert('练习生成失败，请重试'); return; }
+    // 解析为练习页
+    const layers = [{name:'基础题', regex:/===基础===([\s\S]*?)(?===进阶===|$)/}, {name:'进阶题', regex:/===进阶===([\s\S]*?)(?===拓展===|$)/}, {name:'拓展题', regex:/===拓展===([\s\S]*?)$/}];
+    for(var i=0;i<layers.length;i++){
+      const m = out.match(layers[i].regex);
+      if(m && m[1].trim()){
+        const lines = m[1].trim().split('\n').filter(function(l){ return l.trim(); });
+        const points = lines.slice(0, 5).map(function(l){ return l.replace(/^\d+[.、]\s*/, '').slice(0, 80); });
+        __pptSlides.push({type: '练习·' + layers[i].name, title: layers[i].name + '（' + (document.getElementById('pptTopic').value||'').slice(0,20) + '）', points: points, notes: m[1].trim().slice(0, 500)});
+      }
+    }
+    renderPptSlides();
+    if(btn) btn.textContent = '📝 分层练习';
+  }catch(e){
+    if(btn) btn.textContent = '📝 分层练习';
+    alert('练习生成失败：' + e.message);
+  }
+}
+
+// ========== 思政融入 ==========
+async function pptAddIdeology(){
+  if(__pptSlides.length === 0){ alert('请先生成课件大纲'); return; }
+  const btn = document.querySelector('button[onclick="pptAddIdeology()"]');
+  if(btn) btn.textContent = '⏳ 分析中...';
+  try{
+    const sys = '你是高校课程思政设计专家。分析体育课件内容，挖掘思政融入点（家国情怀/科学精神/体育精神/文化自信/社会责任/职业道德）。输出格式：P页码｜思政元素｜融入方式（一句话，如何自然融入教学）。只输出有思政价值的页（约3-5页），最后追加一页"课程思政总结"。';
+    const usr = '课件内容：\n' + pptSlidesSummary();
+    let out = '';
+    try{ out = await callModelWithTimeout(sys, usr, 2000, 'deepseek-chat', 120000); }catch(e){ out = ''; }
+    if(!out.trim()){ try{ out = await callModelWithTimeout(sys, usr, 2000, 'kimi-k3', 120000); }catch(e){ out = ''; } }
+    if(!out.trim()){ alert('思政分析失败，请重试'); return; }
+    // 注入到对应页备注
+    const lines = out.split('\n');
+    for(var i=0;i<lines.length;i++){
+      const m = lines[i].match(/P(\d+)[｜|\s]+(.+)/);
+      if(m){
+        const idx = parseInt(m[1]) - 1;
+        if(idx >= 0 && idx < __pptSlides.length){
+          __pptSlides[idx].notes = (__pptSlides[idx].notes ? __pptSlides[idx].notes + '\n' : '') + '【思政融入】' + m[2].trim();
+        }
+      }
+    }
+    // 追加思政总结页
+    __pptSlides.push({type: '课程思政', title: '课程思政总结', points: lines.filter(function(l){ return l.trim() && !l.match(/^P\d+/); }).slice(0, 4).map(function(l){ return l.slice(0, 80); }), notes: out.slice(0, 500)});
+    renderPptSlides();
+    if(btn) btn.textContent = '🇨🇳 思政融入';
+  }catch(e){
+    if(btn) btn.textContent = '🇨🇳 思政融入';
+    alert('思政融入失败：' + e.message);
+  }
 }
 
 async function healthCheckLesson(lessonText, formatReq){
