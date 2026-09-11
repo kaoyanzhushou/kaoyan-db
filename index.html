@@ -16734,7 +16734,17 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
             <div style="font-size:14px;font-weight:700;color:#0f766e">📚 我的课件库（localStorage 本地存档，最多 20 份）</div>
             <button onclick="togglePptLibrary()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:16px">✕</button>
           </div>
-          <div id="pptLibraryList" style="font-size:12px;color:#6b7280">加载中...</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+  <input id="pptLibSearch" type="text" placeholder="🔍 搜索课件标题..." oninput="renderPptLibrary()" style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:12px">
+  <select id="pptLibStyleFilter" onchange="renderPptLibrary()" style="border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:12px">
+    <option value="all">全部风格</option>
+    <option value="academic">学术风</option>
+    <option value="minimal">简约风</option>
+    <option value="colorful">活力风</option>
+    <option value="dark">深色风</option>
+  </select>
+</div>
+<div id="pptLibraryList" style="font-size:12px;color:#6b7280;max-height:350px;overflow-y:auto">加载中...</div>
         </div>
       <div id="pptResult" style="display:none"></div>
 <div id="pptSlideShow" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:99999;flex-direction:column;justify-content:center;align-items:center">
@@ -127920,6 +127930,7 @@ function renderPptSlides(){
   html += '<button onclick="pptTimeAllocation()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⏱️ 时间分配</button>';
   html += '<button onclick="pptGenerateTransitions()" style="background:#d97706;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔗 过渡语</button>';
   html += '<button onclick="pptGenerateInteractions()" style="background:#db2777;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">❓ 互动题</button>';
+  html += '<button onclick="pptExportPDF()" style="background:#1e40af;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📄 导出PDF</button>';
   html += '<button onclick="savePptLayout()" style="background:#fff;border:1px solid #a16207;color:#a16207;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⭐ 收藏版式</button>';
   html += '<button onclick="downloadPptx()" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📥 下载 PPTX</button>';
   html += '<span id="pptEnhanceStatus" style="font-size:11px;color:#6b7280"></span>';
@@ -128288,8 +128299,19 @@ function togglePptLibrary(){
 function renderPptLibrary(){
   const listEl = document.getElementById('pptLibraryList');
   if(!listEl) return;
-  const lib = getPptLibrary();
-  if(lib.length === 0){ listEl.innerHTML = '<div style="padding:12px;color:#9ca3af">暂无存档，生成课件后将自动保存</div>'; return; }
+  let lib = getPptLibrary();
+  // 搜索筛选
+  const searchEl = document.getElementById('pptLibSearch');
+  if(searchEl && searchEl.value.trim()){
+    const kw = searchEl.value.trim().toLowerCase();
+    lib = lib.filter(function(it){ return (it.title||'').toLowerCase().indexOf(kw) >= 0 || (it.subject||'').toLowerCase().indexOf(kw) >= 0; });
+  }
+  // 风格筛选
+  const styleEl = document.getElementById('pptLibStyleFilter');
+  if(styleEl && styleEl.value && styleEl.value !== 'all'){
+    lib = lib.filter(function(it){ return it.style === styleEl.value; });
+  }
+  if(lib.length === 0){ listEl.innerHTML = '<div style="padding:12px;color:#9ca3af">没有匹配的存档</div>'; return; }
   let html = '';
   for(var i=0;i<lib.length;i++){
     const it = lib[i];
@@ -128829,6 +128851,45 @@ async function pptGenerateInteractions(){
   }catch(e){
     div.innerHTML = '<div style="font-size:13px;color:#dc2626">⚠️ 互动题生成出错：' + e.message + '</div>';
   }
+}
+
+// ========== 导出PDF（打印友好窗口） ==========
+function pptExportPDF(){
+  if(__pptSlides.length === 0){ alert('请先生成课件大纲'); return; }
+  const topic = (document.getElementById('pptTopic') ? document.getElementById('pptTopic').value : '课件').slice(0, 50);
+  const w = window.open('', '_blank');
+  if(!w){ alert('请允许弹出窗口以导出PDF'); return; }
+  let html = '<html><head><meta charset="utf-8"><title>' + topic + '</title><style>';
+  html += '@page{size:16in 9in;margin:0}*{box-sizing:border-box}body{margin:0;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif}';
+  html += '.slide{width:16in;height:9in;page-break-after:always;padding:0.7in 0.9in;display:flex;flex-direction:column;position:relative}';
+  html += '.slide::before{content:"";position:absolute;top:0;left:0;right:0;height:0.15in;background:#2563eb}';
+  html += '.stype{font-size:13px;color:#2563eb;margin-bottom:0.15in;font-weight:600;letter-spacing:1px}';
+  html += '.stitle{font-size:30px;font-weight:700;color:#1f2937;margin-bottom:0.3in;line-height:1.3}';
+  html += '.spoints{font-size:17px;color:#374151;line-height:2}';
+  html += '.spoints div{margin-bottom:0.08in}';
+  html += '.snotes{margin-top:auto;font-size:11px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:0.1in;line-height:1.6}';
+  html += '.pagenum{position:absolute;bottom:0.3in;right:0.9in;font-size:10px;color:#9ca3af}';
+  html += '</style></head><body>';
+  for(var i=0;i<__pptSlides.length;i++){
+    const sl = __pptSlides[i];
+    html += '<div class="slide">';
+    html += '<div class="stype">' + sl.type + '</div>';
+    html += '<div class="stitle">' + sl.title + '</div>';
+    html += '<div class="spoints">';
+    for(var j=0;j<sl.points.length;j++){
+      html += '<div>• ' + sl.points[j] + '</div>';
+    }
+    html += '</div>';
+    if(sl.notes){ html += '<div class="snotes">📝 ' + sl.notes.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/
+/g,'<br>') + '</div>'; }
+    html += '<div class="pagenum">第 ' + (i+1) + ' / ' + __pptSlides.length + ' 页</div>';
+    html += '</div>';
+  }
+  html += '</body></html>';
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function(){ try{ w.print(); }catch(e){ alert('请按 Ctrl+P 打印为PDF'); } }, 800);
 }
 
 // ========== 术语标注到页 ==========
