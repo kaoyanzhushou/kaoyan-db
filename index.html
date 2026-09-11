@@ -17043,11 +17043,29 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       </div>
 
       <div id="mechContent-knowledge" style="display:none">
-        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:40px;text-align:center">
-          <div style="font-size:48px;margin-bottom:16px">🧠</div>
-          <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:8px">通路知识库</div>
-          <div style="font-size:13px;color:#64748b;max-width:500px;margin:0 auto;line-height:1.8">运动科学核心通路结构化知识库：10+ 条核心通路（糖酵解/三羧酸/AMPK/PGC-1α/mTOR 等），含节点/酶/调节因素/运动适应变化/文献来源，作为生成准确性基准，AI 自动扩充。P2 阶段上线。</div>
+        <!-- 搜索和筛选 -->
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:16px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div style="flex:1;min-width:200px">
+              <input type="text" id="mechKnowSearch" placeholder="🔍 搜索通路名称、科目、关键节点..." style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px" oninput="renderMechKnowledge()">
+            </div>
+            <select id="mechKnowCategory" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;background:#fff" onchange="renderMechKnowledge()">
+              <option value="全部">全部分类</option>
+              <option value="能量代谢">能量代谢</option>
+              <option value="肌肉肥大">肌肉肥大</option>
+              <option value="信号转导">信号转导</option>
+              <option value="糖代谢">糖代谢</option>
+              <option value="炎症免疫">炎症免疫</option>
+              <option value="氧化应激">氧化应激</option>
+              <option value="神经内分泌">神经内分泌</option>
+              <option value="损伤修复">损伤修复</option>
+              <option value="心血管">心血管</option>
+            </select>
+            <div style="font-size:12px;color:#64748b">共 <span id="mechKnowCount" style="font-weight:700;color:#0891b2">10</span> 条经典通路</div>
+          </div>
         </div>
+        <!-- 通路卡片列表 -->
+        <div id="mechKnowledgeList"></div>
       </div>
 
     </div>
@@ -127724,6 +127742,7 @@ function switchMechanismSubTab(name){
     }
   });
   if(name === 'library'){ renderMechLibrary(); }
+  if(name === 'knowledge'){ renderMechKnowledge(); }
 }
 function navigateToMechanismSubTab(subTab){
   switchTab('mechanism');
@@ -128722,6 +128741,380 @@ async function undToPPT(){
     mechToast('生成失败：' + e.message);
   }
 }
+
+// ===== 运动科学机制库：通路知识库（P2） =====
+var MECH_PATHWAYS = [
+  {
+    id: 'ampk_pgc1a',
+    name: 'AMPK-PGC-1α 线粒体生物发生通路',
+    subject: '运动生物化学',
+    category: '能量代谢',
+    description: '运动诱导 AMPK 激活，通过 PGC-1α 调控线粒体生物发生，提高骨骼肌有氧代谢能力。',
+    keyNodes: ['AMPK', 'PGC-1α', 'NRF-1', 'TFAM'],
+    data: {
+      nodes: [
+        {id:'n1', label:'运动刺激', type:'其他', layer:0, confidence:'高', narration:'运动导致ATP消耗，AMP/ATP比值升高', abbreviation:''},
+        {id:'n2', label:'AMPK', type:'酶', layer:1, confidence:'高', narration:'AMP活化蛋白激酶，细胞能量感受器，Thr172磷酸化激活', abbreviation:'AMPK'},
+        {id:'n3', label:'PGC-1α', type:'转录因子', layer:2, confidence:'高', narration:'过氧化物酶体增殖物激活受体γ共激活因子1α，线粒体生物发生主调控因子', abbreviation:'PGC1a'},
+        {id:'n4', label:'NRF-1', type:'转录因子', layer:3, confidence:'高', narration:'核呼吸因子1，调控线粒体转录因子A表达', abbreviation:'NRF1'},
+        {id:'n5', label:'TFAM', type:'转录因子', layer:4, confidence:'高', narration:'线粒体转录因子A，进入线粒体调控mtDNA转录与复制', abbreviation:'TFAM'},
+        {id:'n6', label:'线粒体生物发生', type:'其他', layer:5, confidence:'高', narration:'线粒体数量和功能增加，提高有氧能力和抗疲劳性', abbreviation:''}
+      ],
+      edges: [
+        {from:'n1', to:'n2', relation:'激活', confidence:'高', acute:true, chronic:true},
+        {from:'n2', to:'n3', relation:'磷酸化', confidence:'高', acute:true, chronic:true},
+        {from:'n3', to:'n4', relation:'激活', confidence:'高', acute:false, chronic:true},
+        {from:'n4', to:'n5', relation:'表达上调', confidence:'高', acute:false, chronic:true},
+        {from:'n5', to:'n6', relation:'表达上调', confidence:'高', acute:false, chronic:true}
+      ],
+      title: 'AMPK-PGC-1α 线粒体生物发生通路',
+      subject: '运动生物化学',
+      overallNarration: '运动通过AMP/ATP比值升高激活AMPK，AMPK磷酸化PGC-1α，进而激活NRF-1-TFAM轴，最终诱导线粒体生物发生，提高骨骼肌有氧代谢能力。这是耐力训练适应的核心分子机制。'
+    }
+  },
+  {
+    id: 'mtor_protein',
+    name: 'mTOR 肌肉蛋白合成通路',
+    subject: '运动生物化学',
+    category: '肌肉肥大',
+    description: '抗阻训练通过机械张力和氨基酸摄入激活 mTORC1，促进肌肉蛋白合成，导致肌肉肥大。',
+    keyNodes: ['mTORC1', 'p70S6K', '4E-BP1', 'eIF4E'],
+    data: {
+      nodes: [
+        {id:'n1', label:'抗阻训练', type:'其他', layer:0, confidence:'高', narration:'机械张力激活肌纤维内信号通路', abbreviation:''},
+        {id:'n2', label:'PI3K/Akt', type:'酶', layer:1, confidence:'高', narration:'磷脂酰肌醇3激酶/蛋白激酶B，上游信号整合点', abbreviation:'Akt'},
+        {id:'n3', label:'TSC2', type:'酶', layer:2, confidence:'高', narration:'结节性硬化复合物2，mTOR的负调控因子', abbreviation:'TSC2'},
+        {id:'n4', label:'Rheb', type:'酶', layer:3, confidence:'高', narration:'Ras同源富集脑蛋白，小GTP酶，直接激活mTOR', abbreviation:'Rheb'},
+        {id:'n5', label:'mTORC1', type:'酶', layer:4, confidence:'高', narration:'雷帕霉素靶蛋白复合物1，蛋白合成主调控激酶', abbreviation:'mTORC1'},
+        {id:'n6', label:'p70S6K', type:'酶', layer:5, confidence:'高', narration:'70kDa核糖体S6蛋白激酶，促进核糖体生物发生', abbreviation:'p70S6K'},
+        {id:'n7', label:'4E-BP1', type:'其他', layer:5, confidence:'高', narration:'eIF4E结合蛋白1，磷酸化后释放eIF4E', abbreviation:'4EBP1'},
+        {id:'n8', label:'肌肉蛋白合成', type:'其他', layer:6, confidence:'高', narration:'肌纤维蛋白合成增加，导致肌肉肥大', abbreviation:''}
+      ],
+      edges: [
+        {from:'n1', to:'n2', relation:'激活', confidence:'高', acute:true, chronic:true},
+        {from:'n2', to:'n3', relation:'抑制', confidence:'高', acute:true, chronic:false},
+        {from:'n3', to:'n4', relation:'抑制', confidence:'高', acute:false, chronic:false},
+        {from:'n4', to:'n5', relation:'激活', confidence:'高', acute:true, chronic:true},
+        {from:'n5', to:'n6', relation:'磷酸化', confidence:'高', acute:true, chronic:false},
+        {from:'n5', to:'n7', relation:'磷酸化', confidence:'高', acute:true, chronic:false},
+        {from:'n6', to:'n8', relation:'激活', confidence:'高', acute:false, chronic:true},
+        {from:'n7', to:'n8', relation:'激活', confidence:'高', acute:false, chronic:true}
+      ],
+      title: 'mTOR 肌肉蛋白合成通路',
+      subject: '运动生物化学',
+      overallNarration: '抗阻训练产生的机械张力激活PI3K/Akt通路，Akt磷酸化抑制TSC2，解除对Rheb的抑制，Rheb激活mTORC1。mTORC1磷酸化p70S6K和4E-BP1，促进翻译起始和核糖体生物发生，最终增加肌肉蛋白合成，导致肌肉肥大。'
+    }
+  },
+  {
+    id: 'mapk_erk',
+    name: 'MAPK/ERK 信号通路',
+    subject: '运动生物化学',
+    category: '信号转导',
+    description: '运动应激通过 MAPK 三级激酶级联反应（Ras-Raf-MEK-ERK）调控细胞增殖、分化和适应。',
+    keyNodes: ['Ras', 'Raf', 'MEK', 'ERK1/2'],
+    data: {
+      nodes: [
+        {id:'n1', label:'运动应激', type:'其他', layer:0, confidence:'高', narration:'机械张力、氧化应激、生长因子等刺激', abbreviation:''},
+        {id:'n2', label:'Ras', type:'酶', layer:1, confidence:'高', narration:'小GTP酶，GDP/GTP循环开关', abbreviation:'Ras'},
+        {id:'n3', label:'Raf', type:'酶', layer:2, confidence:'高', narration:'丝氨酸/苏氨酸激酶，MAPKKK', abbreviation:'Raf'},
+        {id:'n4', label:'MEK1/2', type:'酶', layer:3, confidence:'高', narration:'MAPK激酶，双重特异性激酶', abbreviation:'MEK'},
+        {id:'n5', label:'ERK1/2', type:'酶', layer:4, confidence:'高', narration:'细胞外信号调节激酶，MAPK家族成员', abbreviation:'ERK'},
+        {id:'n6', label:'细胞增殖/分化', type:'其他', layer:5, confidence:'高', narration:'ERK入核磷酸化转录因子，调控基因表达', abbreviation:''}
+      ],
+      edges: [
+        {from:'n1', to:'n2', relation:'激活', confidence:'高', acute:true, chronic:true},
+        {from:'n2', to:'n3', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n3', to:'n4', relation:'磷酸化', confidence:'高', acute:true, chronic:false},
+        {from:'n4', to:'n5', relation:'磷酸化', confidence:'高', acute:true, chronic:false},
+        {from:'n5', to:'n6', relation:'激活', confidence:'高', acute:false, chronic:true}
+      ],
+      title: 'MAPK/ERK 信号通路',
+      subject: '运动生物化学',
+      overallNarration: '运动应激激活Ras小GTP酶，Ras招募并激活Raf（MAPKKK），Raf磷酸化MEK1/2（MAPKK），MEK双重磷酸化激活ERK1/2（MAPK）。活化的ERK入核，磷酸化Elk-1、c-Myc等转录因子，调控细胞增殖、分化和运动适应相关基因表达。'
+    }
+  },
+  {
+    id: 'calcium_camk',
+    name: '钙信号-CaMK 通路',
+    subject: '运动生理学',
+    category: '信号转导',
+    description: '运动时肌浆网释放 Ca²⁺，激活钙调蛋白依赖性激酶（CaMK），调控线粒体生物发生和葡萄糖摄取。',
+    keyNodes: ['Ca²⁺', 'CaM', 'CaMKII', 'CaMKIV'],
+    data: {
+      nodes: [
+        {id:'n1', label:'肌肉收缩', type:'其他', layer:0, confidence:'高', narration:'动作电位触发肌浆网Ca²⁺释放', abbreviation:''},
+        {id:'n2', label:'Ca²⁺', type:'底物', layer:1, confidence:'高', narration:'胞内钙离子浓度升高，第二信使', abbreviation:'Ca2+'},
+        {id:'n3', label:'钙调蛋白 CaM', type:'酶', layer:2, confidence:'高', narration:'钙结合蛋白，Ca²⁺结合后构象改变激活下游激酶', abbreviation:'CaM'},
+        {id:'n4', label:'CaMKII', type:'酶', layer:3, confidence:'高', narration:'钙调蛋白依赖性激酶II，骨骼肌中高表达，调控GLUT4转位', abbreviation:'CaMKII'},
+        {id:'n5', label:'CaMKIV', type:'酶', layer:3, confidence:'高', narration:'钙调蛋白依赖性激酶IV，主要在细胞核内，磷酸化PGC-1α', abbreviation:'CaMKIV'},
+        {id:'n6', label:'PGC-1α', type:'转录因子', layer:4, confidence:'高', narration:'被CaMKIV磷酸化激活，调控线粒体生物发生', abbreviation:'PGC1a'},
+        {id:'n7', label:'GLUT4转位', type:'其他', layer:4, confidence:'高', narration:'CaMKII促进GLUT4从胞内囊泡转位到细胞膜，增加葡萄糖摄取', abbreviation:'GLUT4'}
+      ],
+      edges: [
+        {from:'n1', to:'n2', relation:'底物转化', confidence:'高', acute:true, chronic:false},
+        {from:'n2', to:'n3', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n3', to:'n4', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n3', to:'n5', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n4', to:'n7', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n5', to:'n6', relation:'磷酸化', confidence:'高', acute:true, chronic:true}
+      ],
+      title: '钙信号-CaMK 通路',
+      subject: '运动生理学',
+      overallNarration: '运动时肌肉收缩触发肌浆网释放Ca²⁺，胞内Ca²⁺浓度升高并结合钙调蛋白（CaM）。Ca²⁺/CaM复合物激活CaMKII和CaMKIV：CaMKII促进GLUT4转位增加葡萄糖摄取；CaMKIV入核磷酸化激活PGC-1α，诱导线粒体生物发生。钙信号是运动急性反应和慢性适应的关键交汇点。'
+    }
+  },
+  {
+    id: 'insulin_glut4',
+    name: '胰岛素-GLUT4 葡萄糖摄取通路',
+    subject: '运动生理学',
+    category: '糖代谢',
+    description: '胰岛素通过 PI3K/Akt 通路促进 GLUT4 转位，增加骨骼肌葡萄糖摄取；运动通过非胰岛素依赖途径增强此效应。',
+    keyNodes: ['胰岛素', 'IR', 'PI3K', 'Akt', 'GLUT4'],
+    data: {
+      nodes: [
+        {id:'n1', label:'胰岛素', type:'激素', layer:0, confidence:'高', narration:'胰腺β细胞分泌的降糖激素', abbreviation:'Ins'},
+        {id:'n2', label:'胰岛素受体 IR', type:'受体', layer:1, confidence:'高', narration:'受体酪氨酸激酶，胰岛素结合后自磷酸化', abbreviation:'IR'},
+        {id:'n3', label:'IRS-1', type:'酶', layer:2, confidence:'高', narration:'胰岛素受体底物1，衔接蛋白', abbreviation:'IRS1'},
+        {id:'n4', label:'PI3K', type:'酶', layer:3, confidence:'高', narration:'磷脂酰肌醇3激酶，生成PIP3', abbreviation:'PI3K'},
+        {id:'n5', label:'Akt/PKB', type:'酶', layer:4, confidence:'高', narration:'蛋白激酶B，PIP3依赖激活', abbreviation:'Akt'},
+        {id:'n6', label:'AS160', type:'酶', layer:5, confidence:'高', narration:'Akt底物160kDa，GTP酶激活蛋白，负调控GLUT4转位', abbreviation:'AS160'},
+        {id:'n7', label:'GLUT4转位', type:'其他', layer:6, confidence:'高', narration:'GLUT4从胞内储存囊泡转位到细胞膜，增加葡萄糖摄取', abbreviation:'GLUT4'}
+      ],
+      edges: [
+        {from:'n1', to:'n2', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n2', to:'n3', relation:'磷酸化', confidence:'高', acute:true, chronic:false},
+        {from:'n3', to:'n4', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n4', to:'n5', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n5', to:'n6', relation:'磷酸化', confidence:'高', acute:true, chronic:false},
+        {from:'n6', to:'n7', relation:'抑制', confidence:'高', acute:true, chronic:false}
+      ],
+      title: '胰岛素-GLUT4 葡萄糖摄取通路',
+      subject: '运动生理学',
+      overallNarration: '胰岛素结合骨骼肌细胞膜上的胰岛素受体（IR），受体自磷酸化并磷酸化IRS-1。IRS-1招募并激活PI3K，PI3K生成PIP3激活Akt。Akt磷酸化抑制AS160（Rab GAP），解除对Rab蛋白的抑制，促进GLUT4储存囊泡转位到细胞膜，增加葡萄糖摄取。运动通过AMPK和CaMKII等非胰岛素依赖途径增强GLUT4转位，运动后胰岛素敏感性显著提高。'
+    }
+  },
+  {
+    id: 'nfkb_inflammation',
+    name: '炎症因子-NFκB 通路',
+    subject: '运动医学',
+    category: '炎症免疫',
+    description: '大强度运动诱导氧化应激和炎症因子激活 NFκB，调控炎症反应；规律运动通过抗炎适应抑制过度激活。',
+    keyNodes: ['TNF-α', 'IKK', 'IκBα', 'NFκB'],
+    data: {
+      nodes: [
+        {id:'n1', label:'大强度运动', type:'其他', layer:0, confidence:'高', narration:'运动诱导ROS和损伤相关分子模式', abbreviation:''},
+        {id:'n2', label:'TNF-α/IL-1β', type:'激素', layer:1, confidence:'高', narration:'促炎细胞因子，激活炎症信号级联', abbreviation:'TNFa'},
+        {id:'n3', label:'TNFR/IL-1R', type:'受体', layer:2, confidence:'高', narration:'细胞因子受体，招募衔接蛋白', abbreviation:'TNFR'},
+        {id:'n4', label:'IKK复合物', type:'酶', layer:3, confidence:'高', narration:'IκB激酶复合物，磷酸化IκB', abbreviation:'IKK'},
+        {id:'n5', label:'IκBα', type:'其他', layer:4, confidence:'高', narration:'NFκB抑制蛋白，结合NFκB使其滞留胞质', abbreviation:'IkBa'},
+        {id:'n6', label:'NFκB', type:'转录因子', layer:5, confidence:'高', narration:'核因子κB，入核调控促炎基因表达', abbreviation:'NFkB'},
+        {id:'n7', label:'炎症反应', type:'其他', layer:6, confidence:'高', narration:'促炎细胞因子、趋化因子、黏附分子表达增加', abbreviation:''}
+      ],
+      edges: [
+        {from:'n1', to:'n2', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n2', to:'n3', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n3', to:'n4', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n4', to:'n5', relation:'磷酸化', confidence:'高', acute:true, chronic:false},
+        {from:'n5', to:'n6', relation:'抑制', confidence:'高', acute:false, chronic:false},
+        {from:'n6', to:'n7', relation:'激活', confidence:'高', acute:false, chronic:true}
+      ],
+      title: '炎症因子-NFκB 通路',
+      subject: '运动医学',
+      overallNarration: '大强度运动诱导氧化应激和促炎细胞因子（TNF-α、IL-1β）释放，细胞因子结合受体激活IKK复合物。IKK磷酸化IκBα，导致IκBα泛素化降解，释放NFκB。NFκB转位入核，调控促炎细胞因子、趋化因子和黏附分子基因表达，介导炎症反应。规律运动通过增加抗氧化酶和抗炎细胞因子（IL-10），抑制NFκB过度激活，产生抗炎适应。'
+    }
+  },
+  {
+    id: 'nrf2_antioxidant',
+    name: '氧化应激-Nrf2 抗氧化通路',
+    subject: '运动医学',
+    category: '氧化应激',
+    description: '运动诱导 ROS 生成，激活 Nrf2/ARE 通路，上调抗氧化酶表达，提高机体抗氧化防御能力。',
+    keyNodes: ['ROS', 'Keap1', 'Nrf2', 'ARE', 'SOD'],
+    data: {
+      nodes: [
+        {id:'n1', label:'运动诱导ROS', type:'底物', layer:0, confidence:'高', narration:'线粒体电子传递链和NADPH氧化酶产生活性氧', abbreviation:'ROS'},
+        {id:'n2', label:'Keap1', type:'酶', layer:1, confidence:'高', narration:'Kelch样ECH相关蛋白1，Nrf2的负调控因子，介导泛素化降解', abbreviation:'Keap1'},
+        {id:'n3', label:'Nrf2', type:'转录因子', layer:2, confidence:'高', narration:'核因子E2相关因子2，抗氧化反应主调控因子', abbreviation:'Nrf2'},
+        {id:'n4', label:'ARE', type:'其他', layer:3, confidence:'高', narration:'抗氧化反应元件，Nrf2结合的DNA序列', abbreviation:'ARE'},
+        {id:'n5', label:'抗氧化酶表达', type:'其他', layer:4, confidence:'高', narration:'SOD、CAT、GPx、HO-1等抗氧化酶和II相解毒酶表达上调', abbreviation:''},
+        {id:'n6', label:'抗氧化防御增强', type:'其他', layer:5, confidence:'高', narration:'机体清除ROS能力提高，减轻氧化损伤', abbreviation:''}
+      ],
+      edges: [
+        {from:'n1', to:'n2', relation:'抑制', confidence:'高', acute:true, chronic:false},
+        {from:'n2', to:'n3', relation:'抑制', confidence:'高', acute:false, chronic:false},
+        {from:'n3', to:'n4', relation:'激活', confidence:'高', acute:false, chronic:true},
+        {from:'n4', to:'n5', relation:'表达上调', confidence:'高', acute:false, chronic:true},
+        {from:'n5', to:'n6', relation:'激活', confidence:'高', acute:false, chronic:true}
+      ],
+      title: '氧化应激-Nrf2 抗氧化通路',
+      subject: '运动医学',
+      overallNarration: '运动时线粒体和NADPH氧化酶产生大量ROS。ROS修饰Keap1的半胱氨酸残基，使Keap1构象改变，失去对Nrf2的泛素化降解能力。Nrf2稳定后转位入核，与小Maf蛋白形成异二聚体，结合抗氧化反应元件（ARE），上调SOD、CAT、GPx、HO-1等抗氧化酶和II相解毒酶表达，提高机体抗氧化防御能力。规律运动通过Nrf2通路产生抗氧化适应，是运动预防慢性病的重要机制。'
+    }
+  },
+  {
+    id: 'sympathetic_adrenergic',
+    name: '交感神经-肾上腺素通路',
+    subject: '运动生理学',
+    category: '神经内分泌',
+    description: '运动时交感神经系统激活，释放儿茶酚胺（肾上腺素/去甲肾上腺素），调节心血管、代谢和呼吸系统。',
+    keyNodes: ['交感神经', '肾上腺素', 'β受体', 'cAMP', 'PKA'],
+    data: {
+      nodes: [
+        {id:'n1', label:'运动中枢激活', type:'其他', layer:0, confidence:'高', narration:'运动皮层和下丘脑调控交感神经输出', abbreviation:''},
+        {id:'n2', label:'交感神经节', type:'其他', layer:1, confidence:'高', narration:'交感神经节前纤维激活，释放乙酰胆碱', abbreviation:''},
+        {id:'n3', label:'肾上腺髓质', type:'其他', layer:2, confidence:'高', narration:'嗜铬细胞释放肾上腺素（80%）和去甲肾上腺素（20%）', abbreviation:''},
+        {id:'n4', label:'肾上腺素/NE', type:'激素', layer:3, confidence:'高', narration:'儿茶酚胺类激素，通过血液作用于全身靶器官', abbreviation:'Epi/NE'},
+        {id:'n5', label:'β-肾上腺素受体', type:'受体', layer:4, confidence:'高', narration:'G蛋白偶联受体，β1（心脏）、β2（平滑肌/骨骼肌）', abbreviation:'βAR'},
+        {id:'n6', label:'cAMP', type:'底物', layer:5, confidence:'高', narration:'环磷酸腺苷，第二信使', abbreviation:'cAMP'},
+        {id:'n7', label:'PKA', type:'酶', layer:6, confidence:'高', narration:'蛋白激酶A，cAMP依赖性激酶，磷酸化下游靶蛋白', abbreviation:'PKA'},
+        {id:'n8', label:'生理效应', type:'其他', layer:7, confidence:'高', narration:'心率↑、心肌收缩力↑、支气管扩张、糖原分解↑、脂肪分解↑、骨骼肌血管扩张', abbreviation:''}
+      ],
+      edges: [
+        {from:'n1', to:'n2', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n2', to:'n3', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n3', to:'n4', relation:'底物转化', confidence:'高', acute:true, chronic:false},
+        {from:'n4', to:'n5', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n5', to:'n6', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n6', to:'n7', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n7', to:'n8', relation:'激活', confidence:'高', acute:true, chronic:false}
+      ],
+      title: '交感神经-肾上腺素通路',
+      subject: '运动生理学',
+      overallNarration: '运动时，运动皮层和下丘脑激活交感神经系统，交感神经节前纤维释放乙酰胆碱激活肾上腺髓质嗜铬细胞，释放肾上腺素和去甲肾上腺素。儿茶酚胺通过血液作用于全身β-肾上腺素受体（G蛋白偶联受体），激活腺苷酸环化酶生成cAMP，cAMP激活PKA。PKA磷酸化多种靶蛋白，产生广泛生理效应：心率加快、心肌收缩力增强、支气管扩张、肝糖原和肌糖原分解加速、脂肪分解增强、骨骼肌血管扩张。这是运动时"战斗或逃跑"反应的核心神经内分泌机制。'
+    }
+  },
+  {
+    id: 'muscle_repair_mmp',
+    name: '骨骼肌损伤修复-MMP 通路',
+    subject: '运动医学',
+    category: '损伤修复',
+    description: '运动性肌肉损伤后，基质金属蛋白酶（MMP）降解细胞外基质，卫星细胞激活增殖，完成肌肉修复和重塑。',
+    keyNodes: ['MMP-2', 'MMP-9', 'TIMP', '卫星细胞', '肌管融合'],
+    data: {
+      nodes: [
+        {id:'n1', label:'运动性肌损伤', type:'其他', layer:0, confidence:'高', narration:'离心收缩导致肌纤维微损伤和基底膜破坏', abbreviation:''},
+        {id:'n2', label:'炎症细胞浸润', type:'其他', layer:1, confidence:'高', narration:'中性粒细胞和巨噬细胞浸润损伤部位，清除坏死组织', abbreviation:''},
+        {id:'n3', label:'MMP-2/9', type:'酶', layer:2, confidence:'高', narration:'基质金属蛋白酶2和9，明胶酶，降解IV型胶原和明胶', abbreviation:'MMP'},
+        {id:'n4', label:'TIMP', type:'酶', layer:3, confidence:'高', narration:'金属蛋白酶组织抑制剂，负调控MMP活性', abbreviation:'TIMP'},
+        {id:'n5', label:'ECM重塑', type:'其他', layer:4, confidence:'高', narration:'细胞外基质降解和重建，为卫星细胞迁移和增殖创造空间', abbreviation:'ECM'},
+        {id:'n6', label:'卫星细胞激活', type:'其他', layer:5, confidence:'高', narration:'肌卫星细胞（MuSC）从静息态激活，增殖分化为成肌细胞', abbreviation:'MuSC'},
+        {id:'n7', label:'肌管融合/再生', type:'其他', layer:6, confidence:'高', narration:'成肌细胞融合形成新的肌管，修复受损肌纤维，肌肉功能恢复', abbreviation:''}
+      ],
+      edges: [
+        {from:'n1', to:'n2', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n2', to:'n3', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n3', to:'n5', relation:'底物转化', confidence:'高', acute:false, chronic:true},
+        {from:'n4', to:'n3', relation:'抑制', confidence:'高', acute:false, chronic:false},
+        {from:'n5', to:'n6', relation:'激活', confidence:'高', acute:false, chronic:true},
+        {from:'n6', to:'n7', relation:'激活', confidence:'高', acute:false, chronic:true}
+      ],
+      title: '骨骼肌损伤修复-MMP 通路',
+      subject: '运动医学',
+      overallNarration: '离心运动导致肌纤维微损伤和基底膜破坏，触发炎症反应，中性粒细胞和巨噬细胞浸润损伤部位。巨噬细胞分泌MMP-2和MMP-9（明胶酶），降解IV型胶原和明胶，促进细胞外基质（ECM）重塑。TIMP作为内源性抑制剂调控MMP活性，防止过度降解。ECM重塑为卫星细胞迁移和增殖创造空间，生长因子（HGF、IGF-1）激活静息态卫星细胞。卫星细胞增殖分化为成肌细胞，融合形成新的肌管，修复受损肌纤维，完成肌肉再生和功能恢复。MMP/TIMP平衡是肌肉修复正常进行的关键。'
+    }
+  },
+  {
+    id: 'raas_bp',
+    name: '肾素-血管紧张素-醛固酮通路',
+    subject: '运动医学',
+    category: '心血管',
+    description: '运动时肾血流减少激活 RAAS 系统，通过血管紧张素 II 和醛固酮调节血压、水盐平衡和心血管功能。',
+    keyNodes: ['肾素', 'Ang I', 'ACE', 'Ang II', '醛固酮'],
+    data: {
+      nodes: [
+        {id:'n1', label:'运动/肾血流减少', type:'其他', layer:0, confidence:'高', narration:'运动时血液重新分配，肾血流量减少，肾灌注压下降', abbreviation:''},
+        {id:'n2', label:'肾素', type:'酶', layer:1, confidence:'高', narration:'球旁细胞分泌的蛋白水解酶，切割血管紧张素原', abbreviation:'Renin'},
+        {id:'n3', label:'血管紧张素I', type:'底物', layer:2, confidence:'高', narration:'Ang I，十肽，无明显生物活性', abbreviation:'AngI'},
+        {id:'n4', label:'ACE', type:'酶', layer:3, confidence:'高', narration:'血管紧张素转换酶，主要在肺血管内皮，切割Ang I生成Ang II', abbreviation:'ACE'},
+        {id:'n5', label:'血管紧张素II', type:'激素', layer:4, confidence:'高', narration:'Ang II，八肽，强效血管收缩剂，RAAS核心效应分子', abbreviation:'AngII'},
+        {id:'n6', label:'AT1受体', type:'受体', layer:5, confidence:'高', narration:'Ang II 1型受体，G蛋白偶联受体，介导主要生理效应', abbreviation:'AT1R'},
+        {id:'n7', label:'醛固酮', type:'激素', layer:6, confidence:'高', narration:'肾上腺皮质球状带分泌的盐皮质激素，促进钠水重吸收', abbreviation:'Aldo'},
+        {id:'n8', label:'血压↑/水钠潴留', type:'其他', layer:7, confidence:'高', narration:'血管收缩+钠水重吸收增加，血压升高，维持运动时灌注', abbreviation:''}
+      ],
+      edges: [
+        {from:'n1', to:'n2', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n2', to:'n3', relation:'底物转化', confidence:'高', acute:true, chronic:false},
+        {from:'n3', to:'n4', relation:'底物转化', confidence:'高', acute:true, chronic:false},
+        {from:'n4', to:'n5', relation:'底物转化', confidence:'高', acute:true, chronic:false},
+        {from:'n5', to:'n6', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n5', to:'n7', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n6', to:'n8', relation:'激活', confidence:'高', acute:true, chronic:false},
+        {from:'n7', to:'n8', relation:'激活', confidence:'高', acute:false, chronic:true}
+      ],
+      title: '肾素-血管紧张素-醛固酮通路',
+      subject: '运动医学',
+      overallNarration: '运动时血液重新分配导致肾血流量减少和肾灌注压下降，刺激球旁细胞分泌肾素。肾素切割肝脏来源的血管紧张素原生成血管紧张素I（Ang I）。Ang I在肺血管内皮的血管紧张素转换酶（ACE）作用下生成血管紧张素II（Ang II）。Ang II通过AT1受体产生强效血管收缩，并刺激肾上腺皮质球状带分泌醛固酮。醛固酮促进远曲小管和集合管对钠和水的重吸收。血管收缩+钠水潴留共同升高血压，维持运动时重要器官灌注。长期规律运动可降低静息RAAS活性，有助于降压和心血管保护。'
+    }
+  }
+];
+
+// 渲染通路知识库
+function renderMechKnowledge(){
+  var listEl = document.getElementById('mechKnowledgeList');
+  var search = (document.getElementById('mechKnowSearch') || {value:''}).value.toLowerCase();
+  var category = (document.getElementById('mechKnowCategory') || {value:'全部'}).value;
+  var list = MECH_PATHWAYS.filter(function(p){
+    var matchSearch = !search || (p.name + p.subject + p.description + p.keyNodes.join(' ')).toLowerCase().indexOf(search) !== -1;
+    var matchCategory = category === '全部' || p.category === category;
+    return matchSearch && matchCategory;
+  });
+  if(list.length === 0){
+    listEl.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px">📭 未找到匹配的通路</div>';
+    return;
+  }
+  var catColors = {'能量代谢':'#0891b2','肌肉肥大':'#7c3aed','信号转导':'#db2777','糖代谢':'#059669','炎症免疫':'#dc2626','氧化应激':'#ea580c','神经内分泌':'#0284c7','损伤修复':'#65a30d','心血管':'#b91c1c'};
+  var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">';
+  list.forEach(function(p){
+    var nodeCount = (p.data && p.data.nodes) ? p.data.nodes.length : 0;
+    var edgeCount = (p.data && p.data.edges) ? p.data.edges.length : 0;
+    var catColor = catColors[p.category] || '#64748b';
+    html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;transition:box-shadow 0.2s;border-top:3px solid ' + catColor + '" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(0,0,0,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#0f172a;line-height:1.4">' + p.name + '</div>';
+    html += '<span style="background:' + catColor + '15;color:' + catColor + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap;margin-left:8px">' + p.category + '</span>';
+    html += '</div>';
+    html += '<div style="font-size:11px;color:#64748b;margin-bottom:8px">' + p.subject + ' · ' + nodeCount + '节点/' + edgeCount + '关系</div>';
+    html += '<div style="font-size:12px;color:#475569;line-height:1.6;margin-bottom:10px;min-height:40px">' + p.description + '</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
+    p.keyNodes.forEach(function(n){
+      html += '<span style="background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-size:10px">' + n + '</span>';
+    });
+    html += '</div>';
+    html += '<div style="display:flex;gap:6px">';
+    html += '<button onclick="loadMechPathway(\'' + p.id + '\')" style="flex:1;background:#0891b2;color:#fff;border:none;padding:8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📥 加载编辑</button>';
+    html += '<button onclick="previewMechPathway(\'' + p.id + '\')" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:12px">预览</button>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+  listEl.innerHTML = html;
+}
+
+// 加载通路到机制图生成面板
+function loadMechPathway(id){
+  var p = MECH_PATHWAYS.find(function(x){ return x.id === id; });
+  if(!p){ mechToast('未找到通路'); return; }
+  mechCurrentData = JSON.parse(JSON.stringify(p.data));
+  document.getElementById('mechDesc').value = p.name;
+  switchMechanismSubTab('gen');
+  renderMechSVG(p.data);
+  renderMechLegend();
+  renderMechNodeList(p.data);
+  document.getElementById('mechResult').style.display = 'block';
+  document.getElementById('mechStatus').style.display = 'none';
+  mechToast('已加载：' + p.name + '，可在机制图生成面板编辑');
+}
+
+// 预览通路（在新窗口显示 SVG）
+function previewMechPathway(id){
+  var p = MECH_PATHWAYS.find(function(x){ return x.id === id; });
+  if(!p){ return; }
+  mechCurrentData = JSON.parse(JSON.stringify(p.data));
+  renderMechSVG(p.data);
+  var svg = document.getElementById('mechSvgContainer')._svgContent || '';
+  var win = window.open('', '_blank');
+  win.document.write('<html><head><meta charset="UTF-8"><title>' + p.name + '</title><style>body{font-family:sans-serif;max-width:1000px;margin:30px auto;padding:20px}h2{color:#0891b2}p{color:#475569;line-height:1.8}.svg-box{background:#f8fafc;padding:20px;border-radius:10px;overflow:auto}</style></head><body><h2>' + p.name + '</h2><p><b>科目：</b>' + p.subject + ' | <b>分类：</b>' + p.category + '</p><p>' + p.description + '</p><div class="svg-box">' + svg + '</div><h3 style="color:#0f172a;margin-top:24px">整体机制讲解</h3><p style="color:#475569;line-height:1.8">' + (p.data.overallNarration || '') + '</p></body></html>');
+}
+
 
 
 </script>
