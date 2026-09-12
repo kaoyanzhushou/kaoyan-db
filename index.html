@@ -140782,12 +140782,14 @@ async function analyzeNihTrends() {
     var analysisResult = await callDeepSeekAPI(systemPrompt, projectsSummary, 3000, 'deepseek-chat');
     
     if (analysisResult && analysisResult.trim()) {
-      analysis.innerHTML = `
-        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">
-          <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📊 AI基金趋势分析报告</div>
-          <div style="font-size:13px;color:#374151;line-height:1.8;white-space:pre-wrap">${analysisResult.trim()}</div>
-        </div>
-      `;
+      // 生成统计卡片
+      var nihStatCards = renderStatCards([
+        {value: window._nihResults ? window._nihResults.length : 0, label: '分析项目数'},
+        {value: window._nihResults ? window._nihResults.reduce(function(s, p) { return s + (p.total_cost || 0); }, 0).toLocaleString() : 0, label: '总经费(美元)'},
+        {value: window._nihResults ? new Set(window._nihResults.map(function(p) { return p.organization ? p.organization.org_name : ''; })).size : 0, label: '涉及机构数'}
+      ]);
+      
+      analysis.innerHTML = renderAIReport('📊 AI基金趋势分析报告', analysisResult.trim(), nihStatCards);
     } else {
       analysis.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;color:#991b1b"><b>❌ 分析失败</b>，模型未返回内容，请重试</div>';
     }
@@ -141180,12 +141182,15 @@ ${journalsText}
       status.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:15px;color:#166534"><b>✅ 期刊推荐完成！</b> AI基于' + sortedJournals.length + '个相关期刊给出推荐</div>';
       
       results.style.display = 'block';
-      results.innerHTML = `
-        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">
-          <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">🎯 AI期刊推荐报告</div>
-          <div style="font-size:13px;color:#374151;line-height:1.8;white-space:pre-wrap">${recommendation.trim()}</div>
-        </div>
-        
+      
+      // 生成统计卡片
+      var journalStatCards = renderStatCards([
+        {value: sortedJournals.length, label: '分析期刊数'},
+        {value: sortedJournals.reduce(function(s, j) { return s + j[1].count; }, 0), label: '相关文献数'},
+        {value: sortedJournals.reduce(function(s, j) { return s + j[1].totalCitations; }, 0), label: '总引用次数'}
+      ]);
+      
+      var journalExtraHTML = journalStatCards + `
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:20px">
           <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📊 相关领域期刊统计（CrossRef API数据）</div>
           <div style="font-size:12px;color:#374151;line-height:1.8">
@@ -141195,6 +141200,8 @@ ${journalsText}
           </div>
         </div>
       `;
+      
+      results.innerHTML = renderAIReport('🎯 AI期刊推荐报告', recommendation.trim(), journalExtraHTML);
     } else {
       status.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;color:#991b1b"><b>❌ 推荐失败</b>，模型未返回内容，请重试</div>';
     }
@@ -141439,6 +141446,14 @@ ${articlesSummary}
       
       results.style.display = 'block';
       
+      // 生成统计卡片
+      var statCards = renderStatCards([
+        {value: articles.length, label: '分析文献数'},
+        {value: totalCitations, label: '总引用次数'},
+        {value: sortedJournals.length, label: '涉及期刊数'},
+        {value: sortedAuthors.length, label: '核心作者数'}
+      ]);
+      
       // 生成年份分布的简单可视化（用HTML条形图）
       var maxYearCount = Math.max.apply(null, sortedYears.map(function(y) { return y[1]; }));
       var yearChartHTML = sortedYears.map(function(y) {
@@ -141446,12 +141461,8 @@ ${articlesSummary}
         return '<div style="display:flex;align-items:center;margin-bottom:5px;font-size:12px"><div style="width:50px;color:#6b7280">' + y[0] + '年</div><div style="flex:1;background:#e5e7eb;border-radius:4px;height:20px;position:relative"><div style="width:' + width + '%;background:linear-gradient(90deg,#0891b2,#06b6d4);height:100%;border-radius:4px"></div><div style="position:absolute;left:' + width + '%;margin-left:5px;top:2px;color:#374151;font-weight:600">' + y[1] + '篇</div></div></div>';
       }).join('');
       
-      results.innerHTML = `
-        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">
-          <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📊 AI文献大分析报告</div>
-          <div style="font-size:13px;color:#374151;line-height:1.8;white-space:pre-wrap">${analysisResult.trim()}</div>
-        </div>
-        
+      // 使用美化的AI报告渲染
+      var extraHTML = statCards + `
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:20px">
           <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📈 文献年份分布</div>
           ${yearChartHTML}
@@ -141486,6 +141497,8 @@ ${articlesSummary}
           </div>
         </div>
       `;
+      
+      results.innerHTML = renderAIReport('AI文献大分析报告', analysisResult.trim(), extraHTML);
     } else {
       status.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;color:#991b1b"><b>❌ 分析失败</b>，模型未返回内容，请重试</div>';
     }
@@ -142943,12 +142956,15 @@ ${papersText}
       status.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:15px;color:#166534"><b>✅ 对比分析完成！</b> 共分析' + paperInfos.length + '篇文献</div>';
       
       results.style.display = 'block';
-      results.innerHTML = `
-        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">
-          <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">⚖️ AI文献对比分析报告</div>
-          <div style="font-size:13px;color:#374151;line-height:1.8;white-space:pre-wrap">${analysis.trim()}</div>
-        </div>
-        
+      
+      // 生成统计卡片
+      var compareStatCards = renderStatCards([
+        {value: paperInfos.length, label: '对比文献数'},
+        {value: paperInfos.reduce(function(s, p) { return s + p.citations; }, 0), label: '总引用次数'},
+        {value: paperInfos.filter(function(p) { return p.year; }).length, label: '有年份文献'}
+      ]);
+      
+      var compareExtraHTML = compareStatCards + `
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:20px">
           <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📚 文献基本信息</div>
           ${paperInfos.map(function(p) {
@@ -142956,6 +142972,8 @@ ${papersText}
           }).join('')}
         </div>
       `;
+      
+      results.innerHTML = renderAIReport('⚖️ AI文献对比分析报告', analysis.trim(), compareExtraHTML);
     } else {
       status.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;color:#991b1b"><b>❌ 分析失败</b>，模型未返回内容，请重试</div>';
     }
@@ -142964,6 +142982,493 @@ ${papersText}
     console.error('对比分析失败:', err);
     status.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;color:#991b1b"><b>❌ 分析失败：</b>' + err.message + '</div>';
   }
+}
+
+
+
+// ========== 通用Markdown渲染函数和美化样式 ==========
+
+// 美化报告的CSS样式
+var reportStyles = `
+<style>
+.ai-report-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  line-height: 1.8;
+  color: #1f2937;
+}
+
+.ai-report-container h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e40af;
+  margin: 30px 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #3b82f6;
+  background: linear-gradient(90deg, #eff6ff 0%, transparent 100%);
+  padding-left: 15px;
+  border-radius: 4px;
+}
+
+.ai-report-container h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 28px 0 16px 0;
+  padding-left: 12px;
+  border-left: 5px solid #3b82f6;
+  background: #f8fafc;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  border-radius: 0 6px 6px 0;
+}
+
+.ai-report-container h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1e40af;
+  margin: 22px 0 14px 0;
+  padding-left: 10px;
+  border-left: 3px solid #60a5fa;
+}
+
+.ai-report-container h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  margin: 18px 0 12px 0;
+}
+
+.ai-report-container p {
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 1.9;
+  text-align: justify;
+}
+
+.ai-report-container strong {
+  color: #dc2626;
+  font-weight: 600;
+  background: #fef2f2;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.ai-report-container em {
+  color: #7c3aed;
+  font-style: italic;
+}
+
+.ai-report-container ul, .ai-report-container ol {
+  margin: 12px 0;
+  padding-left: 25px;
+}
+
+.ai-report-container li {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.ai-report-container ul li::marker {
+  color: #3b82f6;
+}
+
+.ai-report-container ol li::marker {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.ai-report-container blockquote {
+  margin: 16px 0;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-left: 5px solid #f59e0b;
+  border-radius: 0 8px 8px 0;
+  color: #92400e;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.ai-report-container blockquote p {
+  margin: 0;
+}
+
+.ai-report-container code {
+  background: #f1f5f9;
+  color: #dc2626;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.ai-report-container pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.ai-report-container pre code {
+  background: none;
+  color: #e2e8f0;
+  padding: 0;
+}
+
+.ai-report-container hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #cbd5e1 50%, transparent 100%);
+  margin: 25px 0;
+}
+
+.ai-report-container a {
+  color: #2563eb;
+  text-decoration: none;
+  border-bottom: 1px dashed #2563eb;
+}
+
+.ai-report-container a:hover {
+  color: #1d4ed8;
+  border-bottom-style: solid;
+}
+
+/* 表格美化 */
+.ai-report-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+  font-size: 13px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ai-report-container thead {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.ai-report-container th {
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.ai-report-container td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.ai-report-container tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.ai-report-container tbody tr:hover {
+  background: #eff6ff;
+  transition: background 0.2s;
+}
+
+.ai-report-container tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 统计卡片样式 */
+.report-stat-card {
+  background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.report-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.report-stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 4px;
+}
+
+.report-stat-card .stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* 高亮提示框 */
+.report-highlight {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-left: 5px solid #f59e0b;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  margin: 16px 0;
+  color: #92400e;
+}
+
+.report-highlight-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 成功提示框 */
+.report-success {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-left: 5px solid #22c55e;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  margin: 16px 0;
+  color: #166534;
+}
+
+/* 信息提示框 */
+.report-info {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-left: 5px solid #3b82f6;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  margin: 16px 0;
+  color: #1e40af;
+}
+
+/* 警告提示框 */
+.report-warning {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-left: 5px solid #ef4444;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  margin: 16px 0;
+  color: #991b1b;
+}
+</style>
+`;
+
+// 注入样式（只注入一次）
+var reportStylesInjected = false;
+function injectReportStyles() {
+  if (reportStylesInjected) return;
+  var styleDiv = document.createElement('div');
+  styleDiv.innerHTML = reportStyles;
+  document.head.appendChild(styleDiv.querySelector('style'));
+  reportStylesInjected = true;
+}
+
+// 简易Markdown渲染器
+function renderMarkdown(text) {
+  if (!text) return '';
+  
+  // 转义HTML特殊字符
+  text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  
+  // 代码块（```）
+  text = text.replace(/```([\s\S]*?)```/g, function(match, code) {
+    return '<pre><code>' + code.trim() + '</code></pre>';
+  });
+  
+  // 行内代码（`code`）
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  
+  // 分割线（---）
+  text = text.replace(/^---\s*$/gm, '<hr>');
+  
+  // 标题（# ## ### ####）
+  text = text.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+  text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  text = text.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  text = text.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  
+  // 粗体（**text**）
+  text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  
+  // 斜体（*text*）- 注意要在粗体之后处理，且不能匹配到**
+  text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  
+  // 引用（> quote）
+  text = text.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  // 多行引用
+  text = text.replace(/(<blockquote>[\s\S]*?<\/blockquote>)/g, function(match) {
+    return match.replace(/<\/blockquote>\s*<blockquote>/g, '<br>');
+  });
+  
+  // 链接（[text](url)）
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+  
+  // 表格（需要特殊处理）
+  text = renderMarkdownTables(text);
+  
+  // 无序列表（- item）
+  text = text.replace(/^- (.+)$/gm, '<li>$1</li>');
+  // 包裹无序列表
+  text = text.replace(/(<li>[\s\S]*?<\/li>)/g, function(match) {
+    // 检查是否已经在ul中
+    if (match.indexOf('<ul>') === -1) {
+      return '<ul>' + match + '</ul>';
+    }
+    return match;
+  });
+  // 合并相邻的ul
+  text = text.replace(/<\/ul>\s*<ul>/g, '');
+  
+  // 有序列表（1. item）
+  text = text.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  // 包裹有序列表（简单处理，连续的li用ol包裹）
+  // 注意：这里可能会和无序列表冲突，需要更精细的处理
+  // 暂时用一个简单的方法：把连续的li（前面是数字的）用ol包裹
+  
+  // 段落（空行分隔的文本）
+  // 先把连续的文本行合并成段落
+  var lines = text.split('\n');
+  var result = [];
+  var currentPara = [];
+  
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (line === '') {
+      if (currentPara.length > 0) {
+        var paraText = currentPara.join(' ');
+        // 检查是否已经是块级元素
+        if (!paraText.match(/^<(h[1-6]|ul|ol|li|blockquote|pre|table|hr|div)/)) {
+          result.push('<p>' + paraText + '</p>');
+        } else {
+          result.push(paraText);
+        }
+        currentPara = [];
+      }
+    } else {
+      currentPara.push(line);
+    }
+  }
+  if (currentPara.length > 0) {
+    var paraText = currentPara.join(' ');
+    if (!paraText.match(/^<(h[1-6]|ul|ol|li|blockquote|pre|table|hr|div)/)) {
+      result.push('<p>' + paraText + '</p>');
+    } else {
+      result.push(paraText);
+    }
+  }
+  
+  text = result.join('\n');
+  
+  // 清理多余的空标签
+  text = text.replace(/<p><\/p>/g, '');
+  text = text.replace(/<p>\s*<\/p>/g, '');
+  
+  return text;
+}
+
+// 渲染Markdown表格
+function renderMarkdownTables(text) {
+  var lines = text.split('\n');
+  var result = [];
+  var i = 0;
+  
+  while (i < lines.length) {
+    var line = lines[i];
+    
+    // 检查是否是表格开始（包含|且下一行是分隔线）
+    if (line.includes('|') && i + 1 < lines.length && lines[i + 1].match(/^\s*\|?[\s\-:|]+\|?\s*$/)) {
+      // 解析表头
+      var headers = parseTableRow(line);
+      i++; // 跳过分隔线
+      i++;
+      
+      // 解析数据行
+      var rows = [];
+      while (i < lines.length && lines[i].includes('|') && lines[i].trim() !== '') {
+        rows.push(parseTableRow(lines[i]));
+        i++;
+      }
+      
+      // 生成HTML表格
+      var tableHTML = '<div style="overflow-x:auto"><table><thead><tr>';
+      headers.forEach(function(h) {
+        tableHTML += '<th>' + h + '</th>';
+      });
+      tableHTML += '</tr></thead><tbody>';
+      rows.forEach(function(row) {
+        tableHTML += '<tr>';
+        row.forEach(function(cell) {
+          tableHTML += '<td>' + cell + '</td>';
+        });
+        tableHTML += '</tr>';
+      });
+      tableHTML += '</tbody></table></div>';
+      
+      result.push(tableHTML);
+    } else {
+      result.push(line);
+      i++;
+    }
+  }
+  
+  return result.join('\n');
+}
+
+// 解析表格行
+function parseTableRow(line) {
+  line = line.trim();
+  // 移除首尾的|
+  if (line.startsWith('|')) line = line.substring(1);
+  if (line.endsWith('|')) line = line.substring(0, line.length - 1);
+  
+  return line.split('|').map(function(cell) {
+    return cell.trim();
+  });
+}
+
+// 渲染美化的AI报告
+function renderAIReport(title, content, extraHTML) {
+  injectReportStyles();
+  
+  var renderedContent = renderMarkdown(content);
+  
+  var html = `
+    <div class="ai-report-container" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:25px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:15px;border-bottom:2px solid #e5e7eb">
+        <div style="font-size:32px">📊</div>
+        <div>
+          <div style="font-size:20px;font-weight:700;color:#1e40af">${title}</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px">AI智能分析报告 · 由多模型协同生成</div>
+        </div>
+      </div>
+      ${extraHTML || ''}
+      <div class="report-content">
+        ${renderedContent}
+      </div>
+    </div>
+  `;
+  
+  return html;
+}
+
+// 生成统计卡片HTML
+function renderStatCards(stats) {
+  var html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:15px;margin:20px 0">';
+  stats.forEach(function(stat) {
+    html += `
+      <div class="report-stat-card">
+        <div class="stat-value">${stat.value}</div>
+        <div class="stat-label">${stat.label}</div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  return html;
 }
 
 </script>
