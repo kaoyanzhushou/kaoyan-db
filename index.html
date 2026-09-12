@@ -136338,29 +136338,29 @@ function getLessonFormatReq(){
 }
 
 
-// ========== 扫描版PDF OCR识别（多模态模型） ==========
+// ========== 扫描版PDF OCR识别（多模态模型，并行优化版） ==========
 async function ocrScanPDF(pdf, pages, callback){
   const status = document.getElementById('bookStatus');
+  const CONCURRENT = 2; // 并行识别页数
+  const SCALE = 1.5; // 渲染分辨率（1.5倍，平衡速度和质量）
+  const startTime = Date.now();
+  
   if(status){
-    status.innerHTML = '🔍 <b>检测到扫描版PDF，正在启动OCR文字识别...</b>（共' + pdf.numPages + '页，每页约需5-10秒）';
+    status.innerHTML = '🔍 <b>检测到扫描版PDF，正在启动OCR文字识别...</b>（共' + pdf.numPages + '页，并行识别中，约需' + Math.ceil(pdf.numPages / CONCURRENT * 6) + '秒）';
     status.style.color = '#d97706';
   }
   
   try{
-    var allText = [];
+    var allText = new Array(pages.length);
+    var completed = 0;
+    var failed = 0;
     
-    for(var i = 0; i < pages.length; i++){
-      var page = pages[i];
-      var pageNum = i + 1;
-      
-      if(status){
-        status.innerHTML = '🔍 <b>OCR识别中...</b> 第' + pageNum + '/' + pdf.numPages + '页';
-        status.style.color = '#d97706';
-      }
-      
+    // 并行识别函数
+    async function recognizePage(page, index){
+      var pageNum = index + 1;
       try{
         // 将PDF页面渲染成图片
-        var viewport = page.getViewport({scale: 2.0}); // 2倍分辨率，提高识别准确率
+        var viewport = page.getViewport({scale: SCALE});
         var canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
@@ -136369,35 +136369,62 @@ async function ocrScanPDF(pdf, pages, callback){
         await page.render({canvasContext: ctx, viewport: viewport}).promise;
         
         // 将canvas转换为base64图片
-        var imageData = canvas.toDataURL('image/jpeg', 0.85);
+        var imageData = canvas.toDataURL('image/jpeg', 0.8);
         
-        // 调用多模态模型识别图片中的文字
+        // 调用多模态模型识别图片中的文字（使用qwen-vl-plus，更快更便宜）
         var ocrText = await recognizeImageText(imageData, pageNum);
-        
-        if(ocrText && ocrText.trim().length > 0){
-          allText.push('\n\n=== 第' + pageNum + '页 ===\n\n' + ocrText.trim());
-        }
         
         // 清理canvas
         canvas = null;
         ctx = null;
         
+        if(ocrText && ocrText.trim().length > 0){
+          allText[index] = '\n\n=== 第' + pageNum + '页 ===\n\n' + ocrText.trim();
+        }else{
+          allText[index] = '';
+          failed++;
+        }
       }catch(pageErr){
         console.error('第' + pageNum + '页OCR失败:', pageErr);
-        // 继续处理下一页
+        allText[index] = '';
+        failed++;
       }
       
-      // 每页之间稍微延迟，避免API限流
-      if(i < pages.length - 1){
-        await new Promise(r => setTimeout(r, 500));
+      completed++;
+      
+      // 更新进度
+      if(status){
+        var elapsed = (Date.now() - startTime) / 1000;
+        var avgTime = elapsed / completed;
+        var remaining = Math.ceil(avgTime * (pages.length - completed));
+        var speed = (completed / elapsed * 60).toFixed(1);
+        status.innerHTML = '🔍 <b>OCR识别中...</b> 已完成' + completed + '/' + pages.length + '页（失败' + failed + '页），速度约' + speed + '页/分钟，预计还需' + remaining + '秒';
+        status.style.color = '#d97706';
       }
     }
     
-    var finalText = allText.join('\n');
+    // 分批并行识别
+    for(var batchStart = 0; batchStart < pages.length; batchStart += CONCURRENT){
+      var batchEnd = Math.min(batchStart + CONCURRENT, pages.length);
+      var batch = [];
+      for(var i = batchStart; i < batchEnd; i++){
+        batch.push(recognizePage(pages[i], i));
+      }
+      await Promise.all(batch);
+      
+      // 批次之间短暂延迟，避免API限流
+      if(batchEnd < pages.length){
+        await new Promise(r => setTimeout(r, 200));
+      }
+    }
+    
+    // 合并结果（按页码顺序）
+    var finalText = allText.filter(function(t){ return t && t.trim().length > 0; }).join('\n');
     
     if(status){
+      var totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
       if(finalText && finalText.trim().length > 50){
-        status.innerHTML = '✅ <b>OCR识别完成！</b> 共识别' + pdf.numPages + '页，' + (finalText.length/1000).toFixed(1) + 'K字，已自动导入教材内容';
+        status.innerHTML = '✅ <b>OCR识别完成！</b> 共' + pages.length + '页，成功' + (pages.length - failed) + '页，' + (finalText.length/1000).toFixed(1) + 'K字，耗时' + totalTime + '秒，已自动导入教材内容';
         status.style.color = '#16a34a';
         // 自动将识别内容填充到教材章节内容文本框
         try{
@@ -136407,7 +136434,7 @@ async function ocrScanPDF(pdf, pages, callback){
           }
         }catch(e){}
       }else{
-        status.innerHTML = '⚠️ <b>OCR识别结果较少</b>，可能图片质量不佳或模型限制';
+        status.innerHTML = '⚠️ <b>OCR识别结果较少</b>（' + (finalText.length/1000).toFixed(1) + 'K字），可能图片质量不佳或模型限制';
         status.style.color = '#d97706';
       }
     }
@@ -136445,8 +136472,8 @@ async function recognizeImageText(imageBase64, pageNum){
       }
     ];
     
-    // 使用qwen-vl-max模型（多模态识别最强）
-    var result = await callQwenChat(messages, 'qwen-vl-max', 0.3, 2000);
+    // 使用qwen-vl-plus模型（速度更快，价格更便宜，教材文字识别足够准确）
+    var result = await callQwenChat(messages, 'qwen-vl-plus', 0.3, 2000);
     
     if(result && result.trim().length > 0){
       return result;
