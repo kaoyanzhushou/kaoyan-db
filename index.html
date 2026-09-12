@@ -136585,6 +136585,257 @@ async function recognizeImageText(imageBase64, pageNum){
 }
 
 
+
+// ============================================================
+// 🚀 教材识别速度优化：增量解析 + 缓存机制 + 预加载
+// ============================================================
+
+// 生成文件缓存key（名称+大小+修改时间）
+function getBookCacheKey(file){
+  return 'aiBookCache_' + file.name + '_' + file.size + '_' + file.lastModified;
+}
+
+// 检查教材缓存
+function checkBookCache(file){
+  try{
+    const key = getBookCacheKey(file);
+    const cache = localStorage.getItem(key);
+    if(cache){
+      const data = JSON.parse(cache);
+      if(data && data.text && data.text.length > 100){
+        return data;
+      }
+    }
+  }catch(e){ console.warn('缓存检查失败:', e); }
+  return null;
+}
+
+// 保存教材缓存
+function saveBookCache(file, text, toc, pages){
+  try{
+    const key = getBookCacheKey(file);
+    const data = {
+      text: text.slice(0, 300000), // 限制300KB
+      toc: toc || [],
+      pages: pages || [],
+      meta: {name: file.name, size: file.size, chars: text.length, time: new Date().toLocaleString()}
+    };
+    localStorage.setItem(key, JSON.stringify(data));
+    console.log('✅ 教材已缓存:', file.name, '(', (text.length/1000).toFixed(1), 'K字 )');
+  }catch(e){ console.warn('缓存保存失败:', e); }
+}
+
+// 增量解析PDF：只解析前N页（用于快速提取目录）
+function parseBookFilePartial(file, maxPages, cb){
+  const name = file.name;
+  const reader = new FileReader();
+  if(name.toLowerCase().endsWith('.pdf')){
+    const done = function(){
+      reader.onload = function(e){
+        try{
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+          pdfjsLib.getDocument({ data: e.target.result }).promise.then(function(pdf){
+            const totalPages = pdf.numPages;
+            const parsePages = Math.min(maxPages, totalPages);
+            console.log('📖 增量解析：前', parsePages, '/', totalPages, '页');
+            var pagePromises = [];
+            for(var pi = 1; pi <= parsePages; pi++){ pagePromises.push(pdf.getPage(pi)); }
+            Promise.all(pagePromises).then(function(pages){
+              Promise.all(pages.map(function(p){ return p.getTextContent(); })).then(function(contents){
+                var text = contents.map(function(c){ return c.items.map(function(it){ return it.str; }).join(' '); }).join('\n');
+                cb(text, {totalPages: totalPages, parsedPages: parsePages, pdf: pdf, isPartial: parsePages < totalPages});
+              }).catch(function(err){ cb('', {error: err.message}); });
+            }).catch(function(err){ cb('', {error: err.message}); });
+          }).catch(function(err){ cb('', {error: err.message}); });
+        }catch(err){ cb('', {error: err.message}); }
+      };
+      reader.readAsArrayBuffer(file);
+    };
+    if(window.pdfjsLib){ done(); }
+    else{ loadPdfjs(done); }
+  }else{
+    // 非PDF文件（txt/docx）直接全量解析
+    parseBookFile(file, function(text){ cb(text, {isPartial: false}); });
+  }
+}
+
+// 后台继续解析PDF剩余页面
+function continueParsePDFBackground(file, pdfInfo, startPage, cb){
+  if(!pdfInfo || !pdfInfo.pdf){ cb(''); return; }
+  const pdf = pdfInfo.pdf;
+  const totalPages = pdfInfo.totalPages;
+  if(startPage > totalPages){ cb(''); return; }
+  
+  console.log('🔄 后台继续解析：第', startPage, '-', totalPages, '页');
+  var pagePromises = [];
+  for(var pi = startPage; pi <= totalPages; pi++){ pagePromises.push(pdf.getPage(pi)); }
+  Promise.all(pagePromises).then(function(pages){
+    Promise.all(pages.map(function(p){ return p.getTextContent(); })).then(function(contents){
+      var text = contents.map(function(c){ return c.items.map(function(it){ return it.str; }).join(' '); }).join('\n');
+      cb(text);
+    }).catch(function(){ cb(''); });
+  }).catch(function(){ cb(''); });
+}
+
+// 优化版上传教材：缓存优先 + 增量解析 + 后台续析
+function uploadBookFileOptimized(){
+  const fi = document.getElementById('bookFile');
+  if(!fi.files || !fi.files[0]){ alert('请先选择书目文件'); return; }
+  const file = fi.files[0];
+  const status = document.getElementById('bookStatus');
+  
+  // 第一步：检查缓存
+  const cache = checkBookCache(file);
+  if(cache){
+    console.log('⚡ 命中教材缓存，秒级加载:', file.name);
+    status.innerHTML = '⚡ <b>缓存命中，秒级加载：</b>' + file.name + '（' + (cache.text.length/1000).toFixed(1) + 'K字），正在恢复...';
+    status.style.color = '#2563eb';
+    
+    // 从缓存恢复
+    try{ localStorage.setItem('aiBookText', cache.text); }catch(e){}
+    try{ localStorage.setItem('aiBookMeta', JSON.stringify(cache.meta)); }catch(e){}
+    try{ localStorage.setItem('aiBookTOC', JSON.stringify(cache.toc)); }catch(e){}
+    try{ localStorage.setItem('aiBookPages', JSON.stringify(cache.pages)); }catch(e){}
+    
+    setTimeout(function(){
+      renderBookChapterSelect(cache.toc);
+      const pbBtn = document.getElementById('bookPageBrowserBtn');
+      if(pbBtn && cache.pages && cache.pages.length > 0) pbBtn.style.display = 'inline-block';
+      if(cache.toc.length >= 3){
+        status.innerHTML = '✅ <b>缓存加载完成：</b>' + file.name + '（' + (cache.text.length/1000).toFixed(1) + 'K字），已解析 <b>' + cache.toc.length + '</b> 个章节';
+      }else{
+        status.innerHTML = '✅ <b>缓存加载完成：</b>' + file.name + '（目录较少，已切换关键词模式）';
+      }
+      status.style.color = '#16a34a';
+    }, 300);
+    return;
+  }
+  
+  // 第二步：增量解析（先解析前10页快速显示目录）
+  status.innerHTML = '📖 <b>快速解析中（前10页）...</b> 目录将很快显示，全文后台继续解析';
+  status.style.color = '#6b7280';
+  
+  parseBookFilePartial(file, 10, function(partialText, info){
+    if(!partialText || partialText.length < 20){
+      // 前10页文字过少，可能是扫描版，降级为全量解析
+      console.log('⚠️ 前10页文字过少，降级为全量解析');
+      status.textContent = '解析中（可能为扫描版PDF，正在OCR识别，请稍候）...';
+      parseBookFile(file, function(fullText){
+        finishBookUpload(file, fullText, status);
+      });
+      return;
+    }
+    
+    // 从前面部分提取目录
+    const partialTOC = extractBookTOC(partialText);
+    console.log('📋 增量解析完成，提取到', partialTOC.length, '个章节（前10页）');
+    
+    // 先显示目录（用户可以立即选择章节）
+    if(partialTOC.length >= 3){
+      renderBookChapterSelect(partialTOC);
+      status.innerHTML = '✅ <b>目录已显示（' + partialTOC.length + '章）</b>，可选择章节；全文后台继续解析中...';
+      status.style.color = '#16a34a';
+    }else{
+      status.innerHTML = '📖 前10页目录较少，全文解析中...';
+    }
+    
+    // 第三步：后台继续解析剩余页面
+    if(info && info.isPartial && info.pdf){
+      // 保存已解析的部分文本到临时变量
+      window._bookPartialText = partialText;
+      window._bookPartialInfo = info;
+      window._bookFile = file;
+      
+      // 延迟后后台继续解析（不阻塞UI）
+      setTimeout(function(){
+        const startPage = info.parsedPages + 1;
+        continueParsePDFBackground(file, info, startPage, function(restText){
+          if(restText && restText.length > 0){
+            const fullText = window._bookPartialText + '\n' + restText;
+            console.log('✅ 全文解析完成:', (fullText.length/1000).toFixed(1), 'K字');
+            finishBookUpload(file, fullText, status, partialTOC);
+          }else{
+            // 剩余解析失败，使用已解析的部分
+            console.log('⚠️ 剩余页面解析失败，使用前10页内容');
+            finishBookUpload(file, partialText, status, partialTOC);
+          }
+          window._bookPartialText = null;
+          window._bookPartialInfo = null;
+          window._bookFile = null;
+        });
+      }, 1000);
+    }else{
+      // 非PDF或已全量解析
+      finishBookUpload(file, partialText, status, partialTOC);
+    }
+  });
+}
+
+// 完成教材上传（保存+解析目录+渲染）
+function finishBookUpload(file, text, status, existingTOC){
+  if(!text || text.length < 50){
+    status.innerHTML = '⚠️ <b>解析失败或内容过少</b>（' + (text?text.length:0) + '字）。可能原因：PDF 为扫描版无文字层 / 文件损坏。';
+    status.style.color = '#dc2626';
+    return;
+  }
+  
+  // 保存文本
+  let store = text;
+  try{ localStorage.setItem('aiBookText', store); }
+  catch(e){ try{ localStorage.setItem('aiBookText', store.slice(0, 300000)); }catch(e2){} }
+  
+  try{
+    localStorage.setItem('aiBookMeta', JSON.stringify({name: file.name, chars: text.length, time: new Date().toLocaleString()}));
+  }catch(e){}
+  
+  // 提取目录（如果没有传入现有目录）
+  const chapters = existingTOC && existingTOC.length >= 3 ? existingTOC : extractBookTOC(text);
+  
+  // 保存目录
+  try{ localStorage.setItem('aiBookTOC', JSON.stringify(chapters)); }catch(e){}
+  
+  // 分页处理
+  let pages = [];
+  try{
+    pages = paginateBookText(store, 600);
+    localStorage.setItem('aiBookPages', JSON.stringify(pages));
+    const pbBtn = document.getElementById('bookPageBrowserBtn');
+    if(pbBtn) pbBtn.style.display = 'inline-block';
+  }catch(e){}
+  
+  // 保存缓存
+  saveBookCache(file, text, chapters, pages);
+  
+  // 渲染章节下拉框
+  renderBookChapterSelect(chapters);
+  
+  // 更新状态
+  if(chapters.length >= 3){
+    status.innerHTML = '✅ <b>书目已上传：</b>' + file.name + '（' + (text.length/1000).toFixed(1) + 'K字），已解析 <b>' + chapters.length + '</b> 个章节，请在下拉框选择';
+  }else{
+    status.innerHTML = '✅ <b>书目已上传：</b>' + file.name + '（目录解析较少，已切换关键词模式）';
+  }
+  status.style.color = '#16a34a';
+}
+
+// 优化版自动上传：选择文件后立即开始解析（预加载）
+function autoUploadBookOptimized(){
+  const fi = document.getElementById('bookFile');
+  if(fi && fi.files && fi.files[0]){
+    console.log('⚡ 预加载：选择文件后立即开始解析');
+    uploadBookFileOptimized();
+  }
+}
+
+// 重写原始函数（保持函数名不变，不影响其他调用）
+window._originalUploadBookFile = uploadBookFile;
+window._originalAutoUploadBook = autoUploadBook;
+uploadBookFile = uploadBookFileOptimized;
+autoUploadBook = autoUploadBookOptimized;
+
+console.log('🚀 教材识别速度优化已加载：增量解析 + 缓存机制 + 预加载');
+// ============================================================
+
 // ========== 教案助手增强：书目上传解析 ==========
 function parseBookFile(file, cb){
   const name = file.name;
