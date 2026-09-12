@@ -15502,12 +15502,36 @@ console.log('✅ 学习工具入口已加载');
           <div style="margin-top:8px;display:inline-block;padding:3px 8px;background:#dcfce7;color:#166534;border-radius:4px;font-size:11px;font-weight:600">P1 已实现</div>
         </div>
 
+        <!-- 功能：智能选刊（已实现） -->
+        <div onclick="showToolboxFunction('journal')" style="background:#fff;border:2px solid #e5e7eb;border-radius:12px;padding:18px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='#7c3aed';this.style.boxShadow='0 4px 12px rgba(124,58,237,0.15)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div style="font-size:28px;margin-bottom:8px">🎯</div>
+          <div style="font-weight:700;color:#1f2937;font-size:15px;margin-bottom:4px">智能选刊</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.5">AI分析论文方向，CrossRef期刊数据，推荐最合适期刊</div>
+          <div style="margin-top:8px;display:inline-block;padding:3px 8px;background:#dcfce7;color:#166534;border-radius:4px;font-size:11px;font-weight:600">P2 已实现</div>
+        </div>
+
+        <!-- 功能：文献大分析（已实现） -->
+        <div onclick="showToolboxFunction('analysis')" style="background:#fff;border:2px solid #e5e7eb;border-radius:12px;padding:18px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='#0891b2';this.style.boxShadow='0 4px 12px rgba(8,145,178,0.15)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div style="font-size:28px;margin-bottom:8px">📊</div>
+          <div style="font-weight:700;color:#1f2937;font-size:15px;margin-bottom:4px">文献大分析</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.5">批量分析文献，AI研究趋势报告，热点/空白/核心作者</div>
+          <div style="margin-top:8px;display:inline-block;padding:3px 8px;background:#dcfce7;color:#166534;border-radius:4px;font-size:11px;font-weight:600">P2 已实现</div>
+        </div>
+
+        <!-- 功能：文献引用网络（已实现） -->
+        <div onclick="showToolboxFunction('network')" style="background:#fff;border:2px solid #e5e7eb;border-radius:12px;padding:18px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='#dc2626';this.style.boxShadow='0 4px 12px rgba(220,38,38,0.15)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div style="font-size:28px;margin-bottom:8px">🕸️</div>
+          <div style="font-weight:700;color:#1f2937;font-size:15px;margin-bottom:4px">文献引用网络</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.5">SVG力导向图可视化文献关联，支持交互拖拽缩放</div>
+          <div style="margin-top:8px;display:inline-block;padding:3px 8px;background:#dcfce7;color:#166534;border-radius:4px;font-size:11px;font-weight:600">P2 已实现</div>
+        </div>
+
         <!-- 功能：更多功能（待实现） -->
         <div style="background:#f9fafb;border:2px dashed #e5e7eb;border-radius:12px;padding:18px;opacity:0.7">
           <div style="font-size:28px;margin-bottom:8px">➕</div>
           <div style="font-weight:700;color:#1f2937;font-size:15px;margin-bottom:4px">更多功能</div>
-          <div style="font-size:12px;color:#6b7280;line-height:1.5">智能选刊、文献大分析、引用网络、听文献等8项</div>
-          <div style="margin-top:8px;display:inline-block;padding:3px 8px;background:#fef3c7;color:#92400e;border-radius:4px;font-size:11px;font-weight:600">P2-P3 待实现</div>
+          <div style="font-size:12px;color:#6b7280;line-height:1.5">文献订阅推送、预印追踪、听文献等5项功能</div>
+          <div style="margin-top:8px;display:inline-block;padding:3px 8px;background:#fef3c7;color:#92400e;border-radius:4px;font-size:11px;font-weight:600">P3 待实现</div>
         </div>
       </div>
 
@@ -139350,6 +139374,12 @@ function showToolboxFunction(funcName) {
     html = getNihHTML();
   } else if (funcName === 'zhiwen') {
     html = getZhiwenHTML();
+  } else if (funcName === 'journal') {
+    html = getJournalRecommendHTML();
+  } else if (funcName === 'analysis') {
+    html = getLiteratureAnalysisHTML();
+  } else if (funcName === 'network') {
+    html = getCitationNetworkHTML();
   }
   
   content.innerHTML = html;
@@ -140947,6 +140977,1012 @@ async function generateZhiwenSection() {
   } catch (err) {
     contentDiv.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;color:#991b1b"><b>❌ 生成失败：</b>' + err.message + '</div>';
   }
+}
+
+
+
+// ========== P2阶段功能：智能选刊（AI推荐合适期刊） ==========
+function getJournalRecommendHTML() {
+  return `
+    <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #ddd6fe">
+      <h2 style="margin:0 0 8px 0;font-size:20px;color:#5b21b6">🎯 智能选刊 - AI推荐合适期刊</h2>
+      <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">输入论文标题、摘要和关键词，AI分析研究方向，结合CrossRef期刊数据库，为您推荐最合适的投稿期刊，给出推荐理由和投稿建议。</p>
+    </div>
+    
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+      <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📝 论文信息</div>
+      
+      <div style="margin-bottom:15px">
+        <label style="font-size:12px;color:#6b7280;font-weight:600">论文标题</label>
+        <input type="text" id="journalTitle" placeholder="例如：高强度间歇训练对慢性心力衰竭患者运动耐力的影响" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;margin-top:4px">
+      </div>
+      
+      <div style="margin-bottom:15px">
+        <label style="font-size:12px;color:#6b7280;font-weight:600">论文摘要（可选，越详细推荐越准确）</label>
+        <textarea id="journalAbstract" rows="4" placeholder="输入论文摘要，包括研究目的、方法、结果、结论..." style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;margin-top:4px;resize:vertical"></textarea>
+      </div>
+      
+      <div style="margin-bottom:15px">
+        <label style="font-size:12px;color:#6b7280;font-weight:600">关键词（用逗号分隔）</label>
+        <input type="text" id="journalKeywords" placeholder="例如：HIIT, heart failure, exercise tolerance, rehabilitation" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;margin-top:4px">
+      </div>
+      
+      <div style="display:flex;gap:15px;flex-wrap:wrap;margin-bottom:15px">
+        <div style="flex:1;min-width:150px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">目标分区</label>
+          <select id="journalTier" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+            <option value="any">不限</option>
+            <option value="q1">Q1区（顶刊）</option>
+            <option value="q2">Q2区（优秀）</option>
+            <option value="q3">Q3区（普通）</option>
+            <option value="q4">Q4区（容易中）</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">开放获取</label>
+          <select id="journalOA" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+            <option value="any">不限</option>
+            <option value="yes">仅限OA期刊</option>
+            <option value="no">仅限非OA期刊</option>
+          </select>
+        </div>
+      </div>
+      
+      <div style="display:flex;gap:10px">
+        <button onclick="recommendJournals()" style="padding:12px 30px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🎯 AI推荐期刊</button>
+      </div>
+    </div>
+    
+    <div id="journalStatus" style="display:none;margin-bottom:20px"></div>
+    <div id="journalResults" style="display:none"></div>
+  `;
+}
+
+// AI推荐期刊
+async function recommendJournals() {
+  var title = document.getElementById('journalTitle').value.trim();
+  var abstract = document.getElementById('journalAbstract').value.trim();
+  var keywords = document.getElementById('journalKeywords').value.trim();
+  var tier = document.getElementById('journalTier').value;
+  var oa = document.getElementById('journalOA').value;
+  var status = document.getElementById('journalStatus');
+  var results = document.getElementById('journalResults');
+  
+  if (!title && !keywords) {
+    alert('请输入论文标题或关键词');
+    return;
+  }
+  
+  status.style.display = 'block';
+  status.innerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:15px;color:#1e40af"><b>⏳ 第一步：正在通过CrossRef API搜索相关领域期刊...</b></div>';
+  results.style.display = 'none';
+  
+  try {
+    // 第一步：通过CrossRef API搜索相关文献，从中提取期刊信息
+    var searchKeyword = keywords || title;
+    var searchUrl = 'https://api.crossref.org/works?query=' + encodeURIComponent(searchKeyword) + '&rows=30&select=title,container-title,DOI,published-print,published-online,type,is-referenced-by-count';
+    
+    var searchResponse = await fetch(searchUrl);
+    var searchData = await searchResponse.json();
+    
+    // 统计期刊出现频率和引用数
+    var journalStats = {};
+    if (searchData.message && searchData.message.items) {
+      searchData.message.items.forEach(function(item) {
+        var journalName = item['container-title'] && item['container-title'][0] ? item['container-title'][0] : '';
+        if (journalName) {
+          if (!journalStats[journalName]) {
+            journalStats[journalName] = { count: 0, totalCitations: 0, titles: [] };
+          }
+          journalStats[journalName].count++;
+          journalStats[journalName].totalCitations += item['is-referenced-by-count'] || 0;
+          if (item.title && item.title[0]) {
+            journalStats[journalName].titles.push(item.title[0]);
+          }
+        }
+      });
+    }
+    
+    // 按出现频率排序，取前15个期刊
+    var sortedJournals = Object.entries(journalStats)
+      .sort(function(a, b) { return b[1].count - a[1].count; })
+      .slice(0, 15);
+    
+    if (sortedJournals.length === 0) {
+      status.innerHTML = '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:15px;color:#92400e"><b>⚠️ 未找到相关期刊</b>，请尝试其他关键词</div>';
+      return;
+    }
+    
+    status.innerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:15px;color:#1e40af"><b>⏳ 第二步：找到' + sortedJournals.length + '个相关期刊，AI正在分析并推荐...</b></div>';
+    
+    // 第二步：AI分析期刊并推荐
+    var journalsText = sortedJournals.map(function(j, i) {
+      return (i+1) + '. ' + j[0] + 
+             ' | 相关文献数: ' + j[1].count + 
+             ' | 总引用数: ' + j[1].totalCitations +
+             ' | 代表文献: ' + (j[1].titles[0] ? j[1].titles[0].substring(0, 80) : '');
+    }).join('\n');
+    
+    var tierText = {any: '不限分区', q1: 'Q1区顶刊', q2: 'Q2区优秀期刊', q3: 'Q3区普通期刊', q4: 'Q4区容易中的期刊'}[tier];
+    var oaText = {any: '不限开放获取', yes: '仅限OA开放获取期刊', no: '仅限非OA订阅期刊'}[oa];
+    
+    var systemPrompt = `你是一位资深的学术期刊推荐专家，特别熟悉体育科学、运动医学、康复医学领域的期刊。请基于以下论文信息和相关期刊列表，为作者推荐最合适的投稿期刊。
+
+论文标题：${title}
+论文摘要：${abstract || '（未提供）'}
+关键词：${keywords || '（未提供）'}
+目标分区：${tierText}
+开放获取要求：${oaText}
+
+相关期刊列表（基于CrossRef API搜索到的该领域高频期刊）：
+${journalsText}
+
+推荐要求：
+1. 从上述期刊中精选5-8个最合适的期刊，按推荐优先级排序
+2. 对每个推荐期刊给出：
+   - 期刊名称
+   - 推荐指数（1-5星）
+   - 推荐理由（为什么适合这篇论文）
+   - 投稿难度评估（容易/中等/较难/很难）
+   - 审稿周期估计
+   - 注意事项和投稿建议
+3. 最后给出一个总体投稿策略建议（先投哪个，被拒后转投哪个）
+4. 如果期刊列表中没有特别合适的，可以补充1-2个你知道的该领域知名期刊
+5. 特别关注体育科学、运动医学、康复医学领域的期刊特点
+
+请用中文回答，结构清晰，分点论述。`;
+    
+    var recommendation = await callDeepSeekAPI(systemPrompt, '请推荐合适的期刊', 4000, 'deepseek-chat');
+    
+    if (recommendation && recommendation.trim()) {
+      status.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:15px;color:#166534"><b>✅ 期刊推荐完成！</b> AI基于' + sortedJournals.length + '个相关期刊给出推荐</div>';
+      
+      results.style.display = 'block';
+      results.innerHTML = `
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">
+          <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">🎯 AI期刊推荐报告</div>
+          <div style="font-size:13px;color:#374151;line-height:1.8;white-space:pre-wrap">${recommendation.trim()}</div>
+        </div>
+        
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:20px">
+          <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📊 相关领域期刊统计（CrossRef API数据）</div>
+          <div style="font-size:12px;color:#374151;line-height:1.8">
+            ${sortedJournals.map(function(j, i) {
+              return '<div style="margin-bottom:8px;padding:8px;background:#f9fafb;border-radius:6px"><b>' + (i+1) + '. ' + j[0] + '</b> | 相关文献: ' + j[1].count + '篇 | 总引用: ' + j[1].totalCitations + '次</div>';
+            }).join('')}
+          </div>
+        </div>
+      `;
+    } else {
+      status.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;color:#991b1b"><b>❌ 推荐失败</b>，模型未返回内容，请重试</div>';
+    }
+  } catch (err) {
+    console.error('期刊推荐失败:', err);
+    status.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;color:#991b1b"><b>❌ 推荐失败：</b>' + err.message + '</div>';
+  }
+}
+
+// ========== P2阶段功能：文献大分析（批量分析+研究趋势） ==========
+function getLiteratureAnalysisHTML() {
+  return `
+    <div style="background:linear-gradient(135deg,#ecfeff,#cffafe);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #a5f3fc">
+      <h2 style="margin:0 0 8px 0;font-size:20px;color:#155e75">📊 文献大分析 - 批量分析+研究趋势</h2>
+      <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">批量搜索某领域文献，AI分析研究趋势、热点主题、研究空白、核心作者和机构，生成全面的研究趋势报告，为选题和综述写作提供参考。</p>
+    </div>
+    
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+      <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">🔍 分析设置</div>
+      
+      <div style="margin-bottom:15px">
+        <label style="font-size:12px;color:#6b7280;font-weight:600">研究主题/关键词</label>
+        <input type="text" id="analysisKeyword" placeholder="例如：exercise intervention mental health college students" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;margin-top:4px">
+      </div>
+      
+      <div style="display:flex;gap:15px;flex-wrap:wrap;margin-bottom:15px">
+        <div style="flex:1;min-width:150px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">分析文献数量</label>
+          <select id="analysisCount" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+            <option value="20">20篇（快速分析）</option>
+            <option value="30">30篇（标准分析）</option>
+            <option value="50">50篇（深度分析）</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">时间范围</label>
+          <select id="analysisYear" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+            <option value="">全部年份</option>
+            <option value="3">近3年</option>
+            <option value="5">近5年</option>
+            <option value="10">近10年</option>
+          </select>
+        </div>
+      </div>
+      
+      <div style="margin-bottom:15px">
+        <label style="font-size:12px;color:#6b7280;font-weight:600">分析维度（可多选）</label>
+        <div style="display:flex;gap:15px;flex-wrap:wrap;margin-top:8px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="dimTrend" checked> 研究趋势</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="dimHot" checked> 热点主题</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="dimGap" checked> 研究空白</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="dimAuthor" checked> 核心作者/机构</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="dimMethod" checked> 研究方法</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="dimFuture" checked> 未来方向</label>
+        </div>
+      </div>
+      
+      <div style="display:flex;gap:10px">
+        <button onclick="runLiteratureAnalysis()" style="padding:12px 30px;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">📊 开始文献大分析</button>
+      </div>
+    </div>
+    
+    <div id="analysisStatus" style="display:none;margin-bottom:20px"></div>
+    <div id="analysisResults" style="display:none"></div>
+  `;
+}
+
+// 运行文献大分析
+async function runLiteratureAnalysis() {
+  var keyword = document.getElementById('analysisKeyword').value.trim();
+  var count = document.getElementById('analysisCount').value;
+  var yearRange = document.getElementById('analysisYear').value;
+  var status = document.getElementById('analysisStatus');
+  var results = document.getElementById('analysisResults');
+  
+  if (!keyword) {
+    alert('请输入研究主题/关键词');
+    return;
+  }
+  
+  // 获取选中的分析维度
+  var dimensions = [];
+  if (document.getElementById('dimTrend').checked) dimensions.push('研究趋势');
+  if (document.getElementById('dimHot').checked) dimensions.push('热点主题');
+  if (document.getElementById('dimGap').checked) dimensions.push('研究空白');
+  if (document.getElementById('dimAuthor').checked) dimensions.push('核心作者/机构');
+  if (document.getElementById('dimMethod').checked) dimensions.push('研究方法');
+  if (document.getElementById('dimFuture').checked) dimensions.push('未来方向');
+  
+  if (dimensions.length === 0) {
+    alert('请至少选择一个分析维度');
+    return;
+  }
+  
+  status.style.display = 'block';
+  status.innerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:15px;color:#1e40af"><b>⏳ 第一步：正在通过CrossRef API批量搜索文献...</b></div>';
+  results.style.display = 'none';
+  
+  try {
+    // 第一步：批量搜索文献
+    var searchUrl = 'https://api.crossref.org/works?query=' + encodeURIComponent(keyword) + '&rows=' + count + '&select=title,author,container-title,published-print,published-online,DOI,abstract,is-referenced-by-count,type';
+    
+    var searchResponse = await fetch(searchUrl);
+    var searchData = await searchResponse.json();
+    
+    var articles = [];
+    if (searchData.message && searchData.message.items) {
+      articles = searchData.message.items;
+    }
+    
+    if (articles.length === 0) {
+      status.innerHTML = '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:15px;color:#92400e"><b>⚠️ 未找到相关文献</b>，请尝试其他关键词</div>';
+      return;
+    }
+    
+    // 按年份过滤（如果指定了时间范围）
+    if (yearRange) {
+      var currentYear = new Date().getFullYear();
+      var minYear = currentYear - parseInt(yearRange);
+      articles = articles.filter(function(a) {
+        var year = null;
+        if (a['published-print'] && a['published-print']['date-parts']) {
+          year = a['published-print']['date-parts'][0][0];
+        } else if (a['published-online'] && a['published-online']['date-parts']) {
+          year = a['published-online']['date-parts'][0][0];
+        }
+        return year && year >= minYear;
+      });
+    }
+    
+    status.innerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:15px;color:#1e40af"><b>⏳ 第二步：找到' + articles.length + '篇文献，正在统计分析...</b></div>';
+    
+    // 第二步：统计分析
+    // 2.1 年份分布
+    var yearStats = {};
+    // 2.2 期刊分布
+    var journalStats = {};
+    // 2.3 作者统计
+    var authorStats = {};
+    // 2.4 引用统计
+    var totalCitations = 0;
+    var topCited = [];
+    
+    articles.forEach(function(a) {
+      // 年份
+      var year = null;
+      if (a['published-print'] && a['published-print']['date-parts']) {
+        year = a['published-print']['date-parts'][0][0];
+      } else if (a['published-online'] && a['published-online']['date-parts']) {
+        year = a['published-online']['date-parts'][0][0];
+      }
+      if (year) {
+        yearStats[year] = (yearStats[year] || 0) + 1;
+      }
+      
+      // 期刊
+      var journal = a['container-title'] && a['container-title'][0] ? a['container-title'][0] : '';
+      if (journal) {
+        journalStats[journal] = (journalStats[journal] || 0) + 1;
+      }
+      
+      // 作者
+      if (a.author) {
+        a.author.forEach(function(auth) {
+          var name = (auth.given ? auth.given + ' ' : '') + (auth.family ? auth.family : '');
+          if (name.trim()) {
+            authorStats[name] = (authorStats[name] || 0) + 1;
+          }
+        });
+      }
+      
+      // 引用
+      var citations = a['is-referenced-by-count'] || 0;
+      totalCitations += citations;
+      topCited.push({
+        title: a.title && a.title[0] ? a.title[0] : '',
+        citations: citations,
+        year: year,
+        journal: journal
+      });
+    });
+    
+    // 排序
+    var sortedYears = Object.entries(yearStats).sort(function(a, b) { return parseInt(a[0]) - parseInt(b[0]); });
+    var sortedJournals = Object.entries(journalStats).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 10);
+    var sortedAuthors = Object.entries(authorStats).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 10);
+    topCited.sort(function(a, b) { return b.citations - a.citations; });
+    topCited = topCited.slice(0, 10);
+    
+    status.innerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:15px;color:#1e40af"><b>⏳ 第三步：统计完成，AI正在深度分析...</b></div>';
+    
+    // 第三步：AI深度分析
+    var articlesSummary = articles.slice(0, 30).map(function(a, i) {
+      var title = a.title && a.title[0] ? a.title[0] : '';
+      var journal = a['container-title'] && a['container-title'][0] ? a['container-title'][0] : '';
+      var year = null;
+      if (a['published-print'] && a['published-print']['date-parts']) {
+        year = a['published-print']['date-parts'][0][0];
+      } else if (a['published-online'] && a['published-online']['date-parts']) {
+        year = a['published-online']['date-parts'][0][0];
+      }
+      var citations = a['is-referenced-by-count'] || 0;
+      return (i+1) + '. [' + year + '] ' + title + ' (' + journal + ', 引用' + citations + '次)';
+    }).join('\n');
+    
+    var dimensionsText = dimensions.join('、');
+    
+    var systemPrompt = `你是一位资深的文献计量学和研究趋势分析专家，特别熟悉体育科学、运动医学、康复医学领域。请基于以下文献列表，对该研究领域进行全面的文献大分析。
+
+研究主题：${keyword}
+分析文献数量：${articles.length}篇
+分析维度：${dimensionsText}
+
+文献列表（前30篇，按相关度排序）：
+${articlesSummary}
+
+统计数据：
+- 年份分布：${JSON.stringify(yearStats)}
+- 核心期刊：${JSON.stringify(journalStats)}
+- 核心作者：${JSON.stringify(authorStats)}
+- 总引用数：${totalCitations}
+
+分析要求：
+请针对选中的分析维度（${dimensionsText}）进行深入分析，每个维度都要有具体的数据支撑和案例。
+
+具体要求：
+1. **研究趋势**：分析该领域随时间的发展趋势，研究热点的演变，未来走向
+2. **热点主题**：总结当前的研究热点和热门话题，分析为什么这些主题受到关注
+3. **研究空白**：指出当前研究的不足和空白领域，有哪些问题还没有被充分研究
+4. **核心作者/机构**：分析该领域的核心作者、研究团队和机构，他们的研究特点和贡献
+5. **研究方法**：总结该领域常用的研究方法、实验设计、数据分析方法，有哪些方法学上的创新和不足
+6. **未来方向**：基于以上分析，给出该领域未来3-5年的研究方向和选题建议
+
+最后给出一个总体总结和对研究者的建议。
+
+请用中文回答，结构清晰，分点论述，每个部分都要有具体的文献案例支撑。`;
+    
+    var analysisResult = await callDeepSeekAPI(systemPrompt, '请进行文献大分析', 5000, 'deepseek-chat');
+    
+    if (analysisResult && analysisResult.trim()) {
+      status.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:15px;color:#166534"><b>✅ 文献大分析完成！</b> 共分析' + articles.length + '篇文献，总引用' + totalCitations + '次</div>';
+      
+      results.style.display = 'block';
+      
+      // 生成年份分布的简单可视化（用HTML条形图）
+      var maxYearCount = Math.max.apply(null, sortedYears.map(function(y) { return y[1]; }));
+      var yearChartHTML = sortedYears.map(function(y) {
+        var width = (y[1] / maxYearCount * 100).toFixed(0);
+        return '<div style="display:flex;align-items:center;margin-bottom:5px;font-size:12px"><div style="width:50px;color:#6b7280">' + y[0] + '年</div><div style="flex:1;background:#e5e7eb;border-radius:4px;height:20px;position:relative"><div style="width:' + width + '%;background:linear-gradient(90deg,#0891b2,#06b6d4);height:100%;border-radius:4px"></div><div style="position:absolute;left:' + width + '%;margin-left:5px;top:2px;color:#374151;font-weight:600">' + y[1] + '篇</div></div></div>';
+      }).join('');
+      
+      results.innerHTML = `
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">
+          <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📊 AI文献大分析报告</div>
+          <div style="font-size:13px;color:#374151;line-height:1.8;white-space:pre-wrap">${analysisResult.trim()}</div>
+        </div>
+        
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:20px">
+          <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📈 文献年份分布</div>
+          ${yearChartHTML}
+        </div>
+        
+        <div style="display:flex;gap:20px;margin-top:20px;flex-wrap:wrap">
+          <div style="flex:1;min-width:300px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">
+            <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📚 核心期刊（Top 10）</div>
+            <div style="font-size:12px;color:#374151;line-height:1.8">
+              ${sortedJournals.map(function(j, i) {
+                return '<div style="margin-bottom:6px"><b>' + (i+1) + '. ' + j[0] + '</b> - ' + j[1] + '篇</div>';
+              }).join('')}
+            </div>
+          </div>
+          
+          <div style="flex:1;min-width:300px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">
+            <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">👤 核心作者（Top 10）</div>
+            <div style="font-size:12px;color:#374151;line-height:1.8">
+              ${sortedAuthors.map(function(a, i) {
+                return '<div style="margin-bottom:6px"><b>' + (i+1) + '. ' + a[0] + '</b> - ' + a[1] + '篇</div>';
+              }).join('')}
+            </div>
+          </div>
+        </div>
+        
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:20px">
+          <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">🏆 高被引文献（Top 10）</div>
+          <div style="font-size:12px;color:#374151;line-height:1.8">
+            ${topCited.map(function(a, i) {
+              return '<div style="margin-bottom:8px;padding:8px;background:#f9fafb;border-radius:6px"><b>' + (i+1) + '. ' + a.title + '</b><br><span style="color:#6b7280">' + a.journal + ' (' + a.year + ') | 引用 ' + a.citations + ' 次</span></div>';
+            }).join('')}
+          </div>
+        </div>
+      `;
+    } else {
+      status.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;color:#991b1b"><b>❌ 分析失败</b>，模型未返回内容，请重试</div>';
+    }
+  } catch (err) {
+    console.error('文献大分析失败:', err);
+    status.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;color:#991b1b"><b>❌ 分析失败：</b>' + err.message + '</div>';
+  }
+}
+
+
+
+// ========== P2阶段功能：文献引用网络（可视化引用关系） ==========
+function getCitationNetworkHTML() {
+  return `
+    <div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #fecaca">
+      <h2 style="margin:0 0 8px 0;font-size:20px;color:#991b1b">🕸️ 文献引用网络 - 可视化引用关系</h2>
+      <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">搜索某领域文献，基于文献相似度、共引关系、作者合作等构建文献关联网络，用SVG力导向图可视化，帮助您快速了解该领域的知识结构和核心文献。</p>
+    </div>
+    
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+      <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">🔍 网络构建设置</div>
+      
+      <div style="margin-bottom:15px">
+        <label style="font-size:12px;color:#6b7280;font-weight:600">研究主题/关键词</label>
+        <input type="text" id="networkKeyword" placeholder="例如：exercise brain health neuroplasticity" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;margin-top:4px">
+      </div>
+      
+      <div style="display:flex;gap:15px;flex-wrap:wrap;margin-bottom:15px">
+        <div style="flex:1;min-width:150px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">文献数量</label>
+          <select id="networkCount" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+            <option value="15">15篇（快速）</option>
+            <option value="20">20篇（标准）</option>
+            <option value="30">30篇（详细）</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+          <label style="font-size:12px;color:#6b7280;font-weight:600">关联阈值</label>
+          <select id="networkThreshold" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+            <option value="0.3">宽松（更多连接）</option>
+            <option value="0.5" selected>标准</option>
+            <option value="0.7">严格（更少连接）</option>
+          </select>
+        </div>
+      </div>
+      
+      <div style="margin-bottom:15px">
+        <label style="font-size:12px;color:#6b7280;font-weight:600">节点大小依据</label>
+        <div style="display:flex;gap:15px;margin-top:8px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="radio" name="nodeSize" value="citations" checked> 引用数</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="radio" name="nodeSize" value="connections"> 连接数</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="radio" name="nodeSize" value="equal"> 统一大小</label>
+        </div>
+      </div>
+      
+      <div style="display:flex;gap:10px">
+        <button onclick="buildCitationNetwork()" style="padding:12px 30px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🕸️ 构建文献网络</button>
+      </div>
+    </div>
+    
+    <div id="networkStatus" style="display:none;margin-bottom:20px"></div>
+    <div id="networkContainer" style="display:none">
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+          <div style="font-weight:700;color:#1f2937;font-size:15px">🕸️ 文献关联网络图</div>
+          <div style="display:flex;gap:10px">
+            <button onclick="zoomNetwork(1.2)" style="padding:6px 12px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;font-size:12px">放大 +</button>
+            <button onclick="zoomNetwork(0.8)" style="padding:6px 12px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;font-size:12px">缩小 -</button>
+            <button onclick="resetNetwork()" style="padding:6px 12px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;font-size:12px">重置</button>
+          </div>
+        </div>
+        <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#fafafa">
+          <svg id="citationNetworkSVG" width="100%" height="600" style="display:block"></svg>
+        </div>
+        <div style="margin-top:15px;font-size:12px;color:#6b7280;line-height:1.6">
+          <b>图例说明：</b>
+          <span style="display:inline-block;width:12px;height:12px;background:#3b82f6;border-radius:50%;margin:0 5px 0 15px;vertical-align:middle"></span>节点大小=引用数
+          <span style="display:inline-block;width:20px;height:2px;background:#94a3b8;margin:0 5px 0 15px;vertical-align:middle"></span>连线=文献相似度
+          <span style="margin-left:15px">💡 点击节点查看文献详情，拖拽节点调整布局</span>
+        </div>
+      </div>
+      <div id="networkDetail" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px"></div>
+      <div id="networkStats" style="margin-top:20px"></div>
+    </div>
+  `;
+}
+
+// 全局变量
+var _networkNodes = [];
+var _networkLinks = [];
+var _networkScale = 1;
+var _networkTranslate = { x: 0, y: 0 };
+var _draggingNode = null;
+var _dragOffset = { x: 0, y: 0 };
+
+// 构建文献引用网络
+async function buildCitationNetwork() {
+  var keyword = document.getElementById('networkKeyword').value.trim();
+  var count = document.getElementById('networkCount').value;
+  var threshold = parseFloat(document.getElementById('networkThreshold').value);
+  var nodeSizeBy = document.querySelector('input[name="nodeSize"]:checked').value;
+  var status = document.getElementById('networkStatus');
+  var container = document.getElementById('networkContainer');
+  
+  if (!keyword) {
+    alert('请输入研究主题/关键词');
+    return;
+  }
+  
+  status.style.display = 'block';
+  status.innerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:15px;color:#1e40af"><b>⏳ 正在通过CrossRef API搜索文献...</b></div>';
+  container.style.display = 'none';
+  
+  try {
+    // 搜索文献
+    var searchUrl = 'https://api.crossref.org/works?query=' + encodeURIComponent(keyword) + '&rows=' + count + '&select=title,author,container-title,published-print,published-online,DOI,abstract,is-referenced-by-count,type';
+    
+    var searchResponse = await fetch(searchUrl);
+    var searchData = await searchResponse.json();
+    
+    var articles = [];
+    if (searchData.message && searchData.message.items) {
+      articles = searchData.message.items;
+    }
+    
+    if (articles.length < 3) {
+      status.innerHTML = '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:15px;color:#92400e"><b>⚠️ 找到的文献太少（' + articles.length + '篇）</b>，无法构建网络，请尝试其他关键词</div>';
+      return;
+    }
+    
+    status.innerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:15px;color:#1e40af"><b>⏳ 找到' + articles.length + '篇文献，正在计算相似度和构建网络...</b></div>';
+    
+    // 构建节点
+    var nodes = articles.map(function(a, i) {
+      var title = a.title && a.title[0] ? a.title[0] : '无标题';
+      var journal = a['container-title'] && a['container-title'][0] ? a['container-title'][0] : '';
+      var year = null;
+      if (a['published-print'] && a['published-print']['date-parts']) {
+        year = a['published-print']['date-parts'][0][0];
+      } else if (a['published-online'] && a['published-online']['date-parts']) {
+        year = a['published-online']['date-parts'][0][0];
+      }
+      var citations = a['is-referenced-by-count'] || 0;
+      var doi = a.DOI || '';
+      var authors = a.author ? a.author.slice(0, 3).map(function(auth) {
+        return (auth.given ? auth.given + ' ' : '') + (auth.family ? auth.family : '');
+      }).join(', ') + (a.author.length > 3 ? ' et al.' : '') : '未知作者';
+      
+      // 提取标题关键词用于相似度计算
+      var keywords = title.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(function(w) {
+        return w.length > 3 && !['with', 'from', 'that', 'this', 'were', 'their', 'which', 'study', 'research', 'analysis', 'effects', 'effect'].includes(w);
+      });
+      
+      return {
+        id: i,
+        title: title,
+        journal: journal,
+        year: year,
+        citations: citations,
+        doi: doi,
+        authors: authors,
+        keywords: keywords,
+        x: 400 + Math.random() * 200 - 100,
+        y: 300 + Math.random() * 200 - 100,
+        vx: 0,
+        vy: 0
+      };
+    });
+    
+    // 计算文献之间的相似度（基于标题关键词重叠、作者、期刊）
+    var links = [];
+    for (var i = 0; i < nodes.length; i++) {
+      for (var j = i + 1; j < nodes.length; j++) {
+        var similarity = 0;
+        
+        // 标题关键词相似度（Jaccard系数）
+        var keywords1 = new Set(nodes[i].keywords);
+        var keywords2 = new Set(nodes[j].keywords);
+        var intersection = 0;
+        keywords1.forEach(function(k) {
+          if (keywords2.has(k)) intersection++;
+        });
+        var union = keywords1.size + keywords2.size - intersection;
+        var keywordSim = union > 0 ? intersection / union : 0;
+        similarity += keywordSim * 0.6;
+        
+        // 期刊相似度
+        if (nodes[i].journal && nodes[j].journal && nodes[i].journal === nodes[j].journal) {
+          similarity += 0.3;
+        }
+        
+        // 作者相似度（检查是否有共同作者）
+        var authors1 = nodes[i].authors.toLowerCase();
+        var authors2 = nodes[j].authors.toLowerCase();
+        var hasCommonAuthor = false;
+        // 简单检查：如果一个作者的姓氏出现在另一个作者列表中
+        var authorList1 = nodes[i].authors.split(',').map(function(a) { return a.trim().split(' ').pop(); });
+        var authorList2 = nodes[j].authors.split(',').map(function(a) { return a.trim().split(' ').pop(); });
+        for (var k = 0; k < authorList1.length; k++) {
+          if (authorList1[k] && authorList2.includes(authorList1[k])) {
+            hasCommonAuthor = true;
+            break;
+          }
+        }
+        if (hasCommonAuthor) {
+          similarity += 0.3;
+        }
+        
+        if (similarity >= threshold) {
+          links.push({
+            source: i,
+            target: j,
+            value: similarity
+          });
+        }
+      }
+    }
+    
+    // 计算每个节点的连接数
+    nodes.forEach(function(n) {
+      n.connections = links.filter(function(l) {
+        return l.source === n.id || l.target === n.id;
+      }).length;
+    });
+    
+    // 存储全局变量
+    _networkNodes = nodes;
+    _networkLinks = links;
+    _networkScale = 1;
+    _networkTranslate = { x: 0, y: 0 };
+    
+    status.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:15px;color:#166534"><b>✅ 网络构建完成！</b> ' + nodes.length + '个文献节点，' + links.length + '条关联连接</div>';
+    
+    container.style.display = 'block';
+    
+    // 渲染网络
+    renderNetwork(nodeSizeBy);
+    
+    // 显示统计信息
+    renderNetworkStats();
+    
+  } catch (err) {
+    console.error('文献网络构建失败:', err);
+    status.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:15px;color:#991b1b"><b>❌ 构建失败：</b>' + err.message + '</div>';
+  }
+}
+
+// 渲染网络
+function renderNetwork(nodeSizeBy) {
+  var svg = document.getElementById('citationNetworkSVG');
+  if (!svg) return;
+  
+  var width = svg.clientWidth || 800;
+  var height = 600;
+  
+  // 简单的力导向布局迭代
+  for (var iter = 0; iter < 100; iter++) {
+    // 斥力
+    for (var i = 0; i < _networkNodes.length; i++) {
+      for (var j = i + 1; j < _networkNodes.length; j++) {
+        var dx = _networkNodes[j].x - _networkNodes[i].x;
+        var dy = _networkNodes[j].y - _networkNodes[i].y;
+        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        var force = 2000 / (dist * dist);
+        var fx = force * dx / dist;
+        var fy = force * dy / dist;
+        _networkNodes[i].vx -= fx;
+        _networkNodes[i].vy -= fy;
+        _networkNodes[j].vx += fx;
+        _networkNodes[j].vy += fy;
+      }
+    }
+    
+    // 引力（连线）
+    _networkLinks.forEach(function(link) {
+      var source = _networkNodes[link.source];
+      var target = _networkNodes[link.target];
+      var dx = target.x - source.x;
+      var dy = target.y - source.y;
+      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      var force = (dist - 150) * 0.01 * link.value;
+      var fx = force * dx / dist;
+      var fy = force * dy / dist;
+      source.vx += fx;
+      source.vy += fy;
+      target.vx -= fx;
+      target.vy -= fy;
+    });
+    
+    // 中心引力
+    _networkNodes.forEach(function(n) {
+      n.vx += (width / 2 - n.x) * 0.001;
+      n.vy += (height / 2 - n.y) * 0.001;
+    });
+    
+    // 更新位置
+    _networkNodes.forEach(function(n) {
+      n.vx *= 0.9;
+      n.vy *= 0.9;
+      n.x += n.vx;
+      n.y += n.vy;
+      // 边界限制
+      n.x = Math.max(50, Math.min(width - 50, n.x));
+      n.y = Math.max(50, Math.min(height - 50, n.y));
+    });
+  }
+  
+  // 计算节点大小
+  var maxCitations = Math.max.apply(null, _networkNodes.map(function(n) { return n.citations; }));
+  var maxConnections = Math.max.apply(null, _networkNodes.map(function(n) { return n.connections; }));
+  
+  _networkNodes.forEach(function(n) {
+    if (nodeSizeBy === 'citations') {
+      n.radius = 8 + (n.citations / (maxCitations || 1)) * 20;
+    } else if (nodeSizeBy === 'connections') {
+      n.radius = 8 + (n.connections / (maxConnections || 1)) * 20;
+    } else {
+      n.radius = 15;
+    }
+  });
+  
+  // 年份颜色映射
+  var years = _networkNodes.map(function(n) { return n.year; }).filter(function(y) { return y; });
+  var minYear = Math.min.apply(null, years);
+  var maxYear = Math.max.apply(null, years);
+  
+  function getYearColor(year) {
+    if (!year) return '#94a3b8';
+    var t = (year - minYear) / ((maxYear - minYear) || 1);
+    // 从蓝色（旧）到红色（新）
+    var r = Math.round(59 + t * (220 - 59));
+    var g = Math.round(130 - t * 80);
+    var b = Math.round(246 - t * (246 - 38));
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+  
+  // 生成SVG
+  var svgHTML = '';
+  
+  // 定义箭头标记
+  svgHTML += '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" /></marker></defs>';
+  
+  // 变换组
+  svgHTML += '<g id="networkTransform" transform="translate(' + _networkTranslate.x + ',' + _networkTranslate.y + ') scale(' + _networkScale + ')">';
+  
+  // 绘制连线
+  _networkLinks.forEach(function(link) {
+    var source = _networkNodes[link.source];
+    var target = _networkNodes[link.target];
+    var opacity = 0.2 + link.value * 0.5;
+    var strokeWidth = 1 + link.value * 3;
+    svgHTML += '<line x1="' + source.x + '" y1="' + source.y + '" x2="' + target.x + '" y2="' + target.y + '" stroke="#94a3b8" stroke-width="' + strokeWidth + '" opacity="' + opacity + '" />';
+  });
+  
+  // 绘制节点
+  _networkNodes.forEach(function(n) {
+    var color = getYearColor(n.year);
+    svgHTML += '<g class="network-node" data-id="' + n.id + '" style="cursor:pointer">';
+    svgHTML += '<circle cx="' + n.x + '" cy="' + n.y + '" r="' + n.radius + '" fill="' + color + '" stroke="#fff" stroke-width="2" opacity="0.85" />';
+    // 只显示引用数高的节点标题
+    if (n.citations >= maxCitations * 0.3 || n.connections >= maxConnections * 0.5) {
+      var shortTitle = n.title.length > 30 ? n.title.substring(0, 30) + '...' : n.title;
+      svgHTML += '<text x="' + n.x + '" y="' + (n.y + n.radius + 12) + '" text-anchor="middle" font-size="10" fill="#374151" font-weight="600">' + shortTitle + '</text>';
+    }
+    // 显示引用数
+    if (n.citations > 0) {
+      svgHTML += '<text x="' + n.x + '" y="' + (n.y + 4) + '" text-anchor="middle" font-size="10" fill="#fff" font-weight="700">' + n.citations + '</text>';
+    }
+    svgHTML += '</g>';
+  });
+  
+  svgHTML += '</g>';
+  
+  svg.innerHTML = svgHTML;
+  
+  // 添加交互事件
+  var svgElement = document.getElementById('citationNetworkSVG');
+  
+  // 点击节点显示详情
+  svgElement.querySelectorAll('.network-node').forEach(function(nodeEl) {
+    nodeEl.addEventListener('click', function() {
+      var id = parseInt(this.getAttribute('data-id'));
+      showNetworkNodeDetail(id);
+    });
+    
+    // 拖拽节点
+    nodeEl.addEventListener('mousedown', function(e) {
+      var id = parseInt(this.getAttribute('data-id'));
+      _draggingNode = _networkNodes[id];
+      var rect = svgElement.getBoundingClientRect();
+      _dragOffset.x = (e.clientX - rect.left) / _networkScale - _draggingNode.x;
+      _dragOffset.y = (e.clientY - rect.top) / _networkScale - _draggingNode.y;
+      e.preventDefault();
+    });
+  });
+  
+  // 鼠标移动（拖拽）
+  svgElement.addEventListener('mousemove', function(e) {
+    if (_draggingNode) {
+      var rect = svgElement.getBoundingClientRect();
+      _draggingNode.x = (e.clientX - rect.left) / _networkScale - _dragOffset.x;
+      _draggingNode.y = (e.clientY - rect.top) / _networkScale - _dragOffset.y;
+      // 重新渲染（简单方式：只更新位置）
+      updateNetworkPositions();
+    }
+  });
+  
+  // 鼠标释放
+  svgElement.addEventListener('mouseup', function() {
+    _draggingNode = null;
+  });
+  
+  svgElement.addEventListener('mouseleave', function() {
+    _draggingNode = null;
+  });
+}
+
+// 更新网络节点位置（拖拽时用）
+function updateNetworkPositions() {
+  var svg = document.getElementById('citationNetworkSVG');
+  if (!svg) return;
+  
+  // 更新连线
+  var lines = svg.querySelectorAll('line');
+  var lineIndex = 0;
+  _networkLinks.forEach(function(link) {
+    if (lines[lineIndex]) {
+      var source = _networkNodes[link.source];
+      var target = _networkNodes[link.target];
+      lines[lineIndex].setAttribute('x1', source.x);
+      lines[lineIndex].setAttribute('y1', source.y);
+      lines[lineIndex].setAttribute('x2', target.x);
+      lines[lineIndex].setAttribute('y2', target.y);
+    }
+    lineIndex++;
+  });
+  
+  // 更新节点
+  var nodeGroups = svg.querySelectorAll('.network-node');
+  nodeGroups.forEach(function(group) {
+    var id = parseInt(group.getAttribute('data-id'));
+    var n = _networkNodes[id];
+    var circle = group.querySelector('circle');
+    var texts = group.querySelectorAll('text');
+    if (circle) {
+      circle.setAttribute('cx', n.x);
+      circle.setAttribute('cy', n.y);
+    }
+    texts.forEach(function(text) {
+      text.setAttribute('x', n.x);
+    });
+  });
+}
+
+// 显示节点详情
+function showNetworkNodeDetail(id) {
+  var n = _networkNodes[id];
+  var detailDiv = document.getElementById('networkDetail');
+  if (!detailDiv || !n) return;
+  
+  detailDiv.style.display = 'block';
+  detailDiv.innerHTML = `
+    <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📄 文献详情</div>
+    <div style="font-size:14px;color:#1f2937;font-weight:600;margin-bottom:10px">${n.title}</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:8px">👤 ${n.authors}</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:8px">📖 ${n.journal}${n.year ? ' (' + n.year + ')' : ''}</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:8px">🏆 引用数：${n.citations} | 🔗 连接数：${n.connections}</div>
+    ${n.doi ? '<div style="font-size:13px;color:#2563eb;margin-bottom:10px">🔗 DOI: <a href="https://doi.org/' + n.doi + '" target="_blank">' + n.doi + '</a></div>' : ''}
+    <div style="margin-top:15px">
+      <button onclick="showToolboxFunction('citation')" style="padding:8px 16px;background:#ca8a04;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📚 生成引用格式</button>
+      <a href="https://doi.org/${n.doi}" target="_blank" style="padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none;display:inline-block;margin-left:10px">🔗 查看原文</a>
+    </div>
+  `;
+  
+  // 滚动到详情
+  detailDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// 渲染网络统计
+function renderNetworkStats() {
+  var statsDiv = document.getElementById('networkStats');
+  if (!statsDiv) return;
+  
+  var totalNodes = _networkNodes.length;
+  var totalLinks = _networkLinks.length;
+  var totalCitations = _networkNodes.reduce(function(sum, n) { return sum + n.citations; }, 0);
+  var avgConnections = (totalLinks * 2 / totalNodes).toFixed(1);
+  
+  // 年份分布
+  var yearStats = {};
+  _networkNodes.forEach(function(n) {
+    if (n.year) {
+      yearStats[n.year] = (yearStats[n.year] || 0) + 1;
+    }
+  });
+  
+  // 高被引文献
+  var topCited = _networkNodes.slice().sort(function(a, b) { return b.citations - a.citations; }).slice(0, 5);
+  
+  statsDiv.innerHTML = `
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">📊 网络统计</div>
+        <div style="font-size:13px;color:#374151;line-height:2">
+          <div>📄 文献节点数：<b>${totalNodes}</b></div>
+          <div>🔗 关联连接数：<b>${totalLinks}</b></div>
+          <div>🏆 总引用数：<b>${totalCitations}</b></div>
+          <div>📈 平均连接数：<b>${avgConnections}</b></div>
+          <div>🔀 网络密度：<b>${(totalLinks / (totalNodes * (totalNodes - 1) / 2) * 100).toFixed(1)}%</b></div>
+        </div>
+      </div>
+      
+      <div style="flex:1;min-width:200px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">
+        <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">🏆 高被引文献（Top 5）</div>
+        <div style="font-size:12px;color:#374151;line-height:1.8">
+          ${topCited.map(function(n, i) {
+            return '<div style="margin-bottom:8px;padding:8px;background:#fef2f2;border-radius:6px"><b>' + (i+1) + '. ' + n.title.substring(0, 50) + (n.title.length > 50 ? '...' : '') + '</b><br><span style="color:#6b7280">' + n.journal + ' (' + n.year + ') | 引用 ' + n.citations + ' 次</span></div>';
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// 缩放网络
+function zoomNetwork(factor) {
+  _networkScale *= factor;
+  var transform = document.getElementById('networkTransform');
+  if (transform) {
+    transform.setAttribute('transform', 'translate(' + _networkTranslate.x + ',' + _networkTranslate.y + ') scale(' + _networkScale + ')');
+  }
+}
+
+// 重置网络
+function resetNetwork() {
+  _networkScale = 1;
+  _networkTranslate = { x: 0, y: 0 };
+  var nodeSizeBy = document.querySelector('input[name="nodeSize"]:checked').value;
+  renderNetwork(nodeSizeBy);
 }
 
 </script>
