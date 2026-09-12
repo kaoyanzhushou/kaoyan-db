@@ -137084,7 +137084,9 @@ function updateImagePreview(images){
 
 // 识图生成教案（核心函数）
 async function generateLessonFromImages(){
+  console.log('📸 [识图生成] 函数被调用，开始执行...');
   const status = document.getElementById('imageQuickStatus');
+  if(!status){ console.error('📸 [识图生成] 错误：status元素不存在'); alert('页面未完全加载，请按Ctrl+F5强制刷新后重试'); return; }
   const pdfInput = document.getElementById('imageQuickPdf');
   const pagesInput = document.getElementById('imageQuickPages').value.trim();
   const model = document.getElementById('imageQuickModel').value;
@@ -137265,6 +137267,20 @@ async function generateLessonFromImages(){
     status.style.color = '#dc2626';
   }
 }
+
+
+// 全局错误捕获（确保任何未捕获的错误都能显示给用户）
+window.addEventListener('unhandledrejection', function(e){
+  console.error('📸 [识图生成] 未处理的Promise错误:', e.reason);
+  var status = document.getElementById('imageQuickStatus');
+  if(status && status.textContent && status.textContent.indexOf('生成') >= 0){
+    status.innerHTML = '❌ 生成出错：' + (e.reason ? e.reason.message : '未知错误') + '，请查看控制台(F12)或刷新重试';
+    status.style.color = '#dc2626';
+  }
+});
+window.addEventListener('error', function(e){
+  console.error('📸 [识图生成] 全局错误:', e.message, e.filename, e.lineno);
+});
 
 console.log('📸 一键识图生成教案功能已加载');
 // ============================================================
