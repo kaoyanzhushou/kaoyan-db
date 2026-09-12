@@ -134179,9 +134179,20 @@ function readLessonFile(){
 async function runLessonGen(){
   const subject = (document.getElementById('lessonSubject').value||'').trim();
   const chapter = (document.getElementById('lessonChapter').value||'').trim();
-  const chapterContent = (document.getElementById('lessonChapterContent').value||'').trim();
+  let chapterContent = (document.getElementById('lessonChapterContent').value||'').trim();
   if(!subject || !chapter){ alert('请填写科目和章节'); return; }
-  if(!chapterContent){ alert('请粘贴教材/书籍章节内容'); return; }
+  // 如果文本框为空，自动从已上传的教材（包括OCR识别的扫描版PDF）中获取内容
+  if(!chapterContent){
+    try{
+      var bookText = localStorage.getItem('aiBookText') || '';
+      if(bookText && bookText.trim().length > 50){
+        chapterContent = bookText.trim();
+        document.getElementById('lessonChapterContent').value = chapterContent;
+        // 不弹窗打扰，静默导入
+      }
+    }catch(e){}
+  }
+  if(!chapterContent){ alert('请粘贴教材/书籍章节内容，或先上传教材文件（支持扫描版PDF自动OCR识别）'); return; }
   const status = document.getElementById('lessonGenStatus');
   const multiCollab = document.getElementById('lessonMultiCollab') && document.getElementById('lessonMultiCollab').checked;
   const resEl = document.getElementById('lessonResult');
@@ -136386,8 +136397,15 @@ async function ocrScanPDF(pdf, pages, callback){
     
     if(status){
       if(finalText && finalText.trim().length > 50){
-        status.innerHTML = '✅ <b>OCR识别完成！</b> 共识别' + pdf.numPages + '页，' + (finalText.length/1000).toFixed(1) + 'K字';
+        status.innerHTML = '✅ <b>OCR识别完成！</b> 共识别' + pdf.numPages + '页，' + (finalText.length/1000).toFixed(1) + 'K字，已自动导入教材内容';
         status.style.color = '#16a34a';
+        // 自动将识别内容填充到教材章节内容文本框
+        try{
+          var contentEl = document.getElementById('lessonChapterContent');
+          if(contentEl && !contentEl.value.trim()){
+            contentEl.value = finalText.trim();
+          }
+        }catch(e){}
       }else{
         status.innerHTML = '⚠️ <b>OCR识别结果较少</b>，可能图片质量不佳或模型限制';
         status.style.color = '#d97706';
