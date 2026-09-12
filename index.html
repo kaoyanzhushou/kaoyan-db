@@ -17046,33 +17046,51 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
       <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
 
-        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">📋 申报书活页生成</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:14px;font-weight:700;color:#1f2937">📋 申报书分模块精准撰写</div>
+          <button onclick="importFromPaperWorkbench()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">📥 从论文工作台导入</button>
+        </div>
 
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">选题（建议从上方生成结果中选用）</label>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:12px">支持分模块独立撰写，也可一键生成完整活页；可从论文工作台导入研究内容，省去重复输入</div>
 
-        <input id="proposalTitle" placeholder="粘贴课题题目" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">课题题目</label>
 
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:12px 0 6px">基金类型</label>
+        <input id="proposalTitle" placeholder="粘贴或输入课题题目" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box">
 
-        <select id="proposalFund" style="border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+          <div>
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">基金类型</label>
+            <select id="proposalFund" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px">
+              <option value="国社科">🏛️ 国家社科基金（体育学）</option>
+              <option value="教育部">📚 教育部人文社科基金</option>
+              <option value="省社科">🏢 省社科基金</option>
+              <option value="总局">🏅 国家体育总局决策咨询/局管课题</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">撰写模块</label>
+            <select id="proposalModule" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px">
+              <option value="full">📄 完整活页（五段式）</option>
+              <option value="background">📌 一、立项依据</option>
+              <option value="content">📌 二、研究内容</option>
+              <option value="method">📌 三、研究方法</option>
+              <option value="innovation">💡 四、创新点</option>
+              <option value="outcome">🎯 五、预期成果</option>
+              <option value="foundation">📚 六、研究基础</option>
+              <option value="budget">💰 七、经费预算</option>
+            </select>
+          </div>
+        </div>
 
-          <option value="国社科">🏛️ 国家社科基金（体育学）</option>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:12px 0 6px">研究内容/补充信息（研究基础/数据/团队，可选）</label>
 
-          <option value="教育部">📚 教育部人文社科基金</option>
+        <textarea id="proposalExtra" rows="3" placeholder="已有的前期成果、可获得的样本/数据、团队成员、研究框架等..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
 
-          <option value="省社科">🏢 省社科基金</option>
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">
 
-          <option value="总局">🏅 国家体育总局决策咨询/局管课题</option>
+          <button onclick="runProposalGen()" style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🚀 生成当前模块</button>
 
-        </select>
-
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin:12px 0 6px">补充信息（研究基础/数据/团队，可选）</label>
-
-        <textarea id="proposalExtra" rows="2" placeholder="已有的前期成果、可获得的样本/数据、团队成员等" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
-
-        <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
-
-          <button onclick="runProposalGen()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">📋 生成申报书活页</button>
+          <button onclick="runFullProposalGen()" style="background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">📄 一键生成完整活页</button>
 
           <label style="font-size:12px;color:#4b5563;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="proposalHealthCheck" checked style="vertical-align:middle">生成后 AI 体检</label>
 
@@ -17081,6 +17099,9 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
         </div>
 
       </div>
+
+      <!-- 分模块结果显示 -->
+      <div id="proposalModuleResult" style="display:none;margin-bottom:16px"></div>
 
       <div id="proposalResult" style="display:none"></div>
 
@@ -59634,7 +59655,416 @@ function paperPreviewVersion(id) {
   var project = (getPaperProjects().find(function(p) { return p.id === paperCurrentProjectId; }) || {});
   var w = window.open('', '_blank');
   if (!w) { alert('浏览器拦截了弹窗，请允许后重试'); return; }
-  w.document.write('<html><head><title>版本预览</title><meta charset="utf-8"><style>body{font-family:"Microsoft YaHei",sans-serif;max-width:760px;margin:20px auto;padding:0 20px;line-height:1.8;color:#1f2937} h2{color:#16a34a;border-bottom:1px solid #e5e7eb;padding-bottom:4px} pre{white-space:pre-wrap;font-family:inherit}</style></head><body><h1>' + (project.title || '') + '</h1>' + text.split('\n\n').map(function(b){ return b.trim() ? '<pre>' + b.replace(/</g,'&lt;') + '</pre>' : ''; }).join('') + '</body></html>');
+  w.document.write('<html><head><title>版本预览</title><meta charset="utf-8"><style>body{font-family:"Microsoft YaHei",sans-serif;max-width:760px;margin:20px auto;padding:0 20px;line-height:1.8;color:#1f2937} h2{color:#16a34a;border-bottom:1px solid #e5e7eb;padding-bottom:4px} pre{white-space:pre-wrap;font-family:inherit}</style></head><body><h1>' + (project.title || '') + '</h1>' + text.split('\n\n').map(function(b){ return b.trim() ? '<pre>' + b.replace(/</g,'&lt;') + '</pre>' : ''; }).join('') + '
+<script>
+// ========== 课题申报中心功能 ==========
+
+// 存储各模块生成结果
+var proposalModuleData = {};
+
+// 课题申报中心选题生成（DeepSeek + GLM双模型）
+async function runTopicGen() {
+  var dir = document.getElementById('topicDir').value.trim();
+  if (!dir) { mechToast('请输入研究方向', 'warn'); return; }
+  
+  var base = document.getElementById('topicBase').value.trim();
+  var statusEl = document.getElementById('topicStatus');
+  var resultEl = document.getElementById('topicResult');
+  
+  statusEl.textContent = '正在生成选题（双模型并行）...';
+  resultEl.style.display = 'none';
+  
+  var systemPrompt = '你是一位体育学领域的资深科研专家，擅长国家社科基金、教育部人文社科基金、体育总局课题等各级课题选题设计。请根据用户提供的研究方向和研究基础，设计3-5个具有创新性、可行性和研究价值的课题选题。每个选题包含：题目、研究背景、核心问题、创新点、适用基金类型。以JSON格式输出：{"topics":[{"title":"","background":"","coreQuestion":"","innovation":"","fundType":""}]}';
+  
+  var userPrompt = '研究方向：' + dir + (base ? '\n\n研究基础：' + base : '');
+  
+  try {
+    // 双模型并行
+    var results = await Promise.all([
+      callDeepSeekAPI(systemPrompt, userPrompt, 2500, 'deepseek-v4-pro'),
+      callDeepSeekAPI(systemPrompt, userPrompt, 2500, 'glm-5.3')
+    ]);
+    
+    // 解析结果
+    var topics1 = parseTopicJSON(results[0]);
+    var topics2 = parseTopicJSON(results[1]);
+    
+    // 合并去重
+    var allTopics = [];
+    var seen = {};
+    (topics1.topics || []).forEach(function(t) {
+      if (!seen[t.title]) { seen[t.title] = true; allTopics.push({...t, model: 'DeepSeek'}); }
+    });
+    (topics2.topics || []).forEach(function(t) {
+      if (!seen[t.title]) { seen[t.title] = true; allTopics.push({...t, model: 'GLM'}); }
+    });
+    
+    // 渲染结果
+    var html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">';
+    html += '<div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:14px">💡 AI 生成选题（共' + allTopics.length + '个，双模型合并）</div>';
+    
+    allTopics.forEach(function(t, i) {
+      html += '<div style="border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:12px;background:#fafafa">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">';
+      html += '<div style="font-size:15px;font-weight:700;color:#1f2937;flex:1">' + (i+1) + '. ' + t.title + '</div>';
+      html += '<span style="font-size:11px;padding:3px 8px;background:#ede9fe;color:#6d28d9;border-radius:4px;margin-left:10px;white-space:nowrap">' + t.model + '</span>';
+      html += '</div>';
+      html += '<div style="font-size:13px;color:#4b5563;line-height:1.6;margin-bottom:6px"><strong>研究背景：</strong>' + (t.background || '') + '</div>';
+      html += '<div style="font-size:13px;color:#4b5563;line-height:1.6;margin-bottom:6px"><strong>核心问题：</strong>' + (t.coreQuestion || '') + '</div>';
+      html += '<div style="font-size:13px;color:#4b5563;line-height:1.6;margin-bottom:6px"><strong>创新点：</strong>' + (t.innovation || '') + '</div>';
+      html += '<div style="font-size:13px;color:#6b7280;margin-bottom:10px"><strong>适用基金：</strong>' + (t.fundType || '') + '</div>';
+      html += '<button onclick="useTopicForProposal(\'' + t.title.replace(/'/g, "\\'") + '\')" style="background:#7c3aed;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📋 用于申报书</button>';
+      html += '</div>';
+    });
+    
+    html += '</div>';
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.textContent = '已生成 ' + allTopics.length + ' 个选题';
+    mechToast('选题生成完成！', 'success');
+    
+  } catch(e) {
+    statusEl.textContent = '生成失败：' + e.message;
+    mechToast('选题生成失败：' + e.message, 'error');
+  }
+}
+
+// 解析选题JSON
+function parseTopicJSON(text) {
+  try {
+    var match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+  } catch(e) {}
+  return {topics: []};
+}
+
+// 使用选题填充申报书
+function useTopicForProposal(title) {
+  document.getElementById('proposalTitle').value = title;
+  document.getElementById('proposalTitle').scrollIntoView({behavior: 'smooth', block: 'center'});
+  mechToast('已填充课题题目', 'success');
+}
+
+// 分模块撰写
+async function runProposalGen() {
+  var title = document.getElementById('proposalTitle').value.trim();
+  if (!title) { mechToast('请输入课题题目', 'warn'); return; }
+  
+  var fund = document.getElementById('proposalFund').value;
+  var module = document.getElementById('proposalModule').value;
+  var extra = document.getElementById('proposalExtra').value.trim();
+  var statusEl = document.getElementById('proposalStatus');
+  var resultEl = document.getElementById('proposalModuleResult');
+  
+  var moduleNames = {
+    'full': '完整活页',
+    'background': '立项依据',
+    'content': '研究内容',
+    'method': '研究方法',
+    'innovation': '创新点',
+    'outcome': '预期成果',
+    'foundation': '研究基础',
+    'budget': '经费预算'
+  };
+  
+  statusEl.textContent = '正在生成' + moduleNames[module] + '...';
+  resultEl.style.display = 'none';
+  
+  var systemPrompt = getProposalSystemPrompt(module, fund);
+  var userPrompt = '课题题目：' + title + '\n基金类型：' + fund + (extra ? '\n\n补充信息：' + extra : '');
+  
+  try {
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000, 'deepseek-v4-pro');
+    
+    // 保存模块结果
+    proposalModuleData[module] = result;
+    
+    // 渲染结果
+    var html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">';
+    html += '<div style="font-size:15px;font-weight:700;color:#1f2937">📝 ' + moduleNames[module] + '（AI生成）</div>';
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button onclick="copyProposalModule(\'' + module + '\')" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">📋 复制</button>';
+    html += '<button onclick="appendToFullProposal(\'' + module + '\')" style="background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">➕ 加入完整活页</button>';
+    html += '</div></div>';
+    html += '<div style="font-size:14px;color:#1f2937;line-height:1.8;white-space:pre-wrap;background:#f9fafb;padding:16px;border-radius:8px;border:1px solid #e5e7eb">' + result + '</div>';
+    html += '</div>';
+    
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.textContent = moduleNames[module] + '生成完成';
+    mechToast(moduleNames[module] + '生成完成！', 'success');
+    
+    // AI体检
+    if (document.getElementById('proposalHealthCheck').checked) {
+      setTimeout(function() { runProposalHealthCheck(module, result, title); }, 500);
+    }
+    
+  } catch(e) {
+    statusEl.textContent = '生成失败：' + e.message;
+    mechToast('生成失败：' + e.message, 'error');
+  }
+}
+
+// 获取申报书系统提示
+function getProposalSystemPrompt(module, fund) {
+  var base = '你是一位体育学领域的资深科研项目评审专家，熟悉' + fund + '的申报要求和评审标准。请根据课题题目，撰写高质量的申报书内容。要求：1. 内容具体、有针对性，避免空泛；2. 符合体育学学科特点；3. 语言规范、学术性强；4. 结构清晰、逻辑严谨。\n\n';
+  
+  var modulePrompts = {
+    'full': '请撰写完整的申报书活页，包含以下五个部分：一、立项依据（研究背景、国内外研究现状、研究意义、问题提出）；二、研究内容（总体框架、具体研究内容、重点难点）；三、研究方法（研究设计、研究对象、研究工具、数据分析方法）；四、创新点（理论创新、方法创新、实践创新）；五、预期成果（论文、专著、专利、政策建议、人才培养）。每个部分都要详细具体。',
+    'background': '请撰写立项依据部分，包含：1. 研究背景与意义；2. 国内外研究现状述评（要具体，引用相关研究）；3. 研究问题的提出；4. 研究价值（理论价值+实践价值）。要求逻辑清晰，论证充分。',
+    'content': '请撰写研究内容部分，包含：1. 总体研究框架；2. 具体研究内容（分点列出，每个内容要有详细说明）；3. 研究重点；4. 研究难点及解决思路。要求内容具体，可操作性强。',
+    'method': '请撰写研究方法部分，包含：1. 研究设计（研究类型、技术路线）；2. 研究对象（样本量、抽样方法、纳入排除标准）；3. 研究工具与指标（测量工具、评价指标）；4. 数据收集流程；5. 数据分析方法（统计方法、分析软件）。要求方法科学、严谨、可重复。',
+    'innovation': '请撰写创新点部分，从以下三个维度分析：1. 理论创新（对现有理论的补充、修正或拓展）；2. 方法创新（研究方法、技术手段的创新）；3. 实践创新（研究成果的应用价值、社会效益）。每个创新点要有具体说明，避免空泛。',
+    'outcome': '请撰写预期成果部分，包含：1. 理论成果（论文发表计划：期刊层次、数量；专著；研究报告）；2. 实践成果（政策建议、标准制定、人才培养、社会服务）；3. 成果转化与应用前景。要求具体可行，符合基金要求。',
+    'foundation': '请撰写研究基础部分，包含：1. 前期研究成果（相关论文、项目、获奖）；2. 研究团队（成员构成、研究专长、分工）；3. 研究条件（实验设备、数据资源、合作单位）；4. 参考文献（列出10-15篇核心参考文献）。要求突出优势，证明研究可行性。',
+    'budget': '请撰写经费预算部分，按照' + fund + '的预算科目要求，列出详细的预算明细：1. 资料费；2. 数据采集费；3. 差旅费；4. 会议费；5. 设备费；6. 专家咨询费；7. 劳务费；8. 印刷出版费；9. 其他费用。每个科目要有金额和测算依据，总预算根据基金类型合理设定。'
+  };
+  
+  return base + (modulePrompts[module] || modulePrompts['full']);
+}
+
+// 一键生成完整活页
+async function runFullProposalGen() {
+  var title = document.getElementById('proposalTitle').value.trim();
+  if (!title) { mechToast('请输入课题题目', 'warn'); return; }
+  
+  var fund = document.getElementById('proposalFund').value;
+  var extra = document.getElementById('proposalExtra').value.trim();
+  var statusEl = document.getElementById('proposalStatus');
+  var resultEl = document.getElementById('proposalResult');
+  
+  statusEl.textContent = '正在生成完整活页（多模块并行）...';
+  resultEl.style.display = 'none';
+  
+  var modules = ['background', 'content', 'method', 'innovation', 'outcome'];
+  var moduleNames = {background: '立项依据', content: '研究内容', method: '研究方法', innovation: '创新点', outcome: '预期成果'};
+  
+  try {
+    // 多模块并行生成
+    var promises = modules.map(function(m) {
+      var systemPrompt = getProposalSystemPrompt(m, fund);
+      var userPrompt = '课题题目：' + title + '\n基金类型：' + fund + (extra ? '\n\n补充信息：' + extra : '');
+      return callDeepSeekAPI(systemPrompt, userPrompt, 3000, 'deepseek-v4-pro')
+        .then(function(r) { return {module: m, name: moduleNames[m], content: r}; })
+        .catch(function(e) { return {module: m, name: moduleNames[m], content: '生成失败：' + e.message, error: true}; });
+    });
+    
+    var results = await Promise.all(promises);
+    
+    // 合并为完整活页
+    var fullContent = '';
+    results.forEach(function(r) {
+      fullContent += '【' + r.name + '】\n' + r.content + '\n\n';
+      proposalModuleData[r.module] = r.content;
+    });
+    
+    // 渲染完整活页
+    var html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">';
+    html += '<div style="font-size:16px;font-weight:700;color:#1f2937">📄 申报书完整活页（' + fund + '）</div>';
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button onclick="copyFullProposal()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px">📋 复制全文</button>';
+    html += '<button onclick="downloadProposal()" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px">💾 下载TXT</button>';
+    html += '</div></div>';
+    html += '<div style="font-size:14px;color:#1f2937;line-height:1.8;white-space:pre-wrap;background:#f9fafb;padding:20px;border-radius:8px;border:1px solid #e5e7eb;max-height:600px;overflow-y:auto">' + fullContent + '</div>';
+    html += '</div>';
+    
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.textContent = '完整活页生成完成（5个模块）';
+    mechToast('完整活页生成完成！', 'success');
+    
+    // AI体检
+    if (document.getElementById('proposalHealthCheck').checked) {
+      setTimeout(function() { runProposalHealthCheck('full', fullContent, title); }, 500);
+    }
+    
+  } catch(e) {
+    statusEl.textContent = '生成失败：' + e.message;
+    mechToast('生成失败：' + e.message, 'error');
+  }
+}
+
+// 复制模块内容
+function copyProposalModule(module) {
+  var content = proposalModuleData[module] || '';
+  if (!content) { mechToast('没有可复制的内容', 'warn'); return; }
+  navigator.clipboard.writeText(content).then(function() {
+    mechToast('已复制到剪贴板', 'success');
+  });
+}
+
+// 复制完整活页
+function copyFullProposal() {
+  var text = document.querySelector('#proposalResult div[style*="white-space:pre-wrap"]').innerText;
+  navigator.clipboard.writeText(text).then(function() {
+    mechToast('已复制全文到剪贴板', 'success');
+  });
+}
+
+// 下载申报书
+function downloadProposal() {
+  var text = document.querySelector('#proposalResult div[style*="white-space:pre-wrap"]').innerText;
+  var title = document.getElementById('proposalTitle').value.trim() || '申报书';
+  var blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = title + '_申报书活页.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+  mechToast('申报书已下载', 'success');
+}
+
+// 加入完整活页
+function appendToFullProposal(module) {
+  mechToast('已加入完整活页（可在完整活页中查看）', 'success');
+}
+
+// 申报书AI体检
+async function runProposalHealthCheck(module, content, title) {
+  var statusEl = document.getElementById('proposalStatus');
+  var oldStatus = statusEl.textContent;
+  statusEl.textContent = '正在进行AI体检...';
+  
+  var systemPrompt = '你是一位资深的科研项目评审专家，请对以下申报书内容进行体检评估。从以下维度打分（1-10分）并给出具体建议：1. 创新性（是否有新意）；2. 可行性（研究方法是否可行）；3. 逻辑一致性（内容是否前后一致）；4. 学术规范性（语言、格式是否规范）；5. 基金契合度（是否符合该基金要求）。最后给出总体评价和修改建议。以JSON格式输出：{"scores":{"innovation":0,"feasibility":0,"logic":0,"academic":0,"fit":0},"overall":"","suggestions":[]}';
+  
+  var userPrompt = '课题题目：' + title + '\n模块：' + module + '\n\n内容：\n' + content.substring(0, 8000);
+  
+  try {
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 1500, 'glm-5.3');
+    var parsed = parseHealthCheckJSON(result);
+    
+    // 渲染体检结果
+    var html = '<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:12px;padding:16px;margin-bottom:16px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px">🏥 AI 体检报告</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px">';
+    var scoreNames = {innovation: '创新性', feasibility: '可行性', logic: '逻辑性', academic: '规范性', fit: '契合度'};
+    Object.keys(scoreNames).forEach(function(key) {
+      var score = parsed.scores ? parsed.scores[key] : 0;
+      var color = score >= 8 ? '#16a34a' : score >= 6 ? '#f59e0b' : '#dc2626';
+      html += '<div style="text-align:center;padding:8px;background:#fff;border-radius:8px">';
+      html += '<div style="font-size:20px;font-weight:700;color:' + color + '">' + score + '</div>';
+      html += '<div style="font-size:11px;color:#6b7280">' + scoreNames[key] + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '<div style="font-size:13px;color:#78350f;line-height:1.6;margin-bottom:8px"><strong>总体评价：</strong>' + (parsed.overall || '') + '</div>';
+    if (parsed.suggestions && parsed.suggestions.length > 0) {
+      html += '<div style="font-size:13px;color:#78350f"><strong>修改建议：</strong><ul style="margin:5px 0 0 20px;padding:0">';
+      parsed.suggestions.forEach(function(s) {
+        html += '<li style="margin-bottom:3px">' + s + '</li>';
+      });
+      html += '</ul></div>';
+    }
+    html += '</div>';
+    
+    // 插入到结果前面
+    var resultEl = module === 'full' ? document.getElementById('proposalResult') : document.getElementById('proposalModuleResult');
+    resultEl.insertAdjacentHTML('afterbegin', html);
+    statusEl.textContent = oldStatus + '（已体检）';
+    
+  } catch(e) {
+    statusEl.textContent = oldStatus + '（体检失败）';
+  }
+}
+
+// 解析体检JSON
+function parseHealthCheckJSON(text) {
+  try {
+    var match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+  } catch(e) {}
+  return {scores: {}, overall: '', suggestions: []};
+}
+
+// 从论文工作台导入
+function importFromPaperWorkbench() {
+  // 检查论文工作台是否有保存的项目
+  var paperProjects = [];
+  try {
+    paperProjects = JSON.parse(localStorage.getItem('paper_projects') || '[]');
+  } catch(e) {}
+  
+  if (paperProjects.length === 0) {
+    // 尝试从其他key获取
+    var allKeys = Object.keys(localStorage);
+    var paperKeys = allKeys.filter(function(k) { return k.indexOf('paper') !== -1 || k.indexOf('论文') !== -1; });
+    
+    if (paperKeys.length === 0) {
+      mechToast('论文工作台暂无项目，请先在论文工作台创建项目', 'warn');
+      return;
+    }
+    
+    // 显示可选的论文数据
+    var html = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">';
+    html += '<div style="background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto">';
+    html += '<div style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:16px">📥 从论文工作台导入</div>';
+    html += '<div style="font-size:13px;color:#6b7280;margin-bottom:16px">检测到以下论文相关数据，选择要导入的内容：</div>';
+    
+    paperKeys.forEach(function(key) {
+      var value = localStorage.getItem(key);
+      var preview = value.substring(0, 100) + (value.length > 100 ? '...' : '');
+      html += '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px;cursor:pointer" onclick="importPaperData(\'' + key.replace(/'/g, "\\'") + '\')">';
+      html += '<div style="font-size:13px;font-weight:600;color:#1f2937;margin-bottom:4px">' + key + '</div>';
+      html += '<div style="font-size:11px;color:#9ca3af">' + preview + '</div>';
+      html += '</div>';
+    });
+    
+    html += '<button onclick="this.closest(\'div[style*=position:fixed]\').remove()" style="width:100%;margin-top:10px;padding:10px;background:#f3f4f6;color:#374151;border:none;border-radius:8px;cursor:pointer;font-size:13px">取消</button>';
+    html += '</div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+    
+  } else {
+    // 显示论文项目列表
+    var html = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">';
+    html += '<div style="background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto">';
+    html += '<div style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:16px">📥 选择要导入的论文项目</div>';
+    
+    paperProjects.forEach(function(p, i) {
+      html += '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px;cursor:pointer" onclick="importPaperProject(' + i + ')">';
+      html += '<div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:4px">' + (p.title || '论文项目 ' + (i+1)) + '</div>';
+      if (p.topic) html += '<div style="font-size:12px;color:#6b7280">方向：' + p.topic + '</div>';
+      if (p.createdAt) html += '<div style="font-size:11px;color:#9ca3af">创建：' + new Date(p.createdAt).toLocaleDateString() + '</div>';
+      html += '</div>';
+    });
+    
+    html += '<button onclick="this.closest(\'div[style*=position:fixed]\').remove()" style="width:100%;margin-top:10px;padding:10px;background:#f3f4f6;color:#374151;border:none;border-radius:8px;cursor:pointer;font-size:13px">取消</button>';
+    html += '</div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+}
+
+// 导入论文数据
+function importPaperData(key) {
+  var value = localStorage.getItem(key) || '';
+  document.getElementById('proposalExtra').value = value;
+  document.getElementById('proposalTitle').value = key.replace(/paper_/gi, '').replace(/_/g, ' ');
+  document.querySelector('div[style*="position:fixed"]').remove();
+  mechToast('已导入论文数据', 'success');
+}
+
+// 导入论文项目
+function importPaperProject(index) {
+  var paperProjects = JSON.parse(localStorage.getItem('paper_projects') || '[]');
+  var p = paperProjects[index];
+  if (!p) return;
+  
+  document.getElementById('proposalTitle').value = p.title || '';
+  var extra = [];
+  if (p.topic) extra.push('研究方向：' + p.topic);
+  if (p.content) extra.push('研究内容：' + p.content);
+  if (p.method) extra.push('研究方法：' + p.method);
+  if (p.innovation) extra.push('创新点：' + p.innovation);
+  document.getElementById('proposalExtra').value = extra.join('\n\n');
+  
+  document.querySelector('div[style*="position:fixed"]').remove();
+  mechToast('已从论文工作台导入项目', 'success');
+}
+
+</script>
+</body></html>');
   w.document.close();
   w.focus();
 }
