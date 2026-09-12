@@ -17568,6 +17568,11 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
                 <option value="qwen-vl-max">🎯 Qwen-VL-Max（更精准）</option>
               </select>
               
+              <select id="imageQuickStyleRef" style="border:1px solid #fcd34d;border-radius:8px;padding:8px;font-size:12px;background:#fff;max-width:200px" title="选择教案风格参考（与下方风格库同步）">
+                <option value="none">🎨 不使用风格参考</option>
+                <option value="all">📚 综合所有风格</option>
+              </select>
+              
               <span id="imageQuickStatus" style="font-size:12px;color:#92400e"></span>
             </div>
           </div>
@@ -136908,10 +136913,37 @@ function toggleImageQuickGen(){
   if(panel.style.display === 'none' || !panel.style.display){
     panel.style.display = 'block';
     arrow.textContent = '▲';
+    // 同步风格参考选项
+    syncImageQuickStyleRefs();
   }else{
     panel.style.display = 'none';
     arrow.textContent = '▼';
   }
+}
+
+// 同步识图面板的风格参考选项（与下方风格库保持一致）
+function syncImageQuickStyleRefs(){
+  try{
+    var sel = document.getElementById('imageQuickStyleRef');
+    if(!sel) return;
+    var refs = JSON.parse(localStorage.getItem('aiLessonRefs') || '[]');
+    // 保留前两个选项
+    var currentVal = sel.value;
+    sel.innerHTML = '<option value="none">🎨 不使用风格参考</option><option value="all">📚 综合所有风格</option>';
+    // 添加各个风格参考
+    if(refs && refs.length > 0){
+      refs.forEach(function(ref, idx){
+        var opt = document.createElement('option');
+        opt.value = String(idx);
+        var name = ref.name || ('风格' + (idx+1));
+        if(name.length > 15) name = name.slice(0, 15) + '...';
+        opt.textContent = '📝 ' + name;
+        sel.appendChild(opt);
+      });
+    }
+    // 恢复选择
+    sel.value = currentVal;
+  }catch(e){ console.warn('同步风格选项失败:', e); }
 }
 
 // 解析页码输入（支持 "3-5"、"3,4,5"、"3" 等格式）
@@ -137095,13 +137127,30 @@ async function generateLessonFromImages(){
     return;
   }
   
-  // 第二步：获取教案格式和课程类型
+  // 第二步：获取教案格式、课程类型和风格参考
   const fmt = document.getElementById('lessonFormat').value;
   const courseType = document.getElementById('lessonCourseType').value;
   const subject = document.getElementById('lessonSubject').value.trim();
   const chapter = document.getElementById('lessonChapter').value.trim();
   
   const formatReq = LESSON_FORMATS[fmt] || LESSON_FORMATS.standard;
+  
+  // 获取教案风格参考
+  var styleText = '';
+  var styleSel = document.getElementById('imageQuickStyleRef');
+  var styleIdx = styleSel ? styleSel.value : 'none';
+  if(styleIdx && styleIdx !== 'none'){
+    try{
+      var refs = JSON.parse(localStorage.getItem('aiLessonRefs') || '[]');
+      if(refs && refs.length > 0){
+        if(styleIdx === 'all'){
+          styleText = refs.map(function(r){ return r.content; }).join('\n\n---\n\n').slice(0, 5000);
+        }else if(!isNaN(parseInt(styleIdx)) && refs[parseInt(styleIdx)]){
+          styleText = refs[parseInt(styleIdx)].content.slice(0, 5000);
+        }
+      }
+    }catch(e){ console.warn('风格参考获取失败:', e); }
+  }
   
   // 第三步：调用Qwen-VL多模态模型识图生成教案
   status.innerHTML = '🤖 AI正在看图生成教案（' + model + '，约30-60秒）...';
@@ -137128,6 +137177,9 @@ async function generateLessonFromImages(){
   userText += '章节：' + (chapter || '（请根据图片内容推断）') + '\n';
   userText += '课程类型：' + courseType + '\n\n';
   userText += '【教案格式要求】\n' + formatReq + '\n\n';
+  if(styleText && styleText.trim().length > 0){
+    userText += '【教案风格参考（模仿其结构、详略与表达风格）】\n' + styleText + '\n\n';
+  }
   userText += '【要求】\n';
   userText += '1. 必须基于图片中的教材内容撰写，不要编造图片中没有的知识点\n';
   userText += '2. 准确理解图片中的概念、原理、机制、公式、图表\n';
