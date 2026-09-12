@@ -17181,6 +17181,38 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
         
         <div id="healthCheckResult" style="display:none;margin-top:16px"></div>
       </div>
+      <!-- 模拟评审专家反馈 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">👨‍🏫 模拟评审专家反馈</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:14px">3位专家独立评审（学术专家/方法专家/管理专家），给出资助建议、修改建议和专家共识分析</div>
+        
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">申报书内容（粘贴活页全文）</label>
+        <textarea id="reviewContent" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;min-height:100px;resize:vertical" placeholder="粘贴您的申报书活页内容，3位专家将独立评审并给出反馈..."></textarea>
+        
+        <div style="margin-top:14px;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">评审专家（可多选）</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="reviewAcademic" checked> 学术专家（理论/创新）
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="reviewMethod" checked> 方法专家（设计/分析）
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="reviewManagement" checked> 管理专家（可行性/价值）
+            </label>
+          </div>
+        </div>
+        
+        <div style="display:flex;gap:10px;align-items:center">
+          <button onclick="runExpertReview()" style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🎯 开始专家评审</button>
+          <button onclick="fillReviewFromProposal()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:12px">📋 从生成结果导入</button>
+          <span id="reviewStatus" style="font-size:12px;color:#6b7280"></span>
+        </div>
+        
+        <div id="reviewResult" style="display:none;margin-top:16px"></div>
+      </div>
+
 
 
     </div>
@@ -138293,6 +138325,249 @@ async function runTopicEvaluation() {
   } catch(e) {
     statusEl.textContent = '评估失败：' + e.message;
     mechToast('选题评估失败：' + e.message, 'error');
+  }
+}
+
+
+// ========== 模拟评审专家反馈 ==========
+
+// 从生成结果导入申报书内容
+function fillReviewFromProposal() {
+  var proposalResult = document.getElementById('proposalResult');
+  var moduleResult = document.getElementById('proposalModuleResult');
+  var content = '';
+  
+  if (proposalResult && proposalResult.style.display === 'block' && proposalResult.innerText.trim()) {
+    content = proposalResult.innerText.trim();
+  } else if (moduleResult && moduleResult.style.display === 'block' && moduleResult.innerText.trim()) {
+    content = moduleResult.innerText.trim();
+  }
+  
+  if (content) {
+    document.getElementById('reviewContent').value = content;
+    mechToast('已从生成结果导入申报书内容', 'success');
+  } else {
+    mechToast('请先生成申报书内容', 'warn');
+  }
+}
+
+// 运行专家评审（3位专家独立评审）
+async function runExpertReview() {
+  var content = document.getElementById('reviewContent').value.trim();
+  if (!content) { mechToast('请先粘贴申报书内容', 'warn'); return; }
+  
+  // 检查选择的专家
+  var experts = [];
+  if (document.getElementById('reviewAcademic').checked) experts.push({
+    key: 'academic',
+    name: '学术专家',
+    role: '理论与创新性评审',
+    model: 'deepseek-v4-pro',
+    systemPrompt: '你是一位体育学领域的资深学术评审专家，擅长从理论深度和创新性角度评审课题申报书。请重点关注：1.研究问题的学术价值和理论贡献；2.文献综述的全面性和前沿性；3.理论框架的清晰度和合理性；4.研究视角的创新性；5.预期成果的学术影响力。请给出：①总体评价（100字内）；②主要优点（3-5条）；③主要问题（3-5条）；④资助建议（建议资助/修改后资助/不建议资助）；⑤具体修改建议（5-8条）。以JSON格式输出：{"overall":"总体评价","strengths":["优点1"],"weaknesses":["问题1"],"funding":"建议资助","suggestions":["建议1"]}'
+  });
+  if (document.getElementById('reviewMethod').checked) experts.push({
+    key: 'method',
+    name: '方法专家',
+    role: '研究设计与方法评审',
+    model: 'glm-5.3',
+    systemPrompt: '你是一位研究方法和统计学专家，擅长从研究设计和方法科学性角度评审课题申报书。请重点关注：1.研究设计的合理性（实验/准实验/调查/案例等）；2.样本选择和样本量的充分性；3.数据收集方法的科学性；4.数据分析方法的恰当性；5.变量控制和混淆因素处理；6.信效度和因果推断强度。请给出：①总体评价（100字内）；②主要优点（3-5条）；③主要问题（3-5条）；④资助建议（建议资助/修改后资助/不建议资助）；⑤具体修改建议（5-8条）。以JSON格式输出：{"overall":"总体评价","strengths":["优点1"],"weaknesses":["问题1"],"funding":"建议资助","suggestions":["建议1"]}'
+  });
+  if (document.getElementById('reviewManagement').checked) experts.push({
+    key: 'management',
+    name: '管理专家',
+    role: '可行性与应用价值评审',
+    model: 'qwen3.5-plus',
+    systemPrompt: '你是一位科研管理和政策研究专家，擅长从可行性和应用价值角度评审课题申报书。请重点关注：1.研究基础和团队配置的充分性；2.研究进度安排的合理性；3.经费预算的合理性；4.预期成果的可实现性；5.研究成果的实践应用价值和政策参考意义；6.风险识别和应对措施。请给出：①总体评价（100字内）；②主要优点（3-5条）；③主要问题（3-5条）；④资助建议（建议资助/修改后资助/不建议资助）；⑤具体修改建议（5-8条）。以JSON格式输出：{"overall":"总体评价","strengths":["优点1"],"weaknesses":["问题1"],"funding":"建议资助","suggestions":["建议1"]}'
+  });
+  
+  if (experts.length === 0) { mechToast('请至少选择一位评审专家', 'warn'); return; }
+  
+  var statusEl = document.getElementById('reviewStatus');
+  var resultEl = document.getElementById('reviewResult');
+  
+  statusEl.textContent = '正在进行' + experts.length + '位专家独立评审...';
+  resultEl.style.display = 'none';
+  
+  try {
+    // 多位专家并行评审
+    var promises = experts.map(function(exp) {
+      var userPrompt = '申报书内容：\n' + content.substring(0, 8000);
+      return callDeepSeekAPI(exp.systemPrompt, userPrompt, 2500, exp.model)
+        .then(function(result) {
+          return {expert: exp, result: result};
+        })
+        .catch(function(err) {
+          return {expert: exp, result: null, error: err.message};
+        });
+    });
+    
+    var reviewResults = await Promise.all(promises);
+    
+    // 解析评审结果
+    var parsedResults = [];
+    reviewResults.forEach(function(rr) {
+      if (rr.result) {
+        try {
+          var parsed = JSON.parse(rr.result.replace(/```json|```/g, '').trim());
+          parsedResults.push({expert: rr.expert, parsed: parsed});
+        } catch(e) {
+          parsedResults.push({expert: rr.expert, raw: rr.result});
+        }
+      }
+    });
+    
+    // 渲染评审结果
+    var html = '<div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fecaca;border-radius:12px;padding:16px;margin-bottom:16px">';
+    html += '<div style="font-size:15px;font-weight:700;color:#991b1b;margin-bottom:10px">👨‍🏫 专家评审报告（共' + parsedResults.length + '位专家）</div>';
+    
+    // 资助建议汇总
+    var fundingCounts = {'建议资助': 0, '修改后资助': 0, '不建议资助': 0};
+    parsedResults.forEach(function(pr) {
+      if (pr.parsed && pr.parsed.funding) {
+        fundingCounts[pr.parsed.funding] = (fundingCounts[pr.parsed.funding] || 0) + 1;
+      }
+    });
+    
+    var overallFunding = '建议资助';
+    if (fundingCounts['不建议资助'] > 0) overallFunding = '存在分歧';
+    else if (fundingCounts['修改后资助'] > 0) overallFunding = '修改后资助';
+    
+    var fundingColor = overallFunding === '建议资助' ? '#16a34a' : overallFunding === '修改后资助' ? '#d97706' : '#dc2626';
+    
+    html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">';
+    html += '<div style="padding:10px 20px;background:' + fundingColor + ';color:#fff;border-radius:8px;font-size:16px;font-weight:700">' + overallFunding + '</div>';
+    html += '<div style="font-size:12px;color:#374151">';
+    html += '<div>建议资助: ' + (fundingCounts['建议资助'] || 0) + '位</div>';
+    html += '<div>修改后资助: ' + (fundingCounts['修改后资助'] || 0) + '位</div>';
+    html += '<div>不建议资助: ' + (fundingCounts['不建议资助'] || 0) + '位</div>';
+    html += '</div></div>';
+    html += '</div>';
+    
+    // 各位专家独立评审意见
+    parsedResults.forEach(function(pr, index) {
+      var exp = pr.expert;
+      var parsed = pr.parsed;
+      
+      var expColor = exp.key === 'academic' ? '#7c3aed' : exp.key === 'method' ? '#059669' : '#d97706';
+      
+      html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px">';
+      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
+      html += '<div style="width:36px;height:36px;background:' + expColor + ';color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">' + (index+1) + '</div>';
+      html += '<div>';
+      html += '<div style="font-size:14px;font-weight:700;color:#1f2937">' + exp.name + '</div>';
+      html += '<div style="font-size:11px;color:#6b7280">' + exp.role + ' | ' + exp.model + '</div>';
+      html += '</div>';
+      if (parsed && parsed.funding) {
+        var fColor = parsed.funding === '建议资助' ? '#16a34a' : parsed.funding === '修改后资助' ? '#d97706' : '#dc2626';
+        html += '<div style="margin-left:auto;padding:6px 12px;background:' + fColor + ';color:#fff;border-radius:6px;font-size:12px;font-weight:600">' + parsed.funding + '</div>';
+      }
+      html += '</div>';
+      
+      if (parsed) {
+        // 总体评价
+        if (parsed.overall) {
+          html += '<div style="font-size:12px;color:#374151;line-height:1.6;background:#f9fafb;padding:10px 12px;border-radius:8px;margin-bottom:10px"><strong>总体评价：</strong>' + parsed.overall + '</div>';
+        }
+        
+        // 主要优点
+        if (parsed.strengths && parsed.strengths.length > 0) {
+          html += '<div style="margin-bottom:10px">';
+          html += '<div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:6px">✅ 主要优点</div>';
+          html += '<ul style="margin:0;padding-left:20px;font-size:11px;color:#374151;line-height:1.6">';
+          parsed.strengths.forEach(function(s) { html += '<li style="margin-bottom:2px">' + s + '</li>'; });
+          html += '</ul></div>';
+        }
+        
+        // 主要问题
+        if (parsed.weaknesses && parsed.weaknesses.length > 0) {
+          html += '<div style="margin-bottom:10px">';
+          html += '<div style="font-size:12px;font-weight:700;color:#991b1b;margin-bottom:6px">⚠️ 主要问题</div>';
+          html += '<ul style="margin:0;padding-left:20px;font-size:11px;color:#374151;line-height:1.6">';
+          parsed.weaknesses.forEach(function(w) { html += '<li style="margin-bottom:2px">' + w + '</li>'; });
+          html += '</ul></div>';
+        }
+        
+        // 修改建议
+        if (parsed.suggestions && parsed.suggestions.length > 0) {
+          html += '<div>';
+          html += '<div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:6px">💡 修改建议</div>';
+          html += '<ul style="margin:0;padding-left:20px;font-size:11px;color:#374151;line-height:1.6">';
+          parsed.suggestions.forEach(function(s, i) { html += '<li style="margin-bottom:2px"><strong>' + (i+1) + '.</strong> ' + s + '</li>'; });
+          html += '</ul></div>';
+        }
+      } else if (pr.raw) {
+        html += '<div style="font-size:12px;color:#4b5563;line-height:1.6;white-space:pre-wrap">' + pr.raw.substring(0, 1000) + '</div>';
+      }
+      
+      html += '</div>';
+    });
+    
+    // 专家共识与分歧分析
+    if (parsedResults.length > 1) {
+      html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px">';
+      html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">🤝 专家共识与分歧分析</div>';
+      
+      // 共识优点（多位专家都提到的优点）
+      var allStrengths = [];
+      parsedResults.forEach(function(pr) {
+        if (pr.parsed && pr.parsed.strengths) {
+          allStrengths = allStrengths.concat(pr.parsed.strengths);
+        }
+      });
+      
+      // 共识问题（多位专家都提到的问题）
+      var allWeaknesses = [];
+      parsedResults.forEach(function(pr) {
+        if (pr.parsed && pr.parsed.weaknesses) {
+          allWeaknesses = allWeaknesses.concat(pr.parsed.weaknesses);
+        }
+      });
+      
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+      
+      // 共识优点
+      html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px">';
+      html += '<div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:6px">✅ 共识优点（' + allStrengths.length + '条）</div>';
+      html += '<ul style="margin:0;padding-left:16px;font-size:11px;color:#374151;line-height:1.5">';
+      allStrengths.slice(0, 5).forEach(function(s) { html += '<li style="margin-bottom:2px">' + s.substring(0, 50) + (s.length > 50 ? '...' : '') + '</li>'; });
+      html += '</ul></div>';
+      
+      // 共识问题
+      html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px">';
+      html += '<div style="font-size:12px;font-weight:700;color:#991b1b;margin-bottom:6px">⚠️ 共识问题（' + allWeaknesses.length + '条）</div>';
+      html += '<ul style="margin:0;padding-left:16px;font-size:11px;color:#374151;line-height:1.5">';
+      allWeaknesses.slice(0, 5).forEach(function(w) { html += '<li style="margin-bottom:2px">' + w.substring(0, 50) + (w.length > 50 ? '...' : '') + '</li>'; });
+      html += '</ul></div>';
+      
+      html += '</div>';
+      
+      // 优先修改建议（综合所有专家的建议）
+      var allSuggestions = [];
+      parsedResults.forEach(function(pr) {
+        if (pr.parsed && pr.parsed.suggestions) {
+          allSuggestions = allSuggestions.concat(pr.parsed.suggestions);
+        }
+      });
+      
+      if (allSuggestions.length > 0) {
+        html += '<div style="margin-top:12px;padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px">';
+        html += '<div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:6px">🎯 优先修改建议（综合' + parsedResults.length + '位专家，共' + allSuggestions.length + '条）</div>';
+        html += '<ol style="margin:0;padding-left:20px;font-size:11px;color:#374151;line-height:1.6">';
+        allSuggestions.slice(0, 8).forEach(function(s, i) { html += '<li style="margin-bottom:2px">' + s + '</li>'; });
+        html += '</ol></div>';
+      }
+      
+      html += '</div>';
+    }
+    
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.textContent = '评审完成！' + parsedResults.length + '位专家独立评审，综合建议：' + overallFunding;
+    mechToast('专家评审完成！', 'success');
+    
+  } catch(e) {
+    statusEl.textContent = '评审失败：' + e.message;
+    mechToast('专家评审失败：' + e.message, 'error');
   }
 }
 </script>
