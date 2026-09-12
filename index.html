@@ -17516,7 +17516,64 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
         </div>
 
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">教材/书籍章节内容（可上传书目自动截取，或手动粘贴）</label>
+        
+        <!-- 📸 识图快速生成面板 -->
+        <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;border-radius:12px;padding:16px;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleImageQuickGen()">
+            <div>
+              <span style="font-size:15px;font-weight:700;color:#92400e">📸 识图快速生成教案</span>
+              <span style="font-size:11px;color:#b45309;margin-left:8px">无需提取文本 · AI直接看图 · 30秒生成</span>
+            </div>
+            <span id="imageQuickGenArrow" style="font-size:18px;color:#92400e">▼</span>
+          </div>
+          
+          <div id="imageQuickGenPanel" style="display:none;margin-top:14px">
+            <div style="font-size:12px;color:#78350f;margin-bottom:12px;background:#fffbeb;padding:8px 12px;border-radius:6px;border-left:3px solid #f59e0b">
+              💡 <b>使用方法：</b>上传教材PDF后输入页码（如 3-5 或 3,4,5），或直接上传教材截图/照片，AI直接"看"图片内容生成教案，省去OCR和章节定位步骤。
+            </div>
+            
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
+              <!-- PDF上传 -->
+              <div style="flex:1;min-width:280px">
+                <label style="font-size:12px;font-weight:600;color:#78350f;display:block;margin-bottom:6px">📄 上传教材PDF</label>
+                <input type="file" id="imageQuickPdf" accept=".pdf" onchange="onImageQuickPdfChange()" style="width:100%;border:1px solid #fcd34d;border-radius:8px;padding:8px;font-size:12px;background:#fff">
+                <div id="imageQuickPdfInfo" style="font-size:11px;color:#92400e;margin-top:4px"></div>
+              </div>
+              
+              <!-- 页码输入 -->
+              <div style="min-width:140px">
+                <label style="font-size:12px;font-weight:600;color:#78350f;display:block;margin-bottom:6px">📑 页码范围</label>
+                <input type="text" id="imageQuickPages" placeholder="如: 3-5 或 3,4,5" style="width:100%;border:1px solid #fcd34d;border-radius:8px;padding:8px;font-size:12px;background:#fff">
+              </div>
+              
+              <!-- 图片上传 -->
+              <div style="flex:1;min-width:280px">
+                <label style="font-size:12px;font-weight:600;color:#78350f;display:block;margin-bottom:6px">🖼️ 或上传教材截图/照片（可多选）</label>
+                <input type="file" id="imageQuickImgs" accept="image/*" multiple onchange="onImageQuickImgsChange()" style="width:100%;border:1px solid #fcd34d;border-radius:8px;padding:8px;font-size:12px;background:#fff">
+              </div>
+            </div>
+            
+            <!-- 图片预览 -->
+            <div id="imageQuickPreview" style="display:none;margin-top:12px">
+              <div style="font-size:12px;font-weight:600;color:#78350f;margin-bottom:6px">📷 待识别图片预览（<span id="imageQuickCount">0</span>张）</div>
+              <div id="imageQuickThumbs" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+            </div>
+            
+            <!-- 生成按钮 -->
+            <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">
+              <button onclick="generateLessonFromImages()" style="background:#d97706;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🚀 识图生成教案</button>
+              
+              <select id="imageQuickModel" style="border:1px solid #fcd34d;border-radius:8px;padding:8px;font-size:12px;background:#fff">
+                <option value="qwen-vl-plus">⚡ Qwen-VL-Plus（速度快）</option>
+                <option value="qwen-vl-max">🎯 Qwen-VL-Max（更精准）</option>
+              </select>
+              
+              <span id="imageQuickStatus" style="font-size:12px;color:#92400e"></span>
+            </div>
+          </div>
+        </div>
+
+<label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">教材/书籍章节内容（可上传书目自动截取，或手动粘贴）</label>
 
         <textarea id="lessonChapterContent" rows="6" placeholder="粘贴教材该章节的核心内容：概念、原理、机制、要点...（AI 将基于此内容撰写教案）" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
 
@@ -136834,6 +136891,332 @@ uploadBookFile = uploadBookFileOptimized;
 autoUploadBook = autoUploadBookOptimized;
 
 console.log('🚀 教材识别速度优化已加载：增量解析 + 缓存机制 + 预加载');
+
+
+// ============================================================
+// 📸 一键识图生成教案（Qwen-VL多模态直接看图，省去OCR和文本提取）
+// ============================================================
+
+// 识图快速生成面板的全局变量
+window._imageQuickImages = []; // 存储待识别的图片base64列表
+window._imageQuickPdf = null; // 存储PDF文档对象
+
+// 切换识图快速生成面板显示/隐藏
+function toggleImageQuickGen(){
+  const panel = document.getElementById('imageQuickGenPanel');
+  const arrow = document.getElementById('imageQuickGenArrow');
+  if(panel.style.display === 'none' || !panel.style.display){
+    panel.style.display = 'block';
+    arrow.textContent = '▲';
+  }else{
+    panel.style.display = 'none';
+    arrow.textContent = '▼';
+  }
+}
+
+// 解析页码输入（支持 "3-5"、"3,4,5"、"3" 等格式）
+function parsePageInput(input, maxPages){
+  if(!input || !input.trim()) return [];
+  const pages = new Set();
+  const parts = input.trim().split(/[,，、\s]+/);
+  for(const part of parts){
+    if(!part) continue;
+    const rangeMatch = part.match(/^(\d+)\s*[-~—]\s*(\d+)$/);
+    if(rangeMatch){
+      const start = parseInt(rangeMatch[1]);
+      const end = parseInt(rangeMatch[2]);
+      for(let p = start; p <= Math.min(end, maxPages || 9999); p++){
+        if(p >= 1) pages.add(p);
+      }
+    }else{
+      const p = parseInt(part);
+      if(p >= 1 && (!maxPages || p <= maxPages)) pages.add(p);
+    }
+  }
+  return Array.from(pages).sort((a,b) => a - b);
+}
+
+// PDF文件选择后加载
+function onImageQuickPdfChange(){
+  const fi = document.getElementById('imageQuickPdf');
+  const info = document.getElementById('imageQuickPdfInfo');
+  if(!fi.files || !fi.files[0]){
+    info.textContent = '';
+    window._imageQuickPdf = null;
+    return;
+  }
+  const file = fi.files[0];
+  info.innerHTML = '⏳ 正在加载PDF...';
+  info.style.color = '#d97706';
+  
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      pdfjsLib.getDocument({ data: e.target.result }).promise.then(function(pdf){
+        window._imageQuickPdf = pdf;
+        info.innerHTML = '✅ 已加载：' + file.name + '（共' + pdf.numPages + '页），请输入页码';
+        info.style.color = '#16a34a';
+      }).catch(function(err){
+        info.innerHTML = '❌ PDF加载失败：' + err.message;
+        info.style.color = '#dc2626';
+      });
+    }catch(err){
+      info.innerHTML = '❌ PDF加载异常：' + err.message;
+      info.style.color = '#dc2626';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// 图片文件选择后预览
+function onImageQuickImgsChange(){
+  const fi = document.getElementById('imageQuickImgs');
+  const preview = document.getElementById('imageQuickPreview');
+  const thumbs = document.getElementById('imageQuickThumbs');
+  const count = document.getElementById('imageQuickCount');
+  
+  if(!fi.files || fi.files.length === 0){
+    preview.style.display = 'none';
+    window._imageQuickImages = [];
+    return;
+  }
+  
+  window._imageQuickImages = [];
+  thumbs.innerHTML = '';
+  let loaded = 0;
+  
+  for(let i = 0; i < fi.files.length; i++){
+    const file = fi.files[i];
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const base64 = e.target.result;
+      window._imageQuickImages.push(base64);
+      
+      // 缩略图
+      const thumb = document.createElement('div');
+      thumb.style.cssText = 'position:relative;width:80px;height:100px;border:1px solid #fcd34d;border-radius:4px;overflow:hidden;background:#fff';
+      thumb.innerHTML = '<img src="' + base64 + '" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);color:#fff;font-size:10px;text-align:center;padding:2px">图' + (loaded+1) + '</div>';
+      thumbs.appendChild(thumb);
+      
+      loaded++;
+      count.textContent = loaded;
+      if(loaded === fi.files.length){
+        preview.style.display = 'block';
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// 渲染PDF指定页面为图片
+async function renderPDFPagesToImages(pdf, pageNums){
+  const images = [];
+  const SCALE = 1.8; // 较高分辨率，确保文字清晰
+  
+  for(const pageNum of pageNums){
+    try{
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({scale: SCALE});
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      await page.render({canvasContext: ctx, viewport: viewport}).promise;
+      const imageData = canvas.toDataURL('image/jpeg', 0.85);
+      images.push({pageNum: pageNum, base64: imageData});
+    }catch(err){
+      console.error('第' + pageNum + '页渲染失败:', err);
+    }
+  }
+  return images;
+}
+
+// 更新图片预览（PDF渲染后）
+function updateImagePreview(images){
+  const preview = document.getElementById('imageQuickPreview');
+  const thumbs = document.getElementById('imageQuickThumbs');
+  const count = document.getElementById('imageQuickCount');
+  
+  thumbs.innerHTML = '';
+  images.forEach(function(img, idx){
+    const thumb = document.createElement('div');
+    thumb.style.cssText = 'position:relative;width:80px;height:100px;border:1px solid #fcd34d;border-radius:4px;overflow:hidden;background:#fff';
+    thumb.innerHTML = '<img src="' + img.base64 + '" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);color:#fff;font-size:10px;text-align:center;padding:2px">p.' + img.pageNum + '</div>';
+    thumbs.appendChild(thumb);
+  });
+  
+  count.textContent = images.length;
+  preview.style.display = 'block';
+}
+
+// 识图生成教案（核心函数）
+async function generateLessonFromImages(){
+  const status = document.getElementById('imageQuickStatus');
+  const pdfInput = document.getElementById('imageQuickPdf');
+  const pagesInput = document.getElementById('imageQuickPages').value.trim();
+  const model = document.getElementById('imageQuickModel').value;
+  
+  let allImages = [];
+  
+  // 第一步：收集图片（来自PDF渲染或直接上传的图片）
+  status.innerHTML = '📷 准备图片中...';
+  status.style.color = '#d97706';
+  
+  // 从PDF渲染
+  if(window._imageQuickPdf && pagesInput){
+    const pageNums = parsePageInput(pagesInput, window._imageQuickPdf.numPages);
+    if(pageNums.length === 0){
+      status.innerHTML = '⚠️ 请输入有效的页码（如 3-5 或 3,4,5）';
+      status.style.color = '#dc2626';
+      return;
+    }
+    if(pageNums.length > 10){
+      status.innerHTML = '⚠️ 一次最多识别10页，请减少页码范围';
+      status.style.color = '#dc2626';
+      return;
+    }
+    status.innerHTML = '📄 正在渲染PDF第' + pageNums.join(',') + '页...';
+    const pdfImages = await renderPDFPagesToImages(window._imageQuickPdf, pageNums);
+    allImages = allImages.concat(pdfImages);
+    updateImagePreview(pdfImages);
+  }
+  
+  // 加上直接上传的图片
+  if(window._imageQuickImages && window._imageQuickImages.length > 0){
+    window._imageQuickImages.forEach(function(base64, idx){
+      allImages.push({pageNum: '上传' + (idx+1), base64: base64});
+    });
+  }
+  
+  if(allImages.length === 0){
+    status.innerHTML = '⚠️ 请先上传教材PDF并输入页码，或上传教材截图';
+    status.style.color = '#dc2626';
+    return;
+  }
+  
+  // 第二步：获取教案格式和课程类型
+  const fmt = document.getElementById('lessonFormat').value;
+  const courseType = document.getElementById('lessonCourseType').value;
+  const subject = document.getElementById('lessonSubject').value.trim();
+  const chapter = document.getElementById('lessonChapter').value.trim();
+  
+  const formatReq = LESSON_FORMATS[fmt] || LESSON_FORMATS.standard;
+  
+  // 第三步：调用Qwen-VL多模态模型识图生成教案
+  status.innerHTML = '🤖 AI正在看图生成教案（' + model + '，约30-60秒）...';
+  status.style.color = '#d97706';
+  
+  const startTime = Date.now();
+  
+  // 构建多模态消息
+  var messages = [
+    {
+      role: 'system',
+      content: '你是高校体育专业资深教师和教案设计专家。你会直接"看"用户提供的教材页面图片，理解其中的概念、原理、机制、公式、图表等内容，然后撰写一份完整、专业、可直接使用的教案。'
+    },
+    {
+      role: 'user',
+      content: []
+    }
+  ];
+  
+  // 添加文字提示
+  var userText = '请仔细阅读以下教材页面图片，理解全部内容后，撰写一份完整教案。\n\n';
+  userText += '【教案信息】\n';
+  userText += '科目：' + (subject || '（请根据图片内容推断）') + '\n';
+  userText += '章节：' + (chapter || '（请根据图片内容推断）') + '\n';
+  userText += '课程类型：' + courseType + '\n\n';
+  userText += '【教案格式要求】\n' + formatReq + '\n\n';
+  userText += '【要求】\n';
+  userText += '1. 必须基于图片中的教材内容撰写，不要编造图片中没有的知识点\n';
+  userText += '2. 准确理解图片中的概念、原理、机制、公式、图表\n';
+  userText += '3. 教学目标要具体可衡量，重难点要准确\n';
+  userText += '4. 教学过程要详细，包含导入、讲解、互动、练习、总结等环节\n';
+  userText += '5. 适当设计课堂提问和互动环节\n';
+  userText += '6. 语言专业规范，符合高校体育专业教学要求\n';
+  userText += '7. 输出完整教案，不要省略任何环节\n\n';
+  userText += '以下是教材页面图片（共' + allImages.length + '张）：';
+  
+  messages[1].content.push({type: 'text', text: userText});
+  
+  // 添加所有图片
+  for(var i = 0; i < allImages.length; i++){
+    messages[1].content.push({type: 'text', text: '--- 第' + (i+1) + '张图片（页码：' + allImages[i].pageNum + '）---'});
+    messages[1].content.push({type: 'image_url', image_url: {url: allImages[i].base64}});
+  }
+  
+  try{
+    // 调用Qwen-VL
+    var result = await callQwenChat(messages, model, 0.4, 6000);
+    
+    if(!result || result.trim().length < 50){
+      throw new Error('AI返回内容过少');
+    }
+    
+    var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    status.innerHTML = '✅ 识图生成完成！耗时' + elapsed + '秒，共' + (result.length/1000).toFixed(1) + 'K字';
+    status.style.color = '#16a34a';
+    
+    // 自动填充科目和章节（如果为空）
+    if(!document.getElementById('lessonSubject').value.trim()){
+      document.getElementById('lessonSubject').value = subject || '（识图生成）';
+    }
+    if(!document.getElementById('lessonChapter').value.trim()){
+      document.getElementById('lessonChapter').value = chapter || '（识图生成）';
+    }
+    
+    // 显示结果（直接操作lessonResult div，复用教案结果展示样式）
+    var esc = function(t){ return t.replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    var wordCount = result.replace(/\s/g,'').length;
+    var estMinutes = Math.max(40, Math.round(wordCount / 15));
+    var resEl = document.getElementById('lessonResult');
+    resEl.style.display = 'block';
+    var modelTag = '<span style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;margin-left:8px">📸 ' + model + ' 识图生成</span>';
+    var resHtml = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">'
+      + '<div style="font-size:15px;font-weight:700;color:#d97706">📖 识图生成教案：' + esc(subject || '（识图推断）') + ' · ' + esc(chapter || '（识图推断）') + modelTag + '</div>'
+      + '<div style="display:flex;gap:6px;align-items:center">'
+      + '<span style="font-size:11px;color:#9ca3af">' + wordCount + '字 · 约' + estMinutes + '分钟讲稿 · 耗时' + elapsed + '秒</span>'
+      + '<button onclick="copyLessonText()" style="background:#f3f4f6;border:1px solid #d1d5db;color:#374151;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">📋 复制</button>'
+      + '<button onclick="downloadLessonTxt()" style="background:#f3f4f6;border:1px solid #d1d5db;color:#374151;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">📄 导出TXT</button>'
+      + '</div></div>'
+      + '<div style="font-size:12px;color:#b45309;margin-bottom:12px">⚠️ AI 识图生成初稿，请结合班级学情复核调整后使用</div>'
+      + '<div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(result) + '</div></div>';
+    
+    // 如果勾选了AI体检，自动执行
+    if(document.getElementById('lessonHealthCheck') && document.getElementById('lessonHealthCheck').checked){
+      resHtml += '<div id="healthBlock" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin-top:16px"><div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">🔍 AI 教案体检中（约1分钟，GLM 独立评审）...</div><div style="font-size:12px;color:#6b7280">对照格式逐环节核查 · 质量评分 · 问题清单 · 补写建议</div></div>';
+      resEl.innerHTML = resHtml;
+      // 异步执行AI体检
+      (async function(){
+        try{
+          var fmtReq = '';
+          try{ fmtReq = getLessonFormatReq(); }catch(e){ fmtReq = ''; }
+          var health = await healthCheckLesson(result, fmtReq);
+          if(health && health.trim()){
+            var hb = document.getElementById('healthBlock');
+            if(hb){ hb.outerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin-top:16px"><div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:8px">🔍 AI 教案体检报告（GLM 独立评审）</div><div style="font-size:13px;line-height:2;color:#1f2937;white-space:pre-wrap">' + esc(health) + '</div></div>'; }
+          }else{
+            var hb2 = document.getElementById('healthBlock');
+            if(hb2){ hb2.outerHTML = ''; }
+          }
+        }catch(e){ console.error('AI体检失败:', e); }
+      })();
+    }else{
+      resEl.innerHTML = resHtml;
+    }
+    
+  }catch(err){
+    console.error('识图生成失败:', err);
+    status.innerHTML = '❌ 生成失败：' + err.message + '，请重试或换用文本模式';
+    status.style.color = '#dc2626';
+  }
+}
+
+console.log('📸 一键识图生成教案功能已加载');
+// ============================================================
+
 // ============================================================
 
 // ========== 教案助手增强：书目上传解析 ==========
