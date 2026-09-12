@@ -17104,6 +17104,44 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
       <div id="proposalModuleResult" style="display:none;margin-bottom:16px"></div>
 
       <div id="proposalResult" style="display:none"></div>
+      <!-- 申报书AI体检增强 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">🔍 申报书AI体检增强</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:14px">多维度深度体检：创新性检测、逻辑一致性、可行性评估、格式合规、薄弱点预警，帮您在提交前发现问题</div>
+        
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">申报书内容（粘贴活页全文）</label>
+        <textarea id="healthCheckContent" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;min-height:120px;resize:vertical" placeholder="粘贴您的申报书活页内容，AI将从5个维度进行深度体检..."></textarea>
+        
+        <div style="margin-top:14px;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">体检维度（可多选）</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="hcInnovation" checked> 创新性检测
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="hcLogic" checked> 逻辑一致性
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="hcFeasibility" checked> 可行性评估
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="hcFormat" checked> 格式合规
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="hcWeakness" checked> 薄弱点预警
+            </label>
+          </div>
+        </div>
+        
+        <div style="display:flex;gap:10px;align-items:center">
+          <button onclick="runHealthCheckEnhanced()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🚀 开始AI体检</button>
+          <button onclick="fillHealthCheckFromProposal()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:12px">📋 从生成结果导入</button>
+          <span id="healthCheckStatus" style="font-size:12px;color:#6b7280"></span>
+        </div>
+        
+        <div id="healthCheckResult" style="display:none;margin-top:16px"></div>
+      </div>
+
 
     </div>
 
@@ -137757,6 +137795,199 @@ function importPaperProject(index) {
   mechToast('已从论文工作台导入项目', 'success');
 }
 
+
+
+// ========== 申报书AI体检增强 ==========
+
+// 从生成结果导入申报书内容
+function fillHealthCheckFromProposal() {
+  var proposalResult = document.getElementById('proposalResult');
+  var moduleResult = document.getElementById('proposalModuleResult');
+  var content = '';
+  
+  if (proposalResult && proposalResult.style.display === 'block' && proposalResult.innerText.trim()) {
+    content = proposalResult.innerText.trim();
+  } else if (moduleResult && moduleResult.style.display === 'block' && moduleResult.innerText.trim()) {
+    content = moduleResult.innerText.trim();
+  }
+  
+  if (content) {
+    document.getElementById('healthCheckContent').value = content;
+    mechToast('已从生成结果导入申报书内容', 'success');
+  } else {
+    mechToast('请先生成申报书内容', 'warn');
+  }
+}
+
+// 运行AI体检增强（多维度并行）
+async function runHealthCheckEnhanced() {
+  var content = document.getElementById('healthCheckContent').value.trim();
+  if (!content) { mechToast('请先粘贴申报书内容', 'warn'); return; }
+  
+  // 检查选择的维度
+  var dimensions = [];
+  if (document.getElementById('hcInnovation').checked) dimensions.push({key: 'innovation', name: '创新性检测', model: 'deepseek-v4-pro'});
+  if (document.getElementById('hcLogic').checked) dimensions.push({key: 'logic', name: '逻辑一致性', model: 'glm-5.3'});
+  if (document.getElementById('hcFeasibility').checked) dimensions.push({key: 'feasibility', name: '可行性评估', model: 'deepseek-v4-pro'});
+  if (document.getElementById('hcFormat').checked) dimensions.push({key: 'format', name: '格式合规', model: 'qwen3.5-plus'});
+  if (document.getElementById('hcWeakness').checked) dimensions.push({key: 'weakness', name: '薄弱点预警', model: 'hy4-preview'});
+  
+  if (dimensions.length === 0) { mechToast('请至少选择一个体检维度', 'warn'); return; }
+  
+  var statusEl = document.getElementById('healthCheckStatus');
+  var resultEl = document.getElementById('healthCheckResult');
+  
+  statusEl.textContent = '正在进行' + dimensions.length + '维度AI体检（多模型并行）...';
+  resultEl.style.display = 'none';
+  
+  // 各维度的系统提示词
+  var systemPrompts = {
+    innovation: '你是一位体育学领域的资深科研评审专家，擅长评估课题申报书的创新性。请从以下维度评估申报书的创新性：1.研究问题的新颖性；2.理论视角的创新；3.研究方法的创新；4.研究发现的潜在贡献。请给出1-10分的评分，并详细说明理由和改进建议。以JSON格式输出：{"score":8,"analysis":"详细分析","suggestions":["建议1","建议2"]}',
+    logic: '你是一位逻辑学和研究方法专家，擅长检查申报书的逻辑一致性。请从以下维度检查：1.研究问题与研究内容的匹配度；2.研究方法与研究问题的适配性；3.论证链条的完整性；4.前后表述的一致性；5.是否存在逻辑跳跃或矛盾。请给出1-10分的评分，并详细说明发现的问题和改进建议。以JSON格式输出：{"score":7,"issues":["问题1","问题2"],"suggestions":["建议1","建议2"]}',
+    feasibility: '你是一位有丰富课题管理经验的科研管理专家，擅长评估课题的可行性。请从以下维度评估：1.研究基础是否扎实；2.研究方法是否可行；3.样本/数据是否可获取；4.时间安排是否合理；5.团队配置是否充分；6.经费预算是否合理。请给出1-10分的评分，并详细说明风险点和保障措施建议。以JSON格式输出：{"score":7,"risks":["风险1","风险2"],"suggestions":["建议1","建议2"]}',
+    format: '你是一位熟悉各级课题申报要求的格式审查专家。请从以下维度检查格式合规性：1.字数是否符合要求；2.结构是否完整（立项依据/研究内容/方法/创新点/预期成果等）；3.参考文献格式是否规范；4.语言表达是否学术化；5.是否有格式错误或遗漏。请给出1-10分的评分，并详细列出格式问题清单。以JSON格式输出：{"score":8,"issues":["问题1","问题2"],"wordCount":"约X字","suggestions":["建议1","建议2"]}',
+    weakness: '你是一位善于发现研究薄弱环节的资深导师。请从以下维度预警薄弱点：1.文献综述是否充分；2.理论框架是否清晰；3.研究问题是否聚焦；4.数据分析方法是否恰当；5.预期成果是否可实现；6.研究创新是否有支撑。请给出1-10分的整体评分，并按严重程度列出薄弱点预警（高/中/低），并给出针对性的强化建议。以JSON格式输出：{"score":6,"warnings":[{"level":"高","content":"薄弱点1"},{"level":"中","content":"薄弱点2"}],"suggestions":["建议1","建议2"]}'
+  };
+  
+  try {
+    // 多维度并行体检
+    var promises = dimensions.map(function(dim) {
+      var userPrompt = '申报书内容：\n' + content.substring(0, 8000);
+      return callDeepSeekAPI(systemPrompts[dim.key], userPrompt, 2000, dim.model)
+        .then(function(result) {
+          return {key: dim.key, name: dim.name, result: result};
+        })
+        .catch(function(err) {
+          return {key: dim.key, name: dim.name, result: null, error: err.message};
+        });
+    });
+    
+    var results = await Promise.all(promises);
+    
+    // 渲染体检结果
+    var html = '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:12px;padding:16px;margin-bottom:16px">';
+    html += '<div style="font-size:15px;font-weight:700;color:#166534;margin-bottom:10px">📊 AI体检报告（共' + dimensions.length + '个维度）</div>';
+    
+    // 计算总分
+    var totalScore = 0;
+    var validCount = 0;
+    results.forEach(function(r) {
+      if (r.result) {
+        try {
+          var parsed = JSON.parse(r.result.replace(/```json|```/g, '').trim());
+          if (parsed.score) {
+            totalScore += parsed.score;
+            validCount++;
+          }
+        } catch(e) {}
+      }
+    });
+    
+    var avgScore = validCount > 0 ? (totalScore / validCount).toFixed(1) : 'N/A';
+    var scoreColor = avgScore >= 8 ? '#16a34a' : avgScore >= 6 ? '#d97706' : '#dc2626';
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
+    html += '<div style="font-size:32px;font-weight:800;color:' + scoreColor + '">' + avgScore + '</div>';
+    html += '<div style="font-size:13px;color:#374151">综合评分（满分10分）<br><span style="font-size:11px;color:#6b7280">基于' + validCount + '个维度的平均评分</span></div>';
+    html += '</div>';
+    html += '</div>';
+    
+    // 各维度详细结果
+    results.forEach(function(r) {
+      html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+      html += '<div style="font-size:14px;font-weight:700;color:#1f2937">' + r.name + '</div>';
+      
+      if (r.result) {
+        try {
+          var parsed = JSON.parse(r.result.replace(/```json|```/g, '').trim());
+          if (parsed.score) {
+            var color = parsed.score >= 8 ? '#16a34a' : parsed.score >= 6 ? '#d97706' : '#dc2626';
+            html += '<span style="font-size:18px;font-weight:800;color:' + color + '">' + parsed.score + '/10</span>';
+          }
+        } catch(e) {}
+      } else {
+        html += '<span style="font-size:12px;color:#dc2626">检测失败</span>';
+      }
+      html += '</div>';
+      
+      if (r.result) {
+        try {
+          var parsed = JSON.parse(r.result.replace(/```json|```/g, '').trim());
+          
+          // 分析内容
+          if (parsed.analysis) {
+            html += '<div style="font-size:12px;color:#4b5563;line-height:1.6;margin-bottom:8px"><strong>详细分析：</strong>' + parsed.analysis + '</div>';
+          }
+          
+          // 问题列表
+          if (parsed.issues && parsed.issues.length > 0) {
+            html += '<div style="font-size:12px;color:#4b5563;margin-bottom:8px"><strong>发现问题：</strong><ul style="margin:4px 0;padding-left:20px">';
+            parsed.issues.forEach(function(issue) {
+              html += '<li style="margin-bottom:2px">' + issue + '</li>';
+            });
+            html += '</ul></div>';
+          }
+          
+          // 风险点
+          if (parsed.risks && parsed.risks.length > 0) {
+            html += '<div style="font-size:12px;color:#4b5563;margin-bottom:8px"><strong>风险点：</strong><ul style="margin:4px 0;padding-left:20px">';
+            parsed.risks.forEach(function(risk) {
+              html += '<li style="margin-bottom:2px">' + risk + '</li>';
+            });
+            html += '</ul></div>';
+          }
+          
+          // 薄弱点预警
+          if (parsed.warnings && parsed.warnings.length > 0) {
+            html += '<div style="font-size:12px;color:#4b5563;margin-bottom:8px"><strong>薄弱点预警：</strong><ul style="margin:4px 0;padding-left:20px">';
+            parsed.warnings.forEach(function(w) {
+              var levelColor = w.level === '高' ? '#dc2626' : w.level === '中' ? '#d97706' : '#6b7280';
+              html += '<li style="margin-bottom:2px"><span style="color:' + levelColor + ';font-weight:600">[' + w.level + ']</span> ' + w.content + '</li>';
+            });
+            html += '</ul></div>';
+          }
+          
+          // 改进建议
+          if (parsed.suggestions && parsed.suggestions.length > 0) {
+            html += '<div style="font-size:12px;color:#166534;margin-bottom:4px"><strong>改进建议：</strong><ul style="margin:4px 0;padding-left:20px">';
+            parsed.suggestions.forEach(function(sug) {
+              html += '<li style="margin-bottom:2px">' + sug + '</li>';
+            });
+            html += '</ul></div>';
+          }
+          
+        } catch(e) {
+          // 如果JSON解析失败，直接显示原始文本
+          html += '<div style="font-size:12px;color:#4b5563;line-height:1.6;white-space:pre-wrap">' + r.result.substring(0, 1000) + '</div>';
+        }
+      } else {
+        html += '<div style="font-size:12px;color:#dc2626">检测失败：' + (r.error || '未知错误') + '</div>';
+      }
+      
+      html += '</div>';
+    });
+    
+    // 总体建议
+    html += '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:14px;margin-bottom:12px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:8px">💡 总体改进建议</div>';
+    html += '<div style="font-size:12px;color:#78350f;line-height:1.6">';
+    html += '1. 建议优先解决"高"级别薄弱点和逻辑一致性问题<br>';
+    html += '2. 创新性不足时，建议补充最新文献综述，寻找研究空白<br>';
+    html += '3. 可行性风险较高时，建议增加预实验数据或调整研究范围<br>';
+    html += '4. 格式问题建议对照申报指南逐项检查，确保字数和结构符合要求<br>';
+    html += '5. 建议修改后再次进行AI体检，跟踪改进效果';
+    html += '</div></div>';
+    
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.textContent = '体检完成！共' + dimensions.length + '个维度，综合评分' + avgScore + '分';
+    mechToast('AI体检完成！', 'success');
+    
+  } catch(e) {
+    statusEl.textContent = '体检失败：' + e.message;
+    mechToast('AI体检失败：' + e.message, 'error');
+  }
+}
 </script>
 
 
