@@ -136326,6 +136326,152 @@ function getLessonFormatReq(){
   return '【教案格式要求】' + req + '。必须严格按此格式输出教案，不得遗漏任何环节。';
 }
 
+
+// ========== 扫描版PDF OCR识别（多模态模型） ==========
+async function ocrScanPDF(pdf, pages, callback){
+  const status = document.getElementById('bookStatus');
+  if(status){
+    status.innerHTML = '🔍 <b>检测到扫描版PDF，正在启动OCR文字识别...</b>（共' + pdf.numPages + '页，每页约需5-10秒）';
+    status.style.color = '#d97706';
+  }
+  
+  try{
+    var allText = [];
+    
+    for(var i = 0; i < pages.length; i++){
+      var page = pages[i];
+      var pageNum = i + 1;
+      
+      if(status){
+        status.innerHTML = '🔍 <b>OCR识别中...</b> 第' + pageNum + '/' + pdf.numPages + '页';
+        status.style.color = '#d97706';
+      }
+      
+      try{
+        // 将PDF页面渲染成图片
+        var viewport = page.getViewport({scale: 2.0}); // 2倍分辨率，提高识别准确率
+        var canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        var ctx = canvas.getContext('2d');
+        
+        await page.render({canvasContext: ctx, viewport: viewport}).promise;
+        
+        // 将canvas转换为base64图片
+        var imageData = canvas.toDataURL('image/jpeg', 0.85);
+        
+        // 调用多模态模型识别图片中的文字
+        var ocrText = await recognizeImageText(imageData, pageNum);
+        
+        if(ocrText && ocrText.trim().length > 0){
+          allText.push('\n\n=== 第' + pageNum + '页 ===\n\n' + ocrText.trim());
+        }
+        
+        // 清理canvas
+        canvas = null;
+        ctx = null;
+        
+      }catch(pageErr){
+        console.error('第' + pageNum + '页OCR失败:', pageErr);
+        // 继续处理下一页
+      }
+      
+      // 每页之间稍微延迟，避免API限流
+      if(i < pages.length - 1){
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+    
+    var finalText = allText.join('\n');
+    
+    if(status){
+      if(finalText && finalText.trim().length > 50){
+        status.innerHTML = '✅ <b>OCR识别完成！</b> 共识别' + pdf.numPages + '页，' + (finalText.length/1000).toFixed(1) + 'K字';
+        status.style.color = '#16a34a';
+      }else{
+        status.innerHTML = '⚠️ <b>OCR识别结果较少</b>，可能图片质量不佳或模型限制';
+        status.style.color = '#d97706';
+      }
+    }
+    
+    callback(finalText);
+    
+  }catch(err){
+    console.error('OCR识别失败:', err);
+    if(status){
+      status.innerHTML = '⚠️ <b>OCR识别失败：</b>' + err.message + '，请尝试转换为txt或直接粘贴文本';
+      status.style.color = '#dc2626';
+    }
+    callback('');
+  }
+}
+
+// 调用多模态模型识别图片中的文字
+async function recognizeImageText(imageBase64, pageNum){
+  try{
+    // 使用后端API调用多模态模型
+    var apiUrl = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com';
+    
+    var requestBody = {
+      model: 'qwen-vl-max', // 使用Qwen-VL多模态模型
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: { url: imageBase64 }
+            },
+            {
+              type: 'text',
+              text: '请准确识别这张教材页面图片中的所有文字内容，包括标题、正文、公式、图表说明等。保持原文的段落结构和顺序，不要添加任何解释或评论，只输出识别出的文字内容。'
+            }
+          ]
+        }
+      ],
+      max_tokens: 2000
+    };
+    
+    var response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+    
+    if(!response.ok){
+      throw new Error('API请求失败: ' + response.status);
+    }
+    
+    var data = await response.json();
+    
+    // 解析返回结果（兼容不同的API返回格式）
+    if(data.choices && data.choices[0] && data.choices[0].message){
+      var msg = data.choices[0].message;
+      // 兼容字符串内容和数组内容
+      if(typeof msg.content === 'string'){
+        return msg.content;
+      }else if(Array.isArray(msg.content)){
+        return msg.content.map(function(c){ return c.text || ''; }).join('');
+      }
+    }
+    
+    // 备用解析格式
+    if(data.output && typeof data.output === 'string'){
+      return data.output;
+    }
+    
+    console.warn('第' + pageNum + '页OCR返回格式异常:', data);
+    return '';
+    
+  }catch(err){
+    console.error('第' + pageNum + '页OCR识别失败:', err);
+    return '';
+  }
+}
+
+
 // ========== 教案助手增强：书目上传解析 ==========
 function parseBookFile(file, cb){
   const name = file.name;
@@ -136357,7 +136503,21 @@ function parseBookFile(file, cb){
             for(var pi = 1; pi <= pdf.numPages; pi++){ pagePromises.push(pdf.getPage(pi)); }
             Promise.all(pagePromises).then(function(pages){
               Promise.all(pages.map(function(p){ return p.getTextContent(); })).then(function(contents){
-                cb(contents.map(function(c){ return c.items.map(function(it){ return it.str; }).join(' '); }).join('\n'));
+                var text = contents.map(function(c){ return c.items.map(function(it){ return it.str; }).join(' '); }).join('\n');
+                // 检测是否为扫描版PDF（文字过少）
+                if(!text || text.trim().length < 50){
+                  console.log('检测到扫描版PDF，启动OCR识别...');
+                  // 自动切换到OCR模式
+                  ocrScanPDF(pdf, pages, function(ocrText){
+                    if(ocrText && ocrText.trim().length > 50){
+                      cb(ocrText);
+                    }else{
+                      cb(text); // OCR也失败，返回原始空文本
+                    }
+                  });
+                }else{
+                  cb(text);
+                }
               }).catch(function(err){ alert('PDF 文本提取失败：' + err.message); });
             }).catch(function(err){ alert('PDF 页面读取失败：' + err.message); });
           }).catch(function(err){ alert('PDF 解析失败：' + err.message); });
