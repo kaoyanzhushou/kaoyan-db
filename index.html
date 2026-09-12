@@ -17212,6 +17212,33 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
         
         <div id="reviewResult" style="display:none;margin-top:16px"></div>
       </div>
+      <!-- 技术路线图自动生成 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">🗺️ 技术路线图自动生成</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:14px">AI自动生成研究技术路线图，支持SVG可视化，可下载PNG/SVG格式</div>
+        
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">研究内容/研究方案（简述研究思路和主要步骤）</label>
+        <textarea id="routeContent" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;min-height:80px;resize:vertical" placeholder="简述您的研究内容、研究方法和主要研究步骤，AI将自动生成技术路线图..."></textarea>
+        
+        <div style="display:flex;gap:10px;align-items:center;margin-top:14px">
+          <button onclick="generateTechRoute()" style="background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🗺️ 生成技术路线图</button>
+          <button onclick="importTechRouteFromPaper()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:12px">📥 从论文工作台导入</button>
+          <span id="routeStatus" style="font-size:12px;color:#6b7280"></span>
+        </div>
+        
+        <div id="routeResult" style="display:none;margin-top:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:700;color:#1f2937">📊 技术路线图</div>
+            <div style="display:flex;gap:8px">
+              <button onclick="downloadTechRouteSVG()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px">⬇️ 下载SVG</button>
+              <button onclick="downloadTechRoutePNG()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px">⬇️ 下载PNG</button>
+            </div>
+          </div>
+          <div id="routeSVGContainer" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;overflow:auto"></div>
+          <div id="routeDescription" style="margin-top:12px;font-size:12px;color:#4b5563;line-height:1.6"></div>
+        </div>
+      </div>
+
 
 
 
@@ -138569,6 +138596,230 @@ async function runExpertReview() {
     statusEl.textContent = '评审失败：' + e.message;
     mechToast('专家评审失败：' + e.message, 'error');
   }
+}
+
+
+// ========== 技术路线图自动生成 ==========
+
+// 从论文工作台导入
+function importTechRouteFromPaper() {
+  var proposalResult = document.getElementById('proposalResult');
+  var moduleResult = document.getElementById('proposalModuleResult');
+  var content = '';
+  
+  if (proposalResult && proposalResult.style.display === 'block' && proposalResult.innerText.trim()) {
+    content = proposalResult.innerText.trim();
+  } else if (moduleResult && moduleResult.style.display === 'block' && moduleResult.innerText.trim()) {
+    content = moduleResult.innerText.trim();
+  }
+  
+  if (content) {
+    // 提取研究内容和方法部分
+    var researchContent = '';
+    var lines = content.split('\n');
+    var capture = false;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (line.indexOf('研究内容') !== -1 || line.indexOf('研究方法') !== -1 || line.indexOf('技术路线') !== -1) {
+        capture = true;
+        researchContent += line + '\n';
+        continue;
+      }
+      if (capture && (line.indexOf('创新点') !== -1 || line.indexOf('预期成果') !== -1 || line.indexOf('研究基础') !== -1)) {
+        break;
+      }
+      if (capture) {
+        researchContent += line + '\n';
+      }
+    }
+    
+    if (researchContent.trim()) {
+      document.getElementById('routeContent').value = researchContent.trim().substring(0, 1000);
+    } else {
+      document.getElementById('routeContent').value = content.substring(0, 1000);
+    }
+    mechToast('已从论文工作台导入研究内容', 'success');
+  } else {
+    mechToast('请先生成申报书内容', 'warn');
+  }
+}
+
+// 生成技术路线图
+async function generateTechRoute() {
+  var content = document.getElementById('routeContent').value.trim();
+  if (!content) { mechToast('请先输入研究内容', 'warn'); return; }
+  
+  var statusEl = document.getElementById('routeStatus');
+  var resultEl = document.getElementById('routeResult');
+  
+  statusEl.textContent = '正在生成技术路线图...';
+  resultEl.style.display = 'none';
+  
+  var systemPrompt = '你是一位科研方法专家，擅长设计课题研究的技术路线图。请根据用户提供的研究内容，设计一个清晰的研究技术路线图，包含5-7个主要研究阶段，每个阶段有简短的标题和具体的研究内容/方法。以JSON格式输出：{"stages":[{"title":"阶段1标题","content":"该阶段的具体研究内容和方法","methods":"使用的研究方法"},{"title":"阶段2标题","content":"...","methods":"..."}],"description":"整体技术路线的简要说明"}';
+  
+  var userPrompt = '研究内容：\n' + content.substring(0, 2000);
+  
+  try {
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000, 'deepseek-v4-pro');
+    
+    // 解析结果
+    var parsed = JSON.parse(result.replace(/```json|```/g, '').trim());
+    var stages = parsed.stages || [];
+    var description = parsed.description || '';
+    
+    if (stages.length === 0) {
+      throw new Error('未生成有效的研究阶段');
+    }
+    
+    // 生成SVG技术路线图
+    var svg = generateRouteSVG(stages);
+    
+    // 显示结果
+    document.getElementById('routeSVGContainer').innerHTML = svg;
+    document.getElementById('routeDescription').innerHTML = '<strong>📝 技术路线说明：</strong>' + description;
+    resultEl.style.display = 'block';
+    statusEl.textContent = '技术路线图生成完成！共' + stages.length + '个研究阶段';
+    mechToast('技术路线图生成完成！', 'success');
+    
+  } catch(e) {
+    statusEl.textContent = '生成失败：' + e.message;
+    mechToast('技术路线图生成失败：' + e.message, 'error');
+  }
+}
+
+// 生成SVG技术路线图
+function generateRouteSVG(stages) {
+  var boxWidth = 180;
+  var boxHeight = 80;
+  var hGap = 40;
+  var vGap = 30;
+  var padding = 30;
+  
+  // 计算布局（每行最多3个）
+  var perRow = Math.min(3, stages.length);
+  var rows = Math.ceil(stages.length / perRow);
+  var svgWidth = padding * 2 + perRow * boxWidth + (perRow - 1) * hGap;
+  var svgHeight = padding * 2 + rows * boxHeight + (rows - 1) * vGap;
+  
+  var colors = ['#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2', '#db2777', '#65a30d'];
+  
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + svgWidth + '" height="' + svgHeight + '" viewBox="0 0 ' + svgWidth + ' ' + svgHeight + '" style="max-width:100%;height:auto">';
+  
+  // 背景
+  svg += '<rect width="' + svgWidth + '" height="' + svgHeight + '" fill="#f9fafb" rx="8"/>';
+  
+  // 绘制每个阶段
+  for (var i = 0; i < stages.length; i++) {
+    var row = Math.floor(i / perRow);
+    var col = i % perRow;
+    var x = padding + col * (boxWidth + hGap);
+    var y = padding + row * (boxHeight + vGap);
+    var color = colors[i % colors.length];
+    
+    // 阶段框
+    svg += '<rect x="' + x + '" y="' + y + '" width="' + boxWidth + '" height="' + boxHeight + '" rx="8" fill="white" stroke="' + color + '" stroke-width="2"/>';
+    
+    // 阶段标题背景
+    svg += '<rect x="' + x + '" y="' + y + '" width="' + boxWidth + '" height="28" rx="8" fill="' + color + '"/>';
+    svg += '<rect x="' + x + '" y="' + (y + 14) + '" width="' + boxWidth + '" height="14" fill="' + color + '"/>';
+    
+    // 阶段编号和标题
+    svg += '<text x="' + (x + boxWidth / 2) + '" y="' + (y + 19) + '" text-anchor="middle" fill="white" font-size="13" font-weight="bold">阶段' + (i+1) + '：' + (stages[i].title || '').substring(0, 8) + '</text>';
+    
+    // 阶段内容
+    var contentText = (stages[i].content || '').substring(0, 40);
+    svg += '<text x="' + (x + 10) + '" y="' + (y + 45) + '" fill="#374151" font-size="11">' + contentText + '</text>';
+    
+    // 研究方法
+    var methodsText = (stages[i].methods || '').substring(0, 25);
+    if (methodsText) {
+      svg += '<text x="' + (x + 10) + '" y="' + (y + 65) + '" fill="' + color + '" font-size="10" font-style="italic">方法：' + methodsText + '</text>';
+    }
+    
+    // 绘制箭头
+    if (i < stages.length - 1) {
+      var nextRow = Math.floor((i + 1) / perRow);
+      var nextCol = (i + 1) % perRow;
+      
+      if (row === nextRow) {
+        // 同一行，水平箭头
+        var arrowX1 = x + boxWidth;
+        var arrowY1 = y + boxHeight / 2;
+        var arrowX2 = x + boxWidth + hGap;
+        var arrowY2 = y + boxHeight / 2;
+        svg += '<line x1="' + arrowX1 + '" y1="' + arrowY1 + '" x2="' + arrowX2 + '" y2="' + arrowY2 + '" stroke="#9ca3af" stroke-width="2" marker-end="url(#arrowhead)"/>';
+      } else {
+        // 换行，弯箭头
+        var arrowX1 = x + boxWidth / 2;
+        var arrowY1 = y + boxHeight;
+        var arrowX2 = padding + nextCol * (boxWidth + hGap) + boxWidth / 2;
+        var arrowY2 = padding + nextRow * (boxHeight + vGap);
+        var midY = (arrowY1 + arrowY2) / 2;
+        
+        svg += '<path d="M ' + arrowX1 + ' ' + arrowY1 + ' L ' + arrowX1 + ' ' + midY + ' L ' + arrowX2 + ' ' + midY + ' L ' + arrowX2 + ' ' + arrowY2 + '" fill="none" stroke="#9ca3af" stroke-width="2" marker-end="url(#arrowhead)"/>';
+      }
+    }
+  }
+  
+  // 箭头标记定义
+  svg += '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#9ca3af"/></marker></defs>';
+  
+  svg += '</svg>';
+  
+  return svg;
+}
+
+// 下载SVG
+function downloadTechRouteSVG() {
+  var container = document.getElementById('routeSVGContainer');
+  var svg = container.querySelector('svg');
+  if (!svg) { mechToast('请先生成技术路线图', 'warn'); return; }
+  
+  var svgData = new XMLSerializer().serializeToString(svg);
+  var blob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '技术路线图.svg';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  mechToast('SVG已下载', 'success');
+}
+
+// 下载PNG
+function downloadTechRoutePNG() {
+  var container = document.getElementById('routeSVGContainer');
+  var svg = container.querySelector('svg');
+  if (!svg) { mechToast('请先生成技术路线图', 'warn'); return; }
+  
+  var svgData = new XMLSerializer().serializeToString(svg);
+  var canvas = document.createElement('canvas');
+  var svgSize = svg.getBoundingClientRect();
+  canvas.width = svgSize.width * 2;
+  canvas.height = svgSize.height * 2;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+  
+  var img = new Image();
+  var svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+  var url = URL.createObjectURL(svgBlob);
+  
+  img.onload = function() {
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+    var pngUrl = canvas.toDataURL('image/png');
+    var a = document.createElement('a');
+    a.href = pngUrl;
+    a.download = '技术路线图.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    mechToast('PNG已下载', 'success');
+  };
+  
+  img.src = url;
 }
 </script>
 
