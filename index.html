@@ -14454,6 +14454,44 @@ console.log('✅ 学习工具入口已加载');
         </div>
 
         <div id="topicResult"></div>
+      <!-- AI选题评估与打分 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">🎯 AI选题评估与打分</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:14px">多模型交叉验证，5维度深度评估，帮您判断选题"值不值得做"</div>
+        
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">选题内容（题目+研究方向简述）</label>
+        <textarea id="topicEvalContent" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;min-height:80px;resize:vertical" placeholder="输入您的选题题目和简要研究方向，AI将从5个维度进行深度评估..."></textarea>
+        
+        <div style="margin-top:14px;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">评估维度（可多选）</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="teNovelty" checked> 新颖性
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="teFeasibility" checked> 可行性
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="teValue" checked> 研究价值
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="teMethod" checked> 方法科学性
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#4b5563;cursor:pointer">
+              <input type="checkbox" id="tePolicy" checked> 政策契合度
+            </label>
+          </div>
+        </div>
+        
+        <div style="display:flex;gap:10px;align-items:center">
+          <button onclick="runTopicEvaluation()" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🚀 开始评估</button>
+          <button onclick="fillTopicEvalFromGenerated()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:12px">📋 从生成选题导入</button>
+          <span id="topicEvalStatus" style="font-size:12px;color:#6b7280"></span>
+        </div>
+        
+        <div id="topicEvalResult" style="display:none;margin-top:16px"></div>
+      </div>
+
 
       </div>
 
@@ -137986,6 +138024,273 @@ async function runHealthCheckEnhanced() {
   } catch(e) {
     statusEl.textContent = '体检失败：' + e.message;
     mechToast('AI体检失败：' + e.message, 'error');
+  }
+}
+
+
+// ========== AI选题评估与打分 ==========
+
+// 从生成选题导入
+function fillTopicEvalFromGenerated() {
+  var topicResult = document.getElementById('topicResult');
+  if (topicResult && topicResult.style.display === 'block' && topicResult.innerText.trim()) {
+    // 提取第一个选题的题目
+    var text = topicResult.innerText;
+    var firstTitleMatch = text.match(/\d+\.\s*(.+?)(?:\n|$)/);
+    if (firstTitleMatch) {
+      document.getElementById('topicEvalContent').value = firstTitleMatch[1].trim();
+      mechToast('已从生成选题导入第一个选题', 'success');
+    } else {
+      document.getElementById('topicEvalContent').value = text.substring(0, 500);
+      mechToast('已导入选题内容', 'success');
+    }
+  } else {
+    mechToast('请先生成选题', 'warn');
+  }
+}
+
+// 运行选题评估（多模型交叉验证）
+async function runTopicEvaluation() {
+  var content = document.getElementById('topicEvalContent').value.trim();
+  if (!content) { mechToast('请先输入选题内容', 'warn'); return; }
+  
+  // 检查选择的维度
+  var dimensions = [];
+  if (document.getElementById('teNovelty').checked) dimensions.push({key: 'novelty', name: '新颖性'});
+  if (document.getElementById('teFeasibility').checked) dimensions.push({key: 'feasibility', name: '可行性'});
+  if (document.getElementById('teValue').checked) dimensions.push({key: 'value', name: '研究价值'});
+  if (document.getElementById('teMethod').checked) dimensions.push({key: 'method', name: '方法科学性'});
+  if (document.getElementById('tePolicy').checked) dimensions.push({key: 'policy', name: '政策契合度'});
+  
+  if (dimensions.length === 0) { mechToast('请至少选择一个评估维度', 'warn'); return; }
+  
+  var statusEl = document.getElementById('topicEvalStatus');
+  var resultEl = document.getElementById('topicEvalResult');
+  
+  statusEl.textContent = '正在进行多模型交叉评估（' + dimensions.length + '维度）...';
+  resultEl.style.display = 'none';
+  
+  // 系统提示词
+  var systemPrompt = '你是一位体育学领域的资深科研评审专家，擅长评估课题选题的质量。请从以下5个维度对用户提供的选题进行1-10分评分，并给出详细理由：1.新颖性：研究问题是否新颖，是否有理论或方法创新；2.可行性：研究基础、数据获取、方法实施是否可行；3.研究价值：理论贡献、实践意义、政策参考价值；4.方法科学性：研究设计、方法选择、分析框架是否科学；5.政策契合度：是否契合当前国家和地方政策导向。最后给出总体结论：值得做/需要修改/不建议做，并给出差异化分析（优势、劣势、机会、威胁）。以JSON格式输出：{"scores":{"novelty":8,"feasibility":7,"value":8,"method":7,"policy":8},"conclusion":"值得做","conclusionReason":"详细理由","swot":{"strengths":["优势1"],"weaknesses":["劣势1"],"opportunities":["机会1"],"threats":["威胁1"]},"suggestions":["建议1","建议2"]}';
+  
+  var userPrompt = '选题内容：\n' + content;
+  
+  try {
+    // 多模型交叉验证（3个模型并行评估）
+    var models = ['deepseek-v4-pro', 'glm-5.3', 'qwen3.5-plus'];
+    var promises = models.map(function(model) {
+      return callDeepSeekAPI(systemPrompt, userPrompt, 2500, model)
+        .then(function(result) {
+          return {model: model, result: result};
+        })
+        .catch(function(err) {
+          return {model: model, result: null, error: err.message};
+        });
+    });
+    
+    var modelResults = await Promise.all(promises);
+    
+    // 解析各模型结果，计算平均分
+    var allScores = {};
+    var validResults = [];
+    dimensions.forEach(function(dim) {
+      allScores[dim.key] = [];
+    });
+    
+    modelResults.forEach(function(mr) {
+      if (mr.result) {
+        try {
+          var parsed = JSON.parse(mr.result.replace(/```json|```/g, '').trim());
+          if (parsed.scores) {
+            dimensions.forEach(function(dim) {
+              if (parsed.scores[dim.key]) {
+                allScores[dim.key].push(parsed.scores[dim.key]);
+              }
+            });
+            validResults.push({model: mr.model, parsed: parsed});
+          }
+        } catch(e) {}
+      }
+    });
+    
+    // 计算各维度平均分
+    var avgScores = {};
+    var totalScore = 0;
+    var scoreCount = 0;
+    dimensions.forEach(function(dim) {
+      if (allScores[dim.key].length > 0) {
+        var avg = allScores[dim.key].reduce(function(a, b) { return a + b; }, 0) / allScores[dim.key].length;
+        avgScores[dim.key] = avg.toFixed(1);
+        totalScore += avg;
+        scoreCount++;
+      } else {
+        avgScores[dim.key] = 'N/A';
+      }
+    });
+    
+    var overallAvg = scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : 'N/A';
+    
+    // 取第一个有效结果的详细分析
+    var mainResult = validResults.length > 0 ? validResults[0].parsed : null;
+    
+    // 渲染评估结果
+    var html = '<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:12px;padding:16px;margin-bottom:16px">';
+    html += '<div style="font-size:15px;font-weight:700;color:#1e40af;margin-bottom:10px">🎯 选题评估报告（多模型交叉验证）</div>';
+    
+    // 综合评分
+    var scoreColor = overallAvg >= 8 ? '#16a34a' : overallAvg >= 6 ? '#d97706' : '#dc2626';
+    html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">';
+    html += '<div style="font-size:36px;font-weight:800;color:' + scoreColor + '">' + overallAvg + '</div>';
+    html += '<div>';
+    html += '<div style="font-size:14px;font-weight:600;color:#1f2937">综合评分（满分10分）</div>';
+    html += '<div style="font-size:11px;color:#6b7280">基于' + validResults.length + '个模型交叉验证，' + scoreCount + '个维度平均</div>';
+    html += '</div>';
+    
+    // 总体结论
+    if (mainResult && mainResult.conclusion) {
+      var conclusionColor = mainResult.conclusion === '值得做' ? '#16a34a' : mainResult.conclusion === '需要修改' ? '#d97706' : '#dc2626';
+      html += '<div style="margin-left:auto;padding:8px 16px;background:' + conclusionColor + ';color:#fff;border-radius:8px;font-size:14px;font-weight:700">' + mainResult.conclusion + '</div>';
+    }
+    html += '</div>';
+    
+    // 结论理由
+    if (mainResult && mainResult.conclusionReason) {
+      html += '<div style="font-size:12px;color:#374151;line-height:1.6;background:#fff;padding:10px 12px;border-radius:8px;margin-bottom:14px"><strong>评估结论：</strong>' + mainResult.conclusionReason + '</div>';
+    }
+    html += '</div>';
+    
+    // 各维度评分柱状图（用CSS实现）
+    html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:12px">📊 各维度评分</div>';
+    
+    dimensions.forEach(function(dim) {
+      var score = avgScores[dim.key];
+      var scoreNum = parseFloat(score);
+      var barColor = scoreNum >= 8 ? '#16a34a' : scoreNum >= 6 ? '#d97706' : '#dc2626';
+      var barWidth = scoreNum ? (scoreNum * 10) + '%' : '0%';
+      
+      html += '<div style="margin-bottom:10px">';
+      html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">';
+      html += '<span style="font-weight:600;color:#374151">' + dim.name + '</span>';
+      html += '<span style="font-weight:700;color:' + barColor + '">' + score + '/10</span>';
+      html += '</div>';
+      html += '<div style="background:#f3f4f6;border-radius:4px;height:8px;overflow:hidden">';
+      html += '<div style="background:linear-gradient(90deg,' + barColor + ',' + barColor + 'cc);height:100%;width:' + barWidth + ';border-radius:4px;transition:width 0.5s"></div>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+    
+    // SWOT差异化分析
+    if (mainResult && mainResult.swot) {
+      html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px">';
+      html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:12px">🔍 差异化分析（SWOT）</div>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+      
+      // 优势
+      if (mainResult.swot.strengths && mainResult.swot.strengths.length > 0) {
+        html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px">';
+        html += '<div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:6px">💪 优势</div>';
+        html += '<ul style="margin:0;padding-left:16px;font-size:11px;color:#374151;line-height:1.5">';
+        mainResult.swot.strengths.forEach(function(s) { html += '<li>' + s + '</li>'; });
+        html += '</ul></div>';
+      }
+      
+      // 劣势
+      if (mainResult.swot.weaknesses && mainResult.swot.weaknesses.length > 0) {
+        html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px">';
+        html += '<div style="font-size:12px;font-weight:700;color:#991b1b;margin-bottom:6px">⚠️ 劣势</div>';
+        html += '<ul style="margin:0;padding-left:16px;font-size:11px;color:#374151;line-height:1.5">';
+        mainResult.swot.weaknesses.forEach(function(w) { html += '<li>' + w + '</li>'; });
+        html += '</ul></div>';
+      }
+      
+      // 机会
+      if (mainResult.swot.opportunities && mainResult.swot.opportunities.length > 0) {
+        html += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px">';
+        html += '<div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:6px">🌟 机会</div>';
+        html += '<ul style="margin:0;padding-left:16px;font-size:11px;color:#374151;line-height:1.5">';
+        mainResult.swot.opportunities.forEach(function(o) { html += '<li>' + o + '</li>'; });
+        html += '</ul></div>';
+      }
+      
+      // 威胁
+      if (mainResult.swot.threats && mainResult.swot.threats.length > 0) {
+        html += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px">';
+        html += '<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px">⚡ 威胁</div>';
+        html += '<ul style="margin:0;padding-left:16px;font-size:11px;color:#374151;line-height:1.5">';
+        mainResult.swot.threats.forEach(function(t) { html += '<li>' + t + '</li>'; });
+        html += '</ul></div>';
+      }
+      
+      html += '</div></div>';
+    }
+    
+    // 多模型交叉验证对比
+    if (validResults.length > 1) {
+      html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px">';
+      html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">🤝 多模型交叉验证对比</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(' + validResults.length + ',1fr);gap:10px">';
+      
+      validResults.forEach(function(vr) {
+        var modelName = vr.model.replace('-v4-pro', '').replace('-5.3', '').replace('3.5-plus', '');
+        var modelScore = 0;
+        var modelCount = 0;
+        dimensions.forEach(function(dim) {
+          if (vr.parsed.scores && vr.parsed.scores[dim.key]) {
+            modelScore += vr.parsed.scores[dim.key];
+            modelCount++;
+          }
+        });
+        var modelAvg = modelCount > 0 ? (modelScore / modelCount).toFixed(1) : 'N/A';
+        
+        html += '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;text-align:center">';
+        html += '<div style="font-size:11px;color:#6b7280;margin-bottom:4px">' + modelName + '</div>';
+        html += '<div style="font-size:20px;font-weight:800;color:#1f2937">' + modelAvg + '</div>';
+        html += '<div style="font-size:10px;color:#9ca3af">综合评分</div>';
+        html += '</div>';
+      });
+      
+      html += '</div>';
+      
+      // 模型一致性分析
+      var scoresArray = dimensions.map(function(dim) { return allScores[dim.key]; });
+      var maxVariance = 0;
+      scoresArray.forEach(function(scores) {
+        if (scores.length > 1) {
+          var mean = scores.reduce(function(a, b) { return a + b; }, 0) / scores.length;
+          var variance = scores.reduce(function(sum, val) { return sum + Math.pow(val - mean, 2); }, 0) / scores.length;
+          maxVariance = Math.max(maxVariance, variance);
+        }
+      });
+      
+      var consistency = maxVariance < 0.5 ? '高度一致' : maxVariance < 1.5 ? '基本一致' : '存在分歧';
+      var consistencyColor = maxVariance < 0.5 ? '#16a34a' : maxVariance < 1.5 ? '#d97706' : '#dc2626';
+      
+      html += '<div style="margin-top:10px;padding:8px 12px;background:#f9fafb;border-radius:6px;font-size:11px;color:#374151">';
+      html += '<strong>模型一致性：</strong><span style="color:' + consistencyColor + ';font-weight:600">' + consistency + '</span>';
+      html += '（各模型评分方差' + maxVariance.toFixed(2) + '，' + (maxVariance < 1.5 ? '评估结果可信度较高' : '建议关注分歧点，进一步完善选题') + '）';
+      html += '</div></div>';
+    }
+    
+    // 改进建议
+    if (mainResult && mainResult.suggestions && mainResult.suggestions.length > 0) {
+      html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:12px">';
+      html += '<div style="font-size:14px;font-weight:700;color:#166534;margin-bottom:10px">💡 改进建议</div>';
+      html += '<ul style="margin:0;padding-left:20px;font-size:12px;color:#374151;line-height:1.7">';
+      mainResult.suggestions.forEach(function(sug, i) {
+        html += '<li style="margin-bottom:4px"><strong>' + (i+1) + '.</strong> ' + sug + '</li>';
+      });
+      html += '</ul></div>';
+    }
+    
+    resultEl.innerHTML = html;
+    resultEl.style.display = 'block';
+    statusEl.textContent = '评估完成！综合评分' + overallAvg + '分，' + (mainResult ? mainResult.conclusion : '');
+    mechToast('选题评估完成！', 'success');
+    
+  } catch(e) {
+    statusEl.textContent = '评估失败：' + e.message;
+    mechToast('选题评估失败：' + e.message, 'error');
   }
 }
 </script>
