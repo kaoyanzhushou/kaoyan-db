@@ -136406,63 +136406,35 @@ async function ocrScanPDF(pdf, pages, callback){
   }
 }
 
-// 调用多模态模型识别图片中的文字
+// 调用多模态模型识别图片中的文字（使用callQwenChat，支持qwen-vl多模态）
 async function recognizeImageText(imageBase64, pageNum){
   try{
-    // 使用后端API调用多模态模型
-    var apiUrl = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com';
-    
-    var requestBody = {
-      model: 'qwen-vl-max', // 使用Qwen-VL多模态模型
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image_url',
-              image_url: { url: imageBase64 }
-            },
-            {
-              type: 'text',
-              text: '请准确识别这张教材页面图片中的所有文字内容，包括标题、正文、公式、图表说明等。保持原文的段落结构和顺序，不要添加任何解释或评论，只输出识别出的文字内容。'
-            }
-          ]
-        }
-      ],
-      max_tokens: 2000
-    };
-    
-    var response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
-    
-    if(!response.ok){
-      throw new Error('API请求失败: ' + response.status);
-    }
-    
-    var data = await response.json();
-    
-    // 解析返回结果（兼容不同的API返回格式）
-    if(data.choices && data.choices[0] && data.choices[0].message){
-      var msg = data.choices[0].message;
-      // 兼容字符串内容和数组内容
-      if(typeof msg.content === 'string'){
-        return msg.content;
-      }else if(Array.isArray(msg.content)){
-        return msg.content.map(function(c){ return c.text || ''; }).join('');
+    // 使用callQwenChat函数调用qwen-vl多模态模型
+    // callQwenChat已经支持多模态图片识别（content可以是数组，包含text和image_url）
+    var messages = [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image_url',
+            image_url: { url: imageBase64 }
+          },
+          {
+            type: 'text',
+            text: '请准确识别这张教材页面图片中的所有文字内容，包括标题、正文、公式、图表说明等。保持原文的段落结构和顺序，不要添加任何解释或评论，只输出识别出的文字内容。'
+          }
+        ]
       }
+    ];
+    
+    // 使用qwen-vl-max模型（多模态识别最强）
+    var result = await callQwenChat(messages, 'qwen-vl-max', 0.3, 2000);
+    
+    if(result && result.trim().length > 0){
+      return result;
     }
     
-    // 备用解析格式
-    if(data.output && typeof data.output === 'string'){
-      return data.output;
-    }
-    
-    console.warn('第' + pageNum + '页OCR返回格式异常:', data);
+    console.warn('第' + pageNum + '页OCR返回为空');
     return '';
     
   }catch(err){
