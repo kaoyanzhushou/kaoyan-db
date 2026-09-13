@@ -148593,5 +148593,730 @@ setTimeout(mergeButtons, 1500);
 </script>
 <!-- ========== 合并论文增强按钮 结束 ========== -->
 
+
+<!-- ========== 修复论文AI工具箱按钮位置 开始 ========== -->
+<script>
+(function() {
+'use strict';
+try {
+
+function fixButtonPosition() {
+    try {
+        var mergedBtn = document.getElementById('paper-merged-btn');
+        var dropdown = document.getElementById('paper-merged-dropdown');
+        
+        if (!mergedBtn) {
+            setTimeout(fixButtonPosition, 1000);
+            return;
+        }
+        
+        // 将按钮从右下角移到右上角（顶部用户信息条下方）
+        mergedBtn.style.bottom = 'auto';
+        mergedBtn.style.top = '70px';
+        mergedBtn.style.right = '20px';
+        mergedBtn.style.padding = '8px 14px';
+        mergedBtn.style.fontSize = '12px';
+        mergedBtn.style.borderRadius = '20px';
+        
+        // 下拉菜单也相应调整到按钮下方
+        if (dropdown) {
+            dropdown.style.bottom = 'auto';
+            dropdown.style.top = '115px';
+            dropdown.style.right = '20px';
+        }
+        
+        console.log('[按钮位置] 论文AI工具箱按钮已移到右上角，避免遮挡模型选择');
+    } catch(e) {
+        console.warn('[按钮位置] 修复失败:', e);
+    }
+}
+
+setTimeout(fixButtonPosition, 2000);
+
+} catch(e) {
+    console.error('[按钮位置] 顶层错误:', e);
+}
+})();
+</script>
+<!-- ========== 修复论文AI工具箱按钮位置 结束 ========== -->
+
+
+<!-- ========== 教案助手增强包 v1.0 开始 ========== -->
+<script>
+(function() {
+'use strict';
+try {
+
+var SF = window.StabilityFramework;
+if (!SF) { console.warn('[教案增强] 稳定性框架未加载，跳过'); return; }
+
+console.log('[教案增强] 开始加载教案助手增强包...');
+
+function callAI(taskType, sysPrompt, userPrompt, maxTokens) {
+    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens || 2000);
+}
+
+function createElement(tag, attrs, children) {
+    var el = document.createElement(tag);
+    if (attrs) { for (var k in attrs) { if (k === 'style') el.style.cssText = attrs[k]; else if (k === 'class') el.className = attrs[k]; else el.setAttribute(k, attrs[k]); } }
+    if (children) { (Array.isArray(children) ? children : [children]).forEach(function(c) { if (typeof c === 'string') el.appendChild(document.createTextNode(c)); else if (c) el.appendChild(c); }); }
+    return el;
+}
+
+function showLoading(container, text) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;"><div style="display:inline-block;width:30px;height:30px;border:3px solid #e5e7eb;border-top-color:#10b981;border-radius:50%;animation:lessonEnhanceSpin 0.8s linear infinite;"></div><p style="margin-top:12px;font-size:14px;">' + (text || 'AI处理中...') + '</p></div>';
+}
+
+var LessonPanel = {
+    isOpen: false,
+    
+    init: function() {
+        try {
+            // 创建抽屉面板
+            var panel = createElement('div', {
+                id: 'lesson-enhance-panel',
+                style: 'position:fixed;top:0;right:0;width:540px;height:100vh;background:#fff;z-index:2147483631;box-shadow:-4px 0 24px rgba(0,0,0,0.15);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;'
+            });
+            
+            var header = createElement('div', { style: 'padding:16px 20px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;' });
+            header.appendChild(createElement('div', { style: 'font-size:16px;font-weight:600;' }, '📝 教案助手增强'));
+            var closeBtn = createElement('div', { style: 'cursor:pointer;font-size:20px;opacity:0.8;' }, '✕');
+            closeBtn.onclick = this.toggle.bind(this);
+            header.appendChild(closeBtn);
+            panel.appendChild(header);
+            
+            var tabs = ['模板匹配', '字段生成', '质量校验', '版本对比', '导出Word', '教案库'];
+            var tabBar = createElement('div', { style: 'display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px;background:#ecfdf5;border-bottom:1px solid #a7f3d0;flex-shrink:0;' });
+            var tabContents = [];
+            var self = this;
+            tabs.forEach(function(tab, idx) {
+                var tabBtn = createElement('div', {
+                    'data-ltab': idx,
+                    style: 'padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer;transition:all 0.2s;background:' + (idx === 0 ? '#10b981;color:#fff;' : '#fff;color:#065f46;') + 'border:1px solid #a7f3d0;'
+                }, tab);
+                tabBtn.onclick = function() {
+                    tabContents.forEach(function(c, i) { c.style.display = i === idx ? 'block' : 'none'; });
+                    tabBar.querySelectorAll('[data-ltab]').forEach(function(b) {
+                        b.style.background = b.getAttribute('data-ltab') == idx ? '#10b981' : '#fff';
+                        b.style.color = b.getAttribute('data-ltab') == idx ? '#fff' : '#065f46';
+                    });
+                };
+                tabBar.appendChild(tabBtn);
+                var content = createElement('div', { 'data-lcontent': idx, style: 'flex:1;overflow-y:auto;padding:16px;display:' + (idx === 0 ? 'block' : 'none') + ';' });
+                tabContents.push(content);
+                panel.appendChild(tabBar);
+                panel.appendChild(content);
+            });
+            
+            this.initTemplateMatch(tabContents[0]);
+            this.initFieldGen(tabContents[1]);
+            this.initQualityCheck(tabContents[2]);
+            this.initVersionCompare(tabContents[3]);
+            this.initExportWord(tabContents[4]);
+            this.initLibrary(tabContents[5]);
+            
+            document.body.appendChild(panel);
+            this.panel = panel;
+            
+            // 将教案助手增强加入到论文AI工具箱下拉菜单
+            this.addToDropdown();
+            
+            var style = document.createElement('style');
+            style.textContent = '@keyframes lessonEnhanceSpin{to{transform:rotate(360deg)}}';
+            document.head.appendChild(style);
+            
+            console.log('[教案增强] 面板已创建');
+        } catch(e) { console.warn('[教案增强] 初始化失败', e); }
+    },
+    
+    addToDropdown: function() {
+        try {
+            var dropdown = document.getElementById('paper-merged-dropdown');
+            if (!dropdown) {
+                setTimeout(this.addToDropdown.bind(this), 1500);
+                return;
+            }
+            
+            // 检查是否已添加
+            if (document.getElementById('lesson-dropdown-option')) return;
+            
+            var option = document.createElement('div');
+            option.id = 'lesson-dropdown-option';
+            option.style.cssText = 'padding:10px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.2s;margin-top:4px;border-top:1px solid #f1f5f9;';
+            option.innerHTML = '<span style="font-size:18px;">📝</span><div><div style="font-size:13px;font-weight:600;color:#1e293b;">教案助手增强</div><div style="font-size:11px;color:#64748b;">模板匹配/字段生成/质量校验/版本对比/导出</div></div>';
+            option.onmouseenter = function() { option.style.background = '#ecfdf5'; };
+            option.onmouseleave = function() { option.style.background = 'transparent'; };
+            option.onclick = function() {
+                dropdown.style.display = 'none';
+                if (LessonPanel.panel) LessonPanel.panel.style.transform = 'translateX(0)';
+            };
+            
+            dropdown.appendChild(option);
+            console.log('[教案增强] 已加入论文AI工具箱下拉菜单');
+        } catch(e) {
+            console.warn('[教案增强] 加入下拉菜单失败:', e);
+        }
+    },
+    
+    toggle: function() {
+        this.isOpen = !this.isOpen;
+        if (this.panel) this.panel.style.transform = this.isOpen ? 'translateX(0)' : 'translateX(100%)';
+    },
+    
+    // 1. 教案模板智能匹配
+    initTemplateMatch: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🎯 教案模板智能匹配'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '输入科目/章节/课型，AI推荐最合适的教案模板结构'));
+        
+        var subjectInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '科目，例如：运动生物化学/运动生理学/体育概论' });
+        c.appendChild(subjectInput);
+        
+        var chapterInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '章节/课题，例如：糖代谢与运动' });
+        c.appendChild(chapterInput);
+        
+        var typeSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['理论课', '实验课', '技术课', '讨论课', '复习课', '综合课'].forEach(function(t) {
+            var opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+            typeSelect.appendChild(opt);
+        });
+        c.appendChild(typeSelect);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🎯 AI智能匹配模板');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var subject = subjectInput.value.trim();
+            var chapter = chapterInput.value.trim();
+            var type = typeSelect.value;
+            if (!subject || !chapter) { SF.Toast.warning('请输入科目和章节'); return; }
+            showLoading(result, 'AI正在匹配教案模板...');
+            try {
+                var sys = '你是体育院校教案设计专家。请根据以下信息，推荐最合适的教案模板结构，输出JSON：{"templateName":"模板名称","fields":[{"name":"字段名称","required":true/false,"description":"字段说明","suggestion":"填写建议"}],"teachingFlow":["教学环节1","教学环节2"],"timeAllocation":{"环节1":"时间比例"},"tips":["注意事项1"],"matchScore":1-10}';
+                var userPrompt = '科目：' + subject + '\n章节：' + chapter + '\n课型：' + type;
+                var aiResult = await callAI('structured', sys, userPrompt, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { templateName: '通用教案模板', fields: [] };
+                
+                var html = '';
+                // 模板名称+匹配度
+                html += '<div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);padding:14px;border-radius:8px;margin-bottom:12px;border:2px solid #10b981;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+                html += '<div><div style="font-size:15px;font-weight:700;color:#065f46;">📋 ' + (data.templateName || '推荐模板') + '</div>';
+                html += '<div style="font-size:11px;color:#047857;margin-top:2px;">课型: ' + type + '</div></div>';
+                html += '<div style="text-align:center;"><div style="font-size:24px;font-weight:700;color:#10b981;">' + (data.matchScore || 8) + '</div><div style="font-size:10px;color:#059669;">匹配度</div></div>';
+                html += '</div></div>';
+                
+                // 教案字段
+                if (data.fields && data.fields.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">📝 教案字段结构（' + data.fields.length + '个字段）</div>';
+                    data.fields.forEach(function(f, i) {
+                        var reqColor = f.required ? '#ef4444' : '#6b7280';
+                        html += '<div style="background:#fff;padding:8px 10px;border-radius:6px;margin-bottom:4px;border:1px solid #e2e8f0;border-left:3px solid #10b981;">';
+                        html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px;">';
+                        html += '<span style="font-weight:600;color:#1e293b;">' + (i+1) + '. ' + (f.name || '') + '</span>';
+                        html += '<span style="font-size:10px;color:' + reqColor + ';">' + (f.required ? '必填' : '选填') + '</span></div>';
+                        if (f.description) html += '<div style="font-size:11px;color:#64748b;line-height:1.4;">' + f.description + '</div>';
+                        if (f.suggestion) html += '<div style="font-size:10px;color:#059669;margin-top:2px;">💡 ' + f.suggestion + '</div>';
+                        html += '</div>';
+                    });
+                }
+                
+                // 教学流程
+                if (data.teachingFlow && data.teachingFlow.length > 0) {
+                    html += '<div style="margin-top:10px;font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">🔄 教学流程</div>';
+                    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+                    data.teachingFlow.forEach(function(step, i) {
+                        html += '<div style="background:#ecfdf5;color:#065f46;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:500;">' + (i+1) + '. ' + step + '</div>';
+                        if (i < data.teachingFlow.length - 1) html += '<div style="display:flex;align-items:center;color:#94a3b8;font-size:14px;">→</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                // 注意事项
+                if (data.tips && data.tips.length > 0) {
+                    html += '<div style="margin-top:10px;background:#fffbeb;padding:10px 12px;border-radius:8px;">';
+                    html += '<div style="font-size:11px;font-weight:600;color:#92400e;margin-bottom:4px;">⚠️ 注意事项</div>';
+                    data.tips.forEach(function(t) { html += '<div style="font-size:11px;color:#78350f;line-height:1.5;padding:2px 0;">• ' + t + '</div>'; });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('模板匹配完成！推荐：' + (data.templateName || ''));
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">匹配失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 2. 教案字段并行生成
+    initFieldGen: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '⚡ 教案字段并行生成'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '多模型并行生成教案各字段，一键生成完整教案'));
+        
+        var subjectInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '科目+章节，例如：运动生物化学-糖代谢与运动' });
+        c.appendChild(subjectInput);
+        
+        var objInput = createElement('textarea', { style: 'width:100%;height:60px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '教学目标/重难点（可选，不填则AI自动生成）...' });
+        c.appendChild(objInput);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '⚡ 并行生成完整教案');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var subject = subjectInput.value.trim();
+            var obj = objInput.value.trim();
+            if (!subject) { SF.Toast.warning('请输入科目和章节'); return; }
+            showLoading(result, '多模型正在并行生成教案各字段...');
+            try {
+                // 并行生成4个核心字段
+                var basePrompt = '科目章节：' + subject + (obj ? '\n教学目标重难点：' + obj : '');
+                
+                var [r1, r2, r3, r4] = await Promise.all([
+                    callAI('zh-writing', '你是教案设计专家。请生成以下教案的【教学目标】（知识目标/能力目标/情感目标），分点列出。', basePrompt + '\n请生成教学目标。', 1000),
+                    callAI('reasoning', '你是教案设计专家。请生成以下教案的【教学重难点】，分别列出重点和难点，并说明突破方法。', basePrompt + '\n请生成教学重难点。', 1000),
+                    callAI('creative', '你是教案设计专家。请生成以下教案的【教学过程】，包括导入/新授/练习/总结/作业五个环节，每个环节包含时间分配、教师活动、学生活动、设计意图。', basePrompt + '\n请生成教学过程。', 2000),
+                    callAI('structured', '你是教案设计专家。请生成以下教案的【板书设计】和【教学反思预设】，输出JSON：{"blackboard":"板书设计内容","reflection":"教学反思预设"}', basePrompt + '\n请生成板书设计和教学反思。', 1000)
+                ]);
+                
+                // 解析第四个结果
+                var r4Json = r4.match(/\{[\s\S]*\}/);
+                var r4Data = r4Json ? JSON.parse(r4Json[0]) : { blackboard: r4, reflection: '' };
+                
+                var html = '';
+                // 生成完成提示
+                html += '<div style="background:#ecfdf5;padding:12px;border-radius:8px;margin-bottom:12px;text-align:center;border:2px solid #10b981;">';
+                html += '<div style="font-size:14px;font-weight:700;color:#065f46;">✅ 教案生成完成！</div>';
+                html += '<div style="font-size:11px;color:#047857;margin-top:4px;">4个核心字段已并行生成</div></div>';
+                
+                // 教学目标
+                html += '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;border:1px solid #e2e8f0;border-left:4px solid #3b82f6;">';
+                html += '<div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:8px;">🎯 教学目标</div>';
+                html += '<div style="font-size:12px;color:#1e3a8a;line-height:1.8;white-space:pre-wrap;">' + r1 + '</div></div>';
+                
+                // 教学重难点
+                html += '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;border:1px solid #e2e8f0;border-left:4px solid #ef4444;">';
+                html += '<div style="font-size:13px;font-weight:700;color:#991b1b;margin-bottom:8px;">⚠️ 教学重难点</div>';
+                html += '<div style="font-size:12px;color:#7f1d1d;line-height:1.8;white-space:pre-wrap;">' + r2 + '</div></div>';
+                
+                // 教学过程
+                html += '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;border:1px solid #e2e8f0;border-left:4px solid #10b981;">';
+                html += '<div style="font-size:13px;font-weight:700;color:#065f46;margin-bottom:8px;">📚 教学过程</div>';
+                html += '<div style="font-size:12px;color:#064e3b;line-height:1.8;white-space:pre-wrap;max-height:400px;overflow-y:auto;">' + r3 + '</div></div>';
+                
+                // 板书设计+反思
+                html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+                html += '<div style="background:#fff;padding:10px;border-radius:8px;border:1px solid #e2e8f0;border-left:4px solid #8b5cf6;">';
+                html += '<div style="font-size:12px;font-weight:700;color:#6b21a8;margin-bottom:6px;">📋 板书设计</div>';
+                html += '<div style="font-size:11px;color:#581c87;line-height:1.6;white-space:pre-wrap;">' + (r4Data.blackboard || '') + '</div></div>';
+                html += '<div style="background:#fff;padding:10px;border-radius:8px;border:1px solid #e2e8f0;border-left:4px solid #f59e0b;">';
+                html += '<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px;">💭 教学反思预设</div>';
+                html += '<div style="font-size:11px;color:#78350f;line-height:1.6;white-space:pre-wrap;">' + (r4Data.reflection || '') + '</div></div>';
+                html += '</div>';
+                
+                result.innerHTML = html;
+                SF.Toast.success('教案生成完成！4个字段已并行生成');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">生成失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 3. 教案质量校验
+    initQualityCheck: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '✅ 教案质量校验'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI检查教案完整性、规范性、逻辑性，给出质量评分和改进建议'));
+        
+        var input = createElement('textarea', { style: 'width:100%;height:120px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;', placeholder: '粘贴教案内容...' });
+        c.appendChild(input);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '✅ AI质量校验');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var text = input.value.trim();
+            if (!text) { SF.Toast.warning('请粘贴教案内容'); return; }
+            showLoading(result, 'AI正在校验教案质量...');
+            try {
+                var sys = '你是教案评审专家。请对以下教案进行质量校验，输出JSON：{"overallScore":1-10,"dimensions":[{"name":"完整性","score":1-10,"issues":["问题"]},{"name":"规范性","score":1-10,"issues":["问题"]},{"name":"逻辑性","score":1-10,"issues":["问题"]},{"name":"可操作性","score":1-10,"issues":["问题"]}],"missingFields":["缺失的字段"],"strengths":["优点"],"suggestions":["改进建议"],"summary":"总体评价"}';
+                var aiResult = await callAI('reasoning', sys, '教案内容：\n' + text, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { overallScore: 7, summary: aiResult };
+                
+                var html = '';
+                // 总体评分
+                var scoreColor = (data.overallScore || 7) >= 8 ? '#10b981' : ((data.overallScore || 7) >= 6 ? '#3b82f6' : '#f59e0b');
+                html += '<div style="text-align:center;margin-bottom:12px;"><span style="font-size:36px;font-weight:700;color:' + scoreColor + ';">' + (data.overallScore || 7) + '</span><span style="font-size:14px;color:#64748b;">/10 教案质量评分</span></div>';
+                
+                // 四维评分
+                if (data.dimensions && data.dimensions.length > 0) {
+                    html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;">';
+                    data.dimensions.forEach(function(d) {
+                        var dColor = (d.score || 5) >= 8 ? '#10b981' : ((d.score || 5) >= 6 ? '#3b82f6' : '#f59e0b');
+                        html += '<div style="background:#fff;padding:10px;border-radius:8px;border:1px solid #e2e8f0;">';
+                        html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">';
+                        html += '<span style="font-weight:600;color:#475569;">' + (d.name || '') + '</span>';
+                        html += '<span style="font-weight:700;color:' + dColor + ';">' + (d.score || 0) + '/10</span></div>';
+                        html += '<div style="height:4px;background:#e2e8f0;border-radius:2px;"><div style="height:100%;width:' + ((d.score || 0)*10) + '%;background:' + dColor + ';border-radius:2px;"></div></div>';
+                        if (d.issues && d.issues.length > 0) {
+                            d.issues.forEach(function(issue) {
+                                html += '<div style="font-size:10px;color:#dc2626;margin-top:4px;">⚠️ ' + issue + '</div>';
+                            });
+                        }
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                // 缺失字段
+                if (data.missingFields && data.missingFields.length > 0) {
+                    html += '<div style="background:#fef2f2;padding:10px 12px;border-radius:8px;margin-bottom:10px;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#991b1b;margin-bottom:4px;">❌ 缺失字段（' + data.missingFields.length + '个）</div>';
+                    data.missingFields.forEach(function(f) {
+                        html += '<div style="font-size:11px;color:#7f1d1d;line-height:1.5;">• ' + f + '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                // 优点
+                if (data.strengths && data.strengths.length > 0) {
+                    html += '<div style="background:#ecfdf5;padding:10px 12px;border-radius:8px;margin-bottom:10px;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#065f46;margin-bottom:4px;">✅ 优点</div>';
+                    data.strengths.forEach(function(s) {
+                        html += '<div style="font-size:11px;color:#064e3b;line-height:1.5;">• ' + s + '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                // 改进建议
+                if (data.suggestions && data.suggestions.length > 0) {
+                    html += '<div style="background:#eff6ff;padding:10px 12px;border-radius:8px;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:4px;">💡 改进建议</div>';
+                    data.suggestions.forEach(function(s, i) {
+                        html += '<div style="font-size:11px;color:#1e3a8a;line-height:1.5;">' + (i+1) + '. ' + s + '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('质量校验完成！评分: ' + (data.overallScore || 7) + '分');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">校验失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 4. 教案版本对比
+    initVersionCompare: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🔄 教案版本对比'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '对比两个版本的教案，AI分析差异和改进点'));
+        
+        var v1Input = createElement('textarea', { style: 'width:100%;height:80px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '版本1（旧版）教案内容...' });
+        c.appendChild(v1Input);
+        
+        var v2Input = createElement('textarea', { style: 'width:100%;height:80px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '版本2（新版）教案内容...' });
+        c.appendChild(v2Input);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🔄 AI对比分析');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var v1 = v1Input.value.trim();
+            var v2 = v2Input.value.trim();
+            if (!v1 || !v2) { SF.Toast.warning('请粘贴两个版本的教案'); return; }
+            showLoading(result, 'AI正在对比两个版本...');
+            try {
+                var sys = '你是教案对比分析专家。请对比以下两个版本的教案，输出JSON：{"improvements":[{"field":"修改字段","old":"旧版内容","new":"新版内容","type":"内容增加/内容修改/内容删除/结构调整","reason":"改进原因"}],"qualityChange":{"oldScore":1-10,"newScore":1-10,"change":"提升/下降/持平"},"summary":"对比总结","remainingIssues":["仍存在的问题"]}';
+                var userPrompt = '版本1（旧版）：\n' + v1 + '\n\n版本2（新版）：\n' + v2;
+                var aiResult = await callAI('reasoning', sys, userPrompt, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { improvements: [], summary: aiResult };
+                
+                var html = '';
+                // 质量变化
+                if (data.qualityChange) {
+                    var qc = data.qualityChange;
+                    var changeColor = qc.change === '提升' ? '#10b981' : (qc.change === '下降' ? '#ef4444' : '#6b7280');
+                    html += '<div style="background:#f8fafc;padding:14px;border-radius:8px;margin-bottom:12px;text-align:center;">';
+                    html += '<div style="display:flex;justify-content:center;align-items:center;gap:20px;">';
+                    html += '<div><div style="font-size:24px;font-weight:700;color:#94a3b8;">' + (qc.oldScore || 0) + '</div><div style="font-size:10px;color:#64748b;">旧版评分</div></div>';
+                    html += '<div style="font-size:24px;color:' + changeColor + ';">→</div>';
+                    html += '<div><div style="font-size:24px;font-weight:700;color:' + changeColor + ';">' + (qc.newScore || 0) + '</div><div style="font-size:10px;color:#64748b;">新版评分</div></div>';
+                    html += '<div style="font-size:14px;font-weight:700;color:' + changeColor + ';margin-left:10px;">' + (qc.change || '') + '</div>';
+                    html += '</div></div>';
+                }
+                
+                // 改进点列表
+                if (data.improvements && data.improvements.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">📝 修改明细（' + data.improvements.length + '处）</div>';
+                    data.improvements.forEach(function(imp, i) {
+                        var typeColor = imp.type === '内容增加' ? '#10b981' : (imp.type === '内容删除' ? '#ef4444' : (imp.type === '结构调整' ? '#8b5cf6' : '#3b82f6'));
+                        html += '<div style="background:#fff;padding:10px 12px;border-radius:8px;margin-bottom:8px;border:1px solid #e2e8f0;border-left:4px solid ' + typeColor + ';">';
+                        html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">';
+                        html += '<span style="font-weight:600;color:#1e293b;">' + (i+1) + '. ' + (imp.field || '修改') + '</span>';
+                        html += '<span style="font-size:10px;background:' + typeColor + ';color:#fff;padding:2px 8px;border-radius:10px;">' + (imp.type || '') + '</span></div>';
+                        if (imp.old) html += '<div style="font-size:11px;color:#dc2626;text-decoration:line-through;margin-bottom:2px;">旧: ' + (imp.old || '').substring(0, 80) + '</div>';
+                        if (imp.new) html += '<div style="font-size:11px;color:#059669;margin-bottom:2px;">新: ' + (imp.new || '').substring(0, 80) + '</div>';
+                        if (imp.reason) html += '<div style="font-size:10px;color:#64748b;margin-top:4px;">💡 ' + imp.reason + '</div>';
+                        html += '</div>';
+                    });
+                }
+                
+                // 仍存在的问题
+                if (data.remainingIssues && data.remainingIssues.length > 0) {
+                    html += '<div style="margin-top:10px;background:#fffbeb;padding:10px 12px;border-radius:8px;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:4px;">⚠️ 仍存在的问题</div>';
+                    data.remainingIssues.forEach(function(issue) {
+                        html += '<div style="font-size:11px;color:#78350f;line-height:1.5;">• ' + issue + '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('版本对比完成！共' + (data.improvements ? data.improvements.length : 0) + '处修改');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">对比失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 5. 教案导出Word
+    initExportWord: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📄 教案导出Word'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '将教案内容导出为Word文档，保持格式规范'));
+        
+        var titleInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '教案标题，例如：运动生物化学-糖代谢与运动教案' });
+        c.appendChild(titleInput);
+        
+        var input = createElement('textarea', { style: 'width:100%;height:120px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '教案内容（支持各字段，用换行分隔）...' });
+        c.appendChild(input);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '📄 导出为Word文档');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = function() {
+            var title = titleInput.value.trim() || '教案';
+            var content = input.value.trim();
+            if (!content) { SF.Toast.warning('请输入教案内容'); return; }
+            
+            // 生成HTML格式的Word文档
+            var htmlContent = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">';
+            htmlContent += '<head><meta charset="utf-8"><title>' + title + '</title>';
+            htmlContent += '<style>body{font-family:"宋体",SimSun;font-size:12pt;line-height:1.8;}h1{font-size:18pt;text-align:center;font-weight:bold;margin-bottom:20px;}h2{font-size:14pt;font-weight:bold;margin-top:16px;margin-bottom:8px;border-bottom:1px solid #ccc;padding-bottom:4px;}p{margin:6px 0;text-indent:2em;}.field{font-weight:bold;color:#1e40af;}</style>';
+            htmlContent += '</head><body>';
+            htmlContent += '<h1>' + title + '</h1>';
+            
+            // 简单格式化内容
+            var lines = content.split('\n');
+            var inField = false;
+            lines.forEach(function(line) {
+                line = line.trim();
+                if (!line) return;
+                // 检测字段标题（包含冒号或常见字段名）
+                if (/^(教学目标|教学重难点|教学过程|板书设计|教学反思|作业布置|导入|新授|练习|总结|课程名称|授课教师|授课班级|课时|授课时间)/.test(line) && line.length < 30) {
+                    htmlContent += '<h2>' + line + '</h2>';
+                    inField = true;
+                } else {
+                    htmlContent += '<p>' + line + '</p>';
+                }
+            });
+            
+            htmlContent += '</body></html>';
+            
+            // 创建Blob并下载
+            var blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = title + '.doc';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            result.innerHTML = '<div style="background:#ecfdf5;padding:16px;border-radius:8px;text-align:center;border:2px solid #10b981;">';
+            result.innerHTML += '<div style="font-size:32px;margin-bottom:8px;">✅</div>';
+            result.innerHTML += '<div style="font-size:14px;font-weight:600;color:#065f46;">导出成功！</div>';
+            result.innerHTML += '<div style="font-size:12px;color:#047857;margin-top:4px;">文件: ' + title + '.doc</div>';
+            result.innerHTML += '<div style="font-size:11px;color:#64748b;margin-top:8px;">提示：用Word打开后可另存为.docx格式</div>';
+            result.innerHTML += '</div>';
+            
+            SF.Toast.success('教案已导出为Word文档！');
+        };
+    },
+    
+    // 6. 教案库管理
+    initLibrary: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📚 教案库管理'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '保存/管理/搜索历史教案，本地存储'));
+        
+        // 存储key
+        var STORAGE_KEY = 'lesson_library_enhanced';
+        
+        function getLibrary() {
+            try {
+                var data = localStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch(e) { return []; }
+        }
+        
+        function saveLibrary(lib) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(lib));
+            } catch(e) { SF.Toast.error('存储空间不足'); }
+        }
+        
+        function renderLibrary() {
+            var lib = getLibrary();
+            var html = '';
+            
+            if (lib.length === 0) {
+                html = '<div style="text-align:center;padding:40px;color:#94a3b8;"><div style="font-size:40px;margin-bottom:8px;">📭</div><div style="font-size:13px;">教案库为空</div><div style="font-size:11px;margin-top:4px;">在"字段生成"中生成教案后可保存到这里</div></div>';
+            } else {
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
+                html += '<span style="font-size:12px;color:#64748b;">共 ' + lib.length + ' 份教案</span>';
+                html += '<button id="clearLibraryBtn" style="padding:4px 10px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:4px;font-size:11px;cursor:pointer;">清空全部</button>';
+                html += '</div>';
+                
+                lib.forEach(function(item, idx) {
+                    var date = new Date(item.createdAt || Date.now());
+                    var dateStr = date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'});
+                    html += '<div style="background:#fff;padding:10px 12px;border-radius:8px;margin-bottom:8px;border:1px solid #e2e8f0;">';
+                    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">';
+                    html += '<div style="flex:1;"><div style="font-size:13px;font-weight:600;color:#1e293b;">' + (item.title || '未命名教案') + '</div>';
+                    html += '<div style="font-size:10px;color:#94a3b8;margin-top:2px;">' + dateStr + ' · ' + (item.content ? item.content.length : 0) + '字</div></div>';
+                    html += '<div style="display:flex;gap:4px;margin-left:8px;">';
+                    html += '<button class="viewLessonBtn" data-idx="' + idx + '" style="padding:4px 8px;background:#eff6ff;color:#1e40af;border:none;border-radius:4px;font-size:11px;cursor:pointer;">查看</button>';
+                    html += '<button class="deleteLessonBtn" data-idx="' + idx + '" style="padding:4px 8px;background:#fef2f2;color:#dc2626;border:none;border-radius:4px;font-size:11px;cursor:pointer;">删除</button>';
+                    html += '</div></div>';
+                    if (item.subject) html += '<div style="font-size:11px;color:#64748b;">科目: ' + item.subject + '</div>';
+                    html += '</div>';
+                });
+            }
+            
+            c.querySelector('#libraryList').innerHTML = html;
+            
+            // 绑定事件
+            var viewBtns = c.querySelectorAll('.viewLessonBtn');
+            viewBtns.forEach(function(btn) {
+                btn.onclick = function() {
+                    var idx = parseInt(this.getAttribute('data-idx'));
+                    var lib = getLibrary();
+                    var item = lib[idx];
+                    if (item) {
+                        alert('教案标题: ' + item.title + '\n\n' + (item.content || '').substring(0, 500) + ((item.content || '').length > 500 ? '...' : ''));
+                    }
+                };
+            });
+            
+            var deleteBtns = c.querySelectorAll('.deleteLessonBtn');
+            deleteBtns.forEach(function(btn) {
+                btn.onclick = function() {
+                    var idx = parseInt(this.getAttribute('data-idx'));
+                    if (confirm('确定删除这份教案吗？')) {
+                        var lib = getLibrary();
+                        lib.splice(idx, 1);
+                        saveLibrary(lib);
+                        renderLibrary();
+                        SF.Toast.success('已删除');
+                    }
+                };
+            });
+            
+            var clearBtn = c.querySelector('#clearLibraryBtn');
+            if (clearBtn) {
+                clearBtn.onclick = function() {
+                    if (confirm('确定清空全部教案吗？此操作不可恢复！')) {
+                        saveLibrary([]);
+                        renderLibrary();
+                        SF.Toast.success('已清空教案库');
+                    }
+                };
+            }
+        }
+        
+        // 保存当前教案区域
+        var saveTitle = createElement('input', { id: 'saveLessonTitle', style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '教案标题（保存到教案库）' });
+        c.appendChild(saveTitle);
+        
+        var saveSubject = createElement('input', { id: 'saveLessonSubject', style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '科目（可选）' });
+        c.appendChild(saveSubject);
+        
+        var saveContent = createElement('textarea', { id: 'saveLessonContent', style: 'width:100%;height:80px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '教案内容...' });
+        c.appendChild(saveContent);
+        
+        var saveBtn = createElement('button', { id: 'saveLessonBtn', style: 'margin-bottom:16px;padding:8px 16px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '💾 保存到教案库');
+        c.appendChild(saveBtn);
+        
+        saveBtn.onclick = function() {
+            var title = saveTitle.value.trim();
+            var subject = saveSubject.value.trim();
+            var content = saveContent.value.trim();
+            if (!title || !content) { SF.Toast.warning('请输入标题和内容'); return; }
+            
+            var lib = getLibrary();
+            lib.unshift({
+                title: title,
+                subject: subject,
+                content: content,
+                createdAt: Date.now()
+            });
+            saveLibrary(lib);
+            
+            saveTitle.value = '';
+            saveSubject.value = '';
+            saveContent.value = '';
+            
+            renderLibrary();
+            SF.Toast.success('教案已保存到教案库！');
+        };
+        
+        // 教案列表
+        var listHeader = createElement('div', { style: 'font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;border-top:1px solid #e2e8f0;padding-top:16px;' }, '📚 我的教案库');
+        c.appendChild(listHeader);
+        
+        var libraryList = createElement('div', { id: 'libraryList' });
+        c.appendChild(libraryList);
+        
+        // 初始渲染
+        renderLibrary();
+    }
+};
+
+setTimeout(function() {
+    LessonPanel.init();
+    console.log('✅ 教案助手增强包 v1.0 已加载（6个功能：模板匹配/字段生成/质量校验/版本对比/导出Word/教案库）');
+}, 1200);
+
+} catch(e) {
+    console.error('[教案增强] 顶层错误:', e);
+}
+})();
+</script>
+<!-- ========== 教案助手增强包 v1.0 结束 ========== -->
+
 </body>
 </html>
