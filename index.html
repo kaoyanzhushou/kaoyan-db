@@ -126535,7 +126535,18 @@ const TASK_PROFILES = {
   'cover_letter': { name: 'Cover Letter', keyDims: ['enWriting', 'cnWriting', 'creative'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro', 'glm-5.3'] },
   'response_letter': { name: '回复信', keyDims: ['cnWriting', 'logic', 'instruction'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro', 'glm-5.3', 'hy4-preview'] },
   'trend_analysis': { name: '趋势分析', keyDims: ['longContext', 'logic', 'structured'], weights: [0.4, 0.3, 0.3], chain: ['kimi-k3', 'deepseek-v4-pro', 'qwen3.5-plus'] },
-  'general': { name: '通用任务', keyDims: ['cnWriting', 'logic', 'instruction'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-chat', 'glm-5.3', 'qwen3.5-plus'] }
+  'general': { name: '通用任务', keyDims: ['cnWriting', 'logic', 'instruction'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-chat', 'glm-5.3', 'qwen3.5-plus'] },
+  'lesson_plan': { name: '教案生成', keyDims: ['cnWriting', 'creative', 'structured'], weights: [0.4, 0.3, 0.3], chain: ['glm-5.3', 'hy4-preview', 'qwen3.5-plus'] },
+  'ppt_generation': { name: 'PPT课件生成', keyDims: ['structured', 'creative', 'cnWriting'], weights: [0.4, 0.3, 0.3], chain: ['qwen3.5-plus', 'glm-5.3', 'hy4-preview'] },
+  'proposal_writing': { name: '课题申报书', keyDims: ['academic', 'logic', 'cnWriting'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro', 'glm-5.3', 'kimi-k3'] },
+  'exercise_prescription': { name: '运动处方', keyDims: ['academic', 'logic', 'structured'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro', 'qwen3.5-plus'] },
+  'experiment_design': { name: '实验设计', keyDims: ['logic', 'academic', 'code'], weights: [0.4, 0.3, 0.3], chain: ['deepseek-v4-pro', 'qwen3.5-plus'] },
+  'stat_analysis': { name: '统计分析', keyDims: ['code', 'logic', 'structured'], weights: [0.45, 0.35, 0.2], chain: ['deepseek-v4-pro', 'qwen3.5-plus'] },
+  'mechanism_diagram': { name: '机制图生成', keyDims: ['multimodal', 'academic', 'logic'], weights: [0.4, 0.35, 0.25], chain: ['qwen3.5-plus', 'hy4-preview'] },
+  'academic_english': { name: '学术英语', keyDims: ['enWriting', 'academic', 'instruction'], weights: [0.45, 0.35, 0.2], chain: ['deepseek-v4-pro', 'qwen3.5-plus'] },
+  'translation': { name: '中英翻译', keyDims: ['cnWriting', 'enWriting', 'instruction'], weights: [0.35, 0.35, 0.3], chain: ['glm-5.3', 'deepseek-v4-pro', 'qwen3.5-plus'] },
+  'image_understand': { name: '图片理解', keyDims: ['multimodal', 'academic', 'logic'], weights: [0.5, 0.3, 0.2], chain: ['qwen3.5-plus', 'hy4-preview'] },
+  'quick_qa': { name: '快速问答', keyDims: ['speed', 'instruction', 'cnWriting'], weights: [0.4, 0.35, 0.25], chain: ['qwen-flash', 'deepseek-v4-flash', 'qwen3.5-flash'] }
 };
 
 // 路由开关（默认开启自动路由）
@@ -126606,6 +126617,42 @@ function toggleAutoRouter() {
 }
 
 // 显示模型路由信息（当前任务用什么模型）
+// 获取模型选择理由（为什么选这个模型）
+function getRouteReason(taskType) {
+  const task = TASK_PROFILES[taskType] || TASK_PROFILES['general'];
+  const model = routeModel(taskType);
+  const cap = MODEL_CAPABILITY[model] || {};
+  const modelInfo = AI_MODELS.find(m => m.value === model) || {};
+  
+  // 找出该任务得分最高的2个维度
+  const dimNames = {
+    cnWriting: '中文写作', enWriting: '英文写作', logic: '逻辑推理',
+    longContext: '长文本理解', code: '代码生成', multimodal: '多模态理解',
+    creative: '创意生成', structured: '结构化输出', instruction: '指令遵循',
+    academic: '学术能力', speed: '响应速度'
+  };
+  
+  let topDims = task.keyDims.map((dim, i) => ({
+    dim: dim,
+    name: dimNames[dim] || dim,
+    score: cap[dim] || 0,
+    weight: task.weights[i]
+  })).sort((a, b) => b.score - a.score).slice(0, 2);
+  
+  let reason = '为你选择 ' + (modelInfo.label || model) + '，因为它在';
+  reason += topDims.map(d => d.name + '（' + d.score + '分）').join('和');
+  reason += '能力上表现最强，最适合' + task.name + '任务。';
+  
+  return {
+    model: model,
+    modelLabel: modelInfo.label || model,
+    taskName: task.name,
+    reason: reason,
+    topDims: topDims,
+    chain: task.chain || []
+  };
+}
+
 function showRouteInfo(taskType) {
   const task = TASK_PROFILES[taskType] || TASK_PROFILES['general'];
   const model = routeModel(taskType);
@@ -126628,7 +126675,21 @@ async function callAIRouted(taskType, systemPrompt, userPrompt, maxTokens) {
     if (log.length > 100) log.shift();
     localStorage.setItem('router_log', JSON.stringify(log));
   } catch(e) {}
+  // 存储当前路由信息供UI显示
+  window._lastRouteInfo = getRouteReason(taskType);
   return callDeepSeekAPI(systemPrompt, userPrompt, maxTokens || 2000, model);
+}
+
+// 显示路由提示（在AI生成时显示用了什么模型）
+function showRouteBadge(taskType, containerId) {
+  if (!autoRouterEnabled) return '';
+  const info = getRouteReason(taskType);
+  const container = containerId ? document.getElementById(containerId) : null;
+  const badgeHtml = '<div style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:#ecfeff;border:1px solid #a5f3fc;border-radius:12px;font-size:11px;color:#0e7490;margin-bottom:8px" title="' + info.reason + '">🤖 自动路由: ' + info.modelLabel + '（' + info.taskName + '）</div>';
+  if (container) {
+    container.insertAdjacentHTML('afterbegin', badgeHtml);
+  }
+  return badgeHtml;
 }
 
 // ========== 审稿人模拟器 ==========
