@@ -149318,5 +149318,843 @@ setTimeout(function() {
 </script>
 <!-- ========== 教案助手增强包 v1.0 结束 ========== -->
 
+
+
+
+
+<!-- ========== 课题申报+PPT课件增强包 v1.0 开始 ========== -->
+<script>
+(function() {
+'use strict';
+try {
+
+var SF = window.StabilityFramework;
+if (!SF) { console.warn('[课题PPT增强] 稳定性框架未加载，跳过'); return; }
+
+console.log('[课题PPT增强] 开始加载课题申报+PPT课件增强包...');
+
+function callAI(taskType, sysPrompt, userPrompt, maxTokens) {
+    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens || 2000);
+}
+
+function createElement(tag, attrs, children) {
+    var el = document.createElement(tag);
+    if (attrs) { for (var k in attrs) { if (k === 'style') el.style.cssText = attrs[k]; else if (k === 'class') el.className = attrs[k]; else el.setAttribute(k, attrs[k]); } }
+    if (children) { (Array.isArray(children) ? children : [children]).forEach(function(c) { if (typeof c === 'string') el.appendChild(document.createTextNode(c)); else if (c) el.appendChild(c); }); }
+    return el;
+}
+
+function showLoading(container, text) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;"><div style="display:inline-block;width:30px;height:30px;border:3px solid #e5e7eb;border-top-color:#8b5cf6;border-radius:50%;animation:proposalPptSpin 0.8s linear infinite;"></div><p style="margin-top:12px;font-size:14px;">' + (text || 'AI处理中...') + '</p></div>';
+}
+
+var Panel = {
+    isOpen: false,
+    
+    init: function() {
+        try {
+            var panel = createElement('div', {
+                id: 'proposal-ppt-panel',
+                style: 'position:fixed;top:0;right:0;width:560px;height:100vh;background:#fff;z-index:2147483632;box-shadow:-4px 0 24px rgba(0,0,0,0.15);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;'
+            });
+            
+            var header = createElement('div', { style: 'padding:16px 20px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;' });
+            header.appendChild(createElement('div', { style: 'font-size:16px;font-weight:600;' }, '📊 课题申报+PPT增强'));
+            var closeBtn = createElement('div', { style: 'cursor:pointer;font-size:20px;opacity:0.8;' }, '✕');
+            closeBtn.onclick = this.toggle.bind(this);
+            header.appendChild(closeBtn);
+            panel.appendChild(header);
+            
+            var tabs = ['选题评估', '申报书生成', '文献综述', '预算编制', '进度计划', 'PPT大纲', 'PPT内容', 'PPT美化', 'PPT导出'];
+            var tabBar = createElement('div', { style: 'display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px;background:#f5f3ff;border-bottom:1px solid #ddd6fe;flex-shrink:0;' });
+            var tabContents = [];
+            var self = this;
+            tabs.forEach(function(tab, idx) {
+                var tabBtn = createElement('div', {
+                    'data-ptab': idx,
+                    style: 'padding:5px 9px;border-radius:6px;font-size:11px;cursor:pointer;transition:all 0.2s;background:' + (idx === 0 ? '#8b5cf6;color:#fff;' : '#fff;color:#5b21b6;') + 'border:1px solid #ddd6fe;'
+                }, tab);
+                tabBtn.onclick = function() {
+                    tabContents.forEach(function(c, i) { c.style.display = i === idx ? 'block' : 'none'; });
+                    tabBar.querySelectorAll('[data-ptab]').forEach(function(b) {
+                        b.style.background = b.getAttribute('data-ptab') == idx ? '#8b5cf6' : '#fff';
+                        b.style.color = b.getAttribute('data-ptab') == idx ? '#fff' : '#5b21b6';
+                    });
+                };
+                tabBar.appendChild(tabBtn);
+                var content = createElement('div', { 'data-pcontent': idx, style: 'flex:1;overflow-y:auto;padding:16px;display:' + (idx === 0 ? 'block' : 'none') + ';' });
+                tabContents.push(content);
+                panel.appendChild(tabBar);
+                panel.appendChild(content);
+            });
+            
+            this.initTopicEval(tabContents[0]);
+            this.initProposalGen(tabContents[1]);
+            this.initLitReview(tabContents[2]);
+            this.initBudget(tabContents[3]);
+            this.initSchedule(tabContents[4]);
+            this.initPptOutline(tabContents[5]);
+            this.initPptContent(tabContents[6]);
+            this.initPptBeautify(tabContents[7]);
+            this.initPptExport(tabContents[8]);
+            
+            document.body.appendChild(panel);
+            this.panel = panel;
+            
+            this.addToDropdown();
+            
+            var style = document.createElement('style');
+            style.textContent = '@keyframes proposalPptSpin{to{transform:rotate(360deg)}}';
+            document.head.appendChild(style);
+            
+            console.log('[课题PPT增强] 面板已创建');
+        } catch(e) { console.warn('[课题PPT增强] 初始化失败', e); }
+    },
+    
+    addToDropdown: function() {
+        try {
+            var dropdown = document.getElementById('paper-merged-dropdown');
+            if (!dropdown) { setTimeout(this.addToDropdown.bind(this), 1500); return; }
+            if (document.getElementById('proposal-dropdown-option')) return;
+            
+            var option = document.createElement('div');
+            option.id = 'proposal-dropdown-option';
+            option.style.cssText = 'padding:10px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.2s;margin-top:4px;border-top:1px solid #f1f5f9;';
+            option.innerHTML = '<span style="font-size:18px;">📊</span><div><div style="font-size:13px;font-weight:600;color:#1e293b;">课题申报+PPT增强</div><div style="font-size:11px;color:#64748b;">选题评估/申报书/综述/预算/进度/PPT生成</div></div>';
+            option.onmouseenter = function() { option.style.background = '#f5f3ff'; };
+            option.onmouseleave = function() { option.style.background = 'transparent'; };
+            option.onclick = function() {
+                dropdown.style.display = 'none';
+                if (Panel.panel) Panel.panel.style.transform = 'translateX(0)';
+            };
+            dropdown.appendChild(option);
+            console.log('[课题PPT增强] 已加入论文AI工具箱下拉菜单');
+        } catch(e) { console.warn('[课题PPT增强] 加入下拉菜单失败:', e); }
+    },
+    
+    toggle: function() {
+        this.isOpen = !this.isOpen;
+        if (this.panel) this.panel.style.transform = this.isOpen ? 'translateX(0)' : 'translateX(100%)';
+    },
+    
+    // 1. 课题选题评估
+    initTopicEval: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🎯 课题选题评估'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI评估课题的创新性、可行性、研究价值，给出立项建议'));
+        
+        var titleInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '课题题目，例如：运动干预对大学生心理健康的影响机制研究' });
+        c.appendChild(titleInput);
+        
+        var descInput = createElement('textarea', { style: 'width:100%;height:80px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '课题简介/研究背景（可选）...' });
+        c.appendChild(descInput);
+        
+        var typeSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['国家级课题', '省部级课题', '厅局级课题', '校级课题', '横向课题'].forEach(function(t) {
+            var opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+            typeSelect.appendChild(opt);
+        });
+        c.appendChild(typeSelect);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🎯 AI课题评估');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var title = titleInput.value.trim();
+            var desc = descInput.value.trim();
+            var type = typeSelect.value;
+            if (!title) { SF.Toast.warning('请输入课题题目'); return; }
+            showLoading(result, 'AI正在评估课题...');
+            try {
+                var sys = '你是科研课题评审专家。请对以下课题进行评估，输出JSON：{"overallScore":1-10,"recommendation":"强烈推荐/推荐/谨慎推荐/不推荐","dimensions":[{"name":"创新性","score":1-10,"comment":"评价"},{"name":"研究价值","score":1-10,"comment":"评价"},{"name":"可行性","score":1-10,"comment":"评价"},{"name":"研究方法","score":1-10,"comment":"评价"},{"name":"预期成果","score":1-10,"comment":"评价"}],"strengths":["优势"],"weaknesses":["不足"],"suggestions":["改进建议"],"riskPoints":["风险点"],"summary":"总体评价"}';
+                var userPrompt = '课题题目：' + title + '\n课题类型：' + type + (desc ? '\n课题简介：' + desc : '');
+                var aiResult = await callAI('reasoning', sys, userPrompt, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { overallScore: 7, summary: aiResult };
+                
+                var html = '';
+                var scoreColor = (data.overallScore || 7) >= 8 ? '#10b981' : ((data.overallScore || 7) >= 6 ? '#3b82f6' : '#f59e0b');
+                var recColor = data.recommendation === '强烈推荐' ? '#10b981' : (data.recommendation === '推荐' ? '#3b82f6' : (data.recommendation === '谨慎推荐' ? '#f59e0b' : '#ef4444'));
+                
+                html += '<div style="text-align:center;margin-bottom:12px;"><span style="font-size:36px;font-weight:700;color:' + scoreColor + ';">' + (data.overallScore || 7) + '</span><span style="font-size:14px;color:#64748b;">/10 综合评分</span>';
+                html += '<div style="margin-top:6px;"><span style="background:' + recColor + ';color:#fff;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">' + (data.recommendation || '') + '</span></div></div>';
+                
+                if (data.dimensions && data.dimensions.length > 0) {
+                    html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;">';
+                    data.dimensions.forEach(function(d) {
+                        var dColor = (d.score || 5) >= 8 ? '#10b981' : ((d.score || 5) >= 6 ? '#3b82f6' : '#f59e0b');
+                        html += '<div style="background:#fff;padding:10px;border-radius:8px;border:1px solid #e2e8f0;">';
+                        html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="font-weight:600;color:#475569;">' + (d.name || '') + '</span><span style="font-weight:700;color:' + dColor + ';">' + (d.score || 0) + '/10</span></div>';
+                        html += '<div style="height:4px;background:#e2e8f0;border-radius:2px;"><div style="height:100%;width:' + ((d.score || 0)*10) + '%;background:' + dColor + ';border-radius:2px;"></div></div>';
+                        if (d.comment) html += '<div style="font-size:10px;color:#64748b;margin-top:4px;line-height:1.4;">' + d.comment + '</div>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                if (data.strengths && data.strengths.length > 0) {
+                    html += '<div style="background:#ecfdf5;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#065f46;margin-bottom:4px;">✅ 优势</div>';
+                    data.strengths.forEach(function(s) { html += '<div style="font-size:11px;color:#064e3b;line-height:1.5;">• ' + s + '</div>'; });
+                    html += '</div>';
+                }
+                
+                if (data.weaknesses && data.weaknesses.length > 0) {
+                    html += '<div style="background:#fef2f2;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#991b1b;margin-bottom:4px;">⚠️ 不足</div>';
+                    data.weaknesses.forEach(function(w) { html += '<div style="font-size:11px;color:#7f1d1d;line-height:1.5;">• ' + w + '</div>'; });
+                    html += '</div>';
+                }
+                
+                if (data.suggestions && data.suggestions.length > 0) {
+                    html += '<div style="background:#eff6ff;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:4px;">💡 改进建议</div>';
+                    data.suggestions.forEach(function(s, i) { html += '<div style="font-size:11px;color:#1e3a8a;line-height:1.5;">' + (i+1) + '. ' + s + '</div>'; });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('课题评估完成！评分: ' + (data.overallScore || 7) + '分');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">评估失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 2. 课题申报书生成
+    initProposalGen: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📝 课题申报书生成'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI辅助生成课题申报书各部分内容'));
+        
+        var titleInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '课题题目' });
+        c.appendChild(titleInput);
+        
+        var partSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['研究背景与意义', '国内外研究现状', '研究目标与内容', '研究方法与技术路线', '创新点', '预期成果', '研究基础与条件'].forEach(function(p) {
+            var opt = document.createElement('option'); opt.value = p; opt.textContent = p;
+            partSelect.appendChild(opt);
+        });
+        c.appendChild(partSelect);
+        
+        var extraInput = createElement('textarea', { style: 'width:100%;height:60px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '补充说明/已有思路（可选）...' });
+        c.appendChild(extraInput);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '📝 AI生成申报书内容');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var title = titleInput.value.trim();
+            var part = partSelect.value;
+            var extra = extraInput.value.trim();
+            if (!title) { SF.Toast.warning('请输入课题题目'); return; }
+            showLoading(result, 'AI正在生成' + part + '...');
+            try {
+                var sys = '你是科研课题申报书撰写专家。请为以下课题撰写【' + part + '】部分，要求：学术规范、逻辑清晰、内容详实、符合体育科研课题申报要求。分点或分段撰写，字数800-1500字。';
+                var userPrompt = '课题题目：' + title + (extra ? '\n补充说明：' + extra : '') + '\n\n请撰写【' + part + '】部分。';
+                var aiResult = await callAI('zh-writing', sys, userPrompt, 3000);
+                
+                var html = '<div style="background:#fff;padding:16px;border-radius:8px;border:1px solid #e2e8f0;border-left:4px solid #8b5cf6;">';
+                html += '<div style="font-size:14px;font-weight:700;color:#5b21b6;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #ddd6fe;">📝 ' + part + '</div>';
+                html += '<div style="font-size:13px;color:#1e293b;line-height:2;white-space:pre-wrap;">' + aiResult + '</div>';
+                html += '</div>';
+                html += '<div style="margin-top:10px;text-align:right;"><button id="copyProposalBtn" style="padding:6px 14px;background:#f5f3ff;color:#5b21b6;border:1px solid #ddd6fe;border-radius:6px;font-size:12px;cursor:pointer;">📋 复制内容</button></div>';
+                
+                result.innerHTML = html;
+                
+                var copyBtn = result.querySelector('#copyProposalBtn');
+                if (copyBtn) {
+                    copyBtn.onclick = function() {
+                        navigator.clipboard.writeText(aiResult).then(function() {
+                            SF.Toast.success('已复制到剪贴板');
+                        }).catch(function() { SF.Toast.error('复制失败'); });
+                    };
+                }
+                
+                SF.Toast.success(part + '生成完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">生成失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 3. 文献综述生成
+    initLitReview: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📚 文献综述生成'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI基于研究主题生成文献综述框架和内容'));
+        
+        var topicInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '研究主题，例如：运动干预与心理健康' });
+        c.appendChild(topicInput);
+        
+        var keywordsInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '关键词（用逗号分隔），例如：运动干预,心理健康,大学生,机制' });
+        c.appendChild(keywordsInput);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '📚 AI生成文献综述');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var topic = topicInput.value.trim();
+            var keywords = keywordsInput.value.trim();
+            if (!topic) { SF.Toast.warning('请输入研究主题'); return; }
+            showLoading(result, 'AI正在生成文献综述...');
+            try {
+                var sys = '你是体育科研文献综述专家。请为以下研究主题生成文献综述，输出JSON：{"structure":[{"section":"章节标题","content":"内容概述","keyPoints":["要点1","要点2"]}],"researchGaps":["研究空白1"],"futureDirections":["未来方向1"],"recommendedReferences":[{"title":"文献标题","author":"作者","year":"年份","journal":"期刊","reason":"推荐理由"}]}';
+                var userPrompt = '研究主题：' + topic + (keywords ? '\n关键词：' + keywords : '');
+                var aiResult = await callAI('research', sys, userPrompt, 3000);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { structure: [] };
+                
+                var html = '';
+                if (data.structure && data.structure.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">📖 综述结构（' + data.structure.length + '个章节）</div>';
+                    data.structure.forEach(function(s, i) {
+                        html += '<div style="background:#fff;padding:10px 12px;border-radius:8px;margin-bottom:8px;border:1px solid #e2e8f0;border-left:4px solid #8b5cf6;">';
+                        html += '<div style="font-size:13px;font-weight:600;color:#5b21b6;margin-bottom:6px;">' + (i+1) + '. ' + (s.section || '') + '</div>';
+                        if (s.content) html += '<div style="font-size:12px;color:#475569;line-height:1.7;margin-bottom:6px;">' + s.content + '</div>';
+                        if (s.keyPoints && s.keyPoints.length > 0) {
+                            s.keyPoints.forEach(function(kp) {
+                                html += '<div style="font-size:11px;color:#6b7280;line-height:1.5;padding-left:12px;">▸ ' + kp + '</div>';
+                            });
+                        }
+                        html += '</div>';
+                    });
+                }
+                
+                if (data.researchGaps && data.researchGaps.length > 0) {
+                    html += '<div style="background:#fffbeb;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:4px;">🔍 研究空白</div>';
+                    data.researchGaps.forEach(function(g) { html += '<div style="font-size:11px;color:#78350f;line-height:1.5;">• ' + g + '</div>'; });
+                    html += '</div>';
+                }
+                
+                if (data.futureDirections && data.futureDirections.length > 0) {
+                    html += '<div style="background:#ecfdf5;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#065f46;margin-bottom:4px;">🚀 未来研究方向</div>';
+                    data.futureDirections.forEach(function(d) { html += '<div style="font-size:11px;color:#064e3b;line-height:1.5;">• ' + d + '</div>'; });
+                    html += '</div>';
+                }
+                
+                if (data.recommendedReferences && data.recommendedReferences.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">📚 推荐参考文献（' + data.recommendedReferences.length + '篇）</div>';
+                    data.recommendedReferences.forEach(function(ref, i) {
+                        html += '<div style="background:#f8fafc;padding:8px 10px;border-radius:6px;margin-bottom:4px;border:1px solid #e2e8f0;">';
+                        html += '<div style="font-size:12px;font-weight:600;color:#1e293b;">' + (i+1) + '. ' + (ref.title || '') + '</div>';
+                        html += '<div style="font-size:10px;color:#64748b;margin-top:2px;">' + (ref.author || '') + ' (' + (ref.year || '') + ') - ' + (ref.journal || '') + '</div>';
+                        if (ref.reason) html += '<div style="font-size:10px;color:#059669;margin-top:2px;">💡 ' + ref.reason + '</div>';
+                        html += '</div>';
+                    });
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('文献综述生成完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">生成失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 4. 预算编制
+    initBudget: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '💰 课题预算编制'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI辅助编制课题预算，合理分配各项经费'));
+        
+        var amountInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '课题总经费（万元），例如：10' });
+        c.appendChild(amountInput);
+        
+        var typeSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['自然科学类', '社会科学类', '体育科学类', '实验类', '调查类'].forEach(function(t) {
+            var opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+            typeSelect.appendChild(opt);
+        });
+        c.appendChild(typeSelect);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '💰 AI编制预算');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var amount = amountInput.value.trim();
+            var type = typeSelect.value;
+            if (!amount) { SF.Toast.warning('请输入课题总经费'); return; }
+            showLoading(result, 'AI正在编制预算...');
+            try {
+                var sys = '你是科研课题预算编制专家。请为以下课题编制预算，输出JSON：{"total":总经费万元,"items":[{"category":"经费类别","amount":金额万元,"percentage":百分比,"items":["明细1","明细2"],"reason":"分配理由"}]}';
+                var userPrompt = '课题总经费：' + amount + '万元\n课题类型：' + type + '\n请编制合理的预算分配方案。';
+                var aiResult = await callAI('structured', sys, userPrompt, 2000);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { items: [] };
+                
+                var html = '';
+                html += '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);padding:14px;border-radius:8px;margin-bottom:12px;text-align:center;border:2px solid #8b5cf6;">';
+                html += '<div style="font-size:12px;color:#6b21a8;">课题总经费</div>';
+                html += '<div style="font-size:28px;font-weight:700;color:#5b21b6;">' + (data.total || amount) + ' <span style="font-size:14px;">万元</span></div>';
+                html += '</div>';
+                
+                if (data.items && data.items.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">📊 预算分配明细</div>';
+                    var colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#f97316'];
+                    data.items.forEach(function(item, i) {
+                        var color = colors[i % colors.length];
+                        html += '<div style="background:#fff;padding:10px 12px;border-radius:8px;margin-bottom:8px;border:1px solid #e2e8f0;border-left:4px solid ' + color + ';">';
+                        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+                        html += '<span style="font-size:13px;font-weight:600;color:#1e293b;">' + (item.category || '') + '</span>';
+                        html += '<span style="font-size:14px;font-weight:700;color:' + color + ';">' + (item.amount || 0) + '万 (' + (item.percentage || 0) + '%)</span></div>';
+                        html += '<div style="height:6px;background:#f1f5f9;border-radius:3px;margin-bottom:6px;"><div style="height:100%;width:' + (item.percentage || 0) + '%;background:' + color + ';border-radius:3px;"></div></div>';
+                        if (item.items && item.items.length > 0) {
+                            item.items.forEach(function(detail) {
+                                html += '<div style="font-size:11px;color:#64748b;line-height:1.5;padding-left:8px;">▸ ' + detail + '</div>';
+                            });
+                        }
+                        if (item.reason) html += '<div style="font-size:10px;color:#6b7280;margin-top:4px;font-style:italic;">💡 ' + item.reason + '</div>';
+                        html += '</div>';
+                    });
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('预算编制完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">编制失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 5. 进度计划
+    initSchedule: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📅 课题进度计划'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI生成课题研究进度计划（甘特图式）'));
+        
+        var durationInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '研究周期（月），例如：24' });
+        c.appendChild(durationInput);
+        
+        var startInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '开始时间，例如：2026年1月' });
+        c.appendChild(startInput);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '📅 AI生成进度计划');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var duration = durationInput.value.trim();
+            var start = startInput.value.trim();
+            if (!duration) { SF.Toast.warning('请输入研究周期'); return; }
+            showLoading(result, 'AI正在生成进度计划...');
+            try {
+                var sys = '你是科研项目管理专家。请为以下课题生成研究进度计划，输出JSON：{"phases":[{"name":"阶段名称","startMonth":开始月,"endMonth":结束月,"tasks":["任务1","任务2"],"deliverables":"交付物","milestone":"里程碑"}]}';
+                var userPrompt = '研究周期：' + duration + '个月\n开始时间：' + (start || '项目启动') + '\n请生成合理的研究进度计划，包含文献调研、研究设计、数据收集、数据分析、论文撰写、结题验收等阶段。';
+                var aiResult = await callAI('structured', sys, userPrompt, 2000);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { phases: [] };
+                
+                var html = '';
+                if (data.phases && data.phases.length > 0) {
+                    var totalMonths = parseInt(duration) || 24;
+                    var colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+                    
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:10px;color:#1e293b;">📊 研究进度甘特图（共' + totalMonths + '个月）</div>';
+                    
+                    // 时间轴
+                    html += '<div style="display:flex;margin-bottom:4px;padding-left:100px;">';
+                    for (var m = 1; m <= totalMonths; m += Math.ceil(totalMonths/12)) {
+                        html += '<div style="flex:1;font-size:9px;color:#94a3b8;text-align:center;">M' + m + '</div>';
+                    }
+                    html += '</div>';
+                    
+                    data.phases.forEach(function(phase, i) {
+                        var color = colors[i % colors.length];
+                        var startM = phase.startMonth || 1;
+                        var endM = phase.endMonth || totalMonths;
+                        var leftPct = ((startM - 1) / totalMonths) * 100;
+                        var widthPct = ((endM - startM + 1) / totalMonths) * 100;
+                        
+                        html += '<div style="display:flex;align-items:center;margin-bottom:6px;">';
+                        html += '<div style="width:100px;font-size:11px;font-weight:600;color:#475569;flex-shrink:0;">' + (phase.name || '') + '</div>';
+                        html += '<div style="flex:1;position:relative;height:24px;background:#f1f5f9;border-radius:4px;">';
+                        html += '<div style="position:absolute;left:' + leftPct + '%;width:' + widthPct + '%;height:100%;background:' + color + ';border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:600;">M' + startM + '-M' + endM + '</div>';
+                        html += '</div></div>';
+                        
+                        if (phase.tasks && phase.tasks.length > 0) {
+                            html += '<div style="padding-left:100px;margin-bottom:8px;">';
+                            phase.tasks.forEach(function(task) {
+                                html += '<div style="font-size:10px;color:#64748b;line-height:1.4;">▸ ' + task + '</div>';
+                            });
+                            if (phase.deliverables) html += '<div style="font-size:10px;color:#059669;margin-top:2px;">📦 交付物: ' + phase.deliverables + '</div>';
+                            if (phase.milestone) html += '<div style="font-size:10px;color:#8b5cf6;margin-top:2px;">🏁 里程碑: ' + phase.milestone + '</div>';
+                            html += '</div>';
+                        }
+                    });
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('进度计划生成完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">生成失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 6. PPT大纲生成
+    initPptOutline: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📑 PPT大纲生成'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI根据教案/教材生成PPT大纲结构'));
+        
+        var topicInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '课件主题/章节，例如：运动生物化学-糖代谢与运动' });
+        c.appendChild(topicInput);
+        
+        var pagesInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '预计页数，例如：20' });
+        c.appendChild(pagesInput);
+        
+        var audienceSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['本科生', '研究生', '教师培训', '学术报告', '科普讲座'].forEach(function(a) {
+            var opt = document.createElement('option'); opt.value = a; opt.textContent = a;
+            audienceSelect.appendChild(opt);
+        });
+        c.appendChild(audienceSelect);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '📑 AI生成PPT大纲');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var topic = topicInput.value.trim();
+            var pages = pagesInput.value.trim() || '20';
+            var audience = audienceSelect.value;
+            if (!topic) { SF.Toast.warning('请输入课件主题'); return; }
+            showLoading(result, 'AI正在生成PPT大纲...');
+            try {
+                var sys = '你是PPT课件设计专家。请为以下主题生成PPT大纲，输出JSON：{"title":"课件标题","subtitle":"副标题","slides":[{"page":页码,"type":"封面/目录/内容/图表/总结/结束","title":"页面标题","keyPoints":["要点1","要点2"],"speakerNotes":"讲稿提示","layoutSuggestion":"版式建议"}]}';
+                var userPrompt = '课件主题：' + topic + '\n预计页数：' + pages + '页\n受众：' + audience + '\n请生成完整的PPT大纲结构。';
+                var aiResult = await callAI('creative', sys, userPrompt, 3000);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { slides: [] };
+                
+                var html = '';
+                html += '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);padding:14px;border-radius:8px;margin-bottom:12px;text-align:center;border:2px solid #8b5cf6;">';
+                html += '<div style="font-size:16px;font-weight:700;color:#5b21b6;">' + (data.title || topic) + '</div>';
+                if (data.subtitle) html += '<div style="font-size:12px;color:#7c3aed;margin-top:4px;">' + data.subtitle + '</div>';
+                html += '<div style="font-size:11px;color:#6b7280;margin-top:6px;">共 ' + (data.slides ? data.slides.length : 0) + ' 页 · 受众: ' + audience + '</div>';
+                html += '</div>';
+                
+                if (data.slides && data.slides.length > 0) {
+                    var typeColors = { '封面': '#8b5cf6', '目录': '#3b82f6', '内容': '#10b981', '图表': '#f59e0b', '总结': '#ec4899', '结束': '#ef4444' };
+                    data.slides.forEach(function(slide) {
+                        var typeColor = typeColors[slide.type] || '#6b7280';
+                        html += '<div style="background:#fff;padding:8px 10px;border-radius:6px;margin-bottom:4px;border:1px solid #e2e8f0;display:flex;gap:8px;">';
+                        html += '<div style="width:28px;height:28px;background:' + typeColor + ';color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">' + (slide.page || '') + '</div>';
+                        html += '<div style="flex:1;min-width:0;">';
+                        html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+                        html += '<span style="font-size:12px;font-weight:600;color:#1e293b;">' + (slide.title || '') + '</span>';
+                        html += '<span style="font-size:9px;background:' + typeColor + ';color:#fff;padding:1px 6px;border-radius:8px;flex-shrink:0;">' + (slide.type || '') + '</span>';
+                        html += '</div>';
+                        if (slide.keyPoints && slide.keyPoints.length > 0) {
+                            slide.keyPoints.forEach(function(kp) {
+                                html += '<div style="font-size:10px;color:#64748b;line-height:1.4;margin-top:2px;">▸ ' + kp + '</div>';
+                            });
+                        }
+                        if (slide.layoutSuggestion) html += '<div style="font-size:9px;color:#8b5cf6;margin-top:2px;font-style:italic;">🎨 ' + slide.layoutSuggestion + '</div>';
+                        html += '</div></div>';
+                    });
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('PPT大纲生成完成！共' + (data.slides ? data.slides.length : 0) + '页');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">生成失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 7. PPT内容生成
+    initPptContent: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📝 PPT内容生成'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI逐页生成PPT内容（标题+要点+讲稿）'));
+        
+        var pageTitleInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '本页标题，例如：糖代谢的基本途径' });
+        c.appendChild(pageTitleInput);
+        
+        var contextInput = createElement('textarea', { style: 'width:100%;height:80px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '相关内容/教材要点（可选）...' });
+        c.appendChild(contextInput);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '📝 AI生成PPT内容');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var pageTitle = pageTitleInput.value.trim();
+            var context = contextInput.value.trim();
+            if (!pageTitle) { SF.Toast.warning('请输入本页标题'); return; }
+            showLoading(result, 'AI正在生成PPT内容...');
+            try {
+                var sys = '你是PPT内容设计专家。请为以下PPT页面生成内容，输出JSON：{"title":"页面标题","subtitle":"副标题","bullets":[{"level":1,"text":"要点内容"}],"visualSuggestion":"视觉建议","speakerNotes":"讲稿（100-200字）","animationSuggestion":"动画建议"}';
+                var userPrompt = '页面标题：' + pageTitle + (context ? '\n相关内容：' + context : '') + '\n请生成这一页PPT的完整内容。';
+                var aiResult = await callAI('creative', sys, userPrompt, 2000);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { title: pageTitle, bullets: [] };
+                
+                var html = '';
+                html += '<div style="background:linear-gradient(135deg,#1e293b,#334155);color:#fff;padding:20px;border-radius:12px;margin-bottom:12px;min-height:120px;display:flex;flex-direction:column;justify-content:center;">';
+                html += '<div style="font-size:18px;font-weight:700;">' + (data.title || pageTitle) + '</div>';
+                if (data.subtitle) html += '<div style="font-size:13px;color:#94a3b8;margin-top:6px;">' + data.subtitle + '</div>';
+                html += '</div>';
+                
+                if (data.bullets && data.bullets.length > 0) {
+                    html += '<div style="background:#fff;padding:16px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:12px;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:10px;">📌 内容要点</div>';
+                    data.bullets.forEach(function(b) {
+                        var indent = (b.level || 1) * 16;
+                        html += '<div style="padding-left:' + indent + 'px;font-size:13px;color:#334155;line-height:2;">' + ((b.level || 1) > 1 ? '○' : '●') + ' ' + (b.text || '') + '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                if (data.speakerNotes) {
+                    html += '<div style="background:#fffbeb;padding:12px;border-radius:8px;margin-bottom:12px;border-left:4px solid #f59e0b;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:6px;">🎤 讲稿提示</div>';
+                    html += '<div style="font-size:12px;color:#78350f;line-height:1.8;">' + data.speakerNotes + '</div>';
+                    html += '</div>';
+                }
+                
+                if (data.visualSuggestion || data.animationSuggestion) {
+                    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+                    if (data.visualSuggestion) {
+                        html += '<div style="background:#f5f3ff;padding:10px;border-radius:8px;"><div style="font-size:11px;font-weight:600;color:#5b21b6;margin-bottom:4px;">🎨 视觉建议</div><div style="font-size:11px;color:#6b21a8;line-height:1.5;">' + data.visualSuggestion + '</div></div>';
+                    }
+                    if (data.animationSuggestion) {
+                        html += '<div style="background:#ecfdf5;padding:10px;border-radius:8px;"><div style="font-size:11px;font-weight:600;color:#065f46;margin-bottom:4px;">✨ 动画建议</div><div style="font-size:11px;color:#064e3b;line-height:1.5;">' + data.animationSuggestion + '</div></div>';
+                    }
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('PPT内容生成完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">生成失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 8. PPT美化建议
+    initPptBeautify: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🎨 PPT美化建议'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI分析PPT内容，给出专业美化建议'));
+        
+        var input = createElement('textarea', { style: 'width:100%;height:120px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;', placeholder: '粘贴PPT内容/大纲...' });
+        c.appendChild(input);
+        
+        var styleSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-top:8px;' });
+        ['学术简约风', '商务专业风', '科技现代风', '教育活泼风', '体育活力风'].forEach(function(s) {
+            var opt = document.createElement('option'); opt.value = s; opt.textContent = s;
+            styleSelect.appendChild(opt);
+        });
+        c.appendChild(styleSelect);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🎨 AI美化建议');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var text = input.value.trim();
+            var style = styleSelect.value;
+            if (!text) { SF.Toast.warning('请粘贴PPT内容'); return; }
+            showLoading(result, 'AI正在分析美化建议...');
+            try {
+                var sys = '你是PPT设计美化专家。请对以下PPT内容给出专业美化建议，输出JSON：{"colorScheme":{"primary":"主色","secondary":"辅色","accent":"强调色","background":"背景色"},"fontSuggestion":"字体建议","layoutSuggestions":["版式建议1"],"visualEnhancements":["视觉增强建议"],"typographyTips":["排版技巧"],"animationTips":["动画建议"],"commonMistakes":["常见问题"]}';
+                var userPrompt = 'PPT内容：\n' + text + '\n\n目标风格：' + style + '\n请给出美化建议。';
+                var aiResult = await callAI('creative', sys, userPrompt, 2000);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+                
+                var html = '';
+                if (data.colorScheme) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">🎨 配色方案（' + style + '）</div>';
+                    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;">';
+                    var colorItems = [
+                        { label: '主色', value: data.colorScheme.primary },
+                        { label: '辅色', value: data.colorScheme.secondary },
+                        { label: '强调色', value: data.colorScheme.accent },
+                        { label: '背景色', value: data.colorScheme.background }
+                    ];
+                    colorItems.forEach(function(item) {
+                        html += '<div style="text-align:center;"><div style="height:40px;background:' + (item.value || '#ccc') + ';border-radius:6px;border:1px solid #e2e8f0;"></div><div style="font-size:10px;color:#64748b;margin-top:4px;">' + item.label + '<br>' + (item.value || '') + '</div></div>';
+                    });
+                    html += '</div>';
+                }
+                
+                if (data.fontSuggestion) {
+                    html += '<div style="background:#f8fafc;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:4px;">📝 字体建议</div><div style="font-size:12px;color:#475569;line-height:1.6;">' + data.fontSuggestion + '</div></div>';
+                }
+                
+                if (data.layoutSuggestions && data.layoutSuggestions.length > 0) {
+                    html += '<div style="background:#eff6ff;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:4px;">📐 版式建议</div>';
+                    data.layoutSuggestions.forEach(function(s, i) { html += '<div style="font-size:11px;color:#1e3a8a;line-height:1.5;">' + (i+1) + '. ' + s + '</div>'; });
+                    html += '</div>';
+                }
+                
+                if (data.visualEnhancements && data.visualEnhancements.length > 0) {
+                    html += '<div style="background:#f5f3ff;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#5b21b6;margin-bottom:4px;">✨ 视觉增强</div>';
+                    data.visualEnhancements.forEach(function(s, i) { html += '<div style="font-size:11px;color:#6b21a8;line-height:1.5;">' + (i+1) + '. ' + s + '</div>'; });
+                    html += '</div>';
+                }
+                
+                if (data.commonMistakes && data.commonMistakes.length > 0) {
+                    html += '<div style="background:#fef2f2;padding:10px 12px;border-radius:8px;"><div style="font-size:12px;font-weight:600;color:#991b1b;margin-bottom:4px;">⚠️ 常见问题避免</div>';
+                    data.commonMistakes.forEach(function(s) { html += '<div style="font-size:11px;color:#7f1d1d;line-height:1.5;">• ' + s + '</div>'; });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('美化建议生成完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">分析失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 9. PPT导出演示
+    initPptExport: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📤 PPT导出演示'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '将PPT大纲导出为HTML格式，可直接浏览器演示'));
+        
+        var titleInput = createElement('input', { id: 'exportPptTitle', style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: 'PPT标题' });
+        c.appendChild(titleInput);
+        
+        var slidesInput = createElement('textarea', { id: 'exportPptSlides', style: 'width:100%;height:120px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: 'PPT内容（每页用===分隔，第一行为标题，后续为要点）...\n\n示例：\n封面\n运动生物化学\n=== \n糖代谢概述\n糖的分类\n糖的生理功能\n=== \n谢谢观看' });
+        c.appendChild(slidesInput);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '📤 生成并打开演示');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = function() {
+            var title = titleInput.value.trim() || '演示文稿';
+            var slidesText = slidesInput.value.trim();
+            if (!slidesText) { SF.Toast.warning('请输入PPT内容'); return; }
+            
+            var slides = slidesText.split('===').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+            if (slides.length === 0) { SF.Toast.warning('请输入至少一页内容'); return; }
+            
+            // 生成HTML演示文稿
+            var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + title + '</title>';
+            html += '<style>';
+            html += '*{margin:0;padding:0;box-sizing:border-box;}';
+            html += 'body{font-family:"Microsoft YaHei",sans-serif;background:#1a1a2e;overflow:hidden;}';
+            html += '.slide{width:100vw;height:100vh;display:none;flex-direction:column;justify-content:center;align-items:center;padding:60px;color:#fff;position:relative;}';
+            html += '.slide.active{display:flex;}';
+            html += '.slide-title{font-size:48px;font-weight:700;margin-bottom:30px;text-align:center;background:linear-gradient(135deg,#8b5cf6,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}';
+            html += '.slide-subtitle{font-size:24px;color:#94a3b8;margin-bottom:40px;text-align:center;}';
+            html += '.slide-bullets{font-size:22px;line-height:2.2;color:#e2e8f0;}';
+            html += '.slide-bullets li{margin-bottom:12px;}';
+            html += '.nav{position:fixed;bottom:30px;right:30px;display:flex;gap:10px;z-index:100;}';
+            html += '.nav button{padding:10px 20px;background:rgba(139,92,246,0.8);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;}';
+            html += '.nav button:hover{background:rgba(139,92,246,1);}';
+            html += '.page-indicator{position:fixed;bottom:30px;left:30px;color:#94a3b8;font-size:14px;z-index:100;}';
+            html += '.cover{background:linear-gradient(135deg,#1a1a2e,#16213e);}';
+            html += '.content-slide{background:linear-gradient(135deg,#0f0f23,#1a1a2e);}';
+            html += '.end-slide{background:linear-gradient(135deg,#1a1a2e,#0f0f23);}';
+            html += '</style></head><body>';
+            
+            slides.forEach(function(slide, idx) {
+                var lines = slide.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
+                var slideTitle = lines[0] || '';
+                var slideClass = idx === 0 ? 'cover' : (idx === slides.length - 1 ? 'end-slide' : 'content-slide');
+                html += '<div class="slide ' + slideClass + (idx === 0 ? ' active' : '') + '" data-index="' + idx + '">';
+                
+                if (idx === 0) {
+                    html += '<div class="slide-title">' + slideTitle + '</div>';
+                    if (lines.length > 1) html += '<div class="slide-subtitle">' + lines.slice(1).join(' · ') + '</div>';
+                } else if (idx === slides.length - 1) {
+                    html += '<div class="slide-title" style="font-size:64px;">' + slideTitle + '</div>';
+                } else {
+                    html += '<div style="width:80%;max-width:900px;">';
+                    html += '<div style="font-size:36px;font-weight:700;margin-bottom:30px;color:#fff;border-left:6px solid #8b5cf6;padding-left:20px;">' + slideTitle + '</div>';
+                    if (lines.length > 1) {
+                        html += '<ul class="slide-bullets" style="list-style:none;padding-left:26px;">';
+                        lines.slice(1).forEach(function(line) {
+                            html += '<li style="position:relative;padding-left:20px;">';
+                            html += '<span style="position:absolute;left:0;color:#8b5cf6;">▸</span>' + line;
+                            html += '</li>';
+                        });
+                        html += '</ul>';
+                    }
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            
+            html += '<div class="page-indicator"><span id="currentPage">1</span> / ' + slides.length + '</div>';
+            html += '<div class="nav">';
+            html += '<button onclick="prevSlide()">← 上一页</button>';
+            html += '<button onclick="nextSlide()">下一页 →</button>';
+            html += '</div>';
+            
+            html += '<script>';
+            html += 'var current=0;var slides=document.querySelectorAll(".slide");';
+            html += 'function showSlide(n){slides.forEach(function(s,i){s.classList.toggle("active",i===n);});document.getElementById("currentPage").textContent=n+1;current=n;}';
+            html += 'function nextSlide(){if(current<slides.length-1)showSlide(current+1);}';
+            html += 'function prevSlide(){if(current>0)showSlide(current-1);}';
+            html += 'document.addEventListener("keydown",function(e){if(e.key==="ArrowRight"||e.key===" ")nextSlide();if(e.key==="ArrowLeft")prevSlide();});';
+            html += '<\/script>';
+            html += '</body></html>';
+            
+            // 在新窗口打开
+            var newWindow = window.open('', '_blank');
+            if (newWindow) {
+                newWindow.document.write(html);
+                newWindow.document.close();
+                result.innerHTML = '<div style="background:#ecfdf5;padding:16px;border-radius:8px;text-align:center;border:2px solid #10b981;">';
+                result.innerHTML += '<div style="font-size:32px;margin-bottom:8px;">✅</div>';
+                result.innerHTML += '<div style="font-size:14px;font-weight:600;color:#065f46;">演示文稿已生成！</div>';
+                result.innerHTML += '<div style="font-size:12px;color:#047857;margin-top:4px;">共 ' + slides.length + ' 页，已在新窗口打开</div>';
+                result.innerHTML += '<div style="font-size:11px;color:#64748b;margin-top:8px;">使用 ← → 方向键或空格键翻页</div>';
+                result.innerHTML += '</div>';
+                SF.Toast.success('PPT演示已生成！共' + slides.length + '页');
+            } else {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">弹窗被阻止，请允许弹窗后重试</div>';
+            }
+        };
+    }
+};
+
+setTimeout(function() {
+    Panel.init();
+    console.log('✅ 课题申报+PPT课件增强包 v1.0 已加载（9个功能：选题评估/申报书生成/文献综述/预算编制/进度计划/PPT大纲/PPT内容/PPT美化/PPT导出）');
+}, 1500);
+
+} catch(e) {
+    console.error('[课题PPT增强] 顶层错误:', e);
+}
+})();
+</script>
+<!-- ========== 课题申报+PPT课件增强包 v1.0 结束 ========== -->
+
 </body>
 </html>
