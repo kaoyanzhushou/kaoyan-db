@@ -146379,5 +146379,563 @@ initStabilityFramework();
 </script>
 <!-- ========== 稳定性核心框架 v1.0 结束 ========== -->
 
+
+<!-- ========== 稳定性框架 v1.1 扩展 开始 ========== -->
+<script>
+(function() {
+'use strict';
+try {
+
+// 检查v1.0是否已加载
+if (!window.StabilityFramework) {
+    console.warn('[稳定性v1.1] v1.0未加载，跳过扩展');
+    return;
+}
+
+var SF = window.StabilityFramework;
+console.log('[稳定性v1.1] 开始加载扩展模块...');
+
+
+// ==========================================
+// 1. localStorage 容量管理
+// ==========================================
+var StabilityStorageManager = {
+    prefix: '', // 不限制前缀，管理所有localStorage
+    maxSize: 4.5 * 1024 * 1024, // 4.5MB（留0.5MB余量）
+    warnThreshold: 0.8, // 80%时预警
+    
+    init: function() {
+        try {
+            // 页面加载时检查容量
+            this.checkAndWarn();
+            // 每分钟检查一次
+            var self = this;
+            setInterval(function() { self.checkAndWarn(); }, 60000);
+            console.log('[稳定性v1.1] localStorage容量管理已启动');
+        } catch(e) { console.warn('[存储管理] init失败', e); }
+    },
+    
+    // 获取当前使用量
+    getUsage: function() {
+        try {
+            var total = 0;
+            var itemCount = 0;
+            for (var key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    var val = localStorage.getItem(key);
+                    total += (key.length + val.length) * 2; // UTF-16
+                    itemCount++;
+                }
+            }
+            return {
+                used: total,
+                usedMB: (total / 1024 / 1024).toFixed(2),
+                total: this.maxSize,
+                totalMB: (this.maxSize / 1024 / 1024).toFixed(2),
+                percent: ((total / this.maxSize) * 100).toFixed(1),
+                itemCount: itemCount
+            };
+        } catch(e) {
+            return { used: 0, usedMB: '0', percent: '0', itemCount: 0 };
+        }
+    },
+    
+    // 检查并预警
+    checkAndWarn: function() {
+        try {
+            var usage = this.getUsage();
+            if (parseFloat(usage.percent) >= this.warnThreshold * 100) {
+                if (!window.__storageWarned) {
+                    window.__storageWarned = true;
+                    SF.Toast.warning('存储空间已使用 ' + usage.percent + '%（' + usage.usedMB + 'MB/' + usage.totalMB + 'MB），建议导出备份后清理历史数据', 8000);
+                    var self = this;
+                    setTimeout(function() { window.__storageWarned = false; }, 3600000); // 1小时内不重复提醒
+                }
+            }
+            return usage;
+        } catch(e) { return null; }
+    },
+    
+    // 清理旧数据（按优先级：过期 → 最久未使用 → 大文件）
+    cleanup: function(keepRecentCount) {
+        try {
+            keepRecentCount = keepRecentCount || 20;
+            var items = [];
+            for (var key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    try {
+                        var raw = localStorage.getItem(key);
+                        var data = JSON.parse(raw);
+                        var timestamp = data.timestamp || data.time || 0;
+                        var size = raw.length * 2;
+                        items.push({ key: key, timestamp: timestamp, size: size, isObject: true });
+                    } catch(e) {
+                        // 非JSON数据，按修改时间排序
+                        items.push({ key: key, timestamp: 0, size: localStorage.getItem(key).length * 2, isObject: false });
+                    }
+                }
+            }
+            
+            // 按时间排序（最旧的在前）
+            items.sort(function(a, b) { return a.timestamp - b.timestamp; });
+            
+            // 保留最近的N个，删除其余的30%
+            var toDelete = items.slice(keepRecentCount, Math.floor(items.length * 0.3));
+            var deletedSize = 0;
+            toDelete.forEach(function(item) {
+                deletedSize += item.size;
+                localStorage.removeItem(item.key);
+            });
+            
+            console.log('[存储管理] 清理完成: 删除' + toDelete.length + '项，释放' + (deletedSize/1024).toFixed(1) + 'KB');
+            return { deleted: toDelete.length, freedKB: (deletedSize/1024).toFixed(1) };
+        } catch(e) {
+            console.warn('[存储管理] 清理失败', e);
+            return { deleted: 0, freedKB: '0' };
+        }
+    },
+    
+    // 导出所有数据为JSON备份
+    exportAll: function() {
+        try {
+            var data = {};
+            for (var key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    data[key] = localStorage.getItem(key);
+                }
+            }
+            var blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'sport_research_backup_' + new Date().toISOString().slice(0,10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            SF.Toast.success('数据备份已导出', 3000);
+            return true;
+        } catch(e) {
+            SF.Toast.error('数据导出失败: ' + e.message, 5000);
+            return false;
+        }
+    }
+};
+
+
+// ==========================================
+// 2. 数据完整性校验
+// ==========================================
+var StabilityDataIntegrity = {
+    init: function() {
+        try {
+            // 页面加载完成后自动校验
+            var self = this;
+            setTimeout(function() { self.checkAndFix(); }, 3000);
+            console.log('[稳定性v1.1] 数据完整性校验已启动');
+        } catch(e) { console.warn('[数据校验] init失败', e); }
+    },
+    
+    // 检查所有数据
+    checkAll: function() {
+        try {
+            var issues = [];
+            for (var key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    try {
+                        var raw = localStorage.getItem(key);
+                        if (!raw || raw.trim() === '') {
+                            issues.push({ key: key, type: 'empty', severity: 'low' });
+                            continue;
+                        }
+                        // 尝试JSON解析
+                        try {
+                            var data = JSON.parse(raw);
+                            if (data === null || data === undefined) {
+                                issues.push({ key: key, type: 'null_value', severity: 'medium' });
+                            }
+                        } catch(e) {
+                            // 非JSON是正常的（比如纯字符串配置），不记录
+                        }
+                    } catch(e) {
+                        issues.push({ key: key, type: 'read_error', severity: 'high', error: e.message });
+                    }
+                }
+            }
+            return issues;
+        } catch(e) {
+            console.warn('[数据校验] 检查失败', e);
+            return [];
+        }
+    },
+    
+    // 检查并自动修复
+    checkAndFix: function() {
+        try {
+            var issues = this.checkAll();
+            if (issues.length === 0) {
+                console.log('[数据校验] 所有数据完整，无需修复');
+                return { issues: 0, fixed: 0 };
+            }
+            
+            var fixed = 0;
+            issues.forEach(function(issue) {
+                try {
+                    if (issue.type === 'empty' || issue.type === 'null_value') {
+                        // 空数据或null值，删除
+                        localStorage.removeItem(issue.key);
+                        fixed++;
+                    } else if (issue.type === 'read_error') {
+                        // 读取错误，备份后删除
+                        try {
+                            var raw = localStorage.getItem(issue.key);
+                            if (raw) {
+                                var backupKey = '__backup_corrupted_' + Date.now() + '_' + issue.key;
+                                localStorage.setItem(backupKey, raw);
+                            }
+                        } catch(e) {}
+                        localStorage.removeItem(issue.key);
+                        fixed++;
+                    }
+                } catch(e) {}
+            });
+            
+            console.log('[数据校验] 发现' + issues.length + '个问题，自动修复' + fixed + '个');
+            return { issues: issues.length, fixed: fixed };
+        } catch(e) {
+            console.warn('[数据校验] 修复失败', e);
+            return { issues: 0, fixed: 0 };
+        }
+    }
+};
+
+
+// ==========================================
+// 3. AI超时与取消机制（增强v1.0的callAIStable）
+// ==========================================
+var StabilityAICancel = {
+    runningTasks: new Map(), // taskId -> {cancel, status, startTime}
+    taskCounter: 0,
+    
+    init: function() {
+        try {
+            console.log('[稳定性v1.1] AI超时取消机制已启动');
+        } catch(e) { console.warn('[AI取消] init失败', e); }
+    },
+    
+    // 创建可取消的AI任务
+    createTask: function(taskType, systemPrompt, userPrompt, maxTokens, options) {
+        options = options || {};
+        var taskId = 'ai_task_' + (++this.taskCounter) + '_' + Date.now();
+        var self = this;
+        var cancelled = false;
+        var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        
+        // 记录任务
+        this.runningTasks.set(taskId, {
+            status: 'running',
+            startTime: Date.now(),
+            taskType: taskType,
+            cancel: function() {
+                cancelled = true;
+                if (controller) controller.abort();
+                self.runningTasks.get(taskId).status = 'cancelled';
+                console.log('[AI取消] 任务已取消: ' + taskId);
+            }
+        });
+        
+        // 执行任务（包装v1.0的callAIStable）
+        var promise = (async function() {
+            try {
+                var result = await SF.callAIStable(taskType, systemPrompt, userPrompt, maxTokens, options);
+                if (cancelled) throw new Error('任务已取消');
+                self.runningTasks.get(taskId).status = 'completed';
+                self.runningTasks.get(taskId).endTime = Date.now();
+                return result;
+            } catch(e) {
+                if (cancelled) {
+                    self.runningTasks.get(taskId).status = 'cancelled';
+                } else {
+                    self.runningTasks.get(taskId).status = 'failed';
+                    self.runningTasks.get(taskId).error = e.message;
+                }
+                throw e;
+            } finally {
+                // 5分钟后清理任务记录
+                setTimeout(function() { self.runningTasks.delete(taskId); }, 300000);
+            }
+        })();
+        
+        return { taskId: taskId, promise: promise, cancel: this.runningTasks.get(taskId).cancel };
+    },
+    
+    // 取消任务
+    cancel: function(taskId) {
+        var task = this.runningTasks.get(taskId);
+        if (task && task.status === 'running') {
+            task.cancel();
+            return true;
+        }
+        return false;
+    },
+    
+    // 取消所有运行中的任务
+    cancelAll: function() {
+        var count = 0;
+        this.runningTasks.forEach(function(task, id) {
+            if (task.status === 'running') {
+                task.cancel();
+                count++;
+            }
+        });
+        return count;
+    },
+    
+    // 获取运行中的任务
+    getRunningTasks: function() {
+        var running = [];
+        this.runningTasks.forEach(function(task, id) {
+            if (task.status === 'running') {
+                running.push({
+                    id: id,
+                    taskType: task.taskType,
+                    duration: ((Date.now() - task.startTime) / 1000).toFixed(1) + 's'
+                });
+            }
+        });
+        return running;
+    }
+};
+
+
+// ==========================================
+// 4. 模型健康监控面板
+// ==========================================
+var StabilityModelHealthPanel = {
+    panelElement: null,
+    isVisible: false,
+    
+    init: function() {
+        try {
+            this.createPanel();
+            console.log('[稳定性v1.1] 模型健康监控面板已启动');
+        } catch(e) { console.warn('[模型监控] init失败', e); }
+    },
+    
+    createPanel: function() {
+        try {
+            // 创建浮动按钮
+            var btn = document.createElement('div');
+            btn.id = 'stability-model-health-btn';
+            btn.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:2147483640;background:rgba(0,0,0,0.7);color:#fff;padding:8px 14px;border-radius:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.3s;user-select:none;';
+            btn.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 2s infinite;"></span>AI模型状态';
+            btn.onclick = this.togglePanel.bind(this);
+            document.body.appendChild(btn);
+            
+            // 创建面板
+            var panel = document.createElement('div');
+            panel.id = 'stability-model-health-panel';
+            panel.style.cssText = 'position:fixed;bottom:60px;left:20px;z-index:2147483641;background:#1a1a2e;color:#fff;padding:16px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);width:320px;display:none;font-size:13px;';
+            panel.innerHTML = this.getPanelHTML();
+            document.body.appendChild(panel);
+            
+            this.panelElement = panel;
+            
+            // 添加脉冲动画
+            var style = document.createElement('style');
+            style.textContent = '@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}';
+            document.head.appendChild(style);
+            
+            // 定期更新面板
+            var self = this;
+            setInterval(function() { self.updatePanel(); }, 5000);
+            
+        } catch(e) { console.warn('[模型监控] 创建面板失败', e); }
+    },
+    
+    getPanelHTML: function() {
+        var models = SF.ModelFailover.getHealthStatus();
+        var healthy = models.filter(function(m) { return m.status === 'healthy'; }).length;
+        var degraded = models.filter(function(m) { return m.status === 'degraded'; }).length;
+        var down = models.filter(function(m) { return m.status === 'down'; }).length;
+        
+        var html = '<div style="margin-bottom:12px;font-weight:bold;font-size:14px;display:flex;justify-content:space-between;align-items:center;">';
+        html += '<span>AI模型健康状态</span>';
+        html += '<span style="font-size:11px;color:#888;">' + healthy + '正常/' + (degraded+down) + '异常</span>';
+        html += '</div>';
+        
+        html += '<div style="display:flex;gap:6px;margin-bottom:12px;">';
+        html += '<span style="background:#10b981;padding:2px 8px;border-radius:10px;font-size:11px;">正常' + healthy + '</span>';
+        if (degraded > 0) html += '<span style="background:#f59e0b;padding:2px 8px;border-radius:10px;font-size:11px;">降级' + degraded + '</span>';
+        if (down > 0) html += '<span style="background:#ef4444;padding:2px 8px;border-radius:10px;font-size:11px;">不可用' + down + '</span>';
+        html += '</div>';
+        
+        html += '<div id="stability-model-list" style="max-height:250px;overflow-y:auto;">';
+        models.forEach(function(m) {
+            var color = m.status === 'healthy' ? '#10b981' : (m.status === 'degraded' ? '#f59e0b' : '#ef4444');
+            var statusText = m.status === 'healthy' ? '正常' : (m.status === 'degraded' ? '降级' : '不可用');
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);">';
+            html += '<span style="font-size:12px;">' + m.model + '</span>';
+            html += '<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:' + color + ';">';
+            html += '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + color + ';"></span>';
+            html += statusText;
+            if (m.errorCount > 0) html += ' (' + m.errorCount + '次失败)';
+            html += '</span></div>';
+        });
+        html += '</div>';
+        
+        // 请求队列状态
+        var queue = SF.RequestQueue.getStatus();
+        html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;color:#888;">';
+        html += '请求队列: 运行' + queue.running + '/排队' + queue.queued + '/最大并发' + queue.maxConcurrent;
+        html += '</div>';
+        
+        // 存储状态
+        var storage = StabilityStorageManager.getUsage();
+        html += '<div style="margin-top:6px;font-size:11px;color:#888;">';
+        html += '存储: ' + storage.usedMB + 'MB/' + storage.totalMB + 'MB (' + storage.percent + '%)';
+        html += '</div>';
+        
+        return html;
+    },
+    
+    updatePanel: function() {
+        try {
+            if (this.isVisible && this.panelElement) {
+                var listEl = document.getElementById('stability-model-list');
+                if (listEl) {
+                    // 只更新列表部分，避免整个面板闪烁
+                    var models = SF.ModelFailover.getHealthStatus();
+                    var html = '';
+                    models.forEach(function(m) {
+                        var color = m.status === 'healthy' ? '#10b981' : (m.status === 'degraded' ? '#f59e0b' : '#ef4444');
+                        var statusText = m.status === 'healthy' ? '正常' : (m.status === 'degraded' ? '降级' : '不可用');
+                        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);">';
+                        html += '<span style="font-size:12px;">' + m.model + '</span>';
+                        html += '<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:' + color + ';">';
+                        html += '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + color + ';"></span>';
+                        html += statusText;
+                        if (m.errorCount > 0) html += ' (' + m.errorCount + '次失败)';
+                        html += '</span></div>';
+                    });
+                    listEl.innerHTML = html;
+                }
+            }
+        } catch(e) {}
+    },
+    
+    togglePanel: function() {
+        try {
+            if (!this.panelElement) return;
+            this.isVisible = !this.isVisible;
+            this.panelElement.style.display = this.isVisible ? 'block' : 'none';
+            if (this.isVisible) {
+                this.panelElement.innerHTML = this.getPanelHTML();
+            }
+        } catch(e) {}
+    }
+};
+
+
+// ==========================================
+// 5. 前端错误日志导出
+// ==========================================
+var StabilityErrorLogExport = {
+    init: function() {
+        try {
+            console.log('[稳定性v1.1] 错误日志导出已启动');
+        } catch(e) { console.warn('[错误日志] init失败', e); }
+    },
+    
+    // 导出错误日志
+    export: function() {
+        try {
+            var errors = SF.ErrorHandler.getErrors();
+            var data = {
+                exportedAt: new Date().toISOString(),
+                pageUrl: window.location.href,
+                userAgent: navigator.userAgent.substring(0, 200),
+                screenSize: window.screen.width + 'x' + window.screen.height,
+                language: navigator.language,
+                totalErrors: errors.length,
+                errors: errors
+            };
+            var blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'error_log_' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            SF.Toast.success('错误日志已导出（共' + errors.length + '条）', 3000);
+            return true;
+        } catch(e) {
+            SF.Toast.error('日志导出失败: ' + e.message, 5000);
+            return false;
+        }
+    },
+    
+    // 在控制台显示错误统计
+    showStats: function() {
+        var errors = SF.ErrorHandler.getErrors();
+        var jsErrors = errors.filter(function(e) { return e.type === 'js_error'; }).length;
+        var promiseErrors = errors.filter(function(e) { return e.type === 'promise_error'; }).length;
+        console.log('========== 错误日志统计 ==========');
+        console.log('总错误数: ' + errors.length);
+        console.log('JS运行时错误: ' + jsErrors);
+        console.log('Promise未捕获错误: ' + promiseErrors);
+        console.log('==================================');
+        return { total: errors.length, js: jsErrors, promise: promiseErrors };
+    }
+};
+
+
+// ==========================================
+// 初始化所有v1.1扩展模块
+// ==========================================
+function initStabilityV11() {
+    try {
+        StabilityStorageManager.init();
+        StabilityDataIntegrity.init();
+        StabilityAICancel.init();
+        StabilityModelHealthPanel.init();
+        StabilityErrorLogExport.init();
+        
+        // 扩展StabilityFramework
+        SF.StorageManager = StabilityStorageManager;
+        SF.DataIntegrity = StabilityDataIntegrity;
+        SF.AICancel = StabilityAICancel;
+        SF.ModelHealthPanel = StabilityModelHealthPanel;
+        SF.ErrorLogExport = StabilityErrorLogExport;
+        SF.version = '1.1';
+        
+        // 可取消的AI调用（替代v1.0的callAIStable）
+        SF.callAICancelable = function(taskType, systemPrompt, userPrompt, maxTokens, options) {
+            return StabilityAICancel.createTask(taskType, systemPrompt, userPrompt, maxTokens, options);
+        };
+        
+        console.log('========================================');
+        console.log('✅ 稳定性框架 v1.1 扩展已成功启动');
+        console.log('   - localStorage容量管理（自动预警+清理+备份）');
+        console.log('   - 数据完整性校验（自动检测+修复损坏数据）');
+        console.log('   - AI超时取消机制（可取消运行中的AI任务）');
+        console.log('   - 模型健康监控面板（左下角浮动按钮，实时显示7模型状态）');
+        console.log('   - 前端错误日志导出（一键导出JSON，方便排查问题）');
+        console.log('   - 统一可取消AI调用入口: callAICancelable()');
+        console.log('========================================');
+        
+    } catch(e) {
+        console.error('[稳定性v1.1] 初始化失败:', e);
+    }
+}
+
+// 延迟初始化（等v1.0完全就绪）
+setTimeout(initStabilityV11, 500);
+
+} catch(e) {
+    console.error('[稳定性v1.1] 顶层错误:', e);
+}
+})();
+</script>
+<!-- ========== 稳定性框架 v1.1 扩展 结束 ========== -->
+
 </body>
 </html>
