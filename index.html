@@ -9862,6 +9862,8 @@ console.log('✅ 学习工具入口已加载');
 
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 </head>
 
 <body>
@@ -17389,7 +17391,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
         </div>
 
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-          <input type="file" id="lessonTemplateFile" accept=".txt,.docx,.pdf" style="font-size:13px">
+          <input type="file" id="lessonTemplateFile" accept=".txt,.docx,.doc,.pdf" style="font-size:13px">
           <button onclick="uploadLessonTemplate()" style="background:#0ea5e9;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📤 上传并解析模板</button>
           <button onclick="useStandardTemplate()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px">↩️ 使用标准模板</button>
           <span style="font-size:12px;color:#9ca3af">支持 .txt / .docx / .pdf · AI自动识别模板字段和格式</span>
@@ -137124,22 +137126,44 @@ async function uploadLessonTemplate() {
   }
 }
 
-// 读取docx文件内容（简化版）
+// 读取docx文件内容（使用mammoth.js解析）
 async function readDocxFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = function(e) {
-      // 简化处理：尝试提取文本（实际项目用mammoth.js）
-      try {
-        const arrayBuffer = e.target.result;
-        // 这里简化处理，实际应该用JSZip + mammoth解析
-        // 暂时返回空，让用户用txt格式
-        resolve('（docx格式解析需要额外库，请先将模板另存为.txt格式后上传）');
-      } catch(err) {
-        reject(err);
+      const arrayBuffer = e.target.result;
+      
+      // 检查mammoth是否加载
+      if (typeof mammoth === 'undefined') {
+        // 降级：尝试用JSZip手动提取
+        if (typeof JSZip !== 'undefined') {
+          JSZip.loadAsync(arrayBuffer).then(function(zip) {
+            return zip.file('word/document.xml').async('string');
+          }).then(function(xml) {
+            // 简单提取XML中的文本
+            const text = xml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            resolve(text);
+          }).catch(function(err) {
+            reject(new Error('docx解析失败：' + err.message));
+          });
+        } else {
+          reject(new Error('mammoth.js未加载，请检查网络连接'));
+        }
+        return;
       }
+      
+      // 使用mammoth.js解析
+      mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+        .then(function(result) {
+          resolve(result.value);
+        })
+        .catch(function(err) {
+          reject(new Error('docx解析失败：' + err.message));
+        });
     };
-    reader.onerror = reject;
+    reader.onerror = function() {
+      reject(new Error('文件读取失败'));
+    };
     reader.readAsArrayBuffer(file);
   });
 }
@@ -137184,6 +137208,172 @@ async function parseTemplateWithAI(templateText, fileName) {
   }
 }
 
+// 切换字段映射编辑器
+function toggleFieldMappingEditor() {
+  const editor = document.getElementById('fieldMappingEditor');
+  if (!editor) return;
+  
+  if (editor.style.display === 'none') {
+    editor.style.display = 'block';
+    renderFieldMappingEditor();
+  } else {
+    editor.style.display = 'none';
+  }
+}
+
+// 渲染字段映射编辑器
+function renderFieldMappingEditor() {
+  const editor = document.getElementById('fieldMappingEditor');
+  if (!editor || !currentLessonTemplate) return;
+  
+  let html = '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px">';
+  html += '<div style="font-size:11px;color:#64748b;margin-bottom:8px">💡 拖拽字段可调整顺序，点击字段可编辑配置</div>';
+  html += '<div id="fieldMappingList" style="display:flex;flex-direction:column;gap:4px">';
+  
+  currentLessonTemplate.fields.forEach((field, idx) => {
+    html += '<div class="field-mapping-item" draggable="true" data-index="' + idx + '" '
+      + 'ondragstart="onFieldDragStart(event)" ondragover="onFieldDragOver(event)" ondrop="onFieldDrop(event)" '
+      + 'style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:4px;cursor:move;font-size:11px">';
+    html += '<span style="color:#94a3b8;cursor:grab">⋮⋮</span>';
+    html += '<span style="font-weight:600;color:#334155;min-width:80px">' + (idx + 1) + '. ' + field.name + '</span>';
+    html += '<select onchange="updateFieldType(' + idx + ', this.value)" style="font-size:10px;padding:2px 4px;border:1px solid #e2e8f0;border-radius:3px">';
+    html += '<option value="single"' + (field.type === 'single' ? ' selected' : '') + '>单行</option>';
+    html += '<option value="multi"' + (field.type === 'multi' ? ' selected' : '') + '>多行</option>';
+    html += '<option value="table"' + (field.type === 'table' ? ' selected' : '') + '>表格</option>';
+    html += '</select>';
+    html += '<input type="number" value="' + (field.maxLength || '') + '" placeholder="字数" onchange="updateFieldMaxLength(' + idx + ', this.value)" style="width:60px;font-size:10px;padding:2px 4px;border:1px solid #e2e8f0;border-radius:3px">';
+    html += '<label style="font-size:10px;color:#64748b;display:flex;align-items:center;gap:2px">';
+    html += '<input type="checkbox"' + (field.required ? ' checked' : '') + ' onchange="updateFieldRequired(' + idx + ', this.checked)"> 必填';
+    html += '</label>';
+    html += '<button onclick="deleteTemplateField(' + idx + ')" style="margin-left:auto;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px">删除</button>';
+    html += '</div>';
+  });
+  
+  html += '</div>';
+  html += '<div style="margin-top:8px;display:flex;gap:6px">';
+  html += '<button onclick="saveTemplateMapping()" style="background:#0ea5e9;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">💾 保存字段映射</button>';
+  html += '<button onclick="toggleFieldMappingEditor()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px">取消</button>';
+  html += '</div></div>';
+  
+  editor.innerHTML = html;
+}
+
+// 拖拽相关
+let draggedFieldIndex = null;
+
+function onFieldDragStart(e) {
+  draggedFieldIndex = parseInt(e.target.closest('.field-mapping-item').getAttribute('data-index'));
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onFieldDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function onFieldDrop(e) {
+  e.preventDefault();
+  const targetIndex = parseInt(e.target.closest('.field-mapping-item').getAttribute('data-index'));
+  
+  if (draggedFieldIndex !== null && draggedFieldIndex !== targetIndex) {
+    // 移动字段
+    const fields = currentLessonTemplate.fields;
+    const [moved] = fields.splice(draggedFieldIndex, 1);
+    fields.splice(targetIndex, 0, moved);
+    
+    // 重新渲染
+    renderFieldMappingEditor();
+    renderTemplateStructure();
+  }
+  
+  draggedFieldIndex = null;
+}
+
+// 更新字段类型
+function updateFieldType(idx, type) {
+  if (currentLessonTemplate && currentLessonTemplate.fields[idx]) {
+    currentLessonTemplate.fields[idx].type = type;
+  }
+}
+
+// 更新字段最大字数
+function updateFieldMaxLength(idx, maxLength) {
+  if (currentLessonTemplate && currentLessonTemplate.fields[idx]) {
+    currentLessonTemplate.fields[idx].maxLength = parseInt(maxLength) || null;
+  }
+}
+
+// 更新字段是否必填
+function updateFieldRequired(idx, required) {
+  if (currentLessonTemplate && currentLessonTemplate.fields[idx]) {
+    currentLessonTemplate.fields[idx].required = required;
+  }
+}
+
+// 添加字段
+function addTemplateField() {
+  if (!currentLessonTemplate) {
+    alert('请先上传或选择一个模板');
+    return;
+  }
+  
+  const name = prompt('请输入新字段名称：', '新字段');
+  if (!name) return;
+  
+  currentLessonTemplate.fields.push({
+    name: name,
+    type: 'multi',
+    maxLength: 200,
+    required: false
+  });
+  
+  renderTemplateStructure();
+  
+  // 如果编辑器打开，重新渲染
+  const editor = document.getElementById('fieldMappingEditor');
+  if (editor && editor.style.display !== 'none') {
+    renderFieldMappingEditor();
+  }
+}
+
+// 删除字段
+function deleteTemplateField(idx) {
+  if (!currentLessonTemplate) return;
+  
+  if (confirm('确定删除字段 "' + currentLessonTemplate.fields[idx].name + '" 吗？')) {
+    currentLessonTemplate.fields.splice(idx, 1);
+    renderTemplateStructure();
+    
+    const editor = document.getElementById('fieldMappingEditor');
+    if (editor && editor.style.display !== 'none') {
+      renderFieldMappingEditor();
+    }
+  }
+}
+
+// 保存字段映射
+function saveTemplateMapping() {
+  if (!currentLessonTemplate) return;
+  
+  // 更新已保存的模板列表
+  const tplIdx = lessonTemplates.findIndex(t => t.name === currentLessonTemplate.name);
+  if (tplIdx >= 0) {
+    lessonTemplates[tplIdx] = currentLessonTemplate;
+  } else {
+    lessonTemplates.push(currentLessonTemplate);
+  }
+  
+  try {
+    localStorage.setItem('lesson_templates', JSON.stringify(lessonTemplates));
+  } catch(e) {}
+  
+  renderSavedTemplates();
+  renderTemplateStructure();
+  toggleFieldMappingEditor();
+  
+  alert('字段映射已保存！共 ' + currentLessonTemplate.fields.length + ' 个字段');
+}
+
 // 渲染模板结构
 function renderTemplateStructure() {
   const structureEl = document.getElementById('templateStructure');
@@ -137196,7 +137386,13 @@ function renderTemplateStructure() {
   
   structureEl.style.display = 'block';
   
-  let html = '<div style="margin-bottom:6px;font-weight:600;color:#0ea5e9">📋 ' + currentLessonTemplate.name + '（共' + currentLessonTemplate.fields.length + '个字段）</div>';
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">';
+  html += '<div style="font-weight:600;color:#0ea5e9">📋 ' + currentLessonTemplate.name + '（共' + currentLessonTemplate.fields.length + '个字段）</div>';
+  html += '<div style="display:flex;gap:6px">';
+  html += '<button onclick="toggleFieldMappingEditor()" style="background:#0ea5e9;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">✏️ 编辑字段映射</button>';
+  html += '<button onclick="addTemplateField()" style="background:#16a34a;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">+ 添加字段</button>';
+  html += '</div></div>';
+  html += '<div id="fieldMappingEditor" style="display:none;margin-bottom:8px"></div>';
   html += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
   currentLessonTemplate.fields.forEach((field, idx) => {
     const typeColor = field.type === 'table' ? '#f59e0b' : (field.type === 'multi' ? '#8b5cf6' : '#10b981');
@@ -137407,6 +137603,8 @@ function assembleAndShowLesson() {
       + '<div style="display:flex;gap:6px;align-items:center">'
       + '<span style="font-size:11px;color:#9ca3af">' + wordCount + '字</span>'
       + '<button onclick="copyLessonText()" style="background:#f3f4f6;border:1px solid #d1d5db;color:#374151;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">📋 复制</button>'
+      + '<button onclick="exportLessonAsHtml()" style="background:#dbeafe;border:1px solid #93c5fd;color:#1e40af;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">🌐 导出HTML</button>'
+      + '<button onclick="exportLessonAsWord()" style="background:#dcfce7;border:1px solid #86efac;color:#166534;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">📝 导出Word</button>'
       + '<button onclick="downloadLessonTxt()" style="background:#f3f4f6;border:1px solid #d1d5db;color:#374151;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">📄 导出TXT</button>'
       + '</div></div>'
       + '<div class="md-content paper-style" style="font-size:14px;line-height:2;color:#1f2937;padding:0 8px">' + (window.renderMarkdown ? renderMarkdown(fullLesson) : fullLesson.replace(/\n/g, '<br>')) + '</div></div>';
@@ -137486,7 +137684,189 @@ function validateFieldResults() {
     }
   }
   
-  // 显示校验报告
+  // AI一键修正校验问题
+async function autoFixValidationIssues() {
+  const fields = lessonGenState.fields;
+  const status = lessonGenState.status;
+  const fieldConfigs = currentLessonTemplate && currentLessonTemplate.fields ? currentLessonTemplate.fields : LESSON_TEMPLATE_FIELDS;
+  
+  // 收集需要修正的字段
+  const toFix = [];
+  
+  fieldConfigs.forEach(field => {
+    const fieldId = field.id || field.name;
+    const fieldContent = fields[fieldId] || '';
+    const fieldStatus = status[fieldId] || 'pending';
+    
+    // 必填字段未填充或生成失败 → 需要生成
+    if (field.required && (!fieldContent || fieldContent.length < 5 || fieldStatus === 'error')) {
+      toFix.push({ field: field, fieldId: fieldId, issue: 'missing', currentContent: fieldContent });
+      return;
+    }
+    
+    if (!fieldContent) return;
+    
+    // 字数过长 → 需要精简
+    if (field.maxLength && fieldContent.length > field.maxLength * 1.5) {
+      toFix.push({ field: field, fieldId: fieldId, issue: 'too_long', currentContent: fieldContent });
+    }
+    // 字数过短 → 需要扩展
+    else if (field.maxLength && fieldContent.length < field.maxLength * 0.3 && field.required) {
+      toFix.push({ field: field, fieldId: fieldId, issue: 'too_short', currentContent: fieldContent });
+    }
+    
+    // 格式问题：教学目标应该分点
+    if (field.name && (field.name.includes('教学目标') || field.name.includes('目标'))) {
+      if (!fieldContent.includes('1') && !fieldContent.includes('知识') && !fieldContent.includes('能力')) {
+        toFix.push({ field: field, fieldId: fieldId, issue: 'format_objectives', currentContent: fieldContent });
+      }
+    }
+    
+    // 格式问题：教学过程应该有时间分配
+    if (field.name && (field.name.includes('教学过程') || field.name.includes('过程'))) {
+      if (!fieldContent.includes('分钟') && !fieldContent.includes('min')) {
+        toFix.push({ field: field, fieldId: fieldId, issue: 'format_time', currentContent: fieldContent });
+      }
+    }
+  });
+  
+  if (toFix.length === 0) {
+    alert('没有需要修正的问题');
+    return;
+  }
+  
+  if (!confirm('检测到 ' + toFix.length + ' 个需要修正的问题，是否让AI自动修正？\n（修正过程约需30-60秒）')) {
+    return;
+  }
+  
+  // 显示修正进度
+  const resultsEl = document.getElementById('fieldGenResults');
+  const fixStatusHtml = '<div id="autoFixStatus" style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px;margin-bottom:16px">'
+    + '<div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px">🔧 AI正在自动修正...</div>'
+    + '<div id="autoFixProgress" style="font-size:12px;color:#92400e">准备中...</div>'
+    + '<div style="height:6px;background:#fef3c7;border-radius:3px;overflow:hidden;margin-top:8px">'
+    + '<div id="autoFixBar" style="height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#ef4444);border-radius:3px;transition:width 0.3s"></div>'
+    + '</div></div>';
+  
+  resultsEl.insertAdjacentHTML('afterbegin', fixStatusHtml);
+  
+  // 逐个修正（并行修正独立字段）
+  let fixedCount = 0;
+  let failedCount = 0;
+  
+  // 按字段去重（同一个字段可能有多个问题，只修正一次）
+  const uniqueFields = [];
+  const seenFieldIds = new Set();
+  toFix.forEach(item => {
+    if (!seenFieldIds.has(item.fieldId)) {
+      seenFieldIds.add(item.fieldId);
+      uniqueFields.push(item);
+    }
+  });
+  
+  for (let i = 0; i < uniqueFields.length; i++) {
+    const item = uniqueFields[i];
+    const progressEl = document.getElementById('autoFixProgress');
+    const barEl = document.getElementById('autoFixBar');
+    
+    if (progressEl) {
+      progressEl.textContent = '正在修正：' + item.field.name + '（' + (i + 1) + '/' + uniqueFields.length + '）';
+    }
+    if (barEl) {
+      barEl.style.width = Math.round((i / uniqueFields.length) * 100) + '%';
+    }
+    
+    try {
+      let newContent = '';
+      
+      if (item.issue === 'missing') {
+        // 缺失字段：直接生成
+        const textbookContent = window._bookExtractedText || (document.getElementById('bookContentResult') ? document.getElementById('bookContentResult').value : '') || '';
+        const options = {
+          subject: document.getElementById('lessonSubject').value || '体育科学',
+          courseType: document.getElementById('lessonCourseType').value || 'new'
+        };
+        const result = await generateLessonField(item.field, textbookContent, options);
+        if (result.success) {
+          newContent = result.content;
+        } else {
+          throw new Error(result.error);
+        }
+      } else if (item.issue === 'too_long') {
+        // 字数过长：精简
+        newContent = await refineFieldContent(item.field, item.currentContent, 'shorten', item.field.maxLength);
+      } else if (item.issue === 'too_short') {
+        // 字数过短：扩展
+        newContent = await refineFieldContent(item.field, item.currentContent, 'expand', item.field.maxLength);
+      } else if (item.issue === 'format_objectives') {
+        // 教学目标格式：分点
+        newContent = await refineFieldContent(item.field, item.currentContent, 'format_objectives', item.field.maxLength);
+      } else if (item.issue === 'format_time') {
+        // 教学过程格式：添加时间
+        newContent = await refineFieldContent(item.field, item.currentContent, 'format_time', item.field.maxLength);
+      }
+      
+      if (newContent) {
+        lessonGenState.fields[item.fieldId] = newContent;
+        lessonGenState.status[item.fieldId] = 'done';
+        fixedCount++;
+        
+        // 更新字段卡片显示
+        const fieldEl = document.querySelector('[data-field-id="' + item.fieldId + '"]');
+        if (fieldEl) {
+          fieldEl.innerHTML = newContent.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+        }
+      } else {
+        failedCount++;
+      }
+    } catch(e) {
+      console.error('修正失败:', item.field.name, e);
+      failedCount++;
+    }
+  }
+  
+  // 更新进度条为100%
+  const barEl = document.getElementById('autoFixBar');
+  if (barEl) barEl.style.width = '100%';
+  
+  // 显示修正结果
+  const fixStatusEl = document.getElementById('autoFixStatus');
+  if (fixStatusEl) {
+    fixStatusEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'
+      + '<div style="font-size:13px;font-weight:600;color:' + (failedCount > 0 ? '#d97706' : '#16a34a') + '">'
+      + (failedCount > 0 ? '⚠️' : '✅') + ' 修正完成：成功 ' + fixedCount + ' 个' + (failedCount > 0 ? '，失败 ' + failedCount + ' 个' : '')
+      + '</div>'
+      + '<button onclick="this.parentElement.parentElement.remove();validateFieldResults()" style="background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">🔄 重新校验</button>'
+      + '</div>';
+  }
+}
+
+// 用AI修正字段内容（精简/扩展/格式化）
+async function refineFieldContent(field, currentContent, action, targetLength) {
+  const systemPrompt = '你是一位资深教案编辑专家。请根据要求修改以下教案字段内容，保持原意，只输出修改后的内容，不要其他文字。';
+  
+  let userPrompt = '';
+  if (action === 'shorten') {
+    userPrompt = '请将以下内容精简到' + targetLength + '字以内，保留核心信息：\n\n' + currentContent;
+  } else if (action === 'expand') {
+    userPrompt = '请将以下内容扩展到' + targetLength + '字左右，补充细节和具体内容：\n\n' + currentContent;
+  } else if (action === 'format_objectives') {
+    userPrompt = '请将以下教学目标重新组织为三点：知识目标、能力目标、素养目标，每点一句话，动词开头：\n\n' + currentContent;
+  } else if (action === 'format_time') {
+    userPrompt = '请在以下教学过程中补充时间分配（每个环节标注约X分钟），保持内容不变：\n\n' + currentContent;
+  }
+  
+  try {
+    const model = getFieldModel(field);
+    const result = await callDeepSeekAPI(systemPrompt, userPrompt, targetLength + 200, model);
+    return result.trim();
+  } catch(e) {
+    console.error('字段修正失败:', e);
+    return currentContent; // 失败则返回原内容
+  }
+}
+
+// 显示校验报告
   showValidationReport(issues, warnings, passed, fieldConfigs.length);
 }
 
@@ -137503,6 +137883,9 @@ function showValidationReport(issues, warnings, passed, totalFields) {
   reportHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">';
   reportHtml += '<div style="font-size:15px;font-weight:700;color:#1f2937">📊 教案质量校验报告</div>';
   reportHtml += '<div style="display:flex;align-items:center;gap:8px">';
+  if (issues.length > 0 || warnings.length > 0) {
+    reportHtml += '<button onclick="autoFixValidationIssues()" style="background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔧 AI一键修正</button>';
+  }
   reportHtml += '<span style="font-size:24px;font-weight:700;color:' + scoreColor + '">' + score + '</span>';
   reportHtml += '<span style="font-size:12px;color:' + scoreColor + ';font-weight:600">' + scoreText + '</span>';
   reportHtml += '</div></div>';
@@ -137560,6 +137943,77 @@ function showValidationReport(issues, warnings, passed, totalFields) {
   setTimeout(() => {
     resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 100);
+}
+
+// 导出教案为HTML（Word可直接打开，保留格式）
+function exportLessonAsHtml() {
+  const resEl = document.getElementById('lessonResult');
+  if (!resEl) {
+    alert('请先生成教案');
+    return;
+  }
+  
+  // 获取教案内容
+  const subject = document.getElementById('lessonSubject').value || '教案';
+  const chapter = document.getElementById('lessonChapter').value || '';
+  const title = subject + (chapter ? ' - ' + chapter : '') + ' 教案';
+  
+  // 获取渲染后的HTML内容
+  const contentEl = resEl.querySelector('.md-content') || resEl.querySelector('.paper-style');
+  let bodyHtml = '';
+  if (contentEl) {
+    bodyHtml = contentEl.innerHTML;
+  } else {
+    // 降级：从lessonGenState组装
+    const formatType = document.getElementById('lessonFormat').value || 'standard';
+    const fullLesson = assembleLessonByTemplate(lessonGenState.fields, formatType);
+    bodyHtml = (window.renderMarkdown ? renderMarkdown(fullLesson) : fullLesson.replace(/\n/g, '<br>'));
+  }
+  
+  // 构建完整HTML
+  const html = '<!DOCTYPE html>\n'
+    + '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">\n'
+    + '<head>\n'
+    + '<meta charset="utf-8">\n'
+    + '<title>' + title + '</title>\n'
+    + '<!--[if gte mso 9]>\n<xml>\n<w:WordDocument>\n<w:View>Print</w:View>\n<w:Zoom>100</w:Zoom>\n<w:DoNotOptimizeForBrowser/>\n</w:WordDocument>\n</xml>\n<![endif]-->\n'
+    + '<style>\n'
+    + 'body { font-family: "宋体", SimSun, serif; font-size: 12pt; line-height: 1.8; color: #000; margin: 2cm; }\n'
+    + 'h1 { font-family: "黑体", SimHei, sans-serif; font-size: 18pt; text-align: center; margin-bottom: 20px; }\n'
+    + 'h2 { font-family: "黑体", SimHei, sans-serif; font-size: 14pt; margin-top: 16px; margin-bottom: 8px; }\n'
+    + 'h3 { font-family: "黑体", SimHei, sans-serif; font-size: 12pt; margin-top: 12px; margin-bottom: 6px; }\n'
+    + 'p { margin: 6px 0; text-indent: 2em; }\n'
+    + 'table { border-collapse: collapse; width: 100%; margin: 10px 0; }\n'
+    + 'td, th { border: 1px solid #000; padding: 6px; font-size: 11pt; }\n'
+    + 'th { background: #f0f0f0; font-weight: bold; }\n'
+    + 'ul, ol { margin: 6px 0; padding-left: 2em; }\n'
+    + 'li { margin: 4px 0; }\n'
+    + '</style>\n'
+    + '</head>\n'
+    + '<body>\n'
+    + '<h1>' + title + '</h1>\n'
+    + bodyHtml + '\n'
+    + '</body>\n'
+    + '</html>';
+  
+  // 下载
+  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = title + '.doc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  alert('已导出为Word格式（.doc），可用Word直接打开，保留排版格式');
+}
+
+// 导出教案为Word（简化版，与HTML导出相同格式）
+function exportLessonAsWord() {
+  // 复用HTML导出，因为Word可以直接打开HTML格式的.doc文件
+  exportLessonAsHtml();
 }
 
 // 复制所有字段结果
