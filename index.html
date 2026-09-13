@@ -148497,5 +148497,101 @@ setTimeout(function() {
 </script>
 <!-- ========== 论文写作审稿增强包 v2.0 结束 ========== -->
 
+
+<!-- ========== 合并论文增强按钮 开始 ========== -->
+<script>
+(function() {
+'use strict';
+try {
+
+// 等待页面加载完成后执行
+function mergeButtons() {
+    try {
+        var enhanceBtn = document.getElementById('paper-enhance-btn');
+        var writingBtn = document.getElementById('paper-writing-btn');
+        var enhancePanel = document.getElementById('paper-enhance-panel');
+        var writingPanel = document.getElementById('paper-writing-panel');
+        
+        // 如果按钮不存在，等待后重试
+        if (!enhanceBtn || !writingBtn) {
+            setTimeout(mergeButtons, 1000);
+            return;
+        }
+        
+        // 隐藏原来的两个按钮
+        enhanceBtn.style.display = 'none';
+        writingBtn.style.display = 'none';
+        
+        // 创建合并按钮
+        var mergedBtn = document.createElement('div');
+        mergedBtn.id = 'paper-merged-btn';
+        mergedBtn.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:2147483628;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px 18px;border-radius:25px;font-size:13px;cursor:pointer;box-shadow:0 4px 16px rgba(102,126,234,0.4);display:flex;align-items:center;gap:8px;transition:all 0.3s;user-select:none;font-weight:500;';
+        mergedBtn.innerHTML = '🔬 论文AI工具箱';
+        
+        // 创建下拉菜单
+        var dropdown = document.createElement('div');
+        dropdown.id = 'paper-merged-dropdown';
+        dropdown.style.cssText = 'position:fixed;bottom:65px;right:20px;z-index:2147483629;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.2);padding:8px;display:none;min-width:200px;';
+        
+        var option1 = document.createElement('div');
+        option1.style.cssText = 'padding:10px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.2s;';
+        option1.innerHTML = '<span style="font-size:18px;">📚</span><div><div style="font-size:13px;font-weight:600;color:#1e293b;">选题文献增强</div><div style="font-size:11px;color:#64748b;">热点/空白/评估/进化/分类/观点/核验</div></div>';
+        option1.onmouseenter = function() { option1.style.background = '#f0f9ff'; };
+        option1.onmouseleave = function() { option1.style.background = 'transparent'; };
+        option1.onclick = function() {
+            dropdown.style.display = 'none';
+            if (enhancePanel) {
+                enhancePanel.style.transform = 'translateX(0)';
+            }
+        };
+        
+        var option2 = document.createElement('div');
+        option2.style.cssText = 'padding:10px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.2s;margin-top:4px;';
+        option2.innerHTML = '<span style="font-size:18px;">✍️</span><div><div style="font-size:13px;font-weight:600;color:#1e293b;">写作审稿增强</div><div style="font-size:11px;color:#64748b;">协同写作/反思链/评审圆桌/审稿回复/选刊/润色</div></div>';
+        option2.onmouseenter = function() { option2.style.background = '#fffbeb'; };
+        option2.onmouseleave = function() { option2.style.background = 'transparent'; };
+        option2.onclick = function() {
+            dropdown.style.display = 'none';
+            if (writingPanel) {
+                writingPanel.style.transform = 'translateX(0)';
+            }
+        };
+        
+        dropdown.appendChild(option1);
+        dropdown.appendChild(option2);
+        
+        // 合并按钮点击切换下拉菜单
+        mergedBtn.onclick = function(e) {
+            e.stopPropagation();
+            var isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+        };
+        
+        // 点击其他地方关闭下拉菜单
+        document.addEventListener('click', function(e) {
+            if (!dropdown.contains(e.target) && e.target !== mergedBtn) {
+                dropdown.style.display = 'none';
+            }
+        });
+        
+        document.body.appendChild(mergedBtn);
+        document.body.appendChild(dropdown);
+        
+        console.log('[按钮合并] 两个论文增强按钮已合并为一个「论文AI工具箱」');
+    } catch(e) {
+        console.warn('[按钮合并] 执行失败:', e);
+    }
+}
+
+// 延迟执行，等待原有按钮创建完成
+setTimeout(mergeButtons, 1500);
+
+} catch(e) {
+    console.error('[按钮合并] 顶层错误:', e);
+}
+})();
+</script>
+<!-- ========== 合并论文增强按钮 结束 ========== -->
+
 </body>
 </html>
