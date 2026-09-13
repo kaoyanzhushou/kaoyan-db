@@ -146937,5 +146937,708 @@ setTimeout(initStabilityV11, 500);
 </script>
 <!-- ========== 稳定性框架 v1.1 扩展 结束 ========== -->
 
+
+<!-- ========== 论文工作台增强包 v1.0 开始 ========== -->
+<script>
+(function() {
+'use strict';
+try {
+
+var SF = window.StabilityFramework;
+if (!SF) { console.warn('[论文增强] 稳定性框架未加载，跳过'); return; }
+
+console.log('[论文增强] 开始加载论文工作台增强包...');
+
+// ==========================================
+// 工具函数
+// ==========================================
+function callAI(taskType, sysPrompt, userPrompt, maxTokens) {
+    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens || 2000);
+}
+
+function createElement(tag, attrs, children) {
+    var el = document.createElement(tag);
+    if (attrs) { for (var k in attrs) { if (k === 'style') el.style.cssText = attrs[k]; else if (k === 'class') el.className = attrs[k]; else el.setAttribute(k, attrs[k]); } }
+    if (children) { (Array.isArray(children) ? children : [children]).forEach(function(c) { if (typeof c === 'string') el.appendChild(document.createTextNode(c)); else if (c) el.appendChild(c); }); }
+    return el;
+}
+
+function showLoading(container, text) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;"><div style="display:inline-block;width:30px;height:30px;border:3px solid #e5e7eb;border-top-color:#3b82f6;border-radius:50%;animation:paperEnhanceSpin 0.8s linear infinite;"></div><p style="margin-top:12px;font-size:14px;">' + (text || 'AI处理中...') + '</p></div>';
+}
+
+// ==========================================
+// 创建增强面板（浮动按钮+抽屉面板）
+// ==========================================
+var PaperEnhancePanel = {
+    isOpen: false,
+    
+    init: function() {
+        try {
+            // 浮动按钮（右下角）
+            var btn = createElement('div', {
+                id: 'paper-enhance-btn',
+                style: 'position:fixed;bottom:20px;right:20px;z-index:2147483630;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px 18px;border-radius:25px;font-size:13px;cursor:pointer;box-shadow:0 4px 16px rgba(102,126,234,0.4);display:flex;align-items:center;gap:8px;transition:all 0.3s;user-select:none;font-weight:500;'
+            }, '🔬 论文AI增强');
+            btn.onclick = this.toggle.bind(this);
+            document.body.appendChild(btn);
+            
+            // 抽屉面板
+            var panel = createElement('div', {
+                id: 'paper-enhance-panel',
+                style: 'position:fixed;top:0;right:0;width:520px;height:100vh;background:#fff;z-index:2147483631;box-shadow:-4px 0 24px rgba(0,0,0,0.15);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;'
+            });
+            
+            // 面板头部
+            var header = createElement('div', { style: 'padding:16px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;' });
+            header.appendChild(createElement('div', { style: 'font-size:16px;font-weight:600;' }, '🔬 论文工作台AI增强'));
+            var closeBtn = createElement('div', { style: 'cursor:pointer;font-size:20px;opacity:0.8;hover:opacity:1;' }, '✕');
+            closeBtn.onclick = this.toggle.bind(this);
+            header.appendChild(closeBtn);
+            panel.appendChild(header);
+            
+            // Tab导航
+            var tabs = ['热点追踪', '空白挖掘', '选题评估', '选题进化', '文献分类', '观点提取', '引用核验'];
+            var tabBar = createElement('div', { style: 'display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #e5e7eb;flex-shrink:0;' });
+            var tabContents = [];
+            var self = this;
+            tabs.forEach(function(tab, idx) {
+                var tabBtn = createElement('div', {
+                    'data-tab': idx,
+                    style: 'padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer;transition:all 0.2s;background:' + (idx === 0 ? '#667eea;color:#fff;' : '#fff;color:#475569;') + 'border:1px solid #e2e8f0;'
+                }, tab);
+                tabBtn.onclick = function() {
+                    tabContents.forEach(function(c, i) { c.style.display = i === idx ? 'block' : 'none'; });
+                    tabBar.querySelectorAll('[data-tab]').forEach(function(b) {
+                        b.style.background = b.getAttribute('data-tab') == idx ? '#667eea' : '#fff';
+                        b.style.color = b.getAttribute('data-tab') == idx ? '#fff' : '#475569';
+                    });
+                };
+                tabBar.appendChild(tabBtn);
+                
+                var content = createElement('div', { 'data-content': idx, style: 'flex:1;overflow-y:auto;padding:16px;display:' + (idx === 0 ? 'block' : 'none') + ';' });
+                tabContents.push(content);
+                panel.appendChild(tabBar);
+                panel.appendChild(content);
+            });
+            
+            // 初始化每个tab的内容
+            this.initHotspotTab(tabContents[0]);
+            this.initGapTab(tabContents[1]);
+            this.initFeasibilityTab(tabContents[2]);
+            this.initEvolutionTab(tabContents[3]);
+            this.initClassifyTab(tabContents[4]);
+            this.initViewpointTab(tabContents[5]);
+            this.initCitationTab(tabContents[6]);
+            
+            document.body.appendChild(panel);
+            this.panel = panel;
+            
+            // 添加动画样式
+            var style = document.createElement('style');
+            style.textContent = '@keyframes paperEnhanceSpin{to{transform:rotate(360deg)}}';
+            document.head.appendChild(style);
+            
+            console.log('[论文增强] 面板已创建');
+        } catch(e) { console.warn('[论文增强] 初始化失败', e); }
+    },
+    
+    toggle: function() {
+        this.isOpen = !this.isOpen;
+        if (this.panel) {
+            this.panel.style.transform = this.isOpen ? 'translateX(0)' : 'translateX(100%)';
+        }
+    },
+    
+    // ==========================================
+    // 1. 热点追踪器
+    // ==========================================
+    initHotspotTab: function(container) {
+        container.innerHTML = '';
+        container.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📈 研究热点追踪'));
+        container.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '输入研究方向，AI分析近5年研究热点，生成趋势报告'));
+        
+        var input = createElement('textarea', { style: 'width:100%;height:60px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;resize:vertical;', placeholder: '例如：运动干预对糖尿病患者血糖控制的影响...' });
+        container.appendChild(input);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🔍 AI分析研究热点');
+        container.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        container.appendChild(result);
+        
+        btn.onclick = async function() {
+            var topic = input.value.trim();
+            if (!topic) { SF.Toast.warning('请输入研究方向'); return; }
+            showLoading(result, 'AI正在分析研究热点...');
+            try {
+                var sysPrompt = '你是体育学研究热点分析专家。请分析以下研究方向近5年的研究热点，输出JSON格式：{"hotspots":[{"name":"热点名称","trend":"上升/稳定/下降","papers":"代表论文数量","description":"热点描述","opportunity":"研究机会"}],"summary":"总体趋势总结","emerging":"新兴热点列表"}';
+                var userPrompt = '研究方向：' + topic + '\n请分析近5年该方向的研究热点。';
+                var aiResult = await callAI('research', sysPrompt, userPrompt, 2500);
+                
+                // 解析JSON
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { hotspots: [], summary: aiResult, emerging: [] };
+                
+                // 渲染结果
+                var html = '<div style="background:#f0f9ff;padding:12px;border-radius:8px;margin-bottom:12px;border-left:3px solid #0ea5e9;">';
+                html += '<div style="font-size:13px;font-weight:600;color:#0369a1;margin-bottom:4px;">📊 总体趋势</div>';
+                html += '<div style="font-size:12px;color:#0c4a6e;line-height:1.6;">' + (data.summary || 'AI分析完成') + '</div></div>';
+                
+                if (data.hotspots && data.hotspots.length > 0) {
+                    html += '<div style="font-size:13px;font-weight:600;margin-bottom:8px;color:#1e293b;">🔥 热点主题（' + data.hotspots.length + '个）</div>';
+                    data.hotspots.forEach(function(h, i) {
+                        var trendColor = h.trend === '上升' ? '#10b981' : (h.trend === '下降' ? '#ef4444' : '#f59e0b');
+                        html += '<div style="background:#fff;padding:10px 12px;border-radius:8px;margin-bottom:8px;border:1px solid #e2e8f0;">';
+                        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+                        html += '<span style="font-size:13px;font-weight:600;color:#1e293b;">' + (i+1) + '. ' + (h.name || '热点' + (i+1)) + '</span>';
+                        html += '<span style="font-size:11px;color:' + trendColor + ';font-weight:500;">' + (h.trend || '稳定') + '</span></div>';
+                        html += '<div style="font-size:12px;color:#64748b;line-height:1.5;margin-bottom:4px;">' + (h.description || '') + '</div>';
+                        if (h.opportunity) html += '<div style="font-size:11px;color:#059669;background:#ecfdf5;padding:4px 8px;border-radius:4px;display:inline-block;">💡 ' + h.opportunity + '</div>';
+                        html += '</div>';
+                    });
+                }
+                
+                if (data.emerging && data.emerging.length > 0) {
+                    html += '<div style="margin-top:12px;background:#fef3c7;padding:10px 12px;border-radius:8px;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:4px;">🌱 新兴热点（值得关注）</div>';
+                    html += '<div style="font-size:12px;color:#78350f;line-height:1.6;">' + data.emerging.join('、') + '</div></div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('热点分析完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">分析失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // ==========================================
+    // 2. 空白点挖掘
+    // ==========================================
+    initGapTab: function(container) {
+        container.innerHTML = '';
+        container.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🕳️ 研究空白点挖掘'));
+        container.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI分析研究领域的空白点，按S/A/B/C分级推荐'));
+        
+        var input = createElement('textarea', { style: 'width:100%;height:60px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;resize:vertical;', placeholder: '例如：运动人体科学领域，运动干预与慢性病管理...' });
+        container.appendChild(input);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🔍 AI挖掘研究空白');
+        container.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        container.appendChild(result);
+        
+        btn.onclick = async function() {
+            var topic = input.value.trim();
+            if (!topic) { SF.Toast.warning('请输入研究领域'); return; }
+            showLoading(result, 'AI正在挖掘研究空白点...');
+            try {
+                var sysPrompt = '你是体育学研究空白点分析专家。请分析以下研究领域的研究空白点，输出JSON：{"gaps":[{"name":"空白点名称","level":"S/A/B/C","value":"研究价值1-10","feasibility":"可行性1-10","description":"空白描述","why":"为什么是空白","suggestion":"研究建议"}],"summary":"总体分析","topRecommendation":"最推荐的空白点"}';
+                var userPrompt = '研究领域：' + topic + '\n请挖掘该领域的研究空白点，按S（强烈推荐）/A（推荐）/B（可选）/C（不建议）分级。';
+                var aiResult = await callAI('research', sysPrompt, userPrompt, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { gaps: [], summary: aiResult };
+                
+                var levelColors = { 'S': '#7c3aed', 'A': '#2563eb', 'B': '#059669', 'C': '#6b7280' };
+                var levelNames = { 'S': 'S级·强烈推荐', 'A': 'A级·推荐', 'B': 'B级·可选', 'C': 'C级·不建议' };
+                
+                var html = '';
+                if (data.topRecommendation) {
+                    html += '<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);padding:12px;border-radius:8px;margin-bottom:12px;border:2px solid #f59e0b;">';
+                    html += '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:4px;">⭐ 最推荐研究方向</div>';
+                    html += '<div style="font-size:13px;color:#78350f;line-height:1.6;">' + data.topRecommendation + '</div></div>';
+                }
+                
+                if (data.gaps && data.gaps.length > 0) {
+                    // 按级别排序
+                    data.gaps.sort(function(a, b) { return (a.level || 'C').localeCompare(b.level || 'C'); });
+                    data.gaps.forEach(function(g, i) {
+                        var level = g.level || 'B';
+                        var color = levelColors[level] || levelColors['B'];
+                        html += '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;border-left:4px solid ' + color + ';border-top:1px solid #e2e8f0;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">';
+                        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+                        html += '<span style="font-size:13px;font-weight:600;color:#1e293b;">' + (i+1) + '. ' + (g.name || '空白点' + (i+1)) + '</span>';
+                        html += '<span style="font-size:10px;color:#fff;background:' + color + ';padding:2px 8px;border-radius:10px;font-weight:600;">' + (levelNames[level] || level + '级') + '</span></div>';
+                        html += '<div style="font-size:12px;color:#64748b;line-height:1.5;margin-bottom:6px;">' + (g.description || '') + '</div>';
+                        html += '<div style="display:flex;gap:12px;font-size:11px;color:#64748b;margin-bottom:6px;">';
+                        html += '<span>📊 价值: ' + (g.value || '-') + '/10</span>';
+                        html += '<span>✅ 可行: ' + (g.feasibility || '-') + '/10</span></div>';
+                        if (g.suggestion) html += '<div style="font-size:11px;color:#059669;background:#ecfdf5;padding:4px 8px;border-radius:4px;">💡 ' + g.suggestion + '</div>';
+                        html += '</div>';
+                    });
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('空白点挖掘完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">挖掘失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // ==========================================
+    // 3. 选题可行性评估
+    // ==========================================
+    initFeasibilityTab: function(container) {
+        container.innerHTML = '';
+        container.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '⚖️ 选题可行性评估'));
+        container.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '五维评分（新颖性/可行性/发表潜力/创新性/契合度），模型辩论机制'));
+        
+        var input = createElement('textarea', { style: 'width:100%;height:80px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;resize:vertical;', placeholder: '请输入你的选题，包括研究题目、研究内容、研究方法等...' });
+        container.appendChild(input);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🎯 AI五维评估（模型辩论）');
+        container.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        container.appendChild(result);
+        
+        btn.onclick = async function() {
+            var topic = input.value.trim();
+            if (!topic) { SF.Toast.warning('请输入选题内容'); return; }
+            showLoading(result, 'AI正在进行五维评估（双模型辩论中）...');
+            try {
+                // 模型A评估
+                var sysA = '你是严格的学术评审专家。请对以下选题进行五维评分，输出JSON：{"scores":{"novelty":1-10,"feasibility":1-10,"publication":1-10,"innovation":1-10,"fit":1-10},"comments":"总体评价","strengths":["优点1","优点2"],"weaknesses":["不足1","不足2"],"suggestions":"改进建议","conclusion":"强烈推荐/可以做/需谨慎/不建议"}';
+                var resultA = await callAI('reasoning', sysA, '选题：' + topic, 2000);
+                
+                // 模型B评估（不同模型交叉验证）
+                var sysB = '你是另一位学术评审专家，从不同角度评估以下选题。输出JSON：{"scores":{"novelty":1-10,"feasibility":1-10,"publication":1-10,"innovation":1-10,"fit":1-10},"comments":"你的评价","disagreements":"你与其他评审可能存在的分歧","additionalInsights":"补充见解"}';
+                var resultB = await callAI('creative', sysB, '选题：' + topic, 1500);
+                
+                // 解析结果
+                var jsonA = resultA.match(/\{[\s\S]*\}/);
+                var dataA = jsonA ? JSON.parse(jsonA[0]) : null;
+                var jsonB = resultB.match(/\{[\s\S]*\}/);
+                var dataB = jsonB ? JSON.parse(jsonB[0]) : null;
+                
+                // 综合评分（取平均）
+                var scores = {};
+                var dims = ['novelty', 'feasibility', 'publication', 'innovation', 'fit'];
+                var dimNames = { novelty: '新颖性', feasibility: '可行性', publication: '发表潜力', innovation: '创新性', fit: '契合度' };
+                dims.forEach(function(d) {
+                    var a = dataA && dataA.scores ? dataA.scores[d] : 0;
+                    var b = dataB && dataB.scores ? dataB.scores[d] : 0;
+                    scores[d] = a && b ? Math.round((a + b) / 2) : (a || b || 5);
+                });
+                var avgScore = Math.round(dims.reduce(function(sum, d) { return sum + scores[d]; }, 0) / dims.length * 10) / 10;
+                
+                // 渲染
+                var conclusion = dataA ? dataA.conclusion : '评估完成';
+                var conclColor = conclusion.indexOf('强烈') >= 0 ? '#10b981' : (conclusion.indexOf('可以') >= 0 ? '#3b82f6' : (conclusion.indexOf('谨慎') >= 0 ? '#f59e0b' : '#ef4444'));
+                
+                var html = '<div style="text-align:center;margin-bottom:16px;">';
+                html += '<div style="font-size:36px;font-weight:700;color:' + conclColor + ';">' + avgScore + '</div>';
+                html += '<div style="font-size:12px;color:#64748b;">综合评分（满分10分）</div>';
+                html += '<div style="margin-top:8px;display:inline-block;padding:4px 12px;background:' + conclColor + ';color:#fff;border-radius:12px;font-size:12px;font-weight:500;">' + conclusion + '</div></div>';
+                
+                // 五维评分条
+                html += '<div style="background:#f8fafc;padding:12px;border-radius:8px;margin-bottom:12px;">';
+                dims.forEach(function(d) {
+                    var score = scores[d];
+                    var color = score >= 8 ? '#10b981' : (score >= 6 ? '#3b82f6' : (score >= 4 ? '#f59e0b' : '#ef4444'));
+                    html += '<div style="margin-bottom:8px;">';
+                    html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px;"><span style="color:#475569;">' + dimNames[d] + '</span><span style="font-weight:600;color:' + color + ';">' + score + '/10</span></div>';
+                    html += '<div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + (score*10) + '%;background:' + color + ';border-radius:3px;transition:width 0.5s;"></div></div>';
+                    html += '</div>';
+                });
+                html += '</div>';
+                
+                // 优点
+                if (dataA && dataA.strengths && dataA.strengths.length > 0) {
+                    html += '<div style="margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#059669;margin-bottom:4px;">✅ 优点</div>';
+                    dataA.strengths.forEach(function(s) { html += '<div style="font-size:12px;color:#065f46;line-height:1.5;padding-left:12px;">• ' + s + '</div>'; });
+                    html += '</div>';
+                }
+                
+                // 不足
+                if (dataA && dataA.weaknesses && dataA.weaknesses.length > 0) {
+                    html += '<div style="margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:4px;">⚠️ 不足</div>';
+                    dataA.weaknesses.forEach(function(w) { html += '<div style="font-size:12px;color:#991b1b;line-height:1.5;padding-left:12px;">• ' + w + '</div>'; });
+                    html += '</div>';
+                }
+                
+                // 改进建议
+                if (dataA && dataA.suggestions) {
+                    html += '<div style="background:#eff6ff;padding:10px 12px;border-radius:8px;margin-bottom:10px;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:4px;">💡 改进建议</div>';
+                    html += '<div style="font-size:12px;color:#1e3a8a;line-height:1.6;">' + dataA.suggestions + '</div></div>';
+                }
+                
+                // 模型B补充见解
+                if (dataB && dataB.additionalInsights) {
+                    html += '<div style="background:#faf5ff;padding:10px 12px;border-radius:8px;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#6b21a8;margin-bottom:4px;">🔄 第二位评审补充见解（模型辩论）</div>';
+                    html += '<div style="font-size:12px;color:#581c87;line-height:1.6;">' + dataB.additionalInsights + '</div></div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('五维评估完成！综合评分: ' + avgScore + '分');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">评估失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // ==========================================
+    // 4. 选题进化器
+    // ==========================================
+    initEvolutionTab: function(container) {
+        container.innerHTML = '';
+        container.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🌱 选题进化器'));
+        container.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '从初步想法出发，AI多轮进化，生成可执行的研究方案'));
+        
+        var input = createElement('textarea', { style: 'width:100%;height:60px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;resize:vertical;', placeholder: '输入你的初步想法，例如：我想研究运动和健康的关系...' });
+        container.appendChild(input);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🚀 开始选题进化（3轮）');
+        container.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        container.appendChild(result);
+        
+        btn.onclick = async function() {
+            var idea = input.value.trim();
+            if (!idea) { SF.Toast.warning('请输入初步想法'); return; }
+            showLoading(result, 'AI正在进行3轮选题进化...');
+            try {
+                // 第1轮：发散方向
+                var r1Sys = '你是创意型研究顾问。请从以下初步想法出发，发散出5个具体研究方向，输出JSON：{"directions":[{"name":"方向名称","description":"方向描述","innovation":"创新点"}],"summary":"发散思路总结"}';
+                var r1 = await callAI('creative', r1Sys, '初步想法：' + idea, 2000);
+                var r1Json = r1.match(/\{[\s\S]*\}/);
+                var r1Data = r1Json ? JSON.parse(r1Json[0]) : { directions: [] };
+                
+                // 第2轮：聚焦创新点（选第一个方向深入）
+                var focusDir = r1Data.directions && r1Data.directions[0] ? r1Data.directions[0].name : idea;
+                var r2Sys = '你是逻辑严谨的学术专家。请针对以下研究方向，细化创新点和研究内容，输出JSON：{"researchQuestions":["研究问题1","研究问题2","研究问题3"],"innovationPoints":[{"name":"创新点名称","description":"创新描述","type":"理论/方法/应用"}],"content":"研究内容概述"}';
+                var r2 = await callAI('reasoning', r2Sys, '研究方向：' + focusDir, 2000);
+                var r2Json = r2.match(/\{[\s\S]*\}/);
+                var r2Data = r2Json ? JSON.parse(r2Json[0]) : {};
+                
+                // 第3轮：可执行化
+                var r3Sys = '你是研究方案设计专家。请将以下研究内容细化为可执行的研究方案，输出JSON：{"title":"研究题目","background":"研究背景（200字）","content":"研究内容（分点）","method":"研究方法","techRoute":"技术路线（分步骤）","expected":"预期成果","feasibility":"可行性分析"}';
+                var r3Input = '研究方向：' + focusDir + '\n研究内容：' + (r2Data.content || '');
+                var r3 = await callAI('zh-writing', r3Sys, r3Input, 2500);
+                var r3Json = r3.match(/\{[\s\S]*\}/);
+                var r3Data = r3Json ? JSON.parse(r3Json[0]) : { title: focusDir, content: r3 };
+                
+                // 渲染进化树
+                var html = '';
+                
+                // 第1轮
+                html += '<div style="margin-bottom:16px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="background:#f59e0b;color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;">第1轮</span><span style="font-size:13px;font-weight:600;color:#1e293b;">🌿 发散方向</span></div>';
+                html += '<div style="background:#fffbeb;padding:10px 12px;border-radius:8px;border:1px solid #fde68a;">';
+                if (r1Data.directions && r1Data.directions.length > 0) {
+                    r1Data.directions.forEach(function(d, i) {
+                        html += '<div style="padding:6px 0;border-bottom:1px dashed #fde68a;' + (i === r1Data.directions.length - 1 ? 'border-bottom:none;' : '') + '">';
+                        html += '<div style="font-size:12px;font-weight:600;color:#92400e;">' + (i+1) + '. ' + (d.name || '') + (i === 0 ? ' <span style="color:#10b981;">← 选中深入</span>' : '') + '</div>';
+                        html += '<div style="font-size:11px;color:#78350f;line-height:1.4;margin-top:2px;">' + (d.description || '') + '</div></div>';
+                    });
+                }
+                html += '</div></div>';
+                
+                // 箭头
+                html += '<div style="text-align:center;color:#94a3b8;font-size:18px;margin:-8px 0;">↓</div>';
+                
+                // 第2轮
+                html += '<div style="margin-bottom:16px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="background:#3b82f6;color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;">第2轮</span><span style="font-size:13px;font-weight:600;color:#1e293b;">🎯 聚焦创新点</span></div>';
+                html += '<div style="background:#eff6ff;padding:10px 12px;border-radius:8px;border:1px solid #bfdbfe;">';
+                if (r2Data.researchQuestions && r2Data.researchQuestions.length > 0) {
+                    html += '<div style="font-size:11px;font-weight:600;color:#1e40af;margin-bottom:4px;">❓ 研究问题</div>';
+                    r2Data.researchQuestions.forEach(function(q, i) {
+                        html += '<div style="font-size:11px;color:#1e3a8a;line-height:1.4;padding-left:10px;">' + (i+1) + '. ' + q + '</div>';
+                    });
+                }
+                if (r2Data.innovationPoints && r2Data.innovationPoints.length > 0) {
+                    html += '<div style="font-size:11px;font-weight:600;color:#1e40af;margin:8px 0 4px;">💡 创新点</div>';
+                    r2Data.innovationPoints.forEach(function(p, i) {
+                        html += '<div style="font-size:11px;color:#1e3a8a;line-height:1.4;padding-left:10px;">• ' + (p.name || '') + '（' + (p.type || '') + '）: ' + (p.description || '') + '</div>';
+                    });
+                }
+                html += '</div></div>';
+                
+                html += '<div style="text-align:center;color:#94a3b8;font-size:18px;margin:-8px 0;">↓</div>';
+                
+                // 第3轮
+                html += '<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="background:#10b981;color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;">第3轮</span><span style="font-size:13px;font-weight:600;color:#1e293b;">✅ 可执行方案</span></div>';
+                html += '<div style="background:#ecfdf5;padding:12px;border-radius:8px;border:1px solid #a7f3d0;">';
+                html += '<div style="font-size:14px;font-weight:700;color:#065f46;margin-bottom:8px;">📝 ' + (r3Data.title || '研究方案') + '</div>';
+                if (r3Data.background) { html += '<div style="font-size:11px;font-weight:600;color:#047857;margin-bottom:2px;">研究背景</div><div style="font-size:12px;color:#064e3b;line-height:1.6;margin-bottom:8px;">' + r3Data.background + '</div>'; }
+                if (r3Data.content) { html += '<div style="font-size:11px;font-weight:600;color:#047857;margin-bottom:2px;">研究内容</div><div style="font-size:12px;color:#064e3b;line-height:1.6;margin-bottom:8px;white-space:pre-wrap;">' + r3Data.content + '</div>'; }
+                if (r3Data.method) { html += '<div style="font-size:11px;font-weight:600;color:#047857;margin-bottom:2px;">研究方法</div><div style="font-size:12px;color:#064e3b;line-height:1.6;margin-bottom:8px;">' + r3Data.method + '</div>'; }
+                if (r3Data.techRoute) { html += '<div style="font-size:11px;font-weight:600;color:#047857;margin-bottom:2px;">技术路线</div><div style="font-size:12px;color:#064e3b;line-height:1.6;margin-bottom:8px;white-space:pre-wrap;">' + r3Data.techRoute + '</div>'; }
+                if (r3Data.expected) { html += '<div style="font-size:11px;font-weight:600;color:#047857;margin-bottom:2px;">预期成果</div><div style="font-size:12px;color:#064e3b;line-height:1.6;">' + r3Data.expected + '</div>'; }
+                html += '</div></div>';
+                
+                result.innerHTML = html;
+                SF.Toast.success('选题进化完成！3轮进化已生成可执行方案');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">进化失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // ==========================================
+    // 5. 文献智能分类
+    // ==========================================
+    initClassifyTab: function(container) {
+        container.innerHTML = '';
+        container.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📚 文献智能分类'));
+        container.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '粘贴文献列表，AI按主题/方法/对象四维分类，生成文献矩阵'));
+        
+        var input = createElement('textarea', { style: 'width:100%;height:100px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;font-family:monospace;', placeholder: '粘贴文献列表（每行一篇），例如：\nSmith J, et al. Effects of exercise on health. Sports Med. 2023\n张三, 李四. 运动干预对糖尿病的影响. 体育科学. 2023\n...' });
+        container.appendChild(input);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🔍 AI智能分类');
+        container.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        container.appendChild(result);
+        
+        btn.onclick = async function() {
+            var refs = input.value.trim();
+            if (!refs) { SF.Toast.warning('请粘贴文献列表'); return; }
+            var lines = refs.split('\n').filter(function(l) { return l.trim(); });
+            if (lines.length < 2) { SF.Toast.warning('至少需要2篇文献'); return; }
+            
+            showLoading(result, 'AI正在分类' + lines.length + '篇文献...');
+            try {
+                var sysPrompt = '你是文献分类专家。请对以下文献按四维分类，输出JSON：{"clusters":[{"name":"主题集群名称","papers":[0,1,2],"description":"集群描述","keywords":["关键词1","关键词2"]}],"byMethod":[{"method":"研究方法","papers":[0,1]}],"bySubject":[{"subject":"研究对象","papers":[0,1]}],"summary":"分类总结","controversies":["争议点1"]}';
+                var userPrompt = '文献列表（共' + lines.length + '篇）：\n' + lines.map(function(l, i) { return (i+1) + '. ' + l.trim(); }).join('\n');
+                var aiResult = await callAI('long-text', sysPrompt, userPrompt, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { clusters: [], summary: aiResult };
+                
+                var html = '';
+                if (data.summary) {
+                    html += '<div style="background:#f0f9ff;padding:10px 12px;border-radius:8px;margin-bottom:12px;border-left:3px solid #0ea5e9;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#0369a1;margin-bottom:4px;">📊 分类总结</div>';
+                    html += '<div style="font-size:12px;color:#0c4a6e;line-height:1.6;">' + data.summary + '</div></div>';
+                }
+                
+                if (data.clusters && data.clusters.length > 0) {
+                    html += '<div style="font-size:13px;font-weight:600;margin-bottom:8px;color:#1e293b;">📑 主题集群（' + data.clusters.length + '个）</div>';
+                    data.clusters.forEach(function(c, i) {
+                        var colors = ['#dbeafe', '#fce7f3', '#d1fae5', '#fef3c7', '#e0e7ff'];
+                        var borderColors = ['#3b82f6', '#ec4899', '#10b981', '#f59e0b', '#6366f1'];
+                        var color = colors[i % colors.length];
+                        var borderColor = borderColors[i % borderColors.length];
+                        html += '<div style="background:' + color + ';padding:10px 12px;border-radius:8px;margin-bottom:8px;border-left:3px solid ' + borderColor + ';">';
+                        html += '<div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:4px;">' + (i+1) + '. ' + (c.name || '集群' + (i+1)) + ' <span style="font-size:10px;color:#64748b;font-weight:400;">(' + (c.papers ? c.papers.length : 0) + '篇)</span></div>';
+                        html += '<div style="font-size:11px;color:#475569;line-height:1.5;margin-bottom:4px;">' + (c.description || '') + '</div>';
+                        if (c.keywords && c.keywords.length > 0) {
+                            html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+                            c.keywords.forEach(function(k) { html += '<span style="font-size:10px;background:rgba(255,255,255,0.7);padding:2px 6px;border-radius:4px;color:#475569;">' + k + '</span>'; });
+                            html += '</div>';
+                        }
+                        if (c.papers && c.papers.length > 0) {
+                            html += '<div style="font-size:10px;color:#64748b;margin-top:4px;">文献编号: ' + c.papers.map(function(p) { return '#' + (p+1); }).join(', ') + '</div>';
+                        }
+                        html += '</div>';
+                    });
+                }
+                
+                if (data.controversies && data.controversies.length > 0) {
+                    html += '<div style="margin-top:12px;background:#fef2f2;padding:10px 12px;border-radius:8px;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#991b1b;margin-bottom:4px;">⚔️ 争议点识别</div>';
+                    data.controversies.forEach(function(c) { html += '<div style="font-size:11px;color:#7f1d1d;line-height:1.5;padding-left:10px;">• ' + c + '</div>'; });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('文献分类完成！共' + (data.clusters ? data.clusters.length : 0) + '个主题集群');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">分类失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // ==========================================
+    // 6. 文献观点提取
+    // ==========================================
+    initViewpointTab: function(container) {
+        container.innerHTML = '';
+        container.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '💡 文献观点提取'));
+        container.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '粘贴文献摘要/全文，AI提取核心观点/证据/局限/未来方向'));
+        
+        var input = createElement('textarea', { style: 'width:100%;height:120px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;', placeholder: '粘贴文献摘要或全文内容...' });
+        container.appendChild(input);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🔍 AI提取观点');
+        container.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        container.appendChild(result);
+        
+        btn.onclick = async function() {
+            var text = input.value.trim();
+            if (!text) { SF.Toast.warning('请粘贴文献内容'); return; }
+            showLoading(result, 'AI正在提取文献观点...');
+            try {
+                var sysPrompt = '你是文献观点提取专家。请提取以下文献的核心观点，输出JSON：{"core论点":"核心论点","keyEvidence":[{"point":"证据点","support":"支持程度"}],"limitations":["局限1","局限2"],"futureDirections":["未来方向1","future方向2"],"theoreticalFramework":"理论框架","methodSummary":"研究方法总结","contribution":"主要贡献"}';
+                var aiResult = await callAI('long-text', sysPrompt, '文献内容：\n' + text, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { 'core论点': aiResult };
+                
+                var html = '';
+                
+                // 核心论点
+                if (data['core论点'] || data.coreArgument) {
+                    html += '<div style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px;border-radius:8px;margin-bottom:12px;">';
+                    html += '<div style="font-size:11px;opacity:0.8;margin-bottom:4px;">🎯 核心论点</div>';
+                    html += '<div style="font-size:13px;line-height:1.6;font-weight:500;">' + (data['core论点'] || data.coreArgument) + '</div></div>';
+                }
+                
+                // 主要贡献
+                if (data.contribution) {
+                    html += '<div style="background:#ecfdf5;padding:10px 12px;border-radius:8px;margin-bottom:10px;border-left:3px solid #10b981;">';
+                    html += '<div style="font-size:11px;font-weight:600;color:#059669;margin-bottom:2px;">🏆 主要贡献</div>';
+                    html += '<div style="font-size:12px;color:#065f46;line-height:1.6;">' + data.contribution + '</div></div>';
+                }
+                
+                // 关键证据
+                if (data.keyEvidence && data.keyEvidence.length > 0) {
+                    html += '<div style="margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:6px;">📊 关键证据</div>';
+                    data.keyEvidence.forEach(function(e, i) {
+                        html += '<div style="background:#eff6ff;padding:8px 10px;border-radius:6px;margin-bottom:4px;">';
+                        html += '<div style="font-size:12px;color:#1e3a8a;line-height:1.5;">' + (i+1) + '. ' + (e.point || '') + '</div>';
+                        if (e.support) html += '<div style="font-size:10px;color:#3b82f6;margin-top:2px;">支持程度: ' + e.support + '</div>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                // 研究局限
+                if (data.limitations && data.limitations.length > 0) {
+                    html += '<div style="margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:6px;">⚠️ 研究局限</div>';
+                    data.limitations.forEach(function(l) {
+                        html += '<div style="font-size:12px;color:#78350f;line-height:1.5;padding:4px 0;padding-left:12px;">• ' + l + '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                // 未来方向
+                if (data.futureDirections && data.futureDirections.length > 0) {
+                    html += '<div style="background:#faf5ff;padding:10px 12px;border-radius:8px;border-left:3px solid #8b5cf6;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#6b21a8;margin-bottom:6px;">🚀 未来研究方向</div>';
+                    data.futureDirections.forEach(function(f) {
+                        html += '<div style="font-size:12px;color:#581c87;line-height:1.5;padding:4px 0;padding-left:12px;">• ' + f + '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('观点提取完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">提取失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // ==========================================
+    // 7. 引用真实性核验
+    // ==========================================
+    initCitationTab: function(container) {
+        container.innerHTML = '';
+        container.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '✅ 引用真实性核验'));
+        container.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '粘贴参考文献列表，AI核验每条引用真实性，杜绝AI编文献'));
+        
+        var input = createElement('textarea', { style: 'width:100%;height:100px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;font-family:monospace;', placeholder: '粘贴参考文献列表（每行一条），支持PMID/DOI/完整引用格式...' });
+        container.appendChild(input);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🔍 AI核验引用真实性');
+        container.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        container.appendChild(result);
+        
+        btn.onclick = async function() {
+            var refs = input.value.trim();
+            if (!refs) { SF.Toast.warning('请粘贴参考文献列表'); return; }
+            var lines = refs.split('\n').filter(function(l) { return l.trim(); });
+            
+            showLoading(result, 'AI正在核验' + lines.length + '条引用...');
+            try {
+                var sysPrompt = '你是引用真实性核验专家。请核验以下参考文献的真实性，输出JSON：{"results":[{"index":1,"citation":"原始引用","status":"已验证/待确认/疑似虚构","confidence":"高/中/低","reason":"核验理由","suggestion":"建议","pmid":"PMID号（如有）","doi":"DOI号（如有）"}],"summary":"总体核验总结","verifiedCount":已验证数量,"suspiciousCount":疑似虚构数量,"warning":"风险警告"}';
+                var userPrompt = '参考文献列表（共' + lines.length + '条）：\n' + lines.map(function(l, i) { return (i+1) + '. ' + l.trim(); }).join('\n') + '\n\n请逐条核验：1.格式是否规范 2.作者/期刊/年份是否合理 3.是否存在明显的虚构特征（如作者名奇怪、期刊不存在、年份不合理等）。注意：无法联网查询时，请基于格式和内容特征判断，并标注置信度。';
+                var aiResult = await callAI('structured', sysPrompt, userPrompt, 3000);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : { results: [], summary: aiResult };
+                
+                var html = '';
+                
+                // 统计概览
+                var verified = data.verifiedCount || (data.results ? data.results.filter(function(r) { return r.status === '已验证'; }).length : 0);
+                var suspicious = data.suspiciousCount || (data.results ? data.results.filter(function(r) { return r.status === '疑似虚构'; }).length : 0);
+                var pending = lines.length - verified - suspicious;
+                
+                html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">';
+                html += '<div style="background:#ecfdf5;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#10b981;">' + verified + '</div><div style="font-size:10px;color:#059669;">✅ 已验证</div></div>';
+                html += '<div style="background:#fef3c7;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#d97706;">' + pending + '</div><div style="font-size:10px;color:#92400e;">⚠️ 待确认</div></div>';
+                html += '<div style="background:#fef2f2;padding:10px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#ef4444;">' + suspicious + '</div><div style="font-size:10px;color:#dc2626;">❌ 疑似虚构</div></div>';
+                html += '</div>';
+                
+                if (data.warning) {
+                    html += '<div style="background:#fef2f2;padding:10px 12px;border-radius:8px;margin-bottom:12px;border:2px solid #ef4444;">';
+                    html += '<div style="font-size:12px;font-weight:700;color:#991b1b;">🚨 风险警告</div>';
+                    html += '<div style="font-size:12px;color:#7f1d1d;line-height:1.6;margin-top:4px;">' + data.warning + '</div></div>';
+                }
+                
+                if (data.results && data.results.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">📋 逐条核验结果</div>';
+                    data.results.forEach(function(r) {
+                        var statusColor = r.status === '已验证' ? '#10b981' : (r.status === '疑似虚构' ? '#ef4444' : '#f59e0b');
+                        var statusBg = r.status === '已验证' ? '#ecfdf5' : (r.status === '疑似虚构' ? '#fef2f2' : '#fffbeb');
+                        html += '<div style="background:' + statusBg + ';padding:10px 12px;border-radius:8px;margin-bottom:6px;border-left:3px solid ' + statusColor + ';">';
+                        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">';
+                        html += '<div style="font-size:11px;color:#475569;line-height:1.4;flex:1;padding-right:8px;">#' + (r.index || '?') + '. ' + (r.citation || '').substring(0, 100) + ((r.citation || '').length > 100 ? '...' : '') + '</div>';
+                        html += '<span style="font-size:10px;color:#fff;background:' + statusColor + ';padding:2px 8px;border-radius:10px;font-weight:600;flex-shrink:0;">' + (r.status || '待确认') + '</span>';
+                        html += '</div>';
+                        if (r.reason) html += '<div style="font-size:11px;color:#64748b;line-height:1.4;margin-top:4px;">💬 ' + r.reason + '</div>';
+                        if (r.suggestion) html += '<div style="font-size:11px;color:#059669;line-height:1.4;margin-top:2px;">💡 ' + r.suggestion + '</div>';
+                        if ((r.pmid || r.doi) && r.status !== '疑似虚构') {
+                            html += '<div style="font-size:10px;color:#3b82f6;margin-top:2px;">';
+                            if (r.pmid) html += 'PMID: ' + r.pmid + ' ';
+                            if (r.doi) html += 'DOI: ' + r.doi;
+                            html += '</div>';
+                        }
+                        html += '</div>';
+                    });
+                }
+                
+                if (data.summary) {
+                    html += '<div style="margin-top:10px;background:#f8fafc;padding:10px 12px;border-radius:8px;">';
+                    html += '<div style="font-size:11px;font-weight:600;color:#475569;margin-bottom:4px;">📝 核验总结</div>';
+                    html += '<div style="font-size:12px;color:#64748b;line-height:1.6;">' + data.summary + '</div></div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('引用核验完成！已验证' + verified + '条，疑似虚构' + suspicious + '条');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">核验失败: ' + e.message + '</div>';
+            }
+        };
+    }
+};
+
+// 初始化
+setTimeout(function() {
+    PaperEnhancePanel.init();
+    console.log('✅ 论文工作台增强包 v1.0 已加载（7个功能：热点追踪/空白挖掘/选题评估/选题进化/文献分类/观点提取/引用核验）');
+}, 800);
+
+} catch(e) {
+    console.error('[论文增强] 顶层错误:', e);
+}
+})();
+</script>
+<!-- ========== 论文工作台增强包 v1.0 结束 ========== -->
+
 </body>
 </html>
