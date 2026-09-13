@@ -17563,6 +17563,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
             <!-- 生成按钮 -->
             <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap">
               <button onclick="generateLessonFromImages()" style="background:#d97706;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🚀 识图生成教案</button>
+              <button onclick="generateLessonByFieldsUI()" style="background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">⚡ 按字段并行生成（更快更准）</button>
               
               <select id="imageQuickModel" style="border:1px solid #fcd34d;border-radius:8px;padding:8px;font-size:12px;background:#fff">
                 <option value="qwen-vl-plus">⚡ Qwen-VL-Plus（速度快）</option>
@@ -17576,6 +17577,12 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
               
               <span id="imageQuickStatus" style="font-size:12px;color:#92400e"></span>
             </div>
+            
+            <!-- 按字段生成进度 -->
+            <div id="fieldGenStatus" style="display:none;margin-top:14px"></div>
+            
+            <!-- 按字段生成结果 -->
+            <div id="fieldGenResults" style="display:none;margin-top:14px"></div>
           </div>
         </div>
 
@@ -136843,6 +136850,399 @@ function toggleFormatCustom(){
   var cus = document.getElementById('lessonFormatCustom');
   if(sel && cus) cus.style.display = (sel.value === 'custom') ? 'block' : 'none';
 }
+// ========== 教案模板字段详细配置（按字段生成核心） ==========
+const LESSON_TEMPLATE_FIELDS = [
+  // 基础信息组（简单字段，用快速模型）
+  { group: 'basic', id: 'courseName', name: '课程名称', type: 'single', model: 'fast', maxLength: 30, required: true, prompt: '请根据教材内容生成课程名称，不超过30字，简洁准确。' },
+  { group: 'basic', id: 'chapter', name: '章节/课题', type: 'single', model: 'fast', maxLength: 50, required: true, prompt: '请根据教材内容生成章节/课题名称，不超过50字。' },
+  { group: 'basic', id: 'teacher', name: '授课教师', type: 'single', model: 'fast', maxLength: 10, required: false, prompt: '授课教师姓名（如用户未提供，填"___"）。' },
+  { group: 'basic', id: 'class', name: '授课班级', type: 'single', model: 'fast', maxLength: 20, required: false, prompt: '授课班级（如用户未提供，填"___"）。' },
+  { group: 'basic', id: 'hours', name: '课时', type: 'single', model: 'fast', maxLength: 10, required: true, prompt: '课时安排，如"2学时"或"45分钟"。' },
+  { group: 'basic', id: 'courseType', name: '课型', type: 'single', model: 'fast', maxLength: 10, required: false, prompt: '课型，如"新授课""复习课""实验课""理论课"。' },
+  
+  // 教学要素组（中等字段，用均衡模型）
+  { group: 'elements', id: 'objectives', name: '教学目标', type: 'multi', model: 'balanced', maxLength: 200, required: true, prompt: '请生成教学目标，分三点：知识目标、能力目标、素养目标，每点一句话，动词开头，总字数不超过200字。' },
+  { group: 'elements', id: 'keyPoints', name: '教学重点', type: 'multi', model: 'balanced', maxLength: 100, required: true, prompt: '请生成教学重点，1-2个核心知识点，简洁明确，不超过100字。' },
+  { group: 'elements', id: 'difficultPoints', name: '教学难点', type: 'multi', model: 'balanced', maxLength: 100, required: true, prompt: '请生成教学难点，1个学生最难理解的点，并简要说明为什么难，不超过100字。' },
+  { group: 'elements', id: 'methods', name: '教学方法', type: 'single', model: 'fast', maxLength: 50, required: true, prompt: '教学方法，多个用顿号分隔，如"讲授法、案例分析法、讨论法"，不超过50字。' },
+  { group: 'elements', id: 'preparation', name: '教学准备', type: 'single', model: 'fast', maxLength: 80, required: false, prompt: '教学准备，如教具、教材、多媒体课件等，不超过80字。' },
+  { group: 'elements', id: 'studentAnalysis', name: '学情分析', type: 'multi', model: 'balanced', maxLength: 150, required: false, prompt: '请生成学情分析，包括学生已有知识基础、认知特点、可能遇到的困难，不超过150字。' },
+  
+  // 教学过程组（复杂字段，用最强模型）
+  { group: 'process', id: 'process_intro', name: '教学过程-导入', type: 'table', model: 'strong', maxLength: 200, required: true, prompt: '请设计导入环节，包括教师活动、学生活动、设计意图、时间（约5分钟）。教师活动要具体，学生活动要可操作，设计意图要说明为什么这样导入。' },
+  { group: 'process', id: 'process_teach', name: '教学过程-新课讲授', type: 'table', model: 'strong', maxLength: 500, required: true, prompt: '请设计新课讲授环节，按知识点逐个讲解，包括教师活动、学生活动、设计意图、时间（约25-30分钟）。每个知识点要有讲解要点、互动设计、重难点突破方法。' },
+  { group: 'process', id: 'process_practice', name: '教学过程-课堂练习', type: 'table', model: 'strong', maxLength: 200, required: true, prompt: '请设计课堂练习环节，包括2-3道练习题、教师活动、学生活动、设计意图、时间（约5-8分钟）。练习题要对应讲授的知识点，有参考答案。' },
+  { group: 'process', id: 'process_summary', name: '教学过程-课堂小结', type: 'table', model: 'balanced', maxLength: 100, required: true, prompt: '请设计课堂小结环节，包括教师活动、学生活动、设计意图、时间（约3分钟）。小结要涵盖本节课的重点，帮助学生构建知识框架。' },
+  { group: 'process', id: 'process_homework', name: '教学过程-作业布置', type: 'table', model: 'balanced', maxLength: 100, required: true, prompt: '请设计作业布置环节，分基础题和拓展题，包括教师活动、学生活动、设计意图、时间（约2分钟）。作业量适中，有层次性。' },
+  
+  // 其他部分
+  { group: 'other', id: 'blackboard', name: '板书设计', type: 'multi', model: 'balanced', maxLength: 200, required: false, prompt: '请设计板书，结构化呈现，层级清晰，突出重点，不超过200字。可以用文字描述板书布局。' },
+  { group: 'other', id: 'reflection', name: '教学反思', type: 'multi', model: 'balanced', maxLength: 150, required: false, prompt: '请生成教学反思预设，包括本节课的预期亮点、可能存在的问题、改进方向，不超过150字。' }
+];
+
+// 模型分级配置
+const LESSON_MODEL_LEVELS = {
+  fast: ['qwen-flash', 'deepseek-v4-flash', 'qwen3.5-flash'],
+  balanced: ['glm-5.3', 'deepseek-chat', 'hy4-preview'],
+  strong: ['deepseek-v4-pro', 'qwen3.5-plus', 'kimi-k3']
+};
+
+// 当前教案生成状态
+let lessonGenState = {
+  fields: {},      // 每个字段的生成结果
+  status: {},      // 每个字段的生成状态（pending/generating/done/error）
+  templateConfig: null,  // 模板配置
+  isGenerating: false
+};
+
+// 获取字段对应的模型
+function getFieldModel(field) {
+  const models = LESSON_MODEL_LEVELS[field.model] || LESSON_MODEL_LEVELS.balanced;
+  // 随机选择一个，避免总是用同一个
+  return models[Math.floor(Math.random() * models.length)];
+}
+
+// 按字段生成教案内容（单个字段）
+async function generateLessonField(field, textbookContent, options) {
+  options = options || {};
+  const model = getFieldModel(field);
+  
+  const systemPrompt = '你是一位资深体育教育专家，擅长编写高质量教案。请严格按要求生成教案内容，不要使用Markdown标记，直接输出纯文本。';
+  
+  const userPrompt = field.prompt + '\n\n【教材内容】\n' + textbookContent.substring(0, 6000) + 
+    (options.subject ? '\n\n【科目】' + options.subject : '') +
+    (options.courseType ? '\n\n【适用对象】' + (options.courseType === 'graduate' ? '研究生' : '本科生') : '');
+  
+  try {
+    const result = await callDeepSeekAPI(systemPrompt, userPrompt, field.maxLength + 200, model);
+    // 简单校验：截断到最大长度
+    let finalResult = result.trim();
+    if (finalResult.length > field.maxLength * 1.5) {
+      finalResult = finalResult.substring(0, field.maxLength * 1.5);
+    }
+    return { success: true, content: finalResult, model: model };
+  } catch(e) {
+    return { success: false, error: e.message, model: model };
+  }
+}
+
+// 按字段并行生成教案（核心提速函数）
+async function generateLessonByFields(textbookContent, options) {
+  options = options || {};
+  lessonGenState = { fields: {}, status: {}, templateConfig: null, isGenerating: true };
+  
+  const fields = LESSON_TEMPLATE_FIELDS.filter(f => options.fieldIds ? options.fieldIds.includes(f.id) : true);
+  
+  // 初始化状态
+  fields.forEach(f => {
+    lessonGenState.status[f.id] = 'pending';
+  });
+  
+  // 按组分批并行生成
+  const groups = ['basic', 'elements', 'process', 'other'];
+  
+  for (let g = 0; g < groups.length; g++) {
+    const groupFields = fields.filter(f => f.group === groups[g]);
+    if (groupFields.length === 0) continue;
+    
+    // 标记为生成中
+    groupFields.forEach(f => { lessonGenState.status[f.id] = 'generating'; });
+    updateLessonGenProgress();
+    
+    // 并行生成该组的所有字段
+    const promises = groupFields.map(f => generateLessonField(f, textbookContent, options));
+    const results = await Promise.all(promises);
+    
+    // 保存结果
+    groupFields.forEach((f, idx) => {
+      if (results[idx].success) {
+        lessonGenState.fields[f.id] = results[idx].content;
+        lessonGenState.status[f.id] = 'done';
+      } else {
+        lessonGenState.status[f.id] = 'error';
+        lessonGenState.fields[f.id] = '';
+      }
+    });
+    updateLessonGenProgress();
+  }
+  
+  lessonGenState.isGenerating = false;
+  return lessonGenState;
+}
+
+// 按字段生成教案（UI入口）
+async function generateLessonByFieldsUI() {
+  // 收集教材内容
+  let textbookContent = '';
+  
+  // 优先使用已识别的教材内容
+  if (window._bookExtractedText) {
+    textbookContent = window._bookExtractedText;
+  } else if (document.getElementById('bookContentResult')) {
+    textbookContent = document.getElementById('bookContentResult').value || '';
+  }
+  
+  // 如果没有教材内容，尝试从识图生成的图片中获取
+  if (!textbookContent && window._imageQuickImages && window._imageQuickImages.length > 0) {
+    alert('请先使用"识图生成教案"识别教材内容，或使用教材上传功能定位章节内容');
+    return;
+  }
+  
+  if (!textbookContent || textbookContent.length < 50) {
+    alert('请先上传教材并定位/识别章节内容（至少50字）');
+    return;
+  }
+  
+  // 收集选项
+  const options = {
+    subject: document.getElementById('lessonSubject').value || '体育科学',
+    courseType: document.getElementById('lessonCourseType').value || 'new'
+  };
+  
+  // 显示进度区域
+  const statusEl = document.getElementById('fieldGenStatus');
+  const resultsEl = document.getElementById('fieldGenResults');
+  statusEl.style.display = 'block';
+  resultsEl.style.display = 'none';
+  
+  // 开始按字段并行生成
+  const startTime = Date.now();
+  await generateLessonByFields(textbookContent, options);
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  
+  // 显示结果
+  renderFieldResults(elapsed);
+}
+
+// 渲染字段生成结果
+function renderFieldResults(elapsed) {
+  const resultsEl = document.getElementById('fieldGenResults');
+  const statusEl = document.getElementById('fieldGenStatus');
+  
+  if (!resultsEl) return;
+  
+  const fields = lessonGenState.fields;
+  const status = lessonGenState.status;
+  
+  // 更新状态
+  const total = Object.keys(status).length;
+  const done = Object.values(status).filter(s => s === 'done').length;
+  const error = Object.values(status).filter(s => s === 'error').length;
+  
+  statusEl.innerHTML = '<div style="padding:12px;background:#dcfce7;border-radius:8px;border:1px solid #bbf7d0">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center">'
+    + '<span style="font-size:13px;font-weight:600;color:#166534">✅ 按字段并行生成完成！</span>'
+    + '<span style="font-size:12px;color:#16a34a">' + done + '/' + total + ' 字段成功 · 耗时' + elapsed + '秒</span>'
+    + '</div></div>';
+  
+  // 按组渲染字段结果
+  const groups = [
+    { id: 'basic', name: '📋 基础信息', color: '#f0f9ff', border: '#bae6fd' },
+    { id: 'elements', name: '🎯 教学要素', color: '#fefce8', border: '#fde68a' },
+    { id: 'process', name: '📚 教学过程', color: '#f0fdf4', border: '#bbf7d0' },
+    { id: 'other', name: '📝 其他部分', color: '#faf5ff', border: '#e9d5ff' }
+  ];
+  
+  let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">';
+  html += '<div style="font-size:15px;font-weight:700;color:#1f2937">📖 按字段生成结果（可单独编辑/重新生成）</div>';
+  html += '<div style="display:flex;gap:8px">';
+  html += '<button onclick="assembleAndShowLesson()" style="background:#7c3aed;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📄 组装完整教案</button>';
+  html += '<button onclick="copyAllFieldResults()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📋 复制全部</button>';
+  html += '</div></div>';
+  
+  groups.forEach(group => {
+    const groupFields = LESSON_TEMPLATE_FIELDS.filter(f => f.group === group.id);
+    if (groupFields.length === 0) return;
+    
+    html += '<div style="margin-bottom:16px">';
+    html += '<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid ' + group.border + '">' + group.name + '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">';
+    
+    groupFields.forEach(field => {
+      const fieldStatus = status[field.id] || 'pending';
+      const fieldContent = fields[field.id] || '';
+      const isError = fieldStatus === 'error';
+      
+      html += '<div style="background:' + group.color + ';border:1px solid ' + group.border + ';border-radius:8px;padding:10px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+      html += '<span style="font-size:12px;font-weight:600;color:#374151">' + field.name + '</span>';
+      html += '<div style="display:flex;gap:4px">';
+      html += '<button onclick="regenerateField(\'' + field.id + '\')" style="background:#fff;border:1px solid ' + group.border + ';padding:2px 6px;border-radius:4px;cursor:pointer;font-size:10px;color:#6b7280" title="重新生成">🔄</button>';
+      html += '</div></div>';
+      
+      if (isError) {
+        html += '<div style="font-size:11px;color:#dc2626;padding:6px;background:#fef2f2;border-radius:4px">生成失败，点击🔄重试</div>';
+      } else if (fieldContent) {
+        html += '<div contenteditable="true" data-field-id="' + field.id + '" onblur="saveFieldEdit(this)" style="font-size:11px;color:#1f2937;line-height:1.6;background:#fff;padding:8px;border-radius:4px;border:1px solid ' + group.border + ';min-height:40px;max-height:150px;overflow-y:auto;cursor:text" title="点击可直接编辑">' + fieldContent.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>') + '</div>';
+        html += '<div style="font-size:10px;color:#9ca3af;margin-top:4px">' + fieldContent.length + '字 · 点击可编辑</div>';
+      } else {
+        html += '<div style="font-size:11px;color:#9ca3af;padding:8px">待生成...</div>';
+      }
+      html += '</div>';
+    });
+    
+    html += '</div></div>';
+  });
+  
+  html += '</div>';
+  resultsEl.innerHTML = html;
+  resultsEl.style.display = 'block';
+  
+  // 滚动到结果区域
+  setTimeout(() => {
+    resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 200);
+}
+
+// 重新生成单个字段
+async function regenerateField(fieldId) {
+  const field = LESSON_TEMPLATE_FIELDS.find(f => f.id === fieldId);
+  if (!field) return;
+  
+  // 获取教材内容
+  let textbookContent = window._bookExtractedText || '';
+  if (!textbookContent && document.getElementById('bookContentResult')) {
+    textbookContent = document.getElementById('bookContentResult').value || '';
+  }
+  if (!textbookContent) {
+    alert('请先上传教材并识别内容');
+    return;
+  }
+  
+  // 更新状态
+  lessonGenState.status[fieldId] = 'generating';
+  const fieldEl = document.querySelector('[data-field-id="' + fieldId + '"]');
+  if (fieldEl) {
+    fieldEl.innerHTML = '<span style="color:#0ea5e9">正在重新生成...</span>';
+  }
+  
+  // 生成
+  const options = {
+    subject: document.getElementById('lessonSubject').value || '体育科学',
+    courseType: document.getElementById('lessonCourseType').value || 'new'
+  };
+  
+  const result = await generateLessonField(field, textbookContent, options);
+  
+  if (result.success) {
+    lessonGenState.fields[fieldId] = result.content;
+    lessonGenState.status[fieldId] = 'done';
+    if (fieldEl) {
+      fieldEl.innerHTML = result.content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+    }
+  } else {
+    lessonGenState.status[fieldId] = 'error';
+    if (fieldEl) {
+      fieldEl.innerHTML = '<span style="color:#dc2626">生成失败：' + result.error + '</span>';
+    }
+  }
+}
+
+// 保存字段编辑
+function saveFieldEdit(el) {
+  const fieldId = el.getAttribute('data-field-id');
+  if (fieldId) {
+    lessonGenState.fields[fieldId] = el.innerText;
+  }
+}
+
+// 组装并显示完整教案
+function assembleAndShowLesson() {
+  const formatType = document.getElementById('lessonFormat').value || 'standard';
+  const fullLesson = assembleLessonByTemplate(lessonGenState.fields, formatType);
+  
+  // 显示在教案结果区域
+  const resEl = document.getElementById('lessonResult');
+  if (resEl) {
+    const subject = document.getElementById('lessonSubject').value || '（按字段生成）';
+    const chapter = document.getElementById('lessonChapter').value || '（按字段生成）';
+    const wordCount = fullLesson.replace(/\s/g, '').length;
+    
+    resEl.style.display = 'block';
+    resEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">'
+      + '<div style="font-size:15px;font-weight:700;color:#7c3aed">📖 按字段组装教案：' + subject + ' · ' + chapter + '<span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;margin-left:8px">⚡ 按字段并行生成</span></div>'
+      + '<div style="display:flex;gap:6px;align-items:center">'
+      + '<span style="font-size:11px;color:#9ca3af">' + wordCount + '字</span>'
+      + '<button onclick="copyLessonText()" style="background:#f3f4f6;border:1px solid #d1d5db;color:#374151;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">📋 复制</button>'
+      + '<button onclick="downloadLessonTxt()" style="background:#f3f4f6;border:1px solid #d1d5db;color:#374151;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">📄 导出TXT</button>'
+      + '</div></div>'
+      + '<div class="md-content paper-style" style="font-size:14px;line-height:2;color:#1f2937;padding:0 8px">' + (window.renderMarkdown ? renderMarkdown(fullLesson) : fullLesson.replace(/\n/g, '<br>')) + '</div></div>';
+    
+    resEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// 复制所有字段结果
+function copyAllFieldResults() {
+  const formatType = document.getElementById('lessonFormat').value || 'standard';
+  const fullLesson = assembleLessonByTemplate(lessonGenState.fields, formatType);
+  navigator.clipboard.writeText(fullLesson).then(() => {
+    alert('已复制全部教案内容到剪贴板');
+  }).catch(() => {
+    alert('复制失败，请手动复制');
+  });
+}
+
+// 更新生成进度显示
+function updateLessonGenProgress() {
+  const statusEl = document.getElementById('fieldGenStatus');
+  if (!statusEl) return;
+  
+  const total = Object.keys(lessonGenState.status).length;
+  const done = Object.values(lessonGenState.status).filter(s => s === 'done').length;
+  const generating = Object.values(lessonGenState.status).filter(s => s === 'generating').length;
+  const error = Object.values(lessonGenState.status).filter(s => s === 'error').length;
+  
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+  
+  statusEl.innerHTML = '<div style="padding:12px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+    + '<span style="font-size:13px;font-weight:600;color:#0369a1">⚡ 按字段并行生成中...</span>'
+    + '<span style="font-size:12px;color:#0284c7">' + done + '/' + total + ' 完成 (' + pct + '%)</span>'
+    + '</div>'
+    + '<div style="height:6px;background:#e0f2fe;border-radius:3px;overflow:hidden">'
+    + '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#0ea5e9,#06b6d4);border-radius:3px;transition:width 0.3s"></div>'
+    + '</div>'
+    + (generating > 0 ? '<div style="margin-top:6px;font-size:11px;color:#0284c7">正在生成 ' + generating + ' 个字段...</div>' : '')
+    + (error > 0 ? '<div style="margin-top:4px;font-size:11px;color:#dc2626">' + error + ' 个字段生成失败，可单独重试</div>' : '')
+    + '</div>';
+}
+
+// 按模板格式组装教案
+function assembleLessonByTemplate(fieldData, formatType) {
+  formatType = formatType || 'standard';
+  const f = fieldData || lessonGenState.fields;
+  
+  let result = '';
+  
+  if (formatType === 'standard') {
+    result += '一、教学目标\n' + (f.objectives || '（待补充）') + '\n\n';
+    result += '二、教学重难点\n重点：' + (f.keyPoints || '（待补充）') + '\n难点：' + (f.difficultPoints || '（待补充）') + '\n\n';
+    if (f.studentAnalysis) result += '三、学情分析\n' + f.studentAnalysis + '\n\n';
+    result += (f.studentAnalysis ? '四' : '三') + '、教学方法\n' + (f.methods || '（待补充）') + '\n\n';
+    if (f.preparation) result += '五、教学准备\n' + f.preparation + '\n\n';
+    result += '六、教学过程\n';
+    result += '1. 导入：' + (f.process_intro || '（待补充）') + '\n';
+    result += '2. 新课讲授：' + (f.process_teach || '（待补充）') + '\n';
+    result += '3. 课堂练习：' + (f.process_practice || '（待补充）') + '\n';
+    result += '4. 课堂小结：' + (f.process_summary || '（待补充）') + '\n';
+    result += '5. 作业布置：' + (f.process_homework || '（待补充）') + '\n\n';
+    if (f.blackboard) result += '七、板书设计\n' + f.blackboard + '\n\n';
+    if (f.reflection) result += '八、教学反思\n' + f.reflection + '\n';
+  } else {
+    // 其他格式：简单按字段顺序输出
+    LESSON_TEMPLATE_FIELDS.forEach(field => {
+      if (f[field.id]) {
+        result += field.name + '：\n' + f[field.id] + '\n\n';
+      }
+    });
+  }
+  
+  return result;
+}
+
 function getLessonFormatReq(){
   var sel = document.getElementById('lessonFormat');
   var f = sel ? sel.value : 'standard';
