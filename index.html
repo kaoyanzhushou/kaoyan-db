@@ -13827,6 +13827,7 @@ console.log('✅ 学习工具入口已加载');
       <button onclick="switchPaperSubTab('pipeline2')" id="paperTab-pipeline2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🔗 模型流水线</button>
       <button onclick="switchPaperSubTab('chart')" id="paperTab-chart" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📊 图表生成</button>
       <button onclick="switchPaperSubTab('toolbox')" id="paperTab-toolbox" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🧰 学术工具箱</button>
+      <button onclick="showPaperToLessonModal()" style="padding:10px 20px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600;margin-left:auto">📄→📖 论文转教案</button>
       <button onclick="switchPaperSubTab('knowledge2')" id="paperTab-knowledge2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📚 个人知识库</button>
       <button onclick="switchPaperSubTab('debate2')" id="paperTab-debate2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">⚖️ 模型辩论</button>
       <button onclick="switchPaperSubTab('toolbox')" id="paperTab-toolbox" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🧰 学术工具箱</button>
@@ -126806,6 +126807,167 @@ function renderReflectionUI(reflectionData, containerId) {
   html += '</div>';
   
   container.insertAdjacentHTML('afterbegin', html);
+}
+
+// ========== 论文↔教案双向打通 ==========
+
+// 论文转教案
+async function convertPaperToLesson(paperText, options) {
+  options = options || {};
+  const subject = options.subject || '体育科学';
+  const courseType = options.courseType || 'graduate';
+  const lessonHours = options.lessonHours || '2学时';
+  
+  const systemPrompt = `你是一位资深体育教育学专家，擅长将学术论文转化为高质量教学教案。
+请将以下学术论文转化为一份完整的教学教案，适用于${courseType === 'graduate' ? '研究生' : '本科生'}${subject}课程。
+
+教案要求：
+1. 教学目标：知识目标、能力目标、素养目标
+2. 教学重难点：重点和难点
+3. 教学方法：讲授法、讨论法、案例分析法等
+4. 教学过程：导入（5分钟）、新课讲授（60分钟）、课堂讨论（15分钟）、总结（5分钟）、作业布置
+5. 每个教学环节包含：教师活动、学生活动、设计意图
+6. 结合论文的核心观点、研究方法、实验结果进行教学设计
+7. 适当设置思考题引导学生批判性思考
+
+请输出完整的教案，格式清晰，可直接用于教学。`;
+
+  const userPrompt = `论文内容：
+${paperText.substring(0, 12000)}
+
+课程信息：
+- 科目：${subject}
+- 适用对象：${courseType === 'graduate' ? '研究生' : '本科生'}
+- 课时：${lessonHours}
+
+请将上述论文转化为教学教案。`;
+
+  const result = await callWithReflection(
+    'lesson_plan',
+    systemPrompt,
+    userPrompt,
+    5000,
+    ['structure', 'language', 'academic']
+  );
+  
+  return result;
+}
+
+// 教案转论文（教学研究论文框架）
+async function convertLessonToPaper(lessonText, options) {
+  options = options || {};
+  const paperType = options.paperType || 'teaching_research';
+  const targetJournal = options.targetJournal || '体育教学研究期刊';
+  
+  const systemPrompt = `你是一位体育教育研究专家，擅长将教学教案转化为学术研究论文。
+请将以下教案转化为一份${paperType === 'teaching_research' ? '教学研究论文' : '课程改革论文'}的完整框架和初稿。
+
+论文结构要求：
+1. 标题：简洁、准确、有学术性
+2. 摘要：研究目的、方法、结果、结论（300字左右）
+3. 关键词：3-5个
+4. 引言：研究背景、研究意义、研究问题
+5. 研究方法：教学设计、教学对象、教学实施、评价方式
+6. 研究结果：教学效果、学生反馈、数据分析
+7. 讨论：结果解读、与已有研究对比、研究创新点
+8. 结论与建议：主要结论、教学建议、研究局限
+9. 参考文献：列出相关文献
+
+请基于教案的教学内容、教学设计、教学方法，提炼出研究问题和研究价值，生成完整的论文框架和各部分初稿。`;
+
+  const userPrompt = `教案内容：
+${lessonText.substring(0, 10000)}
+
+论文信息：
+- 类型：${paperType === 'teaching_research' ? '教学研究论文' : '课程改革论文'}
+- 目标期刊：${targetJournal}
+
+请将上述教案转化为学术研究论文框架和初稿。`;
+
+  const result = await callWithReflection(
+    'introduction',
+    systemPrompt,
+    userPrompt,
+    5000,
+    ['academic', 'logic', 'structure']
+  );
+  
+  return result;
+}
+
+// 显示论文转教案界面
+function showPaperToLessonModal() {
+  const modal = document.getElementById('paperLessonModal');
+  if (!modal) {
+    // 创建模态框
+    const modalHtml = '<div id="paperLessonModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999999;align-items:center;justify-content:center">'
+      + '<div style="background:#fff;border-radius:12px;width:90%;max-width:700px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column">'
+      + '<div style="padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">'
+      + '<div style="font-size:16px;font-weight:700;color:#1f2937">📄→📖 论文转教案</div>'
+      + '<button onclick="closePaperLessonModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280">✕</button>'
+      + '</div>'
+      + '<div style="padding:20px;overflow-y:auto;flex:1">'
+      + '<div style="margin-bottom:12px"><label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">论文内容（粘贴论文全文或摘要）</label>'
+      + '<textarea id="paperToLessonText" style="width:100%;height:150px;padding:10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;resize:vertical" placeholder="粘贴论文内容..."></textarea></div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:#374151;margin-bottom:4px">科目</label>'
+      + '<input id="paperLessonSubject" type="text" value="体育科学" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:4px;font-size:11px"></div>'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:#374151;margin-bottom:4px">适用对象</label>'
+      + '<select id="paperLessonCourseType" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:4px;font-size:11px">'
+      + '<option value="graduate">研究生</option><option value="undergraduate">本科生</option></select></div>'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:#374151;margin-bottom:4px">课时</label>'
+      + '<input id="paperLessonHours" type="text" value="2学时" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:4px;font-size:11px"></div>'
+      + '</div>'
+      + '<div id="paperToLessonStatus" style="display:none;margin:10px 0;padding:10px;background:#f0f9ff;border-radius:6px;font-size:12px;color:#0369a1"></div>'
+      + '<div id="paperToLessonResult" style="display:none;margin-top:12px"></div>'
+      + '</div>'
+      + '<div style="padding:12px 20px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px">'
+      + '<button onclick="closePaperLessonModal()" style="padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;font-size:12px;cursor:pointer">取消</button>'
+      + '<button onclick="doPaperToLesson()" style="padding:8px 16px;background:#7c3aed;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">🚀 生成教案</button>'
+      + '</div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
+  document.getElementById('paperLessonModal').style.display = 'flex';
+}
+
+function closePaperLessonModal() {
+  const modal = document.getElementById('paperLessonModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function doPaperToLesson() {
+  const paperText = document.getElementById('paperToLessonText').value.trim();
+  if (!paperText) { alert('请输入论文内容'); return; }
+  
+  const status = document.getElementById('paperToLessonStatus');
+  const result = document.getElementById('paperToLessonResult');
+  status.style.display = 'block';
+  result.style.display = 'none';
+  status.innerHTML = '🤖 AI正在将论文转化为教案（约30-60秒）...';
+  
+  try {
+    const options = {
+      subject: document.getElementById('paperLessonSubject').value,
+      courseType: document.getElementById('paperLessonCourseType').value,
+      lessonHours: document.getElementById('paperLessonHours').value
+    };
+    
+    const conversion = await convertPaperToLesson(paperText, options);
+    status.innerHTML = '✅ 转换完成！' + (conversion.reflection ? '（' + conversion.reflection + '）' : '');
+    
+    let resultHtml = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px">';
+    resultHtml += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">📖 生成的教案</div>';
+    resultHtml += '<div class="md-content paper-style" style="font-size:13px;line-height:1.8;color:#1f2937;max-height:400px;overflow-y:auto">' + (window.renderMarkdown ? renderMarkdown(conversion.result) : conversion.result.replace(/\n/g, '<br>')) + '</div>';
+    resultHtml += '<div style="margin-top:12px;display:flex;gap:8px">'
+      + '<button onclick="copyTextToClipboard(document.getElementById(\'paperToLessonResult\').innerText)" style="padding:6px 12px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;font-size:11px;cursor:pointer">📋 复制</button>'
+      + '<button onclick="useAsLessonTemplate()" style="padding:6px 12px;background:#7c3aed;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer">📝 用作教案模板</button>'
+      + '</div></div>';
+    result.innerHTML = resultHtml;
+    result.style.display = 'block';
+  } catch(e) {
+    status.innerHTML = '❌ 转换失败：' + e.message;
+    status.style.color = '#dc2626';
+  }
 }
 
 // 切换反思链开关
