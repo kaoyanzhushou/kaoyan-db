@@ -60048,7 +60048,520 @@ function paperBuildFullDoc() {
 function exportPaperWord() {
   var doc = paperBuildFullDoc();
   if (!doc) { alert('请先在「我的论文」中选择或创建论文项目'); return; }
-  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.8;color:#000}h1{font-size:16pt;text-align:center;margin-bottom:20pt}h2{font-size:14pt;margin-top:16pt;margin-bottom:8pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '</body></html>';
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.8;color:#000}h1{font-size:16pt;text-align:center;margin-bottom:20pt}h2{font-size:14pt;margin-top:16pt;margin-bottom:8pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '
+<!-- ========== 稳定性核心框架 v1.0 开始 ========== -->
+<script>
+(function() {
+'use strict';
+
+try {
+
+// ==========================================
+// 1. Toast 提示系统（所有操作有反馈）
+// ==========================================
+var StabilityToast = {
+    container: null,
+    init: function() {
+        try {
+            this.container = document.createElement('div');
+            this.container.id = 'stability-toast-container';
+            this.container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:2147483647;display:flex;flex-direction:column;gap:8px;max-width:380px;pointer-events:none;';
+            document.body.appendChild(this.container);
+        } catch(e) { console.warn('[Toast] init失败', e); }
+    },
+    show: function(message, type, duration) {
+        try {
+            if (!this.container) this.init();
+            type = type || 'info';
+            duration = duration || 3000;
+            var colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                warning: '#f59e0b',
+                info: '#3b82f6'
+            };
+            var icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+            var toast = document.createElement('div');
+            toast.style.cssText = 'background:' + (colors[type] || colors.info) + ';color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);font-size:14px;line-height:1.5;display:flex;align-items:flex-start;gap:8px;word-break:break-word;pointer-events:auto;cursor:pointer;animation:stabilitySlideIn 0.3s ease;';
+            toast.innerHTML = '<span style="font-weight:bold;flex-shrink:0;">' + (icons[type] || icons.info) + '</span><span>' + message + '</span>';
+            this.container.appendChild(toast);
+            var self = this;
+            setTimeout(function() {
+                toast.style.animation = 'stabilitySlideOut 0.3s ease';
+                setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+            }, duration);
+            toast.addEventListener('click', function() { if (toast.parentNode) toast.parentNode.removeChild(toast); });
+        } catch(e) { console.warn('[Toast] show失败', e); }
+    },
+    success: function(msg, d) { this.show(msg, 'success', d); },
+    error: function(msg, d) { this.show(msg, 'error', d || 5000); },
+    warning: function(msg, d) { this.show(msg, 'warning', d); },
+    info: function(msg, d) { this.show(msg, 'info', d); }
+};
+
+// 全局 showToast 函数（兼容原有代码可能的调用）
+window.showToast = function(message, type, duration) {
+    StabilityToast.show(message, type, duration);
+};
+
+// 添加Toast动画样式
+try {
+    var style = document.createElement('style');
+    style.textContent = '@keyframes stabilitySlideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes stabilitySlideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(120%);opacity:0}}.stability-btn-loading{cursor:not-allowed!important;opacity:0.7!important;}.stability-btn-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:stabilitySpin 0.8s linear infinite;vertical-align:middle;margin-right:6px;}@keyframes stabilitySpin{to{transform:rotate(360deg)}}#stability-loading-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,#4f8cff,#6ee7b7);z-index:2147483646;transition:width 0.3s ease;width:0%;}';
+    document.head.appendChild(style);
+} catch(e) {}
+
+
+// ==========================================
+// 2. 全局错误捕获（一个错误不崩溃整个页面）
+// ==========================================
+var StabilityErrorHandler = {
+    errors: [],
+    maxErrors: 50,
+    init: function() {
+        try {
+            var self = this;
+            // JS运行时错误
+            window.addEventListener('error', function(e) {
+                self.log('js_error', {
+                    message: e.message,
+                    filename: (e.filename || '').substring(0, 100),
+                    line: e.lineno,
+                    col: e.colno
+                });
+                // 不阻断页面
+                return true;
+            }, true);
+            // Promise未捕获错误
+            window.addEventListener('unhandledrejection', function(e) {
+                self.log('promise_error', { reason: String(e.reason).substring(0, 200) });
+            });
+            console.log('[稳定性框架] 全局错误捕获已启动');
+        } catch(e) { console.warn('[错误捕获] init失败', e); }
+    },
+    log: function(type, data) {
+        try {
+            var entry = { type: type, data: data, time: new Date().toISOString() };
+            this.errors.push(entry);
+            if (this.errors.length > this.maxErrors) this.errors.shift();
+            console.error('[稳定性框架:' + type + ']', data);
+        } catch(e) {}
+    },
+    getErrors: function() { return this.errors; },
+    exportErrors: function() {
+        try {
+            var data = { time: new Date().toISOString(), errors: this.errors };
+            var blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'error_log_' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch(e) { console.warn('[错误导出] 失败', e); }
+    }
+};
+
+
+// ==========================================
+// 3. 页面加载状态机（加载中点击有提示）
+// ==========================================
+var StabilityPageLoader = {
+    state: 'loading', // loading / ready / error
+    loadingBar: null,
+    init: function() {
+        try {
+            var self = this;
+            // 创建顶部加载进度条
+            this.loadingBar = document.createElement('div');
+            this.loadingBar.id = 'stability-loading-bar';
+            document.body.appendChild(this.loadingBar);
+            // 模拟进度
+            var progress = 0;
+            var timer = setInterval(function() {
+                progress += Math.random() * 12;
+                if (progress > 85) progress = 85;
+                if (self.loadingBar) self.loadingBar.style.width = progress + '%';
+                if (self.state === 'ready') {
+                    if (self.loadingBar) self.loadingBar.style.width = '100%';
+                    setTimeout(function() { if (self.loadingBar && self.loadingBar.parentNode) self.loadingBar.parentNode.removeChild(self.loadingBar); }, 500);
+                    clearInterval(timer);
+                }
+            }, 150);
+            // 加载中拦截点击
+            document.addEventListener('click', function(e) {
+                if (self.state === 'loading') {
+                    var target = e.target.closest('button, a, [onclick], .clickable, input[type="button"], input[type="submit"]');
+                    if (target) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        StabilityToast.info('页面加载中，请稍候...', 1500);
+                    }
+                }
+            }, true);
+            // DOM加载完成后标记ready
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                setTimeout(function() { self.markReady(); }, 800);
+            } else {
+                window.addEventListener('load', function() { setTimeout(function() { self.markReady(); }, 500); });
+            }
+            console.log('[稳定性框架] 页面加载状态机已启动');
+        } catch(e) { console.warn('[加载状态机] init失败', e); }
+    },
+    markReady: function() {
+        this.state = 'ready';
+        console.log('[稳定性框架] 页面加载完成');
+    },
+    isReady: function() { return this.state === 'ready'; }
+};
+
+
+// ==========================================
+// 4. 防重复点击按钮（点击后禁用+loading）
+// ==========================================
+var StabilityButton = {
+    init: function() {
+        try {
+            // 给所有AI生成类按钮添加防重复保护
+            this.protectExistingButtons();
+            // 监听DOM变化，自动保护新按钮
+            var self = this;
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(m) {
+                    if (m.addedNodes && m.addedNodes.length > 0) {
+                        self.protectExistingButtons();
+                    }
+                });
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+            console.log('[稳定性框架] 防重复按钮已启动');
+        } catch(e) { console.warn('[防重复按钮] init失败', e); }
+    },
+    protectExistingButtons: function() {
+        try {
+            var buttons = document.querySelectorAll('button:not([data-stability-protected])');
+            var self = this;
+            buttons.forEach(function(btn) {
+                // 只保护包含AI/生成/提交/搜索/分析等关键词的按钮
+                var text = (btn.textContent || '').toLowerCase();
+                var hasKeyword = text.indexOf('生成') >= 0 || text.indexOf('ai') >= 0 || text.indexOf('提交') >= 0 || text.indexOf('搜索') >= 0 || text.indexOf('分析') >= 0 || text.indexOf('计算') >= 0 || text.indexOf('评估') >= 0 || text.indexOf('翻译') >= 0 || text.indexOf('润色') >= 0 || text.indexOf('审稿') >= 0 || text.indexOf('写') >= 0 || text.indexOf('开始') >= 0;
+                if (hasKeyword) {
+                    self.protectButton(btn);
+                }
+                btn.setAttribute('data-stability-protected', '1');
+            });
+        } catch(e) {}
+    },
+    protectButton: function(btn) {
+        try {
+            if (btn.getAttribute('data-stability-protected-btn')) return;
+            btn.setAttribute('data-stability-protected-btn', '1');
+            var originalHTML = btn.innerHTML;
+            var isProcessing = false;
+            // 包装原始点击事件
+            var originalOnclick = btn.onclick;
+            btn.onclick = null;
+            btn.addEventListener('click', function(e) {
+                if (isProcessing) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    StabilityToast.info('正在处理中，请稍候...', 1500);
+                    return;
+                }
+                // 不自动禁用，因为很多按钮是同步操作且很快
+                // 只在明确是异步AI调用时才启用loading（由callAIStable控制）
+            }, true);
+        } catch(e) {}
+    },
+    // 手动设置按钮loading状态
+    setLoading: function(btn, loadingText) {
+        try {
+            if (!btn) return;
+            if (loadingText) {
+                btn.setAttribute('data-stability-original-html', btn.innerHTML);
+                btn.innerHTML = '<span class="stability-btn-spinner"></span>' + loadingText;
+                btn.classList.add('stability-btn-loading');
+                btn.disabled = true;
+            } else {
+                var original = btn.getAttribute('data-stability-original-html');
+                if (original) btn.innerHTML = original;
+                btn.classList.remove('stability-btn-loading');
+                btn.disabled = false;
+            }
+        } catch(e) {}
+    }
+};
+
+
+// ==========================================
+// 5. 多模型故障转移（一个模型挂了自动切下一个）
+// ==========================================
+var StabilityModelFailover = {
+    // 故障转移链（按任务类型）
+    chains: {
+        'zh-writing': ['glm-5.3', 'deepseek-v4-pro', 'qwen3.5-plus', 'hunyuan-hy4', 'kimi-k3'],
+        'en-writing': ['deepseek-v4-pro', 'qwen3.5-plus', 'glm-5.3', 'kimi-k3'],
+        'long-text': ['kimi-k3', 'deepseek-v4-pro', 'glm-5.3', 'qwen3.5-plus'],
+        'reasoning': ['deepseek-v4-pro', 'qwen3.5-plus', 'glm-5.3', 'kimi-k3'],
+        'fast': ['qwen-flash', 'deepseek-flash', 'qwen3.5-plus', 'glm-5.3'],
+        'creative': ['hunyuan-hy4', 'glm-5.3', 'deepseek-v4-pro', 'qwen3.5-plus'],
+        'structured': ['qwen3.5-plus', 'glm-5.3', 'deepseek-v4-pro', 'kimi-k3'],
+        'default': ['deepseek-v4-pro', 'glm-5.3', 'qwen3.5-plus', 'kimi-k3', 'hunyuan-hy4']
+    },
+    // 模型健康状态
+    health: {},
+    init: function() {
+        try {
+            var allModels = ['deepseek-v4-pro', 'deepseek-flash', 'glm-5.3', 'kimi-k3', 'hunyuan-hy4', 'qwen3.5-plus', 'qwen-flash'];
+            var self = this;
+            allModels.forEach(function(m) {
+                self.health[m] = { status: 'healthy', errorCount: 0, lastSuccess: null, lastError: null };
+            });
+            console.log('[稳定性框架] 多模型故障转移已启动，共' + allModels.length + '个模型');
+        } catch(e) { console.warn('[故障转移] init失败', e); }
+    },
+    recordSuccess: function(model) {
+        try {
+            if (this.health[model]) {
+                this.health[model].status = 'healthy';
+                this.health[model].errorCount = 0;
+                this.health[model].lastSuccess = Date.now();
+            }
+        } catch(e) {}
+    },
+    recordError: function(model, error) {
+        try {
+            if (this.health[model]) {
+                this.health[model].errorCount++;
+                this.health[model].lastError = error;
+                this.health[model].lastErrorTime = Date.now();
+                if (this.health[model].errorCount >= 5) {
+                    this.health[model].status = 'down';
+                    console.warn('[故障转移] ' + model + ' 连续失败5次，标记为不可用');
+                } else if (this.health[model].errorCount >= 3) {
+                    this.health[model].status = 'degraded';
+                }
+            }
+        } catch(e) {}
+    },
+    getHealthyChain: function(taskType) {
+        var chain = this.chains[taskType] || this.chains['default'];
+        var self = this;
+        return chain.filter(function(m) {
+            var h = self.health[m];
+            return !h || h.status !== 'down';
+        });
+    },
+    getHealthStatus: function() {
+        var result = [];
+        for (var m in this.health) {
+            result.push({ model: m, status: this.health[m].status, errorCount: this.health[m].errorCount });
+        }
+        return result;
+    }
+};
+
+
+// ==========================================
+// 6. 请求队列与并发控制（防止API限流）
+// ==========================================
+var StabilityRequestQueue = {
+    queue: [],
+    running: 0,
+    maxConcurrent: 3,
+    maxRetries: 2,
+    add: function(task) {
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            self.queue.push({
+                task: task,
+                resolve: resolve,
+                reject: reject,
+                retries: 0,
+                addedAt: Date.now()
+            });
+            self.process();
+        });
+    },
+    process: function() {
+        var self = this;
+        if (this.running >= this.maxConcurrent || this.queue.length === 0) return;
+        var item = this.queue.shift();
+        this.running++;
+        (async function() {
+            try {
+                var result = await item.task.execute();
+                item.resolve(result);
+            } catch(e) {
+                if (item.retries < self.maxRetries) {
+                    item.retries++;
+                    console.warn('[请求队列] 失败，第' + item.retries + '次重试:', e.message);
+                    await new Promise(r => setTimeout(r, 1000 * item.retries));
+                    self.queue.unshift(item);
+                } else {
+                    console.error('[请求队列] 最终失败:', e.message);
+                    item.reject(e);
+                }
+            } finally {
+                self.running--;
+                self.process();
+            }
+        })();
+    },
+    getStatus: function() {
+        return { queued: this.queue.length, running: this.running, maxConcurrent: this.maxConcurrent };
+    },
+    clear: function() {
+        this.queue.forEach(function(item) { item.reject(new Error('已取消')); });
+        this.queue = [];
+    }
+};
+
+
+// ==========================================
+// 统一AI调用入口（带故障转移+队列+超时）
+// ==========================================
+async function callAIStable(taskType, systemPrompt, userPrompt, maxTokens, options) {
+    options = options || {};
+    var timeoutMs = options.timeout || 90000; // 默认90秒超时
+    var showLoading = options.showLoading !== false;
+    var loadingBtn = options.loadingBtn || null;
+    var loadingText = options.loadingText || 'AI处理中...';
+
+    // 设置按钮loading
+    if (loadingBtn && showLoading) {
+        StabilityButton.setLoading(loadingBtn, loadingText);
+    }
+
+    try {
+        // 通过队列执行
+        var result = await StabilityRequestQueue.add({
+            execute: function() {
+                return callAIWithFailoverInternal(taskType, systemPrompt, userPrompt, maxTokens, timeoutMs);
+            }
+        });
+
+        if (result && result.success) {
+            return result.content;
+        } else {
+            throw new Error(result ? result.message : 'AI调用失败');
+        }
+    } catch(e) {
+        StabilityToast.error('AI调用失败: ' + (e.message || '未知错误') + '，已自动尝试切换模型', 5000);
+        throw e;
+    } finally {
+        // 恢复按钮
+        if (loadingBtn) {
+            StabilityButton.setLoading(loadingBtn, false);
+        }
+    }
+}
+
+// 内部故障转移执行
+async function callAIWithFailoverInternal(taskType, systemPrompt, userPrompt, maxTokens, timeoutMs) {
+    var chain = StabilityModelFailover.getHealthyChain(taskType);
+    var errors = [];
+
+    for (var i = 0; i < chain.length; i++) {
+        var model = chain[i];
+        try {
+            console.log('[AI稳定调用] 尝试模型: ' + model + ' (第' + (i+1) + '次尝试)');
+
+            // 超时控制
+            var timeoutPromise = new Promise(function(_, reject) {
+                setTimeout(function() { reject(new Error('模型' + model + '响应超时(' + (timeoutMs/1000) + '秒)')); }, timeoutMs);
+            });
+
+            // 调用原有AI函数
+            var callPromise;
+            if (typeof callDeepSeekAPI === 'function') {
+                callPromise = callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model);
+            } else {
+                throw new Error('callDeepSeekAPI 不存在');
+            }
+
+            var result = await Promise.race([callPromise, timeoutPromise]);
+
+            if (result && (typeof result === 'string' ? result.trim().length > 0 : true)) {
+                StabilityModelFailover.recordSuccess(model);
+                console.log('[AI稳定调用] 成功: ' + model);
+                return { success: true, model: model, content: result, attempts: i + 1 };
+            }
+            throw new Error('返回内容为空');
+        } catch(e) {
+            console.warn('[AI稳定调用] ' + model + ' 失败:', e.message);
+            StabilityModelFailover.recordError(model, e.message);
+            errors.push({ model: model, error: e.message });
+            if (i < chain.length - 1) {
+                await new Promise(r => setTimeout(r, 500 * (i + 1)));
+            }
+        }
+    }
+
+    console.error('[AI稳定调用] 所有模型都失败:', errors);
+    return {
+        success: false,
+        errors: errors,
+        message: '所有AI模型暂时不可用（已尝试' + chain.length + '个模型），请稍后重试'
+    };
+}
+
+
+// ==========================================
+// 初始化所有稳定性模块
+// ==========================================
+function initStabilityFramework() {
+    try {
+        StabilityToast.init();
+        StabilityErrorHandler.init();
+        StabilityPageLoader.init();
+        StabilityButton.init();
+        StabilityModelFailover.init();
+
+        // 暴露到全局，方便调试和使用
+        window.StabilityFramework = {
+            Toast: StabilityToast,
+            ErrorHandler: StabilityErrorHandler,
+            PageLoader: StabilityPageLoader,
+            Button: StabilityButton,
+            ModelFailover: StabilityModelFailover,
+            RequestQueue: StabilityRequestQueue,
+            callAIStable: callAIStable,
+            version: '1.0'
+        };
+
+        console.log('========================================');
+        console.log('✅ 稳定性核心框架 v1.0 已成功启动');
+        console.log('   - Toast提示系统');
+        console.log('   - 全局错误捕获');
+        console.log('   - 页面加载状态机');
+        console.log('   - 防重复点击按钮');
+        console.log('   - 多模型故障转移（7模型互为备份）');
+        console.log('   - 请求队列与并发控制');
+        console.log('   - 统一AI调用入口: callAIStable()');
+        console.log('========================================');
+
+        // 延迟标记页面ready（给原有JS一些初始化时间）
+        setTimeout(function() {
+            StabilityPageLoader.markReady();
+        }, 1500);
+
+    } catch(e) {
+        console.error('[稳定性框架] 初始化失败:', e);
+    }
+}
+
+// 立即执行（不等待DOMContentLoaded，因为我们在body末尾）
+initStabilityFramework();
+
+} catch(e) {
+    console.error('[稳定性框架] 顶层错误:', e);
+}
+})();
+</script>
+<!-- ========== 稳定性核心框架 v1.0 结束 ========== -->
+
+</body></html>';
   var blob = new Blob(['\ufeff' + html], {type: 'application/msword'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
