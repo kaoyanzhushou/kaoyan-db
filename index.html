@@ -126680,6 +126680,141 @@ async function callAIRouted(taskType, systemPrompt, userPrompt, maxTokens) {
   return callDeepSeekAPI(systemPrompt, userPrompt, maxTokens || 2000, model);
 }
 
+// ========== 反思链机制（生成→自检→修正） ==========
+// 反思链配置
+let reflectionEnabled = true;
+try { reflectionEnabled = localStorage.getItem('reflection_enabled') !== 'false'; } catch(e) {}
+
+// 反思链检查维度
+const REFLECTION_DIMENSIONS = {
+  'academic': {
+    name: '学术规范',
+    checkPrompt: '请检查以下内容的学术规范性：1.是否有未经证实的断言 2.引用格式是否正确 3.术语使用是否准确 4.逻辑是否严密。列出发现的问题，每条一行，格式：[问题类型] 问题描述。如果没有问题，输出"无问题"。',
+    fixPrompt: '请根据以下检查意见修正内容，保持原意，只修改有问题的部分。检查意见：\n{issues}'
+  },
+  'logic': {
+    name: '逻辑严谨性',
+    checkPrompt: '请检查以下内容的逻辑严谨性：1.论证是否充分 2.是否有逻辑跳跃 3.因果关系是否成立 4.是否有自相矛盾。列出发现的问题，每条一行，格式：[问题类型] 问题描述。如果没有问题，输出"无问题"。',
+    fixPrompt: '请根据以下检查意见修正内容的逻辑问题，保持核心观点，修正论证过程。检查意见：\n{issues}'
+  },
+  'language': {
+    name: '语言质量',
+    checkPrompt: '请检查以下内容的语言质量：1.是否有语法错误 2.表达是否清晰 3.是否有冗余或重复 4.专业术语使用是否恰当。列出发现的问题，每条一行，格式：[问题类型] 问题描述。如果没有问题，输出"无问题"。',
+    fixPrompt: '请根据以下检查意见润色语言，保持原意，提升表达质量。检查意见：\n{issues}'
+  },
+  'citation': {
+    name: '引用真实性',
+    checkPrompt: '请检查以下内容中的引用：1.是否有虚构的文献 2.引用是否与论点相关 3.引用格式是否规范。列出发现的问题，每条一行，格式：[问题类型] 问题描述。如果没有问题，输出"无问题"。',
+    fixPrompt: '请根据以下检查意见修正引用问题，删除可疑引用，保留真实相关的引用。检查意见：\n{issues}'
+  },
+  'structure': {
+    name: '结构完整性',
+    checkPrompt: '请检查以下内容的结构完整性：1.是否有明确的主题句 2.段落之间是否有过渡 3.是否有遗漏的重要部分 4.层次是否清晰。列出发现的问题，每条一行，格式：[问题类型] 问题描述。如果没有问题，输出"无问题"。',
+    fixPrompt: '请根据以下检查意见优化结构，保持内容，调整组织方式。检查意见：\n{issues}'
+  }
+};
+
+// 带反思链的AI调用
+async function callWithReflection(taskType, systemPrompt, userPrompt, maxTokens, dimensions) {
+  dimensions = dimensions || ['academic', 'logic', 'language'];
+  
+  // 第一步：生成
+  const initialResult = await callAIRouted(taskType, systemPrompt, userPrompt, maxTokens);
+  
+  if (!reflectionEnabled) {
+    return { result: initialResult, reflection: null, issues: [], corrected: false };
+  }
+  
+  // 第二步：自检（用不同模型检查）
+  const checkModel = getTopNModels(taskType, 3)[1] || routeModel(taskType);
+  let allIssues = [];
+  
+  for (let i = 0; i < dimensions.length; i++) {
+    const dim = REFLECTION_DIMENSIONS[dimensions[i]];
+    if (!dim) continue;
+    
+    try {
+      const checkSystem = '你是一位严格的学术编辑，负责检查内容质量。' + dim.checkPrompt;
+      const checkUser = '待检查内容：\n\n' + initialResult.substring(0, 8000);
+      const checkResult = await callDeepSeekAPI(checkSystem, checkUser, 1500, checkModel);
+      
+      // 解析问题
+      const lines = checkResult.split('\n').filter(l => l.trim() && l.includes(']') && !l.includes('无问题'));
+      for (let j = 0; j < lines.length; j++) {
+        allIssues.push({ dimension: dim.name, issue: lines[j].replace(/^\[.*?\]\s*/, '') });
+      }
+    } catch(e) {
+      console.log('反思检查失败:', dimensions[i], e.message);
+    }
+  }
+  
+  // 第三步：修正（如果有问题）
+  if (allIssues.length === 0) {
+    return { result: initialResult, reflection: '自检通过，未发现问题', issues: [], corrected: false };
+  }
+  
+  try {
+    const issuesText = allIssues.map((iss, idx) => (idx+1) + '. [' + iss.dimension + '] ' + iss.issue).join('\n');
+    const fixSystem = '你是一位学术编辑，请根据检查意见修正以下内容。只修改有问题的部分，保持原意和结构。';
+    const fixUser = '原始内容：\n\n' + initialResult + '\n\n检查意见：\n' + issuesText + '\n\n请输出修正后的完整内容。';
+    
+    const correctedResult = await callDeepSeekAPI(fixSystem, fixUser, maxTokens || 3000, routeModel(taskType));
+    
+    return {
+      result: correctedResult,
+      reflection: '发现 ' + allIssues.length + ' 个问题并已修正',
+      issues: allIssues,
+      corrected: true,
+      initial: initialResult
+    };
+  } catch(e) {
+    return { result: initialResult, reflection: '修正失败，返回原始内容', issues: allIssues, corrected: false, error: e.message };
+  }
+}
+
+// 渲染反思过程UI
+function renderReflectionUI(reflectionData, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container || !reflectionData) return;
+  
+  let html = '<div style="margin:12px 0;padding:12px;background:#fefce8;border:1px solid #fde68a;border-radius:8px">';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+  html += '<span style="font-size:14px">🔍</span>';
+  html += '<span style="font-size:12px;font-weight:600;color:#92400e">AI 反思链自检</span>';
+  html += '<span style="margin-left:auto;font-size:11px;color:#a16207">' + (reflectionData.reflection || '处理中...') + '</span>';
+  html += '</div>';
+  
+  if (reflectionData.issues && reflectionData.issues.length > 0) {
+    html += '<div style="font-size:11px;color:#78350f;margin-bottom:6px">发现 ' + reflectionData.issues.length + ' 个问题：</div>';
+    html += '<div style="max-height:120px;overflow-y:auto">';
+    for (let i = 0; i < reflectionData.issues.length; i++) {
+      const iss = reflectionData.issues[i];
+      html += '<div style="font-size:10px;color:#92400e;padding:2px 0;border-bottom:1px dashed #fde68a">';
+      html += '<span style="background:#fef3c7;padding:1px 4px;border-radius:3px;margin-right:4px">' + iss.dimension + '</span>';
+      html += iss.issue;
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  
+  if (reflectionData.corrected) {
+    html += '<div style="margin-top:8px;font-size:10px;color:#166534;background:#dcfce7;padding:4px 8px;border-radius:4px;display:inline-block">✅ 已根据检查意见修正内容</div>';
+  } else if (reflectionData.issues && reflectionData.issues.length === 0) {
+    html += '<div style="margin-top:8px;font-size:10px;color:#166534">✅ 自检通过，内容质量良好</div>';
+  }
+  
+  html += '</div>';
+  
+  container.insertAdjacentHTML('afterbegin', html);
+}
+
+// 切换反思链开关
+function toggleReflection() {
+  reflectionEnabled = !reflectionEnabled;
+  try { localStorage.setItem('reflection_enabled', reflectionEnabled ? 'true' : 'false'); } catch(e) {}
+  return reflectionEnabled;
+}
+
 // 显示路由提示（在AI生成时显示用了什么模型）
 function showRouteBadge(taskType, containerId) {
   if (!autoRouterEnabled) return '';
@@ -137272,6 +137407,54 @@ async function generateLessonFromImages(){
     var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     status.innerHTML = '✅ 识图生成完成！耗时' + elapsed + '秒，共' + (result.length/1000).toFixed(1) + 'K字';
     status.style.color = '#16a34a';
+    
+    // 反思链：异步自检教案质量
+    if (reflectionEnabled && result.length > 200) {
+      status.innerHTML += ' 🔍 正在自检教案质量...';
+      (async function() {
+        try {
+          const reflectionData = await callWithReflection(
+            'lesson_plan',
+            '你是一位资深体育教育专家，负责检查教案质量。',
+            '请检查以下教案的质量，重点关注：教学目标是否明确、教学过程是否完整、重难点是否突出、教学方法是否恰当。\n\n教案内容：\n' + result.substring(0, 6000),
+            2000,
+            ['structure', 'language', 'academic']
+          );
+          
+          // 在结果区域显示反思报告
+          const resEl = document.getElementById('lessonResult');
+          if (resEl && reflectionData.issues && reflectionData.issues.length > 0) {
+            const reflectionHtml = '<div id="reflectionReport" style="margin:12px 0;padding:12px;background:#fefce8;border:1px solid #fde68a;border-radius:8px">'
+              + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+              + '<span style="font-size:14px">🔍</span>'
+              + '<span style="font-size:12px;font-weight:600;color:#92400e">AI 反思链自检报告</span>'
+              + '<span style="margin-left:auto;font-size:11px;color:#a16207">发现 ' + reflectionData.issues.length + ' 个问题' + (reflectionData.corrected ? '，已修正' : '') + '</span>'
+              + '</div>'
+              + '<div style="max-height:150px;overflow-y:auto">';
+            for (let i = 0; i < reflectionData.issues.length; i++) {
+              const iss = reflectionData.issues[i];
+              reflectionHtml += '<div style="font-size:11px;color:#78350f;padding:3px 0;border-bottom:1px dashed #fde68a">'
+                + '<span style="background:#fef3c7;padding:1px 5px;border-radius:3px;margin-right:5px;font-size:10px">' + iss.dimension + '</span>'
+                + iss.issue + '</div>';
+            }
+            reflectionHtml += '</div></div>';
+            
+            // 插入到结果区域开头
+            const firstChild = resEl.firstChild;
+            if (firstChild) {
+              const tempDiv = document.createElement('div');
+              tempDiv.innerHTML = reflectionHtml;
+              resEl.insertBefore(tempDiv.firstChild, firstChild);
+            }
+          }
+          
+          status.innerHTML = '✅ 识图生成完成！耗时' + elapsed + '秒，自检' + (reflectionData.issues.length > 0 ? '发现' + reflectionData.issues.length + '个问题' + (reflectionData.corrected ? '并修正' : '') : '通过');
+        } catch(e) {
+          console.log('反思链自检失败:', e.message);
+          status.innerHTML = '✅ 识图生成完成！耗时' + elapsed + '秒（自检跳过）';
+        }
+      })();
+    }
     
     // 自动填充科目和章节（如果为空）
     if(!document.getElementById('lessonSubject').value.trim()){
