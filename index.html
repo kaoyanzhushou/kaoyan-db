@@ -138014,7 +138014,218 @@ var SCORE_DIMENSIONS = [
   { key: 'instruction', name: '指令遵循', icon: '🎯' }
 ];
 
+
+// ========== 雷达图绘制 ==========
+function drawRadarChart(scores, containerId, size) {
+  size = size || 220;
+  var center = size / 2;
+  var radius = size / 2 - 30;
+  var dims = SCORE_DIMENSIONS;
+  var n = dims.length;
+  
+  var svg = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">';
+  
+  // 背景网格（5层）
+  for (var level = 5; level >= 1; level--) {
+    var r = radius * level / 5;
+    var points = [];
+    for (var i = 0; i < n; i++) {
+      var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      var x = center + r * Math.cos(angle);
+      var y = center + r * Math.sin(angle);
+      points.push(x.toFixed(1) + ',' + y.toFixed(1));
+    }
+    var fillColor = level % 2 === 0 ? '#f9fafb' : '#ffffff';
+    svg += '<polygon points="' + points.join(' ') + '" fill="' + fillColor + '" stroke="#e5e7eb" stroke-width="0.5"/>';
+  }
+  
+  // 轴线
+  for (var i = 0; i < n; i++) {
+    var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    var x = center + radius * Math.cos(angle);
+    var y = center + radius * Math.sin(angle);
+    svg += '<line x1="' + center + '" y1="' + center + '" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="#e5e7eb" stroke-width="0.5"/>';
+  }
+  
+  // 数据多边形
+  var dataPoints = [];
+  for (var i = 0; i < n; i++) {
+    var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    var score = scores[dims[i].key] || 0;
+    var r = radius * score / 10;
+    var x = center + r * Math.cos(angle);
+    var y = center + r * Math.sin(angle);
+    dataPoints.push(x.toFixed(1) + ',' + y.toFixed(1));
+  }
+  svg += '<polygon points="' + dataPoints.join(' ') + '" fill="rgba(124,58,237,0.2)" stroke="#7c3aed" stroke-width="2"/>';
+  
+  // 数据点
+  for (var i = 0; i < n; i++) {
+    var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    var score = scores[dims[i].key] || 0;
+    var r = radius * score / 10;
+    var x = center + r * Math.cos(angle);
+    var y = center + r * Math.sin(angle);
+    svg += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3" fill="#7c3aed"/>';
+  }
+  
+  // 标签
+  for (var i = 0; i < n; i++) {
+    var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    var labelR = radius + 18;
+    var x = center + labelR * Math.cos(angle);
+    var y = center + labelR * Math.sin(angle);
+    var score = scores[dims[i].key] || 0;
+    var anchor = 'middle';
+    if (Math.cos(angle) > 0.3) anchor = 'start';
+    if (Math.cos(angle) < -0.3) anchor = 'end';
+    svg += '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="9" fill="#4b5563">' + dims[i].icon + dims[i].name + '(' + score + ')</text>';
+  }
+  
+  svg += '</svg>';
+  
+  var container = document.getElementById(containerId);
+  if (container) container.innerHTML = svg;
+  return svg;
+}
+
+// ========== 模型对比功能 ==========
+var compareModelIds = [];
+
+function toggleModelCompare(modelId) {
+  var idx = compareModelIds.indexOf(modelId);
+  if (idx >= 0) {
+    compareModelIds.splice(idx, 1);
+  } else {
+    if (compareModelIds.length >= 3) {
+      alert('最多同时对比3个模型');
+      return;
+    }
+    compareModelIds.push(modelId);
+  }
+  renderModelArchiveTabs();
+  if (compareModelIds.length >= 2) {
+    renderModelCompare();
+  } else {
+    renderModelDetail(currentArchiveModel);
+  }
+}
+
+function renderModelCompare() {
+  var content = document.getElementById('modelArchiveContent');
+  if (!content) return;
+  
+  var models = [];
+  for (var i = 0; i < compareModelIds.length; i++) {
+    for (var j = 0; j < MODEL_ARCHIVE_DATA.length; j++) {
+      if (MODEL_ARCHIVE_DATA[j].id === compareModelIds[i]) {
+        models.push(MODEL_ARCHIVE_DATA[j]);
+        break;
+      }
+    }
+  }
+  
+  var html = '';
+  // 对比标题
+  html += '<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:12px;padding:14px;margin-bottom:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+  html += '<div style="font-size:15px;font-weight:700;color:#1e40af">⚖️ 模型对比（' + models.length + '个）</div>';
+  html += '<button onclick="clearCompare()" style="padding:5px 12px;background:#fee2e2;border:1px solid #fecaca;border-radius:6px;color:#dc2626;font-size:11px;font-weight:600;cursor:pointer">✕ 清除对比</button>';
+  html += '</div></div>';
+  
+  // 基础信息对比表
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:16px;overflow-x:auto">';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+  html += '<tr style="background:#f9fafb">';
+  html += '<th style="padding:8px;text-align:left;border-bottom:2px solid #e5e7eb;color:#6b7280;font-weight:600;min-width:80px">维度</th>';
+  for (var i = 0; i < models.length; i++) {
+    html += '<th style="padding:8px;text-align:center;border-bottom:2px solid #e5e7eb;color:#1f2937;font-weight:700;min-width:100px">' + models[i].name + '</th>';
+  }
+  html += '</tr>';
+  
+  var compareFields = [
+    {key: 'provider', name: '开发商'},
+    {key: 'params', name: '参数量'},
+    {key: 'context', name: '上下文'},
+    {key: 'maxOutput', name: '最大输出'},
+    {key: 'languages', name: '支持语言'},
+    {key: 'multimodal', name: '多模态'},
+    {key: 'speed', name: '响应速度'},
+    {key: 'tag', name: '核心特长'}
+  ];
+  
+  for (var f = 0; f < compareFields.length; f++) {
+    html += '<tr>';
+    html += '<td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;color:#6b7280;font-weight:600">' + compareFields[f].name + '</td>';
+    for (var i = 0; i < models.length; i++) {
+      html += '<td style="padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:center;color:#1f2937">' + models[i][compareFields[f].key] + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</table></div>';
+  
+  // 能力评分对比
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:16px">';
+  html += '<div style="font-size:13px;font-weight:700;color:#1f2937;margin-bottom:12px">📊 9项能力对比</div>';
+  for (var k = 0; k < SCORE_DIMENSIONS.length; k++) {
+    var dim = SCORE_DIMENSIONS[k];
+    html += '<div style="margin-bottom:8px">';
+    html += '<div style="font-size:11px;color:#4b5563;margin-bottom:3px">' + dim.icon + ' ' + dim.name + '</div>';
+    html += '<div style="display:flex;gap:4px;align-items:center">';
+    for (var i = 0; i < models.length; i++) {
+      var score = models[i].scores[dim.key] || 0;
+      var colors = ['#7c3aed', '#0ea5e9', '#f59e0b'];
+      var pct = score * 10;
+      html += '<div style="flex:1;height:16px;background:#f3f4f6;border-radius:3px;overflow:hidden;position:relative" title="' + models[i].name + ': ' + score + '分">';
+      html += '<div style="width:' + pct + '%;height:100%;background:' + colors[i] + ';border-radius:3px"></div>';
+      html += '<span style="position:absolute;left:4px;top:0;font-size:9px;color:#fff;line-height:16px;font-weight:600">' + score + '</span>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+  }
+  html += '</div>';
+  
+  // 适用场景对比
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px">';
+  html += '<div style="font-size:13px;font-weight:700;color:#1f2937;margin-bottom:10px">🎯 适用场景对比</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(' + models.length + ',1fr);gap:10px">';
+  for (var i = 0; i < models.length; i++) {
+    html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px">';
+    html += '<div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:6px">' + models[i].name + '</div>';
+    for (var s = 0; s < models[i].scenarios.length; s++) {
+      html += '<div style="font-size:10px;color:#166534;margin:2px 0">✓ ' + models[i].scenarios[s] + '</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div></div>';
+  
+  content.innerHTML = html;
+  // 绘制雷达图
+  setTimeout(function() {
+    var finalScores = {};
+    for (var d = 0; d < SCORE_DIMENSIONS.length; d++) {
+      var key = SCORE_DIMENSIONS[d].key;
+      finalScores[key] = model.scores[key] || 0;
+    }
+    if (dynamicScores) {
+      for (var key in dynamicScores) {
+        if (finalScores[key] !== undefined) {
+          finalScores[key] = Math.min(10, Math.max(0, finalScores[key] + (dynamicScores[key] || 0)));
+        }
+      }
+    }
+    drawRadarChart(finalScores, 'radarChart_' + modelId, 240);
+  }, 50);
+}
+
+function clearCompare() {
+  compareModelIds = [];
+  renderModelArchiveTabs();
+  renderModelDetail(currentArchiveModel);
+}
+
 var currentArchiveModel = 'deepseek-v4-pro';
+
 
 // 打开模型档案库
 function openModelArchive() {
@@ -138040,10 +138251,15 @@ function renderModelArchiveTabs() {
   var tabs = document.getElementById('modelArchiveTabs');
   if (!tabs) return;
   var html = '';
+  html += '<span style="font-size:10px;color:#6b7280;margin-right:6px;align-self:center">点击模型查看详情，勾选对比：</span>';
   for (var i = 0; i < MODEL_ARCHIVE_DATA.length; i++) {
     var m = MODEL_ARCHIVE_DATA[i];
     var isActive = currentArchiveModel === m.id;
-    html += '<button onclick="selectArchiveModel(\'' + m.id + '\')" style="padding:6px 12px;border-radius:6px;border:1px solid ' + (isActive ? '#7c3aed' : '#e5e7eb') + ';background:' + (isActive ? '#7c3aed' : '#fff') + ';color:' + (isActive ? '#fff' : '#374151') + ';font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">' + m.name + '</button>';
+    var isCompared = compareModelIds.indexOf(m.id) >= 0;
+    html += '<div style="display:flex;align-items:center;gap:3px">';
+    html += '<input type="checkbox" ' + (isCompared ? 'checked' : '') + ' onchange="toggleModelCompare(\'' + m.id + '\')" style="width:12px;height:12px;cursor:pointer;accent-color:#7c3aed" title="加入对比">';
+    html += '<button onclick="selectArchiveModel(\'' + m.id + '\')" style="padding:5px 10px;border-radius:6px;border:1px solid ' + (isActive ? '#7c3aed' : '#e5e7eb') + ';background:' + (isActive ? '#7c3aed' : '#fff') + ';color:' + (isActive ? '#fff' : '#374151') + ';font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">' + m.name + '</button>';
+    html += '</div>';
   }
   tabs.innerHTML = html;
 }
@@ -138126,6 +138342,12 @@ function renderModelDetail(modelId) {
   html += '<div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#ca8a04">' + (avgRating || '-') + '</div><div style="font-size:10px;color:#ca8a04">用户平均评分</div></div>';
   html += '</div>';
 
+  // 雷达图可视化
+  html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px">';
+  html += '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:12px">📊 能力雷达图</div>';
+  html += '<div id="radarChart_' + modelId + '" style="display:flex;justify-content:center"></div>';
+  html += '</div>';
+  
   // 能力评分
   html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
