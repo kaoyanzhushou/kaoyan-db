@@ -150228,5 +150228,894 @@ console.log('[性能优化] 页面已加载完成，AI增强包开始初始化')
 </script>
 <!-- ========== 延迟初始化增强包 结束 ========== -->
 
+
+<!-- ========== 体育科研专属工具库 v1.0 开始 ========== -->
+<script>
+(function() {
+'use strict';
+try {
+
+var SF = window.StabilityFramework;
+if (!SF) { console.warn('[体育工具库] 稳定性框架未加载，跳过'); return; }
+
+console.log('[体育工具库] 开始加载体育科研专属工具库...');
+
+function callAI(taskType, sysPrompt, userPrompt, maxTokens) {
+    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens || 2000);
+}
+
+function createElement(tag, attrs, children) {
+    var el = document.createElement(tag);
+    if (attrs) { for (var k in attrs) { if (k === 'style') el.style.cssText = attrs[k]; else if (k === 'class') el.className = attrs[k]; else el.setAttribute(k, attrs[k]); } }
+    if (children) { (Array.isArray(children) ? children : [children]).forEach(function(c) { if (typeof c === 'string') el.appendChild(document.createTextNode(c)); else if (c) el.appendChild(c); }); }
+    return el;
+}
+
+function showLoading(container, text) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;"><div style="display:inline-block;width:30px;height:30px;border:3px solid #e5e7eb;border-top-color:#10b981;border-radius:50%;animation:sportsToolsSpin 0.8s linear infinite;"></div><p style="margin-top:12px;font-size:14px;">' + (text || 'AI处理中...') + '</p></div>';
+}
+
+var Panel = {
+    isOpen: false,
+    
+    init: function() {
+        try {
+            var panel = createElement('div', {
+                id: 'sports-tools-panel',
+                style: 'position:fixed;top:0;right:0;width:560px;height:100vh;background:#fff;z-index:2147483633;box-shadow:-4px 0 24px rgba(0,0,0,0.15);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;'
+            });
+            
+            var header = createElement('div', { style: 'padding:16px 20px;background:linear-gradient(135deg,#059669,#047857);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;' });
+            header.appendChild(createElement('div', { style: 'font-size:16px;font-weight:600;' }, '🏃 体育科研工具库'));
+            var closeBtn = createElement('div', { style: 'cursor:pointer;font-size:20px;opacity:0.8;' }, '✕');
+            closeBtn.onclick = this.toggle.bind(this);
+            header.appendChild(closeBtn);
+            panel.appendChild(header);
+            
+            var tabs = ['生理指标', '生物力学', '训练计划', '统计助手', '营养计算', '损伤评估', '伦理审查', '心理量表', '文献检索', '表现评估'];
+            var tabBar = createElement('div', { style: 'display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px;background:#ecfdf5;border-bottom:1px solid #a7f3d0;flex-shrink:0;' });
+            var tabContents = [];
+            var self = this;
+            tabs.forEach(function(tab, idx) {
+                var tabBtn = createElement('div', {
+                    'data-stab': idx,
+                    style: 'padding:5px 9px;border-radius:6px;font-size:11px;cursor:pointer;transition:all 0.2s;background:' + (idx === 0 ? '#059669;color:#fff;' : '#fff;color:#065f46;') + 'border:1px solid #a7f3d0;'
+                }, tab);
+                tabBtn.onclick = function() {
+                    tabContents.forEach(function(c, i) { c.style.display = i === idx ? 'block' : 'none'; });
+                    tabBar.querySelectorAll('[data-stab]').forEach(function(b) {
+                        b.style.background = b.getAttribute('data-stab') == idx ? '#059669' : '#fff';
+                        b.style.color = b.getAttribute('data-stab') == idx ? '#fff' : '#065f46';
+                    });
+                };
+                tabBar.appendChild(tabBtn);
+                var content = createElement('div', { 'data-scontent': idx, style: 'flex:1;overflow-y:auto;padding:16px;display:' + (idx === 0 ? 'block' : 'none') + ';' });
+                tabContents.push(content);
+                panel.appendChild(tabBar);
+                panel.appendChild(content);
+            });
+            
+            this.initPhysioCalc(tabContents[0]);
+            this.initBiomech(tabContents[1]);
+            this.initTrainingPlan(tabContents[2]);
+            this.initStatsHelper(tabContents[3]);
+            this.initNutrition(tabContents[4]);
+            this.initInjury(tabContents[5]);
+            this.initEthics(tabContents[6]);
+            this.initPsychScale(tabContents[7]);
+            this.initLitSearch(tabContents[8]);
+            this.initPerformance(tabContents[9]);
+            
+            document.body.appendChild(panel);
+            this.panel = panel;
+            
+            this.addToDropdown();
+            
+            var style = document.createElement('style');
+            style.textContent = '@keyframes sportsToolsSpin{to{transform:rotate(360deg)}}';
+            document.head.appendChild(style);
+            
+            console.log('[体育工具库] 面板已创建');
+        } catch(e) { console.warn('[体育工具库] 初始化失败', e); }
+    },
+    
+    addToDropdown: function() {
+        try {
+            var dropdown = document.getElementById('paper-merged-dropdown');
+            if (!dropdown) { setTimeout(this.addToDropdown.bind(this), 1500); return; }
+            if (document.getElementById('sports-dropdown-option')) return;
+            
+            var option = document.createElement('div');
+            option.id = 'sports-dropdown-option';
+            option.style.cssText = 'padding:10px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.2s;margin-top:4px;border-top:1px solid #f1f5f9;';
+            option.innerHTML = '<span style="font-size:18px;">🏃</span><div><div style="font-size:13px;font-weight:600;color:#1e293b;">体育科研工具库</div><div style="font-size:11px;color:#64748b;">生理指标/生物力学/训练计划/统计/营养/损伤/伦理/量表/检索/表现</div></div>';
+            option.onmouseenter = function() { option.style.background = '#ecfdf5'; };
+            option.onmouseleave = function() { option.style.background = 'transparent'; };
+            option.onclick = function() {
+                dropdown.style.display = 'none';
+                if (Panel.panel) Panel.panel.style.transform = 'translateX(0)';
+            };
+            dropdown.appendChild(option);
+            console.log('[体育工具库] 已加入论文AI工具箱下拉菜单');
+        } catch(e) { console.warn('[体育工具库] 加入下拉菜单失败:', e); }
+    },
+    
+    toggle: function() {
+        this.isOpen = !this.isOpen;
+        if (this.panel) this.panel.style.transform = this.isOpen ? 'translateX(0)' : 'translateX(100%)';
+    },
+    
+    // 1. 运动生理指标计算
+    initPhysioCalc: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '❤️ 运动生理指标计算'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '计算VO2max、心率储备、靶心率、MET值等常用生理指标'));
+        
+        var grid = createElement('div', { style: 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;' });
+        grid.appendChild(this.makeInput('年龄(岁)', 'ageInput', '25'));
+        grid.appendChild(this.makeInput('体重(kg)', 'weightInput', '70'));
+        grid.appendChild(this.makeInput('静息心率(bpm)', 'restHRInput', '60'));
+        grid.appendChild(this.makeInput('最大心率(bpm)', 'maxHRInput', '195'));
+        c.appendChild(grid);
+        
+        var btn = createElement('button', { style: 'padding:8px 16px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '❤️ 计算生理指标');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = function() {
+            var age = parseFloat(document.getElementById('ageInput').value) || 25;
+            var weight = parseFloat(document.getElementById('weightInput').value) || 70;
+            var restHR = parseFloat(document.getElementById('restHRInput').value) || 60;
+            var maxHR = parseFloat(document.getElementById('maxHRInput').value) || (220 - age);
+            
+            // 计算
+            var hrReserve = maxHR - restHR;
+            var targetHR60 = Math.round(restHR + hrReserve * 0.6);
+            var targetHR70 = Math.round(restHR + hrReserve * 0.7);
+            var targetHR80 = Math.round(restHR + hrReserve * 0.8);
+            var targetHR85 = Math.round(restHR + hrReserve * 0.85);
+            var bmr = Math.round(10 * weight + 6.25 * 170 - 5 * age + 5); // 简化Mifflin-St Jeor公式（假设身高170cm男性）
+            var bmrFemale = Math.round(10 * weight + 6.25 * 170 - 5 * age - 161);
+            
+            var html = '';
+            html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">';
+            
+            var cards = [
+                { label: '最大心率', value: maxHR + ' bpm', color: '#ef4444', desc: '220-年龄' },
+                { label: '心率储备', value: hrReserve + ' bpm', color: '#f59e0b', desc: '最大-静息' },
+                { label: '靶心率(60%)', value: targetHR60 + ' bpm', color: '#3b82f6', desc: '低强度' },
+                { label: '靶心率(70%)', value: targetHR70 + ' bpm', color: '#10b981', desc: '中等强度' },
+                { label: '靶心率(80%)', value: targetHR80 + ' bpm', color: '#8b5cf6', desc: '高强度' },
+                { label: '靶心率(85%)', value: targetHR85 + ' bpm', color: '#ec4899', desc: '极高强度' },
+                { label: '基础代谢(男)', value: bmr + ' kcal', color: '#065f46', desc: 'Mifflin公式' },
+                { label: '基础代谢(女)', value: bmrFemale + ' kcal', color: '#7c2d12', desc: 'Mifflin公式' }
+            ];
+            
+            cards.forEach(function(card) {
+                html += '<div style="background:#fff;padding:10px;border-radius:8px;border:1px solid #e2e8f0;border-top:3px solid ' + card.color + ';">';
+                html += '<div style="font-size:11px;color:#64748b;">' + card.label + '</div>';
+                html += '<div style="font-size:18px;font-weight:700;color:' + card.color + ';margin:4px 0;">' + card.value + '</div>';
+                html += '<div style="font-size:10px;color:#94a3b8;">' + card.desc + '</div>';
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            // 运动强度分区
+            html += '<div style="background:#fff;padding:12px;border-radius:8px;border:1px solid #e2e8f0;">';
+            html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">📊 运动强度分区</div>';
+            var zones = [
+                { name: '恢复区', range: '50-60%', hr: restHR + '-' + Math.round(restHR + hrReserve*0.6), color: '#10b981' },
+                { name: '有氧区', range: '60-70%', hr: Math.round(restHR + hrReserve*0.6) + '-' + Math.round(restHR + hrReserve*0.7), color: '#3b82f6' },
+                { name: ' tempo区', range: '70-80%', hr: Math.round(restHR + hrReserve*0.7) + '-' + Math.round(restHR + hrReserve*0.8), color: '#f59e0b' },
+                { name: '阈值区', range: '80-90%', hr: Math.round(restHR + hrReserve*0.8) + '-' + Math.round(restHR + hrReserve*0.9), color: '#ef4444' },
+                { name: '无氧区', range: '90-100%', hr: Math.round(restHR + hrReserve*0.9) + '-' + maxHR, color: '#ec4899' }
+            ];
+            zones.forEach(function(zone) {
+                html += '<div style="display:flex;align-items:center;margin-bottom:6px;">';
+                html += '<div style="width:80px;font-size:11px;font-weight:600;color:#475569;">' + zone.name + '</div>';
+                html += '<div style="flex:1;height:20px;background:#f1f5f9;border-radius:4px;overflow:hidden;">';
+                html += '<div style="height:100%;width:' + (zone.range === '50-60%' ? 10 : (zone.range === '60-70%' ? 20 : (zone.range === '70-80%' ? 30 : (zone.range === '80-90%' ? 25 : 15)))) + '%;background:' + zone.color + ';"></div>';
+                html += '</div>';
+                html += '<div style="width:120px;font-size:10px;color:#64748b;text-align:right;margin-left:8px;">' + zone.hr + ' bpm</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+            
+            result.innerHTML = html;
+            SF.Toast.success('生理指标计算完成！');
+        };
+    },
+    
+    makeInput: function(label, id, placeholder) {
+        var div = createElement('div');
+        div.appendChild(createElement('label', { style: 'display:block;font-size:11px;color:#64748b;margin-bottom:4px;' }, label));
+        var input = createElement('input', { id: id, style: 'width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;', placeholder: placeholder });
+        div.appendChild(input);
+        return div;
+    },
+    
+    // 2. 生物力学分析
+    initBiomech: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🦵 运动生物力学分析'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI分析运动技术特征，给出生物力学评估和改进建议'));
+        
+        var sportSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['跑步', '跳跃', '投掷', '游泳', '力量训练', '球类运动'].forEach(function(s) {
+            var opt = document.createElement('option'); opt.value = s; opt.textContent = s;
+            sportSelect.appendChild(opt);
+        });
+        c.appendChild(sportSelect);
+        
+        var descInput = createElement('textarea', { style: 'width:100%;height:80px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '描述运动动作/技术问题，例如：跑步时落地脚跟先着地，膝盖内扣...' });
+        c.appendChild(descInput);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🦵 AI生物力学分析');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var sport = sportSelect.value;
+            var desc = descInput.value.trim();
+            if (!desc) { SF.Toast.warning('请描述运动动作/技术问题'); return; }
+            showLoading(result, 'AI正在分析生物力学特征...');
+            try {
+                var sys = '你是运动生物力学专家。请对以下运动技术进行分析，输出JSON：{"jointAngles":[{"joint":"关节名称","angle":"角度","idealRange":"理想范围","assessment":"评估"}],"forceAnalysis":"受力分析","kineticChain":"动力链分析","commonMistakes":["常见错误"],"corrections":["纠正建议"],"trainingDrills":["训练练习"],"injuryRisk":"损伤风险评估"}';
+                var userPrompt = '运动项目：' + sport + '\n动作描述：' + desc;
+                var aiResult = await callAI('reasoning', sys, userPrompt, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+                
+                var html = '';
+                if (data.jointAngles && data.jointAngles.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">🦴 关节角度分析</div>';
+                    data.jointAngles.forEach(function(j) {
+                        var color = j.assessment && j.assessment.indexOf('正常') >= 0 ? '#10b981' : (j.assessment && j.assessment.indexOf('异常') >= 0 ? '#ef4444' : '#f59e0b');
+                        html += '<div style="background:#fff;padding:8px 10px;border-radius:6px;margin-bottom:6px;border:1px solid #e2e8f0;border-left:4px solid ' + color + ';">';
+                        html += '<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="font-weight:600;color:#1e293b;">' + (j.joint || '') + '</span><span style="font-weight:700;color:' + color + ';">' + (j.angle || '') + '</span></div>';
+                        html += '<div style="font-size:10px;color:#64748b;margin-top:2px;">理想范围: ' + (j.idealRange || '') + '</div>';
+                        html += '<div style="font-size:10px;color:' + color + ';margin-top:2px;">' + (j.assessment || '') + '</div>';
+                        html += '</div>';
+                    });
+                }
+                
+                if (data.forceAnalysis) {
+                    html += '<div style="background:#eff6ff;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:4px;">⚡ 受力分析</div><div style="font-size:11px;color:#1e3a8a;line-height:1.7;">' + data.forceAnalysis + '</div></div>';
+                }
+                
+                if (data.commonMistakes && data.commonMistakes.length > 0) {
+                    html += '<div style="background:#fef2f2;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#991b1b;margin-bottom:4px;">⚠️ 常见错误</div>';
+                    data.commonMistakes.forEach(function(m) { html += '<div style="font-size:11px;color:#7f1d1d;line-height:1.5;">• ' + m + '</div>'; });
+                    html += '</div>';
+                }
+                
+                if (data.corrections && data.corrections.length > 0) {
+                    html += '<div style="background:#ecfdf5;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#065f46;margin-bottom:4px;">✅ 纠正建议</div>';
+                    data.corrections.forEach(function(c2, i) { html += '<div style="font-size:11px;color:#064e3b;line-height:1.5;">' + (i+1) + '. ' + c2 + '</div>'; });
+                    html += '</div>';
+                }
+                
+                if (data.trainingDrills && data.trainingDrills.length > 0) {
+                    html += '<div style="background:#f5f3ff;padding:10px 12px;border-radius:8px;"><div style="font-size:12px;font-weight:600;color:#5b21b6;margin-bottom:4px;">🏋️ 训练练习</div>';
+                    data.trainingDrills.forEach(function(d) { html += '<div style="font-size:11px;color:#6b21a8;line-height:1.5;">• ' + d + '</div>'; });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('生物力学分析完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">分析失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 3. 训练计划生成
+    initTrainingPlan: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📅 训练计划生成'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI根据训练目标/水平/周期生成个性化训练计划'));
+        
+        var goalSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['提升耐力', '提升力量', '提升速度', '减脂塑形', '备赛训练', '恢复训练'].forEach(function(g) {
+            var opt = document.createElement('option'); opt.value = g; opt.textContent = g;
+            goalSelect.appendChild(opt);
+        });
+        c.appendChild(goalSelect);
+        
+        var levelSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['初学者', '中级', '高级', '运动员'].forEach(function(l) {
+            var opt = document.createElement('option'); opt.value = l; opt.textContent = l;
+            levelSelect.appendChild(opt);
+        });
+        c.appendChild(levelSelect);
+        
+        var weeksInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '训练周期（周），例如：12' });
+        c.appendChild(weeksInput);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '📅 AI生成训练计划');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var goal = goalSelect.value;
+            var level = levelSelect.value;
+            var weeks = weeksInput.value.trim() || '12';
+            showLoading(result, 'AI正在生成训练计划...');
+            try {
+                var sys = '你是运动训练专家。请根据以下信息生成训练计划，输出JSON：{"overview":"计划概述","weeklySchedule":{"周一":[{"exercise":"运动项目","duration":"时长","intensity":"强度"}],"周二":[],"周三":[],"周四":[],"周五":[],"周六":[],"周日":[]}},"progression":"进阶安排","recovery":"恢复建议","tips":["注意事项"]}';
+                var userPrompt = '训练目标：' + goal + '\n训练水平：' + level + '\n训练周期：' + weeks + '周';
+                var aiResult = await callAI('creative', sys, userPrompt, 3000);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+                
+                var html = '';
+                if (data.overview) {
+                    html += '<div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);padding:14px;border-radius:8px;margin-bottom:12px;border:2px solid #10b981;">';
+                    html += '<div style="font-size:12px;font-weight:600;color:#065f46;">📋 计划概述</div>';
+                    html += '<div style="font-size:12px;color:#064e3b;line-height:1.7;margin-top:6px;">' + data.overview + '</div>';
+                    html += '</div>';
+                }
+                
+                if (data.weeklySchedule) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">📆 周训练安排</div>';
+                    var days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+                    var dayColors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#6b7280'];
+                    days.forEach(function(day, idx) {
+                        var schedule = data.weeklySchedule[day];
+                        if (schedule && schedule.length > 0) {
+                            html += '<div style="background:#fff;padding:8px 10px;border-radius:6px;margin-bottom:4px;border:1px solid #e2e8f0;border-left:4px solid ' + dayColors[idx] + ';">';
+                            html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="font-weight:600;color:#1e293b;">' + day + '</span><span style="font-size:10px;color:#64748b;">' + schedule.length + '项</span></div>';
+                            schedule.forEach(function(item) {
+                                html += '<div style="font-size:11px;color:#475569;line-height:1.6;">▸ ' + (item.exercise || '') + ' (' + (item.duration || '') + ', ' + (item.intensity || '') + ')</div>';
+                            });
+                            html += '</div>';
+                        }
+                    });
+                }
+                
+                if (data.progression) {
+                    html += '<div style="background:#eff6ff;padding:10px 12px;border-radius:8px;margin-top:10px;"><div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:4px;">📈 进阶安排</div><div style="font-size:11px;color:#1e3a8a;line-height:1.7;">' + data.progression + '</div></div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('训练计划生成完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">生成失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 4. 体育统计助手
+    initStatsHelper: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📊 体育统计助手'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '选择统计方法、生成SPSS/R代码、解读结果'));
+        
+        var dataTypeSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['两组比较', '多组比较', '相关分析', '回归分析', '方差分析', '非参数检验', '信效度分析'].forEach(function(t) {
+            var opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+            dataTypeSelect.appendChild(opt);
+        });
+        c.appendChild(dataTypeSelect);
+        
+        var descInput = createElement('textarea', { style: 'width:100%;height:80px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '描述研究设计/数据类型/分析需求，例如：实验组n=20，对照组n=20，比较训练前后VO2max差异...' });
+        c.appendChild(descInput);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '📊 AI统计建议');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var dataType = dataTypeSelect.value;
+            var desc = descInput.value.trim();
+            if (!desc) { SF.Toast.warning('请描述研究设计'); return; }
+            showLoading(result, 'AI正在分析统计方法...');
+            try {
+                var sys = '你是体育统计学专家。请根据以下研究设计推荐统计方法，输出JSON：{"recommendedMethod":"推荐方法","reason":"推荐理由","assumptions":["前提假设"],"spssSteps":["SPSS操作步骤"],"rCode":"R代码","interpretationTemplate":"结果解读模板","commonPitfalls":["常见错误"]}';
+                var userPrompt = '分析类型：' + dataType + '\n研究描述：' + desc;
+                var aiResult = await callAI('reasoning', sys, userPrompt, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+                
+                var html = '';
+                if (data.recommendedMethod) {
+                    html += '<div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);padding:14px;border-radius:8px;margin-bottom:12px;text-align:center;border:2px solid #10b981;">';
+                    html += '<div style="font-size:11px;color:#047857;">推荐统计方法</div>';
+                    html += '<div style="font-size:20px;font-weight:700;color:#065f46;margin-top:4px;">' + data.recommendedMethod + '</div>';
+                    if (data.reason) html += '<div style="font-size:11px;color:#047857;margin-top:6px;line-height:1.6;">' + data.reason + '</div>';
+                    html += '</div>';
+                }
+                
+                if (data.spssSteps && data.spssSteps.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">💻 SPSS操作步骤</div>';
+                    data.spssSteps.forEach(function(step, i) {
+                        html += '<div style="background:#fff;padding:6px 10px;border-radius:6px;margin-bottom:4px;border:1px solid #e2e8f0;font-size:11px;color:#334155;">' + (i+1) + '. ' + step + '</div>';
+                    });
+                }
+                
+                if (data.rCode) {
+                    html += '<div style="background:#1e293b;color:#e2e8f0;padding:12px;border-radius:8px;margin-top:10px;overflow-x:auto;"><div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px;">📄 R代码</div><pre style="font-size:11px;line-height:1.6;white-space:pre-wrap;">' + data.rCode + '</pre></div>';
+                }
+                
+                if (data.commonPitfalls && data.commonPitfalls.length > 0) {
+                    html += '<div style="background:#fef2f2;padding:10px 12px;border-radius:8px;margin-top:10px;"><div style="font-size:12px;font-weight:600;color:#991b1b;margin-bottom:4px;">⚠️ 常见错误</div>';
+                    data.commonPitfalls.forEach(function(p) { html += '<div style="font-size:11px;color:#7f1d1d;line-height:1.5;">• ' + p + '</div>'; });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('统计建议生成完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">分析失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 5. 运动营养计算
+    initNutrition: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🍎 运动营养计算'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'BMI/基础代谢/每日热量需求/宏量营养素分配'));
+        
+        var grid = createElement('div', { style: 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;' });
+        grid.appendChild(this.makeInput('体重(kg)', 'nutriWeight', '70'));
+        grid.appendChild(this.makeInput('身高(cm)', 'nutriHeight', '175'));
+        grid.appendChild(this.makeInput('年龄(岁)', 'nutriAge', '25'));
+        grid.appendChild(this.makeInput('性别', 'nutriGender', 'male'));
+        c.appendChild(grid);
+        
+        var activitySelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['久坐(办公室工作)', '轻度活动(每周1-3次运动)', '中度活动(每周3-5次运动)', '高度活动(每周6-7次运动)', '极度活动(专业运动员)'].forEach(function(a) {
+            var opt = document.createElement('option'); opt.value = a; opt.textContent = a;
+            activitySelect.appendChild(opt);
+        });
+        c.appendChild(activitySelect);
+        
+        var goalSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['维持体重', '减脂', '增肌', '运动表现提升'].forEach(function(g) {
+            var opt = document.createElement('option'); opt.value = g; opt.textContent = g;
+            goalSelect.appendChild(opt);
+        });
+        c.appendChild(goalSelect);
+        
+        var btn = createElement('button', { style: 'padding:8px 16px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🍎 AI营养计算');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = function() {
+            var weight = parseFloat(document.getElementById('nutriWeight').value) || 70;
+            var height = parseFloat(document.getElementById('nutriHeight').value) || 175;
+            var age = parseFloat(document.getElementById('nutriAge').value) || 25;
+            var gender = document.getElementById('nutriGender').value || 'male';
+            var activity = activitySelect.value;
+            var goal = goalSelect.value;
+            
+            // 计算
+            var bmi = weight / ((height/100) * (height/100));
+            var bmr = gender === 'male' ? Math.round(10 * weight + 6.25 * height - 5 * age + 5) : Math.round(10 * weight + 6.25 * height - 5 * age - 161);
+            
+            var activityFactors = {'久坐(办公室工作)':1.2, '轻度活动(每周1-3次运动)':1.375, '中度活动(每周3-5次运动)':1.55, '高度活动(每周6-7次运动)':1.725, '极度活动(专业运动员)':1.9};
+            var tdee = Math.round(bmr * (activityFactors[activity] || 1.55));
+            
+            var goalAdjust = {'维持体重':0, '减脂':-500, '增肌':+300, '运动表现提升':+200};
+            var targetCal = tdee + (goalAdjust[goal] || 0);
+            
+            // 宏量营养素（按运动需求）
+            var proteinPct = goal === '增肌' ? 0.30 : (goal === '减脂' ? 0.35 : 0.25);
+            var fatPct = 0.25;
+            var carbPct = 1 - proteinPct - fatPct;
+            
+            var proteinG = Math.round(targetCal * proteinPct / 4);
+            var fatG = Math.round(targetCal * fatPct / 9);
+            var carbG = Math.round(targetCal * carbPct / 4);
+            
+            var bmiStatus = bmi < 18.5 ? '偏瘦' : (bmi < 24 ? '正常' : (bmi < 28 ? '超重' : '肥胖'));
+            var bmiColor = bmi < 18.5 ? '#f59e0b' : (bmi < 24 ? '#10b981' : '#ef4444');
+            
+            var html = '';
+            // 核心指标
+            html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">';
+            html += '<div style="text-align:center;background:#fff;padding:10px;border-radius:8px;border:1px solid #e2e8f0;"><div style="font-size:11px;color:#64748b;">BMI</div><div style="font-size:22px;font-weight:700;color:' + bmiColor + ';">' + bmi.toFixed(1) + '</div><div style="font-size:10px;color:' + bmiColor + ';">' + bmiStatus + '</div></div>';
+            html += '<div style="text-align:center;background:#fff;padding:10px;border-radius:8px;border:1px solid #e2e8f0;"><div style="font-size:11px;color:#64748b;">基础代谢</div><div style="font-size:22px;font-weight:700;color:#3b82f6;">' + bmr + '</div><div style="font-size:10px;color:#64748b;">kcal/天</div></div>';
+            html += '<div style="text-align:center;background:#fff;padding:10px;border-radius:8px;border:1px solid #e2e8f0;"><div style="font-size:11px;color:#64748b;">目标热量</div><div style="font-size:22px;font-weight:700;color:#10b981;">' + targetCal + '</div><div style="font-size:10px;color:#64748b;">kcal/天</div></div>';
+            html += '</div>';
+            
+            // 宏量营养素
+            html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">🥗 宏量营养素分配</div>';
+            html += '<div style="background:#fff;padding:12px;border-radius:8px;border:1px solid #e2e8f0;">';
+            
+            var nutrients = [
+                { name: '蛋白质', grams: proteinG, pct: Math.round(proteinPct*100), color: '#3b82f6', desc: (proteinG/weight).toFixed(1) + 'g/kg体重' },
+                { name: '碳水化合物', grams: carbG, pct: Math.round(carbPct*100), color: '#10b981', desc: '主要能量来源' },
+                { name: '脂肪', grams: fatG, pct: Math.round(fatPct*100), color: '#f59e0b', desc: '必需脂肪酸' }
+            ];
+            
+            nutrients.forEach(function(n) {
+                html += '<div style="margin-bottom:10px;">';
+                html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="font-weight:600;color:#1e293b;">' + n.name + '</span><span style="font-weight:700;color:' + n.color + ';">' + n.grams + 'g (' + n.pct + '%)</span></div>';
+                html += '<div style="height:8px;background:#f1f5f9;border-radius:4px;"><div style="height:100%;width:' + n.pct + '%;background:' + n.color + ';border-radius:4px;"></div></div>';
+                html += '<div style="font-size:10px;color:#64748b;margin-top:2px;">' + n.desc + '</div>';
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            result.innerHTML = html;
+            SF.Toast.success('营养计算完成！');
+        };
+    },
+    
+    // 6. 损伤评估
+    initInjury: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🩹 运动损伤评估'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI初步评估运动损伤类型，给出应急处理建议（仅供参考，严重请就医）'));
+        
+        var locationSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['膝关节', '踝关节', '腰部', '肩部', '腕部', '大腿', '小腿', '足部'].forEach(function(l) {
+            var opt = document.createElement('option'); opt.value = l; opt.textContent = l;
+            locationSelect.appendChild(opt);
+        });
+        c.appendChild(locationSelect);
+        
+        var symptomInput = createElement('textarea', { style: 'width:100%;height:80px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '描述症状，例如：跑步后膝盖外侧疼痛，上下楼梯加重...' });
+        c.appendChild(symptomInput);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🩹 AI损伤评估');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var location = locationSelect.value;
+            var symptom = symptomInput.value.trim();
+            if (!symptom) { SF.Toast.warning('请描述症状'); return; }
+            showLoading(result, 'AI正在评估损伤...');
+            try {
+                var sys = '你是运动医学专家。请根据以下症状进行初步损伤评估，输出JSON：{"possibleInjuries":[{"name":"可能损伤","likelihood":"可能性","description":"损伤描述"}],"redFlags":["红旗症状（需立即就医）"],"immediateCare":["即时处理建议"],"recoveryTime":"预计恢复时间","preventionTips":["预防建议"],"seeDoctor":是否需要就医}';
+                var userPrompt = '受伤部位：' + location + '\n症状描述：' + symptom;
+                var aiResult = await callAI('reasoning', sys, userPrompt, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+                
+                var html = '';
+                // 警告
+                html += '<div style="background:#fffbeb;padding:12px;border-radius:8px;margin-bottom:12px;border:2px solid #f59e0b;">';
+                html += '<div style="font-size:12px;font-weight:700;color:#92400e;">⚠️ 重要提示</div>';
+                html += '<div style="font-size:11px;color:#78350f;line-height:1.6;margin-top:4px;">本评估仅供参考，不能替代专业医疗诊断。如有严重疼痛、肿胀、畸形或无法负重，请立即就医！</div>';
+                html += '</div>';
+                
+                if (data.possibleInjuries && data.possibleInjuries.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">🏥 可能损伤（按可能性排序）</div>';
+                    data.possibleInjuries.forEach(function(inj, i) {
+                        var color = i === 0 ? '#ef4444' : (i === 1 ? '#f59e0b' : '#6b7280');
+                        html += '<div style="background:#fff;padding:10px;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0;border-left:4px solid ' + color + ';">';
+                        html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="font-weight:600;color:#1e293b;">' + (i+1) + '. ' + (inj.name || '') + '</span><span style="font-size:10px;color:' + color + ';">' + (inj.likelihood || '') + '</span></div>';
+                        if (inj.description) html += '<div style="font-size:11px;color:#64748b;line-height:1.5;">' + inj.description + '</div>';
+                        html += '</div>';
+                    });
+                }
+                
+                if (data.redFlags && data.redFlags.length > 0) {
+                    html += '<div style="background:#fef2f2;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#991b1b;margin-bottom:4px;">🚨 红旗症状（立即就医）</div>';
+                    data.redFlags.forEach(function(r) { html += '<div style="font-size:11px;color:#7f1d1d;line-height:1.5;">• ' + r + '</div>'; });
+                    html += '</div>';
+                }
+                
+                if (data.immediateCare && data.immediateCare.length > 0) {
+                    html += '<div style="background:#ecfdf5;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#065f46;margin-bottom:4px;">✅ 即时处理建议</div>';
+                    data.immediateCare.forEach(function(c2, i) { html += '<div style="font-size:11px;color:#064e3b;line-height:1.5;">' + (i+1) + '. ' + c2 + '</div>'; });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('损伤评估完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">评估失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 7. 伦理审查
+    initEthics: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '⚖️ 伦理审查助手'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI检查研究方案的伦理合规性，逐项核查'));
+        
+        var studyTypeSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['人体实验', '问卷调查', '访谈研究', '动物实验', '二手数据分析'].forEach(function(t) {
+            var opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+            studyTypeSelect.appendChild(opt);
+        });
+        c.appendChild(studyTypeSelect);
+        
+        var descInput = createElement('textarea', { style: 'width:100%;height:100px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '描述研究方案，包括研究对象、干预措施、数据收集方法等...' });
+        c.appendChild(descInput);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '⚖️ AI伦理审查');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var studyType = studyTypeSelect.value;
+            var desc = descInput.value.trim();
+            if (!desc) { SF.Toast.warning('请描述研究方案'); return; }
+            showLoading(result, 'AI正在进行伦理审查...');
+            try {
+                var sys = '你是科研伦理审查专家。请对以下研究方案进行伦理审查，输出JSON：{"overallCompliance":"合规/部分合规/不合规","checklist":[{"item":"审查项目","status":"通过/需修改/不通过","comment":"审查意见"}],"issues":["存在的伦理问题"],"improvements":["改进建议"],"requiredDocuments":["需要补充的文件"]}';
+                var userPrompt = '研究类型：' + studyType + '\n研究方案：' + desc;
+                var aiResult = await callAI('reasoning', sys, userPrompt, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+                
+                var html = '';
+                var statusColor = data.overallCompliance === '合规' ? '#10b981' : (data.overallCompliance === '部分合规' ? '#f59e0b' : '#ef4444');
+                html += '<div style="text-align:center;margin-bottom:12px;"><span style="font-size:14px;color:#64748b;">整体伦理审查结论：</span><span style="font-size:18px;font-weight:700;color:' + statusColor + ';">' + (data.overallCompliance || '') + '</span></div>';
+                
+                if (data.checklist && data.checklist.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">📋 伦理审查清单</div>';
+                    data.checklist.forEach(function(item) {
+                        var itemColor = item.status === '通过' ? '#10b981' : (item.status === '需修改' ? '#f59e0b' : '#ef4444');
+                        html += '<div style="background:#fff;padding:8px 10px;border-radius:6px;margin-bottom:4px;border:1px solid #e2e8f0;border-left:4px solid ' + itemColor + ';">';
+                        html += '<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="font-weight:600;color:#1e293b;">' + (item.item || '') + '</span><span style="font-size:10px;background:' + itemColor + ';color:#fff;padding:2px 8px;border-radius:10px;">' + (item.status || '') + '</span></div>';
+                        if (item.comment) html += '<div style="font-size:11px;color:#64748b;margin-top:2px;">' + item.comment + '</div>';
+                        html += '</div>';
+                    });
+                }
+                
+                if (data.improvements && data.improvements.length > 0) {
+                    html += '<div style="background:#eff6ff;padding:10px 12px;border-radius:8px;margin-top:10px;"><div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:4px;">💡 改进建议</div>';
+                    data.improvements.forEach(function(imp, i) { html += '<div style="font-size:11px;color:#1e3a8a;line-height:1.5;">' + (i+1) + '. ' + imp + '</div>'; });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('伦理审查完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">审查失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 8. 心理量表
+    initPsychScale: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🧠 运动心理量表'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '常用运动心理量表生成与评分指引'));
+        
+        var scaleSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['POMS心境状态量表', 'STAI状态焦虑量表', '运动自信量表', '运动动机量表', '训练压力量表', '疲劳量表'].forEach(function(s) {
+            var opt = document.createElement('option'); opt.value = s; opt.textContent = s;
+            scaleSelect.appendChild(opt);
+        });
+        c.appendChild(scaleSelect);
+        
+        var btn = createElement('button', { style: 'padding:8px 16px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🧠 生成量表');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var scale = scaleSelect.value;
+            showLoading(result, 'AI正在生成量表...');
+            try {
+                var sys = '你是运动心理学专家。请生成以下心理量表的完整版本，输出JSON：{"scaleName":"量表名称","purpose":"量表用途","dimensions":[{"name":"维度名称","items":[{"number":1,"question":"题目内容","scale":"评分方式"}]}],"scoringMethod":"计分方法","interpretation":"结果解释","reliability":"信效度说明"}';
+                var userPrompt = '请生成【' + scale + '】的完整量表版本，适用于体育科研。';
+                var aiResult = await callAI('structured', sys, userPrompt, 3000);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+                
+                var html = '';
+                html += '<div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);padding:14px;border-radius:8px;margin-bottom:12px;border:2px solid #10b981;">';
+                html += '<div style="font-size:15px;font-weight:700;color:#065f46;">' + (data.scaleName || scale) + '</div>';
+                if (data.purpose) html += '<div style="font-size:11px;color:#047857;margin-top:4px;">' + data.purpose + '</div>';
+                html += '</div>';
+                
+                if (data.dimensions && data.dimensions.length > 0) {
+                    data.dimensions.forEach(function(dim, di) {
+                        html += '<div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:10px;border:1px solid #e2e8f0;">';
+                        html += '<div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:8px;">' + (di+1) + '. ' + (dim.name || '') + '</div>';
+                        if (dim.items && dim.items.length > 0) {
+                            dim.items.forEach(function(item) {
+                                html += '<div style="font-size:12px;color:#334155;line-height:1.8;padding:4px 0;border-bottom:1px solid #f1f5f9;">';
+                                html += '<span style="color:#64748b;">' + (item.number || '') + '.</span> ' + (item.question || '');
+                                html += '<span style="font-size:10px;color:#94a3b8;margin-left:8px;">(' + (item.scale || '') + ')</span>';
+                                html += '</div>';
+                            });
+                        }
+                        html += '</div>';
+                    });
+                }
+                
+                if (data.scoringMethod) {
+                    html += '<div style="background:#eff6ff;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:4px;">📊 计分方法</div><div style="font-size:11px;color:#1e3a8a;line-height:1.7;">' + data.scoringMethod + '</div></div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('量表生成完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">生成失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 9. 文献检索
+    initLitSearch: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🔍 文献检索助手'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI推荐检索词、数据库、检索式'));
+        
+        var topicInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '研究主题，例如：运动干预对大学生睡眠质量的影响' });
+        c.appendChild(topicInput);
+        
+        var btn = createElement('button', { style: 'padding:8px 16px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🔍 AI检索建议');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var topic = topicInput.value.trim();
+            if (!topic) { SF.Toast.warning('请输入研究主题'); return; }
+            showLoading(result, 'AI正在生成检索建议...');
+            try {
+                var sys = '你是文献检索专家。请为以下研究主题生成检索策略，输出JSON：{"keywords":{"Chinese":["中文关键词"],"English":["English keywords"]},"databases":["推荐数据库"],"searchStrategies":[{"database":"数据库名","query":"检索式"}],"tips":["检索技巧"]}';
+                var aiResult = await callAI('research', sys, '研究主题：' + topic, 2500);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+                
+                var html = '';
+                if (data.keywords) {
+                    html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">🔑 关键词推荐</div>';
+                    if (data.keywords.Chinese && data.keywords.Chinese.length > 0) {
+                        html += '<div style="margin-bottom:8px;"><div style="font-size:11px;color:#64748b;margin-bottom:4px;">中文关键词：</div>';
+                        html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+                        data.keywords.Chinese.forEach(function(kw) {
+                            html += '<span style="background:#eff6ff;color:#1e40af;padding:4px 10px;border-radius:12px;font-size:11px;">' + kw + '</span>';
+                        });
+                        html += '</div></div>';
+                    }
+                    if (data.keywords.English && data.keywords.English.length > 0) {
+                        html += '<div><div style="font-size:11px;color:#64748b;margin-bottom:4px;">English keywords：</div>';
+                        html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+                        data.keywords.English.forEach(function(kw) {
+                            html += '<span style="background:#f5f3ff;color:#5b21b6;padding:4px 10px;border-radius:12px;font-size:11px;">' + kw + '</span>';
+                        });
+                        html += '</div></div>';
+                    }
+                }
+                
+                if (data.databases && data.databases.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin:12px 0 8px;color:#1e293b;">📚 推荐数据库</div>';
+                    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+                    data.databases.forEach(function(db) {
+                        html += '<span style="background:#ecfdf5;color:#065f46;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:500;">' + db + '</span>';
+                    });
+                    html += '</div>';
+                }
+                
+                if (data.searchStrategies && data.searchStrategies.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin:12px 0 8px;color:#1e293b;">💻 检索式</div>';
+                    data.searchStrategies.forEach(function(ss) {
+                        html += '<div style="background:#1e293b;color:#e2e8f0;padding:10px;border-radius:8px;margin-bottom:8px;"><div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:4px;">' + (ss.database || '') + '</div><div style="font-size:11px;white-space:pre-wrap;word-break:break-all;">' + (ss.query || '') + '</div></div>';
+                    });
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('检索建议生成完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">生成失败: ' + e.message + '</div>';
+            }
+        };
+    },
+    
+    // 10. 运动表现评估
+    initPerformance: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🏆 运动表现评估'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, 'AI评估运动表现水平，给出提升建议'));
+        
+        var sportSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['跑步(5km/10km/半马/全马)', '游泳(100m/400m/1500m)', '力量(深蹲/卧推/硬拉)', '跳跃(立定跳远/纵跳)', '球类(专项体能)'].forEach(function(s) {
+            var opt = document.createElement('option'); opt.value = s; opt.textContent = s;
+            sportSelect.appendChild(opt);
+        });
+        c.appendChild(sportSelect);
+        
+        var resultInput = createElement('input', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '你的成绩，例如：5km用时25分钟 / 深蹲100kg' });
+        c.appendChild(resultInput);
+        
+        var levelSelect = createElement('select', { style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['初学者', '业余爱好者', '业余精英', '专业运动员'].forEach(function(l) {
+            var opt = document.createElement('option'); opt.value = l; opt.textContent = l;
+            levelSelect.appendChild(opt);
+        });
+        c.appendChild(levelSelect);
+        
+        var btn = createElement('button', { style: 'margin-top:10px;padding:8px 16px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '🏆 AI表现评估');
+        c.appendChild(btn);
+        
+        var result = createElement('div', { style: 'margin-top:16px;' });
+        c.appendChild(result);
+        
+        btn.onclick = async function() {
+            var sport = sportSelect.value;
+            var userResult = resultInput.value.trim();
+            var level = levelSelect.value;
+            if (!userResult) { SF.Toast.warning('请输入你的成绩'); return; }
+            showLoading(result, 'AI正在评估运动表现...');
+            try {
+                var sys = '你是运动表现评估专家。请评估以下运动表现，输出JSON：{"percentile":"百分位排名","level":"表现等级","comparison":"与同水平对比","strengths":["优势"],"weaknesses":["不足"],"improvements":["提升建议"],"target":"下阶段目标"}';
+                var userPrompt = '运动项目：' + sport + '\n我的成绩：' + userResult + '\n我的水平：' + level;
+                var aiResult = await callAI('reasoning', sys, userPrompt, 2000);
+                
+                var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+                var data = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+                
+                var html = '';
+                var scoreColor = data.percentile && parseInt(data.percentile) >= 80 ? '#10b981' : (data.percentile && parseInt(data.percentile) >= 60 ? '#3b82f6' : '#f59e0b');
+                
+                html += '<div style="text-align:center;margin-bottom:12px;"><span style="font-size:36px;font-weight:700;color:' + scoreColor + ';">' + (data.percentile || '') + '</span><span style="font-size:14px;color:#64748b;"> 百分位</span>';
+                html += '<div style="margin-top:6px;"><span style="background:' + scoreColor + ';color:#fff;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">' + (data.level || '') + '</span></div></div>';
+                
+                if (data.comparison) {
+                    html += '<div style="background:#eff6ff;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:11px;font-weight:600;color:#1e40af;margin-bottom:4px;">📊 水平对比</div><div style="font-size:11px;color:#1e3a8a;line-height:1.7;">' + data.comparison + '</div></div>';
+                }
+                
+                if (data.strengths && data.strengths.length > 0) {
+                    html += '<div style="background:#ecfdf5;padding:10px 12px;border-radius:8px;margin-bottom:10px;"><div style="font-size:12px;font-weight:600;color:#065f46;margin-bottom:4px;">✅ 优势</div>';
+                    data.strengths.forEach(function(s) { html += '<div style="font-size:11px;color:#064e3b;line-height:1.5;">• ' + s + '</div>'; });
+                    html += '</div>';
+                }
+                
+                if (data.improvements && data.improvements.length > 0) {
+                    html += '<div style="background:#fffbeb;padding:10px 12px;border-radius:8px;"><div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:4px;">💡 提升建议</div>';
+                    data.improvements.forEach(function(imp, i) { html += '<div style="font-size:11px;color:#78350f;line-height:1.5;">' + (i+1) + '. ' + imp + '</div>'; });
+                    html += '</div>';
+                }
+                
+                result.innerHTML = html;
+                SF.Toast.success('运动表现评估完成！');
+            } catch(e) {
+                result.innerHTML = '<div style="color:#ef4444;font-size:13px;padding:20px;text-align:center;">评估失败: ' + e.message + '</div>';
+            }
+        };
+    }
+};
+
+setTimeout(function() {
+    Panel.init();
+    console.log('✅ 体育科研专属工具库 v1.0 已加载（10个工具：生理指标/生物力学/训练计划/统计助手/营养计算/损伤评估/伦理审查/心理量表/文献检索/表现评估）');
+}, 1500);
+
+} catch(e) {
+    console.error('[体育工具库] 顶层错误:', e);
+}
+})();
+</script>
+<!-- ========== 体育科研专属工具库 v1.0 结束 ========== -->
+
 </body>
 </html>
