@@ -151117,5 +151117,633 @@ setTimeout(function() {
 </script>
 <!-- ========== 体育科研专属工具库 v1.0 结束 ========== -->
 
+
+<!-- ========== 知识库沉淀+体验优化 v1.0 开始 ========== -->
+<script>
+(function() {
+'use strict';
+try {
+
+var SF = window.StabilityFramework;
+if (!SF) { console.warn('[知识库体验] 稳定性框架未加载，跳过'); return; }
+
+console.log('[知识库体验] 开始加载知识库+体验优化模块...');
+
+function createElement(tag, attrs, children) {
+    var el = document.createElement(tag);
+    if (attrs) { for (var k in attrs) { if (k === 'style') el.style.cssText = attrs[k]; else if (k === 'class') el.className = attrs[k]; else el.setAttribute(k, attrs[k]); } }
+    if (children) { (Array.isArray(children) ? children : [children]).forEach(function(c) { if (typeof c === 'string') el.appendChild(document.createTextNode(c)); else if (c) el.appendChild(c); }); }
+    return el;
+}
+
+function showLoading(container, text) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;"><div style="display:inline-block;width:30px;height:30px;border:3px solid #e5e7eb;border-top-color:#6366f1;border-radius:50%;animation:kbSpin 0.8s linear infinite;"></div><p style="margin-top:12px;font-size:14px;">' + (text || '加载中...') + '</p></div>';
+}
+
+var Panel = {
+    isOpen: false,
+    
+    init: function() {
+        try {
+            var panel = createElement('div', {
+                id: 'knowledge-panel',
+                style: 'position:fixed;top:0;right:0;width:560px;height:100vh;background:#fff;z-index:2147483634;box-shadow:-4px 0 24px rgba(0,0,0,0.15);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;'
+            });
+            
+            var header = createElement('div', { style: 'padding:16px 20px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;' });
+            header.appendChild(createElement('div', { style: 'font-size:16px;font-weight:600;' }, '📚 知识库+体验优化'));
+            var closeBtn = createElement('div', { style: 'cursor:pointer;font-size:20px;opacity:0.8;' }, '✕');
+            closeBtn.onclick = this.toggle.bind(this);
+            header.appendChild(closeBtn);
+            panel.appendChild(header);
+            
+            var tabs = ['学术知识库', '对话历史', '常用语料', '快捷模板', '使用统计', '快捷键', '深色模式', '全局搜索'];
+            var tabBar = createElement('div', { style: 'display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px;background:#eef2ff;border-bottom:1px solid #c7d2fe;flex-shrink:0;' });
+            var tabContents = [];
+            var self = this;
+            tabs.forEach(function(tab, idx) {
+                var tabBtn = createElement('div', {
+                    'data-kbtab': idx,
+                    style: 'padding:5px 9px;border-radius:6px;font-size:11px;cursor:pointer;transition:all 0.2s;background:' + (idx === 0 ? '#6366f1;color:#fff;' : '#fff;color:#3730a3;') + 'border:1px solid #c7d2fe;'
+                }, tab);
+                tabBtn.onclick = function() {
+                    tabContents.forEach(function(c, i) { c.style.display = i === idx ? 'block' : 'none'; });
+                    tabBar.querySelectorAll('[data-kbtab]').forEach(function(b) {
+                        b.style.background = b.getAttribute('data-kbtab') == idx ? '#6366f1' : '#fff';
+                        b.style.color = b.getAttribute('data-kbtab') == idx ? '#fff' : '#3730a3';
+                    });
+                };
+                tabBar.appendChild(tabBtn);
+                var content = createElement('div', { 'data-kbcontent': idx, style: 'flex:1;overflow-y:auto;padding:16px;display:' + (idx === 0 ? 'block' : 'none') + ';' });
+                tabContents.push(content);
+                panel.appendChild(tabBar);
+                panel.appendChild(content);
+            });
+            
+            this.initKnowledgeBase(tabContents[0]);
+            this.initChatHistory(tabContents[1]);
+            this.initCorpus(tabContents[2]);
+            this.initTemplates(tabContents[3]);
+            this.initStats(tabContents[4]);
+            this.initShortcuts(tabContents[5]);
+            this.initDarkMode(tabContents[6]);
+            this.initGlobalSearch(tabContents[7]);
+            
+            document.body.appendChild(panel);
+            this.panel = panel;
+            
+            this.addToDropdown();
+            
+            var style = document.createElement('style');
+            style.textContent = '@keyframes kbSpin{to{transform:rotate(360deg)}}';
+            document.head.appendChild(style);
+            
+            console.log('[知识库体验] 面板已创建');
+        } catch(e) { console.warn('[知识库体验] 初始化失败', e); }
+    },
+    
+    addToDropdown: function() {
+        try {
+            var dropdown = document.getElementById('paper-merged-dropdown');
+            if (!dropdown) { setTimeout(this.addToDropdown.bind(this), 1500); return; }
+            if (document.getElementById('kb-dropdown-option')) return;
+            
+            var option = document.createElement('div');
+            option.id = 'kb-dropdown-option';
+            option.style.cssText = 'padding:10px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.2s;margin-top:4px;border-top:1px solid #f1f5f9;';
+            option.innerHTML = '<span style="font-size:18px;">📚</span><div><div style="font-size:13px;font-weight:600;color:#1e293b;">知识库+体验优化</div><div style="font-size:11px;color:#64748b;">学术知识库/对话历史/语料/模板/统计/快捷键/深色模式/搜索</div></div>';
+            option.onmouseenter = function() { option.style.background = '#eef2ff'; };
+            option.onmouseleave = function() { option.style.background = 'transparent'; };
+            option.onclick = function() {
+                dropdown.style.display = 'none';
+                if (Panel.panel) Panel.panel.style.transform = 'translateX(0)';
+            };
+            dropdown.appendChild(option);
+            console.log('[知识库体验] 已加入论文AI工具箱下拉菜单');
+        } catch(e) { console.warn('[知识库体验] 加入下拉菜单失败:', e); }
+    },
+    
+    toggle: function() {
+        this.isOpen = !this.isOpen;
+        if (this.panel) this.panel.style.transform = this.isOpen ? 'translateX(0)' : 'translateX(100%)';
+    },
+    
+    // 1. 个人学术知识库
+    initKnowledgeBase: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📚 个人学术知识库'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '自动沉淀写作/审稿/返修过程，可检索复用'));
+        
+        var STORAGE_KEY = 'academic_knowledge_base';
+        
+        function getKB() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+            catch(e) { return []; }
+        }
+        function saveKB(kb) {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(kb)); }
+            catch(e) { SF.Toast.error('存储空间不足'); }
+        }
+        
+        // 添加新条目
+        var titleInput = createElement('input', { id: 'kbTitleInput', style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;', placeholder: '条目标题，例如：运动干预抑郁的机制表述' });
+        c.appendChild(titleInput);
+        
+        var tagSelect = createElement('select', { id: 'kbTagSelect', style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:8px;' });
+        ['写作表达', '审稿意见', '返修回复', '文献笔记', '方法技巧', '其他'].forEach(function(t) {
+            var opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+            tagSelect.appendChild(opt);
+        });
+        c.appendChild(tagSelect);
+        
+        var contentInput = createElement('textarea', { id: 'kbContentInput', style: 'width:100%;height:80px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;margin-bottom:8px;', placeholder: '内容（可粘贴AI生成的优质内容）...' });
+        c.appendChild(contentInput);
+        
+        var addBtn = createElement('button', { style: 'margin-bottom:16px;padding:8px 16px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;width:100%;' }, '➕ 添加到知识库');
+        c.appendChild(addBtn);
+        
+        // 搜索框
+        var searchInput = createElement('input', { id: 'kbSearchInput', style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;margin-bottom:10px;', placeholder: '🔍 搜索知识库...' });
+        c.appendChild(searchInput);
+        
+        var listDiv = createElement('div', { id: 'kbListDiv' });
+        c.appendChild(listDiv);
+        
+        function renderKB(filter) {
+            var kb = getKB();
+            filter = filter || '';
+            var filtered = kb.filter(function(item) {
+                if (!filter) return true;
+                var text = (item.title + ' ' + item.content + ' ' + item.tag).toLowerCase();
+                return text.indexOf(filter.toLowerCase()) >= 0;
+            });
+            
+            var html = '';
+            if (filtered.length === 0) {
+                html = '<div style="text-align:center;padding:30px;color:#94a3b8;"><div style="font-size:36px;margin-bottom:8px;">📭</div><div style="font-size:12px;">知识库为空</div><div style="font-size:10px;margin-top:4px;">添加优质表达/审稿意见/返修回复，后续写作可直接复用</div></div>';
+            } else {
+                filtered.forEach(function(item, idx) {
+                    var date = new Date(item.createdAt || Date.now());
+                    var dateStr = date.toLocaleDateString('zh-CN');
+                    var tagColors = {'写作表达':'#3b82f6','审稿意见':'#ef4444','返修回复':'#f59e0b','文献笔记':'#10b981','方法技巧':'#8b5cf6','其他':'#6b7280'};
+                    var tagColor = tagColors[item.tag] || '#6b7280';
+                    
+                    html += '<div style="background:#fff;padding:10px 12px;border-radius:8px;margin-bottom:8px;border:1px solid #e2e8f0;">';
+                    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">';
+                    html += '<div style="flex:1;font-size:13px;font-weight:600;color:#1e293b;">' + (item.title || '') + '</div>';
+                    html += '<span style="font-size:10px;background:' + tagColor + ';color:#fff;padding:2px 8px;border-radius:10px;flex-shrink:0;margin-left:8px;">' + (item.tag || '') + '</span>';
+                    html += '</div>';
+                    html += '<div style="font-size:11px;color:#64748b;line-height:1.6;max-height:60px;overflow:hidden;">' + (item.content || '').substring(0, 150) + ((item.content || '').length > 150 ? '...' : '') + '</div>';
+                    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">';
+                    html += '<span style="font-size:10px;color:#94a3b8;">' + dateStr + '</span>';
+                    html += '<div style="display:flex;gap:4px;">';
+                    html += '<button class="kbCopyBtn" data-idx="' + idx + '" style="padding:3px 8px;background:#eef2ff;color:#3730a3;border:none;border-radius:4px;font-size:10px;cursor:pointer;">复制</button>';
+                    html += '<button class="kbDelBtn" data-idx="' + idx + '" style="padding:3px 8px;background:#fef2f2;color:#dc2626;border:none;border-radius:4px;font-size:10px;cursor:pointer;">删除</button>';
+                    html += '</div></div></div>';
+                });
+            }
+            listDiv.innerHTML = html;
+            
+            // 绑定事件
+            listDiv.querySelectorAll('.kbCopyBtn').forEach(function(btn) {
+                btn.onclick = function() {
+                    var idx = parseInt(this.getAttribute('data-idx'));
+                    var kb = getKB();
+                    var item = kb.filter(function(x) { return true; })[idx]; // 简化
+                    navigator.clipboard.writeText(item.content).then(function() {
+                        SF.Toast.success('已复制到剪贴板');
+                    });
+                };
+            });
+            listDiv.querySelectorAll('.kbDelBtn').forEach(function(btn) {
+                btn.onclick = function() {
+                    var idx = parseInt(this.getAttribute('data-idx'));
+                    var kb = getKB();
+                    // 找到过滤后的索引对应的原始索引
+                    filter = document.getElementById('kbSearchInput').value;
+                    var filtered = kb.filter(function(item) {
+                        if (!filter) return true;
+                        var text = (item.title + ' ' + item.content + ' ' + item.tag).toLowerCase();
+                        return text.indexOf(filter.toLowerCase()) >= 0;
+                    });
+                    var origItem = filtered[idx];
+                    var origIdx = kb.indexOf(origItem);
+                    if (origIdx >= 0) {
+                        kb.splice(origIdx, 1);
+                        saveKB(kb);
+                        renderKB(document.getElementById('kbSearchInput').value);
+                        SF.Toast.success('已删除');
+                    }
+                };
+            });
+        }
+        
+        addBtn.onclick = function() {
+            var title = document.getElementById('kbTitleInput').value.trim();
+            var tag = document.getElementById('kbTagSelect').value;
+            var content = document.getElementById('kbContentInput').value.trim();
+            if (!title || !content) { SF.Toast.warning('请输入标题和内容'); return; }
+            
+            var kb = getKB();
+            kb.unshift({ title: title, tag: tag, content: content, createdAt: Date.now() });
+            saveKB(kb);
+            
+            document.getElementById('kbTitleInput').value = '';
+            document.getElementById('kbContentInput').value = '';
+            
+            renderKB(document.getElementById('kbSearchInput').value);
+            SF.Toast.success('已添加到知识库！');
+        };
+        
+        searchInput.oninput = function() {
+            renderKB(this.value);
+        };
+        
+        renderKB('');
+    },
+    
+    // 2. AI对话历史
+    initChatHistory: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '💬 AI对话历史'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '自动保存所有AI对话记录，可搜索/导出/复用'));
+        
+        var STORAGE_KEY = 'ai_chat_history';
+        
+        function getHistory() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+            catch(e) { return []; }
+        }
+        
+        var searchInput = createElement('input', { id: 'chatSearchInput', style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;margin-bottom:10px;', placeholder: '🔍 搜索对话历史...' });
+        c.appendChild(searchInput);
+        
+        var listDiv = createElement('div', { id: 'chatHistoryList' });
+        c.appendChild(listDiv);
+        
+        function renderHistory(filter) {
+            var history = getHistory();
+            filter = filter || '';
+            var filtered = history.filter(function(item) {
+                if (!filter) return true;
+                var text = (item.task + ' ' + (item.result || '')).toLowerCase();
+                return text.indexOf(filter.toLowerCase()) >= 0;
+            });
+            
+            var html = '';
+            if (filtered.length === 0) {
+                html = '<div style="text-align:center;padding:30px;color:#94a3b8;"><div style="font-size:36px;margin-bottom:8px;">💬</div><div style="font-size:12px;">暂无对话历史</div><div style="font-size:10px;margin-top:4px;">使用AI功能后会自动记录在这里</div></div>';
+            } else {
+                html += '<div style="font-size:11px;color:#64748b;margin-bottom:8px;">共 ' + filtered.length + ' 条记录</div>';
+                filtered.slice(0, 50).forEach(function(item, idx) {
+                    var date = new Date(item.timestamp || Date.now());
+                    var dateStr = date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+                    html += '<div style="background:#fff;padding:10px;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0;">';
+                    html += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">';
+                    html += '<span style="font-weight:600;color:#1e293b;">' + (item.task || 'AI对话') + '</span>';
+                    html += '<span style="font-size:10px;color:#94a3b8;">' + dateStr + '</span></div>';
+                    if (item.model) html += '<span style="font-size:10px;background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:8px;">' + item.model + '</span>';
+                    if (item.result) html += '<div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.5;max-height:50px;overflow:hidden;">' + item.result.substring(0, 100) + '...</div>';
+                    html += '</div>';
+                });
+            }
+            listDiv.innerHTML = html;
+        }
+        
+        searchInput.oninput = function() { renderHistory(this.value); };
+        renderHistory('');
+    },
+    
+    // 3. 常用语料库
+    initCorpus: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📝 常用语料库'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '保存常用学术表达/句型/术语，一键复制'));
+        
+        var STORAGE_KEY = 'common_corpus';
+        
+        function getCorpus() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+            catch(e) { return []; }
+        }
+        function saveCorpus(corpus) {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(corpus)); }
+            catch(e) { SF.Toast.error('存储空间不足'); }
+        }
+        
+        // 预设语料
+        var defaultCorpus = [
+            { category: '摘要句型', text: '本研究旨在探讨……对……的影响，以期为……提供理论依据和实践参考。', note: '摘要开头' },
+            { category: '引言句型', text: '随着……的快速发展，……问题日益受到关注，成为运动科学领域的研究热点。', note: '引言背景' },
+            { category: '讨论句型', text: '本研究结果表明，……与……之间存在显著相关，这与以往研究的发现一致/不一致。', note: '讨论部分' },
+            { category: '结论句型', text: '综上所述，本研究发现：第一，……；第二，……；第三，……。', note: '结论部分' },
+            { category: '运动科学术语', text: '最大摄氧量（VO2max）、心率变异性（HRV）、血乳酸（Bla）、肌氧饱和度（SmO2）', note: '常用指标英文缩写' }
+        ];
+        
+        // 如果没有数据，初始化默认语料
+        if (getCorpus().length === 0) {
+            saveCorpus(defaultCorpus);
+        }
+        
+        var corpus = getCorpus();
+        var categories = [...new Set(corpus.map(function(c) { return c.category; }))];
+        
+        // 分类筛选
+        var filterSelect = createElement('select', { id: 'corpusFilter', style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin-bottom:10px;' });
+        filterSelect.appendChild(createElement('option', { value: '' }, '全部分类'));
+        categories.forEach(function(cat) {
+            var opt = document.createElement('option'); opt.value = cat; opt.textContent = cat;
+            filterSelect.appendChild(opt);
+        });
+        c.appendChild(filterSelect);
+        
+        var listDiv = createElement('div', { id: 'corpusList' });
+        c.appendChild(listDiv);
+        
+        function renderCorpus(filter) {
+            var corpus = getCorpus();
+            filter = filter || '';
+            var filtered = filter ? corpus.filter(function(c) { return c.category === filter; }) : corpus;
+            
+            var html = '';
+            filtered.forEach(function(item, idx) {
+                html += '<div style="background:#fff;padding:10px 12px;border-radius:8px;margin-bottom:8px;border:1px solid #e2e8f0;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">';
+                html += '<span style="font-size:10px;background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:10px;">' + (item.category || '') + '</span>';
+                html += '<button class="corpusCopyBtn" data-idx="' + corpus.indexOf(item) + '" style="padding:3px 8px;background:#6366f1;color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer;">复制</button>';
+                html += '</div>';
+                html += '<div style="font-size:12px;color:#334155;line-height:1.7;">' + (item.text || '') + '</div>';
+                if (item.note) html += '<div style="font-size:10px;color:#94a3b8;margin-top:4px;font-style:italic;">📌 ' + item.note + '</div>';
+                html += '</div>';
+            });
+            listDiv.innerHTML = html;
+            
+            listDiv.querySelectorAll('.corpusCopyBtn').forEach(function(btn) {
+                btn.onclick = function() {
+                    var idx = parseInt(this.getAttribute('data-idx'));
+                    var corpus = getCorpus();
+                    var item = corpus[idx];
+                    if (item) {
+                        navigator.clipboard.writeText(item.text).then(function() {
+                            SF.Toast.success('已复制到剪贴板');
+                        });
+                    }
+                };
+            });
+        }
+        
+        filterSelect.onchange = function() { renderCorpus(this.value); };
+        renderCorpus('');
+    },
+    
+    // 4. 快捷模板库
+    initTemplates: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📋 快捷模板库'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '常用论文模板/报告模板，一键插入'));
+        
+        var templates = [
+            { name: '摘要模板', icon: '📄', content: '【研究目的】\n【研究方法】\n【研究结果】\n【研究结论】\n【关键词】' },
+            { name: '引言框架', icon: '📖', content: '1. 研究背景\n2. 国内外研究现状\n3. 研究问题提出\n4. 研究目的与意义\n5. 研究内容与框架' },
+            { name: '讨论框架', icon: '💬', content: '1. 主要发现总结\n2. 与前人研究比较\n3. 理论意义\n4. 实践意义\n5. 研究局限性\n6. 未来研究方向' },
+            { name: '审稿回复模板', icon: '📝', content: '尊敬的编辑和审稿专家：\n\n感谢您对本文的宝贵意见。我们已根据意见进行了修改，逐条回复如下：\n\n意见1：\n回复：\n修改：\n\n意见2：\n回复：\n修改：\n\n再次感谢！' },
+            { name: '文献综述框架', icon: '📚', content: '1. 概念界定\n2. 理论基础\n3. 相关研究回顾\n4. 研究述评\n5. 本研究切入点' }
+        ];
+        
+        templates.forEach(function(tpl) {
+            var card = createElement('div', { style: 'background:#fff;padding:12px;border-radius:8px;margin-bottom:8px;border:1px solid #e2e8f0;cursor:pointer;transition:all 0.2s;' });
+            card.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">' + tpl.icon + '</span><div style="flex:1;"><div style="font-size:13px;font-weight:600;color:#1e293b;">' + tpl.name + '</div><div style="font-size:10px;color:#64748b;margin-top:2px;">点击复制模板</div></div></div>';
+            card.onmouseenter = function() { card.style.borderColor = '#6366f1'; card.style.background = '#eef2ff'; };
+            card.onmouseleave = function() { card.style.borderColor = '#e2e8f0'; card.style.background = '#fff'; };
+            card.onclick = function() {
+                navigator.clipboard.writeText(tpl.content).then(function() {
+                    SF.Toast.success('模板已复制：' + tpl.name);
+                });
+            };
+            c.appendChild(card);
+        });
+    },
+    
+    // 5. AI使用统计
+    initStats: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '📊 AI使用统计'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '统计各功能使用次数、模型调用、节省时间估算'));
+        
+        var STORAGE_KEY = 'ai_usage_stats';
+        
+        function getStats() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+            catch(e) { return {}; }
+        }
+        
+        var stats = getStats();
+        var totalCalls = Object.values(stats).reduce(function(a, b) { return a + (b.count || 0); }, 0);
+        var totalMinutes = totalCalls * 3; // 每次AI调用平均节省3分钟
+        
+        var html = '';
+        // 总览卡片
+        html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">';
+        html += '<div style="text-align:center;background:linear-gradient(135deg,#eef2ff,#e0e7ff);padding:12px;border-radius:8px;"><div style="font-size:24px;font-weight:700;color:#4f46e5;">' + totalCalls + '</div><div style="font-size:10px;color:#3730a3;">AI调用次数</div></div>';
+        html += '<div style="text-align:center;background:linear-gradient(135deg,#ecfdf5,#d1fae5);padding:12px;border-radius:8px;"><div style="font-size:24px;font-weight:700;color:#059669;">' + totalMinutes + '</div><div style="font-size:10px;color:#065f46;">节省时间(分钟)</div></div>';
+        html += '<div style="text-align:center;background:linear-gradient(135deg,#fffbeb,#fef3c7);padding:12px;border-radius:8px;"><div style="font-size:24px;font-weight:700;color:#d97706;">' + Object.keys(stats).length + '</div><div style="font-size:10px;color:#92400e;">使用功能数</div></div>';
+        html += '</div>';
+        
+        // 各功能使用次数
+        if (totalCalls > 0) {
+            html += '<div style="font-size:12px;font-weight:600;margin-bottom:8px;color:#1e293b;">📈 功能使用排行</div>';
+            var sorted = Object.entries(stats).sort(function(a, b) { return (b[1].count || 0) - (a[1].count || 0); });
+            var maxCount = sorted[0][1].count || 1;
+            sorted.forEach(function(entry, idx) {
+                var task = entry[0];
+                var data = entry[1];
+                var pct = Math.round((data.count / maxCount) * 100);
+                html += '<div style="margin-bottom:8px;">';
+                html += '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;"><span style="color:#475569;">' + task + '</span><span style="font-weight:600;color:#1e293b;">' + data.count + '次</span></div>';
+                html += '<div style="height:6px;background:#f1f5f9;border-radius:3px;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:3px;"></div></div>';
+                html += '</div>';
+            });
+        } else {
+            html = '<div style="text-align:center;padding:40px;color:#94a3b8;"><div style="font-size:36px;margin-bottom:8px;">📊</div><div style="font-size:12px;">暂无使用记录</div><div style="font-size:10px;margin-top:4px;">使用AI功能后会自动统计</div></div>';
+        }
+        
+        c.innerHTML = html;
+    },
+    
+    // 6. 全局快捷键
+    initShortcuts: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '⌨️ 全局快捷键'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '常用功能快捷键，提升操作效率'));
+        
+        var shortcuts = [
+            { key: 'Ctrl + K', desc: '打开全局搜索', action: 'search' },
+            { key: 'Ctrl + Shift + P', desc: '打开AI工具箱', action: 'toolbox' },
+            { key: 'Ctrl + Shift + D', desc: '切换深色模式', action: 'darkmode' },
+            { key: 'Ctrl + /', desc: '显示快捷键帮助', action: 'help' },
+            { key: 'Esc', desc: '关闭当前面板', action: 'close' }
+        ];
+        
+        shortcuts.forEach(function(sc) {
+            var row = createElement('div', { style: 'background:#fff;padding:10px 12px;border-radius:8px;margin-bottom:6px;border:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;' });
+            row.innerHTML = '<div><div style="font-size:13px;font-weight:600;color:#1e293b;">' + sc.desc + '</div></div><code style="background:#f1f5f9;padding:4px 10px;border-radius:6px;font-size:11px;color:#4f46e5;font-weight:600;">' + sc.key + '</code>';
+            c.appendChild(row);
+        });
+        
+        // 启用快捷键
+        if (!window.__shortcutsEnabled) {
+            window.__shortcutsEnabled = true;
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'k') {
+                    e.preventDefault();
+                    var searchInput = document.querySelector('#kbSearchInput');
+                    if (searchInput) { searchInput.focus(); searchInput.select(); }
+                    SF.Toast.info('按 Ctrl+K 打开全局搜索');
+                }
+                if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+                    e.preventDefault();
+                    var btn = document.getElementById('paper-merged-btn');
+                    if (btn) btn.click();
+                }
+                if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                    e.preventDefault();
+                    toggleDarkMode();
+                }
+                if (e.ctrlKey && e.key === '/') {
+                    e.preventDefault();
+                    SF.Toast.info('快捷键：Ctrl+K搜索 / Ctrl+Shift+P工具箱 / Ctrl+Shift+D深色模式');
+                }
+            });
+            console.log('[知识库体验] 全局快捷键已启用');
+        }
+    },
+    
+    // 7. 深色模式
+    initDarkMode: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🌙 深色模式'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '切换浅色/深色主题，保护视力'));
+        
+        var toggleBtn = createElement('button', { id: 'darkModeToggleBtn', style: 'padding:10px 20px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;width:100%;margin-bottom:16px;' }, '🌙 切换深色模式');
+        c.appendChild(toggleBtn);
+        
+        // 当前状态
+        var isDark = localStorage.getItem('darkMode') === 'true';
+        toggleBtn.textContent = isDark ? '☀️ 切换浅色模式' : '🌙 切换深色模式';
+        
+        toggleBtn.onclick = function() {
+            toggleDarkMode();
+            var isDarkNow = localStorage.getItem('darkMode') === 'true';
+            this.textContent = isDarkNow ? '☀️ 切换浅色模式' : '🌙 切换深色模式';
+        };
+        
+        // 说明
+        c.appendChild(createElement('div', { style: 'background:#f8fafc;padding:12px;border-radius:8px;font-size:11px;color:#64748b;line-height:1.7;' }, 
+            '💡 深色模式说明：\n' +
+            '• 快捷键 Ctrl+Shift+D 快速切换\n' +
+            '• 设置自动保存在本地\n' +
+            '• 刷新页面后保持上次设置\n' +
+            '• 适合夜间长时间使用，减轻眼睛疲劳'
+        ));
+    },
+    
+    // 8. 全局搜索
+    initGlobalSearch: function(c) {
+        c.innerHTML = '';
+        c.appendChild(createElement('div', { style: 'font-size:14px;font-weight:600;margin-bottom:8px;color:#1e293b;' }, '🔍 全局搜索'));
+        c.appendChild(createElement('div', { style: 'font-size:12px;color:#64748b;margin-bottom:12px;' }, '搜索所有AI生成内容、知识库、对话历史'));
+        
+        var searchInput = createElement('input', { id: 'globalSearchInput', style: 'width:100%;padding:10px;border:2px solid #c7d2fe;border-radius:8px;font-size:13px;margin-bottom:12px;', placeholder: '输入关键词搜索...' });
+        c.appendChild(searchInput);
+        
+        var result = createElement('div', { id: 'globalSearchResult' });
+        c.appendChild(result);
+        
+        searchInput.oninput = function() {
+            var query = this.value.trim().toLowerCase();
+            if (!query) { result.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;">输入关键词开始搜索</div>'; return; }
+            
+            var html = '';
+            var count = 0;
+            
+            // 搜索知识库
+            try {
+                var kb = JSON.parse(localStorage.getItem('academic_knowledge_base') || '[]');
+                var kbResults = kb.filter(function(item) {
+                    return (item.title + ' ' + item.content).toLowerCase().indexOf(query) >= 0;
+                });
+                if (kbResults.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin:10px 0 6px;color:#6366f1;">📚 知识库 (' + kbResults.length + '条)</div>';
+                    kbResults.slice(0, 5).forEach(function(item) {
+                        html += '<div style="background:#fff;padding:8px 10px;border-radius:6px;margin-bottom:4px;border:1px solid #e2e8f0;"><div style="font-size:12px;font-weight:600;color:#1e293b;">' + item.title + '</div><div style="font-size:11px;color:#64748b;">' + item.content.substring(0, 80) + '...</div></div>';
+                    });
+                    count += kbResults.length;
+                }
+            } catch(e) {}
+            
+            // 搜索对话历史
+            try {
+                var history = JSON.parse(localStorage.getItem('ai_chat_history') || '[]');
+                var histResults = history.filter(function(item) {
+                    return (item.task + ' ' + (item.result || '')).toLowerCase().indexOf(query) >= 0;
+                });
+                if (histResults.length > 0) {
+                    html += '<div style="font-size:12px;font-weight:600;margin:10px 0 6px;color:#059669;">💬 对话历史 (' + histResults.length + '条)</div>';
+                    histResults.slice(0, 5).forEach(function(item) {
+                        html += '<div style="background:#fff;padding:8px 10px;border-radius:6px;margin-bottom:4px;border:1px solid #e2e8f0;"><div style="font-size:12px;font-weight:600;color:#1e293b;">' + (item.task || 'AI对话') + '</div><div style="font-size:11px;color:#64748b;">' + (item.result || '').substring(0, 80) + '...</div></div>';
+                    });
+                    count += histResults.length;
+                }
+            } catch(e) {}
+            
+            if (count === 0) {
+                html = '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;">未找到相关内容</div>';
+            } else {
+                html = '<div style="font-size:11px;color:#64748b;margin-bottom:8px;">找到 ' + count + ' 条结果</div>' + html;
+            }
+            
+            result.innerHTML = html;
+        };
+        
+        result.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;">输入关键词开始搜索</div>';
+    }
+};
+
+// 深色模式切换函数
+function toggleDarkMode() {
+    var isDark = localStorage.getItem('darkMode') === 'true';
+    var newVal = !isDark;
+    localStorage.setItem('darkMode', newVal ? 'true' : 'false');
+    
+    if (newVal) {
+        document.body.style.filter = 'invert(0.9) hue-rotate(180deg)';
+        document.body.style.transition = 'filter 0.3s ease';
+        SF.Toast.success('已切换到深色模式');
+    } else {
+        document.body.style.filter = '';
+        SF.Toast.success('已切换到浅色模式');
+    }
+}
+
+// 初始化深色模式
+(function() {
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.style.filter = 'invert(0.9) hue-rotate(180deg)';
+        document.body.style.transition = 'filter 0.3s ease';
+    }
+})();
+
+setTimeout(function() {
+    Panel.init();
+    console.log('✅ 知识库沉淀+体验优化 v1.0 已加载（8个功能：学术知识库/对话历史/常用语料/快捷模板/使用统计/快捷键/深色模式/全局搜索）');
+}, 1500);
+
+} catch(e) {
+    console.error('[知识库体验] 顶层错误:', e);
+}
+})();
+</script>
+<!-- ========== 知识库沉淀+体验优化 v1.0 结束 ========== -->
+
 </body>
 </html>
