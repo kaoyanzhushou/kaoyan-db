@@ -151745,5 +151745,323 @@ setTimeout(function() {
 </script>
 <!-- ========== 知识库沉淀+体验优化 v1.0 结束 ========== -->
 
+
+<!-- ========== 导航栏折叠优化 v1.0 开始 ========== -->
+<style>
+/* 导航栏折叠优化 */
+.nav-group{
+    position:relative;
+    cursor:pointer;
+    user-select:none;
+    padding-right:24px !important;
+}
+.nav-group::after{
+    content:'▼';
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:10px;
+    color:#94a3b8;
+    transition:transform 0.3s ease;
+}
+.nav-group.collapsed::after{
+    transform:translateY(-50%) rotate(-90deg);
+}
+.nav-group.collapsed + .nav-item,
+.nav-group.collapsed ~ .nav-item,
+.nav-group.collapsed ~ .nav-group-start ~ .nav-item{
+    display:none !important;
+}
+/* 折叠时隐藏同组所有子项 */
+.nav-group.collapsed ~ .nav-item.nav-sub-item{
+    display:none !important;
+}
+
+/* 导航搜索框 */
+.nav-search-box{
+    margin:10px 12px;
+    position:relative;
+}
+.nav-search-box input{
+    width:100%;
+    padding:6px 10px 6px 30px;
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:6px;
+    background:rgba(255,255,255,0.05);
+    color:#e2e8f0;
+    font-size:12px;
+    outline:none;
+    transition:border-color 0.2s;
+    box-sizing:border-box;
+}
+.nav-search-box input::placeholder{
+    color:#64748b;
+}
+.nav-search-box input:focus{
+    border-color:#6366f1;
+}
+.nav-search-icon{
+    position:absolute;
+    left:10px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:12px;
+    color:#64748b;
+}
+
+/* 最近访问 */
+.recent-visits{
+    margin:10px 12px;
+    padding:8px;
+    background:rgba(255,255,255,0.03);
+    border-radius:8px;
+    display:none;
+}
+.recent-visits.show{
+    display:block;
+}
+.recent-visits-title{
+    font-size:10px;
+    color:#64748b;
+    margin-bottom:6px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+}
+.recent-visit-item{
+    padding:4px 8px;
+    border-radius:4px;
+    font-size:12px;
+    color:#cbd5e1;
+    cursor:pointer;
+    transition:background 0.2s;
+}
+.recent-visit-item:hover{
+    background:rgba(99,102,241,0.15);
+}
+
+/* 全部折叠/展开按钮 */
+.nav-collapse-all{
+    position:absolute;
+    bottom:12px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:4px 12px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;
+    color:#94a3b8;
+    font-size:11px;
+    cursor:pointer;
+    transition:all 0.2s;
+    z-index:10;
+}
+.nav-collapse-all:hover{
+    background:rgba(99,102,241,0.2);
+    color:#e2e8f0;
+}
+
+/* 分组间距加大 */
+.nav-group{
+    margin-top:16px !important;
+}
+.nav-group:first-of-type{
+    margin-top:8px !important;
+}
+
+/* 激活项左边竖条 */
+.nav-item.active{
+    border-left:3px solid #6366f1;
+    padding-left:calc(12px - 3px) !important;
+}
+
+/* 滚动条美化 */
+.sidebar::-webkit-scrollbar{
+    width:4px;
+}
+.sidebar::-webkit-scrollbar-track{
+    background:transparent;
+}
+.sidebar::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,0.1);
+    border-radius:2px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover{
+    background:rgba(255,255,255,0.2);
+}
+</style>
+
+<script>
+(function() {
+'use strict';
+try {
+
+console.log('[导航优化] 开始加载导航栏折叠优化...');
+
+// 等待DOM加载完成
+function init() {
+    var sidebar = document.querySelector('.sidebar');
+    if (!sidebar) {
+        setTimeout(init, 500);
+        return;
+    }
+
+    // 1. 给nav-group添加点击折叠功能
+    var navGroups = sidebar.querySelectorAll('.nav-group');
+    navGroups.forEach(function(group) {
+        // 默认不折叠，保持原有展开状态
+        group.addEventListener('click', function(e) {
+            e.stopPropagation();
+            group.classList.toggle('collapsed');
+        });
+    });
+
+    // 2. 在导航顶部添加搜索框
+    var sidebarH2 = sidebar.querySelector('h2');
+    if (sidebarH2 && !document.getElementById('navSearchBox')) {
+        var searchBox = document.createElement('div');
+        searchBox.className = 'nav-search-box';
+        searchBox.id = 'navSearchBox';
+        searchBox.innerHTML = '<span class="nav-search-icon">🔍</span><input type="text" id="navSearchInput" placeholder="搜索菜单项...">';
+        sidebarH2.parentNode.insertBefore(searchBox, sidebarH2.nextSibling);
+
+        // 搜索过滤功能
+        var searchInput = document.getElementById('navSearchInput');
+        searchInput.addEventListener('input', function() {
+            var query = this.value.toLowerCase().trim();
+            var allItems = sidebar.querySelectorAll('.nav-item');
+            var allGroups = sidebar.querySelectorAll('.nav-group');
+
+            if (!query) {
+                // 清空搜索，恢复显示
+                allItems.forEach(function(item) { item.style.display = ''; });
+                allGroups.forEach(function(group) { group.style.display = ''; });
+                return;
+            }
+
+            // 搜索时显示所有，隐藏不匹配的
+            allGroups.forEach(function(group) { group.style.display = 'none'; });
+            allItems.forEach(function(item) {
+                var text = item.textContent.toLowerCase();
+                if (text.indexOf(query) >= 0) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // 3. 添加最近访问记录
+    var recentVisits = [];
+    var MAX_RECENT = 3;
+
+    function addRecentVisit(name, tab) {
+        // 去重
+        recentVisits = recentVisits.filter(function(v) { return v.tab !== tab; });
+        recentVisits.unshift({ name: name, tab: tab });
+        if (recentVisits.length > MAX_RECENT) {
+            recentVisits.pop();
+        }
+        renderRecentVisits();
+        // 保存到localStorage
+        try {
+            localStorage.setItem('recent_visits', JSON.stringify(recentVisits));
+        } catch(e) {}
+    }
+
+    function renderRecentVisits() {
+        var container = document.getElementById('recentVisitsContainer');
+        if (!container) return;
+        if (recentVisits.length === 0) {
+            container.classList.remove('show');
+            return;
+        }
+        container.classList.add('show');
+        container.innerHTML = '<div class="recent-visits-title">🕐 最近访问</div>' +
+            recentVisits.map(function(v) {
+                return '<div class="recent-visit-item" data-tab="' + v.tab + '">→ ' + v.name + '</div>';
+            }).join('');
+
+        // 绑定点击事件
+        container.querySelectorAll('.recent-visit-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                var tab = this.getAttribute('data-tab');
+                // 调用原有的switchTab函数
+                if (typeof switchTab === 'function') {
+                    switchTab(tab);
+                }
+            });
+        });
+    }
+
+    // 从localStorage加载
+    try {
+        var saved = localStorage.getItem('recent_visits');
+        if (saved) {
+            recentVisits = JSON.parse(saved);
+        }
+    } catch(e) {}
+
+    // 在搜索框下面插入最近访问容器
+    var searchBox = document.getElementById('navSearchBox');
+    if (searchBox && !document.getElementById('recentVisitsContainer')) {
+        var recentContainer = document.createElement('div');
+        recentContainer.className = 'recent-visits';
+        recentContainer.id = 'recentVisitsContainer';
+        searchBox.parentNode.insertBefore(recentContainer, searchBox.nextSibling);
+        renderRecentVisits();
+    }
+
+    // 4. 监听tab切换，记录最近访问
+    var originalSwitchTab = window.switchTab;
+    if (typeof originalSwitchTab === 'function') {
+        window.switchTab = function(tab) {
+            originalSwitchTab.apply(this, arguments);
+            // 获取当前tab的名称
+            var activeItem = sidebar.querySelector('.nav-item.active span:last-child');
+            var name = activeItem ? activeItem.textContent : tab;
+            addRecentVisit(name, tab);
+        };
+    }
+
+    // 5. 添加全部折叠/展开按钮
+    if (!document.getElementById('navCollapseAll')) {
+        var collapseBtn = document.createElement('div');
+        collapseBtn.className = 'nav-collapse-all';
+        collapseBtn.id = 'navCollapseAll';
+        collapseBtn.textContent = '📂 全部折叠';
+        var allCollapsed = false;
+        collapseBtn.addEventListener('click', function() {
+            allCollapsed = !allCollapsed;
+            navGroups.forEach(function(group) {
+                if (allCollapsed) {
+                    group.classList.add('collapsed');
+                } else {
+                    group.classList.remove('collapsed');
+                }
+            });
+            collapseBtn.textContent = allCollapsed ? '📂 全部展开' : '📂 全部折叠';
+        });
+        sidebar.appendChild(collapseBtn);
+    }
+
+    console.log('✅ 导航栏折叠优化 v1.0 已加载（折叠功能/搜索框/最近访问/全部折叠按钮）');
+}
+
+// DOM加载完成后初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    setTimeout(init, 1000);
+}
+
+} catch(e) {
+    console.error('[导航优化] 错误:', e);
+}
+})();
+</script>
+<!-- ========== 导航栏折叠优化 v1.0 结束 ========== -->
+
 </body>
 </html>
