@@ -152063,5 +152063,716 @@ if (document.readyState === 'loading') {
 </script>
 <!-- ========== 导航栏折叠优化 v1.0 结束 ========== -->
 
+
+<!-- ========== 元认知AI工具库 v1.0 开始 ========== -->
+<style>
+/* 元认知AI面板样式 */
+#meta-cog-panel{
+    position:fixed;
+    top:0;
+    right:0;
+    width:620px;
+    height:100vh;
+    background:#fff;
+    z-index:2147483635;
+    box-shadow:-4px 0 24px rgba(0,0,0,0.15);
+    transform:translateX(100%);
+    transition:transform 0.3s ease;
+    display:flex;
+    flex-direction:column;
+}
+#meta-cog-panel.open{
+    transform:translateX(0);
+}
+#meta-cog-panel .panel-header{
+    padding:16px 20px;
+    background:linear-gradient(135deg,#6366f1,#4f46e5);
+    color:#fff;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-shrink:0;
+}
+#meta-cog-panel .panel-header h3{
+    margin:0;
+    font-size:16px;
+    font-weight:600;
+}
+#meta-cog-panel .close-btn{
+    cursor:pointer;
+    font-size:20px;
+    opacity:0.8;
+}
+#meta-cog-panel .close-btn:hover{
+    opacity:1;
+}
+#meta-cog-panel .tab-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    padding:10px 12px;
+    background:#eef2ff;
+    border-bottom:1px solid #c7d2fe;
+    flex-shrink:0;
+}
+#meta-cog-panel .tab-btn{
+    padding:5px 9px;
+    border-radius:6px;
+    font-size:11px;
+    cursor:pointer;
+    transition:all 0.2s;
+    background:#fff;
+    color:#3730a3;
+    border:1px solid #c7d2fe;
+}
+#meta-cog-panel .tab-btn.active{
+    background:#6366f1;
+    color:#fff;
+}
+#meta-cog-panel .panel-content{
+    flex:1;
+    overflow-y:auto;
+    padding:16px;
+}
+#meta-cog-panel .func-card{
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:12px;
+}
+#meta-cog-panel .func-card h4{
+    margin:0 0 8px;
+    font-size:14px;
+    color:#1e293b;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+#meta-cog-panel .func-card p{
+    margin:0 0 10px;
+    font-size:12px;
+    color:#64748b;
+    line-height:1.6;
+}
+#meta-cog-panel .func-card textarea,
+#meta-cog-panel .func-card input{
+    width:100%;
+    padding:8px;
+    border:1px solid #cbd5e1;
+    border-radius:6px;
+    font-size:12px;
+    margin-bottom:8px;
+    box-sizing:border-box;
+}
+#meta-cog-panel .func-card textarea{
+    height:80px;
+    resize:vertical;
+}
+#meta-cog-panel .func-card .action-btn{
+    padding:8px 16px;
+    background:#6366f1;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    font-size:12px;
+    cursor:pointer;
+}
+#meta-cog-panel .func-card .action-btn:hover{
+    background:#4f46e5;
+}
+#meta-cog-panel .func-card .result-box{
+    margin-top:10px;
+    padding:10px;
+    background:#f8fafc;
+    border-radius:6px;
+    font-size:12px;
+    line-height:1.7;
+    color:#334155;
+    display:none;
+}
+#meta-cog-panel .func-card .result-box.show{
+    display:block;
+}
+#meta-cog-panel .loading{
+    text-align:center;
+    padding:20px;
+    color:#666;
+    font-size:13px;
+}
+#meta-cog-panel .loading::before{
+    content:'⏳';
+    display:block;
+    font-size:24px;
+    margin-bottom:8px;
+    animation:metaSpin 1s linear infinite;
+}
+@keyframes metaSpin{
+    to{transform:rotate(360deg);}
+}
+
+/* 导航菜单项 */
+.nav-item-meta-cog{
+    /* 和其他nav-item保持一致 */
+}
+</style>
+
+<script>
+(function() {
+'use strict';
+try {
+
+console.log('[元认知AI] 开始加载元认知AI工具库...');
+
+var SF = window.StabilityFramework;
+var callAIStable = window.callAIStable;
+
+// 1. 在左侧导航「论文工作台」组下添加菜单项
+function addNavItem() {
+    var paperGroup = document.querySelector('.nav-group-paper');
+    if (!paperGroup) {
+        setTimeout(addNavItem, 500);
+        return;
+    }
+    
+    // 检查是否已添加
+    if (document.getElementById('navItemMetaCog')) {
+        return;
+    }
+    
+    // 找到论文工作台组的最后一个子项
+    var paperItems = paperGroup.parentNode.querySelectorAll('.nav-item-paper, .nav-sub-item.nav-item-paper');
+    var lastItem = paperItems[paperItems.length - 1];
+    
+    if (lastItem) {
+        var newItem = document.createElement('div');
+        newItem.className = 'nav-item nav-sub-item nav-item-paper nav-item-meta-cog';
+        newItem.id = 'navItemMetaCog';
+        newItem.setAttribute('data-tab', 'paper');
+        newItem.innerHTML = '<span class="icon">🧠</span><span>元认知AI</span>';
+        newItem.style.cursor = 'pointer';
+        newItem.onclick = function(e) {
+            e.stopPropagation();
+            openMetaCogPanel();
+        };
+        lastItem.parentNode.insertBefore(newItem, lastItem.nextSibling);
+        console.log('[元认知AI] 已添加导航菜单项');
+    }
+}
+
+// 2. 创建右侧面板
+var panelEl = null;
+
+function createPanel() {
+    if (panelEl) return panelEl;
+    
+    var panel = document.createElement('div');
+    panel.id = 'meta-cog-panel';
+    panel.innerHTML = `
+        <div class="panel-header">
+            <h3>🧠 元认知AI工具库</h3>
+            <div class="close-btn" onclick="document.getElementById('meta-cog-panel').classList.remove('open')">✕</div>
+        </div>
+        <div class="tab-bar">
+            <div class="tab-btn active" data-tab="self">认识你自己</div>
+            <div class="tab-btn" data-tab="future">看见未来</div>
+            <div class="tab-btn" data-tab="challenge">挑战研究</div>
+            <div class="tab-btn" data-tab="intel">学术情报</div>
+        </div>
+        <div class="panel-content" id="metaCogContent">
+            <!-- 内容由JS动态生成 -->
+        </div>
+    `;
+    
+    document.body.appendChild(panel);
+    panelEl = panel;
+    
+    // tab切换
+    panel.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.onclick = function() {
+            panel.querySelectorAll('.tab-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            btn.classList.add('active');
+            renderTabContent(btn.getAttribute('data-tab'));
+        };
+    });
+    
+    // 默认渲染第一个tab
+    renderTabContent('self');
+    
+    return panel;
+}
+
+function openMetaCogPanel() {
+    var panel = createPanel();
+    panel.classList.add('open');
+}
+
+// 3. 渲染tab内容
+var tabContents = {
+    self: renderSelfTab,
+    future: renderFutureTab,
+    challenge: renderChallengeTab,
+    intel: renderIntelTab
+};
+
+function renderTabContent(tab) {
+    var contentDiv = document.getElementById('metaCogContent');
+    if (!contentDiv) return;
+    
+    if (tabContents[tab]) {
+        contentDiv.innerHTML = '';
+        tabContents[tab](contentDiv);
+    }
+}
+
+// 通用：调用AI
+function callMetaAI(prompt, resultDiv) {
+    if (!callAIStable) {
+        resultDiv.innerHTML = '<div class="result-box show">⚠️ AI服务未就绪，请稍后再试</div>';
+        return;
+    }
+    
+    resultDiv.innerHTML = '<div class="loading">AI思考中，请稍候...</div>';
+    
+    callAIStable('meta_cognition',
+        '你是一位资深的体育科研专家和学术导师，拥有20年科研指导经验。请用专业、深入、有洞察力的语言回答，给出具体可操作的建议，不要空泛。',
+        prompt,
+        2000,
+        {}
+    ).then(function(result) {
+        resultDiv.innerHTML = '<div class="result-box show"><strong>💡 AI分析结果：</strong><br><br>' + result.replace(/\n/g, '<br>') + '</div>';
+    }).catch(function(err) {
+        resultDiv.innerHTML = '<div class="result-box show" style="color:#dc2626;">❌ 调用失败：' + (err.message || err) + '</div>';
+    });
+}
+
+// ========== 认识你自己 tab ==========
+function renderSelfTab(container) {
+    // 1. 学术DNA深度分析
+    var dnaCard = document.createElement('div');
+    dnaCard.className = 'func-card';
+    dnaCard.innerHTML = `
+        <h4>🧬 学术DNA深度分析</h4>
+        <p>分析你的写作风格/研究偏好/常用方法，生成你的"学术DNA画像"，推荐最适合你的研究方向</p>
+        <textarea id="dnaInput" placeholder="粘贴你过往论文的摘要或研究方向描述，例如：我的研究方向是运动生物化学，主要做运动训练对骨骼肌代谢的影响..."></textarea>
+        <button class="action-btn" onclick="runDnaAnalysis()">🔬 分析我的学术DNA</button>
+        <div class="result-box" id="dnaResult"></div>
+    `;
+    container.appendChild(dnaCard);
+    
+    // 2. 思维盲点检测器
+    var blindCard = document.createElement('div');
+    blindCard.className = 'func-card';
+    blindCard.innerHTML = `
+        <h4>🔍 思维盲点检测器</h4>
+        <p>找出你研究中默认但没意识到的假设：确认偏差/忽略反例/过于乐观</p>
+        <textarea id="blindInput" placeholder="描述你的研究方案或论文摘要，例如：本研究假设有氧运动可以改善抑郁症状..."></textarea>
+        <button class="action-btn" onclick="runBlindCheck()">🔍 检测我的思维盲点</button>
+        <div class="result-box" id="blindResult"></div>
+    `;
+    container.appendChild(blindCard);
+    
+    // 3. 论文伪装检查
+    var disguiseCard = document.createElement('div');
+    disguiseCard.className = 'func-card';
+    disguiseCard.innerHTML = `
+        <h4>🎭 论文伪装检查</h4>
+        <p>判断你的论文看起来像研究生写的还是教授写的，找出"新手痕迹"并给出修改建议</p>
+        <textarea id="disguiseInput" placeholder="粘贴你的论文片段（引言/讨论部分最佳）..."></textarea>
+        <button class="action-btn" onclick="runDisguiseCheck()">🎭 检查论文伪装度</button>
+        <div class="result-box" id="disguiseResult"></div>
+    `;
+    container.appendChild(disguiseCard);
+}
+
+// ========== 看见未来 tab ==========
+function renderFutureTab(container) {
+    // 4. 研究趋势预测与浪潮定位
+    var waveCard = document.createElement('div');
+    waveCard.className = 'func-card';
+    waveCard.innerHTML = `
+        <h4>🌊 研究趋势预测与浪潮定位</h4>
+        <p>告诉你现在处于浪潮哪个阶段（初期蓝海/中期红海/末期夕阳），预测3年后趋势，现在该做什么布局</p>
+        <input type="text" id="waveInput" placeholder="输入你的研究方向，例如：运动干预抑郁症">
+        <button class="action-btn" onclick="runWaveAnalysis()">🌊 分析研究浪潮</button>
+        <div class="result-box" id="waveResult"></div>
+    `;
+    container.appendChild(waveCard);
+    
+    // 5. 研究时间胶囊
+    var capsuleCard = document.createElement('div');
+    capsuleCard.className = 'func-card';
+    capsuleCard.innerHTML = `
+        <h4>⏳ 研究时间胶囊</h4>
+        <p>预测5年后回头看，这个研究的真实价值是什么？哪些判断是对的？哪些是错的？</p>
+        <textarea id="capsuleInput" placeholder="描述你现在正在做的研究..."></textarea>
+        <button class="action-btn" onclick="runTimeCapsule()">⏳ 打开时间胶囊</button>
+        <div class="result-box" id="capsuleResult"></div>
+    `;
+    container.appendChild(capsuleCard);
+    
+    // 6. 论文死后预测
+    var deathCard = document.createElement('div');
+    deathCard.className = 'func-card';
+    deathCard.innerHTML = `
+        <h4>📉 论文"死后"预测</h4>
+        <p>预测你的论文发表后会被谁引用？会被用来支持什么观点？3年后会不会被推翻？</p>
+        <textarea id="deathInput" placeholder="粘贴你的论文摘要..."></textarea>
+        <button class="action-btn" onclick="runDeathPrediction()">📉 预测论文"死后"</button>
+        <div class="result-box" id="deathResult"></div>
+    `;
+    container.appendChild(deathCard);
+}
+
+// ========== 挑战研究 tab ==========
+function renderChallengeTab(container) {
+    // 7. 研究可行性沙盘
+    var sandBoxCard = document.createElement('div');
+    sandBoxCard.className = 'func-card';
+    sandBoxCard.innerHTML = `
+        <h4>🏖️ 研究可行性沙盘</h4>
+        <p>模拟做这个研究会遇到什么坑：样本难招？数据不好收？统计方法选错？审稿人有意见？</p>
+        <textarea id="sandboxInput" placeholder="描述你的研究想法和方案..."></textarea>
+        <button class="action-btn" onclick="runSandbox()">🏖️ 进入沙盘模拟</button>
+        <div class="result-box" id="sandboxResult"></div>
+    `;
+    container.appendChild(sandBoxCard);
+    
+    // 8. 研究反方辩手
+    var debateCard = document.createElement('div');
+    debateCard.className = 'func-card';
+    debateCard.innerHTML = `
+        <h4>⚔️ 研究"反方辩手"</h4>
+        <p>站在彻底反对你的立场写一篇完整批判：为什么研究问题不重要？方法有什么致命缺陷？</p>
+        <textarea id="debateInput" placeholder="粘贴你的研究方案或论文摘要..."></textarea>
+        <button class="action-btn" onclick="runDebate()">⚔️ 召唤反方辩手</button>
+        <div class="result-box" id="debateResult"></div>
+    `;
+    container.appendChild(debateCard);
+    
+    // 9. 研究岔路口模拟器
+    var forkCard = document.createElement('div');
+    forkCard.className = 'func-card';
+    forkCard.innerHTML = `
+        <h4>🔀 研究岔路口模拟器</h4>
+        <p>模拟两条研究路径分别会走到哪里：会遇到什么问题？产出什么结果？哪个更有长期影响力？</p>
+        <textarea id="forkInput" placeholder="描述你的研究决策点，例如：我应该用问卷调查还是实验干预？"></textarea>
+        <button class="action-btn" onclick="runForkSimulator()">🔀 模拟两条路径</button>
+        <div class="result-box" id="forkResult"></div>
+    `;
+    container.appendChild(forkCard);
+    
+    // 10. AI虚拟合作者
+    var partnerCard = document.createElement('div');
+    partnerCard.className = 'func-card';
+    partnerCard.innerHTML = `
+        <h4>🤝 AI虚拟合作者</h4>
+        <p>不是工具，而是一个有"性格"的合作者：你可以跟它讨论研究问题、争论观点、头脑风暴</p>
+        <textarea id="partnerInput" placeholder="输入你想讨论的研究问题..."></textarea>
+        <button class="action-btn" onclick="runPartnerChat()">🤝 和合作者讨论</button>
+        <div class="result-box" id="partnerResult"></div>
+    `;
+    container.appendChild(partnerCard);
+}
+
+// ========== 学术情报 tab ==========
+function renderIntelTab(container) {
+    // 11. 研究雷达
+    var radarCard = document.createElement('div');
+    radarCard.className = 'func-card';
+    radarCard.innerHTML = `
+        <h4>📡 研究雷达</h4>
+        <p>分析你关注的领域，告诉你最近应该关注什么新论文/新方法/新趋势</p>
+        <input type="text" id="radarInput" placeholder="输入你的研究方向，例如：运动生物化学">
+        <button class="action-btn" onclick="runRadar()">📡 启动研究雷达</button>
+        <div class="result-box" id="radarResult"></div>
+    `;
+    container.appendChild(radarCard);
+    
+    // 12. 引用网络X光
+    var citeCard = document.createElement('div');
+    citeCard.className = 'func-card';
+    citeCard.innerHTML = `
+        <h4>🕸️ 引用网络X光</h4>
+        <p>分析你的引用圈是不是太同质化？哪些领域的人在引用你但你没引用？漏了哪些关键文献？</p>
+        <textarea id="citeInput" placeholder="粘贴你引用的文献列表或你的论文参考文献..."></textarea>
+        <button class="action-btn" onclick="runCiteXray()">🕸️ 做引用X光</button>
+        <div class="result-box" id="citeResult"></div>
+    `;
+    container.appendChild(citeCard);
+    
+    // 13. 学术潜规则翻译
+    var unwrittenCard = document.createElement('div');
+    unwrittenCard.className = 'func-card';
+    unwrittenCard.innerHTML = `
+        <h4>🤫 学术潜规则翻译</h4>
+        <p>告诉你这个期刊/领域不说出来但真实存在的规则：什么样的论文容易中？什么样的会被秒拒？</p>
+        <input type="text" id="unwrittenInput" placeholder="输入期刊名或领域，例如：体育科学/上海体育学院学报">
+        <button class="action-btn" onclick="runUnwritten()">🤫 翻译潜规则</button>
+        <div class="result-box" id="unwrittenResult"></div>
+    `;
+    container.appendChild(unwrittenCard);
+}
+
+// ========== 各功能实现 ==========
+window.runDnaAnalysis = function() {
+    var input = document.getElementById('dnaInput').value.trim();
+    var result = document.getElementById('dnaResult');
+    if (!input) { alert('请先输入你的研究方向描述'); return; }
+    
+    callMetaAI(
+        '请分析以下研究者的学术DNA：\n\n' + input + '\n\n' +
+        '请从以下几个维度分析：\n' +
+        '1. 擅长领域画像（你最擅长什么？）\n' +
+        '2. 写作风格标签（你的论文风格是什么样的？）\n' +
+        '3. 常用方法依赖（你习惯用什么研究方法？）\n' +
+        '4. 思维模式类型（你是问题驱动型还是方法驱动型？）\n' +
+        '5. 路径依赖分析（你是不是一直在做类似的东西？该突破了？）\n' +
+        '6. 推荐研究方向（基于你的DNA，最适合你的3个研究方向是什么？）\n\n' +
+        '请用专业、有洞察力的语言回答，像一位资深导师在分析他的学生。',
+        result
+    );
+};
+
+window.runBlindCheck = function() {
+    var input = document.getElementById('blindInput').value.trim();
+    var result = document.getElementById('blindResult');
+    if (!input) { alert('请先描述你的研究方案'); return; }
+    
+    callMetaAI(
+        '请检查以下研究方案中的思维盲点：\n\n' + input + '\n\n' +
+        '请从以下几个角度找出盲点：\n' +
+        '1. 默认假设（你默认了什么但没明说？）\n' +
+        '2. 确认偏差（你是不是只找支持你观点的证据？）\n' +
+        '3. 反例忽略（你忽略了哪些可能的反例？）\n' +
+        '4. 过度乐观（你是不是对结果过于乐观？）\n' +
+        '5. 幸存者偏差（你是不是只看成功案例？）\n' +
+        '6. 改进建议（针对每个盲点，你建议怎么改进？）\n\n' +
+        '请直接指出问题，不要客气，越尖锐越好。',
+        result
+    );
+};
+
+window.runDisguiseCheck = function() {
+    var input = document.getElementById('disguiseInput').value.trim();
+    var result = document.getElementById('disguiseResult');
+    if (!input) { alert('请先粘贴你的论文片段'); return; }
+    
+    callMetaAI(
+        '请检查以下论文片段的"伪装度"：\n\n' + input + '\n\n' +
+        '请回答：\n' +
+        '1. 这篇看起来像研究生写的还是教授写的？为什么？\n' +
+        '2. 哪些地方暴露了"新手感"？（语言/逻辑/结构/用词）\n' +
+        '3. 怎么改才能让审稿人觉得"这是个有经验的人写的"？\n' +
+        '4. 给出具体的修改建议和改写示例。\n\n' +
+        '请诚实评价，不要奉承。',
+        result
+    );
+};
+
+window.runWaveAnalysis = function() {
+    var input = document.getElementById('waveInput').value.trim();
+    var result = document.getElementById('waveResult');
+    if (!input) { alert('请先输入研究方向'); return; }
+    
+    callMetaAI(
+        '请分析以下研究方向的浪潮阶段：\n\n' + input + '\n\n' +
+        '请回答：\n' +
+        '1. 现在处于浪潮哪个阶段？（初期蓝海/中期红海/末期夕阳）\n' +
+        '2. 为什么？依据是什么？\n' +
+        '3. 预测3年后这个领域会变成什么样？\n' +
+        '4. 现在应该做什么布局？（赶紧做/差异化/别投入太多）\n' +
+        '5. 上升期方向和衰退期方向分别是什么？\n\n' +
+        '请用有洞察力的语言，像一位科研老兵在分析形势。',
+        result
+    );
+};
+
+window.runTimeCapsule = function() {
+    var input = document.getElementById('capsuleInput').value.trim();
+    var result = document.getElementById('capsuleResult');
+    if (!input) { alert('请先描述你的研究'); return; }
+    
+    callMetaAI(
+        '请预测5年后回头看，以下研究的真实价值：\n\n' + input + '\n\n' +
+        '请回答：\n' +
+        '1. 5年后这个研究的真实价值是什么？\n' +
+        '2. 当时哪些判断是对的？\n' +
+        '3. 当时哪些判断是错的？\n' +
+        '4. 哪些现在很重要但5年后没人关心？\n' +
+        '5. 现在应该调整什么策略？\n\n' +
+        '请用时间旅行者的视角，客观、冷静。',
+        result
+    );
+};
+
+window.runDeathPrediction = function() {
+    var input = document.getElementById('deathInput').value.trim();
+    var result = document.getElementById('deathResult');
+    if (!input) { alert('请先粘贴论文摘要'); return; }
+    
+    callMetaAI(
+        '请预测以下论文发表后的"死后"命运：\n\n' + input + '\n\n' +
+        '请回答：\n' +
+        '1. 这篇论文会被谁引用？（什么领域的研究者？）\n' +
+        '2. 会被用来支持什么观点？\n' +
+        '3. 3年后会不会被后续研究推翻？\n' +
+        '4. 5年后的引用量大概是多少？\n' +
+        '5. 最大的可能被推翻的点是什么？\n\n' +
+        '请客观预测，不要讨好作者。',
+        result
+    );
+};
+
+window.runSandbox = function() {
+    var input = document.getElementById('sandboxInput').value.trim();
+    var result = document.getElementById('sandboxResult');
+    if (!input) { alert('请先描述你的研究方案'); return; }
+    
+    callMetaAI(
+        '请模拟做以下研究会遇到的坑：\n\n' + input + '\n\n' +
+        '请从以下几个方面模拟：\n' +
+        '1. 样本招募坑：样本量够吗？能招到这么多人吗？\n' +
+        '2. 数据收集坑：数据好收吗？会有缺失值吗？\n' +
+        '3. 统计分析坑：统计方法选对了吗？会有什么问题？\n' +
+        '4. 审稿人意见坑：审稿人最可能挑什么毛病？\n' +
+        '5. 时间进度坑：能按时完成吗？哪里会拖延？\n' +
+        '6. 每个坑的规避方案是什么？\n\n' +
+        '请像一位有经验的师兄在给你提前预警。',
+        result
+    );
+};
+
+window.runDebate = function() {
+    var input = document.getElementById('debateInput').value.trim();
+    var result = document.getElementById('debateResult');
+    if (!input) { alert('请先粘贴你的研究方案'); return; }
+    
+    callMetaAI(
+        '请站在彻底反对的立场，写一篇完整的批判：\n\n' + input + '\n\n' +
+        '请从以下几个角度批判：\n' +
+        '1. 研究问题不重要：为什么这个问题不值得研究？\n' +
+        '2. 方法有致命缺陷：研究方法有什么硬伤？\n' +
+        '3. 结论不成立：为什么结论推不出来？\n' +
+        '4. 理论贡献为零：对学术有什么贡献？\n' +
+        '5. 实践价值有限：对实践有什么用？\n' +
+        '6. 最强的反对理由是什么？\n\n' +
+        '请写得尖锐、有力，像一个严格的审稿人在拒稿意见里写的话。',
+        result
+    );
+};
+
+window.runForkSimulator = function() {
+    var input = document.getElementById('forkInput').value.trim();
+    var result = document.getElementById('forkResult');
+    if (!input) { alert('请先描述你的决策点'); return; }
+    
+    callMetaAI(
+        '请模拟以下研究决策的两条路径：\n\n' + input + '\n\n' +
+        '请分别模拟：\n' +
+        '路径A：\n' +
+        '1. 这条路会遇到什么问题？\n' +
+        '2. 会产出什么结果？\n' +
+        '3. 长期影响力如何？\n' +
+        '路径B：\n' +
+        '1. 这条路会遇到什么问题？\n' +
+        '2. 会产出什么结果？\n' +
+        '3. 长期影响力如何？\n' +
+        '最后给出建议：你推荐哪条路？为什么？\n\n' +
+        '请客观分析，像一个走过这两条路的人在给你建议。',
+        result
+    );
+};
+
+window.runPartnerChat = function() {
+    var input = document.getElementById('partnerInput').value.trim();
+    var result = document.getElementById('partnerResult');
+    if (!input) { alert('请先输入你想讨论的问题'); return; }
+    
+    callMetaAI(
+        '你是一位资深的体育科研合作者，性格：严谨但友善，喜欢挑战别人的假设，有自己的独立观点。\n\n' +
+        '我的问题是：' + input + '\n\n' +
+        '请像一个真正的合作者一样回应：\n' +
+        '1. 先回应我的观点（同意/不同意/部分同意）\n' +
+        '2. 提出你的不同看法或挑战\n' +
+        '3. 给出你的建议\n' +
+        '4. 反问我一个问题，推动思考\n\n' +
+        '不要像AI助手，要像一个真正的同事在和你讨论。',
+        result
+    );
+};
+
+window.runRadar = function() {
+    var input = document.getElementById('radarInput').value.trim();
+    var result = document.getElementById('radarResult');
+    if (!input) { alert('请先输入研究方向'); return; }
+    
+    callMetaAI(
+        '请作为研究雷达，分析以下领域最近应该关注什么：\n\n' + input + '\n\n' +
+        '请回答：\n' +
+        '1. 最近这个领域有什么新方法？\n' +
+        '2. 有什么新的研究热点？\n' +
+        '3. 哪些论文值得特别关注？\n' +
+        '4. 哪些方向正在兴起？\n' +
+        '5. 哪些方向正在衰退？\n' +
+        '6. 我应该重点跟踪什么？\n\n' +
+        '请像一位情报分析师，给出精准的情报。',
+        result
+    );
+};
+
+window.runCiteXray = function() {
+    var input = document.getElementById('citeInput').value.trim();
+    var result = document.getElementById('citeResult');
+    if (!input) { alert('请先粘贴你的参考文献'); return; }
+    
+    callMetaAI(
+        '请对以下参考文献做引用网络X光分析：\n\n' + input + '\n\n' +
+        '请回答：\n' +
+        '1. 你的引用圈是不是太同质化？（都是一个圈子的人？）\n' +
+        '2. 哪些领域的人在引用这个方向但你没引用？\n' +
+        '3. 你漏了哪些关键文献？\n' +
+        '4. 引用的时效性如何？是不是太老了？\n' +
+        '5. 引用的经典文献够不够？\n' +
+        '6. 建议补充哪些文献？\n\n' +
+        '请像一位文献学专家在做诊断。',
+        result
+    );
+};
+
+window.runUnwritten = function() {
+    var input = document.getElementById('unwrittenInput').value.trim();
+    var result = document.getElementById('unwrittenResult');
+    if (!input) { alert('请先输入期刊名或领域'); return; }
+    
+    callMetaAI(
+        '请翻译以下期刊/领域的"学术潜规则"：\n\n' + input + '\n\n' +
+        '请回答（这些是不说出来但真实存在的规则）：\n' +
+        '1. 什么样的论文容易中？\n' +
+        '2. 什么样的论文会被秒拒？\n' +
+        '3. 审稿人真正关心什么？（不是他们说的）\n' +
+        '4. 投稿有什么技巧？\n' +
+        '5. 回复审稿意见有什么潜规则？\n' +
+        '6. 这个领域的"政治正确"是什么？\n\n' +
+        '请像一位老炮在告诉新人圈内的秘密。',
+        result
+    );
+};
+
+// 初始化
+setTimeout(function() {
+    addNavItem();
+    console.log('✅ 元认知AI工具库 v1.0 已加载（13个功能：学术DNA/盲点检测/伪装检查/浪潮定位/时间胶囊/死后预测/可行性沙盘/反方辩手/岔路模拟器/虚拟合作者/研究雷达/引用X光/潜规则翻译）');
+}, 2000);
+
+} catch(e) {
+    console.error('[元认知AI] 错误:', e);
+}
+})();
+</script>
+<!-- ========== 元认知AI工具库 v1.0 结束 ========== -->
+
 </body>
 </html>
