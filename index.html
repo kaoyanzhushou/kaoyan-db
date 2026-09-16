@@ -152361,40 +152361,25 @@ document.querySelectorAll('.meta-cog-tab').forEach(function(tab) {
     };
 });
 
-// 通用AI调用函数
-window.mcCallAI = function(prompt, resultDiv, btn) {
+// 通用AI调用函数 - 直接调用callDeepSeekAPI
+window.mcCallAI = async function(prompt, resultDiv, btn) {
     if (btn) btn.disabled = true;
     resultDiv.innerHTML = '<div class="loading">AI思考中，请稍候...</div>';
     resultDiv.classList.add('show');
 
-    // 使用现有的callAIStable
-    if (typeof callAIStable === 'function') {
-        callAIStable('meta_cognition',
-            '你是一位资深的体育科研专家和学术导师，拥有20年科研指导经验。请用专业、深入、有洞察力的语言回答，给出具体可操作的建议，不要空泛。',
-            prompt,
-            2000,
-            {}
-        ).then(function(result) {
+    var systemPrompt = '你是一位资深的体育科研专家和学术导师，拥有20年科研指导经验。请用专业、深入、有洞察力的语言回答，给出具体可操作的建议，不要空泛。';
+
+    try {
+        if (typeof callDeepSeekAPI === 'function') {
+            var result = await callDeepSeekAPI(systemPrompt, prompt, 2000);
             resultDiv.innerHTML = '<strong>💡 AI分析结果：</strong><br><br>' + (result || '').replace(/\n/g, '<br>');
-            if (btn) btn.disabled = false;
-        }).catch(function(err) {
-            resultDiv.innerHTML = '<div style="color:#dc2626;">❌ 调用失败：' + (err.message || err) + '</div>';
-            if (btn) btn.disabled = false;
-        });
-    } else {
-        //  fallback：用callAIRouted
-        if (typeof callAIRouted === 'function') {
-            callAIRouted(prompt, 'meta_cognition').then(function(result) {
-                resultDiv.innerHTML = '<strong>💡 AI分析结果：</strong><br><br>' + (result || '').replace(/\n/g, '<br>');
-                if (btn) btn.disabled = false;
-            }).catch(function(err) {
-                resultDiv.innerHTML = '<div style="color:#dc2626;">❌ 调用失败：' + (err.message || err) + '</div>';
-                if (btn) btn.disabled = false;
-            });
         } else {
             resultDiv.innerHTML = '<div style="color:#dc2626;">⚠️ AI服务未就绪</div>';
-            if (btn) btn.disabled = false;
         }
+    } catch(e) {
+        resultDiv.innerHTML = '<div style="color:#dc2626;">❌ 调用失败：' + (e.message || e) + '</div>';
+    } finally {
+        if (btn) btn.disabled = false;
     }
 };
 
