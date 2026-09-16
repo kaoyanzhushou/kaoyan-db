@@ -152772,5 +152772,217 @@ window.mcRunUnwritten = function() {
 </style>
 <!-- ========== 视觉减负优化v1.0 结束 ========== -->
 
+
+<!-- ========== 全局对话助手v1.0 开始 ========== -->
+<style>
+/* 全局对话助手悬浮按钮 */
+#globalChatBtn{
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    z-index: 9999;
+    transition: transform 0.2s;
+}
+#globalChatBtn:hover{
+    transform: scale(1.1);
+}
+
+/* 全局聊天窗口 */
+#globalChatWindow{
+    position: fixed;
+    bottom: 150px;
+    right: 20px;
+    width: 380px;
+    height: 500px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+#globalChatWindow.open{
+    display: flex;
+}
+
+#globalChatHeader{
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#globalChatHeader h3{
+    margin: 0;
+    font-size: 15px;
+}
+#globalChatClose{
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#globalChatMessages{
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    background: #f8fafc;
+}
+.global-msg{
+    margin-bottom: 10px;
+    max-width: 85%;
+}
+.global-msg.user{
+    margin-left: auto;
+}
+.global-msg .bubble{
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.global-msg.user .bubble{
+    background: #6366f1;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+.global-msg.ai .bubble{
+    background: #fff;
+    color: #1e293b;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#globalChatInputArea{
+    padding: 10px;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    gap: 8px;
+}
+#globalChatInput{
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 13px;
+    resize: none;
+    height: 40px;
+}
+#globalChatSend{
+    padding: 0 16px;
+    background: #6366f1;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+}
+#globalChatSend:disabled{
+    background: #a5b4fc;
+    cursor: not-allowed;
+}
+</style>
+
+<!-- 悬浮按钮 -->
+<button id="globalChatBtn" onclick="toggleGlobalChat()">💬</button>
+
+<!-- 聊天窗口 -->
+<div id="globalChatWindow">
+    <div id="globalChatHeader">
+        <h3>💬 全局AI助手</h3>
+        <button id="globalChatClose" onclick="toggleGlobalChat()">×</button>
+    </div>
+    <div id="globalChatMessages">
+        <div class="global-msg ai">
+            <div class="bubble">
+                你好！我是全局AI助手，任何页面都可以问我问题。
+                比如："帮我看看第三章的逻辑"、"这个结果图怎么描述"
+            </div>
+        </div>
+    </div>
+    <div id="globalChatInputArea">
+        <textarea id="globalChatInput" placeholder="输入你的问题..."></textarea>
+        <button id="globalChatSend" onclick="sendGlobalChat()">发送</button>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    try {
+        window.toggleGlobalChat = function() {
+            var win = document.getElementById('globalChatWindow');
+            win.classList.toggle('open');
+        };
+
+        window.sendGlobalChat = async function() {
+            var input = document.getElementById('globalChatInput');
+            var messages = document.getElementById('globalChatMessages');
+            var sendBtn = document.getElementById('globalChatSend');
+            var text = input.value.trim();
+            
+            if (!text) return;
+            
+            // 添加用户消息
+            var userMsg = document.createElement('div');
+            userMsg.className = 'global-msg user';
+            userMsg.innerHTML = '<div class="bubble">' + text + '</div>';
+            messages.appendChild(userMsg);
+            
+            input.value = '';
+            sendBtn.disabled = true;
+            
+            // 添加AI加载中
+            var aiMsg = document.createElement('div');
+            aiMsg.className = 'global-msg ai';
+            aiMsg.innerHTML = '<div class="bubble">思考中...</div>';
+            messages.appendChild(aiMsg);
+            
+            messages.scrollTop = messages.scrollHeight;
+            
+            try {
+                if (typeof callDeepSeekAPI === 'function') {
+                    var result = await callDeepSeekAPI(
+                        '你是体育科研助手，帮助用户解决论文写作、研究设计、数据分析等问题。回答要简洁专业。',
+                        text,
+                        1000
+                    );
+                    aiMsg.querySelector('.bubble').textContent = result || '抱歉，我没听清，请再说一遍。';
+                } else {
+                    aiMsg.querySelector('.bubble').textContent = 'AI服务未就绪';
+                }
+            } catch(e) {
+                aiMsg.querySelector('.bubble').textContent = '调用失败: ' + (e.message || e);
+            } finally {
+                sendBtn.disabled = false;
+                messages.scrollTop = messages.scrollHeight;
+            }
+        };
+
+        console.log('✅ 全局对话助手v1.0 已加载');
+    } catch(e) {
+        console.error('[全局对话助手] 错误:', e);
+    }
+})();
+</script>
+<!-- ========== 全局对话助手v1.0 结束 ========== -->
+
 </body>
 </html>
