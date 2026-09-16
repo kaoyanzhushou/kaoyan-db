@@ -14159,6 +14159,99 @@ Smith A B, Jones C D. The effects of exercise on health[J]. Journal of Sports Me
 </script>
 <!-- ========== 文献引用格式化v1.0 结束 ========== -->
 
+
+<!-- ========== 论文查重自检v1.0 开始 ========== -->
+<style>
+.plagiarism-card{
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.plagiarism-card h3{
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: #1e293b;
+}
+.plagiarism-input textarea{
+    width: 100%;
+    min-height: 150px;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+}
+.plagiarism-output{
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    white-space: pre-wrap;
+    font-size: 13px;
+    line-height: 1.6;
+    display: none;
+}
+.plagiarism-output.show{
+    display: block;
+}
+</style>
+
+<div class="plagiarism-card">
+    <h3>🔍 论文查重自检</h3>
+    <p style="font-size:13px;color:#64748b;margin-bottom:12px;">粘贴论文段落，AI帮你预判哪些内容容易被标红，提前降重</p>
+    
+    <div class="plagiarism-input">
+        <textarea id="plagiarismInput" placeholder="粘贴你的论文段落（建议一段一段查）...&#10;例如：运动性疲劳是指机体生理过程不能持续其机能在一特定水平上和/或不能维持预定的运动强度。自19世纪以来，运动生理学对疲劳的研究已经有一百多年的历史..."></textarea>
+    </div>
+    
+    <div style="margin-top:12px;">
+        <button onclick="checkPlagiarism()" style="padding:8px 16px;background:#6366f1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">🔍 开始自检</button>
+    </div>
+    
+    <div id="plagiarismOutput" class="plagiarism-output"></div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    try {
+        window.checkPlagiarism = async function() {
+            var input = document.getElementById('plagiarismInput').value.trim();
+            var output = document.getElementById('plagiarismOutput');
+            
+            if (!input) { alert('请先粘贴论文内容'); return; }
+            
+            output.classList.add('show');
+            output.textContent = 'AI分析中...';
+            
+            try {
+                if (typeof callDeepSeekAPI === 'function') {
+                    var result = await callDeepSeekAPI(
+                        '你是学术论文查重专家，熟悉知网、万方等查重系统的检测规则。请分析用户提供的论文段落，找出哪些句子或短语容易被判定为重复（比如常见套话、教科书原话、通用术语堆砌）。然后给出具体的降重建议：1.哪些句子容易标红 2.怎么改写更安全 3.哪些术语可以换表述。',
+                        '请分析以下段落的查重风险并给出降重建议：\n\n' + input,
+                        1500
+                    );
+                    output.textContent = result || '分析失败';
+                } else {
+                    output.textContent = 'AI服务未就绪';
+                }
+            } catch(e) {
+                output.textContent = '调用失败: ' + (e.message || e);
+            }
+        };
+
+        console.log('✅ 论文查重自检v1.0 已加载');
+    } catch(e) {
+        console.error('[论文查重自检] 错误:', e);
+    }
+})();
+</script>
+<!-- ========== 论文查重自检v1.0 结束 ========== -->
+
 <div id="tab-paper" class="tab-content">
 
   <div style="max-width:1200px;margin:0 auto">
