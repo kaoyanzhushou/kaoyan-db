@@ -10156,6 +10156,65 @@ console.log('[性能优化] 加载提速已启用');
 
 
 <div class="main">
+
+
+
+<div class="topbar">
+
+  <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="菜单">☰</button>
+
+  <h1 id="pageTitle">科研总览</h1>
+
+  <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+
+    <div style="position:relative">
+
+      <div id="topbarGamify" style="display:flex;align-items:center;gap:8px;margin-right:8px">
+
+        <span class="level-badge" id="topbarLevel" style="display:none">⭐ Lv.1</span>
+
+        <span class="streak-badge" id="topbarStreak" style="display:none">🔥 0天</span>
+
+      </div>
+
+      <div class="user-info" id="userInfo" onclick="toggleUserDropdown()" style="display:none">
+
+        <div class="avatar" id="userAvatar">U</div>
+
+        <span id="userName">用户</span>
+
+        <span style="font-size:10px;color:#94a3b8">▼</span>
+
+      </div>
+
+      <div class="user-dropdown" id="userDropdown">
+
+        <div class="user-dropdown-item" id="adminMenuItem" onclick="openAdminPanel()" style="display:none;color:#d97706">⚙️ 管理后台</div>
+
+        <div class="user-dropdown-item" onclick="openTargetModal()">🎯 目标设置</div>
+
+        <div class="user-dropdown-item" onclick="showUserProfile()">👤 个人中心</div>
+
+        <div class="user-dropdown-item" onclick="changePassword()">🔑 修改密码</div>
+
+        <div class="user-dropdown-item logout" onclick="doLogout()">🚪 退出登录</div>
+
+      </div>
+
+    </div>
+
+    <div class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="切换深色/浅色模式">🌙</div>
+
+    <div class="search-box"><input type="text" id="searchInput" placeholder="搜索知识点..."></div>
+
+    <div class="countdown" id="countdown"></div>
+
+  </div>
+
+</div>
+
+
+
 <div class="tab-content tab-meta-cog" id="tab-meta-cog">
     <div class="meta-cog-container">
         <div class="meta-cog-header">
@@ -10286,64 +10345,6 @@ console.log('[性能优化] 加载提速已启用');
         </div>
     </div>
 </div>
-
-
-<div class="topbar">
-
-  <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="菜单">☰</button>
-
-  <h1 id="pageTitle">科研总览</h1>
-
-  <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-
-    <div style="position:relative">
-
-      <div id="topbarGamify" style="display:flex;align-items:center;gap:8px;margin-right:8px">
-
-        <span class="level-badge" id="topbarLevel" style="display:none">⭐ Lv.1</span>
-
-        <span class="streak-badge" id="topbarStreak" style="display:none">🔥 0天</span>
-
-      </div>
-
-      <div class="user-info" id="userInfo" onclick="toggleUserDropdown()" style="display:none">
-
-        <div class="avatar" id="userAvatar">U</div>
-
-        <span id="userName">用户</span>
-
-        <span style="font-size:10px;color:#94a3b8">▼</span>
-
-      </div>
-
-      <div class="user-dropdown" id="userDropdown">
-
-        <div class="user-dropdown-item" id="adminMenuItem" onclick="openAdminPanel()" style="display:none;color:#d97706">⚙️ 管理后台</div>
-
-        <div class="user-dropdown-item" onclick="openTargetModal()">🎯 目标设置</div>
-
-        <div class="user-dropdown-item" onclick="showUserProfile()">👤 个人中心</div>
-
-        <div class="user-dropdown-item" onclick="changePassword()">🔑 修改密码</div>
-
-        <div class="user-dropdown-item logout" onclick="doLogout()">🚪 退出登录</div>
-
-      </div>
-
-    </div>
-
-    <div class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="切换深色/浅色模式">🌙</div>
-
-    <div class="search-box"><input type="text" id="searchInput" placeholder="搜索知识点..."></div>
-
-    <div class="countdown" id="countdown"></div>
-
-  </div>
-
-</div>
-
-
-
 <div class="tab-content active" id="tab-dashboard">
 
 
@@ -152642,53 +152643,7 @@ window.mcRunUnwritten = function() {
     );
 };
 
-// 在左侧导航添加菜单项 - 更可靠的版本
-function addMetaCogNavItem() {
-    // 找"体育学特色"这个nav-item，在它后面插入
-    var items = document.querySelectorAll('.nav-item');
-    var targetItem = null;
-    for (var i = 0; i < items.length; i++) {
-        if (items[i].textContent.indexOf('体育学特色') >= 0) {
-            targetItem = items[i];
-            break;
-        }
-    }
-    
-    if (!targetItem) {
-        setTimeout(addMetaCogNavItem, 1000);
-        return;
-    }
-    
-    // 检查是否已经添加过
-    if (document.getElementById('navItemMetaCogV2')) {
-        return;
-    }
-    
-    // 创建新的导航项
-    var newItem = document.createElement('div');
-    newItem.className = 'nav-item nav-sub-item';
-    newItem.id = 'navItemMetaCogV2';
-    newItem.setAttribute('data-tab', 'meta-cog');
-    newItem.innerHTML = '<span class="icon">🧠</span><span>元认知AI</span>';
-    newItem.style.cursor = 'pointer';
-    newItem.onclick = function(e) {
-        e.stopPropagation();
-        if (typeof switchTab === 'function') {
-            switchTab('meta-cog');
-        }
-    };
-    
-    // 插入到体育学特色后面
-    targetItem.parentNode.insertBefore(newItem, targetItem.nextSibling);
-    console.log('[元认知AI v2.0] 已添加导航菜单项到体育学特色后面');
-}
 
-// 多次尝试添加，确保DOM加载完成
-setTimeout(addMetaCogNavItem, 1500);
-setTimeout(addMetaCogNavItem, 3000);
-setTimeout(addMetaCogNavItem, 5000);
-
-console.log('✅ 元认知AI工具库 v2.0 已加载（主页面tab形式，13个功能）');
 
 } catch(e) {
     console.error('[元认知AI v2.0] 错误:', e);
