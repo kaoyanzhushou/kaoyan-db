@@ -14026,6 +14026,139 @@ body.loading #loadingText{
 
 <!-- 体育考博模块 -->
 
+
+<!-- ========== 文献引用格式化v1.0 开始 ========== -->
+<style>
+.cite-tool-card{
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.cite-tool-card h3{
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: #1e293b;
+}
+.cite-input-area{
+    margin-bottom: 12px;
+}
+.cite-input-area textarea{
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+}
+.cite-format-select{
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-right: 8px;
+}
+.cite-output{
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    white-space: pre-wrap;
+    font-size: 13px;
+    line-height: 1.6;
+    display: none;
+}
+.cite-output.show{
+    display: block;
+}
+</style>
+
+<div class="cite-tool-card">
+    <h3>📚 文献引用一键格式化</h3>
+    <p style="font-size:13px;color:#64748b;margin-bottom:12px;">粘贴文献信息（标题、作者、期刊等），自动转成标准引用格式</p>
+    
+    <div class="cite-input-area">
+        <textarea id="citeInput" placeholder="粘贴文献信息，例如：
+张三, 李四. 运动生理学研究进展[J]. 体育科学, 2023, 43(5): 12-20.
+或者：
+Smith A B, Jones C D. The effects of exercise on health[J]. Journal of Sports Medicine, 2022, 52(3): 45-60."></textarea>
+    </div>
+    
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select id="citeFormat" class="cite-format-select">
+            <option value="gbt7714">GB/T 7714-2015 (国标)</option>
+            <option value="apa">APA 7th</option>
+            <option value="mla">MLA 9th</option>
+            <option value="chicago">Chicago 17th</option>
+        </select>
+        <button onclick="formatCitation()" style="padding:8px 16px;background:#6366f1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">✨ 格式化</button>
+        <button onclick="copyCitation()" style="padding:8px 16px;background:#10b981;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">📋 复制</button>
+    </div>
+    
+    <div id="citeOutput" class="cite-output"></div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    try {
+        window.formatCitation = async function() {
+            var input = document.getElementById('citeInput').value.trim();
+            var format = document.getElementById('citeFormat').value;
+            var output = document.getElementById('citeOutput');
+            
+            if (!input) { alert('请先粘贴文献信息'); return; }
+            
+            output.classList.add('show');
+            output.textContent = 'AI格式化中...';
+            
+            var formatNames = {
+                'gbt7714': 'GB/T 7714-2015 中国国家标准',
+                'apa': 'APA 7th Edition',
+                'mla': 'MLA 9th Edition',
+                'chicago': 'Chicago Manual of Style 17th Edition'
+            };
+            
+            try {
+                if (typeof callDeepSeekAPI === 'function') {
+                    var result = await callDeepSeekAPI(
+                        '你是学术引用格式化专家。请把用户提供的文献信息转换成标准的' + formatNames[format] + '格式。只输出格式化后的引用文本，不要解释。如果信息不全，用[?]标注缺失部分。',
+                        '请把以下文献转换成' + formatNames[format] + '格式：\n\n' + input,
+                        500
+                    );
+                    output.textContent = result || '格式化失败';
+                } else {
+                    output.textContent = 'AI服务未就绪';
+                }
+            } catch(e) {
+                output.textContent = '调用失败: ' + (e.message || e);
+            }
+        };
+
+        window.copyCitation = function() {
+            var output = document.getElementById('citeOutput');
+            var text = output.textContent;
+            if (!text) { alert('还没有内容可复制'); return; }
+            
+            navigator.clipboard.writeText(text).then(function() {
+                alert('已复制到剪贴板');
+            }).catch(function() {
+                alert('复制失败，请手动选择复制');
+            });
+        };
+
+        console.log('✅ 文献引用格式化v1.0 已加载');
+    } catch(e) {
+        console.error('[文献引用格式化] 错误:', e);
+    }
+})();
+</script>
+<!-- ========== 文献引用格式化v1.0 结束 ========== -->
+
 <div id="tab-paper" class="tab-content">
 
   <div style="max-width:1200px;margin:0 auto">
