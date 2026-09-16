@@ -14252,6 +14252,99 @@ Smith A B, Jones C D. The effects of exercise on health[J]. Journal of Sports Me
 </script>
 <!-- ========== 论文查重自检v1.0 结束 ========== -->
 
+
+<!-- ========== 实验设计智能助手v1.0 开始 ========== -->
+<style>
+.experiment-card{
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.experiment-card h3{
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: #1e293b;
+}
+.experiment-input textarea{
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+}
+.experiment-output{
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    white-space: pre-wrap;
+    font-size: 13px;
+    line-height: 1.6;
+    display: none;
+}
+.experiment-output.show{
+    display: block;
+}
+</style>
+
+<div class="experiment-card">
+    <h3>🧪 实验设计智能助手</h3>
+    <p style="font-size:13px;color:#64748b;margin-bottom:12px;">输入你的研究主题，AI帮你生成完整实验方案</p>
+    
+    <div class="experiment-input">
+        <textarea id="experimentInput" placeholder="描述你的研究主题，例如：研究8周高强度间歇训练对肥胖青少年减脂效果的影响，想做个干预实验..."></textarea>
+    </div>
+    
+    <div style="margin-top:12px;">
+        <button onclick="generateExperimentDesign()" style="padding:8px 16px;background:#6366f1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">🧪 生成实验方案</button>
+    </div>
+    
+    <div id="experimentOutput" class="experiment-output"></div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    try {
+        window.generateExperimentDesign = async function() {
+            var input = document.getElementById('experimentInput').value.trim();
+            var output = document.getElementById('experimentOutput');
+            
+            if (!input) { alert('请先描述研究主题'); return; }
+            
+            output.classList.add('show');
+            output.textContent = 'AI设计实验方案中...';
+            
+            try {
+                if (typeof callDeepSeekAPI === 'function') {
+                    var result = await callDeepSeekAPI(
+                        '你是体育科研实验设计专家，拥有丰富的运动人体科学实验设计经验。请根据用户提供的研究主题，生成完整的实验方案，包括：1.实验假设 2.研究对象（样本量计算、纳入排除标准）3.实验设计类型（随机对照/交叉/重复测量）4.干预方案 5.测量指标 6.数据收集流程 7.统计分析方法 8.伦理要点 9.预期结果与意义。要具体、可操作，不要空泛。',
+                        '研究主题：' + input + '\n\n请生成完整实验方案：',
+                        2500
+                    );
+                    output.textContent = result || '生成失败';
+                } else {
+                    output.textContent = 'AI服务未就绪';
+                }
+            } catch(e) {
+                output.textContent = '调用失败: ' + (e.message || e);
+            }
+        };
+
+        console.log('✅ 实验设计智能助手v1.0 已加载');
+    } catch(e) {
+        console.error('[实验设计智能助手] 错误:', e);
+    }
+})();
+</script>
+<!-- ========== 实验设计智能助手v1.0 结束 ========== -->
+
 <div id="tab-paper" class="tab-content">
 
   <div style="max-width:1200px;margin:0 auto">
