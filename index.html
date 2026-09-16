@@ -9915,6 +9915,87 @@ console.log('[性能优化] 加载提速已启用');
 </script>
 <!-- ========== 轻量加载提速优化 结束 ========== -->
 
+
+<!-- ========== 加载优化v1.0 开始 ========== -->
+<style>
+/* 首屏加载进度条 */
+#loadingBar{
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    z-index: 99999;
+    width: 0%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+#loadingText{
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    font-size: 12px;
+    color: #6366f1;
+    background: rgba(255,255,255,0.9);
+    padding: 4px 10px;
+    border-radius: 6px;
+    z-index: 99999;
+    display: none;
+}
+body.loading #loadingText{
+    display: block;
+}
+</style>
+
+<div id="loadingBar"></div>
+<div id="loadingText">加载中...</div>
+
+<script>
+(function() {
+    'use strict';
+    try {
+        var bar = document.getElementById('loadingBar');
+        var text = document.getElementById('loadingText');
+        var progress = 0;
+        
+        // 模拟加载进度
+        function updateProgress() {
+            if (progress < 90) {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                bar.style.width = progress + '%';
+                text.textContent = '加载中... ' + Math.round(progress) + '%';
+                setTimeout(updateProgress, 200);
+            }
+        }
+        
+        // 页面加载完成后
+        window.addEventListener('load', function() {
+            progress = 100;
+            bar.style.width = '100%';
+            text.textContent = '加载完成！';
+            setTimeout(function() {
+                bar.style.opacity = '0';
+                text.style.opacity = '0';
+                setTimeout(function() {
+                    bar.remove();
+                    text.remove();
+                }, 500);
+            }, 300);
+        });
+        
+        // 开始加载
+        document.body.classList.add('loading');
+        updateProgress();
+        
+        console.log('[加载优化] 已启动');
+    } catch(e) {
+        console.error('[加载优化] 错误:', e);
+    }
+})();
+</script>
+<!-- ========== 加载优化v1.0 结束 ========== -->
+
 </head>
 
 <body>
