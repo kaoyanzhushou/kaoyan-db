@@ -152907,7 +152907,10 @@ window.mcRunUnwritten = function() {
 <div id="globalChatWindow">
     <div id="globalChatHeader">
         <h3>💬 全局AI助手</h3>
-        <button id="globalChatClose" onclick="toggleGlobalChat()">×</button>
+        <div style="display:flex;gap:6px;">
+            <button onclick="clearGlobalChat()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">清空</button>
+            <button id="globalChatClose" onclick="toggleGlobalChat()">×</button>
+        </div>
     </div>
     <div id="globalChatMessages">
         <div class="global-msg ai">
@@ -152932,7 +152935,10 @@ window.mcRunUnwritten = function() {
             win.classList.toggle('open');
         };
 
-        window.sendGlobalChat = async function() {
+        // 对话历史
+var globalChatHistory = [];
+
+window.sendGlobalChat = async function() {
             var input = document.getElementById('globalChatInput');
             var messages = document.getElementById('globalChatMessages');
             var sendBtn = document.getElementById('globalChatSend');
@@ -152957,14 +152963,29 @@ window.mcRunUnwritten = function() {
             
             messages.scrollTop = messages.scrollHeight;
             
+            // 加入对话历史
+            globalChatHistory.push({role: 'user', content: text});
+            // 保留最近10轮对话
+            if (globalChatHistory.length > 20) globalChatHistory = globalChatHistory.slice(-20);
+            
             try {
                 if (typeof callDeepSeekAPI === 'function') {
+                    var systemPrompt = '你是体育科研助手，帮助用户解决论文写作、研究设计、数据分析、教案设计等问题。回答要简洁专业，有深度。';
+                    
+                    // 构造完整对话上下文
+                    var context = globalChatHistory.map(function(m) {
+                        return (m.role === 'user' ? '用户: ' : '助手: ') + m.content;
+                    }).join('\n\n');
+                    
                     var result = await callDeepSeekAPI(
-                        '你是体育科研助手，帮助用户解决论文写作、研究设计、数据分析等问题。回答要简洁专业。',
-                        text,
-                        1000
+                        systemPrompt,
+                        context + '\n\n请回答: ' + text,
+                        1500
                     );
                     aiMsg.querySelector('.bubble').textContent = result || '抱歉，我没听清，请再说一遍。';
+                    
+                    // 加入AI回复到历史
+                    globalChatHistory.push({role: 'assistant', content: result || ''});
                 } else {
                     aiMsg.querySelector('.bubble').textContent = 'AI服务未就绪';
                 }
@@ -152974,6 +152995,13 @@ window.mcRunUnwritten = function() {
                 sendBtn.disabled = false;
                 messages.scrollTop = messages.scrollHeight;
             }
+        };
+        
+        // 清空对话
+        window.clearGlobalChat = function() {
+            globalChatHistory = [];
+            var messages = document.getElementById('globalChatMessages');
+            messages.innerHTML = '<div class="global-msg ai"><div class="bubble">对话已清空，有什么可以帮你的？</div></div>';
         };
 
         console.log('✅ 全局对话助手v1.0 已加载');
