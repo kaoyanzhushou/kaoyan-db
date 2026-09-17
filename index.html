@@ -153628,5 +153628,64 @@ async function handleFileUpload(file, targetInputId) {
 console.log('✅ 通用工具已加载');
 </script>
 
+
+<script>
+// ========== 全局优化：AI输出自动美化 ==========
+
+// 监听所有AI结果div，自动美化
+function beautifyAllAIResults() {
+    // 找所有包含AI结果的div
+    var resultDivs = document.querySelectorAll('[id*="Result"], [id*="result"], [class*="result"]');
+    resultDivs.forEach(function(div) {
+        if (div.dataset.beautified) return;
+        div.dataset.beautified = 'true';
+        
+        // 如果div里有pre标签，自动改成Markdown渲染
+        var pre = div.querySelector('pre');
+        if (pre && pre.textContent.length > 100) {
+            var originalText = pre.textContent;
+            div.innerHTML = beautifyResult(renderMarkdown(originalText));
+        }
+    });
+}
+
+// 定期检查新生成的结果
+setInterval(beautifyAllAIResults, 2000);
+
+// 给所有textarea自动加上传按钮
+function addUploadToAllTextareas() {
+    var textareas = document.querySelectorAll('textarea');
+    textareas.forEach(function(textarea) {
+        if (textarea.dataset.uploadAdded) return;
+        if (!textarea.id) return; // 没有id的跳过，避免重复
+        
+        textarea.dataset.uploadAdded = 'true';
+        
+        // 在textarea后面加上传按钮
+        var uploadDiv = document.createElement('div');
+        uploadDiv.style.margin = '8px 0';
+        uploadDiv.innerHTML = '<label style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:12px;">📎 上传PDF/Word/TXT <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;"></label>';
+        
+        textarea.parentNode.insertBefore(uploadDiv, textarea.nextSibling);
+        
+        // 绑定上传事件
+        var fileInput = uploadDiv.querySelector('input[type="file"]');
+        fileInput.addEventListener('change', function(e) {
+            handleFileUpload(e.target.files[0], textarea.id);
+        });
+    });
+}
+
+// 页面加载完成后执行
+window.addEventListener('load', function() {
+    setTimeout(addUploadToAllTextareas, 1000);
+});
+
+// 定期检查新的textarea
+setInterval(addUploadToAllTextareas, 3000);
+
+console.log('✅ 全局优化已加载：AI输出自动美化+输入框自动加上传');
+</script>
+
 </body>
 </html>
