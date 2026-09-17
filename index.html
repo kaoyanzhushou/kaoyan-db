@@ -153365,5 +153365,127 @@ document.addEventListener('click', function(e) {
 });
 </script>
 
+
+<script>
+// ========== 新工具AI功能 ==========
+
+// 1. 文献引用格式化
+async function formatCitations() {
+    var input = document.getElementById('citeInput').value.trim();
+    var resultDiv = document.getElementById('citeResult');
+    
+    if (!input) {
+        resultDiv.innerHTML = '<p style="color:#ef4444;">请先粘贴参考文献</p>';
+        return;
+    }
+    
+    resultDiv.innerHTML = '<p style="color:#6b7280;">AI正在格式化...请稍候</p>';
+    
+    try {
+        var sysPrompt = '你是学术引用格式专家。请将用户提供的参考文献格式化为GB/T 7714-2015格式。输出格式化后的参考文献列表，每条单独一行。';
+        var userPrompt = '请将以下参考文献格式化为GB/T 7714-2015格式：\n\n' + input;
+        
+        var result = await callDeepSeekAPI(sysPrompt, userPrompt, 2000);
+        resultDiv.innerHTML = '<div style="background:#f9fafb;padding:15px;border-radius:8px;border:1px solid #e5e7eb;"><h4>格式化结果：</h4><pre style="white-space:pre-wrap;font-family:inherit;">' + result + '</pre></div>';
+    } catch(e) {
+        resultDiv.innerHTML = '<p style="color:#ef4444;">格式化失败：' + e.message + '</p>';
+    }
+}
+
+// 2. 论文查重自检
+async function checkPlagiarism() {
+    var input = document.getElementById('plagiarismInput').value.trim();
+    var resultDiv = document.getElementById('plagiarismResult');
+    
+    if (!input) {
+        resultDiv.innerHTML = '<p style="color:#ef4444;">请先粘贴论文内容</p>';
+        return;
+    }
+    
+    resultDiv.innerHTML = '<p style="color:#6b7280;">AI正在分析重复风险...请稍候</p>';
+    
+    try {
+        var sysPrompt = '你是学术查重专家。请分析用户提供的论文段落，指出：1.可能存在重复的高风险句子 2.建议修改的地方 3.原创性评分（0-100分）。请用中文回答，结构清晰。';
+        var userPrompt = '请分析以下论文段落的重复风险：\n\n' + input;
+        
+        var result = await callDeepSeekAPI(sysPrompt, userPrompt, 2000);
+        resultDiv.innerHTML = '<div style="background:#f9fafb;padding:15px;border-radius:8px;border:1px solid #e5e7eb;"><h4>查重分析结果：</h4><pre style="white-space:pre-wrap;font-family:inherit;">' + result + '</pre></div>';
+    } catch(e) {
+        resultDiv.innerHTML = '<p style="color:#ef4444;">分析失败：' + e.message + '</p>';
+    }
+}
+
+// 3. 审稿人预测
+async function predictReviewer() {
+    var input = document.getElementById('reviewerInput').value.trim();
+    var resultDiv = document.getElementById('reviewerResult');
+    
+    if (!input) {
+        resultDiv.innerHTML = '<p style="color:#ef4444;">请先输入研究方向或摘要</p>';
+        return;
+    }
+    
+    resultDiv.innerHTML = '<p style="color:#6b7280;">AI正在预测审稿人意见...请稍候</p>';
+    
+    try {
+        var sysPrompt = '你是资深审稿专家。请基于用户提供的研究方向或论文摘要，预测：1.审稿人可能提出的主要问题 2.研究的主要优点 3.研究的主要不足 4.修改建议。请用中文回答，专业客观。';
+        var userPrompt = '请基于以下研究方向预测审稿人意见：\n\n' + input;
+        
+        var result = await callDeepSeekAPI(sysPrompt, userPrompt, 2000);
+        resultDiv.innerHTML = '<div style="background:#f9fafb;padding:15px;border-radius:8px;border:1px solid #e5e7eb;"><h4>审稿人预测：</h4><pre style="white-space:pre-wrap;font-family:inherit;">' + result + '</pre></div>';
+    } catch(e) {
+        resultDiv.innerHTML = '<p style="color:#ef4444;">预测失败：' + e.message + '</p>';
+    }
+}
+
+// 4. 投稿时机建议
+async function suggestTiming() {
+    var input = document.getElementById('timingInput').value.trim();
+    var resultDiv = document.getElementById('timingResult');
+    
+    if (!input) {
+        resultDiv.innerHTML = '<p style="color:#ef4444;">请先输入研究方向和论文状态</p>';
+        return;
+    }
+    
+    resultDiv.innerHTML = '<p style="color:#6b7280;">AI正在分析投稿时机...请稍候</p>';
+    
+    try {
+        var sysPrompt = '你是学术投稿专家。请基于用户提供的研究方向和论文状态，给出：1.当前投稿时机评估 2.推荐期刊等级（SCI一区/二区/三区/四区）3.预计审稿周期 4.命中率预估 5.投稿建议。请用中文回答，实用具体。';
+        var userPrompt = '请分析以下研究的投稿时机：\n\n' + input;
+        
+        var result = await callDeepSeekAPI(sysPrompt, userPrompt, 1500);
+        resultDiv.innerHTML = '<div style="background:#f9fafb;padding:15px;border-radius:8px;border:1px solid #e5e7eb;"><h4>投稿时机建议：</h4><pre style="white-space:pre-wrap;font-family:inherit;">' + result + '</pre></div>';
+    } catch(e) {
+        resultDiv.innerHTML = '<p style="color:#ef4444;">分析失败：' + e.message + '</p>';
+    }
+}
+
+// 5. 实验设计智能助手
+async function designExperiment() {
+    var input = document.getElementById('experimentInput').value.trim();
+    var resultDiv = document.getElementById('experimentResult');
+    
+    if (!input) {
+        resultDiv.innerHTML = '<p style="color:#ef4444;">请先输入你的实验设计</p>';
+        return;
+    }
+    
+    resultDiv.innerHTML = '<p style="color:#6b7280;">AI正在完善实验设计...请稍候</p>';
+    
+    try {
+        var sysPrompt = '你是运动科学实验设计专家。请基于用户提供的实验设计方案，给出：1.方案的优点 2.存在的问题 3.完善建议（分组、样本量、指标、统计方法）4.伦理注意事项。请用中文回答，专业具体。';
+        var userPrompt = '请完善以下实验设计方案：\n\n' + input;
+        
+        var result = await callDeepSeekAPI(sysPrompt, userPrompt, 2000);
+        resultDiv.innerHTML = '<div style="background:#f9fafb;padding:15px;border-radius:8px;border:1px solid #e5e7eb;"><h4>实验设计完善建议：</h4><pre style="white-space:pre-wrap;font-family:inherit;">' + result + '</pre></div>';
+    } catch(e) {
+        resultDiv.innerHTML = '<p style="color:#ef4444;">设计失败：' + e.message + '</p>';
+    }
+}
+
+console.log('✅ 5个新工具AI功能已加载');
+</script>
+
 </body>
 </html>
