@@ -14392,11 +14392,11 @@ body.loading #loadingText{
       <button onclick="switchPaperSubTab('knowledge')" id="paperTab-knowledge" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">知识库</button>
       <button onclick="switchPaperSubTab('assistant')" id="paperTab-assistant" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">论文助手</button>
       <button onclick="switchPaperSubTab('impact')" id="paperTab-impact" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">影响力</button>
-<button class="paper-tab-btn" data-paper-tab="cite-format" onclick="navigateToPaperSubTab('cite-format')">📚 引用格式化</button>
-<button class="paper-tab-btn" data-paper-tab="plagiarism-check" onclick="navigateToPaperSubTab('plagiarism-check')">🔍 查重自检</button>
-<button class="paper-tab-btn" data-paper-tab="reviewer-predict" onclick="navigateToPaperSubTab('reviewer-predict')">🎯 审稿人预测</button>
-<button class="paper-tab-btn" data-paper-tab="submit-timing" onclick="navigateToPaperSubTab('submit-timing')">⏰ 投稿时机</button>
-<button class="paper-tab-btn" data-paper-tab="experiment-design" onclick="navigateToPaperSubTab('experiment-design')">🧪 实验设计</button>
+<button class="paper-tab-btn" data-paper-tab="cite-format" id="paperTab-cite-format" onclick="navigateToPaperSubTab('cite-format')">📚 引用格式化</button>
+<button class="paper-tab-btn" data-paper-tab="plagiarism-check" id="paperTab-plagiarism-check" onclick="navigateToPaperSubTab('plagiarism-check')">🔍 查重自检</button>
+<button class="paper-tab-btn" data-paper-tab="reviewer-predict" id="paperTab-reviewer-predict" onclick="navigateToPaperSubTab('reviewer-predict')">🎯 审稿人预测</button>
+<button class="paper-tab-btn" data-paper-tab="submit-timing" id="paperTab-submit-timing" onclick="navigateToPaperSubTab('submit-timing')">⏰ 投稿时机</button>
+<button class="paper-tab-btn" data-paper-tab="experiment-design" id="paperTab-experiment-design" onclick="navigateToPaperSubTab('experiment-design')">🧪 实验设计</button>
 
     </div>
 
@@ -14404,7 +14404,49 @@ body.loading #loadingText{
 
     <!-- 我的论文页面 -->
 
-    <div id="paperContent-projects">
+    
+<!-- 新工具内容区 -->
+<div id="paperContent-cite-format" style="display:none;padding:20px;">
+  <h3>📚 文献引用一键格式化</h3>
+  <p>粘贴你的参考文献，自动格式化成GB/T 7714或APA格式</p>
+  <textarea id="citeInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="粘贴你的参考文献..."></textarea>
+  <button onclick="formatCitations()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始格式化</button>
+  <div id="citeResult" style="margin-top:20px;"></div>
+</div>
+
+<div id="paperContent-plagiarism-check" style="display:none;padding:20px;">
+  <h3>🔍 论文查重自检</h3>
+  <p>AI帮你检查论文中可能重复的内容</p>
+  <textarea id="plagiarismInput" style="width:100%;height:200px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="粘贴你的论文段落..."></textarea>
+  <button onclick="checkPlagiarism()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始检查</button>
+  <div id="plagiarismResult" style="margin-top:20px;"></div>
+</div>
+
+<div id="paperContent-reviewer-predict" style="display:none;padding:20px;">
+  <h3>🎯 审稿人预测</h3>
+  <p>基于你的研究方向，AI帮你预测可能的审稿人意见</p>
+  <textarea id="reviewerInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="输入你的研究方向或论文摘要..."></textarea>
+  <button onclick="predictReviewer()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始预测</button>
+  <div id="reviewerResult" style="margin-top:20px;"></div>
+</div>
+
+<div id="paperContent-submit-timing" style="display:none;padding:20px;">
+  <h3>⏰ 投稿时机建议</h3>
+  <p>AI帮你分析现在是不是投稿的好时机</p>
+  <textarea id="timingInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="输入你的研究方向和论文状态..."></textarea>
+  <button onclick="suggestTiming()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始分析</button>
+  <div id="timingResult" style="margin-top:20px;"></div>
+</div>
+
+<div id="paperContent-experiment-design" style="display:none;padding:20px;">
+  <h3>🧪 实验设计智能助手</h3>
+  <p>AI帮你完善实验设计方案</p>
+  <textarea id="experimentInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="输入你的实验设计..."></textarea>
+  <button onclick="designExperiment()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始设计</button>
+  <div id="experimentResult" style="margin-top:20px;"></div>
+</div>
+
+<div id="paperContent-projects">
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
 
@@ -58937,7 +58979,7 @@ function switchPaperSubTab(subTab) {
 
   paperCurrentSubTab = subTab;
 
-  ['projects','editor','format','format2','literature','literature2','design','assist','polish','publish','journalmatch','review','trend','writing','pipeline2','chart','knowledge2','debate2','toolbox','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact'].forEach(function(t) {
+  ['projects','editor','format','format2','literature','literature2','design','assist','polish','publish','journalmatch','review','trend','writing','pipeline2','chart','knowledge2','debate2','toolbox','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact','cite-format','plagiarism-check','reviewer-predict','submit-timing','experiment-design'].forEach(function(t) {
 
     var btn = document.getElementById('paperTab-' + t);
 
