@@ -153910,56 +153910,57 @@ window.addEventListener('load', function() {
 </script>
 
 <script>
-// ========== 写作助手：上传后自动拆分章节 ==========
+// ========== 论文写作：上传后自动拆分章节 ==========
 
-// 找到写作助手的上传按钮，替换它的处理
 window.addEventListener('load', function() {
     setTimeout(function() {
-        // 找写作助手的上传按钮
-        var uploadBtn = document.querySelector('button');
-        // 找带"上传PDF/Word/TXT"文字的按钮
-        var allBtns = document.querySelectorAll('button');
-        var writerUploadBtn = null;
-        for (var i = 0; i < allBtns.length; i++) {
-            if (allBtns[i].textContent.includes('上传PDF/Word/TXT')) {
-                writerUploadBtn = allBtns[i];
-                break;
-            }
-        }
-        
-        if (!writerUploadBtn) {
-            console.log('没找到写作助手上传按钮');
+        var editor = document.getElementById('paperChapterEditor');
+        if (!editor) {
+            console.log('没找到论文写作编辑区');
             return;
         }
         
-        console.log('找到写作助手上传按钮');
+        // 检查有没有已经加过了
+        if (editor.parentNode.querySelector('.paper-upload-wrap')) {
+            console.log('上传按钮已存在');
+            return;
+        }
         
-        // 替换按钮的点击事件
-        var newFileInput = document.createElement('input');
-        newFileInput.type = 'file';
-        newFileInput.accept = '.pdf,.doc,.docx,.txt';
-        newFileInput.style.display = 'none';
+        // 创建上传按钮
+        var wrap = document.createElement('div');
+        wrap.className = 'paper-upload-wrap';
+        wrap.style.marginTop = '10px';
         
-        writerUploadBtn.parentNode.appendChild(newFileInput);
+        var btn = document.createElement('button');
+        btn.textContent = '📂 上传论文PDF/Word，AI自动拆分章节';
+        btn.style.cssText = 'padding:8px 16px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;';
         
-        writerUploadBtn.onclick = function(e) {
-            e.preventDefault();
-            newFileInput.click();
-        };
+        var fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.pdf,.doc,.docx';
+        fileInput.style.display = 'none';
         
-        newFileInput.onchange = function(e) {
+        btn.onclick = function() { fileInput.click(); };
+        
+        fileInput.onchange = function(e) {
             var file = e.target.files[0];
             if (!file) return;
-            splitPaperToSections(file);
+            autoSplitPaper(file);
         };
         
-        console.log('写作助手上传按钮已绑定自动拆分');
-    }, 5000);
+        wrap.appendChild(btn);
+        wrap.appendChild(fileInput);
+        
+        // 插入到编辑区后面
+        editor.parentNode.insertBefore(wrap, editor.nextSibling);
+        
+        console.log('✅ 论文写作上传按钮已加');
+    }, 4000);
 });
 
 // 自动拆分论文到各个章节
-async function splitPaperToSections(file) {
-    alert('正在读取文件，AI将自动拆分章节...');
+async function autoSplitPaper(file) {
+    alert('正在读取文件，AI将自动拆分到8个章节...');
     
     try {
         var paperText = '';
@@ -153974,17 +153975,14 @@ async function splitPaperToSections(file) {
                 var textContent = await page.getTextContent();
                 paperText += textContent.items.map(item => item.str).join(' ') + '\n\n';
             }
-            alert('PDF读取完成！共' + pdf.numPages + '页，AI正在拆分章节...');
+            alert('PDF读取完成！共' + pdf.numPages + '页，AI正在拆分...');
         } else if (fileName.endsWith('.docx')) {
             var arrayBuffer = await file.arrayBuffer();
             var result = await mammoth.extractRawText({arrayBuffer: arrayBuffer});
             paperText = result.value;
-            alert('Word读取完成，AI正在拆分章节...');
-        } else if (fileName.endsWith('.txt')) {
-            paperText = await file.text();
-            alert('TXT读取完成，AI正在拆分章节...');
+            alert('Word读取完成，AI正在拆分...');
         } else {
-            alert('请上传PDF/Word/TXT文件');
+            alert('请上传PDF或Word文件');
             return;
         }
         
@@ -154000,10 +153998,10 @@ async function splitPaperToSections(file) {
         
         var result = await callDeepSeekAPI(sysPrompt, userPrompt, 6000);
         
-        // 解析结果，填充到各个章节
+        // 解析结果
         var sections = result.split(/===([^=]+)===/);
         
-        // 章节名到id的映射（根据实际页面）
+        // 章节名到id的映射
         var sectionMap = {
             '摘要': 'abstract',
             '引言': 'introduction',
@@ -154018,38 +154016,47 @@ async function splitPaperToSections(file) {
         };
         
         var filled = 0;
-        for (var i = 1; i < sections.length; i += 2) {
-            var sectionName = sections[i].trim();
-            var sectionContent = sections[i+1] ? sections[i+1].trim() : '';
-            
-            var inputId = sectionMap[sectionName];
-            if (inputId) {
-                var inputEl = document.getElementById(inputId);
-                if (inputEl) {
-                    inputEl.value = sectionContent;
-                    filled++;
+        
+        // 把内容存到当前项目的content里
+        if (typeof paperCurrentProjectId !== 'undefined' && paperCurrentProjectId) {
+            var projects = getPaperProjects();
+            var project = projects.find(function(p) { return p.id === paperCurrentProjectId; });
+            if (project) {
+                project.content = project.content || {};
+                
+                for (var i = 1; i < sections.length; i += 2) {
+                    var sectionName = sections[i].trim();
+                    var sectionContent = sections[i+1] ? sections[i+1].trim() : '';
+                    
+                    var sectionId = sectionMap[sectionName];
+                    if (sectionId) {
+                        project.content[sectionId] = sectionContent;
+                        filled++;
+                    }
                 }
+                
+                savePaperProjects(projects);
             }
         }
         
-        // 如果找不到对应的id，就全部填到writingInput
-        if (filled === 0) {
-            var writingInput = document.getElementById('writingInput');
-            if (writingInput) {
-                writingInput.value = result;
-                alert('已填充到写作区，请手动拆分章节');
-            }
-        } else {
-            alert('拆分完成！已自动填充' + filled + '个章节');
+        // 刷新当前编辑区
+        if (typeof paperCurrentChapter !== 'undefined' && paperCurrentChapter) {
+            loadPaperChapter(paperCurrentChapter);
         }
+        
+        alert('拆分完成！已自动填充' + filled + '个章节\n左边点不同章节就能看到对应内容');
         
     } catch(e) {
         alert('拆分失败：' + e.message);
     }
 }
 
-console.log('✅ 写作助手自动拆分章节已加载');
+console.log('✅ 论文写作自动拆分章节已加载');
 </script>
+
+
+
+
 
 
 
