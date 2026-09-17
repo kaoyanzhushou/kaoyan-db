@@ -153909,6 +153909,150 @@ window.addEventListener('load', function() {
 });
 </script>
 
+<script>
+// ========== 写作助手：上传后自动拆分章节 ==========
+
+// 找到写作助手的上传按钮，替换它的处理
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        // 找写作助手的上传按钮
+        var uploadBtn = document.querySelector('button');
+        // 找带"上传PDF/Word/TXT"文字的按钮
+        var allBtns = document.querySelectorAll('button');
+        var writerUploadBtn = null;
+        for (var i = 0; i < allBtns.length; i++) {
+            if (allBtns[i].textContent.includes('上传PDF/Word/TXT')) {
+                writerUploadBtn = allBtns[i];
+                break;
+            }
+        }
+        
+        if (!writerUploadBtn) {
+            console.log('没找到写作助手上传按钮');
+            return;
+        }
+        
+        console.log('找到写作助手上传按钮');
+        
+        // 替换按钮的点击事件
+        var newFileInput = document.createElement('input');
+        newFileInput.type = 'file';
+        newFileInput.accept = '.pdf,.doc,.docx,.txt';
+        newFileInput.style.display = 'none';
+        
+        writerUploadBtn.parentNode.appendChild(newFileInput);
+        
+        writerUploadBtn.onclick = function(e) {
+            e.preventDefault();
+            newFileInput.click();
+        };
+        
+        newFileInput.onchange = function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            splitPaperToSections(file);
+        };
+        
+        console.log('写作助手上传按钮已绑定自动拆分');
+    }, 5000);
+});
+
+// 自动拆分论文到各个章节
+async function splitPaperToSections(file) {
+    alert('正在读取文件，AI将自动拆分章节...');
+    
+    try {
+        var paperText = '';
+        var fileName = file.name.toLowerCase();
+        
+        // 读取文件
+        if (fileName.endsWith('.pdf')) {
+            var arrayBuffer = await file.arrayBuffer();
+            var pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+            for (var i = 1; i <= pdf.numPages; i++) {
+                var page = await pdf.getPage(i);
+                var textContent = await page.getTextContent();
+                paperText += textContent.items.map(item => item.str).join(' ') + '\n\n';
+            }
+            alert('PDF读取完成！共' + pdf.numPages + '页，AI正在拆分章节...');
+        } else if (fileName.endsWith('.docx')) {
+            var arrayBuffer = await file.arrayBuffer();
+            var result = await mammoth.extractRawText({arrayBuffer: arrayBuffer});
+            paperText = result.value;
+            alert('Word读取完成，AI正在拆分章节...');
+        } else if (fileName.endsWith('.txt')) {
+            paperText = await file.text();
+            alert('TXT读取完成，AI正在拆分章节...');
+        } else {
+            alert('请上传PDF/Word/TXT文件');
+            return;
+        }
+        
+        if (paperText.length < 200) {
+            alert('文件内容太短，无法拆分');
+            return;
+        }
+        
+        // 调用AI拆分章节
+        var sysPrompt = '你是论文写作专家。请把用户提供的论文文本，按照学术论文的标准结构拆分成以下8个部分：\n1. 摘要\n2. 引言\n3. 文献综述\n4. 研究对象与方法\n5. 研究结果\n6. 讨论\n7. 结论\n8. 参考文献\n\n请严格按照以下格式输出，每个部分用===章节名===开头：\n\n===摘要===\n（摘要内容）\n\n===引言===\n（引言内容）\n\n===文献综述===\n（文献综述内容）\n\n===研究对象与方法===\n（方法内容）\n\n===研究结果===\n（结果内容，表格用Markdown表格格式）\n\n===讨论===\n（讨论内容）\n\n===结论===\n（结论内容）\n\n===参考文献===\n（参考文献内容）\n\n如果原文中某个部分找不到，就输出"（原文未找到此部分）"。注意：表格数据要整理成规范的Markdown表格格式，不要乱码。';
+        
+        var userPrompt = '请拆分以下论文内容：\n\n' + paperText.substring(0, 12000);
+        
+        var result = await callDeepSeekAPI(sysPrompt, userPrompt, 6000);
+        
+        // 解析结果，填充到各个章节
+        var sections = result.split(/===([^=]+)===/);
+        
+        // 章节名到id的映射（根据实际页面）
+        var sectionMap = {
+            '摘要': 'abstract',
+            '引言': 'introduction',
+            '文献综述': 'literature',
+            '研究对象与方法': 'methods',
+            '研究方法': 'methods',
+            '研究结果': 'results',
+            '结果': 'results',
+            '讨论': 'discussion',
+            '结论': 'conclusion',
+            '参考文献': 'references'
+        };
+        
+        var filled = 0;
+        for (var i = 1; i < sections.length; i += 2) {
+            var sectionName = sections[i].trim();
+            var sectionContent = sections[i+1] ? sections[i+1].trim() : '';
+            
+            var inputId = sectionMap[sectionName];
+            if (inputId) {
+                var inputEl = document.getElementById(inputId);
+                if (inputEl) {
+                    inputEl.value = sectionContent;
+                    filled++;
+                }
+            }
+        }
+        
+        // 如果找不到对应的id，就全部填到writingInput
+        if (filled === 0) {
+            var writingInput = document.getElementById('writingInput');
+            if (writingInput) {
+                writingInput.value = result;
+                alert('已填充到写作区，请手动拆分章节');
+            }
+        } else {
+            alert('拆分完成！已自动填充' + filled + '个章节');
+        }
+        
+    } catch(e) {
+        alert('拆分失败：' + e.message);
+    }
+}
+
+console.log('✅ 写作助手自动拆分章节已加载');
+</script>
+
+
+
 
 
 
