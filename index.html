@@ -148116,6 +148116,15 @@ window.addEventListener('load', function() {
         wrap.appendChild(btn);
         wrap.appendChild(fileInput);
 
+        // 加AI润色按钮
+        var polishBtn = document.createElement('button');
+        polishBtn.textContent = '✨ AI润色当前段落';
+        polishBtn.style.cssText = 'padding:8px 16px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;margin-left:8px;box-shadow:0 2px 8px rgba(139,92,246,0.3);';
+        polishBtn.onclick = function() {
+          polishCurrentPara();
+        };
+        wrap.appendChild(polishBtn);
+
         // 插入到编辑区后面
         editor.parentNode.insertBefore(wrap, editor.nextSibling);
 
@@ -148217,6 +148226,43 @@ async function autoSplitPaper(file) {
 }
 
 console.log('✅ 论文写作自动拆分章节已加载');
+
+async function polishCurrentPara() {
+  var editor = document.getElementById('paperChapterEditor');
+  if (!editor) {
+    alert('找不到编辑区');
+    return;
+  }
+  var text = editor.value;
+  if (!text || text.trim().length < 50) {
+    alert('请先在编辑区写一段内容（至少50字）');
+    return;
+  }
+  
+  var originalText = editor.value;
+  editor.value = '✨ AI正在润色中，请稍候...';
+  editor.disabled = true;
+  
+  try {
+    var systemPrompt = '你是一位资深学术写作专家，擅长体育学论文写作。请润色下面这段文字，要求：1. 语言更学术、更流畅；2. 逻辑更清晰；3. 保持原意不变；4. 直接输出润色后的文字，不要解释。';
+    var userPrompt = '请润色这段文字：\n\n' + text;
+    
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
+    
+    var choice = confirm('润色完成！点确定查看润色后的版本，点取消保留原文。\n\n润色后预览：\n' + result.substring(0, 300) + '...');
+    if (choice) {
+      editor.value = result;
+    } else {
+      editor.value = originalText;
+    }
+    
+  } catch(e) {
+    editor.value = originalText;
+    alert('润色失败：' + e.message);
+  } finally {
+    editor.disabled = false;
+  }
+}
 </script>
 
 <script>
