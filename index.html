@@ -153531,7 +153531,7 @@ console.log('✅ 5个新工具AI功能已加载');
 <script>
 // ========== 通用工具：Markdown渲染 + 文件上传 ==========
 
-// 简单Markdown渲染
+// 升级Markdown渲染：支持表格、代码块、引用
 function renderMarkdown(text) {
     if (!text) return '';
     var html = text;
@@ -153540,16 +153540,53 @@ function renderMarkdown(text) {
     html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     
     // 标题
-    html = html.replace(/^### (.*)$/gm, '<h4 style="color:#16a34a;margin:16px 0 8px 0;">$1</h4>');
-    html = html.replace(/^## (.*)$/gm, '<h3 style="color:#16a34a;margin:20px 0 10px 0;">$1</h3>');
-    html = html.replace(/^# (.*)$/gm, '<h2 style="color:#16a34a;margin:24px 0 12px 0;">$1</h2>');
+    html = html.replace(/^### (.*)$/gm, '<h4 style="color:#16a34a;margin:16px 0 8px 0;font-size:16px;">$1</h4>');
+    html = html.replace(/^## (.*)$/gm, '<h3 style="color:#16a34a;margin:20px 0 10px 0;font-size:18px;">$1</h3>');
+    html = html.replace(/^# (.*)$/gm, '<h2 style="color:#16a34a;margin:24px 0 12px 0;font-size:20px;">$1</h2>');
     
     // 粗体
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#1f2937;">$1</strong>');
     
+    // 斜体
+    html = html.replace(/\*(.*?)\*/g, '<em style="color:#4b5563;">$1</em>');
+    
+    // 代码块
+    html = html.replace(/```([^`]+)```/g, '<pre style="background:#f3f4f6;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;"><code>$1</code></pre>');
+    
+    // 表格：Markdown表格
+    html = html.replace(/\|(.*)\|\n\|[\s-|]+\n((?:\|.*\|\n?)*)/g, function(match, header, body) {
+        var headerCells = header.split('|').filter(function(c) { return c.trim(); });
+        var rows = body.trim().split('\n');
+        var tableHtml = '<table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;">';
+        
+        // 表头
+        tableHtml += '<tr>';
+        headerCells.forEach(function(cell) {
+            tableHtml += '<th style="background:#f0fdf4;color:#16a34a;padding:10px;border:1px solid #e5e7eb;text-align:left;">' + cell.trim() + '</th>';
+        });
+        tableHtml += '</tr>';
+        
+        // 表体
+        rows.forEach(function(row) {
+            var cells = row.split('|').filter(function(c) { return c.trim(); });
+            tableHtml += '<tr>';
+            cells.forEach(function(cell) {
+                tableHtml += '<td style="padding:10px;border:1px solid #e5e7eb;">' + cell.trim() + '</td>';
+            });
+            tableHtml += '</tr>';
+        });
+        
+        tableHtml += '</table>';
+        return tableHtml;
+    });
+    
     // 列表
     html = html.replace(/^\* (.*)$/gm, '<li style="margin:4px 0;">$1</li>');
     html = html.replace(/^- (.*)$/gm, '<li style="margin:4px 0;">$1</li>');
+    html = html.replace(/^\d+\. (.*)$/gm, '<li style="margin:4px 0;list-style-type:decimal;">$1</li>');
+    
+    // 引用
+    html = html.replace(/^&gt; (.*)$/gm, '<blockquote style="border-left:4px solid #16a34a;padding:8px 16px;margin:12px 0;background:#f0fdf4;color:#374151;">$1</blockquote>');
     
     // 分割线
     html = html.replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">');
@@ -153560,6 +153597,11 @@ function renderMarkdown(text) {
     // 把连续的li包成ul
     html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, function(match) {
         return '<ul style="margin:8px 0;padding-left:20px;">' + match + '</ul>';
+    });
+    
+    // 把pre里的<br>去掉，因为pre本身就换行了
+    html = html.replace(/<pre[^>]*>(.*?)<\/pre>/g, function(match) {
+        return match.replace(/<br>/g, '\n');
     });
     
     return html;
@@ -153736,7 +153778,7 @@ async function autoAnalyzePaper(file, targetInputId) {
     resultDiv.innerHTML = '<p style="color:#6b7280;">🤖 AI正在自动分析论文...请稍候（可能需要1-2分钟）</p>';
     
     try {
-        var sysPrompt = '你是资深学术审稿专家。请分析用户提供的论文，从以下几个方面给出详细评估：\n\n1. **摘要**：是否清晰、完整、涵盖研究目的/方法/结果/结论\n2. **引言**：研究背景是否充分、问题是否明确、研究目标是否清晰\n3. **文献综述**：是否全面、逻辑是否清晰、是否指出研究缺口\n4. **研究方法**：是否严谨、样本量是否合理、统计方法是否正确\n5. **结果**：数据是否清晰、图表是否规范、结果是否支持结论\n6. **讨论**：分析是否深入、是否解释了机制、是否对比了前人研究\n7. **结论**：是否恰当、是否有创新性、是否指出了局限性\n\n请对每个部分打分（1-10分），并给出具体的改进建议。';
+        var sysPrompt = '你是资深学术审稿专家。请分析用户提供的论文，从以下几个方面给出详细评估：\n\n1. **摘要**：是否清晰、完整、涵盖研究目的/方法/结果/结论\n2. **引言**：研究背景是否充分、问题是否明确、研究目标是否清晰\n3. **文献综述**：是否全面、逻辑是否清晰、是否指出研究缺口\n4. **研究方法**：是否严谨、样本量是否合理、统计方法是否正确\n5. **结果**：数据是否清晰、表格/图表是否规范、结果是否支持结论\n6. **讨论**：分析是否深入、是否解释了机制、是否对比了前人研究\n7. **结论**：是否恰当、是否有创新性、是否指出了局限性\n\n要求：\n- 每个部分打分（1-10分）\n- 用Markdown表格列出评分汇总\n- 具体指出哪些表格/图表/数据存在问题\n- 改进建议要具体可操作\n- 如果论文里有表格数据，要评估数据是否合理、统计是否正确';
         
         var userPrompt = '请分析以下论文：\n\n' + paperText.substring(0, 8000); // 限制长度，避免token超限
         
