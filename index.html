@@ -153835,12 +153835,98 @@ async function autoAnalyzePaper(file, targetInputId) {
 console.log('✅ 论文自动分析功能已加载');
 </script>
 
+<script>
+// 安全加上传按钮
+function addUploadBtn(textareaId, btnText) {
+    var ta = document.getElementById(textareaId);
+    if (!ta) return;
+    if (ta.parentNode.querySelector('.upload-wrap')) return;
+    
+    var wrap = document.createElement('div');
+    wrap.className = 'upload-wrap';
+    wrap.style.marginBottom = '8px';
+    
+    var btn = document.createElement('button');
+    btn.textContent = '📂 ' + (btnText || '上传PDF/Word');
+    btn.style.cssText = 'padding:6px 12px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;';
+    
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.pdf,.doc,.docx';
+    fileInput.style.display = 'none';
+    
+    btn.onclick = function() { fileInput.click(); };
+    
+    fileInput.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        alert('正在读取...');
+        
+        if (file.name.toLowerCase().endsWith('.pdf')) {
+            file.arrayBuffer().then(function(buf) {
+                return pdfjsLib.getDocument({data: buf}).promise;
+            }).then(function(pdf) {
+                var promises = [];
+                for (var i = 1; i <= pdf.numPages; i++) {
+                    promises.push(pdf.getPage(i).then(function(page) {
+                        return page.getTextContent().then(function(tc) {
+                            return tc.items.map(function(it) { return it.str; }).join(' ');
+                        });
+                    }));
+                }
+                return Promise.all(promises);
+            }).then(function(pages) {
+                ta.value = pages.join('\n\n');
+                alert('读取完成！');
+            }).catch(function(err) {
+                alert('读取失败: ' + err.message);
+            });
+        } else if (file.name.toLowerCase().endsWith('.docx')) {
+            file.arrayBuffer().then(function(buf) {
+                return mammoth.extractRawText({arrayBuffer: buf});
+            }).then(function(result) {
+                ta.value = result.value;
+                alert('读取完成！');
+            }).catch(function(err) {
+                alert('读取失败: ' + err.message);
+            });
+        } else {
+            alert('请上传PDF或Word文件');
+        }
+    };
+    
+    wrap.appendChild(btn);
+    wrap.appendChild(fileInput);
+    ta.parentNode.insertBefore(wrap, ta);
+}
+
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        addUploadBtn('reviewPaperInput', '上传论文');
+        addUploadBtn('writingInput', '上传论文');
+        console.log('上传按钮已加');
+    }, 3000);
+});
+</script>
+
+
+
+
+
+
+
 
 <script>
 
 
 
 <script>
+
+
+
+
+
+
 
 
 </body>
