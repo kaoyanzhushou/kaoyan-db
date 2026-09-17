@@ -153386,7 +153386,7 @@ async function formatCitations() {
         var userPrompt = '请将以下参考文献格式化为GB/T 7714-2015格式：\n\n' + input;
         
         var result = await callDeepSeekAPI(sysPrompt, userPrompt, 2000);
-        resultDiv.innerHTML = '<div style="background:#f9fafb;padding:15px;border-radius:8px;border:1px solid #e5e7eb;"><h4>格式化结果：</h4><pre style="white-space:pre-wrap;font-family:inherit;">' + result + '</pre></div>';
+        resultDiv.innerHTML = beautifyResult('<h4 style="color:#16a34a;margin:0 0 16px 0;">📚 格式化结果</h4>' + renderMarkdown(result));
     } catch(e) {
         resultDiv.innerHTML = '<p style="color:#ef4444;">格式化失败：' + e.message + '</p>';
     }
@@ -153409,7 +153409,7 @@ async function checkPlagiarism() {
         var userPrompt = '请分析以下论文段落的重复风险：\n\n' + input;
         
         var result = await callDeepSeekAPI(sysPrompt, userPrompt, 2000);
-        resultDiv.innerHTML = '<div style="background:#f9fafb;padding:15px;border-radius:8px;border:1px solid #e5e7eb;"><h4>查重分析结果：</h4><pre style="white-space:pre-wrap;font-family:inherit;">' + result + '</pre></div>';
+        resultDiv.innerHTML = beautifyResult('<h4 style="color:#16a34a;margin:0 0 16px 0;">🔍 查重分析结果</h4>' + renderMarkdown(result));
     } catch(e) {
         resultDiv.innerHTML = '<p style="color:#ef4444;">分析失败：' + e.message + '</p>';
     }
@@ -153432,7 +153432,7 @@ async function predictReviewer() {
         var userPrompt = '请基于以下研究方向预测审稿人意见：\n\n' + input;
         
         var result = await callDeepSeekAPI(sysPrompt, userPrompt, 2000);
-        resultDiv.innerHTML = '<div style="background:#f9fafb;padding:15px;border-radius:8px;border:1px solid #e5e7eb;"><h4>审稿人预测：</h4><pre style="white-space:pre-wrap;font-family:inherit;">' + result + '</pre></div>';
+        resultDiv.innerHTML = beautifyResult('<h4 style="color:#16a34a;margin:0 0 16px 0;">🎯 审稿人预测</h4>' + renderMarkdown(result));
     } catch(e) {
         resultDiv.innerHTML = '<p style="color:#ef4444;">预测失败：' + e.message + '</p>';
     }
@@ -153455,7 +153455,7 @@ async function suggestTiming() {
         var userPrompt = '请分析以下研究的投稿时机：\n\n' + input;
         
         var result = await callDeepSeekAPI(sysPrompt, userPrompt, 1500);
-        resultDiv.innerHTML = '<div style="background:#f9fafb;padding:15px;border-radius:8px;border:1px solid #e5e7eb;"><h4>投稿时机建议：</h4><pre style="white-space:pre-wrap;font-family:inherit;">' + result + '</pre></div>';
+        resultDiv.innerHTML = beautifyResult('<h4 style="color:#16a34a;margin:0 0 16px 0;">⏰ 投稿时机建议</h4>' + renderMarkdown(result));
     } catch(e) {
         resultDiv.innerHTML = '<p style="color:#ef4444;">分析失败：' + e.message + '</p>';
     }
@@ -153478,13 +153478,90 @@ async function designExperiment() {
         var userPrompt = '请完善以下实验设计方案：\n\n' + input;
         
         var result = await callDeepSeekAPI(sysPrompt, userPrompt, 2000);
-        resultDiv.innerHTML = '<div style="background:#f9fafb;padding:15px;border-radius:8px;border:1px solid #e5e7eb;"><h4>实验设计完善建议：</h4><pre style="white-space:pre-wrap;font-family:inherit;">' + result + '</pre></div>';
+        resultDiv.innerHTML = beautifyResult('<h4 style="color:#16a34a;margin:0 0 16px 0;">🧪 实验设计完善建议</h4>' + renderMarkdown(result));
     } catch(e) {
         resultDiv.innerHTML = '<p style="color:#ef4444;">设计失败：' + e.message + '</p>';
     }
 }
 
 console.log('✅ 5个新工具AI功能已加载');
+</script>
+
+
+<script>
+// ========== 通用工具：Markdown渲染 + 文件上传 ==========
+
+// 简单Markdown渲染
+function renderMarkdown(text) {
+    if (!text) return '';
+    var html = text;
+    
+    // 转义HTML
+    html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
+    // 标题
+    html = html.replace(/^### (.*)$/gm, '<h4 style="color:#16a34a;margin:16px 0 8px 0;">$1</h4>');
+    html = html.replace(/^## (.*)$/gm, '<h3 style="color:#16a34a;margin:20px 0 10px 0;">$1</h3>');
+    html = html.replace(/^# (.*)$/gm, '<h2 style="color:#16a34a;margin:24px 0 12px 0;">$1</h2>');
+    
+    // 粗体
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#1f2937;">$1</strong>');
+    
+    // 列表
+    html = html.replace(/^\* (.*)$/gm, '<li style="margin:4px 0;">$1</li>');
+    html = html.replace(/^- (.*)$/gm, '<li style="margin:4px 0;">$1</li>');
+    
+    // 分割线
+    html = html.replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">');
+    
+    // 换行
+    html = html.replace(/\n/g, '<br>');
+    
+    // 把连续的li包成ul
+    html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, function(match) {
+        return '<ul style="margin:8px 0;padding-left:20px;">' + match + '</ul>';
+    });
+    
+    return html;
+}
+
+// 美化AI结果显示容器
+function beautifyResult(htmlContent) {
+    return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">' + htmlContent + '</div>';
+}
+
+// 文件上传处理（PDF/Word转文本）
+async function handleFileUpload(file, targetInputId) {
+    if (!file) return;
+    
+    var fileName = file.name.toLowerCase();
+    var inputEl = document.getElementById(targetInputId);
+    
+    if (fileName.endsWith('.txt')) {
+        var text = await file.text();
+        inputEl.value = text;
+        alert('文件已加载！');
+        return;
+    }
+    
+    // PDF用PDF.js读取
+    if (fileName.endsWith('.pdf')) {
+        alert('PDF文件读取功能开发中，请先复制粘贴文本内容');
+        // TODO: 加PDF.js读取
+        return;
+    }
+    
+    // Word文件
+    if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+        alert('Word文件读取功能开发中，请先复制粘贴文本内容');
+        // TODO: 加Mammoth.js读取
+        return;
+    }
+    
+    alert('暂不支持该文件格式');
+}
+
+console.log('✅ 通用工具已加载');
 </script>
 
 </body>
