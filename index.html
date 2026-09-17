@@ -15205,6 +15205,10 @@ button {
 <button onclick="simulateReviewerQuestions()" style="padding:10px 20px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;box-shadow:0 2px 8px rgba(245,158,11,0.3);margin-bottom:16px;">
   🎭 模拟审稿人提问（预测审稿意见）
 </button>
+
+<button onclick="generateLiteratureNotes()" style="padding:10px 20px;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;box-shadow:0 2px 8px rgba(16,185,129,0.3);margin-bottom:16px;">
+  📝 AI生成文献笔记（自动结构化）
+</button>
 <h3>📚 文献引用一键格式化</h3>
   <p>粘贴你的参考文献，自动格式化成GB/T 7714或APA格式</p>
   <textarea id="citeInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="粘贴你的参考文献..."></textarea>
@@ -148323,6 +148327,63 @@ async function simulateReviewerQuestions() {
     
   } catch(e) {
     resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">模拟失败：' + e.message + '</div>';
+  }
+}
+
+async function generateLiteratureNotes() {
+  // 找文献内容输入框
+  var inputAreas = document.querySelectorAll('textarea');
+  var paperText = '';
+  for (var i = 0; i < inputAreas.length; i++) {
+    if (inputAreas[i].value.length > 500 && inputAreas[i].offsetParent !== null) {
+      paperText = inputAreas[i].value;
+      break;
+    }
+  }
+  
+  if (!paperText) {
+    alert('请先在上面的输入框里粘贴论文内容，或者上传PDF论文');
+    return;
+  }
+  
+  // 找结果显示区域
+  var resultAreas = document.querySelectorAll('[id*="literature"][id*="result"], [id*="Literature"][id*="Result"]');
+  var resultArea = null;
+  for (var i = 0; i < resultAreas.length; i++) {
+    if (resultAreas[i].offsetParent !== null) {
+      resultArea = resultAreas[i];
+      break;
+    }
+  }
+  
+  if (!resultArea) {
+    var allDivs = document.querySelectorAll('div');
+    for (var i = 0; i < allDivs.length; i++) {
+      if (allDivs[i].id && allDivs[i].id.includes('Result') && allDivs[i].offsetParent !== null) {
+        resultArea = allDivs[i];
+        break;
+      }
+    }
+  }
+  
+  if (!resultArea) {
+    alert('找不到结果显示区域');
+    return;
+  }
+  
+  // 显示加载中
+  resultArea.innerHTML = '<div style="padding:20px;text-align:center;color:#666;">📝 AI正在生成文献笔记，请稍候...</div>';
+  
+  try {
+    var systemPrompt = '你是一位资深体育学研究者，擅长文献阅读和笔记整理。请根据下面这篇论文，生成结构化的文献笔记，包括以下几个部分：1. 研究问题与目的；2. 研究方法（对象、设计、工具、统计方法）；3. 主要结果（关键数据）；4. 核心结论；5. 创新点与不足；6. 对你的研究有什么启发。要求：用Markdown格式，清晰简洁，重点突出。';
+    var userPrompt = '请根据这篇论文，生成文献笔记：\n\n' + paperText;
+    
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 3000);
+    
+    resultArea.innerHTML = renderMarkdown(result);
+    
+  } catch(e) {
+    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">生成失败：' + e.message + '</div>';
   }
 }
 </script>
