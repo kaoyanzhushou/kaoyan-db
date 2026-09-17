@@ -124295,7 +124295,13 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model) {
 
       const errorData = await response.json().catch(() => ({}));
 
-      throw new Error('后端API调用失败: ' + (errorData.error || response.statusText));
+      
+let errMsg = errorData.error || response.statusText;
+if (response.status === 433) {
+  errMsg = '调用太频繁或额度用完了，请稍后再试，或换个模型试试';
+}
+throw new Error('后端API调用失败: ' + errMsg);
+
 
     }
 
@@ -135136,7 +135142,13 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model) {
 
       const errorData = await response.json().catch(() => ({}));
 
-      throw new Error('后端API调用失败: ' + (errorData.error || response.statusText));
+      
+let errMsg = errorData.error || response.statusText;
+if (response.status === 433) {
+  errMsg = '调用太频繁或额度用完了，请稍后再试，或换个模型试试';
+}
+throw new Error('后端API调用失败: ' + errMsg);
+
 
     }
 
