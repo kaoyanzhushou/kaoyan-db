@@ -15199,7 +15199,79 @@ button {
 
     </div>
 
+  
+<div id="paperContent-cite-format" style="display:none;padding:20px;">
+  <h3>📚 文献引用一键格式化</h3>
+  <p>粘贴你的参考文献，自动格式化成GB/T 7714或APA格式</p>
+  <textarea id="citeInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="粘贴你的参考文献..."></textarea>
+  <div style="margin:8px 0;">
+    <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
+      📎 上传PDF/Word/TXT
+      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'citeInput')">
+    </label>
   </div>
+  <button onclick="formatCitations()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始格式化</button>
+  <div id="citeResult" style="margin-top:20px;"></div>
+</div>
+
+<div id="paperContent-plagiarism-check" style="display:none;padding:20px;">
+  <h3>🔍 论文查重自检</h3>
+  <p>AI帮你检查论文中可能重复的内容</p>
+  <textarea id="plagiarismInput" style="width:100%;height:200px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="粘贴你的论文段落..."></textarea>
+  <div style="margin:8px 0;">
+    <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
+      📎 上传PDF/Word/TXT
+      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'plagiarismInput')">
+    </label>
+  </div>
+  <button onclick="checkPlagiarism()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始检查</button>
+  <div id="plagiarismResult" style="margin-top:20px;"></div>
+</div>
+
+<div id="paperContent-reviewer-predict" style="display:none;padding:20px;">
+  <h3>🎯 审稿人预测</h3>
+  <p>基于你的研究方向，AI帮你预测可能的审稿人意见</p>
+  <textarea id="reviewerInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="输入你的研究方向或论文摘要..."></textarea>
+  <div style="margin:8px 0;">
+    <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
+      📎 上传PDF/Word/TXT
+      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'reviewerInput')">
+    </label>
+  </div>
+  <button onclick="predictReviewer()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始预测</button>
+  <div id="reviewerResult" style="margin-top:20px;"></div>
+</div>
+
+<div id="paperContent-submit-timing" style="display:none;padding:20px;">
+  <h3>⏰ 投稿时机建议</h3>
+  <p>AI帮你分析现在是不是投稿的好时机</p>
+  <textarea id="timingInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="输入你的研究方向和论文状态..."></textarea>
+  <div style="margin:8px 0;">
+    <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
+      📎 上传PDF/Word/TXT
+      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'timingInput')">
+    </label>
+  </div>
+  <button onclick="suggestTiming()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始分析</button>
+  <div id="timingResult" style="margin-top:20px;"></div>
+</div>
+
+<div id="paperContent-experiment-design" style="display:none;padding:20px;">
+  <h3>🧪 实验设计智能助手</h3>
+  <p>AI帮你完善实验设计方案</p>
+  <textarea id="experimentInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="输入你的实验设计..."></textarea>
+  <div style="margin:8px 0;">
+    <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
+      📎 上传PDF/Word/TXT
+      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'experimentInput')">
+    </label>
+  </div>
+  <button onclick="designExperiment()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始设计</button>
+  <div id="experimentResult" style="margin-top:20px;"></div>
+</div>
+
+
+</div>
 
 </div>
 
@@ -16221,71 +16293,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
 <div id="tab-teacher" class="tab-content">
 
-<div id="paperContent-cite-format" style="display:none;padding:20px;">
-  <h3>📚 文献引用一键格式化</h3>
-  <p>粘贴你的参考文献，自动格式化成GB/T 7714或APA格式</p>
-  <textarea id="citeInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="粘贴你的参考文献..."></textarea>
-  <div style="margin:8px 0;">
-    <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
-      📎 上传PDF/Word/TXT
-      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'citeInput')">
-    </label>
-  </div>
-  <button onclick="formatCitations()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始格式化</button>
-  <div id="citeResult" style="margin-top:20px;"></div>
-</div>
-<div id="paperContent-plagiarism-check" style="display:none;padding:20px;">
-  <h3>🔍 论文查重自检</h3>
-  <p>AI帮你检查论文中可能重复的内容</p>
-  <textarea id="plagiarismInput" style="width:100%;height:200px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="粘贴你的论文段落..."></textarea>
-  <div style="margin:8px 0;">
-    <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
-      📎 上传PDF/Word/TXT
-      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'plagiarismInput')">
-    </label>
-  </div>
-  <button onclick="checkPlagiarism()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始检查</button>
-  <div id="plagiarismResult" style="margin-top:20px;"></div>
-</div>
-<div id="paperContent-reviewer-predict" style="display:none;padding:20px;">
-  <h3>🎯 审稿人预测</h3>
-  <p>基于你的研究方向，AI帮你预测可能的审稿人意见</p>
-  <textarea id="reviewerInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="输入你的研究方向或论文摘要..."></textarea>
-  <div style="margin:8px 0;">
-    <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
-      📎 上传PDF/Word/TXT
-      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'reviewerInput')">
-    </label>
-  </div>
-  <button onclick="predictReviewer()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始预测</button>
-  <div id="reviewerResult" style="margin-top:20px;"></div>
-</div>
-<div id="paperContent-submit-timing" style="display:none;padding:20px;">
-  <h3>⏰ 投稿时机建议</h3>
-  <p>AI帮你分析现在是不是投稿的好时机</p>
-  <textarea id="timingInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="输入你的研究方向和论文状态..."></textarea>
-  <div style="margin:8px 0;">
-    <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
-      📎 上传PDF/Word/TXT
-      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'timingInput')">
-    </label>
-  </div>
-  <button onclick="suggestTiming()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始分析</button>
-  <div id="timingResult" style="margin-top:20px;"></div>
-</div>
-<div id="paperContent-experiment-design" style="display:none;padding:20px;">
-  <h3>🧪 实验设计智能助手</h3>
-  <p>AI帮你完善实验设计方案</p>
-  <textarea id="experimentInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="输入你的实验设计..."></textarea>
-  <div style="margin:8px 0;">
-    <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
-      📎 上传PDF/Word/TXT
-      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'experimentInput')">
-    </label>
-  </div>
-  <button onclick="designExperiment()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始设计</button>
-  <div id="experimentResult" style="margin-top:20px;"></div>
-</div>
+
 
 class="tab-content">
 
