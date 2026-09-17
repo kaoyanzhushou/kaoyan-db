@@ -148266,7 +148266,7 @@ async function polishCurrentPara() {
     
   } catch(e) {
     editor.value = originalText;
-    alert('润色失败：' + e.message);
+    alert('润色失败：' + e.message + '\n\n详细错误：' + e.stack);
   } finally {
     editor.disabled = false;
   }
@@ -148326,7 +148326,7 @@ async function simulateReviewerQuestions() {
     resultArea.innerHTML = renderMarkdown(result);
     
   } catch(e) {
-    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">模拟失败：' + e.message + '</div>';
+    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">模拟失败：' + e.message + '<br><br><small>' + e.stack + '</small></div>';
   }
 }
 
@@ -148383,9 +148383,22 @@ async function generateLiteratureNotes() {
     resultArea.innerHTML = renderMarkdown(result);
     
   } catch(e) {
-    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">生成失败：' + e.message + '</div>';
+    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">生成失败：' + e.message + '<br><br><small>' + e.stack + '</small></div>';
   }
 }
+
+// 全局AI调用测试函数
+window.testAI = async function() {
+  try {
+    console.log('开始测试AI调用...');
+    var result = await callDeepSeekAPI('你是助手', '说你好', 100);
+    console.log('AI调用成功:', result);
+    alert('AI调用成功！返回：' + result);
+  } catch(e) {
+    console.error('AI调用失败:', e);
+    alert('AI调用失败：' + e.message + '\n\n错误详情：' + e.stack);
+  }
+};
 </script>
 
 <script>
