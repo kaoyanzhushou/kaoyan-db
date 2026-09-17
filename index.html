@@ -15201,7 +15201,11 @@ button {
 
   
 <div id="paperContent-cite-format" style="display:none;padding:20px;">
-  <h3>📚 文献引用一键格式化</h3>
+  
+<button onclick="simulateReviewerQuestions()" style="padding:10px 20px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;box-shadow:0 2px 8px rgba(245,158,11,0.3);margin-bottom:16px;">
+  🎭 模拟审稿人提问（预测审稿意见）
+</button>
+<h3>📚 文献引用一键格式化</h3>
   <p>粘贴你的参考文献，自动格式化成GB/T 7714或APA格式</p>
   <textarea id="citeInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="粘贴你的参考文献..."></textarea>
   <div style="margin:8px 0;">
@@ -148261,6 +148265,64 @@ async function polishCurrentPara() {
     alert('润色失败：' + e.message);
   } finally {
     editor.disabled = false;
+  }
+}
+
+async function simulateReviewerQuestions() {
+  // 找论文内容输入框
+  var inputAreas = document.querySelectorAll('textarea');
+  var paperText = '';
+  for (var i = 0; i < inputAreas.length; i++) {
+    if (inputAreas[i].value.length > 500) {
+      paperText = inputAreas[i].value;
+      break;
+    }
+  }
+  
+  if (!paperText) {
+    alert('请先在上面的输入框里粘贴你的论文内容（至少500字）');
+    return;
+  }
+  
+  // 找结果显示区域
+  var resultAreas = document.querySelectorAll('[id*="review"][id*="result"], [id*="Review"][id*="Result"]');
+  var resultArea = null;
+  for (var i = 0; i < resultAreas.length; i++) {
+    if (resultAreas[i].offsetParent !== null) {
+      resultArea = resultAreas[i];
+      break;
+    }
+  }
+  
+  if (!resultArea) {
+    // 找当前可见的结果区域
+    var allDivs = document.querySelectorAll('div');
+    for (var i = 0; i < allDivs.length; i++) {
+      if (allDivs[i].id && allDivs[i].id.includes('Result') && allDivs[i].offsetParent !== null) {
+        resultArea = allDivs[i];
+        break;
+      }
+    }
+  }
+  
+  if (!resultArea) {
+    alert('找不到结果显示区域');
+    return;
+  }
+  
+  // 显示加载中
+  resultArea.innerHTML = '<div style="padding:20px;text-align:center;color:#666;">🎭 AI正在模拟审稿人，预测审稿意见...</div>';
+  
+  try {
+    var systemPrompt = '你是一位顶级体育学杂志审稿人，经验丰富，眼光毒辣。请根据下面这篇论文，预测3-5个审稿人最可能提出的问题或意见，每个问题后面给出参考答案建议。要求：1. 问题要专业、尖锐，真正能问到点上；2. 参考答案要实用、具体；3. 用Markdown格式输出，清晰易读。';
+    var userPrompt = '请根据这篇论文，预测审稿人会提什么问题：\n\n' + paperText;
+    
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 3000);
+    
+    resultArea.innerHTML = renderMarkdown(result);
+    
+  } catch(e) {
+    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">模拟失败：' + e.message + '</div>';
   }
 }
 </script>
