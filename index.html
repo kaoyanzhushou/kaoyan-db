@@ -9996,6 +9996,10 @@ body.loading #loadingText{
 </script>
 <!-- ========== 加载优化v1.0 结束 ========== -->
 
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
 </head>
 
 <body>
@@ -153567,28 +153571,58 @@ async function handleFileUpload(file, targetInputId) {
     var fileName = file.name.toLowerCase();
     var inputEl = document.getElementById(targetInputId);
     
+    // TXT直接读取
     if (fileName.endsWith('.txt')) {
         var text = await file.text();
         inputEl.value = text;
-        alert('文件已加载！');
+        alert('TXT文件已加载！');
         return;
     }
     
     // PDF用PDF.js读取
     if (fileName.endsWith('.pdf')) {
-        alert('PDF文件读取功能开发中，请先复制粘贴文本内容');
-        // TODO: 加PDF.js读取
+        try {
+            alert('正在读取PDF文件，请稍候...');
+            var arrayBuffer = await file.arrayBuffer();
+            var pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+            var fullText = '';
+            
+            for (var i = 1; i <= pdf.numPages; i++) {
+                var page = await pdf.getPage(i);
+                var textContent = await page.getTextContent();
+                var pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n\n';
+            }
+            
+            inputEl.value = fullText;
+            alert('PDF读取完成！共' + pdf.numPages + '页');
+        } catch(e) {
+            alert('PDF读取失败：' + e.message + '\n请尝试复制粘贴文本内容');
+        }
         return;
     }
     
-    // Word文件
-    if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
-        alert('Word文件读取功能开发中，请先复制粘贴文本内容');
-        // TODO: 加Mammoth.js读取
+    // Word用Mammoth.js读取
+    if (fileName.endsWith('.docx')) {
+        try {
+            alert('正在读取Word文件，请稍候...');
+            var arrayBuffer = await file.arrayBuffer();
+            var result = await mammoth.extractRawText({arrayBuffer: arrayBuffer});
+            inputEl.value = result.value;
+            alert('Word读取完成！');
+        } catch(e) {
+            alert('Word读取失败：' + e.message + '\n请尝试复制粘贴文本内容');
+        }
         return;
     }
     
-    alert('暂不支持该文件格式');
+    // .doc旧格式不支持
+    if (fileName.endsWith('.doc')) {
+        alert('旧版.doc格式暂不支持，请另存为.docx或PDF后上传');
+        return;
+    }
+    
+    alert('暂不支持该文件格式，请上传PDF/Word/TXT');
 }
 
 console.log('✅ 通用工具已加载');
