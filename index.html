@@ -17656,7 +17656,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
   <div style="margin:8px 0;">
     <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
       📎 上传PDF/Word/TXT
-      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="handleFileUpload(this.files[0], 'citeInput')">
+      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'citeInput')">
     </label>
   </div>
   <button onclick="formatCitations()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始格式化</button>
@@ -17669,7 +17669,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
   <div style="margin:8px 0;">
     <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
       📎 上传PDF/Word/TXT
-      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="handleFileUpload(this.files[0], 'plagiarismInput')">
+      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'plagiarismInput')">
     </label>
   </div>
   <button onclick="checkPlagiarism()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始检查</button>
@@ -17682,7 +17682,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
   <div style="margin:8px 0;">
     <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
       📎 上传PDF/Word/TXT
-      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="handleFileUpload(this.files[0], 'reviewerInput')">
+      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'reviewerInput')">
     </label>
   </div>
   <button onclick="predictReviewer()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始预测</button>
@@ -17695,7 +17695,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
   <div style="margin:8px 0;">
     <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
       📎 上传PDF/Word/TXT
-      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="handleFileUpload(this.files[0], 'timingInput')">
+      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'timingInput')">
     </label>
   </div>
   <button onclick="suggestTiming()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始分析</button>
@@ -17708,7 +17708,7 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
   <div style="margin:8px 0;">
     <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">
       📎 上传PDF/Word/TXT
-      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="handleFileUpload(this.files[0], 'experimentInput')">
+      <input type="file" accept=".pdf,.doc,.docx,.txt" style="display:none;" onchange="autoAnalyzePaper(this.files[0], 'experimentInput')">
     </label>
   </div>
   <button onclick="designExperiment()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;cursor:pointer;">开始设计</button>
@@ -153704,6 +153704,50 @@ window.addEventListener('load', function() {
 setInterval(addUploadToAllTextareas, 10000);
 
 console.log('✅ 全局优化已加载：AI输出自动美化+输入框自动加上传');
+</script>
+
+
+<script>
+// ========== 论文自动分析功能 ==========
+
+// 上传后自动分析论文
+async function autoAnalyzePaper(file, targetInputId) {
+    // 先正常上传文件
+    await handleFileUpload(file, targetInputId);
+    
+    var inputEl = document.getElementById(targetInputId);
+    var paperText = inputEl.value;
+    
+    if (paperText.length < 100) {
+        alert('文件内容太短，无法分析');
+        return;
+    }
+    
+    // 找一个结果div来显示分析
+    var resultDiv = document.getElementById(targetInputId + 'Result');
+    if (!resultDiv) {
+        // 创建一个结果div
+        resultDiv = document.createElement('div');
+        resultDiv.id = targetInputId + 'Result';
+        resultDiv.style.marginTop = '20px';
+        inputEl.parentNode.appendChild(resultDiv);
+    }
+    
+    resultDiv.innerHTML = '<p style="color:#6b7280;">🤖 AI正在自动分析论文...请稍候（可能需要1-2分钟）</p>';
+    
+    try {
+        var sysPrompt = '你是资深学术审稿专家。请分析用户提供的论文，从以下几个方面给出详细评估：\n\n1. **摘要**：是否清晰、完整、涵盖研究目的/方法/结果/结论\n2. **引言**：研究背景是否充分、问题是否明确、研究目标是否清晰\n3. **文献综述**：是否全面、逻辑是否清晰、是否指出研究缺口\n4. **研究方法**：是否严谨、样本量是否合理、统计方法是否正确\n5. **结果**：数据是否清晰、图表是否规范、结果是否支持结论\n6. **讨论**：分析是否深入、是否解释了机制、是否对比了前人研究\n7. **结论**：是否恰当、是否有创新性、是否指出了局限性\n\n请对每个部分打分（1-10分），并给出具体的改进建议。';
+        
+        var userPrompt = '请分析以下论文：\n\n' + paperText.substring(0, 8000); // 限制长度，避免token超限
+        
+        var result = await callDeepSeekAPI(sysPrompt, userPrompt, 4000);
+        resultDiv.innerHTML = beautifyResult('<h3 style="color:#16a34a;margin:0 0 16px 0;">📊 论文自动分析报告</h3>' + renderMarkdown(result));
+    } catch(e) {
+        resultDiv.innerHTML = '<p style="color:#ef4444;">分析失败：' + e.message + '</p>';
+    }
+}
+
+console.log('✅ 论文自动分析功能已加载');
 </script>
 
 </body>
