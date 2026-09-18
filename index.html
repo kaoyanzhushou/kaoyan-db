@@ -8974,6 +8974,27 @@ window.addEventListener('load', function() {
 console.log('✅ 全局错误捕获已启用');
 
 </script>
+
+<style>
+/* 移动端基础适配 */
+@media (max-width: 768px) {
+  /* 表格横向滚动 */
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  /* 按钮不要挤 */
+  button {
+    margin: 4px;
+  }
+  
+  /* 字体大小适配 */
+  body {
+    font-size: 14px;
+  }
+}
+</style>
 </head>
 
 <body>
@@ -148372,6 +148393,77 @@ window.addEventListener('load', function() {
   window.addEventListener('beforeunload', backupData);
   
   console.log('✅ 数据自动备份已启用（每5分钟一次）');
+})();
+
+</script>
+<script>
+
+// === 稳定性：性能监控 ===
+(function() {
+  // 记录页面加载时间
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      var perf = performance.timing;
+      var loadTime = perf.loadEventEnd - perf.navigationStart;
+      var domReady = perf.domContentLoadedEventEnd - perf.navigationStart;
+      console.log('⏱️ 页面加载时间: ' + (loadTime / 1000).toFixed(2) + '秒');
+      console.log('⏱️ DOM就绪时间: ' + (domReady / 1000).toFixed(2) + '秒');
+    }, 1000);
+  });
+  
+  // 包装callDeepSeekAPI，记录AI调用时间
+  var originalCall = window.callDeepSeekAPI;
+  if (originalCall) {
+    window.callDeepSeekAPI = async function(systemPrompt, userPrompt, maxTokens, model) {
+      var startTime = Date.now();
+      try {
+        var result = await originalCall(systemPrompt, userPrompt, maxTokens, model);
+        var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log('⏱️ AI调用耗时: ' + elapsed + '秒');
+        return result;
+      } catch(e) {
+        var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log('⏱️ AI调用失败，耗时: ' + elapsed + '秒');
+        throw e;
+      }
+    };
+  }
+  
+  console.log('✅ 性能监控已启用');
+})();
+
+</script>
+<script>
+
+// === 稳定性：错误日志收集 ===
+(function() {
+  // 收集错误
+  window.addEventListener('error', function(e) {
+    var logs = JSON.parse(localStorage.getItem('error_logs') || '[]');
+    logs.push({
+      time: new Date().toLocaleString(),
+      message: e.message,
+      source: e.filename + ':' + e.lineno,
+      stack: e.error ? e.error.stack : ''
+    });
+    // 只保留最近20条
+    if (logs.length > 20) logs = logs.slice(-20);
+    localStorage.setItem('error_logs', JSON.stringify(logs));
+  });
+  
+  // 提供导出错误日志的函数
+  window.exportErrorLogs = function() {
+    var logs = localStorage.getItem('error_logs') || '[]';
+    var blob = new Blob([logs], {type: 'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '错误日志_' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  
+  console.log('✅ 错误日志收集已启用，输入exportErrorLogs()可导出');
 })();
 
 </script>
