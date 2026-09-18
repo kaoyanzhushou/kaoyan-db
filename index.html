@@ -8949,6 +8949,31 @@ button {
   text-decoration: underline;
 }
 </style>
+<script>
+
+// === 稳定性：全局错误捕获 ===
+window.addEventListener('error', function(e) {
+  console.error('全局错误捕获:', e.error);
+  // 不显示白屏，只在控制台打日志
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+  console.error('未处理的Promise错误:', e.reason);
+});
+
+// 页面加载超时提示
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    // 如果页面还没完全加载，显示提示
+    if (document.readyState !== 'complete') {
+      console.log('页面加载较慢，请稍候...');
+    }
+  }, 10000);
+});
+
+console.log('✅ 全局错误捕获已启用');
+
+</script>
 </head>
 
 <body>
@@ -135183,7 +135208,7 @@ function rateAIOutput(modelId, rating) {
 
 // ========== 核心AI调用函数（从主script块提取） ==========
 
-const BACKEND_API_URL = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com';
+if (typeof BACKEND_API_URL === 'undefined') { var BACKEND_API_URL = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com'; }
 
 function getMockApiKey() {
 
@@ -148207,6 +148232,43 @@ window.addEventListener('load', function() {
 });
 </script>
 
+<script>
+
+// === 稳定性：API自动重试 ===
+(function() {
+  // 保存原始函数
+  var originalCallDeepSeekAPI = window.callDeepSeekAPI;
+  
+  // 包装成带重试的版本
+  window.callDeepSeekAPI = async function(systemPrompt, userPrompt, maxTokens, model) {
+    var maxRetries = 2; // 失败重试2次，总共3次
+    var lastError = null;
+    
+    for (var i = 0; i <= maxRetries; i++) {
+      try {
+        var result = await originalCallDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model);
+        return result; // 成功就返回
+      } catch(e) {
+        lastError = e;
+        // 433错误不重试，直接抛出
+        if (e.message && e.message.includes('433')) {
+          throw e;
+        }
+        // 等1秒再重试
+        if (i < maxRetries) {
+          console.log('API调用失败，第' + (i+1) + '次重试...', e.message);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+    
+    throw lastError; // 所有重试都失败了，抛出最后一个错误
+  };
+  
+  console.log('✅ API自动重试已启用（最多重试2次）');
+})();
+
+</script>
 <script>
 // ========== 论文写作：上传后自动拆分章节 ==========
 
