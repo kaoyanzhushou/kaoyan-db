@@ -15317,6 +15317,10 @@ button {
 <button onclick="generateLiteratureNotes()" style="padding:10px 20px;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;box-shadow:0 2px 8px rgba(16,185,129,0.3);margin-bottom:16px;">
   📝 AI生成文献笔记（自动结构化）
 </button>
+
+<button onclick="oneClickAnalyze()" style="padding:12px 24px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:white;border:none;border-radius:10px;cursor:pointer;font-size:15px;font-weight:600;box-shadow:0 4px 12px rgba(124,58,237,0.4);margin-bottom:16px;">
+  🚀 一键AI智能分析（综合报告）
+</button>
 <h3>📚 文献引用一键格式化</h3>
   <p>粘贴你的参考文献，自动格式化成GB/T 7714或APA格式</p>
   <textarea id="citeInput" style="width:100%;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin:10px 0;" placeholder="粘贴你的参考文献..."></textarea>
@@ -148519,6 +148523,91 @@ window.testAI = async function() {
     alert('AI调用失败：' + e.message + '\n\n错误详情：' + e.stack);
   }
 };
+
+async function oneClickAnalyze() {
+  // 找论文内容输入框
+  var inputAreas = document.querySelectorAll('textarea');
+  var paperText = '';
+  for (var i = 0; i < inputAreas.length; i++) {
+    if (inputAreas[i].value.length > 500 && inputAreas[i].offsetParent !== null) {
+      paperText = inputAreas[i].value;
+      break;
+    }
+  }
+  
+  if (!paperText) {
+    alert('请先在上面的输入框里粘贴论文内容，或者上传PDF论文');
+    return;
+  }
+  
+  // 找结果显示区域
+  var resultAreas = document.querySelectorAll('[id*="literature"][id*="result"], [id*="Literature"][id*="Result"]');
+  var resultArea = null;
+  for (var i = 0; i < resultAreas.length; i++) {
+    if (resultAreas[i].offsetParent !== null) {
+      resultArea = resultAreas[i];
+      break;
+    }
+  }
+  
+  if (!resultArea) {
+    var allDivs = document.querySelectorAll('div');
+    for (var i = 0; i < allDivs.length; i++) {
+      if (allDivs[i].id && allDivs[i].id.includes('Result') && allDivs[i].offsetParent !== null) {
+        resultArea = allDivs[i];
+        break;
+      }
+    }
+  }
+  
+  if (!resultArea) {
+    alert('找不到结果显示区域');
+    return;
+  }
+  
+  // 显示加载中
+  resultArea.innerHTML = '<div style="padding:40px;text-align:center;color:#666;">' +
+    '<div style="font-size:48px;margin-bottom:16px;">🚀</div>' +
+    '<div style="font-size:18px;font-weight:600;margin-bottom:8px;">AI正在进行综合分析...</div>' +
+    '<div style="font-size:14px;color:#999;">预计需要30-60秒，请稍候</div>' +
+    '</div>';
+  
+  try {
+    var systemPrompt = '你是一位资深体育学教授和顶级审稿人，请对下面这篇论文做全面的综合分析报告，包括以下几个部分：\n\n' +
+      '## 📊 论文概览\n' +
+      '- 研究主题：\n' +
+      '- 研究目的：\n' +
+      '- 研究方法：\n' +
+      '- 主要结果：\n\n' +
+      
+      '## 📚 文献笔记\n' +
+      '- 核心创新点：\n' +
+      '- 主要贡献：\n' +
+      '- 局限性：\n\n' +
+      
+      '## 🎯 审稿人视角\n' +
+      '- 优势（3点）：\n' +
+      '- 不足（3点）：\n' +
+      '- 可能被拒的原因：\n' +
+      '- 修改建议（按优先级）：\n\n' +
+      
+      '## 💡 对你的启发\n' +
+      '- 可以借鉴的方法：\n' +
+      '- 可以延伸的研究方向：\n' +
+      '- 可以引用的核心结论：\n\n' +
+      
+      '要求：用Markdown格式，内容专业、具体、有深度，不要空泛。';
+    
+    var userPrompt = '请对这篇论文做全面综合分析：\n\n' + paperText;
+    
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 4000);
+    
+    resultArea.innerHTML = renderMarkdown(result);
+    
+  } catch(e) {
+    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">分析失败：' + e.message + '</div>';
+  }
+}
 </script>
 
 <script>
