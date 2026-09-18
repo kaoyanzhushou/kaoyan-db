@@ -148270,6 +148270,112 @@ window.addEventListener('load', function() {
 
 </script>
 <script>
+
+// === 稳定性：网络状态检测 ===
+(function() {
+  // 创建提示条
+  var banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:#ef4444;color:white;padding:8px;text-align:center;font-size:14px;z-index:10000;display:none;';
+  banner.textContent = '⚠️ 网络连接断开，请检查网络';
+  document.body.appendChild(banner);
+  
+  // 离线
+  window.addEventListener('offline', function() {
+    banner.style.display = 'block';
+  });
+  
+  // 在线
+  window.addEventListener('online', function() {
+    banner.style.display = 'none';
+    // 提示网络恢复
+    var restore = document.createElement('div');
+    restore.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:#10b981;color:white;padding:8px;text-align:center;font-size:14px;z-index:10000;';
+    restore.textContent = '✅ 网络已恢复';
+    document.body.appendChild(restore);
+    setTimeout(function() {
+      restore.remove();
+    }, 2000);
+  });
+  
+  console.log('✅ 网络状态检测已启用');
+})();
+
+</script>
+<script>
+
+// === 稳定性：按钮防抖 ===
+(function() {
+  // 全局防抖：所有按钮点击后，1秒内不能重复点
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    
+    // 如果正在加载中，不重复点
+    if (btn.disabled) return;
+    
+    // 检查是不是AI按钮（onclick里有callDeepSeekAI或generate等）
+    var onclick = btn.getAttribute('onclick') || '';
+    if (onclick.includes('callDeepSeek') || onclick.includes('generate') || onclick.includes('analyze')) {
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      setTimeout(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }, 1500); // 1.5秒内不能重复点
+    }
+  }, true); // 捕获阶段，先执行
+  
+  console.log('✅ 按钮防抖已启用');
+})();
+
+</script>
+<script>
+
+// === 稳定性：数据自动备份 ===
+(function() {
+  function backupData() {
+    try {
+      // 把所有localStorage数据打包
+      var data = {};
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        data[key] = localStorage.getItem(key);
+      }
+      
+      // 存到备份key里
+      localStorage.setItem('backup_' + Date.now(), JSON.stringify(data));
+      
+      // 只保留最近5份备份，清理旧的
+      var backups = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (key.startsWith('backup_')) {
+          backups.push(key);
+        }
+      }
+      // 按时间排序，删最老的
+      backups.sort();
+      while (backups.length > 5) {
+        localStorage.removeItem(backups.shift());
+      }
+      
+      console.log('✅ 数据自动备份完成');
+    } catch(e) {
+      console.error('备份失败:', e);
+    }
+  }
+  
+  // 每5分钟自动备份一次
+  setInterval(backupData, 5 * 60 * 1000);
+  
+  // 页面关闭前备份一次
+  window.addEventListener('beforeunload', backupData);
+  
+  console.log('✅ 数据自动备份已启用（每5分钟一次）');
+})();
+
+</script>
+<script>
 // ========== 论文写作：上传后自动拆分章节 ==========
 
 window.addEventListener('load', function() {
