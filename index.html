@@ -57922,6 +57922,7 @@ function renderPaperEditor(id) {
   html += '<button onclick="paperAIAction(\'rewrite\')" style="background:#8b5cf6;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="改写表达方式，提升学术性">🔄 改写</button>';
 
   html += '<button onclick="paperAIAction(\'polish\')" style="background:#ec4899;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="学术润色，优化语言和逻辑">✨ 润色</button>';
+  html += '<button onclick="paperFormatAnalyze()" style="background:#0891b2;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="自动分析并整理论文格式、拆分段落">🔧 格式分析</button>';
   html += '<button onclick="paperFullScore()" style="background:#f59e0b;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="AI智能评分，从5个维度打分">📊 全文智能评分</button>';
   html += '<button onclick="paperSaveVersion()" style="background:#4b5563;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="保存当前论文全部章节为版本快照（最多10个）">💾 保存版本</button>';
   html += '<button onclick="exportPaperWord()" style="background:#dc2626;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="导出为Word文档（.doc）">📄 导出Word</button>';
@@ -148990,6 +148991,46 @@ async function paperFullScore() {
     
   } catch(e) {
     resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">评分失败：' + e.message + '</div>';
+  }
+}
+
+async function paperFormatAnalyze() {
+  // 找当前论文内容
+  var editor = document.querySelector('.paper-editor-content') || document.querySelector('[contenteditable=true]');
+  var paperText = '';
+  if (editor) {
+    paperText = editor.innerText || editor.textContent;
+  }
+  
+  if (!paperText || paperText.length < 100) {
+    alert('请先上传或粘贴论文内容，再点格式分析');
+    return;
+  }
+  
+  // 弹窗显示结果
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = '<div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:800px;max-height:90vh;overflow-y:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h3 style="margin:0;">🔧 论文格式智能分析</h3><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button></div><div id="format-result" style="margin-top:16px;">分析中...</div></div>';
+  document.body.appendChild(modal);
+  
+  var resultArea = modal.querySelector('#format-result');
+  
+  try {
+    var systemPrompt = '你是一位资深体育学教授，请对下面这篇论文做格式分析和整理：\n' +
+      '1. 自动识别章节结构（摘要、引言、研究方法、研究结果、讨论、结论、参考文献）\n' +
+      '2. 指出格式问题：段落太挤、标题不规范、引用格式不对、参考文献不规范等\n' +
+      '3. 给出整理后的规范格式示例\n' +
+      '4. 按重要性列出5条格式修改建议\n' +
+      '用Markdown格式，清晰易读。';
+    
+    var userPrompt = '请分析这篇论文的格式：\n\n' + paperText;
+    
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
+    
+    resultArea.innerHTML = renderMarkdown(result);
+    
+  } catch(e) {
+    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">分析失败：' + e.message + '</div>';
   }
 }
 </script>
