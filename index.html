@@ -57922,6 +57922,7 @@ function renderPaperEditor(id) {
   html += '<button onclick="paperAIAction(\'rewrite\')" style="background:#8b5cf6;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="改写表达方式，提升学术性">🔄 改写</button>';
 
   html += '<button onclick="paperAIAction(\'polish\')" style="background:#ec4899;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="学术润色，优化语言和逻辑">✨ 润色</button>';
+  html += '<button onclick="paperFullScore()" style="background:#f59e0b;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="AI智能评分，从5个维度打分">📊 全文智能评分</button>';
   html += '<button onclick="paperSaveVersion()" style="background:#4b5563;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="保存当前论文全部章节为版本快照（最多10个）">💾 保存版本</button>';
   html += '<button onclick="exportPaperWord()" style="background:#dc2626;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="导出为Word文档（.doc）">📄 导出Word</button>';
   html += '<button onclick="exportPaperPDF()" style="background:#ea580c;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="导出为PDF（打印窗口选另存为PDF）">🖨️ 导出PDF</button>';
@@ -148937,6 +148938,51 @@ async function paragraphScore() {
       '用Markdown格式，清晰易读。';
     
     var userPrompt = '请对这段内容评分：\n\n' + writingText;
+    
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
+    
+    resultArea.innerHTML = renderMarkdown(result);
+    
+  } catch(e) {
+    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">评分失败：' + e.message + '</div>';
+  }
+}
+
+async function paperFullScore() {
+  // 找当前论文内容
+  var editor = document.querySelector('.paper-editor-content') || document.querySelector('[contenteditable=true]');
+  var paperText = '';
+  if (editor) {
+    paperText = editor.innerText || editor.textContent;
+  }
+  
+  if (!paperText || paperText.length < 200) {
+    alert('请先在编辑器里写一些内容，再点评分');
+    return;
+  }
+  
+  // 弹窗显示结果
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = '<div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h3 style="margin:0;">📊 全文智能评分</h3><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button></div><div id="full-score-result" style="margin-top:16px;">分析中...</div></div>';
+  document.body.appendChild(modal);
+  
+  var resultArea = modal.querySelector('#full-score-result');
+  
+  try {
+    var systemPrompt = '你是一位资深体育学教授，请对下面这篇论文做智能评分，从以下5个维度各打1-10分：\n' +
+      '1. 逻辑结构：整体结构是否完整，论证是否连贯\n' +
+      '2. 语言表达：用词是否专业，语句是否通顺\n' +
+      '3. 数据支撑：有没有足够的证据和数据支撑观点\n' +
+      '4. 学术规范：有没有符合学术写作规范，引用是否规范\n' +
+      '5. 创新性：观点是否有新意，研究有没有价值\n\n' +
+      '然后给出：\n' +
+      '- 总分（满分50）\n' +
+      '- 每个维度的分数和简单点评\n' +
+      '- 3条最关键的修改建议\n' +
+      '用Markdown格式，清晰易读。';
+    
+    var userPrompt = '请对这篇论文评分：\n\n' + paperText;
     
     var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
     
