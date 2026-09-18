@@ -1436,7 +1436,86 @@ body.focus-mode .focus-mode-exit{display:flex}
 
 <script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 
-<script>if(window.mermaid){mermaid.initialize({startOnLoad:false,theme:'default',securityLevel:'loose',flowchart:{useMaxWidth:true,curve:'basis'}});}</script>
+<script>
+// 全局函数：论文评分和格式分析
+window.paperFullScore = async function() {
+  var allText = [];
+  document.querySelectorAll('[contenteditable=true]').forEach(function(el) {
+    var t = el.innerText || el.textContent;
+    if (t && t.length > 200) allText.push(t);
+  });
+  document.querySelectorAll('textarea').forEach(function(el) {
+    if (el.offsetParent !== null && el.value.length > 200) {
+      allText.push(el.value);
+    }
+  });
+  var paperText = allText.sort(function(a,b) { return b.length - a.length; })[0] || '';
+  
+  if (!paperText || paperText.length < 200) {
+    alert('请先在编辑器里写一些内容，再点评分');
+    return;
+  }
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = '<div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h3 style="margin:0;">📊 全文智能评分</h3><button onclick="this.parentElement.parentElement.parentElement.remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button></div><div id="full-score-result" style="margin-top:16px;">分析中...</div></div>';
+  document.body.appendChild(modal);
+  var resultArea = modal.querySelector('#full-score-result');
+  
+  try {
+    var systemPrompt = '你是一位资深体育学教授，请对下面这篇论文做智能评分，从以下5个维度各打1-10分：\n' +
+      '1. 逻辑结构：整体结构是否完整，论证是否连贯\n' +
+      '2. 语言表达：用词是否专业，语句是否通顺\n' +
+      '3. 数据支撑：有没有足够的证据和数据支撑观点\n' +
+      '4. 学术规范：有没有符合学术写作规范，引用是否规范\n' +
+      '5. 创新性：观点是否有新意，研究有没有价值\n\n' +
+      '然后给出：\n- 总分（满分50）\n- 每个维度的分数和简单点评\n- 3条最关键的修改建议\n用Markdown格式，清晰易读。';
+    var userPrompt = '请对这篇论文评分：\n\n' + paperText;
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
+    resultArea.innerHTML = renderMarkdown(result);
+  } catch(e) {
+    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">评分失败：' + e.message + '</div>';
+  }
+};
+
+window.paperFormatAnalyze = async function() {
+  var allText = [];
+  document.querySelectorAll('[contenteditable=true]').forEach(function(el) {
+    var t = el.innerText || el.textContent;
+    if (t && t.length > 200) allText.push(t);
+  });
+  document.querySelectorAll('textarea').forEach(function(el) {
+    if (el.offsetParent !== null && el.value.length > 200) {
+      allText.push(el.value);
+    }
+  });
+  var paperText = allText.sort(function(a,b) { return b.length - a.length; })[0] || '';
+  
+  if (!paperText || paperText.length < 100) {
+    alert('请先上传或粘贴论文内容，再点格式分析');
+    return;
+  }
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = '<div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:800px;max-height:90vh;overflow-y:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h3 style="margin:0;">🔧 论文格式智能分析</h3><button onclick="this.parentElement.parentElement.parentElement.remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button></div><div id="format-result" style="margin-top:16px;">分析中...</div></div>';
+  document.body.appendChild(modal);
+  var resultArea = modal.querySelector('#format-result');
+  
+  try {
+    var systemPrompt = '你是一位资深体育学教授，请对下面这篇论文做格式分析和整理：\n' +
+      '1. 自动识别章节结构（摘要、引言、研究方法、研究结果、讨论、结论、参考文献）\n' +
+      '2. 指出格式问题：段落太挤、标题不规范、引用格式不对、参考文献不规范等\n' +
+      '3. 给出整理后的规范格式示例\n' +
+      '4. 按重要性列出5条格式修改建议\n用Markdown格式，清晰易读。';
+    var userPrompt = '请分析这篇论文的格式：\n\n' + paperText;
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
+    resultArea.innerHTML = renderMarkdown(result);
+  } catch(e) {
+    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">分析失败：' + e.message + '</div>';
+  }
+};
+if(window.mermaid){mermaid.initialize({startOnLoad:false,theme:'default',securityLevel:'loose',flowchart:{useMaxWidth:true,curve:'basis'}});}</script>
 
 <script>window.__allErrors = [];
 
@@ -57923,7 +58002,7 @@ function renderPaperEditor(id) {
 
   html += '<button onclick="paperAIAction(\'polish\')" style="background:#ec4899;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="学术润色，优化语言和逻辑">✨ 润色</button>';
   html += '<button onclick="paperFormatAnalyze()" style="background:#0891b2;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="自动分析并整理论文格式、拆分段落">🔧 格式分析</button>';
-  html += '<button onclick="paperFormatAnalyze()" style="background:#0891b2;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔧 格式分析</button>';
+  
   html += '<button onclick="paperFullScore()" style="background:#f59e0b;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="AI智能评分，从5个维度打分">📊 全文智能评分</button>';
   html += '<button onclick="paperSaveVersion()" style="background:#4b5563;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="保存当前论文全部章节为版本快照（最多10个）">💾 保存版本</button>';
   html += '<button onclick="exportPaperWord()" style="background:#dc2626;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="导出为Word文档（.doc）">📄 导出Word</button>';
@@ -148951,110 +149030,4 @@ async function paragraphScore() {
 }
 
 
-async function paperFullScore() {
-  // 找当前论文内容：从所有contenteditable或者textarea里找最长的
-  var allText = [];
-  
-  // 找所有contenteditable
-  document.querySelectorAll('[contenteditable=true]').forEach(function(el) {
-    var t = el.innerText || el.textContent;
-    if (t && t.length > 200) allText.push(t);
-  });
-  
-  // 找所有textarea
-  document.querySelectorAll('textarea').forEach(function(el) {
-    if (el.offsetParent !== null && el.value.length > 200) {
-      allText.push(el.value);
-    }
-  });
-  
-  var paperText = allText.sort(function(a,b) { return b.length - a.length; })[0] || '';
-  
-  if (!paperText || paperText.length < 200) {
-    alert('请先在编辑器里写一些内容，再点评分');
-    return;
-  }
-  
-  // 弹窗显示结果
-  var modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
-  modal.innerHTML = '<div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h3 style="margin:0;">📊 全文智能评分</h3><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button></div><div id="full-score-result" style="margin-top:16px;">分析中...</div></div>';
-  document.body.appendChild(modal);
-  
-  var resultArea = modal.querySelector('#full-score-result');
-  
-  try {
-    var systemPrompt = '你是一位资深体育学教授，请对下面这篇论文做智能评分，从以下5个维度各打1-10分：\n' +
-      '1. 逻辑结构：整体结构是否完整，论证是否连贯\n' +
-      '2. 语言表达：用词是否专业，语句是否通顺\n' +
-      '3. 数据支撑：有没有足够的证据和数据支撑观点\n' +
-      '4. 学术规范：有没有符合学术写作规范，引用是否规范\n' +
-      '5. 创新性：观点是否有新意，研究有没有价值\n\n' +
-      '然后给出：\n' +
-      '- 总分（满分50）\n' +
-      '- 每个维度的分数和简单点评\n' +
-      '- 3条最关键的修改建议\n' +
-      '用Markdown格式，清晰易读。';
-    
-    var userPrompt = '请对这篇论文评分：\n\n' + paperText;
-    
-    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
-    
-    resultArea.innerHTML = renderMarkdown(result);
-    
-  } catch(e) {
-    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">评分失败：' + e.message + '</div>';
-  }
-}
 
-
-async function paperFormatAnalyze() {
-  // 找当前论文内容：从所有contenteditable或者textarea里找最长的
-  var allText = [];
-  
-  // 找所有contenteditable
-  document.querySelectorAll('[contenteditable=true]').forEach(function(el) {
-    var t = el.innerText || el.textContent;
-    if (t && t.length > 200) allText.push(t);
-  });
-  
-  // 找所有textarea
-  document.querySelectorAll('textarea').forEach(function(el) {
-    if (el.offsetParent !== null && el.value.length > 200) {
-      allText.push(el.value);
-    }
-  });
-  
-  var paperText = allText.sort(function(a,b) { return b.length - a.length; })[0] || '';
-  
-  if (!paperText || paperText.length < 100) {
-    alert('请先上传或粘贴论文内容，再点格式分析');
-    return;
-  }
-  
-  // 弹窗显示结果
-  var modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
-  modal.innerHTML = '<div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:800px;max-height:90vh;overflow-y:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h3 style="margin:0;">🔧 论文格式智能分析</h3><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button></div><div id="format-result" style="margin-top:16px;">分析中...</div></div>';
-  document.body.appendChild(modal);
-  
-  var resultArea = modal.querySelector('#format-result');
-  
-  try {
-    var systemPrompt = '你是一位资深体育学教授，请对下面这篇论文做格式分析和整理：\n' +
-      '1. 自动识别章节结构（摘要、引言、研究方法、研究结果、讨论、结论、参考文献）\n' +
-      '2. 指出格式问题：段落太挤、标题不规范、引用格式不对、参考文献不规范等\n' +
-      '3. 给出整理后的规范格式示例\n' +
-      '4. 按重要性列出5条格式修改建议\n' +
-      '用Markdown格式，清晰易读。';
-    
-    var userPrompt = '请分析这篇论文的格式：\n\n' + paperText;
-    
-    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
-    
-    resultArea.innerHTML = renderMarkdown(result);
-    
-  } catch(e) {
-    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">分析失败：' + e.message + '</div>';
-  }
-}
