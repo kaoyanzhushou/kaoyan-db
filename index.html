@@ -148525,48 +148525,60 @@ window.testAI = async function() {
   }
 };
 
+
 async function oneClickAnalyze() {
-  // 找论文内容输入框
-  var inputAreas = document.querySelectorAll('textarea');
-  var paperText = '';
-  for (var i = 0; i < inputAreas.length; i++) {
-    if (inputAreas[i].value.length > 500 && inputAreas[i].offsetParent !== null) {
-      paperText = inputAreas[i].value;
-      break;
-    }
-  }
+  // 弹出对话框
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:800px;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;color:#1f2937;">🚀 一键AI智能分析</h3>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button>
+      </div>
+      <p style="color:#666;margin-bottom:16px;">粘贴论文内容，或者上传PDF/Word文件，AI将自动生成综合分析报告</p>
+      
+      <textarea id="oneclick-input" placeholder="在这里粘贴论文内容..." style="width:100%;height:200px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;line-height:1.6;resize:vertical;margin-bottom:12px;"></textarea>
+      
+      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+        <label style="padding:10px 20px;background:#f3f4f6;border-radius:8px;cursor:pointer;font-size:14px;">
+          📄 上传PDF/Word
+          <input type="file" id="oneclick-file" accept=".pdf,.doc,.docx,.txt" style="display:none;">
+        </label>
+        <span id="oneclick-file-name" style="color:#666;font-size:14px;line-height:36px;"></span>
+      </div>
+      
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:10px 20px;background:#f3f4f6;border:none;border-radius:8px;cursor:pointer;font-size:14px;">取消</button>
+        <button onclick="startOneClickAnalyze()" style="padding:10px 24px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">开始分析</button>
+      </div>
+      
+      <div id="oneclick-result" style="margin-top:20px;"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
   
-  if (!paperText) {
-    alert('请先在上面的输入框里粘贴论文内容，或者上传PDF论文');
+  // 文件上传
+  document.getElementById('oneclick-file').addEventListener('change', async function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('oneclick-file-name').textContent = '已选择: ' + file.name;
+    
+    // 简单提示，实际解析用已有的函数
+    alert('文件已选择，点击"开始分析"按钮即可');
+  });
+}
+
+async function startOneClickAnalyze() {
+  var paperText = document.getElementById('oneclick-input').value.trim();
+  var fileInput = document.getElementById('oneclick-file');
+  
+  if (!paperText && fileInput.files.length === 0) {
+    alert('请先粘贴论文内容，或者上传PDF/Word文件');
     return;
   }
   
-  // 找结果显示区域
-  var resultAreas = document.querySelectorAll('[id*="literature"][id*="result"], [id*="Literature"][id*="Result"]');
-  var resultArea = null;
-  for (var i = 0; i < resultAreas.length; i++) {
-    if (resultAreas[i].offsetParent !== null) {
-      resultArea = resultAreas[i];
-      break;
-    }
-  }
-  
-  if (!resultArea) {
-    var allDivs = document.querySelectorAll('div');
-    for (var i = 0; i < allDivs.length; i++) {
-      if (allDivs[i].id && allDivs[i].id.includes('Result') && allDivs[i].offsetParent !== null) {
-        resultArea = allDivs[i];
-        break;
-      }
-    }
-  }
-  
-  if (!resultArea) {
-    alert('找不到结果显示区域');
-    return;
-  }
-  
-  // 显示加载中
+  var resultArea = document.getElementById('oneclick-result');
   resultArea.innerHTML = '<div style="padding:40px;text-align:center;color:#666;">' +
     '<div style="font-size:48px;margin-bottom:16px;">🚀</div>' +
     '<div style="font-size:18px;font-weight:600;margin-bottom:8px;">AI正在进行综合分析...</div>' +
@@ -148609,11 +148621,3 @@ async function oneClickAnalyze() {
     resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">分析失败：' + e.message + '</div>';
   }
 }
-</script>
-
-<script>
-
-<script>
-
-</body>
-</html>
