@@ -14560,6 +14560,10 @@ console.log('✅ 全局错误捕获已启用');
     <div style="max-width:1100px;margin:0 auto">
       <div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #ddd6fe">
         <h2 style="margin:0 0 8px 0;font-size:20px;color:#6b21a8">✍️ AI写作助手（增强版）</h2>
+<button onclick="paragraphScore()" style="padding:10px 20px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;margin-left:12px;box-shadow:0 2px 8px rgba(245,158,11,0.3);">
+  📊 段落智能评分
+</button>
+
         <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">智能续写、多版本并行生成、风格迁移、实时写作建议、大纲生成——全方位提升论文写作效率。</p>
       </div>
 
@@ -148879,6 +148883,67 @@ async function startOneClickAnalyze() {
     
   } catch(e) {
     resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">分析失败：' + e.message + '</div>';
+  }
+}
+
+async function paragraphScore() {
+  // 找当前写作输入框
+  var inputAreas = document.querySelectorAll('textarea');
+  var writingText = '';
+  for (var i = 0; i < inputAreas.length; i++) {
+    if (inputAreas[i].value.length > 100 && inputAreas[i].offsetParent !== null) {
+      writingText = inputAreas[i].value;
+      break;
+    }
+  }
+  
+  if (!writingText) {
+    alert('请先在写作框里写一段内容，再点评分');
+    return;
+  }
+  
+  // 找结果显示区域
+  var resultArea = null;
+  var allDivs = document.querySelectorAll('div');
+  for (var i = 0; i < allDivs.length; i++) {
+    if (allDivs[i].id && allDivs[i].id.includes('writing') && allDivs[i].id.includes('result') && allDivs[i].offsetParent !== null) {
+      resultArea = allDivs[i];
+      break;
+    }
+  }
+  
+  // 如果没找到结果区，就弹窗显示
+  if (!resultArea) {
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = '<div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;"><h3>📊 段落智能评分</h3><div id="score-result" style="margin-top:16px;">分析中...</div></div>';
+    document.body.appendChild(modal);
+    resultArea = modal.querySelector('#score-result');
+  }
+  
+  resultArea.innerHTML = '<div style="padding:40px;text-align:center;color:#666;"><div style="font-size:48px;margin-bottom:16px;">📊</div><div style="font-size:18px;font-weight:600;">AI正在评分中...</div></div>';
+  
+  try {
+    var systemPrompt = '你是一位资深体育学教授，请对下面这段论文写作内容做智能评分，从以下5个维度各打1-10分：\n' +
+      '1. 逻辑清晰度：论证是否连贯，有没有跑题\n' +
+      '2. 语言质量：用词是否专业，语句是否通顺\n' +
+      '3. 数据支撑：有没有足够的证据和数据支撑观点\n' +
+      '4. 学术规范：有没有符合学术写作规范\n' +
+      '5. 原创性：观点是否有新意，有没有重复别人的话\n\n' +
+      '然后给出：\n' +
+      '- 总分（满分50）\n' +
+      '- 每个维度的分数和简单点评\n' +
+      '- 3条具体的修改建议\n' +
+      '用Markdown格式，清晰易读。';
+    
+    var userPrompt = '请对这段内容评分：\n\n' + writingText;
+    
+    var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
+    
+    resultArea.innerHTML = renderMarkdown(result);
+    
+  } catch(e) {
+    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">评分失败：' + e.message + '</div>';
   }
 }
 </script>
