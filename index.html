@@ -57923,6 +57923,7 @@ function renderPaperEditor(id) {
 
   html += '<button onclick="paperAIAction(\'polish\')" style="background:#ec4899;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="学术润色，优化语言和逻辑">✨ 润色</button>';
   html += '<button onclick="paperFormatAnalyze()" style="background:#0891b2;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="自动分析并整理论文格式、拆分段落">🔧 格式分析</button>';
+  html += '<button onclick="paperFormatAnalyze()" style="background:#0891b2;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔧 格式分析</button>';
   html += '<button onclick="paperFullScore()" style="background:#f59e0b;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="AI智能评分，从5个维度打分">📊 全文智能评分</button>';
   html += '<button onclick="paperSaveVersion()" style="background:#4b5563;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="保存当前论文全部章节为版本快照（最多10个）">💾 保存版本</button>';
   html += '<button onclick="exportPaperWord()" style="background:#dc2626;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="导出为Word文档（.doc）">📄 导出Word</button>';
@@ -148949,13 +148950,25 @@ async function paragraphScore() {
   }
 }
 
+
 async function paperFullScore() {
-  // 找当前论文内容
-  var editor = document.querySelector('.paper-editor-content') || document.querySelector('[contenteditable=true]');
-  var paperText = '';
-  if (editor) {
-    paperText = editor.innerText || editor.textContent;
-  }
+  // 找当前论文内容：从所有contenteditable或者textarea里找最长的
+  var allText = [];
+  
+  // 找所有contenteditable
+  document.querySelectorAll('[contenteditable=true]').forEach(function(el) {
+    var t = el.innerText || el.textContent;
+    if (t && t.length > 200) allText.push(t);
+  });
+  
+  // 找所有textarea
+  document.querySelectorAll('textarea').forEach(function(el) {
+    if (el.offsetParent !== null && el.value.length > 200) {
+      allText.push(el.value);
+    }
+  });
+  
+  var paperText = allText.sort(function(a,b) { return b.length - a.length; })[0] || '';
   
   if (!paperText || paperText.length < 200) {
     alert('请先在编辑器里写一些内容，再点评分');
@@ -148994,13 +149007,25 @@ async function paperFullScore() {
   }
 }
 
+
 async function paperFormatAnalyze() {
-  // 找当前论文内容
-  var editor = document.querySelector('.paper-editor-content') || document.querySelector('[contenteditable=true]');
-  var paperText = '';
-  if (editor) {
-    paperText = editor.innerText || editor.textContent;
-  }
+  // 找当前论文内容：从所有contenteditable或者textarea里找最长的
+  var allText = [];
+  
+  // 找所有contenteditable
+  document.querySelectorAll('[contenteditable=true]').forEach(function(el) {
+    var t = el.innerText || el.textContent;
+    if (t && t.length > 200) allText.push(t);
+  });
+  
+  // 找所有textarea
+  document.querySelectorAll('textarea').forEach(function(el) {
+    if (el.offsetParent !== null && el.value.length > 200) {
+      allText.push(el.value);
+    }
+  });
+  
+  var paperText = allText.sort(function(a,b) { return b.length - a.length; })[0] || '';
   
   if (!paperText || paperText.length < 100) {
     alert('请先上传或粘贴论文内容，再点格式分析');
@@ -149033,6 +149058,3 @@ async function paperFormatAnalyze() {
     resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">分析失败：' + e.message + '</div>';
   }
 }
-</script>
-</body>
-</html>
