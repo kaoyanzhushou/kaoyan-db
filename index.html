@@ -58433,7 +58433,16 @@ function paperBuildFullDoc() {
 function exportPaperWord() {
   var doc = paperBuildFullDoc();
   if (!doc) { alert('请先在「我的论文」中选择或创建论文项目'); return; }
-  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.5;color:#000}h1{font-family:"SimHei",sans-serif;font-size:18pt;text-align:center;font-weight:bold;margin-bottom:20pt}h2{font-family:"SimHei",sans-serif;font-size:14pt;font-weight:bold;margin-top:16pt;margin-bottom:8pt}h3{font-family:"SimHei",sans-serif;font-size:12pt;font-weight:bold;margin-top:12pt;margin-bottom:6pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}table{border-collapse:collapse;margin:10px 0}table td,table th{border:1px solid #000;padding:4px 8px;font-size:10.5pt}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '</body></html>';
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.5;color:#000}h1{font-family:"SimHei",sans-serif;font-size:18pt;text-align:center;font-weight:bold;margin-bottom:20pt}h2{font-family:"SimHei",sans-serif;font-size:14pt;font-weight:bold;margin-top:16pt;margin-bottom:8pt}h3{font-family:"SimHei",sans-serif;font-size:12pt;font-weight:bold;margin-top:12pt;margin-bottom:6pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}table{border-collapse:collapse;margin:10px 0}table td,table th{border:1px solid #000;padding:4px 8px;font-size:10.5pt}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>';
   var blob = new Blob(['\ufeff' + html], {type: 'application/msword'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -58447,7 +58456,16 @@ function exportPaperPDF() {
   if (!doc) { alert('请先在「我的论文」中选择或创建论文项目'); return; }
   var w = window.open('', '_blank');
   if (!w) { alert('浏览器拦截了弹窗，请允许后重试'); return; }
-  w.document.write('<html><head><title>' + doc.title + '</title><meta charset="utf-8"><style>@page{size:A4;margin:2.54cm}body{font-family:"SimSun","Microsoft YaHei",serif;font-size:12pt;line-height:1.8;color:#000;max-width:780px;margin:0 auto}h1{font-size:16pt;text-align:center;margin-bottom:20pt}h2{font-size:14pt;margin-top:16pt;margin-bottom:8pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}@media print{body{margin:0}}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '<script>window.onload=function(){window.print();}</scr' + 'ipt></body></html>');
+  w.document.write('<html><head><title>' + doc.title + '</title><meta charset="utf-8"><style>@page{size:A4;margin:2.54cm}body{font-family:"SimSun","Microsoft YaHei",serif;font-size:12pt;line-height:1.8;color:#000;max-width:780px;margin:0 auto}h1{font-size:16pt;text-align:center;margin-bottom:20pt}h2{font-size:14pt;margin-top:16pt;margin-bottom:8pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}@media print{body{margin:0}}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '<script>window.onload=function(){window.print();}</scr' + 'ipt>
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>');
   w.document.close();
   w.focus();
 }
@@ -65246,7 +65264,16 @@ function exportAiReportPdf() {
 
     'button{display:none}' +
 
-    '</style></head><body>' + header + el.innerHTML + '</body></html>');
+    '</style></head><body>' + header + el.innerHTML + '
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>');
 
   printWin.document.close();
 
@@ -101147,7 +101174,16 @@ function downloadPhdEmailWord() {
 
     '<style>body{font-family:SimSun,serif;font-size:12pt;line-height:1.8;color:#333;padding:30px}pre{white-space:pre-wrap;font-family:SimSun,serif;font-size:12pt}</style></head>' +
 
-    '<body><pre>' + text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre></body></html>';
+    '<body><pre>' + text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>';
 
   const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
 
@@ -106432,7 +106468,16 @@ function propExportMenu() {
 
     });
 
-    html += '</body></html>';
+    html += '
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>';
 
     const blob = new Blob(['\ufeff' + html], {type: 'application/msword'});
 
@@ -128077,7 +128122,16 @@ function exportAnimHTML(){
   html += '<script>var steps=' + stepsData + ';var cur=0;var playing=false;var timer=null;';
   html += 'function render(){var info=document.getElementById("stepInfo");info.textContent="步骤 "+cur+"/"+(steps.length-1);var p=steps[cur];var pr=document.getElementById("principle");if(p.isFinal){pr.innerHTML="<b style=color:#22c55e>✅ 全部通路已点亮</b><br>"+(' + JSON.stringify(animData.overallNarration || '') + ');}else if(p.nodeLabel){pr.innerHTML="<b style=color:#06b6d4>"+p.nodeLabel+"</b><br>"+(p.nodeNarration||"");}else{pr.textContent="准备开始...";}document.querySelectorAll("#svgContainer svg text, #svgContainer svg polygon, #svgContainer svg ellipse, #svgContainer svg rect, #svgContainer svg path").forEach(function(el){el.style.opacity="0.15";});}';
   html += 'function step(d){cur=Math.max(0,Math.min(steps.length-1,cur+d));render();}function togglePlay(){playing=!playing;var b=document.getElementById("playBtn");if(playing){b.textContent="⏸ 暂停";timer=setInterval(function(){if(cur>=steps.length-1){togglePlay();return;}step(1);},1500);}else{b.textContent="▶ 播放";clearInterval(timer);}}function reset(){if(playing){togglePlay();}cur=0;render();}render();';
-  html += '<\/script></body></html>';
+  html += '<\/script>
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>';
   var blob = new Blob([html], {type: 'text/html'});
   var link = document.createElement('a');
   link.download = '机制动画_' + animData.title + '.html';
@@ -128436,7 +128490,16 @@ async function undToPPT(){
     if(!result){ throw new Error('生成失败'); }
     // 显示生成的课件内容，让用户复制
     var win = window.open('', '_blank');
-    win.document.write('<html><head><meta charset="UTF-8"><title>课件页 - ' + undCurrentData.title + '</title><style>body{font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.8}h2{color:#0891b2}pre{background:#f8fafc;padding:16px;border-radius:8px;white-space:pre-wrap;word-wrap:break-word}</style></head><body><h2>📊 课件页内容</h2><p>可复制到 PPT 课件模块中使用：</p><pre>' + result.replace(/</g, '&lt;') + '</pre></body></html>');
+    win.document.write('<html><head><meta charset="UTF-8"><title>课件页 - ' + undCurrentData.title + '</title><style>body{font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.8}h2{color:#0891b2}pre{background:#f8fafc;padding:16px;border-radius:8px;white-space:pre-wrap;word-wrap:break-word}</style></head><body><h2>📊 课件页内容</h2><p>可复制到 PPT 课件模块中使用：</p><pre>' + result.replace(/</g, '&lt;') + '</pre>
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>');
     mechToast('课件页已生成，在新窗口中查看');
   }catch(e){
     mechToast('生成失败：' + e.message);
@@ -128813,7 +128876,16 @@ function previewMechPathway(id){
   renderMechSVG(p.data);
   var svg = document.getElementById('mechSvgContainer')._svgContent || '';
   var win = window.open('', '_blank');
-  win.document.write('<html><head><meta charset="UTF-8"><title>' + p.name + '</title><style>body{font-family:sans-serif;max-width:1000px;margin:30px auto;padding:20px}h2{color:#0891b2}p{color:#475569;line-height:1.8}.svg-box{background:#f8fafc;padding:20px;border-radius:10px;overflow:auto}</style></head><body><h2>' + p.name + '</h2><p><b>科目：</b>' + p.subject + ' | <b>分类：</b>' + p.category + '</p><p>' + p.description + '</p><div class="svg-box">' + svg + '</div><h3 style="color:#0f172a;margin-top:24px">整体机制讲解</h3><p style="color:#475569;line-height:1.8">' + (p.data.overallNarration || '') + '</p></body></html>');
+  win.document.write('<html><head><meta charset="UTF-8"><title>' + p.name + '</title><style>body{font-family:sans-serif;max-width:1000px;margin:30px auto;padding:20px}h2{color:#0891b2}p{color:#475569;line-height:1.8}.svg-box{background:#f8fafc;padding:20px;border-radius:10px;overflow:auto}</style></head><body><h2>' + p.name + '</h2><p><b>科目：</b>' + p.subject + ' | <b>分类：</b>' + p.category + '</p><p>' + p.description + '</p><div class="svg-box">' + svg + '</div><h3 style="color:#0f172a;margin-top:24px">整体机制讲解</h3><p style="color:#475569;line-height:1.8">' + (p.data.overallNarration || '') + '</p>
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>');
 }
 
 // ===== 运动科学机制库：论文机制图（P2） =====
@@ -128885,7 +128957,16 @@ function exportMechPDF(){
     nodeList += '</table>';
   }
   var win = window.open('', '_blank');
-  win.document.write('<html><head><meta charset="UTF-8"><title>' + title + '</title><style>@page{size:A4 landscape;margin:15mm}body{font-family:"Microsoft YaHei",sans-serif;max-width:1000px;margin:0 auto;padding:20px;color:#1e293b}h2{color:#0891b2;text-align:center;font-size:20px;margin-bottom:4px}.subtitle{text-align:center;color:#64748b;font-size:12px;margin-bottom:16px}.svg-box{text-align:center;background:#f8fafc;padding:16px;border-radius:8px;margin:16px 0}.svg-box svg{max-width:100%;height:auto}h3{color:#0f172a;font-size:14px;border-left:3px solid #0891b2;padding-left:8px}p{line-height:1.8;font-size:12px;text-indent:2em;color:#475569}.footer{text-align:center;color:#94a3b8;font-size:10px;margin-top:30px}</style></head><body><h2>' + title + '</h2><div class="subtitle">科目：' + subject + '</div><div class="svg-box">' + svg + '</div><h3>机制说明</h3><p>' + narration + '</p>' + nodeList + '<div class="footer">由体育科研工作台 · 运动科学机制库生成</div></body></html>');
+  win.document.write('<html><head><meta charset="UTF-8"><title>' + title + '</title><style>@page{size:A4 landscape;margin:15mm}body{font-family:"Microsoft YaHei",sans-serif;max-width:1000px;margin:0 auto;padding:20px;color:#1e293b}h2{color:#0891b2;text-align:center;font-size:20px;margin-bottom:4px}.subtitle{text-align:center;color:#64748b;font-size:12px;margin-bottom:16px}.svg-box{text-align:center;background:#f8fafc;padding:16px;border-radius:8px;margin:16px 0}.svg-box svg{max-width:100%;height:auto}h3{color:#0f172a;font-size:14px;border-left:3px solid #0891b2;padding-left:8px}p{line-height:1.8;font-size:12px;text-indent:2em;color:#475569}.footer{text-align:center;color:#94a3b8;font-size:10px;margin-top:30px}</style></head><body><h2>' + title + '</h2><div class="subtitle">科目：' + subject + '</div><div class="svg-box">' + svg + '</div><h3>机制说明</h3><p>' + narration + '</p>' + nodeList + '<div class="footer">由体育科研工作台 · 运动科学机制库生成</div>
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>');
   win.document.close();
   setTimeout(function(){ win.print(); }, 800);
   mechToast('已打开打印预览，可选择"另存为PDF"');
@@ -129425,7 +129506,16 @@ function exportMechSBML(){
   sbml += '    <notes>\n      <body xmlns="http://www.w3.org/1999/xhtml">\n';
   sbml += '        <p>科目：' + (data.subject || '运动科学') + '</p>\n';
   if(data.overallNarration){ sbml += '        <p>' + data.overallNarration.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>\n'; }
-  sbml += '      </body>\n    </notes>\n';
+  sbml += '      
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+\n    </notes>\n';
   // 物种（节点）
   sbml += '    <listOfSpecies>\n';
   (data.nodes || []).forEach(function(n){
@@ -131404,7 +131494,16 @@ function pptExportPDF(){
     html += '<div class="pagenum">第 ' + (i+1) + ' / ' + __pptSlides.length + ' 页</div>';
     html += '</div>';
   }
-  html += '</body></html>';
+  html += '
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>';
   w.document.write(html);
   w.document.close();
   w.focus();
@@ -133222,7 +133321,16 @@ function exportLessonAsHtml() {
     + '<body>\n'
     + '<h1>' + title + '</h1>\n'
     + bodyHtml + '\n'
-    + '</body>\n'
+    + '
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+\n'
     + '</html>';
 
   // 下载
@@ -144356,7 +144464,16 @@ var LessonPanel = {
                 }
             });
 
-            htmlContent += '</body></html>';
+            htmlContent += '
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>';
 
             // 创建Blob并下载
             var blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
@@ -145332,7 +145449,16 @@ var Panel = {
             html += 'function prevSlide(){if(current>0)showSlide(current-1);}';
             html += 'document.addEventListener("keydown",function(e){if(e.key==="ArrowRight"||e.key===" ")nextSlide();if(e.key==="ArrowLeft")prevSlide();});';
             html += '<\/script>';
-            html += '</body></html>';
+            html += '
+<!-- 右下角悬浮快捷功能组 -->
+<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
+  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
+  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
+  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
+  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
+</div>
+</body>
+</html>';
 
             // 在新窗口打开
             var newWindow = window.open('', '_blank');
