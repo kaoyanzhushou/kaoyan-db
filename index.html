@@ -124662,7 +124662,7 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens = 2000, model
       }
       
       const data = await response.json();
-      return data.choices[0].message.content;
+      return data.content || (data.choices && data.choices[0] && data.choices[0].message.content) || '';
       
     } catch (e) {
       if (attempt === 2) throw e;
