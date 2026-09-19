@@ -135512,6 +135512,30 @@ throw new Error('后端API调用失败: ' + errMsg);
 
     }
 
+    // 多模型自动兜底，一个挂了自动试下一个
+    const fallbackModels = ['deepseek-v4-pro', 'glm-5.3', 'kimi-k3', 'qwen-flash', 'hy3'];
+    for (const fm of fallbackModels) {
+      if (fm === useModel) continue;
+      try {
+        const fbRes = await fetch(BACKEND_API_URL + '/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: fm,
+            messages: [{role:'system',content:systemPrompt},{role:'user',content:userPrompt}],
+            temperature: 0.7, max_tokens: useTokens
+          })
+        });
+        if (fbRes.ok) {
+          const fbData = await fbRes.json();
+          if (fbData.content && fbData.content.trim()) {
+            console.log('✅ 自动切换到', fm);
+            return fbData.content;
+          }
+        }
+      } catch(e) { console.warn('兜底模型失败', fm, e.message); }
+    }
+
     throw backendError;
 
   }
