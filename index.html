@@ -135449,7 +135449,18 @@ throw new Error('后端API调用失败: ' + errMsg);
       }
     }
 
-    // AI决策日志（纯增量：记录关键AI动作，不影响任何功能）
+    // ✅ 打字机效果工具：把文本逐字显示到目标元素
+async function typewriterToElement(element, text, speed = 15) {
+  if (!element || !text) return;
+  element.innerHTML = '';
+  for (let i = 0; i < text.length; i += 3) {
+    element.innerHTML = text.slice(0, i + 3);
+    await new Promise(r => setTimeout(r, speed));
+  }
+  element.innerHTML = text;
+}
+
+// AI决策日志（纯增量：记录关键AI动作，不影响任何功能）
     try {
       var _aiLog = JSON.parse(localStorage.getItem('aiDecLog') || '[]');
       _aiLog.push({ t: new Date().toLocaleString('zh-CN'), model: useModel, sys: (systemPrompt||'').slice(0,60), usr: (userPrompt||'').slice(0,100), out: (respContent||'').slice(0,150) });
