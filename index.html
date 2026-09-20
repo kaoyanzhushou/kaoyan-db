@@ -1516,16 +1516,16 @@ window.paperFullScore = async function() {
   var allText = [];
   document.querySelectorAll('[contenteditable=true]').forEach(function(el) {
     var t = el.innerText || el.textContent;
-    if (t && t.length > 100*1024*1024) allText.push(t);
+    if (t && t.length > 200) allText.push(t);
   });
   document.querySelectorAll('textarea').forEach(function(el) {
-    if (el.offsetParent !== null && el.value.length > 100*1024*1024) {
+    if (el.offsetParent !== null && el.value.length > 200) {
       allText.push(el.value);
     }
   });
   var paperText = allText.sort(function(a,b) { return b.length - a.length; })[0] || '';
   
-  if (!paperText || paperText.length < 100*1024*1024) {
+  if (!paperText || paperText.length < 200) {
     alert('请先在编辑器里写一些内容，再点评分');
     return;
   }
@@ -1556,10 +1556,10 @@ window.paperFormatAnalyze = async function() {
   var allText = [];
   document.querySelectorAll('[contenteditable=true]').forEach(function(el) {
     var t = el.innerText || el.textContent;
-    if (t && t.length > 100*1024*1024) allText.push(t);
+    if (t && t.length > 200) allText.push(t);
   });
   document.querySelectorAll('textarea').forEach(function(el) {
-    if (el.offsetParent !== null && el.value.length > 100*1024*1024) {
+    if (el.offsetParent !== null && el.value.length > 200) {
       allText.push(el.value);
     }
   });
@@ -1586,20 +1586,7 @@ window.paperFormatAnalyze = async function() {
     var result = await callDeepSeekAPI(systemPrompt, userPrompt, 2000);
     resultArea.innerHTML = renderMarkdown(result);
   } catch(e) {
-    resultArea.innerHTML = '
-<!-- 首页常用快捷工具栏 -->
-<div style="background:var(--card);border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.1);">
-  <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">🚀 常用快捷入口</h3>
-  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;">
-    <button onclick="toggleGlobalAssistant()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:12px 8px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">🤖 AI学术助手</button>
-    <button onclick="switchTab('knowledge')" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;padding:12px 8px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">📚 知识点目录</button>
-    <button onclick="switchTab('paper')" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:12px 8px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">📝 论文工作台</button>
-    <button onclick="switchTab('literature')" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:12px 8px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">🔍 文献检索</button>
-    <button onclick="switchTab('lesson')" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px 8px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">📝 教案生成</button>
-    <button onclick="switchTab('review')" style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff;border:none;padding:12px 8px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;">✨ AI润色</button>
-  </div>
-</div>
-<div style="padding:20px;color:#dc2626;">分析失败：' + e.message + '</div>';
+    resultArea.innerHTML = '<div style="padding:20px;color:#dc2626;">分析失败：' + e.message + '</div>';
   }
 };
 if(window.mermaid){mermaid.initialize({startOnLoad:false,theme:'default',securityLevel:'loose',flowchart:{useMaxWidth:true,curve:'basis'}});}</script>
@@ -3644,7 +3631,7 @@ if(!container) return;
 
 // 只处理较大的SVG
 
-if(svg.getBoundingClientRect().width < 100*1024*1024) return;
+if(svg.getBoundingClientRect().width < 200) return;
 
 container.classList.add('chart-container', 'has-chart-toolbar');
 
@@ -8198,7 +8185,7 @@ html += '</div></div>';
 
 html += '<div class="note-title">' + note.title + '</div>';
 
-html += '<div class="note-content">' + note.content.substring(0, 100*1024*1024) + (note.content.length > 200 ? '...' : '') + '</div>';
+html += '<div class="note-content">' + note.content.substring(0, 200) + (note.content.length > 200 ? '...' : '') + '</div>';
 
 html += '<div class="note-meta">';
 
@@ -8736,7 +8723,7 @@ setTimeout(() => {
 
 toolContent.scrollIntoView({behavior: 'smooth', block: 'start'});
 
-}, 100*1024*1024);
+}, 200);
 
 }
 
@@ -8848,7 +8835,7 @@ var barTimer=setInterval(function(){
 progress+=Math.random()*15;
 if(progress>90)progress=90;
 bar.style.width=progress+'%';
-},100*1024*1024);
+},200);
 
 // 页面加载完成
 window.addEventListener('load',function(){
@@ -8922,7 +8909,7 @@ body.loading #loadingText{
                 if (progress > 90) progress = 90;
                 bar.style.width = progress + '%';
                 text.textContent = '加载中... ' + Math.round(progress) + '%';
-                setTimeout(updateProgress, 100*1024*1024);
+                setTimeout(updateProgress, 200);
             }
         }
 
@@ -13002,6 +12989,8 @@ console.log('✅ 全局错误捕获已启用');
     </div>
 
 <div class="tab-content" id="tab-physio">
+
+
 
   <div class="physio-overview-collapsible" id="physioOverview">
 
@@ -45167,7 +45156,7 @@ function exitFocusMode(){ switchViewMode(currentViewMode === 'focus' ? 'list' : 
 
 function restoreViewMode(){
 
-  try{ const prefs = JSON.parse(localStorage.getItem('kaoyan_view_prefs') || '{}'); if(prefs.physioViewMode && prefs.physioViewMode !== 'list'){ setTimeout(() => switchViewMode(prefs.physioViewMode), 100*1024*1024); } }catch(e){}
+  try{ const prefs = JSON.parse(localStorage.getItem('kaoyan_view_prefs') || '{}'); if(prefs.physioViewMode && prefs.physioViewMode !== 'list'){ setTimeout(() => switchViewMode(prefs.physioViewMode), 200); } }catch(e){}
 
 }
 
@@ -45377,7 +45366,7 @@ function switchAnatomyViewMode(mode){
 
 function restoreAnatomyViewMode(){
 
-  try{ const prefs = JSON.parse(localStorage.getItem('kaoyan_view_prefs') || '{}'); if(prefs.anatomyViewMode && prefs.anatomyViewMode !== 'list'){ setTimeout(() => switchAnatomyViewMode(prefs.anatomyViewMode), 100*1024*1024); } }catch(e){}
+  try{ const prefs = JSON.parse(localStorage.getItem('kaoyan_view_prefs') || '{}'); if(prefs.anatomyViewMode && prefs.anatomyViewMode !== 'list'){ setTimeout(() => switchAnatomyViewMode(prefs.anatomyViewMode), 200); } }catch(e){}
 
 }
 
@@ -55873,7 +55862,7 @@ setTimeout(() => { try { updateLoading(50, '加载样式...'); } catch(e){} }, 5
 
 setTimeout(() => { try { updateLoading(70, '初始化核心功能...'); } catch(e){} }, 100);
 
-setTimeout(() => { try { updateLoading(85, '加载知识库...'); } catch(e){} }, 100*1024*1024);
+setTimeout(() => { try { updateLoading(85, '加载知识库...'); } catch(e){} }, 200);
 
 setTimeout(() => {
 
@@ -56313,7 +56302,7 @@ function renderPlagiarismCheckResult(result, rawText) {
 
       html += '<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:' + riskColor + ';color:#fff;font-weight:600">' + (seg.risk || '中') + '风险</span></div>';
 
-      if (seg.content) html += '<div style="font-size:11px;color:#374151;background:#f9fafb;padding:8px;border-radius:4px;margin-bottom:6px;border:1px solid #e5e7eb;max-height:80px;overflow-y:auto">' + seg.content.substring(0,100*1024*1024) + (seg.content.length > 200 ? '...' : '') + '</div>';
+      if (seg.content) html += '<div style="font-size:11px;color:#374151;background:#f9fafb;padding:8px;border-radius:4px;margin-bottom:6px;border:1px solid #e5e7eb;max-height:80px;overflow-y:auto">' + seg.content.substring(0,200) + (seg.content.length > 200 ? '...' : '') + '</div>';
 
       if (seg.reason) html += '<div style="font-size:11px;color:#dc2626;margin-bottom:4px">原因：' + seg.reason + '</div>';
 
@@ -57457,7 +57446,7 @@ function exportRouteWord() {
 
   document.body.appendChild(a); a.click();
 
-  setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 100*1024*1024);
+  setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 200);
 
 }
 
@@ -57777,7 +57766,7 @@ function exportRouteMD() {
 
   document.body.appendChild(a); a.click();
 
-  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 100*1024*1024);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 200);
 
 }
 
@@ -57803,7 +57792,7 @@ function exportRouteSVG() {
 
   document.body.appendChild(a); a.click();
 
-  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 100*1024*1024);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 200);
 
 }
 
@@ -58431,16 +58420,7 @@ function paperBuildFullDoc() {
 function exportPaperWord() {
   var doc = paperBuildFullDoc();
   if (!doc) { alert('请先在「我的论文」中选择或创建论文项目'); return; }
-  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.5;color:#000}h1{font-family:"SimHei",sans-serif;font-size:18pt;text-align:center;font-weight:bold;margin-bottom:20pt}h2{font-family:"SimHei",sans-serif;font-size:14pt;font-weight:bold;margin-top:16pt;margin-bottom:8pt}h3{font-family:"SimHei",sans-serif;font-size:12pt;font-weight:bold;margin-top:12pt;margin-bottom:6pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}table{border-collapse:collapse;margin:10px 0}table td,table th{border:1px solid #000;padding:4px 8px;font-size:10.5pt}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>';
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.5;color:#000}h1{font-family:"SimHei",sans-serif;font-size:18pt;text-align:center;font-weight:bold;margin-bottom:20pt}h2{font-family:"SimHei",sans-serif;font-size:14pt;font-weight:bold;margin-top:16pt;margin-bottom:8pt}h3{font-family:"SimHei",sans-serif;font-size:12pt;font-weight:bold;margin-top:12pt;margin-bottom:6pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}table{border-collapse:collapse;margin:10px 0}table td,table th{border:1px solid #000;padding:4px 8px;font-size:10.5pt}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '</body></html>';
   var blob = new Blob(['\ufeff' + html], {type: 'application/msword'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -58454,16 +58434,7 @@ function exportPaperPDF() {
   if (!doc) { alert('请先在「我的论文」中选择或创建论文项目'); return; }
   var w = window.open('', '_blank');
   if (!w) { alert('浏览器拦截了弹窗，请允许后重试'); return; }
-  w.document.write('<html><head><title>' + doc.title + '</title><meta charset="utf-8"><style>@page{size:A4;margin:2.54cm}body{font-family:"SimSun","Microsoft YaHei",serif;font-size:12pt;line-height:1.8;color:#000;max-width:780px;margin:0 auto}h1{font-size:16pt;text-align:center;margin-bottom:20pt}h2{font-size:14pt;margin-top:16pt;margin-bottom:8pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}@media print{body{margin:0}}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '<script>window.onload=function(){window.print();}</scr' + 'ipt>
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>');
+  w.document.write('<html><head><title>' + doc.title + '</title><meta charset="utf-8"><style>@page{size:A4;margin:2.54cm}body{font-family:"SimSun","Microsoft YaHei",serif;font-size:12pt;line-height:1.8;color:#000;max-width:780px;margin:0 auto}h1{font-size:16pt;text-align:center;margin-bottom:20pt}h2{font-size:14pt;margin-top:16pt;margin-bottom:8pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}@media print{body{margin:0}}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '<script>window.onload=function(){window.print();}</scr' + 'ipt></body></html>');
   w.document.close();
   w.focus();
 }
@@ -58654,7 +58625,7 @@ function runAIReview() {
 
   if (!text) { alert('请先输入或加载论文内容'); return; }
 
-  if (text.length < 100*1024*1024) { alert('论文内容太少（少于200字），请输入更多内容'); return; }
+  if (text.length < 200) { alert('论文内容太少（少于200字），请输入更多内容'); return; }
 
   var journal = document.getElementById('reviewJournal').value;
 
@@ -60352,7 +60323,7 @@ function renderDebateModelCard(m, parsed, raw) {
 
   } else if (raw) {
 
-    html += '<div style="padding:10px 14px;border-top:1px solid #f3f4f6;font-size:11px;color:#6b7280;max-height:150px;overflow-y:auto;white-space:pre-wrap">' + raw.replace(/</g,'&lt;').substring(0, 1100*1024*1024) + '</div>';
+    html += '<div style="padding:10px 14px;border-top:1px solid #f3f4f6;font-size:11px;color:#6b7280;max-height:150px;overflow-y:auto;white-space:pre-wrap">' + raw.replace(/</g,'&lt;').substring(0, 1200) + '</div>';
 
   }
 
@@ -62347,7 +62318,7 @@ function getJournalInfo(name) {
   if (j.reviewDays) parts.push('平均审稿周期：' + j.reviewDays + '天');
   if (j.acceptRate) parts.push('录用率：' + j.acceptRate + '%');
   if (j.oa) parts.push('OA模式：' + j.oa);
-  if (j.scope) parts.push('收稿范围：' + j.scope.substring(0, 100*1024*1024));
+  if (j.scope) parts.push('收稿范围：' + j.scope.substring(0, 200));
   if (j.strengths) parts.push('期刊优势：' + j.strengths.substring(0, 100));
   if (j.pitfalls) parts.push('注意事项：' + j.pitfalls.substring(0, 100));
   return parts.join('\n');
@@ -62882,19 +62853,19 @@ if(tabName === 'plan') renderPlan();
 
 if(tabName === 'politics' && !window.knowledgeRendered.politics){
 
-try{ renderKnowledgeSection(politicsData, 'politicsContent', 'tag-politics'); window.knowledgeRendered.politics = true; if(typeof updatePoliticsProgressStats === 'function') setTimeout(updatePoliticsProgressStats, 100); if(typeof restorePoliticsViewMode === 'function') setTimeout(restorePoliticsViewMode, 100*1024*1024); }catch(e){ console.warn('politics render error:', e); }
+try{ renderKnowledgeSection(politicsData, 'politicsContent', 'tag-politics'); window.knowledgeRendered.politics = true; if(typeof updatePoliticsProgressStats === 'function') setTimeout(updatePoliticsProgressStats, 100); if(typeof restorePoliticsViewMode === 'function') setTimeout(restorePoliticsViewMode, 200); }catch(e){ console.warn('politics render error:', e); }
 
 }
 
 if(tabName === 'physio' && !window.knowledgeRendered.physio){
 
-try{ renderKnowledgeSection(physioData, 'physioContent', 'tag-physio'); window.knowledgeRendered.physio = true; if(typeof updatePhysioProgressStats === 'function') setTimeout(updatePhysioProgressStats, 100); if(typeof restoreViewMode === 'function') setTimeout(restoreViewMode, 100*1024*1024); }catch(e){ console.warn('physio render error:', e); }
+try{ renderKnowledgeSection(physioData, 'physioContent', 'tag-physio'); window.knowledgeRendered.physio = true; if(typeof updatePhysioProgressStats === 'function') setTimeout(updatePhysioProgressStats, 100); if(typeof restoreViewMode === 'function') setTimeout(restoreViewMode, 200); }catch(e){ console.warn('physio render error:', e); }
 
 }
 
 if(tabName === 'anatomy' && !window.knowledgeRendered.anatomy){
 
-try{ renderKnowledgeSection(anatomyData, 'anatomyContent', 'tag-anatomy'); window.knowledgeRendered.anatomy = true; if(typeof updateAnatomyProgressStats === 'function') setTimeout(updateAnatomyProgressStats, 100); if(typeof restoreAnatomyViewMode === 'function') setTimeout(restoreAnatomyViewMode, 100*1024*1024); }catch(e){ console.warn('anatomy render error:', e); }
+try{ renderKnowledgeSection(anatomyData, 'anatomyContent', 'tag-anatomy'); window.knowledgeRendered.anatomy = true; if(typeof updateAnatomyProgressStats === 'function') setTimeout(updateAnatomyProgressStats, 100); if(typeof restoreAnatomyViewMode === 'function') setTimeout(restoreAnatomyViewMode, 200); }catch(e){ console.warn('anatomy render error:', e); }
 
 }
 
@@ -64244,7 +64215,7 @@ function parsePlagReport() {
 
       }
 
-    }, 100*1024*1024);
+    }, 200);
 
   };
 
@@ -65262,16 +65233,7 @@ function exportAiReportPdf() {
 
     'button{display:none}' +
 
-    '</style></head><body>' + header + el.innerHTML + '
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>');
+    '</style></head><body>' + header + el.innerHTML + '</body></html>');
 
   printWin.document.close();
 
@@ -65333,7 +65295,7 @@ function downloadAiReportTxt() {
 
   a.click();
 
-  setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 100*1024*1024);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 200);
 
 }
 
@@ -65589,7 +65551,7 @@ setTimeout(()=>{
 
 const msg = `找到 ${results.length} 个相关知识点：\n\n` + results.slice(0,10).map((r,i)=>`${i+1}. [${r.subject}] ${r.title}`).join('\n') + (results.length>10?'\n...':'');
 
-},100*1024*1024);
+},200);
 
 }
 
@@ -67941,7 +67903,7 @@ if(end < searchableText.length) snippet = snippet + '...';
 
 } else {
 
-snippet = searchableText.substring(0, 100*1024*1024) + '...';
+snippet = searchableText.substring(0, 200) + '...';
 
 }
 
@@ -68371,7 +68333,7 @@ setTimeout(()=>{ section.style.background = ''; }, 1500);
 
 }
 
-}, 100*1024*1024);
+}, 200);
 
 }
 
@@ -68657,7 +68619,7 @@ document.getElementById('loginUsername').value = username;
 
 document.getElementById('loginPassword').focus();
 
-}, 1100*1024*1024);
+}, 1200);
 
 }
 
@@ -68667,7 +68629,7 @@ function quickAdminLogin(){
 
   document.getElementById('loginPassword').value = 'admin123';
 
-  setTimeout(function(){ doLogin(); }, 100*1024*1024);
+  setTimeout(function(){ doLogin(); }, 200);
 
 }
 
@@ -83614,7 +83576,7 @@ function addPhdReferencesToAnswer(ragResults, answerElement) {
 
     item.innerHTML = '<div style="font-size:12px;color:#667eea;font-weight:600;margin-bottom:4px">[' + (i+1) + '] ' + r.source + '</div>' +
 
-      '<div style="font-size:12px;color:#475569;line-height:1.6">' + r.text.substring(0, 100*1024*1024) + (r.text.length > 200 ? '...' : '') + '</div>';
+      '<div style="font-size:12px;color:#475569;line-height:1.6">' + r.text.substring(0, 200) + (r.text.length > 200 ? '...' : '') + '</div>';
 
     content.appendChild(item);
 
@@ -87780,7 +87742,7 @@ function navigateToPhdSubTab(subTab) {
 
         if (typeof showPhdLiteratureSearch === 'function') showPhdLiteratureSearch();
 
-      }, 100*1024*1024);
+      }, 200);
 
     } else {
 
@@ -89869,9 +89831,9 @@ function renderFormatCheckResult(response, originalContent) {
 
       if (probMatch) html += '<div style="font-size:12px;color:#374151;line-height:1.7;margin-bottom:8px"><b>问题：</b>' + probMatch[1].trim().replace(/\n/g, ' ') + '</div>';
 
-      if (origMatch && origMatch[1].trim()) html += '<div style="font-size:11px;color:#dc2626;background:#fff;padding:6px 10px;border-radius:4px;margin-bottom:6px;line-height:1.6"><b>原文：</b>' + origMatch[1].trim().substring(0, 100*1024*1024) + '</div>';
+      if (origMatch && origMatch[1].trim()) html += '<div style="font-size:11px;color:#dc2626;background:#fff;padding:6px 10px;border-radius:4px;margin-bottom:6px;line-height:1.6"><b>原文：</b>' + origMatch[1].trim().substring(0, 200) + '</div>';
 
-      if (afterMatch && afterMatch[1].trim()) html += '<div style="font-size:11px;color:#059669;background:#fff;padding:6px 10px;border-radius:4px;margin-bottom:6px;line-height:1.6"><b>修改后：</b>' + afterMatch[1].trim().substring(0, 100*1024*1024) + '</div>';
+      if (afterMatch && afterMatch[1].trim()) html += '<div style="font-size:11px;color:#059669;background:#fff;padding:6px 10px;border-radius:4px;margin-bottom:6px;line-height:1.6"><b>修改后：</b>' + afterMatch[1].trim().substring(0, 200) + '</div>';
 
       if (fixMatch && fixMatch[1].trim()) html += '<div style="font-size:11px;color:#6b7280;line-height:1.6"><b>修改建议：</b>' + fixMatch[1].trim().replace(/\n/g, ' ') + '</div>';
 
@@ -91155,7 +91117,7 @@ async function publishDebateVerdict() {
         html += '</div>';
       });
     } else {
-      html += '<div style="font-size:11px;color:#94a3b8">解析失败，原始文本：' + (textA || '').substring(0, 100*1024*1024) + '</div>';
+      html += '<div style="font-size:11px;color:#94a3b8">解析失败，原始文本：' + (textA || '').substring(0, 200) + '</div>';
     }
     html += '</div>';
 
@@ -91173,7 +91135,7 @@ async function publishDebateVerdict() {
         html += '</div>';
       });
     } else {
-      html += '<div style="font-size:11px;color:#94a3b8">解析失败，原始文本：' + (textB || '').substring(0, 100*1024*1024) + '</div>';
+      html += '<div style="font-size:11px;color:#94a3b8">解析失败，原始文本：' + (textB || '').substring(0, 200) + '</div>';
     }
     html += '</div>';
     html += '</div>';
@@ -101172,16 +101134,7 @@ function downloadPhdEmailWord() {
 
     '<style>body{font-family:SimSun,serif;font-size:12pt;line-height:1.8;color:#333;padding:30px}pre{white-space:pre-wrap;font-family:SimSun,serif;font-size:12pt}</style></head>' +
 
-    '<body><pre>' + text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>';
+    '<body><pre>' + text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre></body></html>';
 
   const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
 
@@ -101709,7 +101662,7 @@ function saveCurrentEmailToTaoci() {
 
   const records = getTaociRecords();
 
-  records.unshift({ id: Date.now(), supName: supName, supSchool: '', status: '待发', followDate: '', scene: sceneName || '首封套磁', note: email.slice(0, 100*1024*1024) });
+  records.unshift({ id: Date.now(), supName: supName, supSchool: '', status: '待发', followDate: '', scene: sceneName || '首封套磁', note: email.slice(0, 200) });
 
   saveTaociRecords(records);
 
@@ -104677,7 +104630,7 @@ function openTaociFromSup(idx){
 
       if(sel) sel.value = idx;
 
-    }, 100*1024*1024);
+    }, 200);
 
   }, 300);
 
@@ -106466,16 +106419,7 @@ function propExportMenu() {
 
     });
 
-    html += '
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>';
+    html += '</body></html>';
 
     const blob = new Blob(['\ufeff' + html], {type: 'application/msword'});
 
@@ -106757,7 +106701,7 @@ function propGenerateChapter() {
 
     if (window.propState.chapters[i].content && window.propState.chapters[i].content.length > 50) {
 
-      prevContext += '【' + window.propState.chapters[i].title + '】' + window.propState.chapters[i].content.substring(0, 100*1024*1024) + '...\n';
+      prevContext += '【' + window.propState.chapters[i].title + '】' + window.propState.chapters[i].content.substring(0, 200) + '...\n';
 
     }
 
@@ -106787,7 +106731,7 @@ function propGenerateChapter() {
 
     console.log('[propGenerateChapter] API返回成功, response长度:', response ? response.length : 0);
 
-    console.log('[propGenerateChapter] response前200字:', response ? response.substring(0, 100*1024*1024) : 'empty');
+    console.log('[propGenerateChapter] response前200字:', response ? response.substring(0, 200) : 'empty');
 
     console.log('[propGenerateChapter] response.trim()长度:', response ? response.trim().length : 0);
 
@@ -107195,7 +107139,7 @@ function propGenerateTechRoute() {
 
     }
 
-    setTimeout(function() { renderMermaidGraph(mermaid.trim(), 'phdTechRouteGraph'); }, 100*1024*1024);
+    setTimeout(function() { renderMermaidGraph(mermaid.trim(), 'phdTechRouteGraph'); }, 200);
 
     alert('技术路线图已生成！已在页面顶部显示，可导出为PNG图片。同时已保存到计划书中。');
 
@@ -107235,7 +107179,7 @@ function propAIReview() {
 
 
 
-  if (!fullContent || fullContent.length < 100*1024*1024) {
+  if (!fullContent || fullContent.length < 200) {
 
     alert('计划书内容太少（少于200字），请先生成或输入内容');
 
@@ -107459,7 +107403,7 @@ function propAIReview() {
 
         alert('评审结果解析失败，但已生成。请查看控制台或重试。');
 
-      }, 100*1024*1024);
+      }, 200);
 
     }
 
@@ -107961,7 +107905,7 @@ function propSimulateSupervisorQuestions() {
 
 
 
-  if (!fullContent || fullContent.length < 100*1024*1024) {
+  if (!fullContent || fullContent.length < 200) {
 
     alert('计划书内容太少，请先生成或输入内容');
 
@@ -112431,7 +112375,7 @@ async function reviewPropProposalAI() {
 
   const contentText = document.getElementById('propEditText').value;
 
-  if (!contentText || contentText.length < 100*1024*1024) {
+  if (!contentText || contentText.length < 200) {
 
     alert('请先生成或输入科研计划书内容（至少200字）');
 
@@ -116561,7 +116505,7 @@ function scorePhdInterviewAnswer(answer, question) {
 
   else if (len >= 300) result.length = 8;
 
-  else if (len >= 100*1024*1024) result.length = 6;
+  else if (len >= 200) result.length = 6;
 
   else if (len >= 100) result.length = 4;
 
@@ -126070,7 +126014,7 @@ document.addEventListener('click', function(e) {
 
       }
 
-    }, 100*1024*1024);
+    }, 200);
 
   }
 
@@ -126368,7 +126312,7 @@ async function pipeSelectTopic(){
   const p = window._pipe;
   const sys = '你是体育科学研究选题专家。基于用户的研究主题方向，给出1-2个具体、可操作、有创新点的研究题目，并简要说明每个题目的选题理由（创新点、可行性、发表潜力）。';
   const usr = '研究方向：' + p.topic;
-  const r = await callDeepSeekAPI(sys, usr, 1100*1024*1024);
+  const r = await callDeepSeekAPI(sys, usr, 1200);
   p.title = r;
 }
 
@@ -126379,7 +126323,7 @@ async function pipeSearchLiterature(){
   let query = '';
   try{
     const sysQ = '你是医学文献检索专家。把用户的中文研究主题转化为 EuropePMC/PubMed 英文检索式（可用布尔运算符 AND/OR/引号，控制在40词内）。只输出检索式本身，不要任何其他文字。';
-    const qr = await callDeepSeekAPI(sysQ, '研究主题：' + p.topic, 100*1024*1024);
+    const qr = await callDeepSeekAPI(sysQ, '研究主题：' + p.topic, 200);
     query = (qr||'').trim().split('\n')[0];
   }catch(e){ query = ''; }
   if(!query || query.length > 150){ query = p.topic; }
@@ -126432,7 +126376,7 @@ async function pipeSuggestJournal(){
   const p = window._pipe;
   const sys = '你是体育科学学术出版顾问。基于论文主题和内容，推荐3-5本合适的SCI/SSCI期刊或中文核心期刊，逐本说明推荐理由（方向匹配度、影响因子区间、审稿周期特点、投稿难度）。';
   const usr = '研究主题：' + p.topic + '\n研究题目：' + (p.title||'') + '\n大纲摘要：\n' + (p.outline||'').slice(0,800);
-  const r = await callDeepSeekAPI(sys, usr, 1100*1024*1024);
+  const r = await callDeepSeekAPI(sys, usr, 1200);
   p.journal = r;
 }
 
@@ -126600,7 +126544,7 @@ async function runRoundTable(){
   let verdict = '';
   try{
     const modSys = '你是学术论文评审会议主持人。四位专家已给出独立意见，请汇总成「圆桌决议」：1.【必须修改】（专家共识必须改的问题，去重合并）2.【建议修改】3.【可保留】4.【综合结论】一句话总结论文水平与修改后录用前景。简洁、有重点、可直接执行。';
-    const modUsr = '论文主题简介：' + inputShort.slice(0,300) + '\n\n--- 四位专家意见（节选） ---\n\n' + ROUND_EXPERTS.map(function(e){ return '【' + e.name + '】\n' + ((expertsOut[e.id]||'').slice(0,1100*1024*1024)); }).join('\n\n');
+    const modUsr = '论文主题简介：' + inputShort.slice(0,300) + '\n\n--- 四位专家意见（节选） ---\n\n' + ROUND_EXPERTS.map(function(e){ return '【' + e.name + '】\n' + ((expertsOut[e.id]||'').slice(0,1200)); }).join('\n\n');
     verdict = (await callDeepSeekAPI(modSys, modUsr, 2000, 'glm-5.3')) || '';
     // 空值降级：GLM 返回空时用 DeepSeek 重试一次
     if(!verdict || verdict.trim().length < 20){
@@ -126680,7 +126624,7 @@ async function runReflectChain(){
     // 第三轮：第三模型修正（独立try+超时+自动降级）
     show('第三轮：Kimi 根据检查意见修正...');
     const fixSys = '你是学术写作专家。根据审校意见修正以下文本：保留原意与专业内容，修正审校指出的问题；若审校意见为「未发现明显问题」则输出原文。输出修正后的完整版本。';
-    const fixInput = '【原文】\n' + draft.slice(0,3000) + '\n\n【审校意见】\n' + check.slice(0,1100*1024*1024);
+    const fixInput = '【原文】\n' + draft.slice(0,3000) + '\n\n【审校意见】\n' + check.slice(0,1200);
     try{ fixed = await callModelWithTimeout(fixSys, fixInput, 1500, 'kimi-k3', 50000); }catch(e){ fixed = ''; }
     if(!fixed.trim()){
       show('第三轮：Kimi 超时/未返回，改用 DeepSeek 修正...');
@@ -126989,7 +126933,7 @@ async function askAssist(){
   const sys = '你是学术论文写作助手。基于用户提供的论文上下文回答问题：1.只给建议、不改动原文 2.能精确定位到相关章节/段落并引用 3.建议具体、可操作（改写示例、结构建议）4.若问题超出论文范围或上下文不足，明确说明。语气专业、简洁。';
   let histTxt = '';
   if(AI_ASSIST_HISTORY.length > 2){
-    histTxt = '\n\n（对话历史：' + AI_ASSIST_HISTORY.slice(-6, -1).map(function(m){ return (m.role==='user'?'用户问':'助手答') + '：' + m.content.slice(0,100*1024*1024); }).join(' | ') + '）';
+    histTxt = '\n\n（对话历史：' + AI_ASSIST_HISTORY.slice(-6, -1).map(function(m){ return (m.role==='user'?'用户问':'助手答') + '：' + m.content.slice(0,200); }).join(' | ') + '）';
   }
   const usr = '论文上下文：\n' + (paper || '（未提供，仅凭问题回答）').slice(0,6000) + '\n\n用户问题：' + q + histTxt;
   let out = '';
@@ -127157,7 +127101,7 @@ function renderBookMeta(){
   }catch(e){}
 }
 function switchTeacherSubTab(name){
-  if(name === 'lesson'){ setTimeout(renderBookMeta, 100*1024*1024); }
+  if(name === 'lesson'){ setTimeout(renderBookMeta, 200); }
   TEACHER_SUBTABS.forEach(function(t){
     var el = document.getElementById('teacherContent-' + t);
     if(el) el.style.display = (t === name) ? 'block' : 'none';
@@ -128120,16 +128064,7 @@ function exportAnimHTML(){
   html += '<script>var steps=' + stepsData + ';var cur=0;var playing=false;var timer=null;';
   html += 'function render(){var info=document.getElementById("stepInfo");info.textContent="步骤 "+cur+"/"+(steps.length-1);var p=steps[cur];var pr=document.getElementById("principle");if(p.isFinal){pr.innerHTML="<b style=color:#22c55e>✅ 全部通路已点亮</b><br>"+(' + JSON.stringify(animData.overallNarration || '') + ');}else if(p.nodeLabel){pr.innerHTML="<b style=color:#06b6d4>"+p.nodeLabel+"</b><br>"+(p.nodeNarration||"");}else{pr.textContent="准备开始...";}document.querySelectorAll("#svgContainer svg text, #svgContainer svg polygon, #svgContainer svg ellipse, #svgContainer svg rect, #svgContainer svg path").forEach(function(el){el.style.opacity="0.15";});}';
   html += 'function step(d){cur=Math.max(0,Math.min(steps.length-1,cur+d));render();}function togglePlay(){playing=!playing;var b=document.getElementById("playBtn");if(playing){b.textContent="⏸ 暂停";timer=setInterval(function(){if(cur>=steps.length-1){togglePlay();return;}step(1);},1500);}else{b.textContent="▶ 播放";clearInterval(timer);}}function reset(){if(playing){togglePlay();}cur=0;render();}render();';
-  html += '<\/script>
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>';
+  html += '<\/script></body></html>';
   var blob = new Blob([html], {type: 'text/html'});
   var link = document.createElement('a');
   link.download = '机制动画_' + animData.title + '.html';
@@ -128488,16 +128423,7 @@ async function undToPPT(){
     if(!result){ throw new Error('生成失败'); }
     // 显示生成的课件内容，让用户复制
     var win = window.open('', '_blank');
-    win.document.write('<html><head><meta charset="UTF-8"><title>课件页 - ' + undCurrentData.title + '</title><style>body{font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.8}h2{color:#0891b2}pre{background:#f8fafc;padding:16px;border-radius:8px;white-space:pre-wrap;word-wrap:break-word}</style></head><body><h2>📊 课件页内容</h2><p>可复制到 PPT 课件模块中使用：</p><pre>' + result.replace(/</g, '&lt;') + '</pre>
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>');
+    win.document.write('<html><head><meta charset="UTF-8"><title>课件页 - ' + undCurrentData.title + '</title><style>body{font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.8}h2{color:#0891b2}pre{background:#f8fafc;padding:16px;border-radius:8px;white-space:pre-wrap;word-wrap:break-word}</style></head><body><h2>📊 课件页内容</h2><p>可复制到 PPT 课件模块中使用：</p><pre>' + result.replace(/</g, '&lt;') + '</pre></body></html>');
     mechToast('课件页已生成，在新窗口中查看');
   }catch(e){
     mechToast('生成失败：' + e.message);
@@ -128874,16 +128800,7 @@ function previewMechPathway(id){
   renderMechSVG(p.data);
   var svg = document.getElementById('mechSvgContainer')._svgContent || '';
   var win = window.open('', '_blank');
-  win.document.write('<html><head><meta charset="UTF-8"><title>' + p.name + '</title><style>body{font-family:sans-serif;max-width:1000px;margin:30px auto;padding:20px}h2{color:#0891b2}p{color:#475569;line-height:1.8}.svg-box{background:#f8fafc;padding:20px;border-radius:10px;overflow:auto}</style></head><body><h2>' + p.name + '</h2><p><b>科目：</b>' + p.subject + ' | <b>分类：</b>' + p.category + '</p><p>' + p.description + '</p><div class="svg-box">' + svg + '</div><h3 style="color:#0f172a;margin-top:24px">整体机制讲解</h3><p style="color:#475569;line-height:1.8">' + (p.data.overallNarration || '') + '</p>
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>');
+  win.document.write('<html><head><meta charset="UTF-8"><title>' + p.name + '</title><style>body{font-family:sans-serif;max-width:1000px;margin:30px auto;padding:20px}h2{color:#0891b2}p{color:#475569;line-height:1.8}.svg-box{background:#f8fafc;padding:20px;border-radius:10px;overflow:auto}</style></head><body><h2>' + p.name + '</h2><p><b>科目：</b>' + p.subject + ' | <b>分类：</b>' + p.category + '</p><p>' + p.description + '</p><div class="svg-box">' + svg + '</div><h3 style="color:#0f172a;margin-top:24px">整体机制讲解</h3><p style="color:#475569;line-height:1.8">' + (p.data.overallNarration || '') + '</p></body></html>');
 }
 
 // ===== 运动科学机制库：论文机制图（P2） =====
@@ -128932,7 +128849,7 @@ function generatePaperMechanism(){
   // 延迟调用生成（等待面板切换）
   setTimeout(function(){
     generateMechanism();
-  }, 100*1024*1024);
+  }, 200);
   mechToast('已切换到机制图生成面板，正在生成...');
 }
 
@@ -128955,16 +128872,7 @@ function exportMechPDF(){
     nodeList += '</table>';
   }
   var win = window.open('', '_blank');
-  win.document.write('<html><head><meta charset="UTF-8"><title>' + title + '</title><style>@page{size:A4 landscape;margin:15mm}body{font-family:"Microsoft YaHei",sans-serif;max-width:1000px;margin:0 auto;padding:20px;color:#1e293b}h2{color:#0891b2;text-align:center;font-size:20px;margin-bottom:4px}.subtitle{text-align:center;color:#64748b;font-size:12px;margin-bottom:16px}.svg-box{text-align:center;background:#f8fafc;padding:16px;border-radius:8px;margin:16px 0}.svg-box svg{max-width:100%;height:auto}h3{color:#0f172a;font-size:14px;border-left:3px solid #0891b2;padding-left:8px}p{line-height:1.8;font-size:12px;text-indent:2em;color:#475569}.footer{text-align:center;color:#94a3b8;font-size:10px;margin-top:30px}</style></head><body><h2>' + title + '</h2><div class="subtitle">科目：' + subject + '</div><div class="svg-box">' + svg + '</div><h3>机制说明</h3><p>' + narration + '</p>' + nodeList + '<div class="footer">由体育科研工作台 · 运动科学机制库生成</div>
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>');
+  win.document.write('<html><head><meta charset="UTF-8"><title>' + title + '</title><style>@page{size:A4 landscape;margin:15mm}body{font-family:"Microsoft YaHei",sans-serif;max-width:1000px;margin:0 auto;padding:20px;color:#1e293b}h2{color:#0891b2;text-align:center;font-size:20px;margin-bottom:4px}.subtitle{text-align:center;color:#64748b;font-size:12px;margin-bottom:16px}.svg-box{text-align:center;background:#f8fafc;padding:16px;border-radius:8px;margin:16px 0}.svg-box svg{max-width:100%;height:auto}h3{color:#0f172a;font-size:14px;border-left:3px solid #0891b2;padding-left:8px}p{line-height:1.8;font-size:12px;text-indent:2em;color:#475569}.footer{text-align:center;color:#94a3b8;font-size:10px;margin-top:30px}</style></head><body><h2>' + title + '</h2><div class="subtitle">科目：' + subject + '</div><div class="svg-box">' + svg + '</div><h3>机制说明</h3><p>' + narration + '</p>' + nodeList + '<div class="footer">由体育科研工作台 · 运动科学机制库生成</div></body></html>');
   win.document.close();
   setTimeout(function(){ win.print(); }, 800);
   mechToast('已打开打印预览，可选择"另存为PDF"');
@@ -129504,16 +129412,7 @@ function exportMechSBML(){
   sbml += '    <notes>\n      <body xmlns="http://www.w3.org/1999/xhtml">\n';
   sbml += '        <p>科目：' + (data.subject || '运动科学') + '</p>\n';
   if(data.overallNarration){ sbml += '        <p>' + data.overallNarration.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>\n'; }
-  sbml += '      
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-\n    </notes>\n';
+  sbml += '      </body>\n    </notes>\n';
   // 物种（节点）
   sbml += '    <listOfSpecies>\n';
   (data.nodes || []).forEach(function(n){
@@ -130820,14 +130719,14 @@ function renderLessonTimeline(){
       if(matched) break;
     }
     if(matched){
-      if(currentPhase) phases.push({name: currentPhase, content: currentContent.join('\n').slice(0, 100*1024*1024)});
+      if(currentPhase) phases.push({name: currentPhase, content: currentContent.join('\n').slice(0, 200)});
       currentPhase = matched;
       currentContent = [line];
     } else if(currentPhase && line.trim()){
       currentContent.push(line);
     }
   }
-  if(currentPhase) phases.push({name: currentPhase, content: currentContent.join('\n').slice(0, 100*1024*1024)});
+  if(currentPhase) phases.push({name: currentPhase, content: currentContent.join('\n').slice(0, 200)});
 
   // 默认时间分配（如果未检测到）
   const defaultTimes = {'导入': 5, '新授': 25, '巩固': 10, '小结': 5, '作业': 0};
@@ -131448,7 +131347,7 @@ async function pptGenerateInteractions(){
       const m = lines[k].match(/P(\d+)[｜|:：]\s*题目[：:]\s*(.+?)[｜|:：]\s*答案[：:]\s*(.+)/);
       if(m){
         const q = m[2].trim().slice(0, 150);
-        const a = m[3].trim().slice(0, 100*1024*1024);
+        const a = m[3].trim().slice(0, 200);
         __pptSlides.push({type:'互动', title:'课堂互动：' + q.slice(0,30), points:[q, '参考答案：' + a], notes:'互动题，建议课堂提问后给学生1-2分钟思考，再公布答案'});
         count++;
       }
@@ -131492,16 +131391,7 @@ function pptExportPDF(){
     html += '<div class="pagenum">第 ' + (i+1) + ' / ' + __pptSlides.length + ' 页</div>';
     html += '</div>';
   }
-  html += '
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>';
+  html += '</body></html>';
   w.document.write(html);
   w.document.close();
   w.focus();
@@ -132855,7 +132745,7 @@ function renderFieldResults(elapsed) {
   // 滚动到结果区域
   setTimeout(() => {
     resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100*1024*1024);
+  }, 200);
 }
 
 // 重新生成单个字段
@@ -133319,16 +133209,7 @@ function exportLessonAsHtml() {
     + '<body>\n'
     + '<h1>' + title + '</h1>\n'
     + bodyHtml + '\n'
-    + '
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-\n'
+    + '</body>\n'
     + '</html>';
 
   // 下载
@@ -133506,7 +133387,7 @@ async function ocrScanPDF(pdf, pages, callback){
 
       // 批次之间短暂延迟，避免API限流
       if(batchEnd < pages.length){
-        await new Promise(r => setTimeout(r, 100*1024*1024));
+        await new Promise(r => setTimeout(r, 200));
       }
     }
 
@@ -134144,7 +134025,7 @@ async function generateLessonFromImages(){
     status.style.color = '#16a34a';
 
     // 反思链：异步自检教案质量
-    if (reflectionEnabled && result.length > 100*1024*1024) {
+    if (reflectionEnabled && result.length > 200) {
       status.innerHTML += ' 🔍 正在自检教案质量...';
       (async function() {
         try {
@@ -134730,7 +134611,7 @@ async function convertLessonFormat(){
   ============================================================ -->
 
 <!-- 全局AI学术助手 -->
-<div id="globalAssistantBtn" onclick="toggleGlobalAssistant()" style="position:fixed;bottom:40px;right:40px;width:64px;height:64px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;box-shadow:0 6px 24px rgba(124,58,237,0.5);z-index:100000;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">🤖</div>
+<div id="globalAssistantBtn" onclick="toggleGlobalAssistant()" style="position:fixed;bottom:30px;right:30px;width:56px;height:56px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,0.4);z-index:99999;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">🤖</div>
 <div id="globalAssistantPanel" style="display:none;position:fixed;bottom:100px;right:30px;width:380px;height:520px;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.2);z-index:99998;overflow:hidden;display:flex;flex-direction:column">
   <div style="padding:12px 16px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;display:flex;justify-content:space-between;align-items:center">
     <div style="font-weight:700;font-size:14px">🤖 AI学术助手</div>
@@ -137045,7 +136926,7 @@ function saveTerm(termData) {
   try {
     var lib = JSON.parse(localStorage.getItem('personal_terms') || '[]');
     lib.unshift(termData);
-    localStorage.setItem('personal_terms', JSON.stringify(lib.slice(0, 100*1024*1024)));
+    localStorage.setItem('personal_terms', JSON.stringify(lib.slice(0, 200)));
     alert('✅ 术语已收藏到个人词库');
   } catch(e) { alert('收藏失败'); }
 }
@@ -137054,7 +136935,7 @@ function savePhrase(phraseData) {
   try {
     var lib = JSON.parse(localStorage.getItem('personal_phrases') || '[]');
     lib.unshift(phraseData);
-    localStorage.setItem('personal_phrases', JSON.stringify(lib.slice(0, 100*1024*1024)));
+    localStorage.setItem('personal_phrases', JSON.stringify(lib.slice(0, 200)));
     alert('✅ 句型已收藏到个人词库');
   } catch(e) { alert('收藏失败'); }
 }
@@ -138669,7 +138550,7 @@ async function analyzeNihTrends() {
              ' | 机构: ' + (p.organization ? p.organization.org_name : '') +
              ' | 经费: ' + (p.total_cost ? '$' + p.total_cost : '未公开') +
              ' | 财年: ' + (p.fiscal_year || '') +
-             ' | 摘要: ' + ((p.abstract_text || '').substring(0, 100*1024*1024));
+             ' | 摘要: ' + ((p.abstract_text || '').substring(0, 200));
     }).join('\n\n');
 
     var systemPrompt = `你是一位资深的科研基金分析专家，擅长分析NIH等机构的资助趋势。请基于以下NIH资助项目列表，分析该领域的基金趋势和热点，并给出课题申报建议。
@@ -141432,7 +141313,7 @@ var StabilityErrorHandler = {
                 return true;
             }, true);
             window.addEventListener('unhandledrejection', function(e) {
-                self.log('promise_error', { reason: String(e.reason).substring(0, 100*1024*1024) });
+                self.log('promise_error', { reason: String(e.reason).substring(0, 200) });
             });
             console.log('[稳定性框架] 全局错误捕获已启动');
         } catch(e) { console.warn('[错误捕获] init失败', e); }
@@ -142177,7 +142058,7 @@ var StabilityErrorLogExport = {
             var data = {
                 exportedAt: new Date().toISOString(),
                 pageUrl: window.location.href,
-                userAgent: navigator.userAgent.substring(0, 100*1024*1024),
+                userAgent: navigator.userAgent.substring(0, 200),
                 screenSize: window.screen.width + 'x' + window.screen.height,
                 language: navigator.language,
                 totalErrors: errors.length,
@@ -144462,16 +144343,7 @@ var LessonPanel = {
                 }
             });
 
-            htmlContent += '
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>';
+            htmlContent += '</body></html>';
 
             // 创建Blob并下载
             var blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
@@ -144637,7 +144509,7 @@ var LessonPanel = {
 setTimeout(function() {
     LessonPanel.init();
     console.log('✅ 教案助手增强包 v1.0 已加载（6个功能：模板匹配/字段生成/质量校验/版本对比/导出Word/教案库）');
-}, 1100*1024*1024);
+}, 1200);
 
 } catch(e) {
     console.error('[教案增强] 顶层错误:', e);
@@ -145447,16 +145319,7 @@ var Panel = {
             html += 'function prevSlide(){if(current>0)showSlide(current-1);}';
             html += 'document.addEventListener("keydown",function(e){if(e.key==="ArrowRight"||e.key===" ")nextSlide();if(e.key==="ArrowLeft")prevSlide();});';
             html += '<\/script>';
-            html += '
-<!-- 右下角悬浮快捷功能组 -->
-<div style="position:fixed;right:40px;bottom:130px;z-index:99998;display:flex;flex-direction:column;gap:8px;">
-  <button onclick="switchTab('knowledge')" title="知识点目录" style="width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.4);">📚</button>
-  <button onclick="switchTab('paper')" title="论文工作台" style="width:44px;height:44px;border-radius:50%;background:#10b981;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.4);">📝</button>
-  <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
-  <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
-</div>
-</body>
-</html>';
+            html += '</body></html>';
 
             // 在新窗口打开
             var newWindow = window.open('', '_blank');
@@ -148846,7 +148709,7 @@ async function autoSplitPaper(file) {
             return;
         }
 
-        if (paperText.length < 100*1024*1024) {
+        if (paperText.length < 200) {
             alert('文件内容太短，无法拆分');
             return;
         }
