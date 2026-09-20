@@ -58466,7 +58466,29 @@ function paperBuildFullDoc() {
 function exportPaperWord() {
   var doc = paperBuildFullDoc();
   if (!doc) { alert('请先在「我的论文」中选择或创建论文项目'); return; }
-  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.5;color:#000}h1{font-family:"SimHei",sans-serif;font-size:18pt;text-align:center;font-weight:bold;margin-bottom:20pt}h2{font-family:"SimHei",sans-serif;font-size:14pt;font-weight:bold;margin-top:16pt;margin-bottom:8pt}h3{font-family:"SimHei",sans-serif;font-size:12pt;font-weight:bold;margin-top:12pt;margin-bottom:6pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}table{border-collapse:collapse;margin:10px 0}table td,table th{border:1px solid #000;padding:4px 8px;font-size:10.5pt}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '</body></html>';
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.5;color:#000}h1{font-family:"SimHei",sans-serif;font-size:18pt;text-align:center;font-weight:bold;margin-bottom:20pt}h2{font-family:"SimHei",sans-serif;font-size:14pt;font-weight:bold;margin-top:16pt;margin-bottom:8pt}h3{font-family:"SimHei",sans-serif;font-size:12pt;font-weight:bold;margin-top:12pt;margin-bottom:6pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}table{border-collapse:collapse;margin:10px 0}table td,table th{border:1px solid #000;padding:4px 8px;font-size:10.5pt}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '
+<script>
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    // 删掉所有遮罩、弹窗、loading层
+    var masks = document.querySelectorAll('.modal, .mask, .loading, .overlay, .login-modal, [style*="position: fixed"]');
+    masks.forEach(function(el){
+      if(el.id !== 'fixed-btns' && !el.classList.contains('nav-item')){
+        el.style.pointerEvents = 'none';
+        if(el.style.zIndex > 100) el.style.display = 'none';
+      }
+    });
+    // 给导航最高优先级，点击一定生效
+    document.querySelectorAll('.nav-item').forEach(function(n){
+      n.style.position = 'relative';
+      n.style.zIndex = 99999;
+    });
+    document.querySelector('.sidebar').style.zIndex = 99999;
+    console.log('遮罩已清除，导航可以点击');
+  }, 1000);
+});
+</script>
+</body></html>';
   var blob = new Blob(['\ufeff' + html], {type: 'application/msword'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
