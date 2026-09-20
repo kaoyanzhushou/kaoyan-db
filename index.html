@@ -9200,6 +9200,18 @@ console.log('✅ 全局错误捕获已启用');
   } catch(e) {}
 })();
 </script>
+
+<script>
+// 本地缓存，第二次打开秒开
+if(localStorage.getItem('site_cache_v1') && !window.location.search.includes('nocache')){
+  document.documentElement.innerHTML = localStorage.getItem('site_cache_v1');
+}
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    try{localStorage.setItem('site_cache_v1', document.documentElement.innerHTML);}catch(e){}
+  }, 1000);
+});
+</script>
 </head>
 <body>
 <div id="loadingScreen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1e3a5f 0%,#2d5a87 50%,#1e3a5f 100%);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;transition:opacity 0.5s ease">
