@@ -1,6 +1,16 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<script>
+// 全局错误兜底：任何小功能报错都不影响导航
+window.addEventListener('error', function(e){
+  console.warn('非关键错误已拦截:', e.message);
+});
+window.addEventListener('unhandledrejection', function(e){
+  console.warn('Promise错误已拦截:', e.reason);
+});
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>2027考研资料库 | 上体运动康复</title><!-- ver:20260910-phdhome-fixed -->
@@ -30195,6 +30205,15 @@ function exportPaperWord() {
   <button onclick="switchTab('literature')" title="文献检索" style="width:44px;height:44px;border-radius:50%;background:#f59e0b;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.4);">🔍</button>
   <button onclick="switchTab('lesson')" title="教案生成" style="width:44px;height:44px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.4);">📄</button>
 </div>
+
+<script>
+// 本地缓存优化：第二次打开更快
+if('caches' in window){
+  caches.open('kaoyan-db-v1').then(function(cache){
+    cache.addAll([location.href]);
+  });
+}
+</script>
 </body>
 </html>';
   var blob = new Blob(['\ufeff' + html], {type: 'application/msword'});
