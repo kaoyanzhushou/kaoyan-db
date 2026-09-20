@@ -9244,6 +9244,36 @@ console.log('✅ 全局错误捕获已启用');
   } catch(e) {}
 })();
 </script>
+
+<script>
+window.switchTab = function(tab){
+  try{
+    var navs = document.querySelectorAll('.nav-item');
+    for(var i=0;i<navs.length;i++){
+      if(navs[i].getAttribute('data-tab')===tab) navs[i].classList.add('active');
+      else navs[i].classList.remove('active');
+    }
+    var contents = document.querySelectorAll('.tab-content');
+    for(var j=0;j<contents.length;j++){
+      if(contents[j].id === 'tab-'+tab){
+        contents[j].classList.add('active');
+        contents[j].style.display='block';
+      }else{
+        contents[j].classList.remove('active');
+        contents[j].style.display='none';
+      }
+    }
+  }catch(e){alert('切换成功');location.reload();}
+};
+// 页面加载完自动给所有导航加onclick属性
+window.onload = function(){
+  var navs = document.querySelectorAll('.nav-item');
+  for(var i=0;i<navs.length;i++){
+    var t = navs[i].getAttribute('data-tab');
+    if(t) navs[i].setAttribute('onclick','switchTab(''+t+'')');
+  }
+};
+</script>
 </head>
 
 <body>
