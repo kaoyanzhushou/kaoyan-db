@@ -1430,22 +1430,6 @@ body.focus-mode .focus-mode-exit{display:flex}
 
 .ck-item-label:hover{background:#f0f9ff}
 
-
-/* 考博AI聊天界面优化 */
-.chat-container { max-width: 900px; margin: 0 auto; padding: 20px; }
-.chat-message { border-radius: 18px !important; padding: 12px 16px !important; margin-bottom: 12px !important; box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; line-height:1.7 !important; }
-.user-message { border-bottom-right-radius: 4px !important; }
-.ai-message { border-bottom-left-radius: 4px !important; }
-.chat-input-area { border-radius: 16px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important; border: none !important; }
-.chat-send-btn { border-radius: 12px !important; background: linear-gradient(135deg,#7c3aed,#6d28d9) !important; border: none !important; }
-
-/* 考博AI聊天界面优化 */
-.ai-chat-box { max-width: 900px !important; margin: 0 auto !important; border-radius: 20px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important; overflow: hidden !important; }
-.ai-chat-box .message { border-radius: 16px !important; padding: 12px 16px !important; margin-bottom: 12px !important; line-height: 1.7 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
-.ai-chat-box .message.user { border-bottom-right-radius: 4px !important; }
-.ai-chat-box .message.ai, .ai-chat-box .message.assistant { border-bottom-left-radius: 4px !important; }
-.ai-chat-box textarea { border-radius: 12px !important; border: 2px solid #e5e7eb !important; padding: 12px !important; }
-.ai-chat-box button.send, .ai-chat-box button[type=submit] { border-radius: 12px !important; background: linear-gradient(135deg,#7c3aed,#6d28d9) !important; border: none !important; }
 </style>
 
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -9243,36 +9227,6 @@ console.log('✅ 全局错误捕获已启用');
     }
   } catch(e) {}
 })();
-</script>
-
-<script>
-window.switchTab = function(tab){
-  try{
-    var navs = document.querySelectorAll('.nav-item');
-    for(var i=0;i<navs.length;i++){
-      if(navs[i].getAttribute('data-tab')===tab) navs[i].classList.add('active');
-      else navs[i].classList.remove('active');
-    }
-    var contents = document.querySelectorAll('.tab-content');
-    for(var j=0;j<contents.length;j++){
-      if(contents[j].id === 'tab-'+tab){
-        contents[j].classList.add('active');
-        contents[j].style.display='block';
-      }else{
-        contents[j].classList.remove('active');
-        contents[j].style.display='none';
-      }
-    }
-  }catch(e){alert('切换成功');location.reload();}
-};
-// 页面加载完自动给所有导航加onclick属性
-window.onload = function(){
-  var navs = document.querySelectorAll('.nav-item');
-  for(var i=0;i<navs.length;i++){
-    var t = navs[i].getAttribute('data-tab');
-    if(t) navs[i].setAttribute('onclick','switchTab(''+t+'')');
-  }
-};
 </script>
 </head>
 
@@ -58466,29 +58420,7 @@ function paperBuildFullDoc() {
 function exportPaperWord() {
   var doc = paperBuildFullDoc();
   if (!doc) { alert('请先在「我的论文」中选择或创建论文项目'); return; }
-  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.5;color:#000}h1{font-family:"SimHei",sans-serif;font-size:18pt;text-align:center;font-weight:bold;margin-bottom:20pt}h2{font-family:"SimHei",sans-serif;font-size:14pt;font-weight:bold;margin-top:16pt;margin-bottom:8pt}h3{font-family:"SimHei",sans-serif;font-size:12pt;font-weight:bold;margin-top:12pt;margin-bottom:6pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}table{border-collapse:collapse;margin:10px 0}table td,table th{border:1px solid #000;padding:4px 8px;font-size:10.5pt}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '
-<script>
-window.addEventListener('load', function(){
-  setTimeout(function(){
-    // 删掉所有遮罩、弹窗、loading层
-    var masks = document.querySelectorAll('.modal, .mask, .loading, .overlay, .login-modal, [style*="position: fixed"]');
-    masks.forEach(function(el){
-      if(el.id !== 'fixed-btns' && !el.classList.contains('nav-item')){
-        el.style.pointerEvents = 'none';
-        if(el.style.zIndex > 100) el.style.display = 'none';
-      }
-    });
-    // 给导航最高优先级，点击一定生效
-    document.querySelectorAll('.nav-item').forEach(function(n){
-      n.style.position = 'relative';
-      n.style.zIndex = 99999;
-    });
-    document.querySelector('.sidebar').style.zIndex = 99999;
-    console.log('遮罩已清除，导航可以点击');
-  }, 1000);
-});
-</script>
-</body></html>';
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.5;color:#000}h1{font-family:"SimHei",sans-serif;font-size:18pt;text-align:center;font-weight:bold;margin-bottom:20pt}h2{font-family:"SimHei",sans-serif;font-size:14pt;font-weight:bold;margin-top:16pt;margin-bottom:8pt}h3{font-family:"SimHei",sans-serif;font-size:12pt;font-weight:bold;margin-top:12pt;margin-bottom:6pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}table{border-collapse:collapse;margin:10px 0}table td,table th{border:1px solid #000;padding:4px 8px;font-size:10.5pt}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '</body></html>';
   var blob = new Blob(['\ufeff' + html], {type: 'application/msword'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
