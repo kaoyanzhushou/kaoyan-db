@@ -60602,47 +60602,7 @@ function paperBuildFullDoc() {
 function exportPaperWord() {
   var doc = paperBuildFullDoc();
   if (!doc) { alert('请先在「我的论文」中选择或创建论文项目'); return; }
-  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.8;color:#000}h1{font-size:16pt;text-align:center;margin-bottom:20pt}h2{font-size:14pt;margin-top:16pt;margin-bottom:8pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '
-<script>
-window.addEventListener('load', function(){
-var btn = document.getElementById('tmBtn');
-if(!btn) return;
-btn.onclick = async function(){
-btn.disabled = true;
-btn.textContent = '正在生成...';
-var type = document.getElementById('tmType').value;
-var name = document.getElementById('tmName').value;
-var dept = document.getElementById('tmDept').value;
-var input = document.getElementById('tmInput').value;
-if(!input){alert('请输入素材');btn.disabled=false;btn.textContent='✨ 生成完整材料';return;}
-var typeText = {
-practice:'青年教师专业实践成果报告，结构完整，正式公文风格',
-annual:'年度教学工作总结，结构完整',
-case:'运动康复教学案例集，专业术语准确',
-team:'运动队带队竞赛总结'
-};
-var sys = '你是高校公文写作专家，严格根据用户素材写作，不编造虚假数据，语言正式规范，直接输出正文';
-var user = '写一份' + typeText[type] + '，作者：' + name + '，单位：' + dept + '，素材：' + input;
-try{
-var res = await callDeepSeekAPI(sys, user, 8000);
-document.getElementById('tmContent').innerHTML = res.split(String.fromCharCode(10)).join('<br>');
-document.getElementById('tmResult').style.display='block';
-}catch(e){alert('生成失败：'+e.message);}
-btn.disabled=false;
-btn.textContent='✨ 生成完整材料';
-};
-document.getElementById('tmExport').onclick = function(){
-var html = document.getElementById('tmContent').innerHTML;
-var full = '<html><head><meta charset="utf-8"></head><body>'+html+'</body></html>';
-var blob = new Blob([String.fromCharCode(65279),full],{type:'application/msword'});
-var a = document.createElement('a');
-a.href = URL.createObjectURL(blob);
-a.download = '教师工作材料.doc';
-a.click();
-};
-});
-</script>
-</body></html>';
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + doc.title + '</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>@page{size:21cm 29.7cm;margin:2.54cm}body{font-family:"Times New Roman","SimSun",serif;font-size:12pt;line-height:1.8;color:#000}h1{font-size:16pt;text-align:center;margin-bottom:20pt}h2{font-size:14pt;margin-top:16pt;margin-bottom:8pt}p{text-align:justify;text-indent:2em;margin:0 0 6pt 0}</style></head><body><h1>' + doc.title + '</h1>' + doc.sections + '</body></html>';
   var blob = new Blob(['\ufeff' + html], {type: 'application/msword'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
