@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>教师材料智能生成器 - 正式修复版</title>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 :root{--primary:#1e40af;--success:#16a34a;--danger:#dc2626;--bg:#f1f5f9;--card:#fff;--border:#e2e8f0;--text:#1e293b;--light:#64748b}
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif}
@@ -81,7 +82,13 @@ textarea.c{min-height:110px;resize:vertical}
 </div>
 
 <div class="panel result" id="resultPanel">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px"><h3>最终材料</h3><div><button class="btn btn-o" onclick="copyAll()">复制全文</button><button class="btn btn-p" onclick="exportWord(event)">导出Word（含照片）</button></div></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;gap:10px;flex-wrap:wrap"><h3>最终材料</h3><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<label style="font-size:13px">汇报时长：<select id="pptDuration" class="c" style="display:inline-block;width:auto;padding:6px"><option value="5">5分钟</option><option value="10" selected>10分钟</option><option value="15">15分钟</option></select></label>
+<button class="btn btn-o" onclick="copyAll()">复制全文</button>
+<button class="btn btn-p" onclick="exportWord(event)">导出Word（含照片）</button>
+<button class="btn btn-o" onclick="exportSpeechOutline(event)">导出演讲提纲</button>
+<button class="btn btn-p" style="background:#0f766e" onclick="exportPPT(event)">生成汇报PPT</button>
+</div></div>
 <div class="doc" id="docRender"></div>
 </div>
 </div>
@@ -200,6 +207,54 @@ async function exportWord(){
  let blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nameInput.value+'_'+type.value+'.doc';document.body.appendChild(a);a.click();a.remove();
  }catch(e){alert('导出失败：'+e.message)}
  btn.disabled=false;btn.textContent=oldText;
+}
+// ===================== 增量：配套汇报PPT与演讲提纲 =====================
+function buildPptStructure(){
+ const mins=parseInt($('pptDuration').value);
+ let slides=[
+  {title:type.value,subtitle:nameInput.value+' | '+college.value+' | '+dateInput.value,note:'各位老师好，我是'+nameInput.value+'，今天汇报我的'+type.value+'，实践单位为'+company.value+'。'},
+  {title:'汇报目录',points:['实践概况','实践内容与过程','教学案例成果','实践收获与总结'],note:'本次汇报主要分为四个部分，先介绍实践基本情况，再说明实践内容，展示教学案例，最后总结收获。'},
+  {title:'一、实践概况',points:['实践单位：'+company.value,'实践岗位：运动康复教学辅助','实践内容：学员评估、康复训练、教学辅助'],note:'本次实践在'+company.value+'开展，主要参与运动康复评估、训练带教等工作。'},
+  {title:'二、实践内容与过程',points:['学员损伤评估与建档','分阶段康复训练带教','动作纠正与日常指导','训练记录与效果跟踪'],note:'实践期间完成学员评估、康复带教、动作指导、效果跟踪全流程工作。'},
+  {title:'三、典型教学案例',points:['覆盖'+caseNum.value+'类常见运动损伤','每个案例包含评估、处理、康复方案','结合专业知识完成带教'],note:'本次实践共整理'+caseNum.value+'个典型教学案例，覆盖常见运动损伤，形成完整康复流程。'},
+  {title:'四、实践成果与收获',points:['完成学员康复带教，积累一线经验','梳理标准化教学案例','提升专业实践与教学能力','明确后续改进方向'],note:'通过实践积累了一线经验，梳理了教学案例，专业能力得到提升，也明确了后续方向。'},
+  {title:'感谢聆听 敬请指正',points:[],note:'我的汇报到此结束，感谢各位老师，敬请批评指正。'}
+ ];
+ if(mins===5)slides=slides.filter((_,i)=>[0,1,2,4,6].includes(i));
+ if(mins===15)slides.splice(4,0,{title:'案例：常见损伤处理要点',points:['急性期PRICE原则','分阶段肌力与功能训练','回归运动评估标准'],note:'这里补充说明常见损伤的处理要点，急性期遵循PRICE原则，分阶段恢复功能，最后评估回归运动。'});
+ return slides;
+}
+async function exportPPT(e){
+ const btn=e.target,old=btn.textContent;btn.disabled=true;btn.textContent='生成中...';
+ try{
+ const pptx=new PptxGenJS();
+ pptx.title=type.value+'汇报PPT';
+ pptx.layout='LAYOUT_WIDE';
+ const slides=buildPptStructure();
+ for(const s of slides){
+  const sl=pptx.addSlide();
+  sl.background={color:'f8fafc'};
+  sl.addText(s.title,{x:0.5,y:0.4,w:12,h:0.8,fontSize:28,bold:true,color:'1e40af'});
+  if(s.subtitle)sl.addText(s.subtitle,{x:0.5,y:2.5,w:12,h:1,fontSize:18,color:'334155',align:'center'});
+  if(s.points?.length){
+   sl.addText(s.points.map(p=>({text:p,options:{bullet:true,breakLine:true,fontSize:18,color:'1e293b',lineSpacing:40}})),{x:1,y:1.8,w:11,h:4});
+  }
+  if(s.note)sl.addNotes(s.note);
+ }
+ await pptx.writeFile({fileName:nameInput.value+'_汇报PPT.pptx'});
+ }catch(err){alert('PPT生成失败：'+err.message)}
+ btn.disabled=false;btn.textContent=old;
+}
+function exportSpeechOutline(e){
+ const btn=e.target,old=btn.textContent;btn.disabled=true;btn.textContent='生成中...';
+ try{
+ const slides=buildPptStructure();
+ let content=slides.map((s,i)=>`第${i+1}页：${s.title}\n演讲内容：${s.note}\n`).join('\n');
+ let html=`<html><head><meta charset="utf-8"><style>body{font-family:宋体;padding:50px;line-height:2;font-size:14pt}h1{text-align:center}h3{margin-top:25px}</style></head><body><h1>${type.value}汇报演讲提纲</h1><p style="text-indent:0">汇报人：${nameInput.value} | 时长：${$('pptDuration').value}分钟</p>`+
+ content.split('\n').filter(l=>l.trim()).map(l=>`<p style="text-indent:0">${l}</p>`).join('')+`</body></html>`;
+ let blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nameInput.value+'_演讲提纲.doc';a.click();
+ }catch(err){alert('提纲导出失败：'+err.message)}
+ btn.disabled=false;btn.textContent=old;
 }
 </script>
 </body>
