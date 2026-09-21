@@ -3,225 +3,144 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>教师材料智能生成器 - 多模型交叉版</title>
+<title>教师材料智能生成器 - 正式修复版</title>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <style>
-:root{--primary:#1e40af;--primary-light:#3b82f6;--success:#16a34a;--danger:#dc2626;--warn:#d97706;--bg:#f1f5f9;--card:#fff;--border:#e2e8f0;--text:#1e293b;--text-light:#64748b}
+:root{--primary:#1e40af;--success:#16a34a;--danger:#dc2626;--bg:#f1f5f9;--card:#fff;--border:#e2e8f0;--text:#1e293b;--light:#64748b}
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif}
-body{background:var(--bg);color:var(--text);min-height:100vh;padding:20px}
-.container{max-width:1200px;margin:0 auto}
-.header{background:linear-gradient(135deg,#1e3a8a,#1e40af);color:#fff;padding:24px 32px;border-radius:12px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
-.header h1{font-size:24px}
-.header p{opacity:.9;margin-top:6px;font-size:14px}
-.model-status{background:var(--card);border-radius:12px;padding:16px 24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.model-status h3{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.status-list{display:flex;gap:16px;flex-wrap:wrap}
-.status-item{display:flex;align-items:center;gap:6px;font-size:13px;padding:6px 12px;border-radius:20px;background:#f8fafc}
-.dot{width:10px;height:10px;border-radius:50%}
-.dot.green{background:var(--success);box-shadow:0 0 0 3px rgba(22,163,74,.15)}
-.dot.red{background:var(--danger);box-shadow:0 0 0 3px rgba(220,38,38,.15)}
-.mode-tabs{display:flex;gap:0;margin-bottom:20px;background:var(--card);border-radius:12px;padding:6px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.mode-tab{flex:1;padding:14px;text-align:center;border-radius:8px;cursor:pointer;font-size:15px;font-weight:500;transition:.2s}
-.mode-tab.active{background:var(--primary);color:#fff}
-.panel{background:var(--card);border-radius:12px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px}
-.form-group{margin-bottom:20px}
-.form-group label{display:block;font-weight:600;margin-bottom:8px;font-size:14px}
-.form-control{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit}
-textarea.form-control{min-height:120px;resize:vertical}
-.btn{padding:12px 28px;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:500;transition:.2s}
-.btn-primary{background:var(--primary);color:#fff}
-.btn-primary:hover{background:#1e3a8a}
-.btn:disabled{opacity:.6;cursor:not-allowed}
-.btn-outline{background:#fff;border:1px solid var(--border);margin-right:10px}
-.progress-steps{margin:20px 0;display:none}
-.step{display:flex;gap:12px;margin-bottom:16px;align-items:flex-start}
-.step-num{width:28px;height:28px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0}
-.step.active .step-num{background:var(--primary);color:#fff}
-.step.done .step-num{background:var(--success);color:#fff}
-.step-content{flex:1}
-.step-title{font-weight:600;font-size:14px;margin-bottom:4px}
-.step-desc{font-size:13px;color:var(--text-light)}
-.result-area{display:none;margin-top:20px}
-.doc-preview{border:1px solid var(--border);border-radius:8px;padding:24px;background:#fafafa;min-height:300px;max-height:600px;overflow-y:auto;line-height:1.8;font-size:14px;white-space:pre-wrap}
-.tip-box{background:#eff6ff;border-left:4px solid var(--primary);padding:12px 16px;border-radius:0 8px 8px 0;font-size:13px;margin:12px 0;line-height:1.7}
-.upload-area{border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;margin:10px 0;cursor:pointer}
-.img-preview{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-.img-preview img{width:100px;height:100px;object-fit:cover;border-radius:6px}
-.hidden{display:none!important}
-.refine-flow{display:none}
-.loading{display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle;margin-right:8px}
-@keyframes spin{to{transform:rotate(360deg)}}
+body{background:var(--bg);color:var(--text);padding:20px}
+.container{max-width:1100px;margin:0 auto}
+.header{background:linear-gradient(135deg,#1e3a8a,#1e40af);color:#fff;padding:22px 30px;border-radius:12px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:22px}.header p{opacity:.9;font-size:13px;margin-top:4px}
+.status-bar{background:var(--card);border-radius:12px;padding:14px 22px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.status-bar h3{font-size:14px;margin-bottom:10px}.status-list{display:flex;gap:12px;flex-wrap:wrap}
+.status-item{font-size:12px;padding:5px 10px;border-radius:16px;background:#f8fafc;display:flex;gap:5px;align-items:center}
+.dot{width:9px;height:9px;border-radius:50%}.dot.g{background:var(--success)}.dot.r{background:var(--danger)}
+.panel{background:var(--card);border-radius:12px;padding:26px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:18px}
+.g{margin-bottom:18px}.g label{display:block;font-weight:600;font-size:14px;margin-bottom:7px}
+.c{width:100%;padding:11px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit}
+textarea.c{min-height:110px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.btn{padding:11px 24px;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:500}
+.btn-p{background:var(--primary);color:#fff}.btn:disabled{opacity:.6;cursor:not-allowed}.btn-o{background:#fff;border:1px solid var(--border);margin-right:8px}
+.upload{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;font-size:14px;color:var(--light)}
+.imgs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.imgs img{width:90px;height:90px;object-fit:cover;border-radius:6px}
+.steps{margin:18px 0;display:none}.step{display:flex;gap:11px;margin-bottom:14px}
+.n{width:26px;height:26px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.step.act .n{background:var(--primary);color:#fff}.step.done .n{background:var(--success);color:#fff}
+.t{font-size:14px;font-weight:600}.d{font-size:12px;color:var(--light);margin-top:2px}
+.confirm-box{display:none;margin:16px 0;padding:18px;background:#f8fafc;border-radius:8px;border:1px solid var(--border)}
+.confirm-box textarea{width:100%;min-height:220px;border:1px solid var(--border);border-radius:6px;padding:12px;font-size:13px;font-family:inherit;margin:10px 0}
+.tip{background:#eff6ff;border-left:4px solid var(--primary);padding:10px 14px;font-size:13px;border-radius:0 6px 6px 0;margin:10px 0;line-height:1.6}
+.result{display:none}.doc{background:#fff;border:1px solid var(--border);border-radius:8px;padding:50px;min-height:500px;max-height:700px;overflow-y:auto;box-shadow:0 2px 10px rgba(0,0,0,.08);line-height:1.9;font-size:14px}
+.cover{text-align:center;margin-bottom:40px;padding-top:60px}.cover h1{font-size:28px;margin-bottom:30px}.cover p{margin:12px 0;font-size:15px}
+.doc h2{font-size:18px;margin:28px 0 15px;padding-bottom:8px;border-bottom:2px solid var(--primary)}.doc h3{font-size:16px;margin:20px 0 10px}.doc p{text-indent:2em;margin:8px 0}.doc .photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin:20px 0}.doc .photo-grid img{width:100%;border-radius:6px}.toc p{text-indent:0;padding-left:20px}.hidden{display:none!important}
+.load{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:sp 1s linear infinite;margin-right:6px}@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div class="container">
-<div class="header">
-<div><h1>教师材料智能生成器</h1><p>多模型交叉印证 · 专属材料生成 · 规范公文排版</p></div>
-<div style="font-size:13px;opacity:.9">独立工具 · 主站零改动</div>
-</div>
+<div class="header"><div><h1>教师材料智能生成器</h1><p>严格基于你的素材 · 大纲确认后写作 · 规范排版</p></div><div style="font-size:12px;opacity:.9">独立工具 · 主站零改动</div></div>
 
-<div class="model-status">
-<h3>模型状态（自动检测）</h3>
-<div class="status-list" id="statusList"><div class="status-item">检测中...</div></div>
-</div>
+<div class="status-bar"><h3>模型状态（自动检测）</h3><div class="status-list" id="sList">检测中...</div></div>
 
-<div class="mode-tabs">
-<div class="mode-tab active" data-mode="fast" onclick="switchMode('fast')">快速生成（单模型兜底）</div>
-<div class="mode-tab" data-mode="refine" onclick="switchMode('refine')">精修模式（多模型交叉印证）</div>
-</div>
-
-<!-- 快速模式 -->
-<div id="fastPanel">
 <div class="panel">
-<div class="form-group">
-<label>材料类型</label>
-<select class="form-control" id="f_type">
-<option>青年教师专业实践成果报告</option><option>年度教学工作总结</option><option>运动康复教学案例集</option><option>运动队带队/竞赛总结</option><option>职称评审业绩材料</option>
-</select>
+<div class="tip">重要说明：上传的模板仅用于提取章节结构、案例数量、格式要求，<b>不会使用模板中的任何示例内容</b>；所有正文内容100%来自你提供的工作素材，素材缺失的内容会明确标注请补充，不会编造、不会照搬模板示例。</div>
+<div class="row">
+<div class="g"><label>材料类型</label><select class="c" id="type"><option>青年教师专业实践成果报告</option><option>年度教学工作总结</option><option>运动康复教学案例集</option><option>运动队带队/竞赛总结</option><option>职称评审业绩材料</option></select></div>
+<div class="g"><label>姓名</label><input class="c" id="name"></div>
+<div class="g"><label>学院/教研室</label><input class="c" id="college"></div>
 </div>
-<div class="form-group"><label>基础信息（姓名/学院/时间等）</label><input class="form-control" id="f_base" placeholder="例：陈云，体育学院，2025-2026学年"></div>
-<div class="form-group"><label>工作素材（直接粘贴）</label><textarea class="form-control" id="f_material" placeholder="粘贴你的所有工作内容、案例、数据..."></textarea></div>
-<div class="form-group"><label>目标字数</label><input class="form-control" id="f_words" type="number" value="3000"></div>
-<button class="btn btn-primary" onclick="fastGenerate()" id="fastBtn">开始生成</button>
+<div class="row">
+<div class="g"><label>实践单位</label><input class="c" id="company"></div>
+<div class="g"><label>完成时间</label><input class="c" id="date"></div>
+<div class="g"><label>案例数量</label><input class="c" id="caseNum" type="number" value="5"></div>
+</div>
+<div class="g"><label style="display:flex;justify-content:space-between;align-items:center"><span>模板文件（可选，仅提取结构）</span><button type="button" class="btn btn-o" style="padding:5px 12px;font-size:12px;margin:0" onclick="document.getElementById('tplF').click()">上传Word/TXT模板</button></label><input type="file" id="tplF" accept=".docx,.txt" hidden onchange="loadTpl(this)"><textarea class="c" id="tpl" placeholder="可粘贴模板结构要求，或上传模板文件；模板里的示例内容不会被写入你的材料"></textarea><div id="tplTip" style="font-size:12px;color:var(--light)"></div></div>
+<div class="g"><label>我的全部工作素材（唯一内容来源）</label><textarea class="c" id="material" style="min-height:180px" placeholder="粘贴你的真实工作内容、实践过程、案例、数据，所有正文只从这里提取"></textarea></div>
+<div class="g"><label>实践照片（自动嵌入报告末尾）</label><div class="upload" onclick="document.getElementById('imgF').click()">点击上传实践照片，可多选</div><input type="file" id="imgF" accept="image/*" multiple hidden onchange="loadImgs(this)"><div class="imgs" id="imgPrev"></div></div>
+<button class="btn btn-p" id="startBtn" onclick="startFlow()">开始生成</button>
+
+<div class="steps" id="steps">
+<div class="step" id="s1"><div class="n">1</div><div><div class="t">素材整理</div><div class="d">提取你的真实素材，不添加模板内容</div></div></div>
+<div class="step" id="s2"><div class="n">2</div><div><div class="t">生成写作大纲</div><div class="d">完成后需要你确认，可编辑修改</div></div></div>
+<div class="step" id="s3"><div class="n">3</div><div><div class="t">逐章/逐案例写作</div><div class="d">按确认后的大纲完整生成，不截断</div></div></div>
+<div class="step" id="s4"><div class="n">4</div><div><div class="t">校验排版</div><div class="d">核对内容、生成封面目录、嵌入照片</div></div></div>
+</div>
+
+<div class="confirm-box" id="confirmBox">
+<div style="font-weight:600;font-size:15px">请确认写作大纲</div>
+<div style="font-size:13px;color:var(--light);margin-top:5px">大纲仅参考模板结构，全部内容将使用你的素材；你可以直接编辑修改章节、案例数量，确认后再开始写作，不会直接生成正文。</div>
+<textarea id="outlineEdit"></textarea>
+<div style="text-align:right"><button class="btn btn-o" onclick="document.getElementById('confirmBox').style.display='none'">取消</button><button class="btn btn-p" onclick="confirmOutline()">确认大纲，开始写作</button></div>
 </div>
 </div>
 
-<!-- 精修模式 -->
-<div id="refinePanel" class="hidden">
-<div class="panel">
-<div class="tip-box">精修模式：2-3个模型交叉拆解素材、分别出大纲融合、分工写作、三审仲裁，内容更准确、格式更规范，案例/表格数量100%匹配模板。</div>
-<div class="form-group">
-<label>材料类型</label>
-<select class="form-control" id="r_type">
-<option>青年教师专业实践成果报告</option><option>年度教学工作总结</option><option>运动康复教学案例集</option><option>运动队带队/竞赛总结</option><option>职称评审业绩材料</option>
-</select>
-</div>
-<div class="form-group">
-<label style="display:flex;justify-content:space-between;align-items:center">
-<span>模板要求（可粘贴，也可直接上传Word/TXT模板文件）</span>
-<button type="button" class="btn btn-outline" style="padding:6px 14px;font-size:13px;margin:0" onclick="document.getElementById('tplFile').click()">上传模板文件</button>
-</label>
-<input type="file" id="tplFile" accept=".docx,.txt" hidden onchange="loadTemplateFile(this)">
-<textarea class="form-control" id="r_template" placeholder="粘贴模板要求，或点击右上角上传模板文件，没有则留空使用默认规范"></textarea>
-<div id="tplTip" style="font-size:12px;color:var(--text-light);margin-top:6px"></div>
-</div>
-<div class="form-group"><label>基础信息</label><input class="form-control" id="r_base"></div>
-<div class="form-group"><label>全部工作素材</label><textarea class="form-control" id="r_material" style="min-height:180px"></textarea></div>
-<div class="form-group"><label>案例数量（如教学案例）</label><input class="form-control" id="r_caseCount" type="number" value="5"></div>
-<div class="form-group"><label>上传实践照片（自动匹配对应章节）</label>
-<div class="upload-area" onclick="document.getElementById('r_imgs').click()">点击或拖拽上传图片</div>
-<input type="file" id="r_imgs" accept="image/*" multiple hidden onchange="previewImgs(this)">
-<div class="img-preview" id="imgPreview"></div>
-</div>
-<button class="btn btn-primary" onclick="startRefine()" id="refineBtn">开始多模型精修</button>
-
-<div class="progress-steps" id="progressSteps">
-<div class="step" id="step1"><div class="step-num">1</div><div class="step-content"><div class="step-title">素材双模型交叉拆解</div><div class="step-desc">两个模型独立整理素材，融合去重，标记缺失内容</div></div></div>
-<div class="step" id="step2"><div class="step-num">2</div><div class="step-content"><div class="step-title">多模型大纲生成与融合</div><div class="step-desc">3个模型分别出大纲，自动融合最优结构</div></div></div>
-<div class="step" id="step3"><div class="step-num">3</div><div class="step-content"><div class="step-title">模型分工写作</div><div class="step-desc">按章节/案例分工，表格、细节、润色各取所长</div></div></div>
-<div class="step" id="step4"><div class="step-num">4</div><div class="step-content"><div class="step-title">三审三校与仲裁</div><div class="step-desc">逻辑事实、结构数量、公文术语三重审核，输出终稿</div></div></div>
+<div class="panel result" id="resultPanel">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px"><h3>最终材料</h3><div><button class="btn btn-o" onclick="copyAll()">复制全文</button><button class="btn btn-p" onclick="exportWord()">导出Word（含照片）</button></div></div>
+<div class="doc" id="docRender"></div>
 </div>
 </div>
-</div>
-
-<!-- 结果区 -->
-<div class="panel result-area" id="resultPanel">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-<h3>生成结果</h3>
-<div><button class="btn btn-outline" onclick="copyResult()">复制全文</button><button class="btn btn-primary" onclick="exportWord()">导出Word</button></div>
-</div>
-<div class="doc-preview" id="docPreview"></div>
-</div>
-</div>
-
 <script>
-const API_BASE='https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com';
-let finalContent='';
-let uploadedImgs=[];
+const API='https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com';
+let imgs=[],parsedMaterial='',finalOutline='',finalText='';
+async function checkS(){try{let r=await fetch(API+'/api/model-status'),d=await r.json();sList.innerHTML=d.data.map(m=>`<div class="status-item"><span class="dot ${m.available?'g':'r'}"></span>${m.name}</div>`).join('')}catch{}}checkS();setInterval(checkS,60000);
+function setS(n,c){document.getElementById('s'+n).classList.add(c)}
+async function callRefine(action,payload){let r=await fetch(API+'/api/teacher/refine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,payload})}),d=await r.json();if(d.code!==0)throw new Error(d.msg);return d.data}
+async function loadTpl(i){let f=i.files[0];tplTip.textContent='解析中...';try{let t='';if(f.name.endsWith('.txt'))t=await f.text();else{let b=await f.arrayBuffer();t=(await mammoth.extractRawText({arrayBuffer:b})).value}tpl.value=t;tplTip.textContent='✅ 模板已解析，仅提取结构，示例内容不会被使用'}catch(e){tplTip.textContent='解析失败'}}
+function loadImgs(i){[...i.files].forEach(f=>imgs.push({url:URL.createObjectURL(f),file:f}));imgPrev.innerHTML=imgs.map(x=>`<img src="${x.url}">`).join('')}
 
-// 检测模型状态
-async function checkStatus(){
+async function startFlow(){
+ startBtn.disabled=true;steps.style.display='block';
+ let info=`姓名：${name.value}\n学院：${college.value}\n实践单位：${company.value}\n时间：${date.value}\n类型：${type.value}`;
+ let material=info+'\n\n工作素材：\n'+material.value;
+ let tplText=tpl.value;
  try{
- const r=await fetch(API_BASE+'/api/model-status');const d=await r.json();
- document.getElementById('statusList').innerHTML=d.data.map(m=>`<div class="status-item"><span class="dot ${m.available?'green':'red'}"></span>${m.name}</div>`).join('');
- }catch{}
+ setS(1,'act');
+ // 严格prompt：模板只取结构
+ let strictTpl='【模板仅用于提取章节结构和数量要求，禁止使用模板中的任何人名、案例、示例文字；所有内容只能从用户素材提取，素材没有就标注「请补充」，禁止编造】\n'+tplText;
+ let d1=await callRefine('parse_material',{material,template:strictTpl});
+ parsedMaterial=d1.merged;setS(1,'done');setS(2,'act');
+ let d2=await callRefine('gen_outlines',{parsedMaterial,template:strictTpl,caseCount:caseNum.value});
+ finalOutline=d2.finalOutline;outlineEdit.value=finalOutline;setS(2,'done');
+ // 强制停下确认
+ confirmBox.style.display='block';document.getElementById('confirmBox').scrollIntoView({behavior:'smooth'});
+ }catch(e){alert('生成失败：'+e.message);startBtn.disabled=false}
 }
-checkStatus();setInterval(checkStatus,60000);
 
-function switchMode(mode){
- document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.dataset.mode===mode));
- document.getElementById('fastPanel').classList.toggle('hidden',mode!=='fast');
- document.getElementById('refinePanel').classList.toggle('hidden',mode!=='refine');
-}
-
-function setStep(n,state){const el=document.getElementById('step'+n);if(el)el.classList.add(state);}
-
-async function fastGenerate(){
- const btn=document.getElementById('fastBtn');btn.disabled=true;btn.innerHTML='<span class="loading"></span>生成中...';
- const content=`材料类型：${document.getElementById('f_type').value}\n基础信息：${document.getElementById('f_base').value}\n目标字数：${document.getElementById('f_words').value}\n素材：${document.getElementById('f_material').value}\n请按照高校正式公文格式生成完整材料，不要markdown符号，段落清晰，案例完整。`;
+async function confirmOutline(){
+ finalOutline=outlineEdit.value;confirmBox.style.display='none';setS(3,'act');
  try{
- const r=await fetch(API_BASE+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content}],max_tokens:8000})});
- const d=await r.json();
- if(!d.choices)throw new Error(d.msg||'生成失败');
- finalContent=d.choices[0].message.content;showResult();
- }catch(e){alert('生成失败：'+e.message)}
- btn.disabled=false;btn.innerHTML='开始生成';
+ // 严格写作prompt
+ let prompt=`严格按照确认后的大纲，基于用户真实素材完整写出全部正文。规则：1.禁止使用模板中的任何示例内容；2.所有事实、人名、案例、数据只能来自提供的素材，素材缺失处写「（请补充）」；3.必须包含${caseNum.value}个独立完整案例，每个案例包含背景、处理过程、康复方案，每个案例单独分段；4.不要使用#、*等markdown符号；5.直接输出正文，不要说明。\n大纲：${finalOutline}\n真实素材：${parsedMaterial}`;
+ let d=await callRefine('write_part',{partPrompt:prompt,partType:'detail',maxTokens:9000});
+ finalText=d.result;setS(3,'done');setS(4,'act');
+ renderDoc();setS(4,'done');resultPanel.style.display='block';resultPanel.scrollIntoView({behavior:'smooth'});
+ }catch(e){alert('写作失败：'+e.message+'，已保留大纲可重试')}
+ startBtn.disabled=false;
 }
 
-async function callRefine(action,payload){
- const r=await fetch(API_BASE+'/api/teacher/refine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,payload})});
- const d=await r.json();if(d.code!==0)throw new Error(d.msg);return d.data;
+function renderDoc(){
+ let toc=finalOutline.split('\n').filter(l=>l.trim()).map(l=>`<p>${l.replace(/^[一二三四五六七八九十\d.、\s]+/,'')}</p>`).join('');
+ let photos=imgs.map(x=>`<img src="${x.url}">`).join('');
+ document.getElementById('docRender').innerHTML=`
+ <div class="cover"><h1>${type.value}</h1><p>学院：${college.value}</p><p>姓名：${name.value}</p><p>实践单位：${company.value}</p><p>完成时间：${date.value}</p></div>
+ <h2>目录</h2><div class="toc">${toc}</div>
+ <h2>正文</h2>${finalText.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('')}
+ <h2>实践照片</h2><div class="photo-grid">${photos||'<p>（未上传照片）</p>'}</div>`;
 }
-
-async function startRefine(){
- const btn=document.getElementById('refineBtn');btn.disabled=true;
- document.getElementById('progressSteps').style.display='block';
- const template=document.getElementById('r_template').value;
- const material=`基础信息：${document.getElementById('r_base').value}\n类型：${document.getElementById('r_type').value}\n素材：${document.getElementById('r_material').value}`;
- const caseCount=parseInt(document.getElementById('r_caseCount').value)||5;
- try{
- // 步骤1
- setStep(1,'active');
- const parsed=await callRefine('parse_material',{material,template});
- setStep(1,'done');setStep(2,'active');
- // 步骤2
- const outline=await callRefine('gen_outlines',{parsedMaterial:parsed.merged,template,caseCount});
- setStep(2,'done');setStep(3,'active');
- // 步骤3：按大纲生成正文（简化为整段生成，案例逐个提示模型）
- let fullContent='';
- const writePrompt=`根据最终大纲，完整写出全部内容，必须包含${caseCount}个独立完整教学案例，每个案例单独分段，需要表格的地方输出规范文本表格，不要markdown符号，不要#号，公文格式。\n大纲：${outline.finalOutline}\n素材：${parsed.merged}`;
- const part=await callRefine('write_part',{partPrompt:writePrompt,partType:'detail',maxTokens:8000});
- fullContent=part.result;
- setStep(3,'done');setStep(4,'active');
- // 步骤4：三审
- const reviewed=await callRefine('review',{content:fullContent,material:parsed.merged,template});
- finalContent=reviewed.finalContent;
- setStep(4,'done');
- showResult();
- }catch(e){alert('精修失败：'+e.message);}
- btn.disabled=false;btn.innerHTML='开始多模型精修';
-}
-
-function showResult(){document.getElementById('resultPanel').style.display='block';document.getElementById('docPreview').textContent=finalContent;document.getElementById('resultPanel').scrollIntoView({behavior:'smooth'});}
-function copyResult(){navigator.clipboard.writeText(finalContent);alert('已复制');}
-function previewImgs(input){[...input.files].forEach(f=>{const u=URL.createObjectURL(f);uploadedImgs.push(u);});document.getElementById('imgPreview').innerHTML=uploadedImgs.map(u=>`<img src="${u}">`).join('');}
-
-async function loadTemplateFile(input){
- const file=input.files[0];if(!file)return;
- const tip=document.getElementById('tplTip');tip.textContent='正在解析模板：'+file.name;
- try{
- let text='';
- if(file.name.endsWith('.txt')){text=await file.text();}
- else if(file.name.endsWith('.docx')){const buf=await file.arrayBuffer();const r=await mammoth.extractRawText({arrayBuffer:buf});text=r.value;}
- else{tip.textContent='仅支持.docx/.txt格式模板';return;}
- document.getElementById('r_template').value=text.trim();
- tip.textContent='✅ 模板解析完成，共 '+text.length+' 字符，可直接编辑';
- }catch(e){tip.textContent='模板解析失败：'+e.message;}
-}
-
-function exportWord(){
- const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>教师材料</title><style>body{font-family:宋体;line-height:2;font-size:14pt;padding:40px}p{text-indent:2em}</style></head><body>${finalContent.split('\n').map(l=>'<p>'+l+'</p>').join('')}</body></html>`;
- const blob=new Blob(['\ufeff',html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='教师工作材料.doc';a.click();
+function copyAll(){navigator.clipboard.writeText(finalText);alert('已复制正文')}
+async function exportWord(){
+ // 图片转base64嵌入Word
+ let photoHtml='';
+ for(let x of imgs){let b=await x.file.arrayBuffer();let b64=btoa(String.fromCharCode(...new Uint8Array(b)));photoHtml+=`<p style="text-align:center"><img src="data:image/jpeg;base64,${b64}" width="400"></p>`}
+ let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:宋体;line-height:2;font-size:14pt;padding:50px}h1{text-align:center;font-size:22pt}h2{font-size:16pt;border-bottom:1px solid #000;padding-bottom:5px}p{text-indent:2em;margin:8px 0}.cover p{text-indent:0;text-align:center}</style></head><body>
+ <div class="cover"><h1>${type.value}</h1><p>学院：${college.value}</p><p>姓名：${name.value}</p><p>实践单位：${company.value}</p><p>完成时间：${date.value}</p></div>
+ <h2>目录</h2>${finalOutline.split('\n').filter(l=>l.trim()).map(l=>'<p style="text-indent:0">'+l+'</p>').join('')}
+ <h2>正文</h2>${finalText.split('\n').filter(l=>l.trim()).map(l=>'<p>'+l+'</p>').join('')}
+ <h2>实践照片</h2>${photoHtml}
+ </body></html>`;
+ let blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name.value+'_'+type.value+'.doc';a.click();
 }
 </script>
 </body>
