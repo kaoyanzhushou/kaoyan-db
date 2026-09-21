@@ -122,7 +122,13 @@ async function confirmOutline(){
  modalMask.style.display='none';confirmBox.style.display='none';
  setS(2,'done');setS(3,'act');
  try{
- let prompt=`严格按照确认后的大纲，基于用户真实素材完整写出全部正文。规则：1.禁止使用模板中的任何示例内容；2.所有事实、人名、案例、数据只能来自提供的素材，素材缺失处写「（请补充）」；3.必须包含${caseNum.value}个独立完整案例，每个案例包含背景、处理过程、康复方案，每个案例单独分段；4.不要使用#、*等markdown符号；5.直接输出正文，不要说明。\n大纲：${finalOutline}\n真实素材：${parsedMaterial}`;
+ let prompt=`严格按照确认后的大纲写作，规则：
+1. 核心事实（姓名、实践单位、时间、案例数量、每个案例的伤情/主题）必须来自用户素材，禁止编造额外案例、单位、个人经历；
+2. 用户提供的是梗概，你需要结合运动康复专业知识，合理扩充专业内容：每个案例补充完整评估流程、急性期处理细节、分阶段康复方案、训练动作、教学要点、专业术语解释，让内容饱满详实，符合高校实践报告要求；
+3. 必须包含${caseNum.value}个独立完整案例，每个案例单独分段，结构完整；
+4. 绝对禁止使用#、*、-、**等任何markdown符号，直接输出纯文本正文，不要输出说明；
+5. 模板仅参考结构，禁止使用模板示例内容。
+大纲：${finalOutline}\n真实素材梗概：${parsedMaterial}`;
  let d=await callRefine('write_part',{partPrompt:prompt,partType:'detail',maxTokens:9000});
  finalText=d.result;setS(3,'done');setS(4,'act');
  renderDoc();setS(4,'done');resultPanel.style.display='block';resultPanel.scrollIntoView({behavior:'smooth'});
@@ -138,25 +144,32 @@ function closeConfirm(){
  startBtn.disabled=false;
 }
 
+function cleanText(t){
+ return t.replace(/[#*`]/g,'').replace(/^[\s\-•·]+/gm,'').replace(/\n{3,}/g,'\n\n').trim();
+}
 function renderDoc(){
- let toc=finalOutline.split('\n').filter(l=>l.trim()).map(l=>`<p>${l.replace(/^[一二三四五六七八九十\d.、\s]+/,'')}</p>`).join('');
+ let cleanContent=cleanText(finalText);
+ let cleanOutline=cleanText(finalOutline);
+ let toc=cleanOutline.split('\n').filter(l=>l.trim()).map(l=>`<p>${l.replace(/^[一二三四五六七八九十\d.、\s]+/,'')}</p>`).join('');
  let photos=imgs.map(x=>`<img src="${x.url}">`).join('');
+ // 模板顺序：封面→目录→实践照片→正文
  document.getElementById('docRender').innerHTML=`
  <div class="cover"><h1>${type.value}</h1><p>学院：${college.value}</p><p>姓名：${nameInput.value}</p><p>实践单位：${company.value}</p><p>完成时间：${dateInput.value}</p></div>
  <h2>目录</h2><div class="toc">${toc}</div>
- <h2>正文</h2>${finalText.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('')}
- <h2>实践照片</h2><div class="photo-grid">${photos||'<p>（未上传照片）</p>'}</div>`;
+ <h2>实践照片</h2><div class="photo-grid">${photos||'<p style="text-indent:0">（请补充实践照片）</p>'}</div>
+ <h2>正文</h2>${cleanContent.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('')}`;
 }
 function copyAll(){navigator.clipboard.writeText(finalText);alert('已复制正文')}
 async function exportWord(){
- // 图片转base64嵌入Word
+ let cleanContent=cleanText(finalText);
+ let cleanOutline=cleanText(finalOutline);
  let photoHtml='';
  for(let x of imgs){let b=await x.file.arrayBuffer();let b64=btoa(String.fromCharCode(...new Uint8Array(b)));photoHtml+=`<p style="text-align:center"><img src="data:image/jpeg;base64,${b64}" width="400"></p>`}
- let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:宋体;line-height:2;font-size:14pt;padding:50px}h1{text-align:center;font-size:22pt}h2{font-size:16pt;border-bottom:1px solid #000;padding-bottom:5px}p{text-indent:2em;margin:8px 0}.cover p{text-indent:0;text-align:center}</style></head><body>
+ let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:宋体;line-height:2;font-size:14pt;padding:50px}h1{text-align:center;font-size:22pt}h2{font-size:16pt;border-bottom:1px solid #000;padding-bottom:5px}p{text-indent:2em;margin:8px 0}.cover p{text-indent:0;text-align:center}.toc p{text-indent:0}</style></head><body>
  <div class="cover"><h1>${type.value}</h1><p>学院：${college.value}</p><p>姓名：${nameInput.value}</p><p>实践单位：${company.value}</p><p>完成时间：${dateInput.value}</p></div>
- <h2>目录</h2>${finalOutline.split('\n').filter(l=>l.trim()).map(l=>'<p style="text-indent:0">'+l+'</p>').join('')}
- <h2>正文</h2>${finalText.split('\n').filter(l=>l.trim()).map(l=>'<p>'+l+'</p>').join('')}
- <h2>实践照片</h2>${photoHtml}
+ <h2>目录</h2>${cleanOutline.split('\n').filter(l=>l.trim()).map(l=>'<p class="toc">'+l+'</p>').join('')}
+ <h2>实践照片</h2>${photoHtml||'<p>（请补充实践照片）</p>'}
+ <h2>正文</h2>${cleanContent.split('\n').filter(l=>l.trim()).map(l=>'<p>'+l+'</p>').join('')}
  </body></html>`;
  let blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nameInput.value+'_'+type.value+'.doc';a.click();
 }
