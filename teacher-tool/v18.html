@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>教师材料智能生成器 - 正式修复版</title>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js">
+// 强制挂载全局，保证onclick可访问
+Object.assign(window,{startFlow,confirmOutline,exportWord,exportPPT,exportSpeechOutline,loadTpl,loadImgs,copyAll,fetchAiPptSlides,splitCases,buildPptStructure,cleanText});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js">
+// 强制挂载全局，保证onclick可访问
+Object.assign(window,{startFlow,confirmOutline,exportWord,exportPPT,exportSpeechOutline,loadTpl,loadImgs,copyAll,fetchAiPptSlides,splitCases,buildPptStructure,cleanText});
+</script>
+<style>
+:root{--primary:#1e40af;--success:#16a34a;--danger:#dc2626;--bg:#f1f5f9;--card:#fff;--border:#e2e8f0;--text:#1e293b;--light:#64748b}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif}
+body{background:var(--bg);color:var(--text);padding:20px}
+.container{max-width:1100px;margin:0 auto}
+.header{background:linear-gradient(135deg,#1e3a8a,#1e40af);color:#fff;padding:22px 30px;border-radius:12px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:22px}.header p{opacity:.9;font-size:13px;margin-top:4px}
+.status-bar{background:var(--card);border-radius:12px;padding:14px 22px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.status-bar h3{font-size:14px;margin-bottom:10px}.status-list{display:flex;gap:12px;flex-wrap:wrap}
+.status-item{font-size:12px;padding:5px 10px;border-radius:16px;background:#f8fafc;display:flex;gap:5px;align-items:center}
+.dot{width:9px;height:9px;border-radius:50%}.dot.g{background:var(--success)}.dot.r{background:var(--danger)}
+.panel{background:var(--card);border-radius:12px;padding:26px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:18px}
+.g{margin-bottom:18px}.g label{display:block;font-weight:600;font-size:14px;margin-bottom:7px}
+.c{width:100%;padding:11px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit}
+textarea.c{min-height:110px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.btn{padding:11px 24px;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:500}
+.btn-p{background:var(--primary);color:#fff}.btn:disabled{opacity:.6;cursor:not-allowed}.btn-o{background:#fff;border:1px solid var(--border);margin-right:8px}
+.upload{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;font-size:14px;color:var(--light)}
+.imgs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.imgs img{width:90px;height:90px;object-fit:cover;border-radius:6px}
+.steps{margin:18px 0;display:none}.step{display:flex;gap:11px;margin-bottom:14px}
+.n{width:26px;height:26px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.step.act .n{background:var(--primary);color:#fff}.step.done .n{background:var(--success);color:#fff}
+.t{font-size:14px;font-weight:600}.d{font-size:12px;color:var(--light);margin-top:2px}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none}
+.confirm-box{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:750px;max-height:85vh;overflow-y:auto;background:#fff;z-index:1000;padding:24px;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.confirm-box textarea{width:100%;min-height:220px;border:1px solid var(--border);border-radius:6px;padding:12px;font-size:13px;font-family:inherit;margin:10px 0}
+.tip{background:#eff6ff;border-left:4px solid var(--primary);padding:10px 14px;font-size:13px;border-radius:0 6px 6px 0;margin:10px 0;line-height:1.6}
+.result{display:none}.doc{background:#fff;border:1px solid var(--border);border-radius:8px;padding:50px;min-height:500px;max-height:700px;overflow-y:auto;box-shadow:0 2px 10px rgba(0,0,0,.08);line-height:1.9;font-size:14px}
+.cover{text-align:center;margin-bottom:40px;padding-top:60px}.cover h1{font-size:28px;margin-bottom:30px}.cover p{margin:12px 0;font-size:15px}
+.doc h2{font-size:18px;margin:28px 0 15px;padding-bottom:8px;border-bottom:2px solid var(--primary)}.doc h3{font-size:16px;margin:20px 0 10px}
+.doc h2.part-divider{margin-top:35px;text-align:center;border:none;background:var(--navy);color:#fff;padding:12px;border-radius:6px}
+.doc h3.case-title{background:#f1f5f9;border-left:5px solid var(--blue);padding:12px 14px;border-radius:0 6px 6px 0;font-size:16px}
+.doc h4.case-sub{font-size:14px;color:var(--blue);margin:16px 0 6px}.doc p{text-indent:2em;margin:8px 0}.doc .photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin:20px 0}
+.photo-item p{text-indent:0!important;text-align:center;font-size:13px;margin-top:8px!important;line-height:1.6}
+.doc .photo-grid img{width:100%;border-radius:6px}.toc p{text-indent:0;padding-left:20px}.hidden{display:none!important}
+.load{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:sp 1s linear infinite;margin-right:6px}@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="modal-mask" id="modalMask"></div>
+<div class="container">
+<div class="header"><div><h1>教师材料智能生成器</h1><p>严格基于你的素材 · 大纲确认后写作 · 规范排版</p></div><div style="font-size:12px;opacity:.9">独立工具 · 主站零改动</div></div>
+
+<div class="status-bar"><h3>模型状态（自动检测）</h3><div class="status-list" id="sList">检测中...</div></div>
+
+<div class="panel">
+<div class="tip">重要说明：上传的模板仅用于提取章节结构、案例数量、格式要求，<b>不会使用模板中的任何示例内容</b>；所有正文内容100%来自你提供的工作素材，素材缺失的内容会明确标注请补充，不会编造、不会照搬模板示例。</div>
+<div class="row">
+<div class="g"><label>材料类型</label><select class="c" id="type"><option>青年教师专业实践成果报告</option><option>年度教学工作总结</option><option>运动康复教学案例集</option><option>运动队带队/竞赛总结</option><option>职称评审业绩材料</option></select></div>
+<div class="g"><label>姓名</label><input class="c" id="name" value="陈云"></div>
+<div class="g"><label>学院</label><input class="c" id="college" value="体育学院"></div>
+</div>
+<div class="row">
+<div class="g"><label>成果类型</label><input class="c" id="resultType" value="调研报告+教学案例"></div>
+<div class="g"><label>系（教研室）</label><input class="c" id="dept" value="运动康复教研室"></div>
+<div class="g"><label>完成时间</label><input class="c"id="date" value="2026年8月31日"></div>
+</div>
+<div class="row">
+<div class="g"><label>实践单位</label><input class="c" id="company" value="铄金健身服务有限公司（SUREFIT）"></div>
+<div class="g"><label>案例数量</label><input class="c" id="caseNum" type="number" value="5"></div>
+<div class="g"></div>
+</div>
+<div class="g"><label style="display:flex;justify-content:space-between;align-items:center"><span>模板文件（可选，仅提取结构）</span><button type="button" class="btn btn-o" style="padding:5px 12px;font-size:12px;margin:0" onclick="document.getElementById('tplF').click()">上传Word/TXT模板</button></label><input type="file" id="tplF" accept=".docx,.txt" hidden onchange="loadTpl(this)"><textarea class="c" id="tpl" placeholder="可粘贴模板结构要求，或上传模板文件；模板里的示例内容不会被写入你的材料"></textarea><div id="tplTip" style="font-size:12px;color:var(--light)"></div></div>
+<div class="g"><label>我的全部工作素材（唯一内容来源）</label><textarea class="c" id="material" style="min-height:180px" placeholder="粘贴你的真实工作内容、实践过程、案例、数据，所有正文只从这里提取"></textarea></div>
+<div class="g"><label>实践照片（自动嵌入报告末尾）</label><div class="upload" onclick="document.getElementById('imgF').click()">点击上传实践照片，可多选</div><input type="file" id="imgF" accept="image/*" multiple hidden onchange="loadImgs(this)"><div class="imgs" id="imgPrev"></div></div>
+<button class="btn btn-p" id="startBtn" onclick="startFlow()">开始生成</button>
+
+<div class="steps" id="steps">
+<div class="step" id="s1"><div class="n">1</div><div><div class="t">素材整理</div><div class="d">提取你的真实素材，不添加模板内容</div></div></div>
+<div class="step" id="s2"><div class="n">2</div><div><div class="t">生成写作大纲</div><div class="d">完成后需要你确认，可编辑修改</div></div></div>
+<div class="step" id="s3"><div class="n">3</div><div><div class="t">逐章/逐案例写作</div><div class="d">按确认后的大纲完整生成，不截断</div></div></div>
+<div class="step" id="s4"><div class="n">4</div><div><div class="t">校验排版</div><div class="d">核对内容、生成封面目录、嵌入照片</div></div></div>
+</div>
+
+<div class="confirm-box" id="confirmBox">
+<div style="font-weight:600;font-size:15px">请确认写作大纲</div>
+<div style="font-size:13px;color:var(--light);margin-top:5px">大纲仅参考模板结构，全部内容将使用你的素材；你可以直接编辑修改章节、案例数量，确认后再开始写作，不会直接生成正文。</div>
+<textarea id="outlineEdit"></textarea>
+<div style="text-align:right"><button class="btn btn-o" onclick="closeConfirm()">取消</button><button class="btn btn-p" onclick="confirmOutline()">确认大纲，开始写作</button></div>
+</div>
+</div>
+
+<div class="panel result" id="resultPanel">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;gap:10px;flex-wrap:wrap"><h3>最终材料</h3><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<label style="font-size:13px">汇报时长：<select id="pptDuration" class="c" style="display:inline-block;width:auto;padding:6px"><option value="5">5分钟</option><option value="10" selected>10分钟</option><option value="15">15分钟</option></select></label>
+<button class="btn btn-o" onclick="copyAll()">复制全文</button>
+<button class="btn btn-p" onclick="exportWord(event)">导出Word（含照片）</button>
+<button class="btn btn-o" onclick="exportSpeechOutline(event)">导出演讲提纲</button>
+<button class="btn btn-p" style="background:#0f766e" onclick="exportPPT(event)">生成汇报PPT</button>
+</div></div>
+<div class="doc" id="docRender"></div>
+</div>
+</div>
+<script>
+const API='https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com';
+// 显式获取所有DOM，避免内置属性冲突
+const $=id=>document.getElementById(id);
+const sList=$('sList'),tpl=$('tpl'),tplTip=$('tplTip'),imgPrev=$('imgPrev'),steps=$('steps'),
+confirmBox=$('confirmBox'),modalMask=$('modalMask'),resultPanel=$('resultPanel'),docRender=$('docRender'),
+type=$('type'),nameInput=$('name'),college=$('college'),dept=$('dept'),resultType=$('resultType'),company=$('company'),dateInput=$('date'),
+caseNum=$('caseNum'),materialEl=$('material'),startBtn=$('startBtn'),outlineEdit=$('outlineEdit');
+let imgs=[],parsedMaterial='',finalOutline='',finalText='';
+async function checkS(){try{let r=await fetch(API+'/api/model-status'),d=await r.json();sList.innerHTML=d.data.map(m=>`<div class="status-item"><span class="dot ${m.available?'g':'r'}"></span>${m.name}</div>`).join('')}catch{}}checkS();setInterval(checkS,60000);
+function setS(n,c){document.getElementById('s'+n).classList.add(c)}
+async function callRefine(action,payload){let r=await fetch(API+'/api/teacher/refine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,payload})}),d=await r.json();if(d.code!==0)throw new Error(d.msg);return d.data}
+function htmlToStructuredTemplate(html){
+ let h=html;
+ h=h.replace(/<img[^>]*>/gi,'\n【照片位置：此处插入实践照片，每张照片下方配图注】\n');
+ h=h.replace(/<table[^>]*>([\s\S]*?)<\/table>/gi,(m,body)=>{
+  let heads=[...body.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/gi)].map(x=>x[1].replace(/<[^>]+>/g,'').trim()).filter(Boolean);
+  return `\n【表格${heads.length?':列包含'+heads.join('、'):''}】\n`;
+ });
+ h=h.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi,'\n# 一级标题：$1\n');
+ h=h.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi,'\n## 二级标题：$1\n');
+ h=h.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi,'\n### 三级标题：$1\n');
+ h=h.replace(/<h[4-6][^>]*>([\s\S]*?)<\/h[4-6]>/gi,'\n#### 小标题：$1\n');
+ h=h.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi,'- $1\n');
+ h=h.replace(/<p[^>]*>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<br\s*\/?>/gi,'\n');
+ // 识别文字描述的照片位置
+ h=h.replace(/([^\n]*(?:实践照片|插入.{0,6}照片|照片.{0,10}说明)[^\n]*)/gi,(m)=>{
+  if(m.includes('【照片位置'))return m;
+  return m+'\n【照片位置：此处插入实践照片，每张照片下方配图注】';
+ });
+ h=h.replace(/<[^>]+>/g,'');
+ h=h.replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+ return h.replace(/\n{3,}/g,'\n\n').trim();
+}
+function summarizeTemplate(struct){
+ const heads=(struct.match(/^#{1,4}\s*(?:[一二三四]级|小)?标题：.+$/gm)||[]).map(x=>x.replace(/^#+\s*(?:[一二三四]级|小)?标题：/,''));
+ return {heads:heads.slice(0,30),photoCount:(struct.match(/【照片位置/g)||[]).length,tableCount:(struct.match(/【表格/g)||[]).length,caseReq:(struct.match(/案例/g)||[]).length};
+}
+function showTplSummary(name,sum){
+ let html=`<div style="margin-top:8px;padding:10px;border:1px solid var(--border);border-radius:6px;background:#f8fafc;font-size:13px">
+ <b>已自动解析模板：</b>${name}<br>识别章节标题 ${sum.heads.length} 个；表格 ${sum.tableCount} 处；照片位置 ${sum.photoCount} 处；案例要求 ${sum.caseReq} 处。<br>`;
+ if(sum.heads.length)html+='<span style="color:var(--light)">章节：'+sum.heads.slice(0,12).join(' / ')+(sum.heads.length>12?'...':'')+'</span><br>';
+ html+='<span style="color:#0f766e">上传即完成，无需手动编辑，直接填素材生成；更换模板请重新上传。</span></div>';
+ tplTip.innerHTML=html;
+}
+async function loadTpl(i){
+ let f=i.files[0];tplTip.textContent='正在解析模板结构...';
+ try{
+  let t='';
+  if(f.name.endsWith('.txt')){t=await f.text();}
+  else{
+   let b=await f.arrayBuffer();
+   let r=await mammoth.convertToHtml({arrayBuffer:b});
+   t=htmlToStructuredTemplate(r.value);
+   tpl.readOnly=true;tpl.style.background='#f8fafc';tpl.style.minHeight='120px';
+  }
+  tpl.value=t;window._parsedTemplateStruct=t;
+  showTplSummary(f.name,summarizeTemplate(t));
+ }catch(e){tplTip.textContent='模板解析失败，请重试或粘贴结构文本'}
+}
+function loadImgs(i){[...i.files].forEach(f=>imgs.push({url:URL.createObjectURL(f),file:f,caption:''}));renderImgPrev()}
+function renderImgPrev(){
+ imgPrev.innerHTML=imgs.map((x,i)=>`<div style="width:150px"><img src="${x.url}" style="width:150px;height:110px;object-fit:cover;border-radius:6px"><textarea placeholder="填写本张照片说明（不填自动生成）" style="width:100%;height:60px;font-size:11px;margin-top:4px;border:1px solid #e2e8f0;border-radius:4px;padding:4px" onchange="imgs[${i}].caption=this.value">${x.caption}</textarea></div>`).join('');
+}
+
+
+async function extractPureStructure(tplText){
+ if(!tplText||tplText.trim().length<10)return '';
+ const prompt=`下面是工作材料模板，只提取章节顺序：
+1. 输出只能包含按顺序排列的章节标题、案例数量、照片部分位置；
+2. 必须删除所有示例正文、公司名、人名、案例细节、数据、宣传文字、计划字数、写作要点、表格说明、图片说明、指导语；
+3. 每章只输出一行标题，用缩进表示层级，禁止完整句子；
+4. 不要输出封面、目录、照片页（系统固定生成），只输出正文章节顺序。
+模板内容：${tplText}`;
+ const r=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}]})});
+ const d=await r.json();
+ return d.choices?.[0]?.message?.content?.trim()||'';
+}
+function extractTemplateKeywords(tplText){
+ // 提取模板里的公司名、专属人名（2-4个汉字+公司/体育/中心，以及引号内专属名词）
+ let kws=[];
+ let ms=tplText.matchAll(/([一-龥]{2,8}(?:公司|有限公司|体育产业|集团|中心|俱乐部))/g);
+ for(let m of ms)if(!kws.includes(m[1]))kws.push(m[1]);
+ return kws.slice(0,10);
+}
+
+async function startFlow(){
+ startBtn.disabled=true;steps.style.display='block';
+ let info=`姓名：${nameInput.value}\n学院：${college.value}\n系（教研室）：${dept.value}\n成果类型：${resultType.value}\n实践单位：${company.value}\n时间：${dateInput.value}\n材料类型：${type.value}`;
+ let fullMaterial=info+'\n\n工作素材：\n'+materialEl.value;
+ let rawTpl=tpl.value;
+ let tplKeywords=extractTemplateKeywords(rawTpl);
+ window._tplKeywords=tplKeywords;
+ try{
+ setS(1,'act');
+ // 第一步：先把模板剥离成纯结构，后续不再接触模板原文
+ let pureStructure=await extractPureStructure(rawTpl);
+ let strictTpl='【以下是需要对齐的章节结构框架，仅用于参考层级和数量，不是内容来源；禁止使用框架外的任何模板示例文字】\n'+pureStructure;
+ let d1=await callRefine('parse_material',{material:fullMaterial,template:strictTpl});
+ parsedMaterial=d1.merged;setS(1,'done');setS(2,'act');
+ let d2=await callRefine('gen_outlines',{parsedMaterial,template:strictTpl,caseCount:caseNum.value});
+ let rawOutline=d2.finalOutline;
+ let simpPrompt=`把下面的写作大纲简化为确认版：只按顺序列出章节标题、案例标题并标明案例数量，每章最多附1句内容方向；删除所有计划字数、写作要点、表格位置、图片位置、模板示例内容；封面目录照片不要列入。只输出简洁大纲。
+大纲：${rawOutline}`;
+ let rSimp=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:simpPrompt}]})});
+ let dSimp=await rSimp.json();
+ finalOutline=dSimp.choices?.[0]?.message?.content?.trim()||rawOutline;
+ outlineEdit.value=finalOutline;
+ // 保持步骤2激活，强制弹窗确认，流程终止，不进入后续步骤
+ modalMask.style.display='block';confirmBox.style.display='block';
+ }catch(e){alert('生成大纲失败：'+e.message);setS(1,'done');startBtn.disabled=false}
+}
+
+async function confirmOutline(){
+ finalOutline=outlineEdit.value;
+ // 确认后才关闭弹窗，步骤2完成、步骤3激活
+ modalMask.style.display='none';confirmBox.style.display='none';
+ setS(2,'done');setS(3,'act');
+ try{
+ // 第一步：只生成调研报告（企业概况~实践心得）
+ let reportPrompt=`请严格按确认大纲，只撰写“专业实践调研报告”部分（从一、企业概况到六、实践心得），不要写“成果材料/教学案例”，不要写封面、目录、照片。规则：
+1. 事实100%来自真实素材，单位未提供的背景、规模、行业地位、荣誉、宣传语不要写；
+2. 素材为梗概时，结合运动康复专业知识扩充完整工作流程、评估、干预、宣教等专业细节，内容详实；
+3. 不插入图片表格，不出现“此处插入”类占位文字；不用#、*、-等markdown符号，输出纯文本。
+大纲（只写调研报告部分）：${finalOutline}
+真实素材：${parsedMaterial}`;
+ let dR=await callRefine('write_part',{partPrompt:reportPrompt,partType:'detail',maxTokens:8000});
+ let report=cleanText(dR.result);
+ // 第二步：从确认大纲提取案例标题，逐个独立生成
+ const caseLines=finalOutline.split('\n').map(x=>x.trim()).filter(l=>/^案例[一二三四五六七八九十]+[:：、]/.test(l));
+ const wantN=parseInt(caseNum.value)||5;
+ const caseTitles=caseLines.slice(0,wantN);
+ const cnNums=['一','二','三','四','五','六','七','八','九','十'];
+ let casesText='';
+ for(let ci=0;ci<caseTitles.length;ci++){
+  let title=caseTitles[ci].replace(/^案例[一二三四五六七八九十]+[:：、]\s*/,'').replace(/（.*?）/g,'').trim();
+  let num=cnNums[ci];
+  let casePrompt=`你是高校运动康复专业教师，同时具有商业健身房运动康复师实践经验。请根据真实实践素材，撰写第${ci+1}个教学案例，案例主题：${title}。
+硬性要求：
+1. 场景必须是商业健身房，对象是健身会员，属于非病理性功能障碍、慢性劳损、体态不良或运动损伤后非手术康复；禁止写术后、手术、骨折、医院临床病例；
+2. 第一行必须是“案例${num}：${title}”，然后依次写六部分：一、案例背景；二、康复评估；三、康复方案；四、教学观察；五、效果评价；六、教学转化；
+3. 会员的年龄、职业、主诉可结合健身场景合理设定，评估方法、康复动作、组数次数、进阶标准结合运动康复专业知识详实撰写；不得出现本主题以外的单位、机构或其他案例；
+4. 真实素材中的工作量、设备技术（手法松解、关节松动、筋膜刀、冲击波、瑞士球、弹力带、悬吊训练）可使用；
+5. 纯文本输出，禁止#、*、-等markdown符号，不插入图片表格，不出现占位，完整写完六部分。
+真实素材：${parsedMaterial}`;
+  let dC=await callRefine('write_part',{partPrompt:casePrompt,partType:'case',maxTokens:3500});
+  casesText+='\n'+cleanText(dC.result).trim()+'\n';
+ }
+ finalText=report.trim()+'\n\n成果材料：教学案例\n'+casesText.trim();
+ // 泄露校验：如果出现模板专属公司/机构名，自动重写一次
+ const leaked=(window._tplKeywords||[]).filter(k=>finalText.includes(k));
+ if(leaked.length>0){
+  const fixPrompt=`下面的正文错误使用了模板示例内容，请严格只根据真实素材重新写作，删除所有模板里的公司、机构、宣传、示例内容；单位未提供的背景、规模、行业地位、荣誉、宣传语一律标注（请补充），输出纯文本正文。
+必须删除的模板关键词：${leaked.join('、')}
+真实素材：${parsedMaterial}
+需要修正的正文：${finalText}`;
+  const dFix=await callRefine('write_part',{partPrompt:fixPrompt,partType:'detail',maxTokens:9000});
+  finalText=dFix.result;
+ }
+ await ensureComplete();
+ setS(3,'done');setS(4,'act');
+ renderDoc();setS(4,'done');resultPanel.style.display='block';resultPanel.scrollIntoView({behavior:'smooth'});
+ }catch(e){
+  // 写作失败停留在步骤3，不进入第四步，保留大纲可重试
+  alert('写作失败（未进入第四步）：'+e.message+'，请重新点击开始或稍后重试，大纲已保留');
+ }
+ startBtn.disabled=false;
+}
+
+function closeConfirm(){
+ modalMask.style.display='none';confirmBox.style.display='none';
+ startBtn.disabled=false;
+}
+
+function cleanText(t){
+ return t.replace(/[#*`]/g,'').replace(/^[\s\-•·]+/gm,'').replace(/\n{3,}/g,'\n\n').trim();
+}
+
+function stripPlaceholders(text){
+ return text.split('\n').filter(line=>{
+  const l=line.trim();
+  if(!l)return false;
+  if(/此处插入.*(图片|图|示意图|表格)/.test(l))return false;
+  if(/^[（(]?图片位置/.test(l))return false;
+  return true;
+ }).join('\n');
+}
+function extractTocFromBody(body){
+ const lines=body.split('\n').map(x=>x.trim()).filter(Boolean);
+ const out=[];const seen=new Set();
+ const add=(level,t)=>{t=t.trim();if(t&&!seen.has(t)){seen.add(t);out.push({level,t})}};
+ let inCases=false;
+ for(let l of lines){
+  if(/^成果材料/.test(l)){inCases=true;add(1,'成果材料');continue}
+  if(inCases){
+   let m=l.match(/^案例([一二三四五六七八九十]+)[:：](.+)$/);
+   if(m)add(2,'案例'+m[1]+'：'+m[2]);
+  }else{
+   if(/^[一二三四五六七八九十]+、/.test(l))add(1,l.replace(/^[一二三四五六七八九十]+、/,''));
+   else if(/^（[一二三四五六七八九十]+）/.test(l))add(2,l.replace(/^（[一二三四五六七八九十]+）/,''));
+  }
+ }
+ return out;
+}
+async function ensureComplete(){
+ const need=parseInt(caseNum.value);
+ const numCN=['一','二','三','四','五','六','七','八','九','十'];
+ let missing=[];
+ for(let i=1;i<=need;i++)if(!finalText.includes('案例'+numCN[i-1]))missing.push(i);
+ const tail=finalText.slice(-300);
+ const ended=/(总结|反思|收获|结语|展望|成效)/.test(tail)&&tail.trim().length>100;
+ if(missing.length===0&&ended)return;
+ let contPrompt=`继续完成材料：
+${missing.length?'补写缺失案例：'+missing.map(x=>'案例'+numCN[x-1]).join('、')+'，结构与已有案例一致；':'从断点继续，补完剩余内容，最后写出完整实践总结与反思；'}
+禁止重复已有内容，直接输出续写正文，不要封面目录照片，不要图表占位，纯文本。
+已有正文末尾：${finalText.slice(-2500)}
+真实素材：${parsedMaterial}`;
+ let d=await callRefine('write_part',{partPrompt:contPrompt,partType:'detail',maxTokens:7000});
+ finalText=finalText.trim()+'\n'+d.result.trim();
+}
+
+function renderDoc(){
+ let cleanContent=stripPlaceholders(cleanText(finalText));
+ const tocItems=extractTocFromBody(cleanContent);
+ const toc=tocItems.map(x=>`<p style="padding-left:${x.level===2?40:20}px">${x.t}</p>`).join('');
+ const defaultCaps=['为学员进行下肢功能评估，检查关节活动度与损伤情况','指导学员进行垫上康复训练，纠正训练动作','在实践场地与学员沟通训练方案，了解恢复情况','指导学员进行康复力量训练，强化薄弱肌群'];
+ const useImgs=imgs.slice(0,4);
+ let photoHtml=useImgs.map((x,i)=>{
+  let cap=x.caption||defaultCaps[i%defaultCaps.length];
+  return `<div class="photo-item"><img src="${x.url}"><p>图${i+1} ${cap}</p></div>`
+ }).join('');
+ if(useImgs.length<4)photoHtml+=`<p style="text-indent:0;color:#b91c1c">（还需上传${4-useImgs.length}张，共需4张）</p>`;
+ document.getElementById('docRender').innerHTML=`
+ <div class="cover"><h1>青年教师专业实践<br>成果材料</h1><p>成果类型：${resultType.value}</p><p>学院：${college.value}</p><p>系（教研室）：${dept.value}</p><p>实践单位：${company.value}</p><p>姓名：${nameInput.value}</p><p>完成时间：${dateInput.value}</p></div>
+ <h2>目录</h2><div class="toc">${toc||'<p>（请先生成正文）</p>'}</div>
+ <h2>实践照片</h2><div class="photo-grid">${photoHtml}</div>
+ ${(function(){
+   const lines=cleanContent.split('\n').map(x=>x.trim()).filter(Boolean);
+   let inCases=false;
+   return lines.map(l=>{
+    if(/^成果材料/.test(l)){inCases=true;return `<h2 class="part-divider">成果材料：教学案例</h2>`}
+    if(inCases){
+     if(/^案例[一二三四五六七八九十]+[:：]/.test(l))return `<h3 class="case-title">${l}</h3>`;
+     if(/^[一二三四五六七八九十]+、/.test(l))return `<h4 class="case-sub">${l}</h4>`;
+     return `<p>${l}</p>`;
+    }
+    if(/^[一二三四五六七八九十]+、/.test(l))return `<h2>${l}</h2>`;
+    if(/^（[一二三四五六七八九十]+）/.test(l))return `<h3>${l}</h3>`;
+    return `<p>${l}</p>`;
+   }).join('');
+ })()}`;
+}
+function copyAll(){navigator.clipboard.writeText(finalText);alert('已复制正文')}
+async function exportWord(){
+ const btn=event.target;
+ const oldText=btn.textContent;
+ btn.disabled=true;btn.textContent='导出中...';
+ try{
+ let cleanContent=stripPlaceholders(cleanText(finalText));
+ const tocItems=extractTocFromBody(cleanContent);
+ const tocWord=tocItems.map(x=>'<p class="toc" style="padding-left:'+(x.level===2?40:20)+'px">'+x.t+'</p>').join('');
+ let photoHtml='';
+ const defaultCaps=['为学员进行下肢功能评估，检查关节活动度与损伤情况','指导学员进行垫上康复训练，纠正训练动作','在实践场地与学员沟通训练方案，了解恢复情况','指导学员进行康复力量训练，强化薄弱肌群'];
+ const exportImgs=imgs.slice(0,4);
+ for(let i=0;i<exportImgs.length;i++){
+  try{
+  let x=exportImgs[i];
+  if(!x.file){photoHtml+=`<p style="text-align:center;text-indent:0">图${i+1} ${x.caption||defaultCaps[i%defaultCaps.length]}（图片文件失效，请重新上传）</p>`;continue}
+  let b=await x.file.arrayBuffer();
+  // 分块转base64避免大文件报错
+  let bytes=new Uint8Array(b),bin='';for(let j=0;j<bytes.byteLength;j++)bin+=String.fromCharCode(bytes[j]);
+  let b64=btoa(bin);
+  let cap=x.caption||defaultCaps[i%defaultCaps.length];
+  photoHtml+=`<p style="text-align:center;text-indent:0"><img src="data:image/jpeg;base64,${b64}" width="400"></p><p style="text-align:center;text-indent:0;font-size:12pt">图${i+1} ${cap}</p>`;
+  }catch(e){photoHtml+=`<p style="text-align:center;text-indent:0">图${i+1}（图片导出失败，可重新上传）</p>`}
+ }
+ let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:宋体;line-height:2;font-size:14pt;padding:50px}h1{text-align:center;font-size:22pt}h2{font-size:16pt;border-bottom:1px solid #000;padding-bottom:5px}p{text-indent:2em;margin:8px 0}.cover p{text-indent:0;text-align:center}.toc p{text-indent:0}</style></head><body>
+ <div class="cover"><h1>青年教师专业实践<br>成果材料</h1><p>成果类型：${resultType.value}</p><p>学院：${college.value}</p><p>系（教研室）：${dept.value}</p><p>实践单位：${company.value}</p><p>姓名：${nameInput.value}</p><p>完成时间：${dateInput.value}</p></div>
+ <h2>目录</h2>${tocWord}
+ <h2>实践照片</h2>${photoHtml}
+ ${(function(){
+   const lines=cleanContent.split('\n').map(x=>x.trim()).filter(Boolean);
+   let inCases=false;
+   return lines.map(l=>{
+    if(/^成果材料/.test(l)){inCases=true;return '<h2 style="text-align:center;background:#1e3a5f;color:#fff;padding:10px">成果材料：教学案例</h2>'}
+    if(inCases){
+     if(/^案例[一二三四五六七八九十]+[:：]/.test(l))return '<h3 style="background:#f1f5f9;border-left:5px solid #2563eb;padding:8px 10px">'+l+'</h3>';
+     if(/^[一二三四五六七八九十]+、/.test(l))return '<h4 style="font-size:13pt;color:#2563eb;margin:12px 0 4px">'+l+'</h4>';
+     return '<p>'+l+'</p>';
+    }
+    if(/^[一二三四五六七八九十]+、/.test(l))return '<h2>'+l+'</h2>';
+    if(/^（[一二三四五六七八九十]+）/.test(l))return '<h3>'+l+'</h3>';
+    return '<p>'+l+'</p>';
+   }).join('');
+ })()}
+ </body></html>`;
+ let blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nameInput.value+'_'+type.value+'.doc';document.body.appendChild(a);a.click();a.remove();
+ }catch(e){alert('导出失败：'+e.message)}
+ btn.disabled=false;btn.textContent=oldText;
+}
+// ===================== 增量：配套汇报PPT与演讲提纲 =====================
+function splitCases(text){
+ let parts=text.split('案例');
+ let cases=[];
+ for(let i=1;i<parts.length;i++){
+  let c='案例'+parts[i];
+  if(c.length>30)cases.push(c.trim());
+ }
+ return cases.slice(0,parseInt(caseNum.value));
+}
+function buildPptStructure(){
+ const mins=parseInt($('pptDuration').value);
+ const cleanBody=cleanText(finalText||'');
+ const cases=splitCases(cleanBody);
+ // 提取概况内容
+ const overviewText=cleanBody.split('案例')[0]||cleanBody.slice(0,800);
+ let slides=[
+  {layout:'cover',title:type.value,subtitle:nameInput.value+' | '+college.value+' | '+dateInput.value,note:'各位老师好，我是'+nameInput.value+'，今天汇报我的'+type.value+'，实践单位为'+company.value+'。'},
+  {layout:'toc',title:'汇报目录',points:['实践概况','实践内容与过程',...cases.map((c,i)=>'教学案例'+(i+1)),'实践收获与总结'],note:'本次汇报包括实践概况、实践过程、典型教学案例以及收获总结几个部分。'},
+  {layout:'content',title:'一、实践概况',text:overviewText.slice(0,900),note:'首先介绍实践基本情况，本次实践在'+company.value+'开展，围绕运动康复教学相关工作展开。'},
+  {layout:'content',title:'二、实践内容与过程',text:'实践期间主要完成学员损伤评估、康复方案制定、分阶段训练带教、动作纠正指导、训练效果跟踪等工作，全程参与教学与康复实践。',note:'实践过程中完成了评估、方案制定、带教、跟踪全流程工作。'}
+ ];
+ // 每个案例独立一页，真实内容
+ cases.forEach((c,i)=>{
+  slides.push({layout:'case',title:'教学案例'+(i+1),text:c.slice(0,1100),note:'接下来介绍第'+(i+1)+'个教学案例，包括案例背景、评估处理和康复方案。'});
+ });
+ slides.push(
+  {layout:'content',title:'实践成果与收获',text:'通过本次实践，积累了运动康复一线教学经验，梳理了完整教学案例，提升了专业实践能力和教学能力，同时明确了后续专业学习和教学改进的方向。',note:'最后总结实践成果与收获，本次实践提升了专业和教学能力，也明确了后续方向。'},
+  {layout:'thanks',title:'感谢聆听',subtitle:'敬请各位老师批评指正',note:'我的汇报到此结束，感谢各位老师，敬请批评指正。'}
+ );
+ // 5分钟精简，只保留前2个案例
+ if(mins===5){
+  slides=slides.filter(s=>!s.layout==='case'||parseInt(s.title.match(/\d+/)[0])<=2);
+ }
+ // 固定移除末尾旧thanks，补标准致谢
+  slides=slides.filter(x=>x.layout!=='thanks');
+  slides.push({layout:'thanks',title:'感谢聆听',subtitle:'敬请各位老师批评指正',points:[],note:'感谢各位老师聆听，恳请批评指正。'});
+  return slides;
+}
+
+async function aiJson(prompt){
+ let lastErr;
+ for(let attempt=0;attempt<2;attempt++){
+  const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),50000);
+  try{
+   const r=await fetch(API+"/api/chat",{method:"POST",headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}]}),signal:ctrl.signal});
+   clearTimeout(to);
+   if(!r.ok)throw new Error('HTTP '+r.status);
+   const data=await r.json();
+   let txt=data.choices?.[0]?.message?.content||'';
+   txt=txt.replace(/```json|```/g,'').trim();
+   const a=txt.indexOf('['),b=txt.lastIndexOf(']');
+   if(a>=0&&b>a)txt=txt.slice(a,b+1);
+   txt=txt.replace(/[“”]/g,"'");
+   const tryParse=t=>{try{return JSON.parse(t)}catch(e){return null}};
+   let out=tryParse(txt);
+   if(!out){
+    const fixed=txt.replace(/"((?:\\.|[^"\\])*)"(\s*[:,\]])/g,(m,c,suf)=>'"'+c.replace(/\n/g,'\\n').replace(/\t/g,' ')+'"'+suf);
+    out=tryParse(fixed);
+   }
+   if(out)return out;
+   throw new Error('JSON解析失败，长度'+txt.length);
+  }catch(e){clearTimeout(to);lastErr=e;await new Promise(r=>setTimeout(r,1500));}
+ }
+ throw new Error('AI请求失败（已重试）：'+lastErr.message);
+}
+window.restoreDebug=function(){
+ const t=localStorage.getItem('debug_final');
+ if(!t)return '无缓存正文';
+ finalText=t;renderDoc();
+ const panel=document.getElementById('resultPanel');panel.style.display='block';
+ s3.classList.add('act','done');
+ try{
+  const sp=localStorage.getItem('debug_ppt_slides');
+  if(sp){window._pptSlides=JSON.parse(sp);window._pptTextLen=t.length;}
+ }catch(e){}
+ return '已恢复 '+t.length+'字'+(window._pptSlides?'，PPT页面已缓存可秒导出':'，可直接生成PPT');
+}
+const LAYOUT_RULE=`可用layout（每页必须选一个）：cover封面、toc目录、transition章节过渡、content普通内容、data数据卡片、photos实践剪影（占位，不要points）、flow康复流程（占位，不要points）、case_eval案例评估页、case_plan案例方案页、thanks致谢。
+每页字段：layout,title,subtitle,points（字符串数组，每个要点具体、含量化参数或专业方法，禁止空话，要点内不要使用英文双引号）,note（4句可直接照读讲稿，不要使用英文双引号）。只输出JSON数组，不要其他文字。`;
+async function fetchAiPptSlides(){
+ const mins=parseInt(pptDuration.value);
+ const body=cleanText(finalText);
+ const caseStart=body.search(/成果材料[:：]?\s*教学案例/);
+ const report=caseStart>0?body.slice(0,caseStart):body;
+ const caseSection=caseStart>0?body.slice(caseStart):'';
+ const caseBlocks=caseSection.split(/(?=案例[一二三四五六七八九十]+[:：])/).map(x=>x.trim()).filter(x=>/^案例[一二三四五六七八九十]+[:：]/.test(x)).slice(0,parseInt(caseNum.value));
+ // A1：封面、目录、概况过渡、企业概况、业务岗位
+ const pA1=`生成汇报PPT开头页面JSON，顺序：
+cover（title“青年教师专业实践成果汇报”，subtitle“陈云 | 体育学院 | 2026年8月31日”）；
+toc（title“汇报目录”，points 8项：实践概况、实践剪影、实践内容、康复流程、教学案例、实践收获、问题建议、实践心得）；
+transition（title“第一部分 实践概况”，points填一句导引）；
+content（title“企业概况”，points 5个：单位性质、地理位置、创办团队、核心理念、业务板块）；
+content（title“业务板块与岗位要求”，points 5个：业务板块、核心服务、岗位设置、人才规格、能力要求）。
+${LAYOUT_RULE}
+调研报告：${report}`;
+ // A2：数据、剪影占位、内容过渡、实践内容、流程占位
+ const pA2=`生成汇报PPT实践工作部分页面JSON，顺序：
+data（title“实践工作量”，points 4个，格式“数值|标签”：1个月|驻店时长、70余份|初筛评估、100余人次|服务人次、30余份|反馈收集）；
+photos（title“实践剪影”）；
+transition（title“第二部分 实践内容与过程”）；
+content（title“评估筛查与康复干预”，points 6个，具体写评估方法、设备技术、训练动作与频次）；
+flow（title“运动损伤标准康复流程”）。
+${LAYOUT_RULE}
+调研报告：${report}`;
+ const slidesA=(await aiJson(pA1)).concat(await aiJson(pA2));
+ // 每个案例单独一次（2页）
+ let slidesCase=[];
+ for(let ci=0;ci<caseBlocks.length;ci++){
+  const pC=`根据下面1个教学案例原文，生成2页汇报PPT JSON：
+case_eval（title“案例${['一','二','三','四','五','六'][ci]}·康复评估”，points 5个：基本情况、主诉、客观评估、主要功能问题、康复目标）；
+case_plan（title“案例${['一','二','三','四','五','六'][ci]}·康复方案”，points 5个：分阶段训练、动作组数频次、进阶标准、注意事项、效果评价）。
+要点必须来自案例原文、具体详实，场景为健身房，禁止术后、手术、骨折等临床病例，禁止空话。
+${LAYOUT_RULE}
+案例原文：${caseBlocks[ci]}`;
+  slidesCase=slidesCase.concat(await aiJson(pC));
+ }
+ // 结尾
+ const pEnd=`生成汇报PPT结尾页面JSON，顺序：
+transition（title“第四部分 成果与反思”）；
+content（title“实践结果与收获”，points 5个）；
+content（title“实践问题与建议”，points 5个）；
+content（title“实践心得”，points 4个）；
+thanks（title“感谢聆听”，subtitle“敬请各位老师批评指正”）。
+要点基于调研报告，具体真实，禁止空话。
+${LAYOUT_RULE}
+调研报告（结尾相关）：${report.slice(-2600)}`;
+ const slidesEnd=[{layout:'transition',title:'第三部分 教学案例',points:['教学案例来源于真实会员，涵盖评估、干预、随访完整流程'],note:'下面汇报五个来自真实实践的教学案例。'}].concat(slidesCase).concat(await aiJson(pEnd));
+ const all=slidesA.concat(slidesEnd);
+ window._pptSlides=all;window._pptTextLen=body.length;
+ try{localStorage.setItem('debug_ppt_slides',JSON.stringify(all))}catch(e){}
+ return all;
+}
+
+function textUnits(t){let u=0;for(const ch of String(t))u+=(/[\x00-\xff]/.test(ch)?0.55:1);return u}
+function estLines(t,widthIn,fs){const per=Math.max(6,Math.floor(widthIn/(fs*0.92/72)));return Math.max(1,Math.ceil(textUnits(t)/per))}
+function fitStack(points,textW,maxH,minH,gap){
+ for(const fs of [16,15,14,13,12,11,10]){
+  const rh=fs*1.32/72;let total=0;const hs=[];
+  for(const p of points){const h=Math.max(minH,estLines(p,textW,fs)*rh+0.2);hs.push(h);total+=h+gap}
+  total-=gap;
+  if(total<=maxH)return{fs,hs};
+ }
+ const fs=10,rh=fs*1.25/72;const hs=[];
+ for(const p of points)hs.push(Math.max(minH,estLines(p,textW,fs)*rh+0.15));
+ return{fs,hs};
+}
+async function imgToDataUrl(im){
+ const read=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(new Error('readerror'));r.readAsDataURL(b)});
+ if(im.file){try{return await read(im.file)}catch(e){}}
+ if(im.url){
+  try{
+   const b=await fetch(im.url).then(r=>r.blob());
+   return await read(b);
+  }catch(e){}
+ }
+ throw new Error('图片转dataURL失败');
+}
+async function exportPPT(e){
+ const btn=e.target,old=btn.textContent;btn.disabled=true;btn.textContent='生成中...';
+ try{
+ window._pptLog=[];const L=x=>window._pptLog.push(x+' @'+((Date.now()-window._pptT0)/1000)+'s');
+ window._pptT0=Date.now();L('开始');
+ const pptx=new PptxGenJS();
+ pptx.title=type.value+'汇报PPT';
+ pptx.layout='LAYOUT_WIDE';
+ let slides;
+ if(window._pptSlides&&window._pptTextLen===(finalText||'').length){slides=window._pptSlides;L('使用缓存');}
+ else{slides=await fetchAiPptSlides();L('重新生成');}
+ L('slides '+slides.length);
+ const C={primary:'1e40af',dark:'1e293b',teal:'0f766e',light:'f1f5f9'};
+ // 预处理占位页：photos填充真实照片，flow填充四阶段
+ for(const s of slides){
+  if(s.layout==='photos'){
+   s.photos=[];
+   for(const im of imgs.slice(0,4)){
+    try{
+     const dataUrl=await imgToDataUrl(im);
+     s.photos.push({img:dataUrl,cap:im.caption||'实践现场'});
+    }catch(e){}
+   }
+   s.note=s.note||'实践期间参与评估、训练带教、动作指导等工作，积累了真实场景的教学辅助经验。';
+  }
+  if(s.layout==='flow'){
+   s.points=[{t:'急性期',d:'控制肿胀疼痛\n保护损伤组织'},{t:'恢复期',d:'恢复活动度\n激活受损肌群'},{t:'功能期',d:'强化肌力\n恢复本体感觉'},{t:'回归期',d:'专项训练\n安全回归运动'}];
+   s.note=s.note||'运动损伤康复遵循分阶段进阶原则，评估达标后再进入下一阶段，不跨阶段冒进。';
+  }
+ }
+ L('预处理完成');
+ for(const [i,s] of slides.entries()){
+  const sl=pptx.addSlide();
+  sl.background={color:'ffffff'};
+  if(s.layout==='cover'){
+   // 左侧深蓝色块
+   sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:4.6,h:7.5,fill:{color:C.primary}});
+   // 左侧装饰小色块
+   sl.addShape(pptx.ShapeType.rect,{x:0.7,y:5.8,w:0.6,h:0.08,fill:{color:'5eead4'}});
+   sl.addText('高校青年教师\n专业实践成果汇报',{x:0.7,y:6,fontSize:16,color:'e2e8f0',lineSpacing:26});
+   // 右侧标题
+   sl.addText(s.title,{x:5.4,y:2.3,w:7.2,h:1.4,fontSize:36,bold:true,color:C.primary,lineSpacing:48});
+   // 装饰线
+   sl.addShape(pptx.ShapeType.rect,{x:5.4,y:3.8,w:1.6,h:0.06,fill:{color:C.teal}});
+   sl.addText(s.subtitle,{x:5.4,y:4.2,w:7.2,h:1.2,fontSize:18,color:C.dark,lineSpacing:32});
+  }else if(s.layout==='toc'){
+   sl.addShape(pptx.ShapeType.rect,{x:0.6,y:0.45,w:0.16,h:0.55,fill:{color:C.primary}});
+   sl.addText(s.title,{x:0.95,y:0.45,w:11.8,h:0.6,fontSize:26,bold:true,color:C.dark});
+   if(s.points)s.points.forEach((p,i)=>{
+    let y=1.5+i*0.85;
+    sl.addShape(pptx.ShapeType.rect,{x:0.9,y,w:11.8,h:0.7,fill:{color:C.light}});
+    sl.addShape(pptx.ShapeType.rect,{x:0.9,y,w:0.7,h:0.7,fill:{color:C.primary}});
+    sl.addText(String(i+1).padStart(2,'0'),{x:0.9,y:y+0.12,w:0.7,h:0.5,fontSize:18,bold:true,color:'fff',align:'center'});
+    sl.addText(p,{x:1.9,y:y+0.12,w:10.5,h:0.5,fontSize:18,color:C.dark});
+   });
+  }else if(s.layout==='content'||s.layout==='case'){
+   const isCase=s.layout==='case';
+   const mainColor=isCase?C.teal:C.primary;
+   // 顶部短标题色块（不满通栏）
+   sl.addShape(pptx.ShapeType.rect,{x:0.6,y:0.45,w:0.16,h:0.55,fill:{color:mainColor}});
+   sl.addText(s.title,{x:0.95,y:0.45,w:11.8,h:0.6,fontSize:26,bold:true,color:C.dark});
+   // 案例页左侧竖装饰条
+   if(isCase)sl.addShape(pptx.ShapeType.rect,{x:0.6,y:1.35,w:0.08,h:5.4,fill:{color:mainColor}});
+   const points=s.points||[s.text];
+   // 4个要点用2×2卡片，其他用通栏卡片
+   const cards=[];
+   if(points.length===4&&!isCase){
+    const pos=[[0.9,1.5],[6.9,1.5],[0.9,4.1],[6.9,4.1]];
+    points.forEach((p,i)=>{
+     let [x,y]=pos[i];
+     sl.addShape(pptx.ShapeType.rect,{x,y,w:5.6,h:2.2,fill:{color:'f1f5f9'}});
+     sl.addShape(pptx.ShapeType.rect,{x,y,w:0.08,h:2.2,fill:{color:mainColor}});
+     sl.addText(p,{x:x+0.3,y:y+0.25,w:5.1,h:1.7,fontSize:16,color:C.dark,valign:'top',lineSpacing:28});
+    });
+   }else{
+    // 通栏卡片：按文字量自适应高度、自动缩字号，防止溢出
+    const fit=fitStack(points,11.0,5.45,0.6,0.12);
+    let y=1.5;
+    points.forEach((p,i)=>{
+     const h=fit.hs[i];
+     sl.addShape(pptx.ShapeType.rect,{x:0.9,y,w:11.8,h,fill:{color:'f8fafc'}});
+     sl.addShape(pptx.ShapeType.rect,{x:0.9,y,w:0.08,h,fill:{color:mainColor}});
+     sl.addText(p,{x:1.2,y:y+0.1,w:11.2,h:h-0.15,fontSize:fit.fs,color:C.dark,valign:'top',lineSpacing:Math.round(fit.fs*1.3)});
+     y+=h+0.12;
+    });
+   }
+  }else if(s.layout==='flow'){
+   sl.addShape(pptx.ShapeType.rect,{x:0.6,y:0.45,w:0.16,h:0.55,fill:{color:C.primary}});
+   sl.addText(s.title,{x:0.95,y:0.45,w:11.8,h:0.6,fontSize:26,bold:true,color:C.dark});
+   const blockW=2.5,gap=0.72,startX=0.85;
+   s.points.forEach((p,i)=>{
+    let x=startX+i*(blockW+gap);
+    // 步骤块
+    sl.addShape(pptx.ShapeType.rect,{x,y:2.3,w:blockW,h:2.4,fill:{color:i%2===0?C.primary:C.teal}});
+    sl.addText(p.t,{x,y:2.6,w:blockW,h:0.6,fontSize:20,bold:true,color:'fff',align:'center'});
+    sl.addText(p.d,{x,y:3.3,w:blockW,h:1.2,fontSize:14,color:'e2e8f0',align:'center',lineSpacing:24});
+    // 箭头（三角形）
+    if(i<s.points.length-1){
+     sl.addShape(pptx.ShapeType.triangle,{x:x+blockW+0.12,y:3.15,w:0.45,h:0.6,fill:{color:'94a3b8'},rotate:90});
+    }
+   });
+   sl.addText('原则：评估达标后进阶，不跨阶段冒进，个体化调整训练强度',{x:1,y:5.3,w:11.3,h:0.5,fontSize:15,color:C.dark,align:'center'});
+  }else if(s.layout==='photos'){
+   sl.addShape(pptx.ShapeType.rect,{x:0.6,y:0.45,w:0.16,h:0.55,fill:{color:C.primary}});
+   sl.addText(s.title,{x:0.95,y:0.45,w:11.8,h:0.6,fontSize:26,bold:true,color:C.dark});
+   const pos=[[0.9,1.4],[6.9,1.4],[0.9,4.2],[6.9,4.2]];
+   s.photos.forEach((p,i)=>{
+    let [x,y]=pos[i];
+    sl.addImage({data:p.img,x,y,w:5.5,h:2.4,altText:p.cap});
+    sl.addShape(pptx.ShapeType.rect,{x,y:y+2.4,w:5.5,h:0.45,fill:{color:C.dark}});
+    sl.addText(p.cap,{x:x+0.1,y:y+2.42,w:5.3,h:0.4,fontSize:12,color:'fff'});
+   });
+  }else if(s.layout==='transition'){
+   // 章节过渡页：左侧色块+右侧大标题
+   sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:4.2,h:7.5,fill:{color:C.primary}});
+   sl.addShape(pptx.ShapeType.rect,{x:0.7,y:3.3,w:0.8,h:0.08,fill:{color:'5eead4'}});
+   sl.addText('PART',{x:0.7,y:3.5,fontSize:16,color:'94a3b8',charSpacing:5});
+   sl.addText(s.title,{x:5.2,y:3,w:7.4,h:1.3,fontSize:34,bold:true,color:C.primary,lineSpacing:46});
+   if(s.points)sl.addText(s.points[0]||'',{x:5.2,y:4.3,w:7.4,h:0.8,fontSize:16,color:'64748b'});
+  }else if(s.layout==='data'){
+   sl.addShape(pptx.ShapeType.rect,{x:0.6,y:0.45,w:0.16,h:0.55,fill:{color:C.primary}});
+   sl.addText(s.title,{x:0.95,y:0.45,w:11.8,h:0.6,fontSize:26,bold:true,color:C.dark});
+   // 4个大数字卡片，来自AI points（格式“数值|标签”）
+   const dataItems=(s.points||[]).slice(0,4).map(p=>{const parts=String(p).split('|');return parts.length===2?{n:parts[0],l:parts[1]}:{n:'',l:p}});
+   const pos=[[0.9,1.7],[3.95,1.7],[7,1.7],[10.05,1.7]];
+   dataItems.forEach((d,i)=>{
+    let [x,y]=pos[i];
+    sl.addShape(pptx.ShapeType.rect,{x,y,w:2.6,h:3.8,fill:{color:i%2?'f0fdfa':'eff6ff'}});
+    sl.addText(d.n,{x,y:y+0.8,w:2.6,h:1.2,fontSize:44,bold:true,color:i%2?C.teal:C.primary,align:'center'});
+    sl.addShape(pptx.ShapeType.rect,{x:x+0.9,y:y+2.2,w:0.8,h:0.05,fill:{color:i%2?C.teal:C.primary}});
+    sl.addText(d.l,{x,y:y+2.5,w:2.6,h:0.6,fontSize:17,color:C.dark,align:'center'});
+   });
+   sl.addText('注：数据根据实践材料整理，具体以实际实践记录为准',{x:1,y:5.9,w:11.3,h:0.4,fontSize:12,color:'64748b',align:'center'});
+  }else if(s.layout==='case_eval'||s.layout==='case_plan'){
+   const isPlan=s.layout==='case_plan';
+   const mainColor=C.teal;
+   sl.addShape(pptx.ShapeType.rect,{x:0.6,y:0.45,w:0.16,h:0.55,fill:{color:mainColor}});
+   sl.addText(s.title,{x:0.95,y:0.45,w:11.8,h:0.6,fontSize:24,bold:true,color:C.dark});
+   sl.addShape(pptx.ShapeType.rect,{x:0.6,y:1.35,w:0.08,h:5.4,fill:{color:mainColor}});
+   const points=s.points||[];
+   const labels=isPlan?['分阶段','训练动作','进阶标准','注意事项','效果评价']:['基本情况','主诉','客观评估','功能问题','康复目标'];
+   const fit=fitStack(points,9.6,5.45,0.5,0.08);
+   let y=1.5;
+   points.forEach((p,i)=>{
+    const h=fit.hs[i];
+    sl.addShape(pptx.ShapeType.rect,{x:0.9,y,w:11.8,h,fill:{color:'f8fafc'}});
+    sl.addShape(pptx.ShapeType.rect,{x:0.9,y,w:1.4,h,fill:{color:mainColor}});
+    sl.addText(labels[i]||'要点',{x:0.9,y:y+0.08,w:1.4,h:h-0.12,fontSize:12,bold:true,color:'fff',align:'center',valign:'middle'});
+    sl.addText(p,{x:2.5,y:y+0.08,w:10,h:h-0.12,fontSize:fit.fs,color:C.dark,valign:'top',lineSpacing:Math.round(fit.fs*1.28)});
+    y+=h+0.08;
+   });
+  }else if(s.layout==='thanks'){
+   sl.addShape(pptx.ShapeType.rect,{x:5.65,y:2.5,w:2,h:0.06,fill:{color:C.teal}});
+   sl.addText(s.title,{x:2,y:2.8,w:9.3,h:1.1,fontSize:44,bold:true,color:C.primary,align:'center'});
+   sl.addShape(pptx.ShapeType.rect,{x:5.65,y:4.1,w:2,h:0.06,fill:{color:C.teal}});
+   sl.addText(s.subtitle,{x:2,y:4.3,w:9.3,h:0.7,fontSize:18,color:C.dark,align:'center'});
+  }
+  // 统一页脚（封面不加）
+  if(s.layout!=='cover'){
+   sl.addShape(pptx.ShapeType.line,{x:0.6,y:7.05,w:12.1,h:0,line:{color:'cbd5e1',width:0.75}});
+   sl.addText(nameInput.value+' | '+type.value,{x:0.6,y:7.1,w:6,h:0.3,fontSize:10,color:'64748b'});
+   sl.addText(String(i+1),{x:12.2,y:7.1,w:0.5,h:0.3,fontSize:10,color:'64748b',align:'right'});
+  }
+  if(s.note)sl.addNotes(s.note);
+  L('渲染页'+i);
+ }
+ L('开始writeFile');
+ window._lastPptx=pptx;
+ await pptx.writeFile({fileName:nameInput.value+'_汇报PPT.pptx'});
+ L('writeFile完成');
+ }catch(err){alert('PPT生成失败：'+err.message)}
+ btn.disabled=false;btn.textContent=old;
+}
+async function exportSpeechOutline(e){
+ const btn=e.target,old=btn.textContent;btn.disabled=true;btn.textContent='生成中...';
+ try{
+ let slides;try{slides=await fetchAiPptSlides()}catch(e){slides=buildPptStructure()}
+ let content=slides.map((s,i)=>`第${i+1}页：${s.title}\n页面要点：${(s.points||[]).join('；')}\n演讲内容：${s.note||''}\n`).join('\n');
+ let html=`<html><head><meta charset="utf-8"><style>body{font-family:宋体;padding:50px;line-height:2;font-size:14pt}h1{text-align:center}h3{margin-top:25px}</style></head><body><h1>${type.value}汇报演讲提纲</h1><p style="text-indent:0">汇报人：${nameInput.value} | 时长：${$('pptDuration').value}分钟</p>`+
+ content.split('\n').filter(l=>l.trim()).map(l=>`<p style="text-indent:0">${l}</p>`).join('')+`</body></html>`;
+ let blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nameInput.value+'_演讲提纲.doc';a.click();
+ }catch(err){alert('提纲导出失败：'+err.message)}
+ btn.disabled=false;btn.textContent=old;
+}
+
+// 强制挂载全局，保证onclick可访问
+Object.assign(window,{startFlow,confirmOutline,exportWord,exportPPT,exportSpeechOutline,loadTpl,loadImgs,copyAll,fetchAiPptSlides,splitCases,buildPptStructure,cleanText});
+</script>
+</body>
+</html>
