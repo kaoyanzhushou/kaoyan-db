@@ -35,7 +35,9 @@ textarea.c{min-height:110px;resize:vertical}
 .tip{background:#eff6ff;border-left:4px solid var(--primary);padding:10px 14px;font-size:13px;border-radius:0 6px 6px 0;margin:10px 0;line-height:1.6}
 .result{display:none}.doc{background:#fff;border:1px solid var(--border);border-radius:8px;padding:50px;min-height:500px;max-height:700px;overflow-y:auto;box-shadow:0 2px 10px rgba(0,0,0,.08);line-height:1.9;font-size:14px}
 .cover{text-align:center;margin-bottom:40px;padding-top:60px}.cover h1{font-size:28px;margin-bottom:30px}.cover p{margin:12px 0;font-size:15px}
-.doc h2{font-size:18px;margin:28px 0 15px;padding-bottom:8px;border-bottom:2px solid var(--primary)}.doc h3{font-size:16px;margin:20px 0 10px}.doc p{text-indent:2em;margin:8px 0}.doc .photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin:20px 0}.doc .photo-grid img{width:100%;border-radius:6px}.toc p{text-indent:0;padding-left:20px}.hidden{display:none!important}
+.doc h2{font-size:18px;margin:28px 0 15px;padding-bottom:8px;border-bottom:2px solid var(--primary)}.doc h3{font-size:16px;margin:20px 0 10px}.doc p{text-indent:2em;margin:8px 0}.doc .photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin:20px 0}
+.photo-item p{text-indent:0!important;text-align:center;font-size:13px;margin-top:8px!important;line-height:1.6}
+.doc .photo-grid img{width:100%;border-radius:6px}.toc p{text-indent:0;padding-left:20px}.hidden{display:none!important}
 .load{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:sp 1s linear infinite;margin-right:6px}@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -96,7 +98,10 @@ async function checkS(){try{let r=await fetch(API+'/api/model-status'),d=await r
 function setS(n,c){document.getElementById('s'+n).classList.add(c)}
 async function callRefine(action,payload){let r=await fetch(API+'/api/teacher/refine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,payload})}),d=await r.json();if(d.code!==0)throw new Error(d.msg);return d.data}
 async function loadTpl(i){let f=i.files[0];tplTip.textContent='解析中...';try{let t='';if(f.name.endsWith('.txt'))t=await f.text();else{let b=await f.arrayBuffer();t=(await mammoth.extractRawText({arrayBuffer:b})).value}tpl.value=t;tplTip.textContent='✅ 模板已解析，仅提取结构，示例内容不会被使用'}catch(e){tplTip.textContent='解析失败'}}
-function loadImgs(i){[...i.files].forEach(f=>imgs.push({url:URL.createObjectURL(f),file:f}));imgPrev.innerHTML=imgs.map(x=>`<img src="${x.url}">`).join('')}
+function loadImgs(i){[...i.files].forEach(f=>imgs.push({url:URL.createObjectURL(f),file:f,caption:''}));renderImgPrev()}
+function renderImgPrev(){
+ imgPrev.innerHTML=imgs.map((x,i)=>`<div style="width:150px"><img src="${x.url}" style="width:150px;height:110px;object-fit:cover;border-radius:6px"><textarea placeholder="填写本张照片说明（不填自动生成）" style="width:100%;height:60px;font-size:11px;margin-top:4px;border:1px solid #e2e8f0;border-radius:4px;padding:4px" onchange="imgs[${i}].caption=this.value">${x.caption}</textarea></div>`).join('');
+}
 
 async function startFlow(){
  startBtn.disabled=true;steps.style.display='block';
@@ -151,12 +156,17 @@ function renderDoc(){
  let cleanContent=cleanText(finalText);
  let cleanOutline=cleanText(finalOutline);
  let toc=cleanOutline.split('\n').filter(l=>l.trim()).map(l=>`<p>${l.replace(/^[一二三四五六七八九十\d.、\s]+/,'')}</p>`).join('');
- let photos=imgs.map(x=>`<img src="${x.url}">`).join('');
+ // 自动补全空图注
+ const defaultCaps=['为学员进行下肢功能评估，检查关节活动度与损伤情况','指导学员进行垫上康复训练，纠正训练动作','在实践场地与学员沟通训练方案，了解恢复情况','指导学员进行康复力量训练，强化薄弱肌群'];
+ let photoHtml=imgs.map((x,i)=>{
+  let cap=x.caption||defaultCaps[i%defaultCaps.length];
+  return `<div class="photo-item"><img src="${x.url}"><p>图${i+1} ${cap}</p></div>`
+ }).join('');
  // 模板顺序：封面→目录→实践照片→正文
  document.getElementById('docRender').innerHTML=`
  <div class="cover"><h1>${type.value}</h1><p>学院：${college.value}</p><p>姓名：${nameInput.value}</p><p>实践单位：${company.value}</p><p>完成时间：${dateInput.value}</p></div>
  <h2>目录</h2><div class="toc">${toc}</div>
- <h2>实践照片</h2><div class="photo-grid">${photos||'<p style="text-indent:0">（请补充实践照片）</p>'}</div>
+ <h2>实践照片</h2><div class="photo-grid">${photoHtml||'<p style="text-indent:0">（请补充实践照片）</p>'}</div>
  <h2>正文</h2>${cleanContent.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('')}`;
 }
 function copyAll(){navigator.clipboard.writeText(finalText);alert('已复制正文')}
@@ -164,7 +174,12 @@ async function exportWord(){
  let cleanContent=cleanText(finalText);
  let cleanOutline=cleanText(finalOutline);
  let photoHtml='';
- for(let x of imgs){let b=await x.file.arrayBuffer();let b64=btoa(String.fromCharCode(...new Uint8Array(b)));photoHtml+=`<p style="text-align:center"><img src="data:image/jpeg;base64,${b64}" width="400"></p>`}
+ const defaultCaps=['为学员进行下肢功能评估，检查关节活动度与损伤情况','指导学员进行垫上康复训练，纠正训练动作','在实践场地与学员沟通训练方案，了解恢复情况','指导学员进行康复力量训练，强化薄弱肌群'];
+ for(let i=0;i<imgs.length;i++){
+  let x=imgs[i];let b=await x.file.arrayBuffer();let b64=btoa(String.fromCharCode(...new Uint8Array(b)));
+  let cap=x.caption||defaultCaps[i%defaultCaps.length];
+  photoHtml+=`<p style="text-align:center;text-indent:0"><img src="data:image/jpeg;base64,${b64}" width="400"></p><p style="text-align:center;text-indent:0;font-size:12pt">图${i+1} ${cap}</p>`;
+ }
  let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:宋体;line-height:2;font-size:14pt;padding:50px}h1{text-align:center;font-size:22pt}h2{font-size:16pt;border-bottom:1px solid #000;padding-bottom:5px}p{text-indent:2em;margin:8px 0}.cover p{text-indent:0;text-align:center}.toc p{text-indent:0}</style></head><body>
  <div class="cover"><h1>${type.value}</h1><p>学院：${college.value}</p><p>姓名：${nameInput.value}</p><p>实践单位：${company.value}</p><p>完成时间：${dateInput.value}</p></div>
  <h2>目录</h2>${cleanOutline.split('\n').filter(l=>l.trim()).map(l=>'<p class="toc">'+l+'</p>').join('')}
