@@ -101,13 +101,13 @@ function loadImgs(i){[...i.files].forEach(f=>imgs.push({url:URL.createObjectURL(
 async function startFlow(){
  startBtn.disabled=true;steps.style.display='block';
  let info=`姓名：${nameInput.value}\n学院：${college.value}\n实践单位：${company.value}\n时间：${dateInput.value}\n类型：${type.value}`;
- let material=info+'\n\n工作素材：\n'+material.value;
+ let fullMaterial=info+'\n\n工作素材：\n'+material.value;
  let tplText=tpl.value;
  try{
  setS(1,'act');
  // 严格prompt：模板只取结构
  let strictTpl='【模板仅用于提取章节结构和数量要求，禁止使用模板中的任何人名、案例、示例文字；所有内容只能从用户素材提取，素材没有就标注「请补充」，禁止编造】\n'+tplText;
- let d1=await callRefine('parse_material',{material,template:strictTpl});
+ let d1=await callRefine('parse_material',{material:fullMaterial,template:strictTpl});
  parsedMaterial=d1.merged;setS(1,'done');setS(2,'act');
  let d2=await callRefine('gen_outlines',{parsedMaterial,template:strictTpl,caseCount:caseNum.value});
  finalOutline=d2.finalOutline;outlineEdit.value=finalOutline;
