@@ -3,56 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>教师材料智能生成器 P2 自定义模板版</title>
+<title>教师材料智能生成器 P3 可控版</title>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
-body { background:#f5f7fa; min-height:100vh; padding:20px; }
-.container { max-width:960px; margin:0 auto; }
-.header { text-align:center; margin-bottom:24px; padding:28px; background:white; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.06); }
-.header h1 { color:#1f2937; margin-bottom:6px; font-size:26px; }
-.header p { color:#6b7280; font-size:14px; }
-.card { background:white; border-radius:12px; padding:26px; box-shadow:0 2px 12px rgba(0,0,0,0.06); margin-bottom:22px; }
-.form-group { margin-bottom:18px; }
-.form-group label { display:block; margin-bottom:7px; font-weight:500; color:#374151; font-size:14px; }
-.form-control { width:100%; padding:11px 13px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; }
-.form-control:focus { outline:none; border-color:#4f46e5; box-shadow:0 0 0 3px rgba(79,70,229,0.1); }
-.form-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
-textarea { resize:vertical; min-height:160px; line-height:1.6; }
-.btn-primary { width:100%; padding:13px; background:#4f46e5; color:white; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; }
-.btn-primary:disabled { background:#9ca3af; cursor:not-allowed; }
-.result-section { display:none; }
-.result-actions { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-.btn { padding:9px 18px; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; }
-.btn-success { background:#10b981; color:white; }
-.btn-secondary { background:#f3f4f6; color:#374151; border:1px solid #d1d5db; }
-.btn-warning { background:#f59e0b; color:white; }
-.result-content { background:white; padding:40px; border:1px solid #e5e7eb; border-radius:8px; line-height:1.8; color:#1f2937; min-height:500px; font-size:15px; }
-.tip { font-size:12px; color:#6b7280; margin-top:5px; }
-.status { text-align:center; padding:18px; color:#6b7280; display:none; font-size:14px; }
-.word-count { font-size:12px; color:#6b7280; text-align:right; margin-top:4px; }
-.upload-area { border:2px dashed #d1d5db; border-radius:8px; padding:20px; text-align:center; cursor:pointer; transition:all 0.2s; }
-.upload-area:hover { border-color:#4f46e5; background:#f8faff; }
-.image-preview { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:12px; }
-.img-item { position:relative; aspect-ratio:1; border-radius:6px; overflow:hidden; }
-.img-item img { width:100%; height:100%; object-fit:cover; }
-.img-del { position:absolute; top:4px; right:4px; width:22px; height:22px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; cursor:pointer; font-size:12px; }
-.chapter-list { max-height:200px; overflow-y:auto; margin:10px 0; border:1px solid #e5e7eb; border-radius:6px; }
-.chapter-item { padding:10px 14px; border-bottom:1px solid #f3f4f6; display:flex; justify-content:space-between; align-items:center; font-size:14px; }
-.chapter-item button { padding:4px 10px; font-size:12px; background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; cursor:pointer; }
-.version-list { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-.version-tag { padding:4px 10px; background:#f3f4f6; border-radius:20px; font-size:12px; cursor:pointer; }
-.template-box { background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:16px; margin-bottom:18px; }
-.template-status { font-size:13px; margin-top:8px; }
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+body{background:#f5f7fa;min-height:100vh;padding:20px;}
+.container{max-width:960px;margin:0 auto;}
+.header{text-align:center;margin-bottom:24px;padding:28px;background:white;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);}
+.header h1{color:#1f2937;margin-bottom:6px;font-size:26px;}
+.header p{color:#6b7280;font-size:14px;}
+.steps{display:flex;justify-content:space-between;margin-bottom:24px;background:white;padding:18px 24px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);}
+.step-item{flex:1;text-align:center;position:relative;color:#9ca3af;font-size:14px;font-weight:500;}
+.step-item.active{color:#4f46e5;}
+.step-item.done{color:#10b981;}
+.step-num{width:30px;height:30px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;color:white;font-size:14px;}
+.step-item.active .step-num{background:#4f46e5;}
+.step-item.done .step-num{background:#10b981;}
+.step-page{display:none;}
+.step-page.active{display:block;}
+.card{background:white;border-radius:12px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-bottom:20px;}
+.form-group{margin-bottom:18px;}
+.form-group label{display:block;margin-bottom:8px;font-weight:500;color:#374151;font-size:14px;}
+.form-control{width:100%;padding:11px 13px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;}
+.form-control:focus{outline:none;border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,0.1);}
+.form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+textarea{resize:vertical;line-height:1.6;}
+.btn{padding:11px 22px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;}
+.btn-primary{background:#4f46e5;color:white;}
+.btn-primary:hover{background:#4338ca;}
+.btn-primary:disabled{background:#9ca3af;cursor:not-allowed;}
+.btn-success{background:#10b981;color:white;}
+.btn-secondary{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;}
+.btn-warning{background:#f59e0b;color:white;}
+.btn-row{display:flex;gap:12px;justify-content:space-between;margin-top:20px;}
+.upload-area{border:2px dashed #d1d5db;border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;}
+.upload-area:hover{border-color:#4f46e5;background:#f8faff;}
+.tip{font-size:12px;color:#6b7280;margin-top:6px;}
+.status-text{font-size:13px;margin-top:8px;}
+.image-preview{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;}
+.img-item{position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;}
+.img-item img{width:100%;height:100%;object-fit:cover;}
+.img-del{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(0,0,0,.6);color:white;border:none;border-radius:50%;cursor:pointer;}
+.template-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:18px;}
+.outline-tip{background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:14px;font-size:13px;color:#92400e;margin-bottom:16px;}
+.result-actions{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.result-content{background:white;padding:40px;border:1px solid #e5e7eb;border-radius:8px;line-height:1.8;min-height:500px;font-size:15px;}
+.chapter-list{max-height:200px;overflow-y:auto;margin:10px 0;border:1px solid #e5e7eb;border-radius:6px;}
+.chapter-item{padding:10px 14px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;font-size:14px;}
+.chapter-item button{padding:4px 10px;font-size:12px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;}
+.version-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.version-tag{padding:4px 10px;background:#f3f4f6;border-radius:20px;font-size:12px;cursor:pointer;}
+.word-count{font-size:12px;color:#6b7280;text-align:right;margin-top:6px;}
 </style>
 </head>
 <body>
 <div class="container">
-<div class="header">
+<div class="header>
 <h1>教师材料智能生成器</h1>
-<p>支持自定义模板上传 · 专业内容生成 · 图片排版 · 分章节编辑</p>
+<p>分步可控 · 自定义模板 · 大纲先确认 · 内容不跑偏</p>
 </div>
 
+<div class="steps">
+<div class="step-item active" id="stepNav1"><div class="step-num">1</div>基础信息与模板</div>
+<div class="step-item" id="stepNav2"><div class="step-num">2</div>素材与图片</div>
+<div class="step-item" id="stepNav3"><div class="step-num">3</div>大纲确认</div>
+<div class="step-item" id="stepNav4"><div class="stepNum">4</div>生成与导出</div>
+</div>
+
+<!-- 步骤1 -->
+<div class="step-page active" id="stepPage1">
 <div class="card">
 <div class="form-group">
 <label>材料类型</label>
@@ -65,112 +84,137 @@ textarea { resize:vertical; min-height:160px; line-height:1.6; }
 </select>
 </div>
 
-<!-- 自定义模板上传 显眼位置 -->
 <div class="template-box">
-<label style="margin-bottom:10px;font-weight:600;color:#0c4a6e;">📄 我的自定义模板（上传后严格按你的模板生成）</label>
-<div class="upload-area" id="templateUploadArea" style="padding:16px;background:white;">
-<div style="color:#6b7280;font-size:14px;">点击上传 .docx / .doc / .txt 模板文件，自动解析章节结构</div>
+<label style="font-weight:600;color:#0c4a6e;margin-bottom:10px;display:block;">📄 上传我的专属模板（可选）</label>
+<div class="upload-area" id="tplUpload" style="padding:18px;background:white;">
+<div style="color:#6b7280;font-size:14px;">点击上传 .docx/.txt 模板，自动解析章节与数量要求</div>
 </div>
-<input type="file" id="templateInput" accept=".docx,.doc,.txt" style="display:none;">
-<div class="template-status" id="templateStatus"></div>
+<input type="file" id="tplInput" accept=".docx,.txt" style="display:none;">
+<div class="status-text" id="tplStatus"></div>
 </div>
 
-<div class="form-row">
-<div class="form-group">
-<label>姓名</label>
-<input type="text" id="name" class="form-control">
+<div class="form-row" style="margin-top:18px;">
+<div class="form-group"><label>姓名</label><input id="name" class="form-control"></div>
+<div class="form-group"><label>学院/教研室</label><input id="department" class="form-control"></div>
+<div class="form-group"><label>目标字数</label><input type="number" id="targetWords" class="form-control" value="5000" step="500"></div>
 </div>
-<div class="form-group">
-<label>学院/教研室</label>
-<input type="text" id="department" class="form-control">
+
+<div class="btn-row">
+<div></div>
+<button class="btn btn-primary" onclick="goStep(2)">下一步：填写素材 →</button>
 </div>
-<div class="form-group">
-<label>目标字数</label>
-<input type="number" id="targetWords" class="form-control" value="5000" step="500">
 </div>
 </div>
 
+<!-- 步骤2 -->
+<div class="step-page" id="stepPage2">
+<div class="card">
 <div class="form-group">
-<label>工作素材</label>
-<textarea id="materialInput" class="form-control" placeholder="粘贴真实工作内容、经历、案例"></textarea>
+<label>工作/实践素材（所有真实内容随意粘贴）</label>
+<textarea id="materialInput" class="form-control" style="min-height:220px;" placeholder="粘贴实践经历、处理过的案例、教学工作、成果等所有内容"></textarea>
 <div class="word-count"><span id="inputCount">0</span> 字 · 自动保存</div>
 </div>
 
 <div class="form-group">
-<label>上传实践照片</label>
-<div class="upload-area" id="uploadArea">
-<div style="color:#6b7280;">📷 点击或拖拽图片上传</div>
-</div>
-<input type="file" id="imageInput" accept="image/*" multiple style="display:none;">
-<div class="image-preview" id="imagePreview"></div>
+<label>上传实践/案例照片</label>
+<div class="upload-area" id="imgUpload"><div style="color:#6b7280;">📷 点击或拖拽批量上传图片</div></div>
+<input type="file" id="imgInput" accept="image/*" multiple style="display:none;">
+<div class="image-preview" id="imgPreview"></div>
 </div>
 
-<button id="generateBtn" class="btn-primary">✨ 生成完整材料</button>
-<div id="status" class="status">正在生成，预计20-40秒...</div>
+<div class="btn-row">
+<button class="btn btn-secondary" onclick="goStep(1)">← 返回上一步</button>
+<button class="btn btn-primary" id="genOutlineBtn">生成写作大纲 →</button>
+</div>
+</div>
 </div>
 
-<div id="resultSection" class="result-section">
+<!-- 步骤3 -->
+<div class="step-page" id="stepPage3">
+<div class="card">
+<div class="outline-tip">
+✅ 以下是AI根据你的模板和素材生成的大纲，<b>你可以直接编辑修改</b>：增删章节、调整案例数量、修改每部分侧重点，确认无误后再生成全文，避免内容跑偏。
+</div>
+<div class="form-group">
+<label>可编辑写作大纲</label>
+<textarea id="outlineText" class="form-control" style="min-height:380px;" placeholder="点击上方按钮生成大纲"></textarea>
+</div>
+<div class="btn-row">
+<button class="btn btn-secondary" onclick="goStep(2)">← 返回修改素材</button>
+<button class="btn btn-success" id="genFullBtn">✅ 确认大纲，生成完整材料</button>
+</div>
+</div>
+</div>
+
+<!-- 步骤4 -->
+<div class="step-page" id="stepPage4">
+<div class="card">
 <div class="result-actions">
 <button id="exportBtn" class="btn btn-success">📄 导出Word</button>
 <button id="copyBtn" class="btn btn-secondary">📋 复制全文</button>
-<button id="regenBtn" class="btn btn-warning">🔄 重新生成</button>
+<button id="regenBtn" class="btn btn-warning">🔄 按当前大纲重新生成</button>
+<button class="btn btn-secondary" onclick="goStep(3)">← 修改大纲</button>
 </div>
+</div>
+
 <div class="card" style="padding:18px;">
-<label style="font-size:14px;font-weight:500;display:block;margin-bottom:8px;">分章节重写</label>
+<label style="font-size:14px;font-weight:500;display:block;margin-bottom:8px;">分章节单独重写</label>
 <div class="chapter-list" id="chapterList"></div>
-<label style="font-size:14px;font-weight:500;display:block;margin:12px 0 8px;">历史版本</label>
+<label style="font-size:14px;font-weight:500;display:block;margin:12px 0 8px;">历史版本（点击回退）</label>
 <div class="version-list" id="versionList"></div>
 </div>
+
 <div class="result-content" id="resultContent"></div>
-<div class="word-count"><span id="outputCount">0</span> 字</div>
+<div class="word-count">当前共 <span id="outputCount">0</span> 字</div>
+<div id="loadingStatus" style="display:none;text-align:center;padding:30px;color:#6b7280;font-size:14px;"></div>
+</div>
 </div>
 </div>
 
 <script>
 const BACKEND='https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/chat';
-let uploadedImages=[],versions=[],currentResult='',customTemplateText='';
+let uploadedImgs=[],versions=[],currentResult='',customTpl='';
 
-// 自定义模板上传
-document.getElementById('templateUploadArea').onclick=()=>document.getElementById('templateInput').click();
-document.getElementById('templateInput').onchange=async function(e){
-  const file=e.target.files[0];if(!file)return;
-  const el=document.getElementById('templateStatus');
-  el.textContent='正在解析...';el.style.color='#0369a1';
-  try{
-    if(file.name.endsWith('.docx')){
-      const buf=await file.arrayBuffer();
-      const res=await mammoth.extractRawText({arrayBuffer:buf});
-      customTemplateText=res.value;
-    }else customTemplateText=await file.text();
-    localStorage.setItem('my_custom_template',customTemplateText);
-    el.textContent=`✅ 模板「${file.name}」解析成功，生成将严格使用该模板`;
-    el.style.color='#15803d';
-  }catch(err){
-    el.textContent='❌ 解析失败，请使用标准docx/txt文件';el.style.color='#b91c1c';
+// 步骤切换
+window.goStep=function(n){
+  for(let i=1;i<=4;i++){
+    document.getElementById('stepPage'+i).classList.toggle('active',i===n);
+    const nav=document.getElementById('stepNav'+i);
+    nav.classList.toggle('active',i===n);
+    nav.classList.toggle('done',i<n);
   }
+  window.scrollTo(0,0);
 };
-if(localStorage.getItem('my_custom_template')){
-  customTemplateText=localStorage.getItem('my_custom_template');
-  const el=document.getElementById('templateStatus');
-  el.textContent='✅ 已加载上次上传的自定义模板';el.style.color='#15803d';
-}
 
-// 草稿
-['materialType','name','department','targetWords','materialInput'].forEach(id=>{
-  const el=document.getElementById(id);const s=localStorage.getItem('p2v2_'+id);if(s)el.value=s;
-  el.addEventListener('input',()=>{localStorage.setItem('p2v2_'+id,el.value);if(id==='materialInput')document.getElementById('inputCount').textContent=el.value.length;});
+// 草稿自动保存
+['materialType','name','department','targetWords','materialInput','outlineText'].forEach(id=>{
+  const el=document.getElementById(id);const s=localStorage.getItem('p3_'+id);if(s)el.value=s;
+  el.addEventListener('input',()=>{localStorage.setItem('p3_'+id,el.value);if(id==='materialInput')document.getElementById('inputCount').textContent=el.value.length;});
 });
 document.getElementById('inputCount').textContent=document.getElementById('materialInput').value.length;
 
-// 图片
-document.getElementById('uploadArea').onclick=()=>document.getElementById('imageInput').click();
-document.getElementById('imageInput').onchange=function(e){
-  Array.from(e.target.files).forEach(f=>{
-    const r=new FileReader();r.onload=ev=>{uploadedImages.push({data:ev.target.result});renderImg();};r.readAsDataURL(f);
-  });
+// 模板上传
+document.getElementById('tplUpload').onclick=()=>document.getElementById('tplInput').click();
+document.getElementById('tplInput').onchange=async e=>{
+  const file=e.target.files[0];if(!file)return;const el=document.getElementById('tplStatus');
+  el.textContent='正在解析...';el.style.color='#0369a1';
+  try{
+    if(file.name.endsWith('.docx')){
+      const buf=await file.arrayBuffer();const r=await mammoth.extractRawText({arrayBuffer:buf});customTpl=r.value;
+    }else customTpl=await file.text();
+    localStorage.setItem('p3_customTpl',customTpl);
+    el.textContent=`✅ 模板「${file.name}」解析成功`;el.style.color='#15803d';
+  }catch{el.textContent='❌ 解析失败，请使用标准docx/txt';el.style.color='#b91c1c';}
 };
-function renderImg(){document.getElementById('imagePreview').innerHTML=uploadedImages.map((_,i)=>`<div class="img-item"><img src="${uploadedImages[i].data}"><button class="img-del" onclick="delImg(${i})">×</button></div>`).join('');}
-window.delImg=i=>{uploadedImages.splice(i,1);renderImg();};
+if(localStorage.getItem('p3_customTpl')){customTpl=localStorage.getItem('p3_customTpl');document.getElementById('tplStatus').textContent='✅ 已加载保存的自定义模板';document.getElementById('tplStatus').style.color='#15803d';}
+
+// 图片上传
+document.getElementById('imgUpload').onclick=()=>document.getElementById('imgInput').click();
+document.getElementById('imgInput').onchange=e=>{
+  Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{uploadedImgs.push({data:ev.target.result});renderImgs();};r.readAsDataURL(f);});
+};
+function renderImgs(){document.getElementById('imgPreview').innerHTML=uploadedImgs.map((_,i)=>`<div class="img-item"><img src="${uploadedImgs[i].data}"><button class="img-del" onclick="delImg(${i})">×</button></div>`).join('');}
+window.delImg=i=>{uploadedImgs.splice(i,1);renderImgs();};
 
 async function callAI(sys,user,max=12000){
   const r=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'system',content:sys},{role:'user',content:user}],max_tokens:max})});
@@ -178,54 +222,98 @@ async function callAI(sys,user,max=12000){
   const d=await r.json();return d.choices?.[0]?.message?.content||d.content;
 }
 
-const builtIn={
+const builtInTpl={
 practice:'章节：一、实践概况 二、实践目的 三、实践内容过程 四、成果收获 五、问题建议 六、心得体会',
 annual:'章节：一、年度概述 二、教学工作 三、科研建设 四、其他工作 五、不足 六、下年计划',
-case:'每个案例：背景、评估、方案、康复过程、反思总结',
+case:'必须包含5个完整不同的运动康复教学案例，每个案例结构：标题、案例背景、损伤评估、处理方案、分阶段康复过程、总结反思',
 team:'章节：概况、训练过程、成绩、经验、展望',
 title:'章节：基本情况、教学业绩、科研成果、专业建设、获奖、总结'
 };
 
-async function generate(full=true,chapter=null){
-  const type=document.getElementById('materialType').value,name=document.getElementById('name').value,dept=document.getElementById('department').value,words=document.getElementById('targetWords').value,input=document.getElementById('materialInput').value;
-  if(full&&!input){alert('请输入素材');return;}
-  document.getElementById('generateBtn').disabled=true;document.getElementById('status').style.display='block';
+// 生成大纲
+document.getElementById('genOutlineBtn').onclick=async function(){
+  const input=document.getElementById('materialInput').value.trim();
+  if(!input){alert('请先填写素材');return;}
+  this.disabled=true;this.textContent='正在生成大纲...';
+  const type=document.getElementById('materialType').value;
+  const tpl=customTpl?('我的自定义模板：\n'+customTpl):builtInTpl[type];
+  const sys='你只输出清晰详细的写作大纲，明确列出所有章节标题、每个章节计划字数、需要的案例/附表数量，不要写正文，格式清晰';
+  const user=`材料类型：${type}\n模板要求：\n${tpl}\n我的素材：\n${input}`;
   try{
-    if(full){
-      const sys='你是高校公文写作专家，熟悉体育、运动康复专业，严格基于真实素材，不编造虚假内容，直接输出正文。';
-      const tpl=customTemplateText?('严格按照我上传的模板结构格式写作：\n'+customTemplateText):builtIn[type];
-      const user=`写一份约${words}字材料：\n${tpl}\n作者：${name}，单位：${dept}\n素材：\n${input}\n共${uploadedImages.length}张照片，在对应位置标注【插入照片X】`;
-      currentResult=await callAI(sys,user);addVer(currentResult);
-    }else{
-      const sys='仅重写指定章节，风格统一，不编造';
-      const user=`全文：\n${currentResult}\n素材：\n${input}\n仅重写章节「${chapter}」，只输出该章节`;
-      const nc=await callAI(sys,user,3000);
-      const reg=new RegExp(chapter.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[\\s\\S]*?(?=\\n[一二三四五六七八九十]、|$)');
-      currentResult=currentResult.replace(reg,nc);addVer(currentResult);
-    }
-    renderRes();
-  }catch(e){alert('失败：'+e.message);}
-  document.getElementById('generateBtn').disabled=false;document.getElementById('status').style.display='none';
-}
+    const outline=await callAI(sys,user,2000);
+    document.getElementById('outlineText').value=outline;
+    localStorage.setItem('p3_outlineText',outline);
+    goStep(3);
+  }catch(e){alert('大纲生成失败：'+e.message);}
+  this.disabled=false;this.textContent='生成写作大纲 →';
+};
 
-function renderRes(){
+// 生成全文
+document.getElementById('genFullBtn').onclick=async function(){
+  const outline=document.getElementById('outlineText').value.trim();
+  if(!outline){alert('请先生成大纲');return;}
+  goStep(4);
+  const loading=document.getElementById('loadingStatus');
+  loading.style.display='block';loading.innerHTML='正在按确认的大纲生成正文，案例较多预计30-60秒，请稍候...';
+  
+  const type=document.getElementById('materialType').value,name=document.getElementById('name').value,dept=document.getElementById('department').value,words=document.getElementById('targetWords').value,input=document.getElementById('materialInput').value;
+  const tpl=customTpl?customTpl:builtInTpl[type];
+
+  try{
+    // 1.生成非案例正文
+    const sys='你是高校公文写作专家，熟悉运动康复专业，严格按照确认的大纲写作，基于真实素材不编造，本次只写除多个教学案例之外的所有内容，在案例位置标注【===插入案例区===】';
+    const user=`大纲：\n${outline}\n模板：\n${tpl}\n作者：${name}，单位：${dept}\n素材：\n${input}\n总字数约${words}，共${uploadedImgs.length}张图片，在对应位置标注【插入照片X】`;
+    let main=await callAI(sys,user,7000);
+
+    // 2.识别案例数量，逐个生成
+    let caseCount=5;
+    const cm=tpl.match(/(\d+)\s*个\s*(案例|范文)/)||outline.match(/(\d+)\s*个\s*(案例|范文)/);
+    if(cm)caseCount=parseInt(cm[1]);
+    if(type==='case')caseCount=Math.max(caseCount,5);
+
+    let cases='';
+    for(let i=1;i<=caseCount;i++){
+      loading.textContent=`正在生成第 ${i}/${caseCount} 个案例...`;
+      const csys='你是运动康复案例专家，写1个完整、不重复的教学案例，结构完整，基于素材，不编造，直接输出案例正文';
+      const cuser=`第${i}个案例，选和其他案例不同的损伤/场景：\n素材：\n${input}`;
+      try{cases+='\n\n'+await callAI(csys,cuser,1600);}
+      catch{i--;}
+    }
+
+    currentResult=main.replace(/【===插入案例区===】|【\s*案例区?\s*】/g,cases);
+    addVersion(currentResult);renderResult();
+  }catch(e){alert('生成失败：'+e.message);}
+  loading.style.display='none';
+};
+
+function renderResult(){
   document.getElementById('resultContent').innerHTML=currentResult.split('\n').join('<br>');
   document.getElementById('outputCount').textContent=currentResult.length;
-  document.getElementById('resultSection').style.display='block';
-  const ch=[...currentResult.matchAll(/\n([一二三四五六七八九十]、[^\n]+)/g)].map(m=>m[1].trim());
-  document.getElementById('chapterList').innerHTML=ch.map(c=>`<div class="chapter-item"><span>${c}</span><button onclick="rewriteCh('${c.replace(/'/g,"\\'")}')">重写</button></div>`).join('')||'<div style="padding:14px;text-align:center;color:#999;">未识别章节</div>';
+  const ch=[...currentResult.matchAll(/\n?([一二三四五六七八九十]、[^\n<]+|案例\s*\d+[：:][^\n<]+)/g)].map(m=>m[1].trim());
+  document.getElementById('chapterList').innerHTML=[...new Set(ch)].map(c=>`<div class="chapter-item"><span>${c}</span><button onclick="rewriteCh('${c.replace(/'/g,"\\'")}')">重写</button></div>`).join('')||'<div style="padding:14px;text-align:center;color:#999;">未识别章节</div>';
 }
-window.rewriteCh=c=>generate(false,c);
-function addVer(t){versions.push({time:new Date().toLocaleTimeString(),text:t});if(versions.length>10)versions.shift();renderVer();}
-function renderVer(){document.getElementById('versionList').innerHTML=versions.map((v,i)=>`<span class="version-tag" onclick="restoreVer(${i})">v${versions.length-i} ${v.time}</span>`).join('');}
-window.restoreVer=i=>{currentResult=versions[i].text;renderRes();};
 
-document.getElementById('generateBtn').onclick=()=>generate(true);
-document.getElementById('regenBtn').onclick=()=>generate(true);
+window.rewriteCh=async function(ch){
+  const input=document.getElementById('materialInput').value;
+  const sys='仅重写指定章节/案例，风格统一，不编造，只输出重写后的内容';
+  const user=`全文：\n${currentResult}\n素材：\n${input}\n仅重写「${ch}」`;
+  try{
+    const nc=await callAI(sys,user,2000);
+    const safe=ch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const reg=new RegExp(safe+'[\\s\\S]*?(?=\\n[一二三四五六七八九十]、|\\n案例\\s*\\d+[：:]|$)');
+    currentResult=currentResult.replace(reg,nc);addVersion(currentResult);renderResult();
+  }catch(e){alert('重写失败：'+e.message);}
+};
+
+function addVersion(t){versions.push({time:new Date().toLocaleTimeString(),text:t});if(versions.length>10)versions.shift();renderVersions();}
+function renderVersions(){document.getElementById('versionList').innerHTML=versions.map((v,i)=>`<span class="version-tag" onclick="restoreVer(${i})">v${versions.length-i} ${v.time}</span>`).join('');}
+window.restoreVer=i=>{currentResult=versions[i].text;renderResult();};
+
+document.getElementById('regenBtn').onclick=()=>document.getElementById('genFullBtn').click();
 document.getElementById('copyBtn').onclick=async function(){await navigator.clipboard.writeText(currentResult);this.textContent='✅ 已复制';setTimeout(()=>this.textContent='📋 复制全文',2000);};
 document.getElementById('exportBtn').onclick=function(){
   const h=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:"宋体";line-height:1.8;font-size:14pt;}</style></head><body>${currentResult.split('\n').join('<br>')}</body></html>`;
-  const b=new Blob(['\ufeff',h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='教师材料.doc';a.click();
+  const b=new Blob(['\ufeff',h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='教师工作材料.doc';a.click();
 };
 </script>
 </body>
