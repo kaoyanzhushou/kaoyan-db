@@ -29,7 +29,8 @@ textarea.c{min-height:110px;resize:vertical}
 .n{width:26px;height:26px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
 .step.act .n{background:var(--primary);color:#fff}.step.done .n{background:var(--success);color:#fff}
 .t{font-size:14px;font-weight:600}.d{font-size:12px;color:var(--light);margin-top:2px}
-.confirm-box{display:none;margin:16px 0;padding:18px;background:#f8fafc;border-radius:8px;border:1px solid var(--border)}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none}
+.confirm-box{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:750px;max-height:85vh;overflow-y:auto;background:#fff;z-index:1000;padding:24px;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
 .confirm-box textarea{width:100%;min-height:220px;border:1px solid var(--border);border-radius:6px;padding:12px;font-size:13px;font-family:inherit;margin:10px 0}
 .tip{background:#eff6ff;border-left:4px solid var(--primary);padding:10px 14px;font-size:13px;border-radius:0 6px 6px 0;margin:10px 0;line-height:1.6}
 .result{display:none}.doc{background:#fff;border:1px solid var(--border);border-radius:8px;padding:50px;min-height:500px;max-height:700px;overflow-y:auto;box-shadow:0 2px 10px rgba(0,0,0,.08);line-height:1.9;font-size:14px}
@@ -39,6 +40,7 @@ textarea.c{min-height:110px;resize:vertical}
 </style>
 </head>
 <body>
+<div class="modal-mask" id="modalMask"></div>
 <div class="container">
 <div class="header"><div><h1>教师材料智能生成器</h1><p>严格基于你的素材 · 大纲确认后写作 · 规范排版</p></div><div style="font-size:12px;opacity:.9">独立工具 · 主站零改动</div></div>
 
@@ -72,7 +74,7 @@ textarea.c{min-height:110px;resize:vertical}
 <div style="font-weight:600;font-size:15px">请确认写作大纲</div>
 <div style="font-size:13px;color:var(--light);margin-top:5px">大纲仅参考模板结构，全部内容将使用你的素材；你可以直接编辑修改章节、案例数量，确认后再开始写作，不会直接生成正文。</div>
 <textarea id="outlineEdit"></textarea>
-<div style="text-align:right"><button class="btn btn-o" onclick="document.getElementById('confirmBox').style.display='none'">取消</button><button class="btn btn-p" onclick="confirmOutline()">确认大纲，开始写作</button></div>
+<div style="text-align:right"><button class="btn btn-o" onclick="closeConfirm()">取消</button><button class="btn btn-p" onclick="confirmOutline()">确认大纲，开始写作</button></div>
 </div>
 </div>
 
@@ -102,21 +104,31 @@ async function startFlow(){
  let d1=await callRefine('parse_material',{material,template:strictTpl});
  parsedMaterial=d1.merged;setS(1,'done');setS(2,'act');
  let d2=await callRefine('gen_outlines',{parsedMaterial,template:strictTpl,caseCount:caseNum.value});
- finalOutline=d2.finalOutline;outlineEdit.value=finalOutline;setS(2,'done');
- // 强制停下确认
- confirmBox.style.display='block';document.getElementById('confirmBox').scrollIntoView({behavior:'smooth'});
- }catch(e){alert('生成失败：'+e.message);startBtn.disabled=false}
+ finalOutline=d2.finalOutline;outlineEdit.value=finalOutline;
+ // 保持步骤2激活，强制弹窗确认，流程终止，不进入后续步骤
+ modalMask.style.display='block';confirmBox.style.display='block';
+ }catch(e){alert('生成大纲失败：'+e.message);setS(1,'done');startBtn.disabled=false}
 }
 
 async function confirmOutline(){
- finalOutline=outlineEdit.value;confirmBox.style.display='none';setS(3,'act');
+ finalOutline=outlineEdit.value;
+ // 确认后才关闭弹窗，步骤2完成、步骤3激活
+ modalMask.style.display='none';confirmBox.style.display='none';
+ setS(2,'done');setS(3,'act');
  try{
- // 严格写作prompt
  let prompt=`严格按照确认后的大纲，基于用户真实素材完整写出全部正文。规则：1.禁止使用模板中的任何示例内容；2.所有事实、人名、案例、数据只能来自提供的素材，素材缺失处写「（请补充）」；3.必须包含${caseNum.value}个独立完整案例，每个案例包含背景、处理过程、康复方案，每个案例单独分段；4.不要使用#、*等markdown符号；5.直接输出正文，不要说明。\n大纲：${finalOutline}\n真实素材：${parsedMaterial}`;
  let d=await callRefine('write_part',{partPrompt:prompt,partType:'detail',maxTokens:9000});
  finalText=d.result;setS(3,'done');setS(4,'act');
  renderDoc();setS(4,'done');resultPanel.style.display='block';resultPanel.scrollIntoView({behavior:'smooth'});
- }catch(e){alert('写作失败：'+e.message+'，已保留大纲可重试')}
+ }catch(e){
+  // 写作失败停留在步骤3，不进入第四步，保留大纲可重试
+  alert('写作失败（未进入第四步）：'+e.message+'，请重新点击开始或稍后重试，大纲已保留');
+ }
+ startBtn.disabled=false;
+}
+
+function closeConfirm(){
+ modalMask.style.display='none';confirmBox.style.display='none';
  startBtn.disabled=false;
 }
 
