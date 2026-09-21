@@ -44,7 +44,7 @@ textarea { resize:vertical; min-height:160px; line-height:1.6; }
 .version-list { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
 .version-tag { padding:4px 10px; background:#f3f4f6; border-radius:20px; font-size:12px; cursor:pointer; }
 </style>
-</head>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script></head>
 <body>
 <div class="container">
 <div class="header">
@@ -64,6 +64,15 @@ textarea { resize:vertical; min-height:160px; line-height:1.6; }
 </select>
 </div>
 
+
+<div class="form-group">
+<label>自定义模板上传（可选，上传后优先使用你的模板）</label>
+<div class="upload-area" id="templateUploadArea" style="padding:16px;">
+<div style="color:#6b7280;font-size:14px;">📄 点击上传 .docx/.doc/.txt 模板文件，自动解析章节结构</div>
+</div>
+<input type="file" id="templateInput" accept=".docx,.doc,.txt,.pdf" style="display:none;">
+<div id="templateStatus" style="font-size:13px;margin-top:6px;color:#10b981;display:none;"></div>
+</div>
 <div class="form-row">
 <div class="form-group">
 <label>姓名</label>
@@ -136,6 +145,39 @@ draftFields.forEach(id=>{
 });
 document.getElementById('inputCount').textContent=document.getElementById('materialInput').value.length;
 
+
+let customTemplateText = '';
+document.getElementById('templateUploadArea').onclick = ()=>document.getElementById('templateInput').click();
+document.getElementById('templateInput').onchange = async function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('templateStatus');
+  statusEl.style.display='block';
+  statusEl.textContent='正在解析模板...';
+  try{
+    if(file.name.endsWith('.docx')){
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({arrayBuffer});
+      customTemplateText = result.value;
+    }else{
+      customTemplateText = await file.text();
+    }
+    localStorage.setItem('custom_template', customTemplateText);
+    statusEl.textContent = `✅ 模板「${file.name}」解析成功，生成时将严格按照该模板结构`;
+  }catch(e){
+    statusEl.textContent='❌ 模板解析失败，请使用txt或标准docx文件';
+    customTemplateText='';
+  }
+};
+// 加载已保存模板
+const savedTemplate = localStorage.getItem('custom_template');
+if(savedTemplate){
+  customTemplateText = savedTemplate;
+  const el=document.getElementById('templateStatus');
+  el.style.display='block';
+  el.textContent='✅ 已加载上次上传的自定义模板';
+}
+
 // 图片上传
 document.getElementById('uploadArea').onclick=()=>document.getElementById('imageInput').click();
 document.getElementById('imageInput').onchange=function(e){
@@ -199,8 +241,9 @@ async function generate(full=true, chapter=null){
   let sys,user;
   if(full){
     sys='你是高校体育学院公文写作专家，精通运动康复专业，严格基于真实素材写作，绝不编造虚假数据、成绩、获奖，语言正式专业，结构清晰，直接输出正文。';
-    user=`请按以下模板写一份约${words}字的材料：
-${templateStructure[type]}
+    const templateUse = customTemplateText ? ('请严格按照我上传的以下模板结构、格式、章节要求写作：\n'+customTemplateText) : templateStructure[type];
+user=`请按模板写一份约${words}字的材料：
+${templateUse}
 作者：${name}，单位：${dept}
 真实素材：
 ${input}
