@@ -212,16 +212,16 @@ async function exportWord(){
 function buildPptStructure(){
  const mins=parseInt($('pptDuration').value);
  let slides=[
-  {title:type.value,subtitle:nameInput.value+' | '+college.value+' | '+dateInput.value,note:'各位老师好，我是'+nameInput.value+'，今天汇报我的'+type.value+'，实践单位为'+company.value+'。'},
-  {title:'汇报目录',points:['实践概况','实践内容与过程','教学案例成果','实践收获与总结'],note:'本次汇报主要分为四个部分，先介绍实践基本情况，再说明实践内容，展示教学案例，最后总结收获。'},
-  {title:'一、实践概况',points:['实践单位：'+company.value,'实践岗位：运动康复教学辅助','实践内容：学员评估、康复训练、教学辅助'],note:'本次实践在'+company.value+'开展，主要参与运动康复评估、训练带教等工作。'},
-  {title:'二、实践内容与过程',points:['学员损伤评估与建档','分阶段康复训练带教','动作纠正与日常指导','训练记录与效果跟踪'],note:'实践期间完成学员评估、康复带教、动作指导、效果跟踪全流程工作。'},
-  {title:'三、典型教学案例',points:['覆盖'+caseNum.value+'类常见运动损伤','每个案例包含评估、处理、康复方案','结合专业知识完成带教'],note:'本次实践共整理'+caseNum.value+'个典型教学案例，覆盖常见运动损伤，形成完整康复流程。'},
-  {title:'四、实践成果与收获',points:['完成学员康复带教，积累一线经验','梳理标准化教学案例','提升专业实践与教学能力','明确后续改进方向'],note:'通过实践积累了一线经验，梳理了教学案例，专业能力得到提升，也明确了后续方向。'},
-  {title:'感谢聆听 敬请指正',points:[],note:'我的汇报到此结束，感谢各位老师，敬请批评指正。'}
+  {layout:'cover',title:type.value,subtitle:nameInput.value+' | '+college.value+' | '+dateInput.value,note:'各位老师好，我是'+nameInput.value+'，今天汇报我的'+type.value+'，实践单位为'+company.value+'。'},
+  {layout:'toc',title:'汇报目录',points:['实践概况','实践内容与过程','典型教学案例','实践收获与总结'],note:'本次汇报主要分为四个部分，先介绍实践基本情况，再说明实践内容，展示教学案例，最后总结收获。'},
+  {layout:'overview',title:'一、实践概况',points:['实践单位：'+company.value,'实践岗位：运动康复教学辅助','实践内容：学员评估、康复训练、教学辅助'],note:'本次实践在'+company.value+'开展，主要参与运动康复评估、训练带教等工作。'},
+  {layout:'process',title:'二、实践内容与过程',points:['损伤评估建档','康复训练带教','动作纠正指导','效果跟踪反馈'],note:'实践期间完成学员评估、康复带教、动作指导、效果跟踪全流程工作。'},
+  {layout:'cases',title:'三、典型教学案例',points:['覆盖'+caseNum.value+'类常见运动损伤','评估-处理-康复完整流程','结合专业知识完成带教'],note:'本次实践共整理'+caseNum.value+'个典型教学案例，覆盖常见运动损伤，形成完整康复流程。'},
+  {layout:'results',title:'四、实践成果与收获',points:['积累一线实践经验','梳理标准化教学案例','提升专业教学能力','明确后续改进方向'],note:'通过实践积累了一线经验，梳理了教学案例，专业能力得到提升，也明确了后续方向。'},
+  {layout:'thanks',title:'感谢聆听',subtitle:'敬请各位老师批评指正',note:'我的汇报到此结束，感谢各位老师，敬请批评指正。'}
  ];
  if(mins===5)slides=slides.filter((_,i)=>[0,1,2,4,6].includes(i));
- if(mins===15)slides.splice(4,0,{title:'案例：常见损伤处理要点',points:['急性期PRICE原则','分阶段肌力与功能训练','回归运动评估标准'],note:'这里补充说明常见损伤的处理要点，急性期遵循PRICE原则，分阶段恢复功能，最后评估回归运动。'});
+ if(mins===15)slides.splice(4,0,{layout:'detail',title:'补充：损伤处理核心要点',points:['急性期遵循PRICE原则','分阶段恢复肌力与功能','回归运动前完成评估'],note:'这里补充说明常见损伤的处理要点，急性期遵循PRICE原则，分阶段恢复功能，最后评估回归运动。'});
  return slides;
 }
 async function exportPPT(e){
@@ -231,13 +231,78 @@ async function exportPPT(e){
  pptx.title=type.value+'汇报PPT';
  pptx.layout='LAYOUT_WIDE';
  const slides=buildPptStructure();
+ const C={primary:'1e40af',light:'eff6ff',dark:'1e293b',gray:'64748b',teal:'0f766e',amber:'b45309'};
  for(const s of slides){
   const sl=pptx.addSlide();
-  sl.background={color:'f8fafc'};
-  sl.addText(s.title,{x:0.5,y:0.4,w:12,h:0.8,fontSize:28,bold:true,color:'1e40af'});
-  if(s.subtitle)sl.addText(s.subtitle,{x:0.5,y:2.5,w:12,h:1,fontSize:18,color:'334155',align:'center'});
-  if(s.points?.length){
-   sl.addText(s.points.map(p=>({text:p,options:{bullet:true,breakLine:true,fontSize:18,color:'1e293b',lineSpacing:40}})),{x:1,y:1.8,w:11,h:4});
+  sl.background={color:'ffffff'};
+  // 1. 封面版式
+  if(s.layout==='cover'){
+   sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.33,h:100,fill:{color:C.primary}});
+   sl.addText(s.title,{x:1,y:2.2,w:11.3,h:1.5,fontSize:40,bold:true,color:'ffffff',align:'center'});
+   sl.addText(s.subtitle,{x:1,y:4,w:11.3,h:1,fontSize:20,color:'e2e8f0',align:'center'});
+  }
+  // 2. 目录双列编号版式
+  else if(s.layout==='toc'){
+   sl.addText(s.title,{x:0.6,y:0.5,w:12,h:0.8,fontSize:30,bold:true,color:C.primary});
+   s.points.forEach((p,i)=>{
+    let x=i%2===0?0.8:7, y=1.8+Math.floor(i/2)*2;
+    sl.addShape(pptx.ShapeType.roundRect,{x,y,w:5.5,h:1.4,fill:{color:C.light},rectRadius:0.1});
+    sl.addText('0'+(i+1),{x:x+0.2,y:y+0.25,w:0.8,h:0.8,fontSize:28,bold:true,color:C.primary});
+    sl.addText(p,{x:x+1.2,y:y+0.4,w:4,h:0.7,fontSize:18,color:C.dark});
+   });
+  }
+  // 3. 概况：左侧色块+右侧信息卡
+  else if(s.layout==='overview'){
+   sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:4,h:5.63,fill:{color:C.primary}});
+   sl.addText(s.title,{x:0.4,y:2,w:3.2,h:1.5,fontSize:26,bold:true,color:'fff',rotate:0});
+   s.points.forEach((p,i)=>{
+    sl.addShape(pptx.ShapeType.roundRect,{x:4.6,y:0.8+i*1.5,w:8,h:1.1,fill:{color:'f8fafc'},line:{color:'e2e8f0'}});
+    sl.addText(p,{x:5,y:1+i*1.5,w:7.2,h:0.7,fontSize:17,color:C.dark});
+   });
+  }
+  // 4. 横向流程版式
+  else if(s.layout==='process'){
+   sl.addText(s.title,{x:0.6,y:0.4,w:12,h:0.7,fontSize:28,bold:true,color:C.primary});
+   s.points.forEach((p,i)=>{
+    let x=0.6+i*3.1;
+    sl.addShape(pptx.ShapeType.chevron,{x,y:2.2,w:2.7,h:1.3,fill:{color:i%2?C.teal:C.primary}});
+    sl.addText(p,{x:x+0.1,y:2.5,w:2.3,h:0.8,fontSize:15,color:'fff',align:'center',bold:true});
+   });
+  }
+  // 5. 案例分栏卡片版式
+  else if(s.layout==='cases'){
+   sl.addText(s.title,{x:0.6,y:0.4,w:12,h:0.7,fontSize:28,bold:true,color:C.primary});
+   s.points.forEach((p,i)=>{
+    let x=0.8+i*4;
+    sl.addShape(pptx.ShapeType.roundRect,{x,y:1.8,w:3.6,h:3,fill:{color:i===1?'f0fdfa':'f8fafc'},line:{color:i===1?'99f6e4':'e2e8f0'},rectRadius:0.1});
+    sl.addShape(pptx.ShapeType.rect,{x,y:1.8,w:3.6,h:0.6,fill:{color:i===1?C.teal:C.primary}});
+    sl.addText('案例要点'+(i+1),{x,y:1.9,w:3.6,h:0.5,fontSize:15,color:'fff',align:'center'});
+    sl.addText(p,{x:x+0.3,y:2.7,w:3,h:1.8,fontSize:16,color:C.dark,valign:'middle'});
+   });
+  }
+  // 6. 成果四色块卡片
+  else if(s.layout==='results'){
+   sl.addText(s.title,{x:0.6,y:0.4,w:12,h:0.7,fontSize:28,bold:true,color:C.primary});
+   const colors=[C.primary,C.teal,C.amber,'7c3aed'];
+   s.points.forEach((p,i)=>{
+    let x=0.7+(i%2)*6.2,y=1.6+Math.floor(i/2)*1.8;
+    sl.addShape(pptx.ShapeType.roundRect,{x,y,w:5.7,h:1.4,fill:{color:colors[i]},rectRadius:0.08});
+    sl.addText(p,{x:x+0.3,y:y+0.35,w:5.1,h:0.7,fontSize:17,color:'fff',bold:true});
+   });
+  }
+  // 7. 要点详情版式
+  else if(s.layout==='detail'){
+   sl.addText(s.title,{x:0.6,y:0.5,w:12,h:0.8,fontSize:28,bold:true,color:C.teal});
+   s.points.forEach((p,i)=>{
+    sl.addShape(pptx.ShapeType.ellipse,{x:1,y:1.8+i*1.1,w:0.5,h:0.5,fill:{color:C.teal}});
+    sl.addText(p,{x:1.8,y:1.85+i*1.1,w:10,h:0.6,fontSize:18,color:C.dark});
+   });
+  }
+  // 8. 致谢居中版式
+  else if(s.layout==='thanks'){
+   sl.addShape(pptx.ShapeType.rect,{x:0,y:4.2,w:13.33,h:1.2,fill:{color:C.primary}});
+   sl.addText(s.title,{x:1,y:2.5,w:11.3,h:1,fontSize:44,bold:true,color:C.primary,align:'center'});
+   sl.addText(s.subtitle,{x:1,y:4.4,w:11.3,h:0.8,fontSize:20,color:'fff',align:'center'});
   }
   if(s.note)sl.addNotes(s.note);
  }
