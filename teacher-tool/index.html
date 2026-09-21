@@ -210,15 +210,25 @@ async function exportWord(){
 }
 // ===================== 增量：配套汇报PPT与演讲提纲 =====================
 function splitCases(text){
- const re=/(?=案例[\s]*[一二三四五六七八九十\d]+[：:、.\s]|[一二三四五六七八九十]+[、.][^\n]*案例)/g;
- const parts=text.split(re);
- let cases=[];
- for(let part of parts){
-  part=part.trim();
-  if(part.includes('案例')&&part.length>50)cases.push(part);
+ const nums=['一','二','三','四','五','六','七','八','九','十'];
+ let positions=[];
+ // 查找所有案例开头位置
+ for(let i=1;i<=10;i++){
+  let keys=[`案例${nums[i-1]}`,`案例${i}`,`${nums[i-1]}、案例`];
+  for(let k of keys){
+   let idx=text.indexOf(k);
+   if(idx>=0)positions.push({idx,i});
+  }
  }
- if(cases.length===0){
-  cases=text.split('\n').filter(l=>l.includes('案例')&&l.length>50);
+ positions.sort((a,b)=>a.idx-b.idx);
+ // 去重，每个i只保留第一个位置
+ let seen=new Set(),uniq=[];
+ for(let p of positions){if(!seen.has(p.i)){seen.add(p.i);uniq.push(p)}}
+ let cases=[];
+ for(let j=0;j<uniq.length;j++){
+  let start=uniq[j].idx;
+  let end=j+1<uniq.length?uniq[j+1].idx:text.length;
+  cases.push(text.slice(start,end).trim());
  }
  return cases.slice(0,parseInt(caseNum.value));
 }
