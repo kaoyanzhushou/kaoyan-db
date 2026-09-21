@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+title>教师材料智能生成器 - 独立完整版</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+body { background: #f5f7fa; min-height: 100vh; padding: 20px; }
+.container { max-width: 920px; margin: 0 auto; }
+.header { text-align: center; margin-bottom: 24px; padding: 28px; background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+.header h1 { color: #1f2937; margin-bottom: 6px; font-size: 26px; }
+.header p { color: #6b7280; font-size: 14px; }
+.card { background: white; border-radius: 12px; padding: 26px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 22px; }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; margin-bottom: 7px; font-weight: 500; color: #374151; font-size: 14px; }
+.form-control { width: 100%; padding: 11px 13px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; }
+.form-control:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+textarea { resize: vertical; min-height: 160px; line-height: 1.6; }
+.btn-primary { width: 100%; padding: 13px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.btn-primary:hover { background: #4338ca; }
+.btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+.result-section { display: none; }
+.result-actions { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.btn { padding: 9px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; }
+.btn-success { background: #10b981; color: white; }
+.btn-success:hover { background: #059669; }
+.btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+.btn-secondary:hover { background: #e5e7eb; }
+.result-content { background: white; padding: 36px; border: 1px solid #e5e7eb; border-radius: 8px; line-height: 1.8; color: #1f2937; min-height: 450px; font-size: 15px; }
+.tip { font-size: 12px; color: #6b7280; margin-top: 5px; }
+.status { text-align: center; padding: 18px; color: #6b7280; display: none; font-size: 14px; }
+.word-count { font-size: 12px; color: #6b7280; text-align: right; margin-top: 4px; }
+.key-section { background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+.key-row { display: grid; grid-template-columns: 120px 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px; }
+.key-row:last-child { margin-bottom: 0; }
+.key-row label { font-size: 13px; color: #475569; margin: 0; }
+.key-row input { padding: 8px 10px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; }
+.key-status { font-size: 12px; width: 50px; text-align: center; }
+.save-keys { padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; margin-top: 8px; }
+.toggle-keys { background: none; border: none; color: #4f46e5; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>教师材料智能生成器</h1>
+<p>多模型协作，基于真实素材生成规范正式的专属工作材料</p>
+</div>
+
+<div class="card">
+<button class="toggle-keys" id="toggleKeys">▶ 配置/查看API Key（首次使用必须配置）</button>
+<div class="key-section" id="keySection" style="display:none;">
+<div class="key-row">
+<label>DeepSeek</label>
+<input type="password" id="key_deepseek" placeholder="输入DeepSeek API Key">
+<span class="key-status" id="status_deepseek"></span>
+</div>
+<div class="key-row">
+<label>智谱GLM</label>
+<input type="password" id="key_glm" placeholder="输入智谱API Key">
+<span class="key-status" id="status_glm"></span>
+</div>
+<div class="key-row">
+<label>Kimi</label>
+<input type="password" id="key_kimi" placeholder="输入Kimi API Key">
+<span class="key-status" id="status_kimi"></span>
+</div>
+<div class="key-row">
+<label>通义千问</label>
+<input type="password" id="key_qwen" placeholder="输入通义API Key">
+<span class="key-status" id="status_qwen"></span>
+</div>
+<div class="key-row">
+<label>混元</label>
+<input type="password" id="key_hunyuan" placeholder="输入混元API Key">
+<span class="key-status" id="status_hunyuan"></span>
+</div>
+<button class="save-keys" id="saveKeys">💾 保存Key配置</button>
+<div class="tip">Key仅保存在你本地浏览器，不会上传到任何服务器</div>
+</div>
+
+<div id="modelStatus" style="font-size:13px;padding:10px;border-radius:6px;margin-bottom:16px;"></div>
+
+<div class="form-group">
+<label>材料类型</label>
+<select id="materialType" class="form-control">
+<option value="practice">青年教师专业实践成果报告</option>
+<option value="annual">年度教学工作总结</option>
+<option value="case">运动康复教学案例集</option>
+<option value="team">运动队带队/竞赛总结</option>
+<option value="title">职称评审工作业绩材料</option>
+</select>
+</div>
+
+<div class="form-row">
+<div class="form-group">
+<label>姓名</label>
+<input type="text" id="name" class="form-control" placeholder="请输入姓名">
+</div>
+<div class="form-group">
+<label>学院/教研室</label>
+<input type="text" id="department" class="form-control" placeholder="例如：体育学院">
+</div>
+</div>
+
+<div class="form-group">
+<label>工作素材（真实做过的工作、经历、案例，随意粘贴）</label>
+<textarea id="materialInput" class="form-control" placeholder="例如：2025年7-8月在河南利晨体育实践2个月，负责篮球培训运动防护，处理过3个脚踝扭伤、2个膝盖劳损的学员……"></textarea>
+<div class="word-count"><span id="inputCount">0</span> 字 · 内容自动保存，刷新不丢失</div>
+</div>
+
+<button id="generateBtn" class="btn-primary">✨ 智能生成完整材料</button>
+<div id="status" class="status">正在多模型协作生成，预计10-30秒，请稍候...</div>
+</div>
+
+<div id="resultSection" class="result-section">
+<div class="result-actions">
+<button id="exportBtn" class="btn btn-success">📄 导出Word</button>
+<button id="copyBtn" class="btn btn-secondary">📋 复制全文</button>
+<button id="regenBtn" class="btn btn-secondary">🔄 重新生成</button>
+</div>
+<div class="result-content" id="resultContent"></div>
+<div class="word-count" style="margin-top:8px;">生成内容共 <span id="outputCount">0</span> 字</div>
+</div>
+</div>
+
+<script>
+const modelList = [
+  { key: 'deepseek', name: 'DeepSeek', url: 'https://api.deepseek.com/v1/chat/completions', model: 'deepseek-chat' },
+  { key: 'glm', name: '智谱GLM', url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', model: 'glm-4' },
+  { key: 'kimi', name: 'Kimi', url: 'https://api.moonshot.cn/v1/chat/completions', model: 'moonshot-v1-8k' },
+  { key: 'qwen', name: '通义千问', url: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', model: 'qwen-plus' },
+  { key: 'hunyuan', name: '混元', url: 'https://api.hunyuan.cloud.tencent.com/v1/chat/completions', model: 'hunyuan-pro' }
+];
+
+// Key配置逻辑
+document.getElementById('toggleKeys').onclick = function() {
+  const section = document.getElementById('keySection');
+  section.style.display = section.style.display === 'none' ? 'block' : 'none';
+  this.textContent = section.style.display === 'none' ? '▶ 配置/查看API Key（首次使用必须配置）' : '▼ 收起Key配置';
+};
+
+// 加载已保存的Key
+modelList.forEach(m => {
+  const saved = localStorage.getItem('standalone_' + m.key + '_key');
+  if (saved) document.getElementById('key_' + m.key).value = saved;
+});
+
+document.getElementById('saveKeys').onclick = function() {
+  let count = 0;
+  modelList.forEach(m => {
+    const val = document.getElementById('key_' + m.key).value.trim();
+    const statusEl = document.getElementById('status_' + m.key);
+    if (val) {
+      localStorage.setItem('standalone_' + m.key + '_key', val);
+      statusEl.textContent = '✅';
+      statusEl.style.color = '#10b981';
+      count++;
+    } else {
+      localStorage.removeItem('standalone_' + m.key + '_key');
+      statusEl.textContent = '';
+    }
+  });
+  checkModels();
+  alert('✅ 已保存' + count + '个模型的Key');
+};
+
+function checkModels() {
+  const available = [];
+  modelList.forEach(m => {
+    if (localStorage.getItem('standalone_' + m.key + '_key')) available.push(m.name);
+  });
+  const el = document.getElementById('modelStatus');
+  if (available.length > 0) {
+    el.textContent = '✅ 可用模型：' + available.join('、') + '，自动按顺序兜底';
+    el.style.background = '#f0fdf4';
+    el.style.color = '#166534';
+  } else {
+    el.textContent = '⚠️ 请先展开上方配置，输入至少一个API Key';
+    el.style.background = '#fef2f2';
+    el.style.color = '#991b1b';
+  }
+}
+checkModels();
+
+// 草稿自动保存
+const fields = ['materialType', 'name', 'department', 'materialInput'];
+fields.forEach(id => {
+  const el = document.getElementById(id);
+  const saved = localStorage.getItem('tm_draft_' + id);
+  if (saved) el.value = saved;
+  el.addEventListener('input', () => {
+    localStorage.setItem('tm_draft_' + id, el.value);
+    if (id === 'materialInput') document.getElementById('inputCount').textContent = el.value.length;
+  });
+});
+document.getElementById('inputCount').textContent = document.getElementById('materialInput').value.length;
+
+async function callAI(systemPrompt, userPrompt, maxTokens = 8000) {
+  let lastError = null;
+  for (const config of modelList) {
+    const apiKey = localStorage.getItem('standalone_' + config.key + '_key');
+    if (!apiKey) continue;
+    try {
+      const response = await fetch(config.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          max_tokens: maxTokens,
+          temperature: 0.7
+        })
+      });
+      if (!response.ok) throw new Error(config.name + '请求失败');
+      const data = await response.json();
+      return data.choices[0].message.content;
+    } catch (
+ e) {
+      lastError = e;
+      continue;
+    }
+  }
+  throw new Error('所有模型调用失败' + (lastError ? '：' + lastError.message : '，请检查Key'));
+}
+
+const typeConfig = {
+  practice: '青年教师专业实践成果报告，结构完整：封面信息、实践概况、实践目的、实践内容与过程、实践成果与收获、存在问题与建议、心得体会，正式高校公文风格',
+  annual: '年度教学工作总结，结构完整：年度工作概述、教学工作完成情况、科研成果、学生工作、不足、下年度计划',
+  case: '运动康复教学案例集，每个案例包含：案例背景、损伤评估、处理方案、分阶段康复过程、教学总结反思',
+  team: '运动队带队/竞赛总结，结构：带队概况、训练过程、竞赛成绩、经验总结、问题展望',
+  title: '职称评审工作业绩材料，突出教学成果、科研成果、专业能力、获奖情况'
+};
+
+async function generate() {
+  const type = document.getElementById('materialType').value;
+  const name = document.getElementById('name').value.trim();
+  const dept = document.getElementById('department').value.trim();
+  const input = document.getElementById('materialInput').value.trim();
+  if (!input) { alert('请先粘贴工作素材'); return; }
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  document.getElementById('status').style.display = 'block';
+  document.getElementById('resultSection').style.display = 'none';
+
+  const systemPrompt = '你是高校公文写作专家，熟悉体育学院、运动康复专业正式材料写作规范。严格根据用户提供的真实素材写作，绝对不编造虚假数据、成绩、获奖，语言正式规范，直接输出正文。';
+  const userPrompt = '请写一份' + typeConfig[type] + '\n作者：' + name + '，单位：' + dept + '\n真实素材：\n' + input;
+
+  try {
+    const result = await callAI(systemPrompt, userPrompt);
+    document.getElementById('resultContent').innerHTML = result.split('\n').join('<br>');
+    document.getElementById('outputCount').textContent = result.length;
+    document.getElementById('resultSection').style.display = 'block';
+    localStorage.setItem('tm_last_result', result);
+  } catch (e) {
+    alert('生成失败：' + e.message);
+  }
+
+  btn.disabled = false;
+  document.getElementById('status').style.display = 'none';
+}
+
+document.getElementById('generateBtn').addEventListener('click', generate);
+document.getElementById('regenBtn').addEventListener('click', generate);
+
+document.getElementById('copyBtn').addEventListener('click', async function() {
+  await navigator.clipboard.writeText(document.getElementById('resultContent').innerText);
+  this.textContent = '✅ 已复制';
+  setTimeout(() => this.textContent = '📋 复制全文', 2000);
+});
+
+document.getElementById('exportBtn').addEventListener('click', function() {
+  const content = document.getElementById('resultContent').innerHTML;
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>教师工作材料</title><style>body{font-family:"宋体";line-height:1.8;font-size:14pt;}</style></head><body>${content}</body></html>`;
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = '教师工作材料.doc';
+  link.click();
+});
+
+const lastResult = localStorage.getItem('tm_last_result');
+if (lastResult) {
+  document.getElementById('resultContent').innerHTML = lastResult.split('\n').join('<br>');
+  document.getElementById('outputCount').textContent = lastResult.length;
+  document.getElementById('resultSection').style.display = 'block';
+}
+</script>
+</body>
+</html>
