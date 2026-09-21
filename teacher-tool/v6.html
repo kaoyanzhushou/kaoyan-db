@@ -123,12 +123,17 @@ function htmlToStructuredTemplate(html){
  h=h.replace(/<h[4-6][^>]*>([\s\S]*?)<\/h[4-6]>/gi,'\n#### 小标题：$1\n');
  h=h.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi,'- $1\n');
  h=h.replace(/<p[^>]*>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<br\s*\/?>/gi,'\n');
+ // 识别文字描述的照片位置
+ h=h.replace(/([^\n]*(?:实践照片|插入.{0,6}照片|照片.{0,10}说明)[^\n]*)/gi,(m)=>{
+  if(m.includes('【照片位置'))return m;
+  return m+'\n【照片位置：此处插入实践照片，每张照片下方配图注】';
+ });
  h=h.replace(/<[^>]+>/g,'');
  h=h.replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
  return h.replace(/\n{3,}/g,'\n\n').trim();
 }
 function summarizeTemplate(struct){
- const heads=(struct.match(/^#{1,4}\s*标题：.+$/gm)||[]).map(x=>x.replace(/^#+\s*标题：/,''));
+ const heads=(struct.match(/^#{1,4}\s*(?:[一二三四]级|小)?标题：.+$/gm)||[]).map(x=>x.replace(/^#+\s*(?:[一二三四]级|小)?标题：/,''));
  return {heads:heads.slice(0,30),photoCount:(struct.match(/【照片位置/g)||[]).length,tableCount:(struct.match(/【表格/g)||[]).length,caseReq:(struct.match(/案例/g)||[]).length};
 }
 function showTplSummary(name,sum){
