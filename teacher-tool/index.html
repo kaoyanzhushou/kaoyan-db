@@ -3,25 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>教师材料智能生成器 P3 可控版</title>
+<title>教师材料智能生成器 正式版</title>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
-body{background:#f5f7fa;min-height:100vh;padding:20px;}
-.container{max-width:960px;margin:0 auto;}
-.header{text-align:center;margin-bottom:24px;padding:28px;background:white;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);}
+body{background:#f0f2f5;min-height:100vh;padding:20px;}
+.container{max-width:1000px;margin:0 auto;}
+.header{text-align:center;margin-bottom:24px;padding:28px;background:white;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.05);}
 .header h1{color:#1f2937;margin-bottom:6px;font-size:26px;}
 .header p{color:#6b7280;font-size:14px;}
-.steps{display:flex;justify-content:space-between;margin-bottom:24px;background:white;padding:18px 24px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);}
-.step-item{flex:1;text-align:center;position:relative;color:#9ca3af;font-size:14px;font-weight:500;}
-.step-item.active{color:#4f46e5;}
-.step-item.done{color:#10b981;}
-.step-num{width:30px;height:30px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;color:white;font-size:14px;}
-.step-item.active .step-num{background:#4f46e5;}
-.step-item.done .step-num{background:#10b981;}
-.step-page{display:none;}
-.step-page.active{display:block;}
-.card{background:white;border-radius:12px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-bottom:20px;}
+.steps{display:flex;justify-content:space-between;margin-bottom:24px;background:white;padding:18px 24px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.05);}
+.step-item{flex:1;text-align:center;color:#9ca3af;font-size:14px;font-weight:500;}
+.step-item.active{color:#4f46e5;}.step-item.done{color:#10b981;}
+.step-num{width:30px;height:30px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;color:white;}
+.step-item.active .step-num{background:#4f46e5;}.step-item.done .step-num{background:#10b981;}
+.step-page{display:none;}.step-page.active{display:block;}
+.card{background:white;border-radius:12px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,0.05);margin-bottom:20px;}
 .form-group{margin-bottom:18px;}
 .form-group label{display:block;margin-bottom:8px;font-weight:500;color:#374151;font-size:14px;}
 .form-control{width:100%;padding:11px 13px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;}
@@ -29,12 +26,8 @@ body{background:#f5f7fa;min-height:100vh;padding:20px;}
 .form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
 textarea{resize:vertical;line-height:1.6;}
 .btn{padding:11px 22px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;}
-.btn-primary{background:#4f46e5;color:white;}
-.btn-primary:hover{background:#4338ca;}
-.btn-primary:disabled{background:#9ca3af;cursor:not-allowed;}
-.btn-success{background:#10b981;color:white;}
-.btn-secondary{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;}
-.btn-warning{background:#f59e0b;color:white;}
+.btn-primary{background:#4f46e5;color:white;}.btn-primary:hover{background:#4338ca;}.btn-primary:disabled{background:#9ca3af;}
+.btn-success{background:#10b981;color:white;}.btn-secondary{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;}.btn-warning{background:#f59e0b;color:white;}
 .btn-row{display:flex;gap:12px;justify-content:space-between;margin-top:20px;}
 .upload-area{border:2px dashed #d1d5db;border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;}
 .upload-area:hover{border-color:#4f46e5;background:#f8faff;}
@@ -47,7 +40,21 @@ textarea{resize:vertical;line-height:1.6;}
 .template-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:18px;}
 .outline-tip{background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:14px;font-size:13px;color:#92400e;margin-bottom:16px;}
 .result-actions{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
-.result-content{background:white;padding:40px;border:1px solid #e5e7eb;border-radius:8px;line-height:1.8;min-height:500px;font-size:15px;}
+/* 正式报告纸张样式 */
+.paper{background:white;padding:0;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.05);overflow:hidden;}
+.cover{padding:80px 60px;text-align:center;border-bottom:1px solid #e5e7eb;}
+.cover h1{font-size:32px;color:#1f2937;margin-bottom:60px;font-weight:700;}
+.cover-info{font-size:16px;line-height:2.5;color:#374151;text-align:left;display:inline-block;}
+.paper-body{padding:50px 60px;line-height:1.9;font-size:15px;color:#1f2937;}
+.paper-body h2{font-size:19px;font-weight:700;margin:30px 0 14px;color:#111827;}
+.paper-body h3{font-size:17px;font-weight:600;margin:24px 0 10px;color:#1f2937;}
+.paper-body h4{font-size:16px;font-weight:600;margin:20px 0 8px;color:#374151;}
+.paper-body p{margin-bottom:10px;text-indent:2em;}
+.paper-body table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+.paper-body th,.paper-body td{border:1px solid #d1d5db;padding:10px 12px;text-align:left;}
+.paper-body th{background:#f9fafb;font-weight:600;}
+.report-img{max-width:85%;margin:20px auto;display:block;border-radius:6px;}
+.img-caption{text-align:center;font-size:13px;color:#6b7280;margin:-10px 0 20px;text-indent:0;}
 .chapter-list{max-height:200px;overflow-y:auto;margin:10px 0;border:1px solid #e5e7eb;border-radius:6px;}
 .chapter-item{padding:10px 14px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;font-size:14px;}
 .chapter-item button{padding:4px 10px;font-size:12px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;}
@@ -58,19 +65,18 @@ textarea{resize:vertical;line-height:1.6;}
 </head>
 <body>
 <div class="container">
-<div class="header>
+<div class="header">
 <h1>教师材料智能生成器</h1>
-<p>分步可控 · 自定义模板 · 大纲先确认 · 内容不跑偏</p>
+<p>正式排版 · 自定义模板 · 图片自动嵌入 · 表格自动渲染</p>
 </div>
 
 <div class="steps">
 <div class="step-item active" id="stepNav1"><div class="step-num">1</div>基础信息与模板</div>
 <div class="step-item" id="stepNav2"><div class="step-num">2</div>素材与图片</div>
 <div class="step-item" id="stepNav3"><div class="step-num">3</div>大纲确认</div>
-<div class="step-item" id="stepNav4"><div class="stepNum">4</div>生成与导出</div>
+<div class="step-item" id="stepNav4"><div class="step-num">4</div>生成与导出</div>
 </div>
 
-<!-- 步骤1 -->
 <div class="step-page active" id="stepPage1">
 <div class="card">
 <div class="form-group">
@@ -83,135 +89,109 @@ textarea{resize:vertical;line-height:1.6;}
 <option value="title">职称评审业绩材料</option>
 </select>
 </div>
-
 <div class="template-box">
-<label style="font-weight:600;color:#0c4a6e;margin-bottom:10px;display:block;">📄 上传我的专属模板（可选）</label>
-<div class="upload-area" id="tplUpload" style="padding:18px;background:white;">
-<div style="color:#6b7280;font-size:14px;">点击上传 .docx/.txt 模板，自动解析章节与数量要求</div>
-</div>
+<label style="font-weight:600;color:#0c4a6e;margin-bottom:10px;display:block;">📄 上传专属模板（可选）</label>
+<div class="upload-area" id="tplUpload" style="padding:18px;background:white;"><div style="color:#6b7280;font-size:14px;">点击上传 .docx/.txt 模板，自动解析结构</div></div>
 <input type="file" id="tplInput" accept=".docx,.txt" style="display:none;">
 <div class="status-text" id="tplStatus"></div>
 </div>
-
 <div class="form-row" style="margin-top:18px;">
 <div class="form-group"><label>姓名</label><input id="name" class="form-control"></div>
 <div class="form-group"><label>学院/教研室</label><input id="department" class="form-control"></div>
 <div class="form-group"><label>目标字数</label><input type="number" id="targetWords" class="form-control" value="5000" step="500"></div>
 </div>
-
-<div class="btn-row">
-<div></div>
-<button class="btn btn-primary" onclick="goStep(2)">下一步：填写素材 →</button>
-</div>
+<div class="btn-row"><div></div><button class="btn btn-primary" onclick="goStep(2)">下一步 →</button></div>
 </div>
 </div>
 
-<!-- 步骤2 -->
 <div class="step-page" id="stepPage2">
 <div class="card">
 <div class="form-group">
-<label>工作/实践素材（所有真实内容随意粘贴）</label>
-<textarea id="materialInput" class="form-control" style="min-height:220px;" placeholder="粘贴实践经历、处理过的案例、教学工作、成果等所有内容"></textarea>
+<label>工作素材</label>
+<textarea id="materialInput" class="form-control" style="min-height:220px;" placeholder="粘贴所有真实工作内容、案例、经历"></textarea>
 <div class="word-count"><span id="inputCount">0</span> 字 · 自动保存</div>
 </div>
-
 <div class="form-group">
-<label>上传实践/案例照片</label>
-<div class="upload-area" id="imgUpload"><div style="color:#6b7280;">📷 点击或拖拽批量上传图片</div></div>
+<label>上传实践/案例照片（自动嵌入对应位置）</label>
+<div class="upload-area" id="imgUpload"><div style="color:#6b7280;">📷 点击批量上传图片</div></div>
 <input type="file" id="imgInput" accept="image/*" multiple style="display:none;">
 <div class="image-preview" id="imgPreview"></div>
 </div>
-
 <div class="btn-row">
-<button class="btn btn-secondary" onclick="goStep(1)">← 返回上一步</button>
-<button class="btn btn-primary" id="genOutlineBtn">生成写作大纲 →</button>
+<button class="btn btn-secondary" onclick="goStep(1)">← 返回</button>
+<button class="btn btn-primary" id="genOutlineBtn">生成大纲 →</button>
 </div>
 </div>
 </div>
 
-<!-- 步骤3 -->
 <div class="step-page" id="stepPage3">
 <div class="card">
-<div class="outline-tip">
-✅ 以下是AI根据你的模板和素材生成的大纲，<b>你可以直接编辑修改</b>：增删章节、调整案例数量、修改每部分侧重点，确认无误后再生成全文，避免内容跑偏。
-</div>
+<div class="outline-tip">以下是纯文本大纲，可直接编辑修改（增删章节、调整案例数量），确认后再生成全文。</div>
 <div class="form-group">
-<label>可编辑写作大纲</label>
-<textarea id="outlineText" class="form-control" style="min-height:380px;" placeholder="点击上方按钮生成大纲"></textarea>
+<label>可编辑大纲</label>
+<textarea id="outlineText" class="form-control" style="min-height:380px;"></textarea>
 </div>
 <div class="btn-row">
-<button class="btn btn-secondary" onclick="goStep(2)">← 返回修改素材</button>
-<button class="btn btn-success" id="genFullBtn">✅ 确认大纲，生成完整材料</button>
+<button class="btn btn-secondary" onclick="goStep(2)">← 返回</button>
+<button class="btn btn-success" id="genFullBtn">✅ 确认大纲，生成正式材料</button>
 </div>
 </div>
 </div>
 
-<!-- 步骤4 -->
 <div class="step-page" id="stepPage4">
 <div class="card">
 <div class="result-actions">
-<button id="exportBtn" class="btn btn-success">📄 导出Word</button>
-<button id="copyBtn" class="btn btn-secondary">📋 复制全文</button>
-<button id="regenBtn" class="btn btn-warning">🔄 按当前大纲重新生成</button>
+<button id="exportBtn" class="btn btn-success">📄 导出Word（含图片表格）</button>
+<button id="copyBtn" class="btn btn-secondary">📋 复制纯文本</button>
+<button id="regenBtn" class="btn btn-warning">🔄 重新生成</button>
 <button class="btn btn-secondary" onclick="goStep(3)">← 修改大纲</button>
 </div>
 </div>
-
 <div class="card" style="padding:18px;">
-<label style="font-size:14px;font-weight:500;display:block;margin-bottom:8px;">分章节单独重写</label>
+<label style="font-size:14px;font-weight:500;display:block;margin-bottom:8px;">分章节重写</label>
 <div class="chapter-list" id="chapterList"></div>
-<label style="font-size:14px;font-weight:500;display:block;margin:12px 0 8px;">历史版本（点击回退）</label>
+<label style="font-size:14px;font-weight:500;display:block;margin:12px 0 8px;">历史版本</label>
 <div class="version-list" id="versionList"></div>
 </div>
-
-<div class="result-content" id="resultContent"></div>
-<div class="word-count">当前共 <span id="outputCount">0</span> 字</div>
-<div id="loadingStatus" style="display:none;text-align:center;padding:30px;color:#6b7280;font-size:14px;"></div>
+<div class="paper" id="reportPaper"></div>
+<div class="word-count">全文共 <span id="outputCount">0</span> 字</div>
+<div id="loadingStatus" style="display:none;text-align:center;padding:30px;color:#6b7280;"></div>
 </div>
 </div>
 </div>
 
 <script>
 const BACKEND='https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/chat';
-let uploadedImgs=[],versions=[],currentResult='',customTpl='';
+let uploadedImgs=[],versions=[],currentRawText='',customTpl='';
 
-// 步骤切换
 window.goStep=function(n){
   for(let i=1;i<=4;i++){
     document.getElementById('stepPage'+i).classList.toggle('active',i===n);
-    const nav=document.getElementById('stepNav'+i);
-    nav.classList.toggle('active',i===n);
-    nav.classList.toggle('done',i<n);
+    const nav=document.getElementById('stepNav'+i);nav.classList.toggle('active',i===n);nav.classList.toggle('done',i<n);
   }
-  window.scrollTo(0,0);
+  scrollTo(0,0);
 };
 
-// 草稿自动保存
 ['materialType','name','department','targetWords','materialInput','outlineText'].forEach(id=>{
-  const el=document.getElementById(id);const s=localStorage.getItem('p3_'+id);if(s)el.value=s;
-  el.addEventListener('input',()=>{localStorage.setItem('p3_'+id,el.value);if(id==='materialInput')document.getElementById('inputCount').textContent=el.value.length;});
+  const el=document.getElementById(id);const s=localStorage.getItem('formal_'+id);if(s)el.value=s;
+  el.addEventListener('input',()=>{localStorage.setItem('formal_'+id,el.value);if(id==='materialInput')document.getElementById('inputCount').textContent=el.value.length;});
 });
 document.getElementById('inputCount').textContent=document.getElementById('materialInput').value.length;
 
-// 模板上传
 document.getElementById('tplUpload').onclick=()=>document.getElementById('tplInput').click();
 document.getElementById('tplInput').onchange=async e=>{
-  const file=e.target.files[0];if(!file)return;const el=document.getElementById('tplStatus');
-  el.textContent='正在解析...';el.style.color='#0369a1';
+  const file=e.target.files[0];if(!file)return;const el=document.getElementById('tplStatus');el.textContent='解析中...';
   try{
-    if(file.name.endsWith('.docx')){
-      const buf=await file.arrayBuffer();const r=await mammoth.extractRawText({arrayBuffer:buf});customTpl=r.value;
-    }else customTpl=await file.text();
-    localStorage.setItem('p3_customTpl',customTpl);
-    el.textContent=`✅ 模板「${file.name}」解析成功`;el.style.color='#15803d';
-  }catch{el.textContent='❌ 解析失败，请使用标准docx/txt';el.style.color='#b91c1c';}
+    if(file.name.endsWith('.docx')){const buf=await file.arrayBuffer();customTpl=(await mammoth.extractRawText({arrayBuffer:buf})).value;}
+    else customTpl=await file.text();
+    localStorage.setItem('formal_tpl',customTpl);el.textContent=`✅ 模板「${file.name}」解析成功`;el.style.color='#15803d';
+  }catch{el.textContent='❌ 解析失败';el.style.color='#b91c1c';}
 };
-if(localStorage.getItem('p3_customTpl')){customTpl=localStorage.getItem('p3_customTpl');document.getElementById('tplStatus').textContent='✅ 已加载保存的自定义模板';document.getElementById('tplStatus').style.color='#15803d';}
+if(localStorage.getItem('formal_tpl')){customTpl=localStorage.getItem('formal_tpl');document.getElementById('tplStatus').textContent='✅ 已加载保存的模板';document.getElementById('tplStatus').style.color='#15803d';}
 
-// 图片上传
 document.getElementById('imgUpload').onclick=()=>document.getElementById('imgInput').click();
 document.getElementById('imgInput').onchange=e=>{
-  Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{uploadedImgs.push({data:ev.target.result});renderImgs();};r.readAsDataURL(f);});
+  Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{uploadedImgs.push({data:ev.target.result,name:f.name});renderImgs();};r.readAsDataURL(f);});
 };
 function renderImgs(){document.getElementById('imgPreview').innerHTML=uploadedImgs.map((_,i)=>`<div class="img-item"><img src="${uploadedImgs[i].data}"><button class="img-del" onclick="delImg(${i})">×</button></div>`).join('');}
 window.delImg=i=>{uploadedImgs.splice(i,1);renderImgs();};
@@ -222,136 +202,150 @@ async function callAI(sys,user,max=12000){
   const d=await r.json();return d.choices?.[0]?.message?.content||d.content;
 }
 
-const builtInTpl={
-practice:'章节：一、实践概况 二、实践目的 三、实践内容过程 四、成果收获 五、问题建议 六、心得体会',
-annual:'章节：一、年度概述 二、教学工作 三、科研建设 四、其他工作 五、不足 六、下年计划',
-case:'必须包含5个完整不同的运动康复教学案例，每个案例结构：标题、案例背景、损伤评估、处理方案、分阶段康复过程、总结反思',
+const builtIn={
+practice:'纯文本章节：一、实践概况 二、实践目的 三、实践内容过程 四、成果收获 五、问题建议 六、心得体会',
+annual:'纯文本章节：一、概述 二、教学工作 三、科研建设 四、其他工作 五、不足 六、计划',
+case:'必须包含5个不同的运动康复教学案例，每个案例结构完整，不要输出markdown格式，不要用|做表格',
 team:'章节：概况、训练过程、成绩、经验、展望',
 title:'章节：基本情况、教学业绩、科研成果、专业建设、获奖、总结'
 };
 
-// 生成大纲
+// Markdown完整转HTML（表格/标题/加粗/图片）
+function markdownToHtml(md){
+  let lines=md.split('\n');let html='';let inTable=false;let tableRows=[];
+  function flushTable(){
+    if(tableRows.length===0)return;
+    // 第一行表头，第二行分隔线跳过
+    let h='<table>';
+    tableRows.forEach((row,idx)=>{
+      if(idx===1&&/^\s*[-:| ]+$/.test(row))return;
+      const cells=row.replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+      const tag=idx===0?'th':'td';
+      h+='<tr>'+cells.map(c=>`<${tag}>${inlineFormat(c)}</${tag}>`).join('')+'</tr>';
+    });
+    h+='</table>';html+=h;tableRows=[];
+  }
+  function inlineFormat(t){
+    // 图片占位替换为真实图片
+    t=t.replace(/【插入照片\s*(\d+)】/g,(m,n)=>{
+      const i=parseInt(n)-1;
+      if(i<uploadedImgs.length)return `</p><img class="report-img" src="${uploadedImgs[i].data}"><p class="img-caption">图${n} 实践现场</p><p>`;
+      return '';
+    });
+    t=t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+    t=t.replace(/`([^`]+)`/g,'$1');
+    return t;
+  }
+
+  lines.forEach(raw=>{
+    let line=raw.trim();
+    if(line.startsWith('|')){tableRows.push(line);return;}
+    else flushTable();
+
+    if(!line){html+='';return;}
+    // 标题
+    let hm=line.match(/^#{1,6}\s*(.+)/);
+    if(hm){
+      let level=Math.min(4,(line.match(/^#+/)||[''])[0].length);
+      html+=`<h${level}>${inlineFormat(hm[1])}</h${level}>`;return;
+    }
+    // 一二三级中文标题
+    if(/^[一二三四五六七八九十]、/.test(line)){html+=`<h2>${inlineFormat(line)}</h2>`;return;}
+    if(/^（[一二三四五六七八九十]）/.test(line)){html+=`<h3>${inlineFormat(line)}</h3>`;return;}
+    if(/^案例\s*\d+[：:]/.test(line)){html+=`<h4>${inlineFormat(line)}</h4>`;return;}
+    // 列表
+    line=line.replace(/^[-*+]\s*/,'').replace(/^\d+\.\s*/,'');
+    html+=`<p>${inlineFormat(line)}</p>`;
+  });
+  flushTable();
+  return html;
+}
+
 document.getElementById('genOutlineBtn').onclick=async function(){
-  const input=document.getElementById('materialInput').value.trim();
-  if(!input){alert('请先填写素材');return;}
-  this.disabled=true;this.textContent='正在生成大纲...';
+  const input=document.getElementById('materialInput').value.trim();if(!input){alert('请填素材');return;}
+  this.disabled=true;
   const type=document.getElementById('materialType').value;
-  const tpl=customTpl?('我的自定义模板：\n'+customTpl):builtInTpl[type];
-  const sys='你只输出清晰详细的写作大纲，明确列出所有章节标题、每个章节计划字数、需要的案例/附表数量，不要写正文，格式清晰';
-  const user=`材料类型：${type}\n模板要求：\n${tpl}\n我的素材：\n${input}`;
+  const tpl=customTpl?customTpl:builtIn[type];
+  const sys='只输出纯文本写作大纲，明确章节、案例数量，禁止使用#、*、|表格等任何markdown符号';
   try{
-    const outline=await callAI(sys,user,2000);
-    document.getElementById('outlineText').value=outline;
-    localStorage.setItem('p3_outlineText',outline);
-    goStep(3);
-  }catch(e){alert('大纲生成失败：'+e.message);}
-  this.disabled=false;this.textContent='生成写作大纲 →';
+    const outline=await callAI(sys,`材料：${type}\n模板：${tpl}\n素材：${input}`,2000);
+    document.getElementById('outlineText').value=outline;localStorage.setItem('formal_outlineText',outline);goStep(3);
+  }catch(e){alert('失败：'+e.message);}
+  this.disabled=false;
 };
 
-// 生成全文
 document.getElementById('genFullBtn').onclick=async function(){
-  const outline=document.getElementById('outlineText').value.trim();
-  if(!outline){alert('请先生成大纲');return;}
+  const outline=document.getElementById('outlineText').value.trim();if(!outline){alert('请先确认大纲');return;}
   goStep(4);
-  const loading=document.getElementById('loadingStatus');
-  loading.style.display='block';loading.innerHTML='正在按确认的大纲生成正文，案例较多预计30-60秒，请稍候...';
-  
+  const loading=document.getElementById('loadingStatus');loading.style.display='block';loading.textContent='正在生成正文...';
   const type=document.getElementById('materialType').value,name=document.getElementById('name').value,dept=document.getElementById('department').value,words=document.getElementById('targetWords').value,input=document.getElementById('materialInput').value;
-  const tpl=customTpl?customTpl:builtInTpl[type];
-
+  const tpl=customTpl?customTpl:builtIn[type];
   try{
-    // 1.生成非案例正文
-    const sys='你是高校公文写作专家，熟悉运动康复专业，严格按照确认的大纲写作，基于真实素材不编造，本次只写除多个教学案例之外的所有内容，在案例位置标注【===插入案例区===】';
-    const user=`大纲：\n${outline}\n模板：\n${tpl}\n作者：${name}，单位：${dept}\n素材：\n${input}\n严格要求：用户实际上传了${uploadedImgs.length}张图片，只允许标注对应数量的【插入照片X】，绝对不能编造不存在的图片、不能多标、不能自行编写图片注解，若上传0张图片则完全不要出现任何图片标注`;
+    const sys='你是高校公文写作专家，熟悉运动康复，严格按大纲和素材写作，不编造，允许输出标准markdown格式用于排版';
+    const user=`大纲：\n${outline}\n模板：\n${tpl}\n作者：${name}，单位：${dept}\n素材：\n${input}\n约${words}字，用户上传${uploadedImgs.length}张图，只允许标注对应数量的【插入照片X】`;
     let main=await callAI(sys,user,7000);
-
-    // 2.识别案例数量，逐个生成
     let caseCount=5;
-    const cm=tpl.match(/(\d+)\s*个\s*(案例|范文)/)||outline.match(/(\d+)\s*个\s*(案例|范文)/);
-    if(cm)caseCount=parseInt(cm[1]);
+    const cm=(tpl+outline).match(/(\d+)\s*个\s*(案例|范文)/);if(cm)caseCount=+cm[1];
     if(type==='case')caseCount=Math.max(caseCount,5);
-
     let cases='';
     for(let i=1;i<=caseCount;i++){
-      loading.textContent=`正在生成第 ${i}/${caseCount} 个案例...`;
-      const csys='你是运动康复案例专家，写1个完整、不重复的教学案例，结构完整，基于素材，不编造，直接输出案例正文';
-      const cuser=`第${i}个案例，选和其他案例不同的损伤/场景：\n素材：\n${input}`;
-      try{cases+='\n\n'+await callAI(csys,cuser,1600);}
+      loading.textContent=`生成案例 ${i}/${caseCount}...`;
+      try{cases+='\n\n'+await callAI('写1个完整不重复的运动康复教学案例，markdown格式',`第${i}个，素材：\n${input}`,1600);}
       catch{i--;}
     }
-
-    currentResult=main.replace(/【===插入案例区===】|【\s*案例区?\s*】/g,cases);
-    addVersion(currentResult);renderResult();
-  }catch(e){alert('生成失败：'+e.message);}
+    currentRawText=main.replace(/【===插入案例区===】|【\s*案例区?\s*】/g,cases);
+    addVersion(currentRawText);renderReport();
+  }catch(e){alert('失败：'+e.message);}
   loading.style.display='none';
 };
 
-
-function cleanAndFormat(text){
-  // 清理所有markdown符号
-  let t = text;
-  // 处理标题：去掉#，转为加粗标题
-  t = t.replace(/^#{1,6}\s*/gm,'');
-  t = t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
-  t = t.replace(/\*([^*]+)\*/g,'$1');
-  t = t.replace(/`([^`]+)`/g,'$1');
-  // 去掉列表符号
-  t = t.replace(/^\s*[-*+]\s+/gm,'');
-  t = t.replace(/^\s*\d+\.\s+/gm,'');
-  // 清理多余图片标注（超过上传数量的全部删掉）
-  const imgCount = uploadedImgs.length;
-  t = t.replace(/【插入照片\s*(\d+)】/g,(match,num)=>{
-    const n=parseInt(num);
-    return n<=imgCount ? match : '';
-  });
-  // 如果0张图，删掉所有图片标注
-  if(imgCount===0) t=t.replace(/【插入照片\s*\d+】/g,'');
-  // 删掉AI瞎写的图注
-  t=t.replace(/^图\s*\d+[：:][^
-]+/gm,'');
-  // 清理多余空行
-  t=t.replace(/
-{3,}/g,'\n\n');
-  return t.trim();
+function renderReport(){
+  const name=document.getElementById('name').value||'XXX';
+  const dept=document.getElementById('department').value||'体育学院';
+  const title=document.getElementById('materialType').selectedOptions[0].textContent;
+  const date=new Date().toLocaleDateString();
+  const bodyHtml=markdownToHtml(currentRawText);
+  document.getElementById('reportPaper').innerHTML=`
+  <div class="cover">
+  <h1>${title}</h1>
+  <div class="cover-info">
+  <div>姓&emsp;&emsp;名：${name}</div>
+  <div>学&emsp;&emsp;院：${dept}</div>
+  <div>日&emsp;&emsp;期：${date}</div>
+  </div>
+  </div>
+  <div class="paper-body">${bodyHtml}</div>`;
+  document.getElementById('outputCount').textContent=currentRawText.length;
+  const ch=[...currentRawText.matchAll(/(?:^|\n)([一二三四五六七八九十]、[^\n]+|案例\s*\d+[：:][^\n]+)/g)].map(m=>m[1].trim());
+  document.getElementById('chapterList').innerHTML=[...new Set(ch)].map(c=>`<div class="chapter-item"><span>${c}</span><button onclick="rewriteCh('${c.replace(/'/g,"\\'")}')">重写</button></div>`).join('');
 }
 
-function renderResult(){
-  currentResult = cleanAndFormat(currentResult);
-  // 章节标题自动加粗加大
-  let html = currentResult.split('\n').join('<br>');
-  html = html.replace(/(^|<br>)([一二三四五六七八九十]、[^<
-]+)/g,'$1<br><h3 style="font-size:17px;font-weight:600;margin:22px 0 10px;color:#1f2937;">$2</h3>');
-  html = html.replace(/(^|<br>)(案例\s*\d+[：:][^<
-]+)/g,'$1<br><h4 style="font-size:16px;font-weight:600;margin:18px 0 8px;color:#374151;">$2</h4>');
-  // 段落首行缩进
-  html = html.replace(/<br>(?![<h]|【)/g,'<br>&nbsp;&nbsp;&nbsp;&nbsp;');
-  document.getElementById('resultContent').innerHTML=html;
-  document.getElementById('outputCount').textContent=currentResult.length;
-  const ch=[...currentResult.matchAll(/\n?([一二三四五六七八九十]、[^\n<]+|案例\s*\d+[：:][^\n<]+)/g)].map(m=>m[1].trim());
-  document.getElementById('chapterList').innerHTML=[...new Set(ch)].map(c=>`<div class="chapter-item"><span>${c}</span><button onclick="rewriteCh('${c.replace(/'/g,"\\'")}')">重写</button></div>`).join('')||'<div style="padding:14px;text-align:center;color:#999;">未识别章节</div>';
-}
-
-window.rewriteCh=async function(ch){
-  const input=document.getElementById('materialInput').value;
-  const sys='仅重写指定章节/案例，风格统一，不编造，只输出重写后的内容';
-  const user=`全文：\n${currentResult}\n素材：\n${input}\n仅重写「${ch}」`;
+window.rewriteCh=async ch=>{
   try{
-    const nc=await callAI(sys,user,2000);
+    const nc=await callAI('仅重写指定章节，风格统一',`全文：\n${currentRawText}\n素材：\n${document.getElementById('materialInput').value}\n重写「${ch}」`,2000);
     const safe=ch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    const reg=new RegExp(safe+'[\\s\\S]*?(?=\\n[一二三四五六七八九十]、|\\n案例\\s*\\d+[：:]|$)');
-    currentResult=currentResult.replace(reg,nc);addVersion(currentResult);renderResult();
-  }catch(e){alert('重写失败：'+e.message);}
+    currentRawText=currentRawText.replace(new RegExp(safe+'[\\s\\S]*?(?=\\n[一二三四五六七八九十]、|\\n案例\\s*\\d+[：:]|$)'),nc);
+    addVersion(currentRawText);renderReport();
+  }catch(e){alert('失败：'+e.message);}
 };
-
 function addVersion(t){versions.push({time:new Date().toLocaleTimeString(),text:t});if(versions.length>10)versions.shift();renderVersions();}
 function renderVersions(){document.getElementById('versionList').innerHTML=versions.map((v,i)=>`<span class="version-tag" onclick="restoreVer(${i})">v${versions.length-i} ${v.time}</span>`).join('');}
-window.restoreVer=i=>{currentResult=versions[i].text;renderResult();};
-
+window.restoreVer=i=>{currentRawText=versions[i].text;renderReport();};
 document.getElementById('regenBtn').onclick=()=>document.getElementById('genFullBtn').click();
-document.getElementById('copyBtn').onclick=async function(){await navigator.clipboard.writeText(currentResult);this.textContent='✅ 已复制';setTimeout(()=>this.textContent='📋 复制全文',2000);};
+document.getElementById('copyBtn').onclick=async function(){await navigator.clipboard.writeText(currentRawText.replace(/[#*|`-]/g,''));this.textContent='✅ 已复制';setTimeout(()=>this.textContent='📋 复制纯文本',2000);};
 document.getElementById('exportBtn').onclick=function(){
-  const cleanExport = cleanAndFormat(currentResult);const h=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:"宋体";line-height:1.8;font-size:14pt;text-indent:2em;}h3{font-family:"黑体";font-size:15pt;text-indent:0;margin:20px 0 10px;}h4{font-family:"黑体";font-size:14pt;text-indent:0;}</style></head><body>${cleanExport.split('\n').map(l=>{if(/^[一二三四五六七八九十]、/.test(l))return '<h3>'+l+'</h3>';if(/^案例\s*\d+[：:]/.test(l))return '<h4>'+l+'</h4>';return l;}).join('<br>')}</body></html>`;
-  const b=new Blob(['\ufeff',h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='教师工作材料.doc';a.click();
+  const reportHtml=document.getElementById('reportPaper').innerHTML;
+  const h=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>
+  body{font-family:"宋体";line-height:1.9;font-size:14pt;}
+  .cover{text-align:center;padding:60px;}
+  .cover h1{font-size:24pt;margin-bottom:60px;}
+  .cover-info{text-align:left;display:inline-block;line-height:2.5;}
+  h2{font-family:"黑体";font-size:16pt;}h3{font-family:"黑体";font-size:15pt;}h4{font-family:"黑体";font-size:14pt;}
+  p{text-indent:2em;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid #000;padding:8px;}
+  .report-img{max-width:80%;display:block;margin:20px auto;}
+  .img-caption{text-align:center;text-indent:0;font-size:12pt;color:#333;}
+  </style></head><body>${reportHtml}</body></html>`;
+  const b=new Blob(['\ufeff',h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='教师正式材料.doc';a.click();
 };
 </script>
 </body>
