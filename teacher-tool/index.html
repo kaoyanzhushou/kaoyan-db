@@ -81,7 +81,7 @@ textarea.c{min-height:110px;resize:vertical}
 </div>
 
 <div class="panel result" id="resultPanel">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px"><h3>最终材料</h3><div><button class="btn btn-o" onclick="copyAll()">复制全文</button><button class="btn btn-p" onclick="exportWord()">导出Word（含照片）</button></div></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px"><h3>最终材料</h3><div><button class="btn btn-o" onclick="copyAll()">复制全文</button><button class="btn btn-p" onclick="exportWord(event)">导出Word（含照片）</button></div></div>
 <div class="doc" id="docRender"></div>
 </div>
 </div>
@@ -171,14 +171,25 @@ function renderDoc(){
 }
 function copyAll(){navigator.clipboard.writeText(finalText);alert('已复制正文')}
 async function exportWord(){
+ const btn=event.target;
+ const oldText=btn.textContent;
+ btn.disabled=true;btn.textContent='导出中...';
+ try{
  let cleanContent=cleanText(finalText);
  let cleanOutline=cleanText(finalOutline);
  let photoHtml='';
  const defaultCaps=['为学员进行下肢功能评估，检查关节活动度与损伤情况','指导学员进行垫上康复训练，纠正训练动作','在实践场地与学员沟通训练方案，了解恢复情况','指导学员进行康复力量训练，强化薄弱肌群'];
  for(let i=0;i<imgs.length;i++){
-  let x=imgs[i];let b=await x.file.arrayBuffer();let b64=btoa(String.fromCharCode(...new Uint8Array(b)));
+  try{
+  let x=imgs[i];
+  if(!x.file){photoHtml+=`<p style="text-align:center;text-indent:0">图${i+1} ${x.caption||defaultCaps[i%defaultCaps.length]}（图片文件失效，请重新上传）</p>`;continue}
+  let b=await x.file.arrayBuffer();
+  // 分块转base64避免大文件报错
+  let bytes=new Uint8Array(b),bin='';for(let j=0;j<bytes.byteLength;j++)bin+=String.fromCharCode(bytes[j]);
+  let b64=btoa(bin);
   let cap=x.caption||defaultCaps[i%defaultCaps.length];
   photoHtml+=`<p style="text-align:center;text-indent:0"><img src="data:image/jpeg;base64,${b64}" width="400"></p><p style="text-align:center;text-indent:0;font-size:12pt">图${i+1} ${cap}</p>`;
+  }catch(e){photoHtml+=`<p style="text-align:center;text-indent:0">图${i+1}（图片导出失败，可重新上传）</p>`}
  }
  let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:宋体;line-height:2;font-size:14pt;padding:50px}h1{text-align:center;font-size:22pt}h2{font-size:16pt;border-bottom:1px solid #000;padding-bottom:5px}p{text-indent:2em;margin:8px 0}.cover p{text-indent:0;text-align:center}.toc p{text-indent:0}</style></head><body>
  <div class="cover"><h1>${type.value}</h1><p>学院：${college.value}</p><p>姓名：${nameInput.value}</p><p>实践单位：${company.value}</p><p>完成时间：${dateInput.value}</p></div>
@@ -186,7 +197,9 @@ async function exportWord(){
  <h2>实践照片</h2>${photoHtml||'<p>（请补充实践照片）</p>'}
  <h2>正文</h2>${cleanContent.split('\n').filter(l=>l.trim()).map(l=>'<p>'+l+'</p>').join('')}
  </body></html>`;
- let blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nameInput.value+'_'+type.value+'.doc';a.click();
+ let blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nameInput.value+'_'+type.value+'.doc';document.body.appendChild(a);a.click();a.remove();
+ }catch(e){alert('导出失败：'+e.message)}
+ btn.disabled=false;btn.textContent=oldText;
 }
 </script>
 </body>
