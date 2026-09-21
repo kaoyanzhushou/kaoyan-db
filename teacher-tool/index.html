@@ -244,13 +244,39 @@ function buildPptStructure(){
  }
  return slides;
 }
+
+async function fetchAiPptSlides(){
+ const mins=parseInt($('pptDuration').value);
+ const caseCount=parseInt(caseNum.value);
+ const prompt=`你是高校汇报PPT设计专家，基于下面的实践报告正文，生成${mins}分钟汇报PPT的完整内容，要求：
+1. 总页数控制在${mins===5?6:mins===10?10:14}页左右，必须包含封面、目录、实践概况、实践内容、${caseCount}个案例（每个案例可以1页，内容饱满）、成果收获、致谢；
+2. 每页包含：title（页面标题）、points（3-5个要点，每个要点1-2句话，内容详实，禁止只有几个字）、note（演讲备注3句话）；
+3. 所有内容基于正文，合理扩充专业细节，不要编造无关内容；
+4. 只输出JSON数组，不要其他文字，格式：[{"title":"","points":[""],"note":""}]
+正文：${cleanText(finalText)}`;
+ const r=await fetch(API+"/api/chat",{method:"POST",headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}]})});
+ const data=await r.json();
+ let txt=data.choices?.[0]?.message?.content||'';
+ txt=txt.replace(/```json|```/g,'').trim();
+ let slides=JSON.parse(txt);
+ // 标记版式
+ slides.forEach((s,i)=>{
+  if(i===0)s.layout='cover',s.subtitle=`${nameInput.value} | ${college.value} | ${dateInput.value}`;
+  else if(i===slides.length-1)s.layout='thanks',s.subtitle='敬请各位老师批评指正';
+  else if(s.title.includes('目录'))s.layout='toc';
+  else if(s.title.includes('案例'))s.layout='case';
+  else s.layout='content';
+ });
+ return slides;
+}
+
 async function exportPPT(e){
  const btn=e.target,old=btn.textContent;btn.disabled=true;btn.textContent='生成中...';
  try{
  const pptx=new PptxGenJS();
  pptx.title=type.value+'汇报PPT';
  pptx.layout='LAYOUT_WIDE';
- const slides=buildPptStructure();
+ let slides;try{slides=await fetchAiPptSlides()}catch(e){slides=buildPptStructure()}
  const C={primary:'1e40af',dark:'1e293b',teal:'0f766e'};
  for(const s of slides){
   const sl=pptx.addSlide();
@@ -262,7 +288,7 @@ async function exportPPT(e){
   }else if(s.layout==='toc'){
    sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.33,h:1.1,fill:{color:C.primary}});
    sl.addText(s.title,{x:0.6,y:0.2,w:12,h:0.7,fontSize:28,bold:true,color:'fff'});
-   s.points.forEach((p,i)=>{
+   if(s.points)s.points.forEach((p,i)=>{
     let y=1.5+i*0.75;
     sl.addShape(pptx.ShapeType.rect,{x:0.8,y:y+0.1,w:0.5,h:0.5,fill:{color:C.primary}});
     sl.addText(String(i+1),{x:0.8,y:y+0.15,w:0.5,h:0.4,fontSize:16,color:'fff',align:'center'});
@@ -273,7 +299,8 @@ async function exportPPT(e){
    sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.33,h:1.1,fill:{color:barColor}});
    sl.addText(s.title,{x:0.6,y:0.2,w:12,h:0.7,fontSize:26,bold:true,color:'fff'});
    sl.addShape(pptx.ShapeType.rect,{x:0.6,y:1.4,w:12.1,h:5.5,fill:{color:'f8fafc'}});
-   sl.addText(s.text,{x:0.9,y:1.7,w:11.5,h:5,fontSize:15,color:C.dark,valign:'top',lineSpacing:28});
+   let content=s.points?s.points.map(p=>({text:p,options:{bullet:true,breakLine:true,fontSize:17,color:C.dark,lineSpacing:38}})):[{text:s.text,options:{fontSize:16,color:C.dark}}];
+   sl.addText(content,{x:1,y:1.8,w:11.2,h:4.8,valign:'top'});
   }else if(s.layout==='thanks'){
    sl.addShape(pptx.ShapeType.rect,{x:0,y:3,w:13.33,h:1.5,fill:{color:C.primary}});
    sl.addText(s.title,{x:1,y:2,w:11.3,h:1,fontSize:44,bold:true,color:C.primary,align:'center'});
@@ -288,8 +315,8 @@ async function exportPPT(e){
 function exportSpeechOutline(e){
  const btn=e.target,old=btn.textContent;btn.disabled=true;btn.textContent='生成中...';
  try{
- const slides=buildPptStructure();
- let content=slides.map((s,i)=>`第${i+1}页：${s.title}\n演讲内容：${s.note}\n`).join('\n');
+ let slides;try{slides=await fetchAiPptSlides()}catch(e){slides=buildPptStructure()}
+ let content=slides.map((s,i)=>`第${i+1}页：${s.title}\n页面要点：${(s.points||[]).join('；')}\n演讲内容：${s.note||''}\n`).join('\n');
  let html=`<html><head><meta charset="utf-8"><style>body{font-family:宋体;padding:50px;line-height:2;font-size:14pt}h1{text-align:center}h3{margin-top:25px}</style></head><body><h1>${type.value}汇报演讲提纲</h1><p style="text-indent:0">汇报人：${nameInput.value} | 时长：${$('pptDuration').value}分钟</p>`+
  content.split('\n').filter(l=>l.trim()).map(l=>`<p style="text-indent:0">${l}</p>`).join('')+`</body></html>`;
  let blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nameInput.value+'_演讲提纲.doc';a.click();
