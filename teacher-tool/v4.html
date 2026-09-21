@@ -248,7 +248,10 @@ function buildPptStructure(){
  if(mins===5){
   slides=slides.filter(s=>!s.layout==='case'||parseInt(s.title.match(/\d+/)[0])<=2);
  }
- return slides;
+ // 固定移除末尾旧thanks，补标准致谢
+  slides=slides.filter(x=>x.layout!=='thanks');
+  slides.push({layout:'thanks',title:'感谢聆听',subtitle:'敬请各位老师批评指正',points:[],note:'感谢各位老师聆听，恳请批评指正。'});
+  return slides;
 }
 
 async function fetchAiPptSlides(){
