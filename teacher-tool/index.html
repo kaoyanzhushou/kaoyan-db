@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>教师材料智能生成器 - 多模型交叉版</title>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <style>
 :root{--primary:#1e40af;--primary-light:#3b82f6;--success:#16a34a;--danger:#dc2626;--warn:#d97706;--bg:#f1f5f9;--card:#fff;--border:#e2e8f0;--text:#1e293b;--text-light:#64748b}
 *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif}
@@ -95,7 +96,15 @@ textarea.form-control{min-height:120px;resize:vertical}
 <option>青年教师专业实践成果报告</option><option>年度教学工作总结</option><option>运动康复教学案例集</option><option>运动队带队/竞赛总结</option><option>职称评审业绩材料</option>
 </select>
 </div>
-<div class="form-group"><label>模板要求（可粘贴模板全文/章节要求）</label><textarea class="form-control" id="r_template" placeholder="粘贴模板要求，没有则留空使用默认规范"></textarea></div>
+<div class="form-group">
+<label style="display:flex;justify-content:space-between;align-items:center">
+<span>模板要求（可粘贴，也可直接上传Word/TXT模板文件）</span>
+<button type="button" class="btn btn-outline" style="padding:6px 14px;font-size:13px;margin:0" onclick="document.getElementById('tplFile').click()">上传模板文件</button>
+</label>
+<input type="file" id="tplFile" accept=".docx,.txt" hidden onchange="loadTemplateFile(this)">
+<textarea class="form-control" id="r_template" placeholder="粘贴模板要求，或点击右上角上传模板文件，没有则留空使用默认规范"></textarea>
+<div id="tplTip" style="font-size:12px;color:var(--text-light);margin-top:6px"></div>
+</div>
 <div class="form-group"><label>基础信息</label><input class="form-control" id="r_base"></div>
 <div class="form-group"><label>全部工作素材</label><textarea class="form-control" id="r_material" style="min-height:180px"></textarea></div>
 <div class="form-group"><label>案例数量（如教学案例）</label><input class="form-control" id="r_caseCount" type="number" value="5"></div>
@@ -196,6 +205,20 @@ async function startRefine(){
 function showResult(){document.getElementById('resultPanel').style.display='block';document.getElementById('docPreview').textContent=finalContent;document.getElementById('resultPanel').scrollIntoView({behavior:'smooth'});}
 function copyResult(){navigator.clipboard.writeText(finalContent);alert('已复制');}
 function previewImgs(input){[...input.files].forEach(f=>{const u=URL.createObjectURL(f);uploadedImgs.push(u);});document.getElementById('imgPreview').innerHTML=uploadedImgs.map(u=>`<img src="${u}">`).join('');}
+
+async function loadTemplateFile(input){
+ const file=input.files[0];if(!file)return;
+ const tip=document.getElementById('tplTip');tip.textContent='正在解析模板：'+file.name;
+ try{
+ let text='';
+ if(file.name.endsWith('.txt')){text=await file.text();}
+ else if(file.name.endsWith('.docx')){const buf=await file.arrayBuffer();const r=await mammoth.extractRawText({arrayBuffer:buf});text=r.value;}
+ else{tip.textContent='仅支持.docx/.txt格式模板';return;}
+ document.getElementById('r_template').value=text.trim();
+ tip.textContent='✅ 模板解析完成，共 '+text.length+' 字符，可直接编辑';
+ }catch(e){tip.textContent='模板解析失败：'+e.message;}
+}
+
 function exportWord(){
  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>教师材料</title><style>body{font-family:宋体;line-height:2;font-size:14pt;padding:40px}p{text-indent:2em}</style></head><body>${finalContent.split('\n').map(l=>'<p>'+l+'</p>').join('')}</body></html>`;
  const blob=new Blob(['\ufeff',html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='教师工作材料.doc';a.click();
