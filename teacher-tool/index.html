@@ -3,282 +3,276 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-title>教师材料智能生成器 - 独立完整版</title>
+<title>教师材料智能生成器 P2专业版</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
-body { background: #f5f7fa; min-height: 100vh; padding: 20px; }
-.container { max-width: 920px; margin: 0 auto; }
-.header { text-align: center; margin-bottom: 24px; padding: 28px; background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-.header h1 { color: #1f2937; margin-bottom: 6px; font-size: 26px; }
-.header p { color: #6b7280; font-size: 14px; }
-.card { background: white; border-radius: 12px; padding: 26px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 22px; }
-.form-group { margin-bottom: 18px; }
-.form-group label { display: block; margin-bottom: 7px; font-weight: 500; color: #374151; font-size: 14px; }
-.form-control { width: 100%; padding: 11px 13px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; }
-.form-control:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-textarea { resize: vertical; min-height: 160px; line-height: 1.6; }
-.btn-primary { width: 100%; padding: 13px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-.btn-primary:hover { background: #4338ca; }
-.btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
-.result-section { display: none; }
-.result-actions { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
-.btn { padding: 9px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; }
-.btn-success { background: #10b981; color: white; }
-.btn-success:hover { background: #059669; }
-.btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
-.btn-secondary:hover { background: #e5e7eb; }
-.result-content { background: white; padding: 36px; border: 1px solid #e5e7eb; border-radius: 8px; line-height: 1.8; color: #1f2937; min-height: 450px; font-size: 15px; }
-.tip { font-size: 12px; color: #6b7280; margin-top: 5px; }
-.status { text-align: center; padding: 18px; color: #6b7280; display: none; font-size: 14px; }
-.word-count { font-size: 12px; color: #6b7280; text-align: right; margin-top: 4px; }
-.key-section { background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-.key-row { display: grid; grid-template-columns: 120px 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px; }
-.key-row:last-child { margin-bottom: 0; }
-.key-row label { font-size: 13px; color: #475569; margin: 0; }
-.key-row input { padding: 8px 10px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; }
-.key-status { font-size: 12px; width: 50px; text-align: center; }
-.save-keys { padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; margin-top: 8px; }
-.toggle-keys { background: none; border: none; color: #4f46e5; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+* { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+body { background:#f5f7fa; min-height:100vh; padding:20px; }
+.container { max-width:960px; margin:0 auto; }
+.header { text-align:center; margin-bottom:24px; padding:28px; background:white; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+.header h1 { color:#1f2937; margin-bottom:6px; font-size:26px; }
+.header p { color:#6b7280; font-size:14px; }
+.card { background:white; border-radius:12px; padding:26px; box-shadow:0 2px 12px rgba(0,0,0,0.06); margin-bottom:22px; }
+.form-group { margin-bottom:18px; }
+.form-group label { display:block; margin-bottom:7px; font-weight:500; color:#374151; font-size:14px; }
+.form-control { width:100%; padding:11px 13px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; }
+.form-control:focus { outline:none; border-color:#4f46e5; box-shadow:0 0 0 3px rgba(79,70,229,0.1); }
+.form-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+textarea { resize:vertical; min-height:160px; line-height:1.6; }
+.btn-primary { width:100%; padding:13px; background:#4f46e5; color:white; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; }
+.btn-primary:hover { background:#4338ca; }
+.btn-primary:disabled { background:#9ca3af; cursor:not-allowed; }
+.result-section { display:none; }
+.result-actions { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+.btn { padding:9px 18px; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; }
+.btn-success { background:#10b981; color:white; }
+.btn-secondary { background:#f3f4f6; color:#374151; border:1px solid #d1d5db; }
+.btn-warning { background:#f59e0b; color:white; }
+.result-content { background:white; padding:40px; border:1px solid #e5e7eb; border-radius:8px; line-height:1.8; color:#1f2937; min-height:500px; font-size:15px; }
+.tip { font-size:12px; color:#6b7280; margin-top:5px; }
+.status { text-align:center; padding:18px; color:#6b7280; display:none; font-size:14px; }
+.word-count { font-size:12px; color:#6b7280; text-align:right; margin-top:4px; }
+.upload-area { border:2px dashed #d1d5db; border-radius:8px; padding:24px; text-align:center; cursor:pointer; margin-bottom:10px; transition:all 0.2s; }
+.upload-area:hover { border-color:#4f46e5; background:#f8faff; }
+.image-preview { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:12px; }
+.img-item { position:relative; aspectratio:1; border-radius:6px; overflow:hidden; }
+.img-item img { width:100%; height:100%; object-fit:cover; }
+.img-del { position:absolute; top:4px; right:4px; width:22px; height:22px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; cursor:pointer; font-size:12px; }
+.chapter-list { max-height:200px; overflow-y:auto; margin:10px 0; border:1px solid #e5e7eb; border-radius:6px; }
+.chapter-item { padding:10px 14px; border-bottom:1px solid #f3f4f6; display:flex; justify-content:space-between; align-items:center; font-size:14px; }
+.chapter-item:last-child { border-bottom:none; }
+.chapter-item button { padding:4px 10px; font-size:12px; background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; cursor:pointer; }
+.version-list { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.version-tag { padding:4px 10px; background:#f3f4f6; border-radius:20px; font-size:12px; cursor:pointer; }
 </style>
 </head>
 <body>
 <div class="container">
 <div class="header">
-<h1>教师材料智能生成器</h1>
-<p>多模型协作，基于真实素材生成规范正式的专属工作材料</p>
+<h1>教师材料智能生成器 P2专业版</h1>
+<p>模板精准匹配 · 专业内容生成 · 图片排版 · 分章节编辑</p>
 </div>
 
 <div class="card">
-<button class="toggle-keys" id="toggleKeys">▶ 配置/查看API Key（首次使用必须配置）</button>
-<div class="key-section" id="keySection" style="display:none;">
-<div class="key-row">
-<label>DeepSeek</label>
-<input type="password" id="key_deepseek" placeholder="输入DeepSeek API Key">
-<span class="key-status" id="status_deepseek"></span>
-</div>
-<div class="key-row">
-<label>智谱GLM</label>
-<input type="password" id="key_glm" placeholder="输入智谱API Key">
-<span class="key-status" id="status_glm"></span>
-</div>
-<div class="key-row">
-<label>Kimi</label>
-<input type="password" id="key_kimi" placeholder="输入Kimi API Key">
-<span class="key-status" id="status_kimi"></span>
-</div>
-<div class="key-row">
-<label>通义千问</label>
-<input type="password" id="key_qwen" placeholder="输入通义API Key">
-<span class="key-status" id="status_qwen"></span>
-</div>
-<div class="key-row">
-<label>混元</label>
-<input type="password" id="key_hunyuan" placeholder="输入混元API Key">
-<span class="key-status" id="status_hunyuan"></span>
-</div>
-<button class="save-keys" id="saveKeys">💾 保存Key配置</button>
-<div class="tip">Key仅保存在你本地浏览器，不会上传到任何服务器</div>
-</div>
-
-<div id="modelStatus" style="font-size:13px;padding:10px;border-radius:6px;margin-bottom:16px;"></div>
-
 <div class="form-group">
 <label>材料类型</label>
 <select id="materialType" class="form-control">
-<option value="practice">青年教师专业实践成果报告</option>
+<option value="practice" selected>青年教师专业实践成果报告（内置标准模板）</option>
 <option value="annual">年度教学工作总结</option>
 <option value="case">运动康复教学案例集</option>
 <option value="team">运动队带队/竞赛总结</option>
-<option value="title">职称评审工作业绩材料</option>
+<option value="title">职称评审业绩材料</option>
 </select>
 </div>
 
 <div class="form-row">
 <div class="form-group">
 <label>姓名</label>
-<input type="text" id="name" class="form-control" placeholder="请输入姓名">
+<input type="text" id="name" class="form-control">
 </div>
 <div class="form-group">
 <label>学院/教研室</label>
-<input type="text" id="department" class="form-control" placeholder="例如：体育学院">
+<input type="text" id="department" class="form-control">
+</div>
+<div class="form-group">
+<label>目标字数</label>
+<input type="number" id="targetWords" class="form-control" value="5000" step="500">
 </div>
 </div>
 
 <div class="form-group">
-<label>工作素材（真实做过的工作、经历、案例，随意粘贴）</label>
-<textarea id="materialInput" class="form-control" placeholder="例如：2025年7-8月在河南利晨体育实践2个月，负责篮球培训运动防护，处理过3个脚踝扭伤、2个膝盖劳损的学员……"></textarea>
-<div class="word-count"><span id="inputCount">0</span> 字 · 内容自动保存，刷新不丢失</div>
+<label>实践/工作素材</label>
+<textarea id="materialInput" class="form-control" placeholder="粘贴所有真实工作内容、经历、案例，AI自动整理润色"></textarea>
+<div class="word-count"><span id="inputCount">0</span> 字 · 自动保存草稿</div>
 </div>
 
-<button id="generateBtn" class="btn-primary">✨ 智能生成完整材料</button>
-<div id="status" class="status">正在多模型协作生成，预计10-30秒，请稍候...</div>
+<div class="form-group">
+<label>上传实践照片/证明材料（自动匹配章节排版）</label>
+<div class="upload-area" id="uploadArea">
+<div style="color:#6b7280;">📷 点击或拖拽图片到此处上传</div>
+</div>
+<input type="file" id="imageInput" accept="image/*" multiple style="display:none;">
+<div class="image-preview" id="imagePreview"></div>
+</div>
+
+<button id="generateBtn" class="btn-primary">✨ 按模板生成完整专业材料</button>
+<div id="status" class="status">正在调用多模型协作生成，预计20-40秒...</div>
 </div>
 
 <div id="resultSection" class="result-section">
 <div class="result-actions">
-<button id="exportBtn" class="btn btn-success">📄 导出Word</button>
+<button id="exportBtn" class="btn btn-success">📄 导出Word（格式匹配模板）</button>
 <button id="copyBtn" class="btn btn-secondary">📋 复制全文</button>
-<button id="regenBtn" class="btn btn-secondary">🔄 重新生成</button>
+<button id="regenBtn" class="btn btn-warning">🔄 全文重新生成</button>
 </div>
+
+<div class="card" style="padding:18px;">
+<label style="font-size:14px;font-weight:500;display:block;margin-bottom:8px;">分章节单独重写</label>
+<div class="chapter-list" id="chapterList"></div>
+<label style="font-size:14px;font-weight:500;display:block;margin:12px 0 8px;">历史版本（点击回退）</label>
+<div class="version-list" id="versionList"></div>
+</div>
+
 <div class="result-content" id="resultContent"></div>
-<div class="word-count" style="margin-top:8px;">生成内容共 <span id="outputCount">0</span> 字</div>
+<div class="word-count" style="margin-top:8px;">当前内容 <span id="outputCount">0</span> 字</div>
 </div>
 </div>
 
 <script>
-const modelList = [
-  { key: 'deepseek', name: 'DeepSeek', url: 'https://api.deepseek.com/v1/chat/completions', model: 'deepseek-chat' },
-  { key: 'glm', name: '智谱GLM', url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', model: 'glm-4' },
-  { key: 'kimi', name: 'Kimi', url: 'https://api.moonshot.cn/v1/chat/completions', model: 'moonshot-v1-8k' },
-  { key: 'qwen', name: '通义千问', url: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', model: 'qwen-plus' },
-  { key: 'hunyuan', name: '混元', url: 'https://api.hunyuan.cloud.tencent.com/v1/chat/completions', model: 'hunyuan-pro' }
-];
+const BACKEND = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/chat';
+let uploadedImages = [];
+let versions = [];
+let currentResult = '';
 
-// Key配置逻辑
-document.getElementById('toggleKeys').onclick = function() {
-  const section = document.getElementById('keySection');
-  section.style.display = section.style.display === 'none' ? 'block' : 'none';
-  this.textContent = section.style.display === 'none' ? '▶ 配置/查看API Key（首次使用必须配置）' : '▼ 收起Key配置';
-};
-
-// 加载已保存的Key
-modelList.forEach(m => {
-  const saved = localStorage.getItem('standalone_' + m.key + '_key');
-  if (saved) document.getElementById('key_' + m.key).value = saved;
-});
-
-document.getElementById('saveKeys').onclick = function() {
-  let count = 0;
-  modelList.forEach(m => {
-    const val = document.getElementById('key_' + m.key).value.trim();
-    const statusEl = document.getElementById('status_' + m.key);
-    if (val) {
-      localStorage.setItem('standalone_' + m.key + '_key', val);
-      statusEl.textContent = '✅';
-      statusEl.style.color = '#10b981';
-      count++;
-    } else {
-      localStorage.removeItem('standalone_' + m.key + '_key');
-      statusEl.textContent = '';
-    }
-  });
-  checkModels();
-  alert('✅ 已保存' + count + '个模型的Key');
-};
-
-function checkModels() {
-  const available = [];
-  modelList.forEach(m => {
-    if (localStorage.getItem('standalone_' + m.key + '_key')) available.push(m.name);
-  });
-  const el = document.getElementById('modelStatus');
-  if (available.length > 0) {
-    el.textContent = '✅ 可用模型：' + available.join('、') + '，自动按顺序兜底';
-    el.style.background = '#f0fdf4';
-    el.style.color = '#166534';
-  } else {
-    el.textContent = '⚠️ 请先展开上方配置，输入至少一个API Key';
-    el.style.background = '#fef2f2';
-    el.style.color = '#991b1b';
-  }
-}
-checkModels();
-
-// 草稿自动保存
-const fields = ['materialType', 'name', 'department', 'materialInput'];
-fields.forEach(id => {
-  const el = document.getElementById(id);
-  const saved = localStorage.getItem('tm_draft_' + id);
-  if (saved) el.value = saved;
-  el.addEventListener('input', () => {
-    localStorage.setItem('tm_draft_' + id, el.value);
-    if (id === 'materialInput') document.getElementById('inputCount').textContent = el.value.length;
+// 草稿自动加载保存
+const draftFields = ['materialType','name','department','targetWords','materialInput'];
+draftFields.forEach(id=>{
+  const el=document.getElementById(id);
+  const saved=localStorage.getItem('p2_draft_'+id);
+  if(saved) el.value=saved;
+  el.addEventListener('input',()=>{
+    localStorage.setItem('p2_draft_'+id,el.value);
+    if(id==='materialInput') document.getElementById('inputCount').textContent=el.value.length;
   });
 });
-document.getElementById('inputCount').textContent = document.getElementById('materialInput').value.length;
+document.getElementById('inputCount').textContent=document.getElementById('materialInput').value.length;
 
-async function callAI(systemPrompt, userPrompt, maxTokens = 8000) {
-  const backendUrl = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/chat';
-  const response = await fetch(backendUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      max_tokens: maxTokens
-    })
+// 图片上传
+document.getElementById('uploadArea').onclick=()=>document.getElementById('imageInput').click();
+document.getElementById('imageInput').onchange=function(e){
+  Array.from(e.target.files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      uploadedImages.push({name:file.name,data:ev.target.result});
+      renderImages();
+    };
+    reader.readAsDataURL(file);
   });
-  if (!response.ok) throw new Error('后端请求失败：' + response.status);
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || data.content || JSON.stringify(data);
+};
+function renderImages(){
+  const el=document.getElementById('imagePreview');
+  el.innerHTML=uploadedImages.map((img,i)=>`
+  <div class="img-item">
+  <img src="${img.data}" alt="">
+  <button class="img-del" onclick="deleteImg(${i})">×</button>
+  </div>`).join('');
+}
+window.deleteImg=function(i){uploadedImages.splice(i,1);renderImages();};
+
+async function callAI(systemPrompt,userPrompt,maxTokens=12000){
+  const res=await fetch(BACKEND,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}],max_tokens:maxTokens})
+  });
+  if(!res.ok) throw new Error('后端错误：'+res.status);
+  const data=await res.json();
+  return data.choices?.[0]?.message?.content || data.content;
 }
 
-
-const typeConfig = {
-  practice: '青年教师专业实践成果报告，结构完整：封面信息、实践概况、实践目的、实践内容与过程、实践成果与收获、存在问题与建议、心得体会，正式高校公文风格',
-  annual: '年度教学工作总结，结构完整：年度工作概述、教学工作完成情况、科研成果、学生工作、不足、下年度计划',
-  case: '运动康复教学案例集，每个案例包含：案例背景、损伤评估、处理方案、分阶段康复过程、教学总结反思',
-  team: '运动队带队/竞赛总结，结构：带队概况、训练过程、竞赛成绩、经验总结、问题展望',
-  title: '职称评审工作业绩材料，突出教学成果、科研成果、专业能力、获奖情况'
+const templateStructure = {
+  practice:`严格按照以下标准章节结构生成，标题层级清晰：
+一、实践基本概况（实践时间、单位、岗位、个人基本信息）
+二、实践目的与意义
+三、实践主要内容与开展过程（分点详细写，结合运动康复/体育教学专业）
+四、实践成果与收获（专业能力提升、教学/工作成果、案例积累）
+五、实践中发现的问题与改进建议
+六、实践心得体会与总结
+格式要求：正式公文风格，专业术语准确，段落清晰，每部分内容饱满`,
+  annual:`结构：一、年度工作概述 二、教学工作完成情况 三、科研与专业建设 四、学生工作/实践教学 五、存在不足 六、下年度工作计划`,
+  case:`每个案例结构：案例编号与名称、案例背景、损伤评估、处理方案、分阶段康复过程、案例总结与教学反思`,
+  team:`结构：一、带队概况 二、训练安排与过程 三、竞赛成绩 四、经验总结 五、问题与展望`,
+  title:`结构：个人基本情况、教学工作业绩、科研成果、专业建设与实践、获奖荣誉、能力总结`
 };
 
-async function generate() {
-  const type = document.getElementById('materialType').value;
-  const name = document.getElementById('name').value.trim();
-  const dept = document.getElementById('department').value.trim();
-  const input = document.getElementById('materialInput').value.trim();
-  if (!input) { alert('请先粘贴工作素材'); return; }
+async function generate(full=true, chapter=null){
+  const type=document.getElementById('materialType').value;
+  const name=document.getElementById('name').value.trim();
+  const dept=document.getElementById('department').value.trim();
+  const words=document.getElementById('targetWords').value;
+  const input=document.getElementById('materialInput').value.trim();
+  if(!input && full){alert('请输入素材');return;}
 
-  const btn = document.getElementById('generateBtn');
-  btn.disabled = true;
-  document.getElementById('status').style.display = 'block';
-  document.getElementById('resultSection').style.display = 'none';
+  const btn=document.getElementById('generateBtn');
+  btn.disabled=true;
+  document.getElementById('status').style.display='block';
 
-  const systemPrompt = '你是高校公文写作专家，熟悉体育学院、运动康复专业正式材料写作规范。严格根据用户提供的真实素材写作，绝对不编造虚假数据、成绩、获奖，语言正式规范，直接输出正文。';
-  const userPrompt = '请写一份' + typeConfig[type] + '\n作者：' + name + '，单位：' + dept + '\n真实素材：\n' + input;
-
-  try {
-    const result = await callAI(systemPrompt, userPrompt);
-    document.getElementById('resultContent').innerHTML = result.split('\n').join('<br>');
-    document.getElementById('outputCount').textContent = result.length;
-    document.getElementById('resultSection').style.display = 'block';
-    localStorage.setItem('tm_last_result', result);
-  } catch (e) {
-    alert('生成失败：' + e.message);
+  let sys,user;
+  if(full){
+    sys='你是高校体育学院公文写作专家，精通运动康复专业，严格基于真实素材写作，绝不编造虚假数据、成绩、获奖，语言正式专业，结构清晰，直接输出正文。';
+    user=`请按以下模板写一份约${words}字的材料：
+${templateStructure[type]}
+作者：${name}，单位：${dept}
+真实素材：
+${input}
+共上传${uploadedImages.length}张实践照片，请在对应合适章节标注【插入实践照片X】占位，后续自动排版。`;
+    try{
+      currentResult=await callAI(sys,user);
+      addVersion(currentResult);
+    }catch(e){alert('生成失败：'+e.message);}
+  }else{
+    sys='你是公文写作专家，仅重写指定章节，保持和全文风格统一，基于原始素材，不编造。';
+    user=`全文内容：
+${currentResult}
+原始素材：
+${input}
+请单独重写章节「${chapter}」，只输出重写后的该章节内容，不要输出其他内容。`;
+    try{
+      const newChapter=await callAI(sys,user,3000);
+      const reg=new RegExp(chapter+'[\\s\\S]*?(?=\\n[一二三四五六七八九十]、|$)');
+      currentResult=currentResult.replace(reg,newChapter);
+      addVersion(currentResult);
+    }catch(e){alert('重写失败：'+e.message);}
   }
 
-  btn.disabled = false;
-  document.getElementById('status').style.display = 'none';
+  renderResult();
+  btn.disabled=false;
+  document.getElementById('status').style.display='none';
 }
 
-document.getElementById('generateBtn').addEventListener('click', generate);
-document.getElementById('regenBtn').addEventListener('click', generate);
-
-document.getElementById('copyBtn').addEventListener('click', async function() {
-  await navigator.clipboard.writeText(document.getElementById('resultContent').innerText);
-  this.textContent = '✅ 已复制';
-  setTimeout(() => this.textContent = '📋 复制全文', 2000);
-});
-
-document.getElementById('exportBtn').addEventListener('click', function() {
-  const content = document.getElementById('resultContent').innerHTML;
-  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>教师工作材料</title><style>body{font-family:"宋体";line-height:1.8;font-size:14pt;}</style></head><body>${content}</body></html>`;
-  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = '教师工作材料.doc';
-  link.click();
-});
-
-const lastResult = localStorage.getItem('tm_last_result');
-if (lastResult) {
-  document.getElementById('resultContent').innerHTML = lastResult.split('\n').join('<br>');
-  document.getElementById('outputCount').textContent = lastResult.length;
-  document.getElementById('resultSection').style.display = 'block';
+function renderResult(){
+  document.getElementById('resultContent').innerHTML=currentResult.split('\n').join('<br>');
+  document.getElementById('outputCount').textContent=currentResult.length;
+  document.getElementById('resultSection').style.display='block';
+  // 提取章节
+  const chapters=[...currentResult.matchAll(/\n([一二三四五六七八九十]、[^\n]+)/g)].map(m=>m[1].trim());
+  document.getElementById('chapterList').innerHTML=chapters.map(ch=>`
+  <div class="chapter-item">
+  <span>${ch}</span>
+  <button onclick="rewriteChapter('${ch.replace(/'/g,"\\'")}')">重写本章</button>
+  </div>`).join('')||'<div style="padding:14px;color:#999;text-align:center;">未识别到标准章节</div>';
 }
+
+window.rewriteChapter=function(ch){generate(false,ch);};
+
+function addVersion(text){
+  const time=new Date().toLocaleTimeString();
+  versions.push({time,text});
+  if(versions.length>10) versions.shift();
+  renderVersions();
+}
+function renderVersions(){
+  document.getElementById('versionList').innerHTML=versions.map((v,i)=>`
+  <span class="version-tag" onclick="restoreVersion(${i})">v${versions.length-i} ${v.time}</span>
+  `).join('');
+}
+window.restoreVersion=function(i){
+  currentResult=versions[i].text;
+  renderResult();
+};
+
+document.getElementById('generateBtn').onclick=()=>generate(true);
+document.getElementById('regenBtn').onclick=()=>generate(true);
+document.getElementById('copyBtn').onclick=async function(){
+  await navigator.clipboard.writeText(currentResult);
+  this.textContent='✅ 已复制';setTimeout(()=>this.textContent='📋 复制全文',2000);
+};
+document.getElementById('exportBtn').onclick=function(){
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>教师工作材料</title><style>body{font-family:"宋体";line-height:1.8;font-size:14pt;}h1,h2,h3{font-family:"黑体";}</style></head><body>${currentResult.split('\n').join('<br>')}</body></html>`;
+  const blob=new Blob(['\ufeff',html],{type:'application/msword'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='教师工作材料.doc';a.click();
+};
 </script>
 </body>
 </html>
