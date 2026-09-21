@@ -210,11 +210,15 @@ async function exportWord(){
 }
 // ===================== 增量：配套汇报PPT与演讲提纲 =====================
 function splitCases(text){
- // 从正文拆分独立案例
- const parts=text.split(/(?=[一二三四五六七八九十]+[、.][^，。]*案例|案例[一二三四五六七八九十\d]+)/);
+ const re=/(?=案例[\s]*[一二三四五六七八九十\d]+[：:、.\s]|[一二三四五六七八九十]+[、.][^\n]*案例)/g;
+ const parts=text.split(re);
  let cases=[];
- for(let p of parts){
-  if(p.includes('案例')&&p.length>100)cases.push(p.trim());
+ for(let part of parts){
+  part=part.trim();
+  if(part.includes('案例')&&part.length>50)cases.push(part);
+ }
+ if(cases.length===0){
+  cases=text.split('\n').filter(l=>l.includes('案例')&&l.length>50);
  }
  return cases.slice(0,parseInt(caseNum.value));
 }
