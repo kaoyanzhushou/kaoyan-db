@@ -85,6 +85,12 @@ textarea.c{min-height:110px;resize:vertical}
 </div>
 <script>
 const API='https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com';
+// 显式获取所有DOM，避免内置属性冲突
+const $=id=>document.getElementById(id);
+const sList=$('sList'),tpl=$('tpl'),tplTip=$('tplTip'),imgPrev=$('imgPrev'),steps=$('steps'),
+confirmBox=$('confirmBox'),modalMask=$('modalMask'),resultPanel=$('resultPanel'),docRender=$('docRender'),
+type=$('type'),nameInput=$('name'),college=$('college'),company=$('company'),dateInput=$('date'),
+caseNum=$('caseNum'),material=$('material'),startBtn=$('startBtn'),outlineEdit=$('outlineEdit');
 let imgs=[],parsedMaterial='',finalOutline='',finalText='';
 async function checkS(){try{let r=await fetch(API+'/api/model-status'),d=await r.json();sList.innerHTML=d.data.map(m=>`<div class="status-item"><span class="dot ${m.available?'g':'r'}"></span>${m.name}</div>`).join('')}catch{}}checkS();setInterval(checkS,60000);
 function setS(n,c){document.getElementById('s'+n).classList.add(c)}
@@ -94,7 +100,7 @@ function loadImgs(i){[...i.files].forEach(f=>imgs.push({url:URL.createObjectURL(
 
 async function startFlow(){
  startBtn.disabled=true;steps.style.display='block';
- let info=`姓名：${name.value}\n学院：${college.value}\n实践单位：${company.value}\n时间：${date.value}\n类型：${type.value}`;
+ let info=`姓名：${nameInput.value}\n学院：${college.value}\n实践单位：${company.value}\n时间：${dateInput.value}\n类型：${type.value}`;
  let material=info+'\n\n工作素材：\n'+material.value;
  let tplText=tpl.value;
  try{
@@ -136,7 +142,7 @@ function renderDoc(){
  let toc=finalOutline.split('\n').filter(l=>l.trim()).map(l=>`<p>${l.replace(/^[一二三四五六七八九十\d.、\s]+/,'')}</p>`).join('');
  let photos=imgs.map(x=>`<img src="${x.url}">`).join('');
  document.getElementById('docRender').innerHTML=`
- <div class="cover"><h1>${type.value}</h1><p>学院：${college.value}</p><p>姓名：${name.value}</p><p>实践单位：${company.value}</p><p>完成时间：${date.value}</p></div>
+ <div class="cover"><h1>${type.value}</h1><p>学院：${college.value}</p><p>姓名：${nameInput.value}</p><p>实践单位：${company.value}</p><p>完成时间：${dateInput.value}</p></div>
  <h2>目录</h2><div class="toc">${toc}</div>
  <h2>正文</h2>${finalText.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('')}
  <h2>实践照片</h2><div class="photo-grid">${photos||'<p>（未上传照片）</p>'}</div>`;
@@ -147,12 +153,12 @@ async function exportWord(){
  let photoHtml='';
  for(let x of imgs){let b=await x.file.arrayBuffer();let b64=btoa(String.fromCharCode(...new Uint8Array(b)));photoHtml+=`<p style="text-align:center"><img src="data:image/jpeg;base64,${b64}" width="400"></p>`}
  let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:宋体;line-height:2;font-size:14pt;padding:50px}h1{text-align:center;font-size:22pt}h2{font-size:16pt;border-bottom:1px solid #000;padding-bottom:5px}p{text-indent:2em;margin:8px 0}.cover p{text-indent:0;text-align:center}</style></head><body>
- <div class="cover"><h1>${type.value}</h1><p>学院：${college.value}</p><p>姓名：${name.value}</p><p>实践单位：${company.value}</p><p>完成时间：${date.value}</p></div>
+ <div class="cover"><h1>${type.value}</h1><p>学院：${college.value}</p><p>姓名：${nameInput.value}</p><p>实践单位：${company.value}</p><p>完成时间：${dateInput.value}</p></div>
  <h2>目录</h2>${finalOutline.split('\n').filter(l=>l.trim()).map(l=>'<p style="text-indent:0">'+l+'</p>').join('')}
  <h2>正文</h2>${finalText.split('\n').filter(l=>l.trim()).map(l=>'<p>'+l+'</p>').join('')}
  <h2>实践照片</h2>${photoHtml}
  </body></html>`;
- let blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name.value+'_'+type.value+'.doc';a.click();
+ let blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nameInput.value+'_'+type.value+'.doc';a.click();
 }
 </script>
 </body>
