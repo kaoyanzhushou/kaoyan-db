@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>教师材料智能生成器 P2专业版</title>
+<title>教师材料智能生成器 P2 自定义模板版</title>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
 body { background:#f5f7fa; min-height:100vh; padding:20px; }
@@ -19,7 +20,6 @@ body { background:#f5f7fa; min-height:100vh; padding:20px; }
 .form-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
 textarea { resize:vertical; min-height:160px; line-height:1.6; }
 .btn-primary { width:100%; padding:13px; background:#4f46e5; color:white; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; }
-.btn-primary:hover { background:#4338ca; }
 .btn-primary:disabled { background:#9ca3af; cursor:not-allowed; }
 .result-section { display:none; }
 .result-actions { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
@@ -31,32 +31,33 @@ textarea { resize:vertical; min-height:160px; line-height:1.6; }
 .tip { font-size:12px; color:#6b7280; margin-top:5px; }
 .status { text-align:center; padding:18px; color:#6b7280; display:none; font-size:14px; }
 .word-count { font-size:12px; color:#6b7280; text-align:right; margin-top:4px; }
-.upload-area { border:2px dashed #d1d5db; border-radius:8px; padding:24px; text-align:center; cursor:pointer; margin-bottom:10px; transition:all 0.2s; }
+.upload-area { border:2px dashed #d1d5db; border-radius:8px; padding:20px; text-align:center; cursor:pointer; transition:all 0.2s; }
 .upload-area:hover { border-color:#4f46e5; background:#f8faff; }
 .image-preview { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:12px; }
-.img-item { position:relative; aspectratio:1; border-radius:6px; overflow:hidden; }
+.img-item { position:relative; aspect-ratio:1; border-radius:6px; overflow:hidden; }
 .img-item img { width:100%; height:100%; object-fit:cover; }
 .img-del { position:absolute; top:4px; right:4px; width:22px; height:22px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; cursor:pointer; font-size:12px; }
 .chapter-list { max-height:200px; overflow-y:auto; margin:10px 0; border:1px solid #e5e7eb; border-radius:6px; }
 .chapter-item { padding:10px 14px; border-bottom:1px solid #f3f4f6; display:flex; justify-content:space-between; align-items:center; font-size:14px; }
-.chapter-item:last-child { border-bottom:none; }
 .chapter-item button { padding:4px 10px; font-size:12px; background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; cursor:pointer; }
 .version-list { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
 .version-tag { padding:4px 10px; background:#f3f4f6; border-radius:20px; font-size:12px; cursor:pointer; }
+.template-box { background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:16px; margin-bottom:18px; }
+.template-status { font-size:13px; margin-top:8px; }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script></head>
+</head>
 <body>
 <div class="container">
 <div class="header">
-<h1>教师材料智能生成器 P2专业版</h1>
-<p>模板精准匹配 · 专业内容生成 · 图片排版 · 分章节编辑</p>
+<h1>教师材料智能生成器</h1>
+<p>支持自定义模板上传 · 专业内容生成 · 图片排版 · 分章节编辑</p>
 </div>
 
 <div class="card">
 <div class="form-group">
 <label>材料类型</label>
 <select id="materialType" class="form-control">
-<option value="practice" selected>青年教师专业实践成果报告（内置标准模板）</option>
+<option value="practice" selected>青年教师专业实践成果报告</option>
 <option value="annual">年度教学工作总结</option>
 <option value="case">运动康复教学案例集</option>
 <option value="team">运动队带队/竞赛总结</option>
@@ -64,15 +65,16 @@ textarea { resize:vertical; min-height:160px; line-height:1.6; }
 </select>
 </div>
 
+<!-- 自定义模板上传 显眼位置 -->
+<div class="template-box">
+<label style="margin-bottom:10px;font-weight:600;color:#0c4a6e;">📄 我的自定义模板（上传后严格按你的模板生成）</label>
+<div class="upload-area" id="templateUploadArea" style="padding:16px;background:white;">
+<div style="color:#6b7280;font-size:14px;">点击上传 .docx / .doc / .txt 模板文件，自动解析章节结构</div>
+</div>
+<input type="file" id="templateInput" accept=".docx,.doc,.txt" style="display:none;">
+<div class="template-status" id="templateStatus"></div>
+</div>
 
-<div class="form-group">
-<label>自定义模板上传（可选，上传后优先使用你的模板）</label>
-<div class="upload-area" id="templateUploadArea" style="padding:16px;">
-<div style="color:#6b7280;font-size:14px;">📄 点击上传 .docx/.doc/.txt 模板文件，自动解析章节结构</div>
-</div>
-<input type="file" id="templateInput" accept=".docx,.doc,.txt,.pdf" style="display:none;">
-<div id="templateStatus" style="font-size:13px;margin-top:6px;color:#10b981;display:none;"></div>
-</div>
 <div class="form-row">
 <div class="form-group">
 <label>姓名</label>
@@ -89,232 +91,141 @@ textarea { resize:vertical; min-height:160px; line-height:1.6; }
 </div>
 
 <div class="form-group">
-<label>实践/工作素材</label>
-<textarea id="materialInput" class="form-control" placeholder="粘贴所有真实工作内容、经历、案例，AI自动整理润色"></textarea>
-<div class="word-count"><span id="inputCount">0</span> 字 · 自动保存草稿</div>
+<label>工作素材</label>
+<textarea id="materialInput" class="form-control" placeholder="粘贴真实工作内容、经历、案例"></textarea>
+<div class="word-count"><span id="inputCount">0</span> 字 · 自动保存</div>
 </div>
 
 <div class="form-group">
-<label>上传实践照片/证明材料（自动匹配章节排版）</label>
+<label>上传实践照片</label>
 <div class="upload-area" id="uploadArea">
-<div style="color:#6b7280;">📷 点击或拖拽图片到此处上传</div>
+<div style="color:#6b7280;">📷 点击或拖拽图片上传</div>
 </div>
 <input type="file" id="imageInput" accept="image/*" multiple style="display:none;">
 <div class="image-preview" id="imagePreview"></div>
 </div>
 
-<button id="generateBtn" class="btn-primary">✨ 按模板生成完整专业材料</button>
-<div id="status" class="status">正在调用多模型协作生成，预计20-40秒...</div>
+<button id="generateBtn" class="btn-primary">✨ 生成完整材料</button>
+<div id="status" class="status">正在生成，预计20-40秒...</div>
 </div>
 
 <div id="resultSection" class="result-section">
 <div class="result-actions">
-<button id="exportBtn" class="btn btn-success">📄 导出Word（格式匹配模板）</button>
+<button id="exportBtn" class="btn btn-success">📄 导出Word</button>
 <button id="copyBtn" class="btn btn-secondary">📋 复制全文</button>
-<button id="regenBtn" class="btn btn-warning">🔄 全文重新生成</button>
+<button id="regenBtn" class="btn btn-warning">🔄 重新生成</button>
 </div>
-
 <div class="card" style="padding:18px;">
-<label style="font-size:14px;font-weight:500;display:block;margin-bottom:8px;">分章节单独重写</label>
+<label style="font-size:14px;font-weight:500;display:block;margin-bottom:8px;">分章节重写</label>
 <div class="chapter-list" id="chapterList"></div>
-<label style="font-size:14px;font-weight:500;display:block;margin:12px 0 8px;">历史版本（点击回退）</label>
+<label style="font-size:14px;font-weight:500;display:block;margin:12px 0 8px;">历史版本</label>
 <div class="version-list" id="versionList"></div>
 </div>
-
 <div class="result-content" id="resultContent"></div>
-<div class="word-count" style="margin-top:8px;">当前内容 <span id="outputCount">0</span> 字</div>
+<div class="word-count"><span id="outputCount">0</span> 字</div>
 </div>
 </div>
 
 <script>
-const BACKEND = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/chat';
-let uploadedImages = [];
-let versions = [];
-let currentResult = '';
+const BACKEND='https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/chat';
+let uploadedImages=[],versions=[],currentResult='',customTemplateText='';
 
-// 草稿自动加载保存
-const draftFields = ['materialType','name','department','targetWords','materialInput'];
-draftFields.forEach(id=>{
-  const el=document.getElementById(id);
-  const saved=localStorage.getItem('p2_draft_'+id);
-  if(saved) el.value=saved;
-  el.addEventListener('input',()=>{
-    localStorage.setItem('p2_draft_'+id,el.value);
-    if(id==='materialInput') document.getElementById('inputCount').textContent=el.value.length;
-  });
+// 自定义模板上传
+document.getElementById('templateUploadArea').onclick=()=>document.getElementById('templateInput').click();
+document.getElementById('templateInput').onchange=async function(e){
+  const file=e.target.files[0];if(!file)return;
+  const el=document.getElementById('templateStatus');
+  el.textContent='正在解析...';el.style.color='#0369a1';
+  try{
+    if(file.name.endsWith('.docx')){
+      const buf=await file.arrayBuffer();
+      const res=await mammoth.extractRawText({arrayBuffer:buf});
+      customTemplateText=res.value;
+    }else customTemplateText=await file.text();
+    localStorage.setItem('my_custom_template',customTemplateText);
+    el.textContent=`✅ 模板「${file.name}」解析成功，生成将严格使用该模板`;
+    el.style.color='#15803d';
+  }catch(err){
+    el.textContent='❌ 解析失败，请使用标准docx/txt文件';el.style.color='#b91c1c';
+  }
+};
+if(localStorage.getItem('my_custom_template')){
+  customTemplateText=localStorage.getItem('my_custom_template');
+  const el=document.getElementById('templateStatus');
+  el.textContent='✅ 已加载上次上传的自定义模板';el.style.color='#15803d';
+}
+
+// 草稿
+['materialType','name','department','targetWords','materialInput'].forEach(id=>{
+  const el=document.getElementById(id);const s=localStorage.getItem('p2v2_'+id);if(s)el.value=s;
+  el.addEventListener('input',()=>{localStorage.setItem('p2v2_'+id,el.value);if(id==='materialInput')document.getElementById('inputCount').textContent=el.value.length;});
 });
 document.getElementById('inputCount').textContent=document.getElementById('materialInput').value.length;
 
-
-let customTemplateText = '';
-document.getElementById('templateUploadArea').onclick = ()=>document.getElementById('templateInput').click();
-document.getElementById('templateInput').onchange = async function(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  const statusEl = document.getElementById('templateStatus');
-  statusEl.style.display='block';
-  statusEl.textContent='正在解析模板...';
-  try{
-    if(file.name.endsWith('.docx')){
-      const arrayBuffer = await file.arrayBuffer();
-      const result = await mammoth.extractRawText({arrayBuffer});
-      customTemplateText = result.value;
-    }else{
-      customTemplateText = await file.text();
-    }
-    localStorage.setItem('custom_template', customTemplateText);
-    statusEl.textContent = `✅ 模板「${file.name}」解析成功，生成时将严格按照该模板结构`;
-  }catch(e){
-    statusEl.textContent='❌ 模板解析失败，请使用txt或标准docx文件';
-    customTemplateText='';
-  }
-};
-// 加载已保存模板
-const savedTemplate = localStorage.getItem('custom_template');
-if(savedTemplate){
-  customTemplateText = savedTemplate;
-  const el=document.getElementById('templateStatus');
-  el.style.display='block';
-  el.textContent='✅ 已加载上次上传的自定义模板';
-}
-
-// 图片上传
+// 图片
 document.getElementById('uploadArea').onclick=()=>document.getElementById('imageInput').click();
 document.getElementById('imageInput').onchange=function(e){
-  Array.from(e.target.files).forEach(file=>{
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      uploadedImages.push({name:file.name,data:ev.target.result});
-      renderImages();
-    };
-    reader.readAsDataURL(file);
+  Array.from(e.target.files).forEach(f=>{
+    const r=new FileReader();r.onload=ev=>{uploadedImages.push({data:ev.target.result});renderImg();};r.readAsDataURL(f);
   });
 };
-function renderImages(){
-  const el=document.getElementById('imagePreview');
-  el.innerHTML=uploadedImages.map((img,i)=>`
-  <div class="img-item">
-  <img src="${img.data}" alt="">
-  <button class="img-del" onclick="deleteImg(${i})">×</button>
-  </div>`).join('');
-}
-window.deleteImg=function(i){uploadedImages.splice(i,1);renderImages();};
+function renderImg(){document.getElementById('imagePreview').innerHTML=uploadedImages.map((_,i)=>`<div class="img-item"><img src="${uploadedImages[i].data}"><button class="img-del" onclick="delImg(${i})">×</button></div>`).join('');}
+window.delImg=i=>{uploadedImages.splice(i,1);renderImg();};
 
-async function callAI(systemPrompt,userPrompt,maxTokens=12000){
-  const res=await fetch(BACKEND,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}],max_tokens:maxTokens})
-  });
-  if(!res.ok) throw new Error('后端错误：'+res.status);
-  const data=await res.json();
-  return data.choices?.[0]?.message?.content || data.content;
+async function callAI(sys,user,max=12000){
+  const r=await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'system',content:sys},{role:'user',content:user}],max_tokens:max})});
+  if(!r.ok)throw new Error(r.status);
+  const d=await r.json();return d.choices?.[0]?.message?.content||d.content;
 }
 
-const templateStructure = {
-  practice:`严格按照以下标准章节结构生成，标题层级清晰：
-一、实践基本概况（实践时间、单位、岗位、个人基本信息）
-二、实践目的与意义
-三、实践主要内容与开展过程（分点详细写，结合运动康复/体育教学专业）
-四、实践成果与收获（专业能力提升、教学/工作成果、案例积累）
-五、实践中发现的问题与改进建议
-六、实践心得体会与总结
-格式要求：正式公文风格，专业术语准确，段落清晰，每部分内容饱满`,
-  annual:`结构：一、年度工作概述 二、教学工作完成情况 三、科研与专业建设 四、学生工作/实践教学 五、存在不足 六、下年度工作计划`,
-  case:`每个案例结构：案例编号与名称、案例背景、损伤评估、处理方案、分阶段康复过程、案例总结与教学反思`,
-  team:`结构：一、带队概况 二、训练安排与过程 三、竞赛成绩 四、经验总结 五、问题与展望`,
-  title:`结构：个人基本情况、教学工作业绩、科研成果、专业建设与实践、获奖荣誉、能力总结`
+const builtIn={
+practice:'章节：一、实践概况 二、实践目的 三、实践内容过程 四、成果收获 五、问题建议 六、心得体会',
+annual:'章节：一、年度概述 二、教学工作 三、科研建设 四、其他工作 五、不足 六、下年计划',
+case:'每个案例：背景、评估、方案、康复过程、反思总结',
+team:'章节：概况、训练过程、成绩、经验、展望',
+title:'章节：基本情况、教学业绩、科研成果、专业建设、获奖、总结'
 };
 
-async function generate(full=true, chapter=null){
-  const type=document.getElementById('materialType').value;
-  const name=document.getElementById('name').value.trim();
-  const dept=document.getElementById('department').value.trim();
-  const words=document.getElementById('targetWords').value;
-  const input=document.getElementById('materialInput').value.trim();
-  if(!input && full){alert('请输入素材');return;}
-
-  const btn=document.getElementById('generateBtn');
-  btn.disabled=true;
-  document.getElementById('status').style.display='block';
-
-  let sys,user;
-  if(full){
-    sys='你是高校体育学院公文写作专家，精通运动康复专业，严格基于真实素材写作，绝不编造虚假数据、成绩、获奖，语言正式专业，结构清晰，直接输出正文。';
-    const templateUse = customTemplateText ? ('请严格按照我上传的以下模板结构、格式、章节要求写作：\n'+customTemplateText) : templateStructure[type];
-user=`请按模板写一份约${words}字的材料：
-${templateUse}
-作者：${name}，单位：${dept}
-真实素材：
-${input}
-共上传${uploadedImages.length}张实践照片，请在对应合适章节标注【插入实践照片X】占位，后续自动排版。`;
-    try{
-      currentResult=await callAI(sys,user);
-      addVersion(currentResult);
-    }catch(e){alert('生成失败：'+e.message);}
-  }else{
-    sys='你是公文写作专家，仅重写指定章节，保持和全文风格统一，基于原始素材，不编造。';
-    user=`全文内容：
-${currentResult}
-原始素材：
-${input}
-请单独重写章节「${chapter}」，只输出重写后的该章节内容，不要输出其他内容。`;
-    try{
-      const newChapter=await callAI(sys,user,3000);
-      const reg=new RegExp(chapter+'[\\s\\S]*?(?=\\n[一二三四五六七八九十]、|$)');
-      currentResult=currentResult.replace(reg,newChapter);
-      addVersion(currentResult);
-    }catch(e){alert('重写失败：'+e.message);}
-  }
-
-  renderResult();
-  btn.disabled=false;
-  document.getElementById('status').style.display='none';
+async function generate(full=true,chapter=null){
+  const type=document.getElementById('materialType').value,name=document.getElementById('name').value,dept=document.getElementById('department').value,words=document.getElementById('targetWords').value,input=document.getElementById('materialInput').value;
+  if(full&&!input){alert('请输入素材');return;}
+  document.getElementById('generateBtn').disabled=true;document.getElementById('status').style.display='block';
+  try{
+    if(full){
+      const sys='你是高校公文写作专家，熟悉体育、运动康复专业，严格基于真实素材，不编造虚假内容，直接输出正文。';
+      const tpl=customTemplateText?('严格按照我上传的模板结构格式写作：\n'+customTemplateText):builtIn[type];
+      const user=`写一份约${words}字材料：\n${tpl}\n作者：${name}，单位：${dept}\n素材：\n${input}\n共${uploadedImages.length}张照片，在对应位置标注【插入照片X】`;
+      currentResult=await callAI(sys,user);addVer(currentResult);
+    }else{
+      const sys='仅重写指定章节，风格统一，不编造';
+      const user=`全文：\n${currentResult}\n素材：\n${input}\n仅重写章节「${chapter}」，只输出该章节`;
+      const nc=await callAI(sys,user,3000);
+      const reg=new RegExp(chapter.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[\\s\\S]*?(?=\\n[一二三四五六七八九十]、|$)');
+      currentResult=currentResult.replace(reg,nc);addVer(currentResult);
+    }
+    renderRes();
+  }catch(e){alert('失败：'+e.message);}
+  document.getElementById('generateBtn').disabled=false;document.getElementById('status').style.display='none';
 }
 
-function renderResult(){
+function renderRes(){
   document.getElementById('resultContent').innerHTML=currentResult.split('\n').join('<br>');
   document.getElementById('outputCount').textContent=currentResult.length;
   document.getElementById('resultSection').style.display='block';
-  // 提取章节
-  const chapters=[...currentResult.matchAll(/\n([一二三四五六七八九十]、[^\n]+)/g)].map(m=>m[1].trim());
-  document.getElementById('chapterList').innerHTML=chapters.map(ch=>`
-  <div class="chapter-item">
-  <span>${ch}</span>
-  <button onclick="rewriteChapter('${ch.replace(/'/g,"\\'")}')">重写本章</button>
-  </div>`).join('')||'<div style="padding:14px;color:#999;text-align:center;">未识别到标准章节</div>';
+  const ch=[...currentResult.matchAll(/\n([一二三四五六七八九十]、[^\n]+)/g)].map(m=>m[1].trim());
+  document.getElementById('chapterList').innerHTML=ch.map(c=>`<div class="chapter-item"><span>${c}</span><button onclick="rewriteCh('${c.replace(/'/g,"\\'")}')">重写</button></div>`).join('')||'<div style="padding:14px;text-align:center;color:#999;">未识别章节</div>';
 }
-
-window.rewriteChapter=function(ch){generate(false,ch);};
-
-function addVersion(text){
-  const time=new Date().toLocaleTimeString();
-  versions.push({time,text});
-  if(versions.length>10) versions.shift();
-  renderVersions();
-}
-function renderVersions(){
-  document.getElementById('versionList').innerHTML=versions.map((v,i)=>`
-  <span class="version-tag" onclick="restoreVersion(${i})">v${versions.length-i} ${v.time}</span>
-  `).join('');
-}
-window.restoreVersion=function(i){
-  currentResult=versions[i].text;
-  renderResult();
-};
+window.rewriteCh=c=>generate(false,c);
+function addVer(t){versions.push({time:new Date().toLocaleTimeString(),text:t});if(versions.length>10)versions.shift();renderVer();}
+function renderVer(){document.getElementById('versionList').innerHTML=versions.map((v,i)=>`<span class="version-tag" onclick="restoreVer(${i})">v${versions.length-i} ${v.time}</span>`).join('');}
+window.restoreVer=i=>{currentResult=versions[i].text;renderRes();};
 
 document.getElementById('generateBtn').onclick=()=>generate(true);
 document.getElementById('regenBtn').onclick=()=>generate(true);
-document.getElementById('copyBtn').onclick=async function(){
-  await navigator.clipboard.writeText(currentResult);
-  this.textContent='✅ 已复制';setTimeout(()=>this.textContent='📋 复制全文',2000);
-};
+document.getElementById('copyBtn').onclick=async function(){await navigator.clipboard.writeText(currentResult);this.textContent='✅ 已复制';setTimeout(()=>this.textContent='📋 复制全文',2000);};
 document.getElementById('exportBtn').onclick=function(){
-  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>教师工作材料</title><style>body{font-family:"宋体";line-height:1.8;font-size:14pt;}h1,h2,h3{font-family:"黑体";}</style></head><body>${currentResult.split('\n').join('<br>')}</body></html>`;
-  const blob=new Blob(['\ufeff',html],{type:'application/msword'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='教师工作材料.doc';a.click();
+  const h=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:"宋体";line-height:1.8;font-size:14pt;}</style></head><body>${currentResult.split('\n').join('<br>')}</body></html>`;
+  const b=new Blob(['\ufeff',h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='教师材料.doc';a.click();
 };
 </script>
 </body>
