@@ -3876,7 +3876,7 @@ function createRipple(event){
 
 
 
-const button = event.currentTarget;
+const button = (event.target.closest && event.target.closest('button, .btn, .btn-primary, .btn-outline, .tool-btn, .nav-btn, .action-btn, .tab-btn')) || event.currentTarget;
 
 
 
@@ -18410,7 +18410,7 @@ console.log('✅ 全局错误捕获已启用');
 
 if(localStorage.getItem('site_cache_v1') && !window.location.search.includes('nocache')){
 
-  document.documentElement.innerHTML = localStorage.getItem('site_cache_v1');
+  try{localStorage.removeItem('site_cache_v1');}catch(e){}
 
 }
 
@@ -18418,7 +18418,7 @@ window.addEventListener('load', function(){
 
   setTimeout(function(){
 
-    try{localStorage.setItem('site_cache_v1', document.documentElement.innerHTML);}catch(e){}
+    /* 整页HTML缓存已禁用：innerHTML替换会使脚本不执行、DOM冻结、存储爆满 */
 
   }, 1000);
 
@@ -200812,7 +200812,7 @@ function rateAIOutput(modelId, rating) {
 
 
 
-if (typeof BACKEND_API_URL === 'undefined') { var BACKEND_API_URL = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com'; }
+if (typeof BACKEND_API_URL === 'undefined') { window.BACKEND_API_URL = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com'; }
 
 
 
