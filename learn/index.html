@@ -282992,6 +282992,7 @@ function init() {
 
 
     function addRecentVisit(name, tab) {
+        if(!name || !tab) return;
 
         // 去重
 
@@ -283020,6 +283021,8 @@ function init() {
 
 
     function renderRecentVisits() {
+        var __rv = recentVisits.filter(function(v){return v && v.tab && v.name;});
+        if(__rv.length!==recentVisits.length){recentVisits=__rv;try{localStorage.setItem('recent_visits',JSON.stringify(recentVisits));}catch(e){}}
 
         var container = document.getElementById('recentVisitsContainer');
 
