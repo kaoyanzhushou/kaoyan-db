@@ -105658,7 +105658,7 @@ function showPhdQuickFollowups(question, answer) {
 
 
 
-      html += '<button onclick="askPhdAIQuick(\'' + f.replace(/'/g, "\\'") + '\')" style="background:#fff;border:1px solid #c7d2fe;color:#4f46e5;padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background=#eef2ff" onmouseout="this.style.background=#fff">' + f + '</button>';
+      html += '<button onclick="askPhdAIQuick(\'' + f.replace(/'/g, "\\'") + '\')" style="background:#fff;border:1px solid #c7d2fe;color:#4f46e5;padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background=\'#eef2ff\'" onmouseout="this.style.background=\'#fff\'">' + f + '</button>';
 
 
 
@@ -201020,7 +201020,7 @@ throw new Error('后端API调用失败: ' + errMsg);
 
     const data = await response.json();
 
-    const respContent = data.content || '';
+    const respContent = data.content || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
 
 
 
@@ -201042,7 +201042,7 @@ throw new Error('后端API调用失败: ' + errMsg);
 
         const fbData = await fb.json();
 
-        if (fbData.content && fbData.content.trim()) return fbData.content;
+        var fbC = fbData.content || (fbData.choices && fbData.choices[0] && fbData.choices[0].message && fbData.choices[0].message.content) || ''; if (fbC && fbC.trim()) return fbC;
 
       }
 
@@ -201114,7 +201114,7 @@ async function typewriterToElement(element, text, speed = 15) {
 
           const fbData = await fb.json();
 
-          if (fbData.content && fbData.content.trim()) return fbData.content;
+          var fbC = fbData.content || (fbData.choices && fbData.choices[0] && fbData.choices[0].message && fbData.choices[0].message.content) || ''; if (fbC && fbC.trim()) return fbC;
 
         }
 
@@ -201268,11 +201268,11 @@ async function typewriterToElement(element, text, speed = 15) {
 
           const fbData = await fbRes.json();
 
-          if (fbData.content && fbData.content.trim()) {
+          var fbC = fbData.content || (fbData.choices && fbData.choices[0] && fbData.choices[0].message && fbData.choices[0].message.content) || ''; if (fbC && fbC.trim()) {
 
             console.log('✅ 自动切换到', fm);
 
-            return fbData.content;
+            return fbC;
 
           }
 
