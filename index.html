@@ -106976,6 +106976,8 @@ function renderPhdPublish(containerId) {
 
   html += '<div style="margin-bottom:12px"><label style="font-size:13px;color:#5b21b6;font-weight:600;display:block;margin-bottom:6px">摘要 / 研究内容简介</label><textarea id="pubAbstract" rows="5" placeholder="粘贴摘要，或简要描述研究目的、方法、结果、创新点" style="width:100%;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none;resize:vertical"></textarea></div>';
 
+  html += '<div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#7c3aed;color:#fff;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">📎 上传论文自动分析（提取图表/数据，选刊更准）<input type="file" id="pubUploadFile" accept=".pdf,.doc,.docx,.txt,.md" style="display:none"></label><span id="pubUploadStatus" style="font-size:11px;color:#6d28d9"></span></div>';
+
 
 
   html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">';
@@ -107676,7 +107678,7 @@ async function aiRecommendJournals() {
 
 
 
-    var userPrompt = '文章标题：' + title + '\n\n摘要/研究内容：' + abstract + '\n\n研究类型：' + type + '\n研究方向：' + direction + '\n投稿目标：' + goal + '\n目标IF区间：' + (minIF||0) + '-' + (maxIF===999?'不限':maxIF) + '\n开源要求：' + (oaPref||'不限制') + '\n期望审稿速度：' + (speedPref||'不限制') + '\n作者身份：' + authorLevel + '\n基金项目：' + hasFund + '\n文章字数：' + wordCount;
+    var userPrompt = '文章标题：' + title + '\n\n摘要/研究内容：' + abstract + '\n\n研究类型：' + type + '\n研究方向：' + direction + '\n投稿目标：' + goal + '\n目标IF区间：' + (minIF||0) + '-' + (maxIF===999?'不限':maxIF) + '\n开源要求：' + (oaPref||'不限制') + '\n期望审稿速度：' + (speedPref||'不限制') + '\n作者身份：' + authorLevel + '\n基金项目：' + hasFund + '\n文章字数：' + wordCount + buildPubChartCtxText();
 
 
 
@@ -112948,7 +112950,7 @@ async function publishMultiModels() {
 
 
 
-  var userPrompt = '论文标题：' + title + '\n研究类型：' + type + '\n研究方向：' + direction + '\n投稿目标：' + goal + '\n摘要：' + (abstract ? abstract.substring(0, 800) : '（未提供）') + '\n\n候选期刊列表：\n' + pool;
+  var userPrompt = '论文标题：' + title + '\n研究类型：' + type + '\n研究方向：' + direction + '\n投稿目标：' + goal + '\n摘要：' + (abstract ? abstract.substring(0, 800) : '（未提供）') + '\n\n候选期刊列表：\n' + pool + buildPubChartCtxText();
 
 
 
@@ -228127,6 +228129,7 @@ async function paragraphScore() {
 <script>
 // ============ 方案C：上传论文深度综合分析引擎 ============
 // 三通道：文本通道(DeepSeek分段全文分析) + 视觉通道(qwen-vl-max看图表) + 规则通道(确定性格式检查)
+// 集成方式：内嵌增强现有功能（期刊匹配等），无独立浮动面板
 (function() {
   'use strict';
 
@@ -228419,63 +228422,97 @@ async function paragraphScore() {
     return h.join('');
   }
 
-  // ---------- 7. UI 面板 ----------
-  function buildPanel() {
-    if (document.getElementById('deepAnalyzePanel')) return;
-    var div = document.createElement('div');
-    div.id = 'deepAnalyzePanel';
-    div.style.cssText = 'position:fixed;right:16px;bottom:80px;width:340px;max-width:92vw;z-index:9998;background:#fff;border:1px solid #ddd6fe;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,0.18);font-size:13px;color:#1f2937;';
-    div.innerHTML =
-      '<div style="padding:10px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center">' +
-      '<span style="font-weight:700;font-size:13px">📊 论文深度综合分析</span>' +
-      '<span id="deepAnalyzeToggle" style="cursor:pointer;font-size:16px">✕</span></div>' +
-      '<div id="deepAnalyzeBody" style="padding:12px 14px;max-height:70vh;overflow-y:auto">' +
-      '<div style="font-size:11px;color:#6b7280;line-height:1.6;margin-bottom:8px">上传论文 PDF / Word / TXT，自动分析<b>格式、图表、数据</b>并生成综合报告。PDF 将提取关键页图片交给视觉模型 qwen-vl-max 分析。</div>' +
-      '<label style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#667eea;color:#fff;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;margin-bottom:8px">📎 选择论文文件' +
-      '<input type="file" id="deepAnalyzeFile" accept=".pdf,.doc,.docx,.txt,.md" style="display:none"></label>' +
-      '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">' +
-      '<label style="font-size:11px;color:#6b7280"><input type="radio" name="deepMode" value="smart" checked> 智能关键页（推荐·省钱）</label>' +
-      '<label style="font-size:11px;color:#6b7280"><input type="radio" name="deepMode" value="full"> 全量分析</label></div>' +
-      '<div id="deepAnalyzeStatus" style="font-size:11px;color:#6b7280;margin-bottom:8px"></div>' +
-      '<div id="deepAnalyzeResult"></div>' +
-      '</div>';
-    document.body.appendChild(div);
-    document.getElementById('deepAnalyzeToggle').addEventListener('click', function() {
-      var b = document.getElementById('deepAnalyzeBody');
-      b.style.display = b.style.display === 'none' ? 'block' : 'none';
+  // ---------- 7. 期刊匹配集成（内嵌增强，无独立面板） ----------
+  // 全局缓存：上传论文后自动提取的图表/数据/格式上下文
+  window.__paperChartCtx = null;
+
+  // 把图表上下文格式化为 prompt 注入文本（无缓存时返回空串）
+  function buildPubChartCtxText() {
+    var ctx = window.__paperChartCtx;
+    if (!ctx || !ctx.vision || ctx.vision.length === 0) return '';
+    var lines = [];
+    lines.push('\n\n【论文图表与数据上下文（视觉模型 qwen-vl-max 自动提取）】');
+    lines.push('- 共提取 ' + ctx.vision.length + ' 处图表/关键页：');
+    ctx.vision.slice(0, 8).forEach(function(v) {
+      var p = v.parsed || {};
+      var chartTxt = p.has_chart ? '，类型:' + (p.chart_type || '图表') : '';
+      lines.push('  第' + v.page + '页：' + (p.page_type || '未知') + chartTxt + (p.data_notes ? '，数据:' + p.data_notes : '') + (p.quality === 'good' ? '（图表规范良好）' : p.quality === 'fair' ? '（图表规范性一般）' : '（图表规范性较差）'));
+      if (p.issues && p.issues.length) {
+        lines.push('    问题：' + p.issues.slice(0, 3).join('；'));
+      }
     });
-    document.getElementById('deepAnalyzeFile').addEventListener('change', function() {
-      var f = this.files && this.files[0];
-      if (!f) return;
-      var mode = 'smart';
-      var radios = document.querySelectorAll('input[name="deepMode"]');
-      for (var i = 0; i < radios.length; i++) if (radios[i].checked) mode = radios[i].value;
-      runDeepAnalyze(f, mode);
-    });
+    var r = ctx.rule || {};
+    lines.push('- 格式检查：' + (r.issues ? r.issues.length : 0) + ' 项问题（' + (r.issues || []).slice(0, 5).map(function(x) { return x.msg; }).join('；') + '）');
+    lines.push('- 请将论文图表完整度、数据质量、格式规范性纳入选刊判断：图表数据完整规范可考虑冲刺更高分期刊；若图表缺图注/坐标轴无单位/样本量不足，请在推荐理由中提示作者先完善再投。');
+    return lines.join('\n');
   }
 
-  async function runDeepAnalyze(file, mode) {
-    var status = document.getElementById('deepAnalyzeStatus');
-    var result = document.getElementById('deepAnalyzeResult');
-    status.textContent = '⏳ 正在解析文件与提取图表...';
-    result.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280"><div style="font-size:28px;margin-bottom:8px">⏳</div>正在解析文件与提取图表...</div>';
+  // 从论文文本提取标题
+  function extractTitle(text) {
+    var t = (text || '').replace(/^\s+/, '');
+    var lines = t.split('\n').filter(function(l) { return l.trim().length > 0; });
+    if (lines.length === 0) return '';
+    var first = lines[0].trim().replace(/^(摘要|题目|标题|论文题目)\s*[：:]?\s*/, '');
+    // 截断到个人信息/摘要标记（兼容 标题+学院+学号+姓名+指导教师 连排的文档）
+    var cut = first.search(/(学院|学号|姓名|指导教师|指导老师|摘要|关键词)/);
+    if (cut > 4) first = first.substring(0, cut);
+    return first.substring(0, 80);
+  }
+
+  // 从论文文本提取摘要段
+  function extractAbstract(text) {
+    var t = text || '';
+    var absIdx = t.indexOf('摘要');
+    if (absIdx >= 0) {
+      var seg = t.substring(absIdx + 2, absIdx + 1200);
+      var kwIdx = seg.indexOf('关键词');
+      if (kwIdx > 0) seg = seg.substring(0, kwIdx);
+      seg = seg.trim();
+      if (seg.length > 80) return seg.substring(0, 900);
+    }
+    // 无摘要标记：取前 900 字
+    return t.trim().substring(0, 900);
+  }
+
+  // 期刊匹配：上传论文 → 自动填标题/摘要 + 后台图表分析 + 缓存上下文
+  async function pubAnalyzeUpload(file) {
+    var statusEl = document.getElementById('pubUploadStatus');
+    if (statusEl) statusEl.innerHTML = '🔍 正在解析论文并提取图表（约30-60秒）...';
     try {
-      var rep = await deepAnalyzePaper(file, { mode: mode });
-      status.textContent = '✅ 分析完成';
-      result.innerHTML = renderDeepReport(rep);
+      var parsed = await parsePaperFile(file, 'smart');
+      // 自动填标题与摘要
+      var tInput = document.getElementById('pubTitle');
+      var aInput = document.getElementById('pubAbstract');
+      if (tInput && !tInput.value.trim()) tInput.value = extractTitle(parsed.text);
+      if (aInput && !aInput.value.trim()) aInput.value = extractAbstract(parsed.text);
+      // 规则检查
+      var rule = ruleCheck(parsed.text);
+      // 视觉通道（仅PDF/DOCX有图）
+      var vision = [];
+      if (parsed.images && parsed.images.length > 0) {
+        vision = await analyzeImagesWithVision(parsed.images);
+      }
+      window.__paperChartCtx = { name: file.name, vision: vision, rule: rule, meta: { chars: parsed.text.length, pages: parsed.pageCount, type: parsed.type } };
+      var imgTxt = vision.length > 0 ? ('已提取 ' + vision.length + ' 张图表') : '未检测到图表（仅文本分析）';
+      if (statusEl) statusEl.innerHTML = '✅ <b>' + esc(file.name) + '</b> 已填标题/摘要 · ' + imgTxt + ' · 选刊时 AI 将参考论文完整度';
     } catch (e) {
-      status.textContent = '❌ 分析失败';
-      result.innerHTML = '<div style="padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:12px">分析失败：' + esc(e.message) + '</div>';
+      if (statusEl) statusEl.innerHTML = '❌ 分析失败：' + esc(e.message);
+      window.__paperChartCtx = null;
     }
   }
 
-  function mount() { buildPanel(); }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
-  else mount();
+  // 事件委托：监听动态生成的 pubUploadFile（智能选刊Tab）
+  document.addEventListener('change', function(ev) {
+    var el = ev.target;
+    if (el && el.id === 'pubUploadFile' && el.files && el.files[0]) {
+      pubAnalyzeUpload(el.files[0]);
+    }
+  });
 
-  window.deepAnalyzePaper = deepAnalyzePaper;
-  window.renderDeepReport = renderDeepReport;
-  window.runDeepAnalyze = runDeepAnalyze;
+  // 暴露 API（供其他功能复用：deepAnalyzePaper 已在上方）
+  window.buildPubChartCtxText = buildPubChartCtxText;
+  window.pubAnalyzeUpload = pubAnalyzeUpload;
+  window.__paperChartCtx = window.__paperChartCtx || null;
   window.__deepAnalyzeLoaded = true;
 })();
 
