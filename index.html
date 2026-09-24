@@ -107542,7 +107542,7 @@ async function aiRecommendJournals() {
 
 
 
-1. 期刊名称 | 匹配度:XX% | 主题匹配:XX | 类型匹配:XX | IF匹配:XX | 速度匹配:XX | 录用难度:XX
+1. 期刊名称 | 匹配度:XX% | 录用概率:XX%-XX% | 主题匹配:XX | 类型匹配:XX | IF匹配:XX | 速度匹配:XX | 录用难度:XX
 
 
 
@@ -107642,6 +107642,12 @@ async function aiRecommendJournals() {
 
 
 
+
+
+- 录用概率: 结合该刊历史录用率与文章质量给出的录用概率区间（格式如 25%-40%），下限=历史录用率按质量缺陷下调，上限=按质量亮点上调
+
+
+
 - 匹配度为5个维度的加权平均分
 
 
@@ -107667,6 +107673,16 @@ async function aiRecommendJournals() {
 
 
 5. 每本期刊的推荐理由要具体，结合文章内容和期刊收稿范围说明为什么适合
+
+
+
+
+
+6. 录用概率区间务必参考候选期刊列表中的历史录用率（acceptRate），并结合文章质量评估上下浮动：质量中上时上浮5-10个百分点，质量中低时下调5-10个百分点，顶刊冲刺概率一般不高于其历史录用率；区间跨度一般为10-20个百分点
+
+
+
+7. 严禁省略【推荐结果】部分：必须完整输出[冲刺刊][稳妥刊][保底刊]共9本期刊，每本都必须包含"匹配度:XX%"和"录用概率:XX%-XX%"字段（与其他维度评分并列），推荐结果是核心交付物，不允许跳过
 
 
 
@@ -111854,6 +111870,12 @@ function renderAIRecommendResult(response, candidates) {
 
 
 
+
+
+      var probMatch = block.match(/录用概率[:：]\s*(\d+)\s*%?\s*[-~至到]\s*(\d+)\s*%/);
+
+
+
       var dimScores = {};
 
 
@@ -111911,6 +111933,12 @@ function renderAIRecommendResult(response, candidates) {
 
 
       if (matchMatch) html += '<div style="text-align:center;margin-left:12px"><div style="font-size:22px;font-weight:700;color:' + tier.color + '">' + matchMatch[1] + '<span style="font-size:12px">%</span></div><div style="font-size:10px;color:#9ca3af">匹配度</div></div>';
+
+
+
+
+
+      if (probMatch) html += '<div style="text-align:center;margin-left:12px;padding-left:12px;border-left:1px dashed #e5e7eb"><div style="font-size:18px;font-weight:700;color:#059669">' + probMatch[1] + '-' + probMatch[2] + '<span style="font-size:11px">%</span></div><div style="font-size:10px;color:#9ca3af">录用概率</div></div>';
 
 
 
@@ -112063,10 +112091,28 @@ function renderAIRecommendResult(response, candidates) {
 
 
       var colors = ['#dc2626','#d97706','#059669'];
+      // 录用概率兜底：从期刊库匹配历史录用率，结合质量评分微调（不依赖AI输出格式）
+      var probBadge = '';
+      var probJ = null, bestLen = 0;
+      PHD_JOURNALS.forEach(function(j) {
+        if (value.indexOf(j.name) >= 0 && j.name.length > bestLen) { bestLen = j.name.length; probJ = j; }
+      });
+      if (probJ && probJ.acceptRate) {
+        var avgScores = [];
+        if (innovMatch) avgScores.push(parseInt(innovMatch[1]));
+        if (qualityMatch2) avgScores.push(parseInt(qualityMatch2[1]));
+        if (writingMatch) avgScores.push(parseInt(writingMatch[1]));
+        var avg = avgScores.length ? avgScores.reduce(function(a,b){return a+b;},0)/avgScores.length : 6;
+        var adj = avg >= 7 ? 8 : (avg >= 5.5 ? 0 : -8);
+        var lo = Math.max(Math.round(probJ.acceptRate + adj - 8), 5);
+        var hi = Math.min(Math.round(probJ.acceptRate + adj + 8), 95);
+        probBadge = '<span style="display:inline-block;margin-left:8px;background:#059669;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px">录用概率 ' + lo + '-' + hi + '%</span>';
+      }
 
 
 
-      html += '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:' + colors[i%3] + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">' + (i+1) + '</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:' + colors[i%3] + '">' + label + '</div><div style="font-size:12px;color:#4c1d95;line-height:1.6">' + value + '</div></div></div>';
+
+      html += '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px"><div style="width:28px;height:28px;border-radius:50%;background:' + colors[i%3] + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">' + (i+1) + '</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:' + colors[i%3] + '">' + label + probBadge + '</div><div style="font-size:12px;color:#4c1d95;line-height:1.6">' + value + '</div></div></div>';
 
 
 
