@@ -228122,3 +228122,363 @@ async function paragraphScore() {
 
 }
 
+</script>
+
+<script>
+// ============ 方案C：上传论文深度综合分析引擎 ============
+// 三通道：文本通道(DeepSeek分段全文分析) + 视觉通道(qwen-vl-max看图表) + 规则通道(确定性格式检查)
+(function() {
+  'use strict';
+
+  function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  function ensurePdfjs() {
+    return new Promise(function(resolve) {
+      if (window.pdfjsLib) {
+        try { pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsLib.GlobalWorkerOptions.workerSrc || 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'; } catch (e) {}
+        return resolve(true);
+      }
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload = function() { resolve(true); };
+      s.onerror = function() { resolve(false); };
+      document.head.appendChild(s);
+    });
+  }
+  function ensureMammoth() {
+    return new Promise(function(resolve) {
+      if (window.mammoth) return resolve(true);
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+      s.onload = function() { resolve(true); };
+      s.onerror = function() { resolve(false); };
+      document.head.appendChild(s);
+    });
+  }
+
+  // ---------- 1. 解析文件：PDF渲染关键页 / DOCX提取文本与内嵌图 / TXT直接读 ----------
+  async function parsePaperFile(file, mode) {
+    var name = (file.name || '').toLowerCase();
+    var result = { text: '', images: [], pageCount: 0, type: '' };
+    var buf = await file.arrayBuffer();
+
+    if (name.endsWith('.pdf')) {
+      result.type = 'pdf';
+      var ok = await ensurePdfjs();
+      if (!ok || !window.pdfjsLib) throw new Error('PDF解析库加载失败，请检查网络');
+      var pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      result.pageCount = pdf.numPages;
+      var texts = [], pageLens = [];
+      for (var i = 1; i <= pdf.numPages; i++) {
+        var page = await pdf.getPage(i);
+        var tc = await page.getTextContent();
+        var pt = tc.items.map(function(it) { return it.str; }).join(' ');
+        texts.push(pt);
+        pageLens.push(pt.length);
+      }
+      result.text = texts.join('\n\n');
+
+      var keyPages = [];
+      if (mode === 'full') {
+        for (var f = 1; f <= pdf.numPages; f++) keyPages.push(f);
+        if (keyPages.length > 40) keyPages = keyPages.slice(0, 40);
+      } else {
+        if (pdf.numPages >= 1) keyPages.push(1);
+        for (var p = 2; p <= pdf.numPages; p++) { if (pageLens[p - 1] < 400) keyPages.push(p); }
+        if (pdf.numPages >= 2) keyPages.push(pdf.numPages);
+        if (pdf.numPages >= 3) keyPages.push(pdf.numPages - 1);
+        keyPages = Array.from(new Set(keyPages)).sort(function(a, b) { return a - b; });
+        if (keyPages.length > 12) keyPages = keyPages.slice(0, 12);
+      }
+
+      var scale = 1.5, images = [];
+      for (var k = 0; k < keyPages.length; k++) {
+        var pg = await pdf.getPage(keyPages[k]);
+        var vp = pg.getViewport({ scale: scale });
+        var cv = document.createElement('canvas');
+        cv.width = vp.width; cv.height = vp.height;
+        var ctx = cv.getContext('2d');
+        await pg.render({ canvasContext: ctx, viewport: vp }).promise;
+        images.push({ page: keyPages[k], dataUrl: cv.toDataURL('image/jpeg', 0.75) });
+        cv = null; ctx = null;
+      }
+      result.images = images;
+    } else if (name.endsWith('.docx')) {
+      result.type = 'docx';
+      var ok2 = await ensureMammoth();
+      if (!ok2 || !window.mammoth) throw new Error('Word解析库加载失败，请检查网络');
+      var r = await mammoth.convertToHtml({ arrayBuffer: buf });
+      var tmp = document.createElement('div');
+      tmp.innerHTML = r.value;
+      result.text = (tmp.innerText || tmp.textContent || '');
+      var imgs = tmp.querySelectorAll('img');
+      var docImages = [];
+      for (var j = 0; j < imgs.length && docImages.length < (mode === 'full' ? 20 : 10); j++) {
+        var src = imgs[j].getAttribute('src') || '';
+        if (src.indexOf('data:image') === 0) docImages.push({ page: j + 1, dataUrl: src });
+      }
+      result.images = docImages;
+    } else if (name.endsWith('.txt') || name.endsWith('.md')) {
+      result.type = 'txt';
+      result.text = new TextDecoder('utf-8').decode(buf);
+    } else {
+      throw new Error('不支持的文件格式，请上传 PDF / Word / TXT');
+    }
+    if (result.text.trim().length < 50) throw new Error('文档文本内容过少，无法分析（若为扫描版PDF请先转文字版）');
+    return result;
+  }
+
+  // ---------- 2. 规则通道：确定性格式检查 ----------
+  function ruleCheck(text) {
+    var issues = [];
+    var score = 100;
+    function add(sev, msg) { issues.push({ sev: sev, msg: msg }); if (sev === 'high') score -= 8; else if (sev === 'mid') score -= 4; else score -= 1; }
+    var t = text || '';
+    var len = t.length;
+    var found = {};
+    ['摘要', '关键词', '引言', '前言', '方法', '结果', '讨论', '结论'].forEach(function(s) { found[s] = t.indexOf(s) >= 0; });
+    if (!found['摘要']) add('high', '未检测到"摘要"章节');
+    if (!found['关键词']) add('mid', '未检测到"关键词"');
+    if (!found['引言'] && !found['前言']) add('high', '未检测到"引言/前言"章节');
+    if (!found['方法']) add('high', '未检测到"方法"章节');
+    if (!found['结果']) add('high', '未检测到"结果"章节');
+    if (!found['讨论']) add('mid', '未检测到"讨论"章节');
+    if (!found['结论']) add('mid', '未检测到"结论"章节');
+    var refCount = (t.match(/\[\d{1,2}\]/g) || []).length;
+    if (refCount === 0) add('mid', '未检测到文献引用标记（如[1][2]）');
+    else if (refCount < 5) add('mid', '文献引用偏少（仅' + refCount + '处）');
+    if (!/参考文献/.test(t)) add('high', '未检测到"参考文献"章节');
+    var figRefs = (t.match(/图\s*\d+/g) || []).length;
+    var tabRefs = (t.match(/表\s*\d+/g) || []).length;
+    if (figRefs > 0 && (t.match(/图\s*\d+\s*[：:]/g) || []).length < figRefs) add('mid', '检测到' + figRefs + '处图引用，但图注（图X：）数量可能不足');
+    if (tabRefs > 0 && (t.match(/表\s*\d+\s*[：:]/g) || []).length < tabRefs) add('mid', '检测到' + tabRefs + '处表引用，但表注（表X：）数量可能不足');
+    var units = t.match(/(kg|kg\/m2|cm|mL|ml|bpm|mmol\/L|mg\/L|%)/g) || [];
+    if (units.length < 3) add('low', '检测到的计量单位较少，运动实验论文通常需体重(kg)、心率(bpm)、浓度等数据单位');
+    if (len < 3000) add('mid', '全文偏短（约' + Math.round(len / 100) / 10 + '千字），论文字数可能不足');
+    var absIdx = t.indexOf('摘要');
+    if (absIdx >= 0) {
+      var absLen = t.substring(absIdx, absIdx + 600).length;
+      if (absLen < 150) add('mid', '摘要内容偏短');
+    }
+    if (score < 0) score = 0;
+    return { score: score, issues: issues, stats: { chars: len, refs: refCount, figs: figRefs, tabs: tabRefs } };
+  }
+
+  // ---------- 3. 文本通道：分段 DeepSeek 分析 ----------
+  async function analyzeTextWithAI(text) {
+    var SEG = 5000;
+    var segments = [];
+    for (var i = 0; i < text.length; i += SEG) segments.push(text.substring(i, i + SEG));
+    if (segments.length > 6) segments = segments.slice(0, 6);
+    var results = [];
+    for (var s = 0; s < segments.length; s++) {
+      var sys = '你是资深体育学教授和顶级学术审稿人。请分析论文片段，只输出一个JSON对象（不要任何其他文字），格式：{"structure_issue":"结构/章节组织问题(20字内,无则空)","logic_issue":"论证逻辑问题(20字内,无则空)","lang_issue":"语言/学术规范问题(20字内,无则空)","data_issue":"数据/统计问题(20字内,无则空)","score":{"structure":8,"logic":8,"lang":8,"data":8},"suggestions":["具体修改建议1","建议2","建议3"]}。每项评分1-10分。';
+      var usr = '论文片段（第' + (s + 1) + '/' + segments.length + '段）：\n' + segments[s];
+      var out = '';
+      try { out = await callDeepSeekAPI(sys, usr, 2500, 'deepseek-chat'); } catch (e) { out = ''; }
+      var parsed = null;
+      try { parsed = JSON.parse(out); } catch (e) {
+        var m = out.match(/\{[\s\S]*\}/);
+        if (m) { try { parsed = JSON.parse(m[0]); } catch (e2) {} }
+      }
+      results.push(parsed || { score: { structure: 7, logic: 7, lang: 7, data: 7 }, suggestions: [] });
+    }
+    var agg = { structure: 0, logic: 0, lang: 0, data: 0, issues: [], suggestions: [] };
+    results.forEach(function(r) {
+      agg.structure += (r.score && r.score.structure) || 7;
+      agg.logic += (r.score && r.score.logic) || 7;
+      agg.lang += (r.score && r.score.lang) || 7;
+      agg.data += (r.score && r.score.data) || 7;
+      if (r.structure_issue) agg.issues.push(r.structure_issue);
+      if (r.logic_issue) agg.issues.push(r.logic_issue);
+      if (r.lang_issue) agg.issues.push(r.lang_issue);
+      if (r.data_issue) agg.issues.push(r.data_issue);
+      (r.suggestions || []).forEach(function(x) { agg.suggestions.push(x); });
+    });
+    var n = results.length || 1;
+    agg.structure = Math.round(agg.structure / n);
+    agg.logic = Math.round(agg.logic / n);
+    agg.lang = Math.round(agg.lang / n);
+    agg.data = Math.round(agg.data / n);
+    agg.issues = Array.from(new Set(agg.issues)).slice(0, 10);
+    agg.suggestions = Array.from(new Set(agg.suggestions)).slice(0, 8);
+    return agg;
+  }
+
+  // ---------- 4. 视觉通道：qwen-vl-max 分析图表 ----------
+  async function analyzeImagesWithVision(images, onProgress) {
+    var reports = [];
+    for (var i = 0; i < images.length; i++) {
+      var img = images[i];
+      if (onProgress) onProgress(i + 1, images.length);
+      var sys = '你是学术论文图表审阅专家。请分析这张论文页面/图表图片，只输出一个JSON对象（不要其他文字）：{"page_type":"页面类型：摘要页/引言/方法/结果/讨论/图表页/其他","has_chart":true,"chart_type":"图表类型：折线图/柱状图/散点图/表格/机制图/流程图/照片/无","issues":["图表规范问题1","问题2"],"data_notes":"从图中读到的关键数据或趋势(25字内)","quality":"good|fair|poor"}。检查要点：坐标轴是否有单位、图注是否完整、数据标签是否清晰、表格是否有表头、图与正文是否对应。';
+      var usr = { role: 'user', content: [{ type: 'text', text: '请分析这张论文图片（第' + img.page + '页）：' }, { type: 'image_url', image_url: { url: img.dataUrl } }] };
+      var out = '';
+      try { out = await callQwenChat([{ role: 'system', content: sys }, usr], 'qwen-vl-max', 0.2, 2000); } catch (e) { out = ''; }
+      var parsed = null;
+      try { parsed = JSON.parse(out); } catch (e) {
+        var m = out.match(/\{[\s\S]*\}/);
+        if (m) { try { parsed = JSON.parse(m[0]); } catch (e2) {} }
+      }
+      reports.push({ page: img.page, parsed: parsed || { page_type: '未知', has_chart: false, issues: [], quality: 'fair' } });
+    }
+    return reports;
+  }
+
+  // ---------- 5. 主函数：综合分析 ----------
+  async function deepAnalyzePaper(file, opts) {
+    opts = opts || {};
+    var mode = opts.mode || 'smart';
+    var parsed = await parsePaperFile(file, mode);
+    var rule = ruleCheck(parsed.text);
+    var ai = await analyzeTextWithAI(parsed.text);
+    var vision = [];
+    if (parsed.images && parsed.images.length > 0) {
+      vision = await analyzeImagesWithVision(parsed.images);
+    }
+    var dims = [
+      { key: 'structure', name: '结构与章节', score: Math.round((rule.score / 10 + ai.structure) / 2) },
+      { key: 'logic', name: '逻辑与论证', score: ai.logic },
+      { key: 'lang', name: '语言与规范', score: ai.lang },
+      { key: 'data', name: '数据与统计', score: ai.data },
+      { key: 'format', name: '格式规范', score: Math.round(rule.score / 10) },
+      { key: 'chart', name: '图表质量', score: vision.length ? Math.round(vision.reduce(function(s, r) { return s + (r.parsed.quality === 'good' ? 9 : r.parsed.quality === 'fair' ? 6 : 3); }, 0) / vision.length) : null }
+    ];
+    var total = 0, cnt = 0;
+    dims.forEach(function(d) { if (d.score != null) { total += d.score; cnt++; } });
+    var overall = Math.round(total / cnt);
+    return { rule: rule, ai: ai, vision: vision, dims: dims, overall: overall, meta: { name: file.name, pages: parsed.pageCount, images: parsed.images.length, mode: mode } };
+  }
+
+  // ---------- 6. 报告渲染 ----------
+  function renderDeepReport(rep) {
+    var h = [];
+    h.push('<div style="background:#fff;border:2px solid #667eea;border-radius:14px;padding:18px;font-size:13px;line-height:1.7;color:#1f2937">');
+    h.push('<div style="font-size:16px;font-weight:700;color:#4338ca;margin-bottom:4px">📊 论文深度综合分析报告</div>');
+    h.push('<div style="font-size:11px;color:#6b7280;margin-bottom:12px">' + esc(rep.meta.name) + ' · ' + (rep.meta.pages ? rep.meta.pages + '页' : '') + ' · ' + (rep.meta.mode === 'full' ? '全量模式' : '智能关键页模式') + ' · 共分析 ' + rep.meta.images + ' 张页面/图</div>');
+    h.push('<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">');
+    h.push('<div style="width:64px;height:64px;border-radius:50%;background:' + (rep.overall >= 8 ? '#059669' : rep.overall >= 6 ? '#d97706' : '#dc2626') + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700">' + rep.overall + '</div>');
+    h.push('<div><div style="font-size:12px;color:#6b7280">综合评分（满分10）</div><div style="font-size:12px;color:#374151">' + (rep.overall >= 8 ? '整体质量较好' : rep.overall >= 6 ? '基本合格，有改进空间' : '需要较大修改') + '</div></div>');
+    h.push('</div>');
+    h.push('<table style="width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12px">');
+    h.push('<tr style="background:#f3f4f6"><th style="padding:6px 8px;border:1px solid #e5e7eb;text-align:left">维度</th><th style="padding:6px 8px;border:1px solid #e5e7eb">得分</th><th style="padding:6px 8px;border:1px solid #e5e7eb">评价</th></tr>');
+    rep.dims.forEach(function(d) {
+      if (d.score == null) return;
+      var c = d.score >= 8 ? '#059669' : d.score >= 6 ? '#d97706' : '#dc2626';
+      var t = d.score >= 8 ? '优' : d.score >= 6 ? '中' : '差';
+      h.push('<tr><td style="padding:5px 8px;border:1px solid #e5e7eb">' + d.name + '</td><td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:center;color:' + c + ';font-weight:700">' + d.score + '</td><td style="padding:5px 8px;border:1px solid #e5e7eb;color:' + c + '">' + t + '</td></tr>');
+    });
+    h.push('</table>');
+    h.push('<div style="font-size:14px;font-weight:700;color:#1f2937;margin:10px 0 6px">📋 格式与结构问题清单（规则检查）</div>');
+    if (rep.rule.issues.length === 0) h.push('<div style="color:#059669;font-size:12px">未发现明显格式问题</div>');
+    else {
+      h.push('<ul style="margin:0;padding-left:18px;font-size:12px">');
+      rep.rule.issues.forEach(function(it) {
+        var c = it.sev === 'high' ? '#dc2626' : it.sev === 'mid' ? '#d97706' : '#6b7280';
+        h.push('<li style="color:' + c + '">' + esc(it.msg) + '</li>');
+      });
+      h.push('</ul>');
+    }
+    h.push('<div style="font-size:11px;color:#9ca3af;margin:4px 0 8px">全文约 ' + Math.round(rep.rule.stats.chars / 100) / 10 + ' 千字 · 文献引用 ' + rep.rule.stats.refs + ' 处 · 图引用 ' + rep.rule.stats.figs + ' 处 · 表引用 ' + rep.rule.stats.tabs + ' 处</div>');
+    h.push('<div style="font-size:14px;font-weight:700;color:#1f2937;margin:10px 0 6px">🧠 AI 文本分析要点</div>');
+    if (rep.ai.issues.length === 0) h.push('<div style="color:#059669;font-size:12px">未发现明显文本问题</div>');
+    else {
+      h.push('<ul style="margin:0;padding-left:18px;font-size:12px">');
+      rep.ai.issues.slice(0, 8).forEach(function(x) { h.push('<li>' + esc(x) + '</li>'); });
+      h.push('</ul>');
+    }
+    if (rep.vision && rep.vision.length > 0) {
+      h.push('<div style="font-size:14px;font-weight:700;color:#1f2937;margin:10px 0 6px">🖼️ 图表分析（qwen-vl-max 视觉模型）</div>');
+      rep.vision.forEach(function(v) {
+        var p = v.parsed;
+        var qc = p.quality === 'good' ? '#059669' : p.quality === 'fair' ? '#d97706' : '#dc2626';
+        var qt = p.quality === 'good' ? '良好' : p.quality === 'fair' ? '一般' : '较差';
+        h.push('<div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;margin-bottom:8px">');
+        h.push('<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">');
+        h.push('<span style="font-weight:600;font-size:12px">第' + v.page + '页 · ' + esc(p.page_type || '未知') + (p.has_chart ? ' · ' + esc(p.chart_type || '图表') : '') + '</span>');
+        h.push('<span style="font-size:11px;color:' + qc + ';font-weight:600">' + qt + '</span>');
+        h.push('</div>');
+        if (p.data_notes) h.push('<div style="font-size:11px;color:#374151;margin-top:3px">📈 ' + esc(p.data_notes) + '</div>');
+        if (p.issues && p.issues.length) {
+          h.push('<ul style="margin:4px 0 0;padding-left:16px;font-size:11px;color:#b45309">');
+          p.issues.slice(0, 4).forEach(function(x) { h.push('<li>' + esc(x) + '</li>'); });
+          h.push('</ul>');
+        }
+        h.push('</div>');
+      });
+    }
+    h.push('<div style="font-size:14px;font-weight:700;color:#1f2937;margin:10px 0 6px">💡 修改建议（按优先级）</div>');
+    var sugg = [];
+    rep.rule.issues.filter(function(x) { return x.sev === 'high'; }).forEach(function(x) { sugg.push('【高】' + x.msg); });
+    rep.ai.suggestions.slice(0, 5).forEach(function(x) { sugg.push('【中】' + x); });
+    if (sugg.length === 0) sugg.push('整体表现不错，继续保持；投稿前请按学校/期刊模板逐项核对格式细节。');
+    h.push('<ul style="margin:0;padding-left:18px;font-size:12px">');
+    sugg.slice(0, 8).forEach(function(x) { h.push('<li>' + esc(x) + '</li>'); });
+    h.push('</ul>');
+    h.push('</div>');
+    return h.join('');
+  }
+
+  // ---------- 7. UI 面板 ----------
+  function buildPanel() {
+    if (document.getElementById('deepAnalyzePanel')) return;
+    var div = document.createElement('div');
+    div.id = 'deepAnalyzePanel';
+    div.style.cssText = 'position:fixed;right:16px;bottom:80px;width:340px;max-width:92vw;z-index:9998;background:#fff;border:1px solid #ddd6fe;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,0.18);font-size:13px;color:#1f2937;';
+    div.innerHTML =
+      '<div style="padding:10px 14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center">' +
+      '<span style="font-weight:700;font-size:13px">📊 论文深度综合分析</span>' +
+      '<span id="deepAnalyzeToggle" style="cursor:pointer;font-size:16px">✕</span></div>' +
+      '<div id="deepAnalyzeBody" style="padding:12px 14px;max-height:70vh;overflow-y:auto">' +
+      '<div style="font-size:11px;color:#6b7280;line-height:1.6;margin-bottom:8px">上传论文 PDF / Word / TXT，自动分析<b>格式、图表、数据</b>并生成综合报告。PDF 将提取关键页图片交给视觉模型 qwen-vl-max 分析。</div>' +
+      '<label style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#667eea;color:#fff;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;margin-bottom:8px">📎 选择论文文件' +
+      '<input type="file" id="deepAnalyzeFile" accept=".pdf,.doc,.docx,.txt,.md" style="display:none"></label>' +
+      '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">' +
+      '<label style="font-size:11px;color:#6b7280"><input type="radio" name="deepMode" value="smart" checked> 智能关键页（推荐·省钱）</label>' +
+      '<label style="font-size:11px;color:#6b7280"><input type="radio" name="deepMode" value="full"> 全量分析</label></div>' +
+      '<div id="deepAnalyzeStatus" style="font-size:11px;color:#6b7280;margin-bottom:8px"></div>' +
+      '<div id="deepAnalyzeResult"></div>' +
+      '</div>';
+    document.body.appendChild(div);
+    document.getElementById('deepAnalyzeToggle').addEventListener('click', function() {
+      var b = document.getElementById('deepAnalyzeBody');
+      b.style.display = b.style.display === 'none' ? 'block' : 'none';
+    });
+    document.getElementById('deepAnalyzeFile').addEventListener('change', function() {
+      var f = this.files && this.files[0];
+      if (!f) return;
+      var mode = 'smart';
+      var radios = document.querySelectorAll('input[name="deepMode"]');
+      for (var i = 0; i < radios.length; i++) if (radios[i].checked) mode = radios[i].value;
+      runDeepAnalyze(f, mode);
+    });
+  }
+
+  async function runDeepAnalyze(file, mode) {
+    var status = document.getElementById('deepAnalyzeStatus');
+    var result = document.getElementById('deepAnalyzeResult');
+    status.textContent = '⏳ 正在解析文件与提取图表...';
+    result.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280"><div style="font-size:28px;margin-bottom:8px">⏳</div>正在解析文件与提取图表...</div>';
+    try {
+      var rep = await deepAnalyzePaper(file, { mode: mode });
+      status.textContent = '✅ 分析完成';
+      result.innerHTML = renderDeepReport(rep);
+    } catch (e) {
+      status.textContent = '❌ 分析失败';
+      result.innerHTML = '<div style="padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:12px">分析失败：' + esc(e.message) + '</div>';
+    }
+  }
+
+  function mount() { buildPanel(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
+  else mount();
+
+  window.deepAnalyzePaper = deepAnalyzePaper;
+  window.renderDeepReport = renderDeepReport;
+  window.runDeepAnalyze = runDeepAnalyze;
+  window.__deepAnalyzeLoaded = true;
+})();
+
+</script>
+</body>
+</html>
