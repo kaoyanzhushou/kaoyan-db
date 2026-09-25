@@ -120177,6 +120177,29 @@ function renderPubAnalytics() {
 
 
 
+  // L2-③ 投稿时间线（按投稿日期倒序）
+  var timeline = allSubs.slice().sort(function(a, b) { return (b.sub.submitDate || '').localeCompare(a.sub.submitDate || ''); });
+  html += '<div style="margin-top:20px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">';
+  html += '<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px">📅 投稿时间线</div>';
+  html += '<div style="font-size:11px;color:#6b7280;margin-bottom:14px">全部投稿按日期排列，节点颜色对应投稿状态</div>';
+  if (timeline.length > 0) {
+    html += '<div style="max-height:320px;overflow-y:auto;padding-right:8px">';
+    timeline.forEach(function(item) {
+      var s = item.sub;
+      var si = getStatusInfo(s.status);
+      html += '<div style="display:flex;margin-bottom:12px">';
+      html += '<div style="display:flex;flex-direction:column;align-items:center;margin-right:12px"><div style="width:12px;height:12px;border-radius:50%;background:' + si.color + ';flex-shrink:0;margin-top:3px;border:2px solid #fff;box-shadow:0 0 0 1px ' + si.color + '"></div><div style="width:2px;flex:1;background:#e5e7eb;margin-top:4px;min-height:8px"></div></div>';
+      html += '<div style="flex:1;min-width:0;padding-bottom:2px"><div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px"><span style="font-size:12px;font-weight:600;color:#1e293b">' + s.journal + '</span><span style="font-size:10px;color:#9ca3af">' + (s.submitDate || '') + '</span><span style="background:' + si.bg + ';color:' + si.color + ';padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600">' + si.label + '</span></div>';
+      html += '<div style="font-size:11px;color:#6b7280;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + item.paper.title + '</div>';
+      if (s.resultDate) html += '<div style="font-size:10px;color:#9ca3af;margin-top:2px">结果日期：' + s.resultDate + '</div>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:12px">暂无投稿记录</div>';
+  }
+  html += '</div>';
+
   // 投稿策略建议
 
 
