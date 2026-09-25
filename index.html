@@ -117420,7 +117420,7 @@ async function simulateReview() {
 
 
 
-    resultDiv.innerHTML = renderSimReviewResult(response);
+    resultDiv.innerHTML = renderSimReviewResult(response, jName);
 
 
 
@@ -117450,7 +117450,7 @@ async function simulateReview() {
 
 
 
-function renderSimReviewResult(response) {
+function renderSimReviewResult(response, jName) {
 
 
 
@@ -117662,21 +117662,63 @@ function renderSimReviewResult(response) {
 
   }
 
-
-
-
+  var risk = predictRejectRisk(response, jName);
+  if (risk && risk.html) html += risk.html;
 
   return html;
 
-
-
-
-
 }
 
-
-
-
+function predictRejectRisk(response, jName) {
+  var txt = response || '';
+  var vm = txt.match(/最可能审稿结果[:：]\s*([^\n]+)/);
+  var verdict = vm ? vm[1].trim() : '';
+  var base = 50;
+  if (/直接录用/.test(verdict)) base = 15;
+  else if (/小修/.test(verdict)) base = 35;
+  else if (/大修/.test(verdict)) base = 60;
+  else if (/拒稿/.test(verdict)) base = 85;
+  var j = PHD_JOURNALS.find(function(x) { return x.name === jName; });
+  var accept = j && j.acceptRate ? parseFloat(j.acceptRate) : NaN;
+  if (!isNaN(accept)) {
+    if (accept < 20) base += 10;
+    else if (accept < 35) base += 5;
+    else if (accept > 60) base -= 10;
+  }
+  var redLines = [];
+  var segs = txt.split(/\n/);
+  for (var i = 0; i < segs.length; i++) {
+    var l = segs[i].trim();
+    if (/严重度[:：]\s*高/.test(l)) {
+      var clean = l.replace(/^\d+\.\s*/, '').replace(/\(严重度[:：]\s*高\)/, '').replace(/\(严重度[:：]\s*[高中低]\)/, '').replace(/\[高\]/, '').trim();
+      if (clean && redLines.length < 3 && redLines.indexOf(clean) < 0) redLines.push(clean);
+    }
+  }
+  if (redLines.length >= 3) base += 10;
+  else if (redLines.length >= 1) base += 5;
+  else base -= 5;
+  base = Math.max(5, Math.min(95, base));
+  var level, color, emoji;
+  if (base >= 70) { level = '极高'; color = '#dc2626'; emoji = '🔴'; }
+  else if (base >= 50) { level = '高'; color = '#ea580c'; emoji = '🟠'; }
+  else if (base >= 30) { level = '中'; color = '#d97706'; emoji = '🟡'; }
+  else { level = '低'; color = '#059669'; emoji = '🟢'; }
+  var html = '<div style="border:1px solid ' + color + '55;border-left:4px solid ' + color + ';border-radius:10px;padding:14px;margin-top:14px;background:linear-gradient(135deg,#fff,#fafaf9)">';
+  html += '<div style="font-size:14px;font-weight:700;color:' + color + ';margin-bottom:8px">🚨 被拒风险预判</div>';
+  html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:22px">' + emoji + '</span><span style="font-size:16px;font-weight:700;color:' + color + '">' + level + '风险（' + base + '分）</span></div>';
+  html += '<div style="font-size:12px;color:#374151;margin-bottom:6px">AI预判结果：' + (verdict || '待AI补充') + (j && j.acceptRate ? ' ｜ 该刊历史录用率约 ' + j.acceptRate + '%' : '') + '</div>';
+  if (redLines.length) {
+    html += '<div style="font-size:12px;color:#374151;margin-bottom:4px"><b>该期刊最可能拒稿的红线问题：</b></div>';
+    redLines.forEach(function(rl, idx) {
+      html += '<div style="font-size:12px;color:' + color + ';padding:3px 0">' + (idx + 1) + '. ' + rl + '</div>';
+    });
+    html += '<div style="font-size:12px;color:#059669;margin-top:6px"><b>建议：</b>投稿前优先解决上述红线问题可显著降低被拒概率' + (base >= 50 && j ? '；若短期难以完善，可考虑转投录用率更高或研究主题更匹配的期刊' : '') + '</div>';
+  } else {
+    html += '<div style="font-size:12px;color:#059669">未发现高严重度红线问题，被拒风险可控，可准备投稿</div>';
+  }
+  html += '</div>';
+  return {level: level, score: base, redLines: redLines, html: html};
+}
 
 async function generateCoverLetter() {
 
