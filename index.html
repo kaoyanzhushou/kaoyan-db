@@ -119167,9 +119167,30 @@ function renderPubManage() {
 
     btn.style.cssText = 'background:#f59e0b;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;margin-left:10px';
 
-
-
     manageHeader.appendChild(btn);
+
+    // L3-① 导出/导入投稿数据
+    var exportBtn = document.createElement('button');
+    exportBtn.id = 'pubExportBtn';
+    exportBtn.textContent = '⬇️ 导出数据';
+    exportBtn.style.cssText = 'background:#059669;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;margin-left:10px';
+    exportBtn.onclick = function() { exportPubPapers(); };
+    manageHeader.appendChild(exportBtn);
+
+    var importBtn = document.createElement('button');
+    importBtn.id = 'pubImportBtn';
+    importBtn.textContent = '⬆️ 导入数据';
+    importBtn.style.cssText = 'background:#2563eb;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;margin-left:10px';
+    importBtn.onclick = function() { document.getElementById('pubImportInput').click(); };
+    manageHeader.appendChild(importBtn);
+
+    var importInput = document.createElement('input');
+    importInput.type = 'file';
+    importInput.id = 'pubImportInput';
+    importInput.accept = '.json';
+    importInput.style.display = 'none';
+    importInput.onchange = function() { importPubPapers(this.files[0]); };
+    manageHeader.appendChild(importInput);
 
 
 
@@ -120605,6 +120626,41 @@ function showPaperDetail(paperId) {
 }
 
 
+
+function exportPubPapers() {
+  var papers = getPubPapers();
+  var d = new Date();
+  var y = d.getFullYear(), m = ('0' + (d.getMonth()+1)).slice(-2), dd = ('0' + d.getDate()).slice(-2);
+  var blob = new Blob([JSON.stringify({version: 1, exportedAt: y + '-' + m + '-' + dd, papers: papers}, null, 2)], {type: 'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'kaoyan-submissions-' + y + m + dd + '.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function importPubPapers(file) {
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      var papers = Array.isArray(data) ? data : (data && Array.isArray(data.papers) ? data.papers : null);
+      if (!papers) { alert('导入失败：文件格式不正确（缺少投稿数据数组）'); return; }
+      var ok = papers.every(function(p) { return p && typeof p.title === 'string' && Array.isArray(p.submissions); });
+      if (!ok) { alert('导入失败：数据结构不完整（每篇论文需含 title 和 submissions 数组）'); return; }
+      var existing = getPubPapers();
+      var merged = existing.concat(papers);
+      savePubPapers(merged);
+      renderPubManage();
+      alert('导入成功：新增 ' + papers.length + ' 篇论文，当前共 ' + merged.length + ' 篇。原数据已保留。');
+    } catch (err) {
+      alert('导入失败：无法解析文件（' + err.message + '）');
+    }
+  };
+  reader.readAsText(file);
+}
 
 function showJournalMatch(name) {
   var box = document.getElementById('newSubMatchBox');
