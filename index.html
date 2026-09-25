@@ -119021,11 +119021,45 @@ function renderPubManage() {
 
   }
 
-
+  // L2-① 审稿周期跟进提醒：超过该刊平均审稿周期仍无结果
+  var reviewAlerts = [];
+  papers.forEach(function(p) {
+    if (!p.submissions) return;
+    p.submissions.forEach(function(s) {
+      if (s.status !== 'under_review' || !s.submitDate) return;
+      var j = PHD_JOURNALS.find(function(x) { return x.name === s.journal; });
+      if (!j || !j.reviewDays) return;
+      var submit = new Date(s.submitDate);
+      var now = new Date();
+      var elapsed = Math.floor((now - submit) / (1000*60*60*24));
+      if (elapsed >= j.reviewDays) {
+        reviewAlerts.push({paper: p, sub: s, j: j, elapsed: elapsed, over: elapsed - j.reviewDays});
+      }
+    });
+  });
+  reviewAlerts.sort(function(a, b) { return b.over - a.over; });
+  if (reviewAlerts.length > 0) {
+    var alert2Html = '<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-radius:10px;padding:14px 16px;margin-bottom:16px">';
+    alert2Html += '<div style="display:flex;align-items:center;margin-bottom:10px"><span style="font-size:18px;margin-right:8px">⏰</span><span style="font-size:13px;font-weight:700;color:#1e40af">审稿周期跟进提醒（' + reviewAlerts.length + '条）</span><span style="font-size:11px;color:#2563eb;margin-left:6px">超过该刊平均审稿周期仍未更新</span></div>';
+    alert2Html += '<div style="display:flex;flex-direction:column;gap:6px">';
+    reviewAlerts.forEach(function(item) {
+      var color = item.over >= 14 ? '#dc2626' : '#d97706';
+      var bg = item.over >= 14 ? '#fee2e2' : '#fffbeb';
+      alert2Html += '<div onclick="showPaperDetail(\'' + item.paper.id + '\')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:' + bg + ';border-radius:6px;cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'#fff\'" onmouseout="this.style.background=\'' + bg + '\'">';
+      alert2Html += '<div style="flex:1;min-width:0"><span style="font-size:12px;font-weight:600;color:#1e293b">' + item.paper.title + '</span><span style="font-size:11px;color:#6b7280;margin-left:8px">' + item.sub.journal + '（均审约' + item.j.reviewDays + '天）</span></div>';
+      alert2Html += '<span style="background:' + color + ';color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;margin-left:10px">已审' + item.elapsed + '天 超' + item.over + '天</span>';
+      alert2Html += '</div>';
+    });
+    alert2Html += '</div></div>';
+    var statsEl3 = document.getElementById('pubManageStats');
+    if (statsEl3 && statsEl3.parentNode) {
+      var alertDiv2 = document.createElement('div');
+      alertDiv2.innerHTML = alert2Html;
+      statsEl3.parentNode.insertBefore(alertDiv2.firstChild, statsEl3);
+    }
+  }
 
   // 统计
-
-
 
   var total = papers.length;
 
