@@ -120631,13 +120631,30 @@ function exportPubPapers() {
   var papers = getPubPapers();
   var d = new Date();
   var y = d.getFullYear(), m = ('0' + (d.getMonth()+1)).slice(-2), dd = ('0' + d.getDate()).slice(-2);
-  var blob = new Blob([JSON.stringify({version: 1, exportedAt: y + '-' + m + '-' + dd, papers: papers}, null, 2)], {type: 'application/json'});
+  var data = JSON.stringify({version: 1, exportedAt: y + '-' + m + '-' + dd, papers: papers}, null, 2);
+  var blob = new Blob([data], {type: 'application/json;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = url;
   a.download = 'kaoyan-submissions-' + y + m + dd + '.json';
+  a.rel = 'noopener';
   document.body.appendChild(a);
-  a.click();
-  setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  try {
+    a.click();
+  } catch (e) {
+    // 下载被拦截时的兜底：新窗口打开 JSON（可另存）
+    window.open(url, '_blank');
+  }
+  setTimeout(function() { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  var tip = document.getElementById('pubExportTip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'pubExportTip';
+    tip.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;background:#ecfdf5;border:1px solid #6ee7b7;color:#065f46;padding:10px 16px;border-radius:8px;font-size:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08)';
+    document.body.appendChild(tip);
+  }
+  tip.textContent = '✅ 导出已开始：请查看浏览器下载列表（' + a.download + '）。若未下载，请允许浏览器下载或检查下载拦截设置。';
+  setTimeout(function() { tip.remove(); }, 6000);
 }
 
 function importPubPapers(file) {
