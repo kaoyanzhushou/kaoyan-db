@@ -120329,6 +120329,78 @@ function deletePaper(paperId) {
 
 
 
+async function smartRevision(paperId, subId) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub) return;
+  var area = document.getElementById('submissionDetailArea');
+  if (!area) return;
+  var comments = '';
+  if (sub.reviewers && sub.reviewers.length) {
+    sub.reviewers.forEach(function(rv) {
+      comments += '【' + rv.name + '】\n' + (rv.comments || []).map(function(c) { return c.text || c.content || ''; }).join('\n') + '\n';
+    });
+  }
+  if (!comments) comments = '（该投稿暂无录入的审稿意见，请基于期刊要求和论文情况给出通用返修建议）';
+  area.innerHTML = '<div style="padding:16px;text-align:center;color:#4f46e5;font-size:13px">📋 正在生成返修策略，请稍候（约20秒）...</div>';
+  var j = PHD_JOURNALS.find(function(x) { return x.name === sub.journal; });
+  var jInfo = j ? ('历史录用率:' + (j.acceptRate || '-') + '% 平均审稿:' + (j.reviewDays || '-') + '天 常见拒稿点:' + (j.pitfalls || '').substring(0, 100)) : '';
+  var sysP = '你是一位资深学术编辑，请基于论文信息和审稿意见生成一份可执行的返修策略。输出纯文本（不用Markdown），严格按以下结构：\n\n===返修策略===\n按优先级排序：P0=红线必改（影响录用） / P1=建议修改 / P2=可选优化。每条格式：\nP0-1. 问题简述 | 修改建议: 具体做法 | 预期工作量: 高/中/低\nP0-2. ...\nP1-1. ...\nP2-1. ...\n\n===投稿行动建议===\n1. 修改顺序与策略：...\n2. 是否建议转投其他期刊：...\n3. 预计修改周期：...天\n4. 修改完成后是否值得重新模拟审稿：...';
+  var userP = '目标期刊：' + sub.journal + '\n论文标题：' + paper.title + '\n论文类型：' + (paper.type || '') + '\n摘要：' + (paper.abstract || '') + '\n' + (jInfo ? ('期刊背景：' + jInfo + '\n') : '') + '\n审稿意见：\n' + comments;
+  var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+  try {
+    var response = await callDeepSeekAPI(sysP, userP, 3500, model);
+    area.innerHTML = renderRevisionStrategy(response) + '<div style="margin-top:10px;text-align:right"><button onclick="showPaperDetail(\'' + paperId + '\')" style="font-size:12px;color:#7c3aed;background:#ede9fe;border:none;padding:7px 14px;border-radius:6px;cursor:pointer">返回论文详情</button></div>';
+  } catch (error) {
+    area.innerHTML = '<div style="color:#dc2626;padding:14px">返修策略生成失败：' + error.message + '</div>';
+  }
+}
+
+function smartReselect(paperId, subId) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  switchPublishTab('recommend');
+  var t = document.getElementById('pubTitle');
+  var a = document.getElementById('pubAbstract');
+  if (t) t.value = paper.title || '';
+  if (a) a.value = paper.abstract || '';
+  var tip = document.getElementById('pubContent-recommend');
+  if (tip) {
+    var d = document.createElement('div');
+    d.style.cssText = 'margin-top:10px;padding:10px 14px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;font-size:12px;color:#1e40af';
+    d.textContent = '✅ 已自动带入被拒论文的信息。检查研究类型/方向后点击「AI推荐期刊」重新选刊，建议优先考虑稳妥刊或保底刊。';
+    tip.insertBefore(d, tip.firstChild);
+  }
+}
+
+function smartCoverLetter(paperId, subId) {
+  var papers = getPubPapers();
+  var paper = papers.find(function(p) { return p.id === paperId; });
+  if (!paper) return;
+  var sub = paper.submissions.find(function(s) { return s.id === subId; });
+  if (!sub) return;
+  switchPublishTab('tools');
+  showPubTool('coverletter');
+  var t = document.getElementById('clTitle');
+  var j = document.getElementById('clJournal');
+  if (t) t.value = paper.title || '';
+  if (j && sub.journal) {
+    for (var i = 0; i < j.options.length; i++) {
+      if (j.options[i].value === sub.journal) { j.selectedIndex = i; break; }
+    }
+  }
+  var tip = document.getElementById('pubToolContent');
+  if (tip) {
+    var d = document.createElement('div');
+    d.style.cssText = 'margin-top:10px;padding:10px 14px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;font-size:12px;color:#1e40af';
+    d.textContent = '✅ 已自动带入论文标题与目标期刊，补充核心发现和研究意义后点击「生成 Cover Letter」。';
+    tip.insertBefore(d, tip.firstChild);
+  }
+}
+
 function showPaperDetail(paperId) {
 
 
@@ -120431,11 +120503,20 @@ function showPaperDetail(paperId) {
 
       }
 
-
+      // L2-② 审稿周期进度（审稿中）
+      if (sub.status === 'under_review' && sub.submitDate) {
+        var jr = PHD_JOURNALS.find(function(x) { return x.name === sub.journal; });
+        var submitD = new Date(sub.submitDate);
+        var nowD = new Date();
+        var elapsedD = Math.max(0, Math.floor((nowD - submitD) / (1000*60*60*24)));
+        if (jr && jr.reviewDays) {
+          var rpct = Math.min(100, Math.round(elapsedD / jr.reviewDays * 100));
+          var rColor = rpct >= 100 ? '#dc2626' : rpct >= 80 ? '#f59e0b' : '#2563eb';
+          html += '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-bottom:4px"><span>审稿周期进度（均审约' + jr.reviewDays + '天）</span><span style="color:' + rColor + ';font-weight:600">已审' + elapsedD + '天' + (rpct >= 100 ? ' 已超期' : '') + '</span></div><div style="height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + rpct + '%;background:' + rColor + ';border-radius:3px"></div></div></div>';
+        }
+      }
 
       // 操作按钮
-
-
 
       html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">';
 
@@ -120453,6 +120534,15 @@ function showPaperDetail(paperId) {
 
 
 
+      if (sub.status === 'minor_revision' || sub.status === 'major_revision') {
+        html += '<button onclick="smartRevision(\'' + paper.id + '\', \'' + sub.id + '\')" style="font-size:11px;color:#fff;background:#4f46e5;border:none;padding:5px 12px;border-radius:4px;cursor:pointer">📋 生成返修策略</button>';
+      }
+      if (sub.status === 'rejected') {
+        html += '<button onclick="smartReselect(\'' + paper.id + '\', \'' + sub.id + '\')" style="font-size:11px;color:#fff;background:#d97706;border:none;padding:5px 12px;border-radius:4px;cursor:pointer">🔄 重新智能选刊</button>';
+      }
+      if (sub.status === 'accepted' || sub.status === 'published') {
+        html += '<button onclick="smartCoverLetter(\'' + paper.id + '\', \'' + sub.id + '\')" style="font-size:11px;color:#fff;background:#059669;border:none;padding:5px 12px;border-radius:4px;cursor:pointer">✉️ 生成Cover Letter</button>';
+      }
       html += '<button onclick="deleteSubmission(\'' + paper.id + '\', \'' + sub.id + '\')" style="font-size:11px;color:#dc2626;background:#fee2e2;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;margin-left:auto">删除</button>';
 
 
