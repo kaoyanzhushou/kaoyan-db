@@ -120606,9 +120606,54 @@ function showPaperDetail(paperId) {
 
 
 
+function showJournalMatch(name) {
+  var box = document.getElementById('newSubMatchBox');
+  if (!box) return;
+  if (!name) { box.innerHTML = ''; return; }
+  var j = PHD_JOURNALS.find(function(x) { return x.name === name; });
+  if (!j) { box.innerHTML = ''; return; }
+  var paper = null;
+  if (window.__addSubPaperId) {
+    var ps = getPubPapers();
+    for (var i = 0; i < ps.length; i++) {
+      if (ps[i].id === window.__addSubPaperId) { paper = ps[i]; break; }
+    }
+  }
+  // 四维评分（每项10分制）
+  var diff = j.acceptRate < 15 ? 5 : j.acceptRate < 25 ? 6.5 : j.acceptRate < 40 ? 8 : 9.5;
+  var speed = j.reviewDays <= 50 ? 9 : j.reviewDays <= 70 ? 7.5 : j.reviewDays <= 90 ? 6 : 4.5;
+  var pt = (paper && paper.type) || '';
+  var jt = j.types || [];
+  var typeScore = 7;
+  if (pt) {
+    if (jt.indexOf(pt) >= 0) typeScore = 9;
+    else if (pt === '毕业论文' && jt.indexOf('原创研究') >= 0) typeScore = 8.5;
+    else if (pt === '毕业论文' && jt.indexOf('简报') >= 0) typeScore = 8;
+    else if (pt === '综述' && jt.indexOf('原创研究') >= 0) typeScore = 7.5;
+    else if (pt === '综述' && jt.indexOf('系统综述') >= 0) typeScore = 8.5;
+    else typeScore = 5;
+  }
+  var zone = (j.cas || '').indexOf('一区') >= 0 ? 4 : (j.cas || '').indexOf('二区') >= 0 ? 5.5 : (j.cas || '').indexOf('三区') >= 0 ? 7 : 8.5;
+  var score = Math.round((diff * 0.4 + speed * 0.25 + typeScore * 0.25 + zone * 0.1) * 10) / 10;
+  var level = score >= 8.5 ? {label: '高匹配 · 建议投稿', color: '#059669', bg: '#f0fdf4'} : score >= 7 ? {label: '中匹配 · 值得尝试', color: '#2563eb', bg: '#eff6ff'} : {label: '低匹配 · 谨慎考虑', color: '#dc2626', bg: '#fef2f2'};
+  var pct = Math.min(100, Math.round(score / 10 * 100));
+  var html = '<div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:linear-gradient(135deg,#fafafa,#f9fafb)">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div><span style="font-size:13px;font-weight:700;color:#1e293b">期刊匹配度分析</span><span style="font-size:11px;color:#6b7280;margin-left:6px">' + (paper ? '论文类型：' + (pt || '未填写') : '未关联论文') + '</span></div><span style="background:' + level.bg + ';color:' + level.color + ';padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600">' + level.label + '</span></div>';
+  html += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><div style="text-align:center;flex-shrink:0"><div style="font-size:26px;font-weight:800;color:' + level.color + '">' + score + '</div><div style="font-size:10px;color:#9ca3af">综合分 /10</div></div><div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + level.color + ';border-radius:4px;transition:width .3s"></div></div></div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">';
+  html += '<div style="background:#fff;border:1px solid #f3f4f6;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:700;color:' + (diff >= 8 ? '#059669' : diff >= 6.5 ? '#d97706' : '#dc2626') + '">' + diff + '</div><div style="font-size:10px;color:#6b7280;margin-top:2px">难度<br>录用率' + (j.acceptRate || '-') + '%</div></div>';
+  html += '<div style="background:#fff;border:1px solid #f3f4f6;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:700;color:' + (speed >= 7.5 ? '#059669' : speed >= 6 ? '#d97706' : '#dc2626') + '">' + speed + '</div><div style="font-size:10px;color:#6b7280;margin-top:2px">审稿速度<br>均审' + (j.reviewDays || '-') + '天</div></div>';
+  html += '<div style="background:#fff;border:1px solid #f3f4f6;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:700;color:' + (typeScore >= 8.5 ? '#059669' : typeScore >= 7 ? '#2563eb' : '#dc2626') + '">' + typeScore + '</div><div style="font-size:10px;color:#6b7280;margin-top:2px">类型匹配<br>' + (pt || '未填类型') + '</div></div>';
+  html += '<div style="background:#fff;border:1px solid #f3f4f6;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:700;color:' + (zone >= 7 ? '#059669' : zone >= 5.5 ? '#d97706' : '#dc2626') + '">' + zone + '</div><div style="font-size:10px;color:#6b7280;margin-top:2px">分区保底<br>' + (j.cas || '-') + ' · IF' + (j.if || '-') + '</div></div>';
+  html += '</div>';
+  if (j.strengths) html += '<div style="font-size:11px;color:#374151;margin-bottom:6px"><span style="font-weight:600;color:#059669">✅ 期刊特点：</span>' + j.strengths + '</div>';
+  if (j.pitfalls) html += '<div style="font-size:11px;color:#374151"><span style="font-weight:600;color:#dc2626">⚠️ 主要风险：</span>' + j.pitfalls + '</div>';
+  html += '</div>';
+  box.innerHTML = html;
+}
+
 function showAddSubmissionForm(paperId) {
-
-
+  window.__addSubPaperId = paperId;
 
   var area = document.getElementById('submissionDetailArea');
 
@@ -120634,7 +120679,7 @@ function showAddSubmissionForm(paperId) {
 
 
 
-    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">目标期刊 *</label><select id="newSubJournal" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;background:#fff"><option value="">请选择</option>' + journalOptions + '</select></div>'
+    + '<div><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">目标期刊 *</label><select id="newSubJournal" onchange="showJournalMatch(this.value)" style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;background:#fff"><option value="">请选择</option>' + journalOptions + '</select></div>'
 
 
 
@@ -120644,7 +120689,7 @@ function showAddSubmissionForm(paperId) {
 
     + '</div>'
 
-
+    + '<div id="newSubMatchBox" style="margin-bottom:12px"></div>'
 
     + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">'
 
