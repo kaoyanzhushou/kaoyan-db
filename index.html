@@ -107323,7 +107323,7 @@ function renderPhdPublish(containerId) {
 
 
 
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><div style="display:flex;gap:8px"><button onclick="showExportMenu()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">导出数据</button><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div></div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><div style="display:flex;gap:8px"><button onclick="checkDuplicateSubmissions()" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚠️ 一稿多投检测</button><button onclick="showExportMenu()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">导出数据</button><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div></div>';
 
 
 
@@ -114051,7 +114051,7 @@ function showPubTool(tool) {
 
 
 
-    html += '<div><label style="font-size:12px;color:#1e40af;font-weight:600;display:block;margin-bottom:4px">目标期刊</label><select id="ckJournal" onchange="generateChecklist()" style="width:100%;padding:9px 12px;border:1px solid #93c5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#1e40af;cursor:pointer"><option value="">请选择期刊</option>' + PHD_JOURNALS.map(function(j) { return '<option value="' + j.name + '">' + j.name + '</option>'; }).join('') + '</select></div>';
+    html += '<div><label style="font-size:12px;color:#1e40af;font-weight:600;display:block;margin-bottom:4px">目标期刊</label><select id="ckJournal" onchange="generateChecklist()" style="width:100%;padding:9px 12px;border:1px solid #93c5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#1e40af;cursor:pointer"><option value="">请选择期刊</option>' + PHD_JOURNALS.concat(CN_JOURNALS).map(function(j) { return '<option value="' + j.name + '">' + j.name + '</option>'; }).join('') + '</select></div>';
 
 
 
@@ -118314,7 +118314,13 @@ function generateChecklist() {
 
   var html = '<div style="margin-top:16px">';
 
-
+  if (journalInfo) {
+    var jlNote = [];
+    if (journalInfo.reviewDays) jlNote.push('平均审稿周期约 ' + journalInfo.reviewDays + ' 天');
+    if (journalInfo.acceptRate) jlNote.push('录用率约 ' + journalInfo.acceptRate + '%');
+    if (journalInfo.if) jlNote.push('影响因子 ' + journalInfo.if);
+    if (jlNote.length) html += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1e40af;margin-bottom:12px">📋 期刊参考：' + jlNote.join(' · ') + '（数据仅供参考，投稿前以期刊官网为准）</div>';
+  }
 
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:#1e40af">' + journal + ' 投稿检查清单</div><div style="font-size:12px;color:#6b7280"><span id="ckDone">0</span>/' + items.reduce(function(s, c) { return s + c.items.length; }, 0) + ' 已完成</div></div>';
 
@@ -118362,7 +118368,16 @@ function generateChecklist() {
 
   resultDiv.innerHTML = html;
 
-
+  // 恢复该期刊+类型的已勾选进度
+  var ckKey = 'pubCk_' + journal + '_' + type;
+  try {
+    var saved = JSON.parse(localStorage.getItem(ckKey) || '[]');
+    saved.forEach(function(i) {
+      var cb = document.getElementById('ckItem' + i);
+      if (cb) cb.checked = true;
+    });
+    updateCkProgress();
+  } catch (e) {}
 
 }
 
@@ -118374,23 +118389,21 @@ function generateChecklist() {
 
 function updateCkProgress() {
 
-
-
   var total = document.querySelectorAll('[id^="ckItem"]').length;
-
-
 
   var done = document.querySelectorAll('[id^="ckItem"]:checked').length;
 
-
-
   var el = document.getElementById('ckDone');
-
-
 
   if (el) el.textContent = done;
 
-
+  // 保存该期刊+类型的勾选进度
+  var jSel = document.getElementById('ckJournal');
+  var tSel = document.getElementById('ckType');
+  if (jSel && tSel && jSel.value) {
+    var ids = [].slice.call(document.querySelectorAll('[id^="ckItem"]:checked')).map(function(c) { return c.id.replace('ckItem', ''); });
+    try { localStorage.setItem('pubCk_' + jSel.value + '_' + tSel.value, JSON.stringify(ids)); } catch (e) {}
+  }
 
 }
 
@@ -118923,6 +118936,67 @@ function savePubPapers(papers) {
 }
 
 
+
+function checkDuplicateSubmissions() {
+
+  var papers = getPubPapers();
+  var old = document.getElementById('dupCheckResult');
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+
+  var activeStatus = {submitted:1, under_review:1, minor_revision:1, major_revision:1, accepted:1};
+  var risks = [];
+
+  // ① 同一篇论文的多个活跃投稿
+  papers.forEach(function(p) {
+    var actives = [];
+    if (p.submissions) p.submissions.forEach(function(s) { if (activeStatus[s.status]) actives.push(s); });
+    if (actives.length >= 2) risks.push({paper: p, subs: actives, kind: 'same-paper'});
+  });
+
+  // ② 跨论文标题近似（规范化后相同，可能为同一论文重复录入）
+  var normMap = {};
+  papers.forEach(function(p) {
+    var t = (p.title || '').toLowerCase().replace(/[^\u4e00-\u9fa5a-z0-9]/g, '');
+    if (t.length < 4) return;
+    (normMap[t] = normMap[t] || []).push(p);
+  });
+  Object.keys(normMap).forEach(function(k) {
+    if (normMap[k].length >= 2) {
+      var group = normMap[k];
+      var multi = group.filter(function(p) {
+        var ss = p.submissions || [];
+        return ss.some(function(x) { return activeStatus[x.status]; });
+      }).length >= 2;
+      if (multi) risks.push({group: group, kind: 'similar-title'});
+    }
+  });
+
+  var container = document.getElementById('pubManageList');
+  if (!container) return;
+  var div = document.createElement('div');
+  div.id = 'dupCheckResult';
+  div.style.cssText = 'margin-bottom:16px';
+
+  if (risks.length === 0) {
+    div.innerHTML = '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:10px;padding:14px 16px;font-size:13px;color:#065f46;font-weight:600">✅ 未检测到一稿多投风险：当前所有论文的"活跃投稿"均未重复投向多个期刊</div>';
+  } else {
+    var h = '<div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:10px;padding:14px 16px">';
+    h += '<div style="font-size:13px;font-weight:700;color:#991b1b;margin-bottom:10px">⚠️ 检测到 ' + risks.length + ' 项一稿多投风险</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:8px">';
+    risks.forEach(function(r) {
+      if (r.kind === 'same-paper') {
+        h += '<div style="background:#fff;border:1px solid #fecaca;border-radius:8px;padding:10px 12px"><div style="font-size:12px;font-weight:600;color:#1e293b">📄 ' + (r.paper.title || '未命名论文') + '</div><div style="font-size:11px;color:#6b7280;margin-top:4px">同一篇论文同时投向：' + r.subs.map(function(s) { return s.journal + '（' + getStatusInfo(s.status).label + '）'; }).join('、') + '</div><div style="font-size:11px;color:#b91c1c;margin-top:4px">⚠️ 学术不端风险：请在确定放弃一刊前不要同时处于多个审稿流程</div></div>';
+      } else {
+        h += '<div style="background:#fff;border:1px solid #fecaca;border-radius:8px;padding:10px 12px"><div style="font-size:12px;font-weight:600;color:#1e293b">📄 相似标题论文组（' + r.group.length + '篇）</div><div style="font-size:11px;color:#6b7280;margin-top:4px">' + r.group.map(function(p) { return p.title || '未命名'; }).join(' | ') + '</div><div style="font-size:11px;color:#b91c1c;margin-top:4px">⚠️ 请确认这些是否为同一论文的重复录入</div></div>';
+      }
+    });
+    h += '</div></div>';
+    div.innerHTML = h;
+  }
+
+  container.parentNode.insertBefore(div, container);
+
+}
 
 function genId(prefix) { return prefix + '_' + Date.now() + '_' + Math.random().toString(36).substr(2,5); }
 
