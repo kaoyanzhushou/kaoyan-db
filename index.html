@@ -107206,6 +107206,12 @@ function renderPhdPublish(containerId) {
 
 
 
+
+
+  html += '<div onclick="showPubTool(\'simreview\')" style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🧪</div><div style="font-size:15px;font-weight:700;color:#5b21b6;margin-bottom:4px">审稿意见模拟（投稿前预演）</div><div style="font-size:12px;color:#7c3aed">AI扮演3名审稿人预演拒稿理由，提前规避硬伤</div></div>';
+
+
+
   html += '</div>';
 
 
@@ -114122,6 +114128,82 @@ function showPubTool(tool) {
 
 
 
+  } else if (tool === 'simreview') {
+
+
+
+
+
+    var srTv = (document.getElementById('pubTitle')?.value || '').trim();
+    var srAv = (document.getElementById('pubAbstract')?.value || '').trim();
+    var srTvSafe = srTv.replace(/"/g, '&quot;');
+    var srAvSafe = srAv.replace(/"/g, '&quot;');
+    html = '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:12px;padding:20px">';
+
+
+
+
+
+    html += '<div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:4px">🧪 审稿意见模拟（投稿前预演）</div>';
+
+
+
+
+
+    html += '<div style="font-size:12px;color:#7c3aed;margin-bottom:14px">AI扮演目标期刊的3名典型审稿人（领域专家 / 方法学与统计专家 / 写作与伦理专家）预审你的论文，提前发现可能被拒的硬伤</div>';
+
+
+
+
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">';
+
+
+
+
+
+    html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">目标期刊</label><select id="srJournal" style="width:100%;padding:9px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="">请选择目标期刊</option>' + PHD_JOURNALS.map(function(j) { return '<option value="' + j.name + '">' + j.name + '</option>'; }).join('') + '</select></div>';
+
+
+
+
+
+    html += '<div><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">审稿严格程度</label><select id="srStrict" style="width:100%;padding:9px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6;cursor:pointer"><option value="正常">正常（贴近真实审稿）</option><option value="严格">严格（按最挑剔审稿人）</option><option value="宽松">宽松（编辑初审视角）</option></select></div>';
+
+
+
+
+
+    html += '</div>';
+
+
+
+
+
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">论文标题</label><input type="text" id="srTitle" value="' + srTvSafe + '" placeholder="输入论文标题（默认取当前选刊标题）" style="width:100%;padding:9px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none"></div>';
+
+
+
+
+
+    html += '<div style="margin-bottom:14px"><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">摘要 / 研究内容</label><textarea id="srAbstract" rows="4" placeholder="粘贴摘要，或描述研究目的、方法、结果（默认取当前选刊摘要）" style="width:100%;padding:9px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;resize:vertical">' + srAvSafe + '</textarea></div>';
+
+
+
+
+
+    html += '<button onclick="simulateReview()" style="background:#7c3aed;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🧪 模拟审稿</button>';
+
+
+
+
+
+    html += '</div><div id="srResult" style="margin-top:16px"></div>';
+
+
+
+
+
   } else if (tool === 'format') {
 
 
@@ -117239,6 +117321,360 @@ function loadJSZip() {
 
 
 // 生成Cover Letter
+
+
+
+async function simulateReview() {
+
+
+
+
+
+  var jName = document.getElementById('srJournal')?.value || '';
+
+
+
+
+
+  var title = document.getElementById('srTitle')?.value.trim() || '';
+
+
+
+
+
+  var abs = document.getElementById('srAbstract')?.value.trim() || '';
+
+
+
+
+
+  var strict = document.getElementById('srStrict')?.value || '正常';
+
+
+
+
+
+  var resultDiv = document.getElementById('srResult');
+
+
+
+
+
+  if (!title || !abs) { alert('请填写论文标题和摘要'); return; }
+
+
+
+
+
+  if (!jName) { alert('请选择目标期刊'); return; }
+
+
+
+
+
+  var j = PHD_JOURNALS.find(function(x) { return x.name === jName; });
+
+
+
+
+
+  var jInfo = j ? ('收稿范围: ' + (j.scope||'').substring(0,150) + '\n历史录用率: ' + (j.acceptRate||'-') + '% | 审稿约' + (j.reviewDays||'-') + '天 | IF ' + (j.if||'-') + ' | ' + (j.cas||j.jcr||'-') + '\n期刊偏好: ' + (j.strengths||'').substring(0,120) + '\n常见拒稿点: ' + (j.pitfalls||'').substring(0,120)) : '';
+
+
+
+
+
+  resultDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#7c3aed;font-size:13px">🧪 3名审稿人正在预审你的论文，请稍候（约20秒）...</div>';
+
+
+
+
+
+  var sysP = '你是一位体育学/运动科学领域的资深期刊编辑，组织3名典型审稿人对一篇拟投' + jName + '的论文进行投稿前预审模拟。请模拟真实审稿过程，输出纯文本（不用Markdown），按以下结构：\n\n===审稿人1（领域专家）===\n总体评价: ...\n主要问题: \n1.(严重度:高/中/低) ...\n2.(严重度:高/中/低) ...\n3.(严重度:高/中/低) ...\n补充建议: ...\n\n===审稿人2（方法学与统计专家）===\n总体评价: ...\n主要问题: \n1.(严重度:高/中/低) ...\n2.(严重度:高/中/低) ...\n3.(严重度:高/中/低) ...\n补充建议: ...\n\n===审稿人3（写作与伦理专家）===\n总体评价: ...\n主要问题: \n1.(严重度:高/中/低) ...\n2.(严重度:高/中/低) ...\n3.(严重度:高/中/低) ...\n补充建议: ...\n\n===综合预判===\n最可能审稿结果: 直接录用/小修/大修/拒稿（给出概率）\n投稿前必须修改的3件事（按优先级）: \n1. ...\n2. ...\n3. ...\n预计审稿周期: ...天';
+
+
+
+
+
+  var userP = '目标期刊：' + jName + '\n\n论文标题：' + title + '\n\n摘要/研究内容：' + abs + '\n\n审稿严格程度：' + strict + '\n\n' + (jInfo ? ('期刊背景：\n' + jInfo + '\n\n') : '') + buildPubChartCtxText();
+
+
+
+
+
+  var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+
+
+
+
+
+  try {
+
+
+
+
+
+    var response = await callDeepSeekAPI(sysP, userP, 3500, model);
+
+
+
+
+
+    resultDiv.innerHTML = renderSimReviewResult(response);
+
+
+
+
+
+  } catch (error) {
+
+
+
+
+
+    resultDiv.innerHTML = '<div style="color:#dc2626;padding:20px">模拟失败：' + error.message + '</div>';
+
+
+
+
+
+  }
+
+
+
+
+
+}
+
+
+
+
+
+function renderSimReviewResult(response) {
+
+
+
+
+
+  var html = '<div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:14px">🧪 审稿意见模拟结果</div>';
+
+
+
+
+
+  var reviewers = [
+
+
+
+
+
+    {key: '审稿人1', label: '领域专家', color: '#dc2626'},
+
+
+
+
+
+    {key: '审稿人2', label: '方法学与统计专家', color: '#d97706'},
+
+
+
+
+
+    {key: '审稿人3', label: '写作与伦理专家', color: '#2563eb'}
+
+
+
+
+
+  ];
+
+
+
+
+
+  reviewers.forEach(function(rv) {
+
+
+
+
+
+    var m = response.match(new RegExp('===' + rv.key + '\\（' + rv.label + '\\）===([\\s\\S]*?)(?=审稿人2|审稿人3|综合预判|$)'));
+
+
+
+
+
+    if (!m) return;
+
+
+
+
+
+    var txt = m[1].trim();
+
+
+
+
+
+    if (!txt) return;
+
+
+
+
+
+    var evalM = txt.match(/总体评价[:：]\s*(.+)/);
+
+
+
+
+
+    var sugM = txt.match(/补充建议[:：]\s*(.+)/);
+
+
+
+
+
+    html += '<div style="border:1px solid ' + rv.color + '33;border-left:4px solid ' + rv.color + ';border-radius:10px;padding:14px;margin-bottom:12px;background:#fff">';
+
+
+
+
+
+    html += '<div style="font-size:14px;font-weight:700;color:' + rv.color + ';margin-bottom:8px">' + rv.key + '（' + rv.label + '）</div>';
+
+
+
+
+
+    if (evalM) html += '<div style="font-size:12px;color:#374151;margin-bottom:8px"><b>总体评价：</b>' + evalM[1].trim() + '</div>';
+
+
+
+
+
+    var problems = txt.split(/\n/).filter(function(l) { return /^\s*\d+\./.test(l.trim()); });
+
+
+
+
+
+    if (problems.length) {
+
+
+
+
+
+      html += '<div style="font-size:12px;color:#374151;margin-bottom:8px"><b>主要问题：</b></div>';
+
+
+
+
+
+      problems.forEach(function(p) {
+
+
+
+
+
+        var sev = p.match(/严重度[:：]\s*(高|中|低)/);
+
+
+
+
+
+        var sc = sev ? (sev[1]==='高' ? '#dc2626' : sev[1]==='中' ? '#d97706' : '#059669') : '#6b7280';
+
+
+
+
+
+        html += '<div style="font-size:12px;color:#374151;padding:4px 0;border-bottom:1px dashed #f3f4f6">' + p.trim().replace(/^\s*\d+\.\s*/, '') + (sev ? ' <span style="color:' + sc + ';font-weight:600">[' + sev[1] + ']</span>' : '') + '</div>';
+
+
+
+
+
+      });
+
+
+
+
+
+    }
+
+
+
+
+
+    if (sugM) html += '<div style="font-size:12px;color:#059669;margin-top:6px"><b>补充建议：</b>' + sugM[1].trim() + '</div>';
+
+
+
+
+
+    html += '</div>';
+
+
+
+
+
+  });
+
+
+
+
+
+  var verdictM = response.match(/===综合预判===([\s\S]*)$/);
+
+
+
+
+
+  if (verdictM) {
+
+
+
+
+
+    html += '<div style="background:linear-gradient(135deg,#1e293b,#312e81);border-radius:12px;padding:18px;color:#fff">';
+
+
+
+
+
+    html += '<div style="font-size:14px;font-weight:700;margin-bottom:10px">⚖️ 综合预判</div>';
+
+
+
+
+
+    html += '<div style="font-size:13px;line-height:1.8">' + verdictM[1].trim().replace(/\n/g, '<br>') + '</div>';
+
+
+
+
+
+    html += '</div>';
+
+
+
+
+
+  }
+
+
+
+
+
+  return html;
+
+
+
+
+
+}
+
+
 
 
 
