@@ -117420,6 +117420,7 @@ async function simulateReview() {
 
 
 
+    window.__simReviewCtx = { response: response, jName: jName, title: title, abs: abs };
     resultDiv.innerHTML = renderSimReviewResult(response, jName);
 
 
@@ -117665,6 +117666,11 @@ function renderSimReviewResult(response, jName) {
   var risk = predictRejectRisk(response, jName);
   if (risk && risk.html) html += risk.html;
 
+  html += '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">';
+  html += '<button onclick="generateRevisionStrategy()" style="background:#4f46e5;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📋 生成返修策略</button>';
+  html += '<button onclick="sendSimReviewToResponse()" style="background:#0ea5e9;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">✍️ 带入审稿意见回复工具</button>';
+  html += '</div><div id="revResult" style="margin-top:12px"></div>';
+
   return html;
 
 }
@@ -117718,6 +117724,83 @@ function predictRejectRisk(response, jName) {
   }
   html += '</div>';
   return {level: level, score: base, redLines: redLines, html: html};
+}
+
+async function generateRevisionStrategy() {
+  var ctx = window.__simReviewCtx;
+  if (!ctx || !ctx.response) { alert('请先完成模拟审稿'); return; }
+  var revDiv = document.getElementById('revResult');
+  if (!revDiv) return;
+  revDiv.innerHTML = '<div style="padding:16px;text-align:center;color:#4f46e5;font-size:13px">📋 正在生成返修策略，请稍候（约20秒）...</div>';
+  var risk = predictRejectRisk(ctx.response, ctx.jName);
+  var sysP = '你是一位资深学术编辑，请基于模拟审稿意见生成一份可执行的返修策略。输出纯文本（不用Markdown），严格按以下结构：\n\n===返修策略===\n按优先级排序：P0=红线必改（影响录用） / P1=建议修改 / P2=可选优化。每条格式：\nP0-1. 问题简述 | 修改建议: 具体做法 | 预期工作量: 高/中/低\nP0-2. ...\nP1-1. ...\nP2-1. ...\n\n===投稿行动建议===\n1. 修改顺序与策略：...\n2. 是否建议转投其他期刊：...\n3. 预计修改周期：...天\n4. 修改完成后是否值得重新模拟审稿：...';
+  var userP = '目标期刊：' + ctx.jName + '\n论文标题：' + ctx.title + '\n摘要：' + ctx.abs + '\n被拒风险等级：' + risk.level + '（' + risk.score + '分）\n\n模拟审稿意见全文：\n' + ctx.response;
+  var model = document.getElementById('phdAIModelSelect') ? document.getElementById('phdAIModelSelect').value : 'deepseek-chat';
+  try {
+    var response = await callDeepSeekAPI(sysP, userP, 3500, model);
+    revDiv.innerHTML = renderRevisionStrategy(response);
+  } catch (error) {
+    revDiv.innerHTML = '<div style="color:#dc2626;padding:14px">返修策略生成失败：' + error.message + '</div>';
+  }
+}
+
+function renderRevisionStrategy(text) {
+  var html = '<div style="border:1px solid #c7d2fe;border-left:4px solid #4f46e5;border-radius:10px;padding:14px;background:#fff">';
+  html += '<div style="font-size:14px;font-weight:700;color:#3730a3;margin-bottom:10px">📋 返修策略（按优先级）</div>';
+  var groups = [
+    {key: 'P0', label: 'P0 红线必改（影响录用）', color: '#dc2626', bg: '#fef2f2'},
+    {key: 'P1', label: 'P1 建议修改', color: '#d97706', bg: '#fffbeb'},
+    {key: 'P2', label: 'P2 可选优化', color: '#059669', bg: '#f0fdf4'}
+  ];
+  groups.forEach(function(g) {
+    var lines = [];
+    var segs = text.split(/\n/);
+    for (var i = 0; i < segs.length; i++) {
+      var l = segs[i].trim();
+      if (new RegExp('^' + g.key + '-\\d+\\.').test(l)) lines.push(l);
+    }
+    if (lines.length) {
+      html += '<div style="font-size:12px;font-weight:700;color:' + g.color + ';margin:8px 0 4px">' + g.label + '</div>';
+      lines.forEach(function(l) {
+        var m = l.match(new RegExp('^' + g.key + '-\\d+\\.\\s*(.*?)\\s*\\|\\s*修改建议[:：]\\s*(.*?)\\s*\\|\\s*预期工作量[:：]\\s*(高|中|低)'));
+        if (m) {
+          html += '<div style="font-size:12px;color:#374151;padding:6px 8px;border-radius:6px;background:' + g.bg + ';margin-bottom:4px">';
+          html += '<div style="font-weight:600">' + m[1] + '</div>';
+          html += '<div style="color:#374151;margin-top:2px">建议：' + m[2] + '</div>';
+          html += '<div style="color:' + g.color + ';margin-top:2px;font-size:11px">工作量：' + m[3] + '</div>';
+          html += '</div>';
+        } else {
+          html += '<div style="font-size:12px;color:#374151;padding:6px 8px;border-radius:6px;background:' + g.bg + ';margin-bottom:4px">' + l.replace(new RegExp('^' + g.key + '-\\d+\\.\\s*'), '') + '</div>';
+        }
+      });
+    }
+  });
+  var actM = text.match(/===投稿行动建议===([\s\S]*)$/);
+  if (actM) {
+    html += '<div style="font-size:12px;font-weight:700;color:#3730a3;margin:10px 0 4px">🎯 投稿行动建议</div>';
+    html += '<div style="font-size:12px;color:#374151;background:#eef2ff;border-radius:6px;padding:8px;line-height:1.8">' + actM[1].trim().replace(/\n/g, '<br>') + '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function sendSimReviewToResponse() {
+  var ctx = window.__simReviewCtx;
+  if (!ctx || !ctx.response) { alert('请先完成模拟审稿'); return; }
+  showPubTool('response');
+  var rp = document.getElementById('rpComments');
+  if (rp) {
+    rp.value = '【目标期刊】' + ctx.jName + '\n\n' + ctx.response;
+  }
+  var rpT = document.getElementById('rpTitle');
+  if (rpT && ctx.title) rpT.value = ctx.title;
+  var box = document.getElementById('rpResult');
+  if (box) {
+    var d = document.createElement('div');
+    d.style.cssText = 'margin-top:10px;padding:10px 14px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;font-size:12px;color:#1e40af';
+    d.textContent = '✅ 已自动带入模拟审稿意见，请选择修回类型和回复语气后生成逐条回复信。';
+    box.parentNode.insertBefore(d, box);
+  }
 }
 
 async function generateCoverLetter() {
