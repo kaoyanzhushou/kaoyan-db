@@ -18552,6 +18552,10 @@ window.addEventListener('load', function(){
 
  <div class="nav-item active" data-tab="dashboard"><span class="icon">🔬</span><span>科研总览</span></div>
 
+ <div class="nav-group nav-group-publish">📤 投稿中心<span class="nav-badge">NEW</span></div>
+
+ <div class="nav-item nav-item-publish" data-tab="publish" onclick="navigateToPublish()"><span class="icon">📤</span><span>投稿中心</span></div>
+
  <div class="nav-group">📚 考研学习中心</div>
 <div class="nav-item" onclick="location.href='learn/index.html'" style="background:linear-gradient(135deg,rgba(16,185,129,.16),rgba(59,130,246,.16));border:1px solid rgba(16,185,129,.35)"><span class="icon">🎓</span><span>进入考研学习中心</span><span style="margin-left:auto">→</span></div>
 
@@ -18573,8 +18577,6 @@ window.addEventListener('load', function(){
 
  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('taoci')"><span class="icon">✉️</span><span>套磁助手</span></div>
 
- <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('publish')"><span class="icon">📤</span><span>投稿模式</span><span class="nav-badge">NEW</span></div>
-
  <div class="nav-group nav-group-paper">📝 论文工作台<span class="nav-badge">NEW</span></div>
 
  <div class="nav-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('projects')"><span class="icon">📁</span><span>我的论文</span></div>
@@ -18590,8 +18592,6 @@ window.addEventListener('load', function(){
  <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('assist')"><span class="icon">💡</span><span>研究辅助</span></div>
 
  <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('polish')"><span class="icon">✨</span><span>论文润色</span></div>
-
- <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('publish')"><span class="icon">📤</span><span>投稿中心</span></div>
 
  <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('sports')"><span class="icon">🏃</span><span>体育学特色</span></div>
 
@@ -19249,6 +19249,12 @@ window.addEventListener('load', function(){
 
 </div>
 
+<div id="tab-publish" class="tab-content">
+
+ <div id="publishMainArea"></div>
+
+</div>
+
 <div id="tab-phd" class="tab-content">
 
  <div class="phd-container">
@@ -19773,7 +19779,7 @@ window.addEventListener('load', function(){
 
  </div>
 
- <div class="study-tool-card" onclick="navigateToPaperSubTab('publish')">
+ <div class="study-tool-card" onclick="navigateToPublish()">
 
  <div class="study-tool-icon">📤</div>
 
@@ -23477,7 +23483,7 @@ window.addEventListener('load', function(){
 
  <button onclick="switchPaperSubTab('polish')" id="paperTab-polish" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">论文润色</button>
 
- <button onclick="switchPaperSubTab('publish')" id="paperTab-publish" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿中心</button>
+ <button onclick="navigateToPublish()" id="paperTab-publish" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿中心</button>
 
  <button onclick="switchPaperSubTab('journalmatch')" id="paperTab-journalmatch" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🎯 期刊匹配</button>
 
@@ -64041,6 +64047,45 @@ function savePolishToProject() {
 
 
 
+// ========== 投稿中心（独立一级模块） ==========
+
+function navigateToPublish(subTab) {
+
+  switchTab('publish');
+
+  setTimeout(function() {
+
+    if (typeof renderPublishCenter === 'function') renderPublishCenter();
+
+    if (subTab) setTimeout(function() { if (typeof switchPublishTab === 'function') switchPublishTab(subTab); }, 120);
+
+  }, 150);
+
+}
+
+function renderPublishCenter() {
+
+  var area = document.getElementById('publishMainArea');
+
+  if (!area) return;
+
+  if (area.dataset.rendered) {
+
+    // 已渲染：保留状态，切回当前子Tab
+    setTimeout(function() { if (typeof switchPublishTab === 'function') switchPublishTab(publishCurrentSubTab || 'recommend'); }, 120);
+
+    return;
+
+  }
+
+  renderPhdPublish('publishMainArea');
+
+  area.dataset.rendered = '1';
+
+  setTimeout(function() { if (typeof switchPublishTab === 'function') switchPublishTab('recommend'); }, 120);
+
+}
+
 // ========== 论文工作台 - 投稿中心 ==========
 
 
@@ -64740,7 +64785,7 @@ var __tc=document.getElementById('tab-'+tabName);if(__tc)__tc.classList.add('act
 
 
 
-const titles = {dashboard:'科研总览',english:'英语（一）知识点',politics:'政治知识点',physio:'运动生理学知识点',anatomy:'运动解剖学知识点',plan:'备考规划',progress:'学习进度',quiz:'📚 文献管理模考',flashcard:'📄 AI调用记忆',memorize:'背诵助手','pro-course':'专业课高效学习','ai-assistant':'AI学习助手','atlas':'人体解剖学图谱','physio-atlas':'生理学图谱','teacher':'教师科研助手'};
+const titles = {dashboard:'科研总览',english:'英语（一）知识点',politics:'政治知识点',physio:'运动生理学知识点',anatomy:'运动解剖学知识点',plan:'备考规划',progress:'学习进度',quiz:'📚 文献管理模考',flashcard:'📄 AI调用记忆',memorize:'背诵助手','pro-course':'专业课高效学习','ai-assistant':'AI学习助手','atlas':'人体解剖学图谱','physio-atlas':'生理学图谱','teacher':'教师科研助手',publish:'📤 投稿中心'};
 
 
 
@@ -64821,6 +64866,10 @@ if(tabName === 'physio-atlas') initPhysioAtlas();
 
 
 if(tabName === 'reading' && typeof initReadingModuleEnhanced === 'function') initReadingModuleEnhanced();
+
+
+
+if(tabName === 'publish' && typeof renderPublishCenter === 'function') renderPublishCenter();
 
 
 
