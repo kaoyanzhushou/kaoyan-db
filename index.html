@@ -107382,6 +107382,8 @@ function renderPhdPublish(containerId) {
 
   html += '<div onclick="showPubTool(\'learnloop\')" style="background:linear-gradient(135deg,#ecfeff,#cffafe);border:1px solid #67e8f9;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📈</div><div style="font-size:15px;font-weight:700;color:#0e7490;margin-bottom:4px">学习闭环</div><div style="font-size:12px;color:#155e75">推荐命中率 + 选择回填 + 时间衰减概率校准，越用越准</div></div>';
 
+  html += '<div onclick="showPubTool(\'deepai\')" style="background:linear-gradient(135deg,#fff7ed,#eff6ff);border:1px solid #fdba74;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🧠</div><div style="font-size:15px;font-weight:700;color:#7c2d12;margin-bottom:4px">大模型深度</div><div style="font-size:12px;color:#c2410c">全文五维评审 + 选刊AI解读 + 语义查重升级 + 审稿周期预测</div></div>';
+
 
 
   html += '</div>';
@@ -114497,6 +114499,212 @@ async function pubSyncChoiceRun() {
   out.innerHTML = r;
 }
 
+// ========== Phase 5 大模型深度（全文评审 / 选刊解读 / 语义查重 / 周期预测） ==========
+
+function pubParseAiJson(txt) {
+  try {
+    var s = String(txt || '').trim().replace(/^```json\s*/,'').replace(/```\s*$/,'').replace(/^```\s*/,'');
+    var a = s.indexOf('{'), b = s.lastIndexOf('}');
+    if (a >= 0 && b > a) s = s.substring(a, b + 1);
+    return JSON.parse(s);
+  } catch(e) { return null; }
+}
+
+function pubDeepReviewUI() {
+  var el = document.getElementById('pubDeepReview');
+  if (!el) return;
+  var html = '';
+  html += '<div style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid #fdba74;border-radius:12px;padding:20px">';
+  html += '<div style="font-size:16px;font-weight:700;color:#9a3412;margin-bottom:4px">🔬 全文 AI 深度评审</div>';
+  html += '<div style="font-size:12px;color:#c2410c;margin-bottom:12px">编委级审稿视角：创新性 / 方法学 / 统计与结果 / 伦理与规范 / 写作表达 五维评分 + 优先修改建议（大模型深度分析，非机械检查）</div>';
+  html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:#9a3412;font-weight:600;display:block;margin-bottom:4px">论文标题</label><input type="text" id="drTitle" placeholder="粘贴标题" style="width:100%;padding:9px 12px;border:1px solid #fdba74;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#9a3412"></div>';
+  html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:#9a3412;font-weight:600;display:block;margin-bottom:4px">论文全文（粘贴，建议 ≥1000 字；超 8000 字自动截断，可分次评审）</label><textarea id="drText" rows="10" placeholder="粘贴论文全文（引言、方法、结果、讨论…）" style="width:100%;padding:9px 12px;border:1px solid #fdba74;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#9a3412;resize:vertical;box-sizing:border-box"></textarea></div>';
+  html += '<button onclick="pubDeepReview()" style="width:100%;background:#ea580c;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🤖 开始五维深度评审（约 15-30 秒）</button>';
+  html += '<div id="drResult" style="margin-top:12px"></div>';
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+async function pubDeepReview() {
+  var title = (document.getElementById('drTitle').value || '').trim();
+  var text = (document.getElementById('drText').value || '').trim();
+  var out = document.getElementById('drResult');
+  if (!text) { out.innerHTML = '<div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:12px;font-size:12px;color:#854d0e">请粘贴论文全文</div>'; return; }
+  var content = text.length > 8000 ? text.substring(0, 8000) + '\n\n（长文已截断至前 8000 字，完整评审请分段粘贴）' : text;
+  out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">🤖 大模型正在深度评审（五维），请稍候…</div>';
+  var sys = '你是运动科学领域资深期刊审稿专家（编委级别），以严谨著称。请对论文做五维评审：创新性、方法学、统计与结果、伦理与规范、写作表达。每维给出 0-100 分、2-4 个具体问题、对应可操作的修改建议。最后给出综合评分与 3-5 条最高优先级的修改项。\n\n只输出JSON（不要任何其他文字）：{"dims":[{"name":"创新性","score":0,"issues":["问题1"],"advice":["建议1"]},{"name":"方法学","score":0,"issues":[],"advice":[]},{"name":"统计与结果","score":0,"issues":[],"advice":[]},{"name":"伦理与规范","score":0,"issues":[],"advice":[]},{"name":"写作表达","score":0,"issues":[],"advice":[]}],"overall":0,"priority":["最高优先修改项1","..."],"strength":"论文最突出优点一句话"}';
+  var usr = '论文标题：' + title + '\n\n论文全文：\n' + content;
+  var r = await pubCallWithRoute('review-sim', sys, usr, 3000);
+  if (!r.text) { out.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px;color:#b91c1c;font-size:12px">大模型暂不可用（' + (r.err || '') + '），请稍后重试</div>'; return; }
+  var d = pubParseAiJson(r.text);
+  if (!d || !Array.isArray(d.dims)) { out.innerHTML = '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:14px;color:#9a3412;font-size:12px">模型返回格式异常，请重试一次</div>'; return; }
+  var html = '';
+  html += '<div style="background:#fff;border:1px solid #fed7aa;border-radius:12px;padding:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:14px;font-weight:700;color:#9a3412">🔬 五维评审报告</div><div style="font-size:11px;color:#94a3b8">来源：' + (PUB_MODEL_NAMES[r.model] || r.model) + (r.fallback ? '（降级链）' : '') + '</div></div>';
+  d.dims.forEach(function(dim) {
+    var col = dim.score >= 75 ? '#16a34a' : (dim.score >= 55 ? '#d97706' : '#dc2626');
+    html += '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:13px;font-weight:600;color:#1e293b">' + dim.name + '</span><span style="font-size:15px;font-weight:800;color:' + col + '">' + dim.score + '</span></div><div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden"><div style="height:100%;width:' + Math.max(0, Math.min(100, dim.score)) + '%;background:' + col + ';border-radius:4px"></div></div>';
+    if (dim.issues && dim.issues.length) html += '<div style="font-size:11px;color:#b91c1c;margin-top:5px">⚠️ ' + dim.issues.join('；') + '</div>';
+    if (dim.advice && dim.advice.length) html += '<div style="font-size:11px;color:#0f766e;margin-top:3px">✍️ 建议：' + dim.advice.join('；') + '</div>';
+    html += '</div>';
+  });
+  html += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:12px;color:#92400e"><b>综合评分：' + d.overall + '/100</b> · 亮点：' + (d.strength || '—') + '</div>';
+  if (d.priority && d.priority.length) {
+    html += '<div style="margin-top:8px;font-size:12px;color:#9a3412;font-weight:600">🎯 优先修改（按录取影响排序）：</div>';
+    d.priority.forEach(function(p, i) { html += '<div style="font-size:12px;color:#1e293b;padding:4px 0;border-bottom:1px dashed #fed7aa">' + (i + 1) + '. ' + p + '</div>'; });
+  }
+  html += '<div style="font-size:10px;color:#94a3b8;margin-top:8px">评审由大模型生成，用于投稿前自查；请结合目标期刊审稿标准与同行意见综合判断。</div>';
+  html += '</div>';
+  out.innerHTML = html;
+}
+
+function pubMatchExplainUI() {
+  var el = document.getElementById('pubMatchExplain');
+  if (!el) return;
+  var html = '';
+  html += '<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-radius:12px;padding:20px">';
+  html += '<div style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:4px">🎯 选刊结果 AI 解读</div>';
+  html += '<div style="font-size:12px;color:#1d4ed8;margin-bottom:12px">大模型解读 Top 3：为什么适合你的论文、录用机会判断、投稿前准备要点（把规则评分翻译成可执行建议）</div>';
+  html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:#1e40af;font-weight:600;display:block;margin-bottom:4px">论文标题</label><input type="text" id="meTitle" placeholder="粘贴标题" style="width:100%;padding:9px 12px;border:1px solid #93c5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#1e40af"></div>';
+  html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:#1e40af;font-weight:600;display:block;margin-bottom:4px">摘要/关键词（选填）</label><textarea id="meAbs" rows="3" placeholder="粘贴摘要或关键词" style="width:100%;padding:9px 12px;border:1px solid #93c5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#1e40af;resize:vertical;box-sizing:border-box"></textarea></div>';
+  html += '<button onclick="pubMatchExplain()" style="width:100%;background:#1d4ed8;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🤖 选刊 AI 解读（Top 3）</button>';
+  html += '<div id="meResult" style="margin-top:12px"></div>';
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+async function pubMatchExplain() {
+  var title = ((document.getElementById('meTitle') || {}).value || (document.getElementById('matcherTitle') || {}).value || '').trim();
+  var abs = ((document.getElementById('meAbs') || {}).value || (document.getElementById('matcherAbs') || {}).value || '').trim();
+  var out = document.getElementById('meResult');
+  if (!title && !abs) { out.innerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px;font-size:12px;color:#1d4ed8">💡 请先在上方输入论文标题/摘要，再解读</div>'; return; }
+  // 本地规则重算 Top3（与引擎同口径）
+  var text = (title + ' ' + abs).toLowerCase();
+  var all = PHD_JOURNALS.concat(CN_JOURNALS);
+  var scored = all.map(function(j) {
+    var kw = j.matchKeywords || [];
+    var kwHit = kw.filter(function(k) { return text.indexOf(String(k).toLowerCase()) >= 0; });
+    var theme = Math.min(100, Math.round((kwHit.length / Math.max(1, kw.length)) * 60));
+    var w = getMabWeights();
+    var total = Math.round(theme * w.theme / 100 + pubPrestigeScore(j) * w.prestige / 100 + pubHistoryScore(j) * w.history / 100 + (j.reviewDays ? Math.max(0, Math.round(100 - (j.reviewDays - 30) * 1.2)) : 60) * w.timing / 100);
+    return {j: j, total: total};
+  }).sort(function(a, b) { return b.total - a.total; }).slice(0, 3);
+  var topNames = scored.map(function(x) { return x.j.name + '（综合分 ' + x.total + '，审稿约 ' + x.j.reviewDays + ' 天，录用率约 ' + x.j.acceptRate + '%）'; });
+  out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">🤖 大模型解读中…</div>';
+  var sys = '你是体育学期刊投稿顾问。请解读这 3 本候选期刊对这篇论文的适配性：每本给出①为什么适合（结合论文主题）②录用机会判断（高/中/低 + 依据）③投稿前 2-3 条准备要点。\n\n只输出JSON：{"top":[{"name":"期刊名","why":"","chance":"","prep":[""]}]}';
+  var usr = '论文标题：' + title + '\n摘要：' + (abs ? abs.substring(0, 600) : '（未提供）') + '\n\n当前 Top 3（规则引擎评分）：\n' + topNames.map(function(n, i) { return (i + 1) + '. ' + n; }).join('\n');
+  var r = await pubCallWithRoute('advisor', sys, usr, 2000);
+  if (!r.text) { out.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px;color:#b91c1c;font-size:12px">大模型暂不可用，请稍后重试</div>'; return; }
+  var d = pubParseAiJson(r.text);
+  if (!d || !Array.isArray(d.top)) { out.innerHTML = '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px;color:#1d4ed8;font-size:12px">模型返回格式异常，请重试一次</div>'; return; }
+  var html = '';
+  html += '<div style="background:#fff;border:1px solid #bfdbfe;border-radius:12px;padding:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:14px;font-weight:700;color:#1e40af">🎯 选刊 AI 解读</div><div style="font-size:11px;color:#94a3b8">来源：' + (PUB_MODEL_NAMES[r.model] || r.model) + (r.fallback ? '（降级链）' : '') + '</div></div>';
+  d.top.forEach(function(t, i) {
+    var chanceCol = t.chance.indexOf('高') >= 0 ? '#16a34a' : (t.chance.indexOf('低') >= 0 ? '#dc2626' : '#d97706');
+    html += '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:8px"><div style="font-size:13px;font-weight:700;color:#1e293b">' + (i + 1) + '. ' + t.name + '</div><div style="font-size:12px;color:#475569;margin-top:4px">📌 为什么适合：' + t.why + '</div><div style="font-size:12px;margin-top:4px">🎯 录用机会：<span style="font-weight:700;color:' + chanceCol + '">' + t.chance + '</span></div><div style="font-size:12px;color:#0f766e;margin-top:4px">✍️ 准备：' + (t.prep || []).join('；') + '</div></div>';
+  });
+  html += '<div style="font-size:10px;color:#94a3b8;margin-top:6px">解读由大模型生成，供投稿决策参考</div>';
+  html += '</div>';
+  out.innerHTML = html;
+}
+
+function pubSemanticCheckUI() {
+  var el = document.getElementById('pubSemanticCheck');
+  if (!el) return;
+  var html = '';
+  html += '<div style="background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:1px solid #e9d5ff;border-radius:12px;padding:20px">';
+  html += '<div style="font-size:16px;font-weight:700;color:#86198f;margin-bottom:4px">🛡️ 语义查重（升级版）</div>';
+  html += '<div style="font-size:12px;color:#a21caf;margin-bottom:12px">本地概念级比对（跨语言同义词典）+ 大模型复核：检测你的投稿记录中是否存在重复发表/自我抄袭风险（不止标题，看摘要语义）</div>';
+  html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:#86198f;font-weight:600;display:block;margin-bottom:4px">论文摘要 / 关键词</label><textarea id="scAbs" rows="4" placeholder="粘贴摘要或关键词" style="width:100%;padding:9px 12px;border:1px solid #e9d5ff;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#86198f;resize:vertical;box-sizing:border-box"></textarea></div>';
+  html += '<button onclick="pubSemanticCheck()" style="width:100%;background:#a21caf;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🛡️ 语义查重 + AI 复核</button>';
+  html += '<div id="scResult" style="margin-top:12px"></div>';
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+async function pubSemanticCheck() {
+  var abs = (document.getElementById('scAbs').value || '').trim();
+  var out = document.getElementById('scResult');
+  if (!abs) { out.innerHTML = '<div style="background:#fdf4ff;border:1px solid #f5d0fe;border-radius:8px;padding:12px;font-size:12px;color:#a21caf">请粘贴摘要或关键词</div>'; return; }
+  var papers = getPubPapers();
+  var hits = [];
+  var setA = pubConceptSet(abs);
+  papers.forEach(function(p) {
+    var t = String(p.title || '').toLowerCase();
+    if (!t) return;
+    var setB = pubConceptSet(t);
+    var inter = 0;
+    setA.forEach(function(x) { if (setB.indexOf(x) >= 0) inter++; });
+    if (inter >= 1) {
+      hits.push({title: p.title, inter: inter, subs: (p.submissions || []).map(function(s) { return s.journal + '(' + s.status + ')'; }).join('、') || '无投稿记录'});
+    }
+  });
+  var localHtml = '<div style="background:#fff;border:1px solid #f5d0fe;border-radius:10px;padding:14px;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#86198f;margin-bottom:6px">🔗 本地概念命中（' + hits.length + ' 条）</div>';
+  if (!hits.length) localHtml += '<div style="font-size:12px;color:#94a3b8">未发现与已投稿论文的概念级重叠（交集 ≥1 个主题概念）</div>';
+  hits.forEach(function(h) {
+    localHtml += '<div style="font-size:12px;color:#475569;padding:5px 0;border-bottom:1px dashed #f5d0fe"><span style="font-weight:600">' + h.title + '</span> · 概念交集 ' + h.inter + ' 组<br><span style="color:#94a3b8;font-size:11px">' + h.subs + '</span></div>';
+  });
+  localHtml += '</div>';
+  out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">🛡️ AI 复核中…</div>' + localHtml;
+  if (!hits.length) return;
+  var sys = '你是学术出版伦理专家。以下是论文摘要与用户投稿记录中语义重叠的论文列表。请判断是否存在重复发表/自我抄袭风险：①同一研究内容以中英文分别发表（除非中文版未发表或版权回收）②核心结果重复发表 ③仅换标题但内容实质相同。\n\n只输出JSON：{"verdict":"结论一句话","riskLevel":"高|中|低","detail":"依据(引用上述论文)", "suggest":"建议"}';
+  var usr = '当前论文摘要：' + abs.substring(0, 800) + '\n\n疑似重叠记录：\n' + hits.map(function(h, i) { return (i + 1) + '. ' + h.title + '（概念交集' + h.inter + '组，' + h.subs + '）'; }).join('\n');
+  var r = await pubCallWithRoute('plagiarism', sys, usr, 2000);
+  var d = r.text ? pubParseAiJson(r.text) : null;
+  var aiHtml = '<div style="background:#fff;border:1px solid #f5d0fe;border-radius:10px;padding:14px"><div style="font-size:13px;font-weight:700;color:#86198f;margin-bottom:6px">🤖 AI 伦理复核' + (r.text ? '（' + (PUB_MODEL_NAMES[r.model] || r.model) + (r.fallback ? '·降级' : '') + '）' : '（暂不可用）') + '</div>';
+  if (d) {
+    var col = d.riskLevel === '高' ? '#dc2626' : (d.riskLevel === '中' ? '#d97706' : '#16a34a');
+    aiHtml += '<div style="font-size:12px;color:#1e293b"><b>结论：</b>' + d.verdict + '</div><div style="font-size:12px;margin-top:4px">风险等级：<span style="font-weight:700;color:' + col + '">' + d.riskLevel + '</span></div><div style="font-size:12px;color:#475569;margin-top:4px">依据：' + (d.detail || '') + '</div><div style="font-size:12px;color:#0f766e;margin-top:4px">建议：' + (d.suggest || '') + '</div>';
+  } else {
+    aiHtml += '<div style="font-size:12px;color:#9a3412">AI 复核暂不可用，请参考上方本地命中情况自行判断，或稍后重试</div>';
+  }
+  aiHtml += '</div>';
+  out.innerHTML = localHtml + aiHtml;
+}
+
+function pubTimelinePredictUI() {
+  var el = document.getElementById('pubTimelinePredict');
+  if (!el) return;
+  var html = '';
+  html += '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px">';
+  html += '<div style="font-size:16px;font-weight:700;color:#166534;margin-bottom:4px">📅 审稿周期 AI 预测</div>';
+  html += '<div style="font-size:12px;color:#15803d;margin-bottom:12px">输入目标期刊与拟投稿日期，大模型基于期刊审稿周期预测关键节点时间线（送审 / 修回 / 录用），并与库内基准对比</div>';
+  html += '<div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap"><div style="flex:1;min-width:180px"><label style="font-size:12px;color:#166534;font-weight:600;display:block;margin-bottom:4px">目标期刊</label><input type="text" id="tpJournal" placeholder="如：体育科学" style="width:100%;padding:9px 12px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#166534"></div><div style="flex:1;min-width:140px"><label style="font-size:12px;color:#166534;font-weight:600;display:block;margin-bottom:4px">拟投稿日期</label><input type="date" id="tpDate" style="width:100%;padding:8px 12px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#166534"></div></div>';
+  html += '<button onclick="pubTimelinePredict()" style="width:100%;background:#16a34a;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🤖 预测关键节点（约 10-20 秒）</button>';
+  html += '<div id="tpResult" style="margin-top:12px"></div>';
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+async function pubTimelinePredict() {
+  var jn = (document.getElementById('tpJournal').value || '').trim();
+  var date = (document.getElementById('tpDate').value || '').trim();
+  var out = document.getElementById('tpResult');
+  if (!jn) { out.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:12px;color:#166534">请填写目标期刊</div>'; return; }
+  var j = getPubJournalByName(jn);
+  if (!j) { out.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:12px;color:#166534">库内未找到《' + jn + '》，可先在「期刊信息库」检索确认刊名</div>'; return; }
+  var base = j.reviewDays || 60;
+  out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">🤖 大模型预测中…</div>';
+  var sys = '你是学术投稿流程管理专家。请基于目标期刊的平均审稿周期，预测从投稿日起的关键节点时间线：送审、首轮结果、修回截止、终审、录用/拒稿。给出每个节点的预计天数（相对投稿日）、预计日期（YYYY-MM-DD）与简短说明，并提示主要风险与时间策略。\n\n只输出JSON：{"nodes":[{"stage":"送审","days":7,"date":"YYYY-MM-DD","note":""}],"risk":"主要风险","tip":"时间策略建议"}';
+  var usr = '目标期刊：' + j.name + '\n库内平均审稿周期：约 ' + base + ' 天\n录用率：' + (j.acceptRate || '未知') + '%\n拟投稿日期：' + (date || '今天');
+  var r = await pubCallWithRoute('advisor', sys, usr, 2000);
+  var html = '<div style="background:#fff;border:1px solid #bbf7d0;border-radius:12px;padding:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:14px;font-weight:700;color:#166534">📅 《' + j.name + '》投稿时间线预测</div><div style="font-size:11px;color:#94a3b8">库内基准：约 ' + base + ' 天' + (r.text ? ' · ' + (PUB_MODEL_NAMES[r.model] || r.model) + (r.fallback ? '·降级' : '') : '') + '</div></div>';
+  var d = r.text ? pubParseAiJson(r.text) : null;
+  if (d && Array.isArray(d.nodes)) {
+    d.nodes.forEach(function(n, i) {
+      html += '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px"><div style="width:26px;height:26px;border-radius:50%;background:#dcfce7;color:#166534;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + (i + 1) + '</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#1e293b">' + n.stage + ' <span style="color:#16a34a;font-weight:700">+' + n.days + ' 天</span> <span style="font-size:11px;color:#64748b">→ ' + n.date + '</span></div><div style="font-size:12px;color:#475569">' + n.note + '</div></div></div>';
+    });
+    html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:12px;color:#166534"><b>⚠️ 主要风险：</b>' + d.risk + '<br><b>⏱ 时间策略：</b>' + d.tip + '</div>';
+  } else {
+    html += '<div style="font-size:12px;color:#9a3412">AI 预测暂不可用，已展示库内基准：约 ' + base + ' 天（请以期刊实际进度为准）</div>';
+  }
+  html += '<div style="font-size:10px;color:#94a3b8;margin-top:8px">预测由大模型生成，仅作时间规划参考；实际以期刊编辑部进度为准</div>';
+  html += '</div>';
+  out.innerHTML = html;
+}
+
 // ========== 选刊辩论裁决模式（v4-pro vs glm-5.3 → hy3综合裁决） ==========
 
 async function publishDebateVerdict() {
@@ -115918,6 +116126,29 @@ function showPubTool(tool) {
     html += '<div id="pubLearnResult" style="margin-top:12px"></div>';
 
     html += '<div style="font-size:11px;color:#155e75;border-top:1px dashed #67e8f9;margin-top:12px;padding-top:8px">🔬 校准原理：录用概率 = 公开先验（贝叶斯）× 你的实测记录，实测按时间衰减加权（最近投稿权重最高）。</div>';
+
+  } else if (tool === 'deepai') {
+
+    html = '<div style="background:linear-gradient(135deg,#fff7ed,#eff6ff);border:1px solid #fdba74;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#7c2d12;margin-bottom:4px">🧠 大模型深度</div>';
+
+    html += '<div style="font-size:12px;color:#c2410c;margin-bottom:14px">编委级全文评审 · 选刊 AI 解读 · 语义查重升级 · 审稿周期预测——把大模型的深度分析用到投稿决策的每个关键环节。</div>';
+
+    html += '<div id="pubDeepReview" style="margin-bottom:12px"></div>';
+
+    html += '<div id="pubMatchExplain" style="margin-bottom:12px"></div>';
+
+    html += '<div id="pubSemanticCheck" style="margin-bottom:12px"></div>';
+
+    html += '<div id="pubTimelinePredict"></div>';
+
+    setTimeout(function() {
+      try { pubDeepReviewUI(); } catch(e) {}
+      try { pubMatchExplainUI(); } catch(e) {}
+      try { pubSemanticCheckUI(); } catch(e) {}
+      try { pubTimelinePredictUI(); } catch(e) {}
+    }, 50);
 
   } else if (tool === 'format') {
 
