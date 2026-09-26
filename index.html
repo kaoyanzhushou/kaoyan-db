@@ -107384,6 +107384,11 @@ function renderPhdPublish(containerId) {
 
   html += '<div onclick="showPubTool(\'deepai\')" style="background:linear-gradient(135deg,#fff7ed,#eff6ff);border:1px solid #fdba74;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🧠</div><div style="font-size:15px;font-weight:700;color:#7c2d12;margin-bottom:4px">大模型深度</div><div style="font-size:12px;color:#c2410c">全文五维评审 + 选刊AI解读 + 语义查重升级 + 审稿周期预测</div></div>';
   html += '<div onclick="showPubTool(\'datahealth\')" style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border:1px solid #86efac;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📊</div><div style="font-size:15px;font-weight:700;color:#166534;margin-bottom:4px">数据健康检查</div><div style="font-size:12px;color:#15803d">体检投稿/学习数据：重复论文、缺字段、损坏记录一键修复</div></div>';
+  html += '<div onclick="showPubTool(\'afteraccept\')" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🏆</div><div style="font-size:15px;font-weight:700;color:#065f46;margin-bottom:4px">录用后全流程</div><div style="font-size:12px;color:#047857">录用→校样→版面费→见刊→收录，五阶段看板推进</div></div>';
+  html += '<div onclick="showPubTool(\'pagefee\')" style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">💰</div><div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:4px">版面费估算</div><div style="font-size:12px;color:#b45309">按期刊+页数估算费用区间，投稿前算清成本</div></div>';
+  html += '<div onclick="showPubTool(\'versions\')" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📁</div><div style="font-size:15px;font-weight:700;color:#1e40af;margin-bottom:4px">论文版本管理</div><div style="font-size:12px;color:#2563eb">初稿/修回稿/终稿版本台账，当前版本一目了然</div></div>';
+  html += '<div onclick="showPubTool(\'riskpanorama\')" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🛡️</div><div style="font-size:15px;font-weight:700;color:#991b1b;margin-bottom:4px">风险全景</div><div style="font-size:12px;color:#b91c1c">一稿多投/重复发表/超期/时间冲突综合风险仪表</div></div>';
+  html += '<div onclick="showPubTool(\'schedule\')" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🗓️</div><div style="font-size:15px;font-weight:700;color:#075985;margin-bottom:4px">并行投稿排程</div><div style="font-size:12px;color:#0369a1">多刊并行时间线排程，冲突一目了然</div></div>';
 
 
 
@@ -107920,11 +107925,12 @@ async function aiRecommendJournals() {
 // ========== P6-UI 投稿工具页分组整理（分区 + 搜索 + 紧凑化） ==========
 
 var PUB_TOOL_GROUPS = [
-  {name: '🎯 选刊决策', color: '#155e75', tools: ['matcher', 'similar', 'multimodel', 'compet', 'resub']},
+  {name: '🎯 选刊决策', color: '#155e75', tools: ['matcher', 'similar', 'multimodel', 'compet', 'resub', 'schedule']},
   {name: '✍️ 投稿准备', color: '#065f46', tools: ['coverletter', 'checklist', 'title', 'highlights', 'reviewer', 'refs', 'translate']},
   {name: '🛡️ 审稿应对', color: '#991b1b', tools: ['response', 'simreview', 'rltable', 'followup']},
   {name: '🧭 选题进阶', color: '#92400e', tools: ['reverse', 'hotspot', 'ladder']},
-  {name: '🔬 深度与系统', color: '#5b21b6', tools: ['deepai', 'datahealth', 'learnloop', 'citations', 'privacy']}
+  {name: '🔬 深度与系统', color: '#5b21b6', tools: ['deepai', 'datahealth', 'learnloop', 'citations', 'privacy']},
+  {name: '🏁 录用与收尾', color: '#065f46', tools: ['afteraccept', 'pagefee', 'versions', 'riskpanorama']}
 ];
 
 function pubToolCardTool(el) {
@@ -108076,6 +108082,297 @@ function pubDataHealthFix() {
   if (removed) fixed.push('论文去重 ' + removed + ' 条');
   alert('✅ 修复完成：' + (fixed.length ? fixed.join('；') : '无可修复项'));
   pubDataHealthRun();
+}
+
+// ========== P7 生命周期封顶 ==========
+
+var PUB_ACCEPT_PHASES = [
+  {id: 'accepted', name: '已录用', icon: '✅'},
+  {id: 'proofing', name: '校样', icon: '🔍'},
+  {id: 'payment', name: '版面费', icon: '💰'},
+  {id: 'published', name: '已见刊', icon: '📰'},
+  {id: 'indexed', name: '被收录', icon: '📊'}
+];
+
+function getPubPhases() { try { return JSON.parse(localStorage.getItem('phd_pub_phases')) || {}; } catch(e) { return {}; } }
+function savePubPhases(o) { localStorage.setItem('phd_pub_phases', JSON.stringify(o)); }
+
+function pubAfterAcceptUI() {
+  var box = document.getElementById('pubAfterAcceptBox');
+  if (!box) return;
+  var papers = getPubPapers();
+  if (!papers.length) { box.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:13px;color:#166534">还没有投稿记录，先去「投稿管理」添加论文</div>'; return; }
+  var opts = '';
+  papers.forEach(function(p) {
+    (p.submissions || []).forEach(function(s) {
+      var label = p.title.slice(0, 18) + ' → ' + (s.journal || '?') + '（' + (s.status || '') + '）';
+      opts += '<option value="' + p.id + '|' + (s.journal || '') + '">' + label + '</option>';
+    });
+  });
+  if (!opts) { box.innerHTML = '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:13px;color:#166534">投稿记录里还没有带期刊的投稿</div>'; return; }
+  box.innerHTML = '<div style="margin-bottom:10px"><label style="font-size:12px;color:#065f46;font-weight:600;display:block;margin-bottom:4px">选择投稿</label><select id="pubPhaseSel" onchange="pubPhaseRender()" style="width:100%;padding:9px 12px;border:1px solid #86efac;border-radius:6px;font-size:12px;background:#fff;color:#065f46;outline:none">' + opts + '</select></div><div id="pubPhaseView"></div>';
+  pubPhaseRender();
+}
+
+function pubPhaseRender() {
+  var sel = document.getElementById('pubPhaseSel');
+  var view = document.getElementById('pubPhaseView');
+  if (!sel || !view) return;
+  var key = sel.value;
+  var phases = getPubPhases();
+  var cur = phases[key] || {phase: 'accepted', dates: {}, note: ''};
+  var idx = PUB_ACCEPT_PHASES.map(function(x) { return x.id; }).indexOf(cur.phase);
+  if (idx < 0) idx = 0;
+  var html = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">';
+  PUB_ACCEPT_PHASES.forEach(function(ph, i) {
+    var active = i <= idx;
+    var isCur = i === idx;
+    html += '<div style="flex:1;min-width:90px;text-align:center;padding:8px 4px;border-radius:8px;background:' + (isCur ? '#059669' : active ? '#d1fae5' : '#f1f5f9') + ';border:1px solid ' + (active ? '#86efac' : '#e2e8f0') + '"><div style="font-size:16px">' + ph.icon + '</div><div style="font-size:11px;font-weight:700;color:' + (isCur ? '#fff' : '#065f46') + '">' + ph.name + '</div></div>';
+  });
+  html += '</div>';
+  var d = cur.dates || {};
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:12px">';
+  PUB_ACCEPT_PHASES.forEach(function(ph) {
+    html += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:11px"><span style="color:#475569">' + ph.icon + ' ' + ph.name + '</span><div style="color:#1e293b;font-weight:600;margin-top:2px">' + (d[ph.id] || '—') + '</div></div>';
+  });
+  html += '</div>';
+  if (idx < PUB_ACCEPT_PHASES.length - 1) {
+    html += '<button onclick="pubPhaseNext()" style="background:#059669;color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">推进到「' + PUB_ACCEPT_PHASES[idx + 1].name + '」（今天）</button> ';
+  } else {
+    html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;font-size:12px;color:#166534">✅ 已走完全流程（见刊并收录）</div>';
+  }
+  html += '<button onclick="pubPhaseReset()" style="background:#fff;color:#4b5563;border:1px solid #9ca3af;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:12px;margin-left:8px">重置为已录用</button>';
+  view.innerHTML = html;
+}
+
+function pubPhaseNext() {
+  var sel = document.getElementById('pubPhaseSel');
+  if (!sel) return;
+  var key = sel.value;
+  var phases = getPubPhases();
+  var cur = phases[key] || {phase: 'accepted', dates: {}, note: ''};
+  var idx = PUB_ACCEPT_PHASES.map(function(x) { return x.id; }).indexOf(cur.phase);
+  var next = PUB_ACCEPT_PHASES[idx + 1];
+  if (!next) return;
+  cur.phase = next.id;
+  cur.dates = cur.dates || {};
+  var today = new Date();
+  cur.dates[next.id] = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  phases[key] = cur;
+  savePubPhases(phases);
+  pubPhaseRender();
+}
+
+function pubPhaseReset() {
+  var sel = document.getElementById('pubPhaseSel');
+  if (!sel) return;
+  var key = sel.value;
+  var phases = getPubPhases();
+  phases[key] = {phase: 'accepted', dates: {}, note: ''};
+  savePubPhases(phases);
+  pubPhaseRender();
+}
+
+// ---------- 版面费估算 ----------
+
+var PUB_PAGE_FEES = {
+  '体育科学': {zh: 1, per: [400, 900]}, '北京体育大学学报': {zh: 1, per: [300, 700]},
+  '上海体育学院学报': {zh: 1, per: [300, 700]}, '武汉体育学院学报': {zh: 1, per: [300, 600]},
+  '体育学刊': {zh: 1, per: [250, 600]}, '天津体育学院学报': {zh: 1, per: [250, 550]},
+  '河南大学学报（社科版）': {zh: 1, per: [200, 500]}, '体育与科学': {zh: 1, per: [250, 550]},
+  '中国体育科技': {zh: 1, per: [300, 700]}, '体育学研究': {zh: 1, per: [300, 650]},
+  '成都体育学院学报': {zh: 1, per: [300, 650]}, '沈阳体育学院学报': {zh: 1, per: [250, 550]},
+  '体育文化导刊': {zh: 1, per: [250, 550]}, '广州体育学院学报': {zh: 1, per: [250, 550]},
+  '山东体育学院学报': {zh: 1, per: [250, 550]}, '首都体育学院学报': {zh: 1, per: [250, 550]},
+  '西安体育学院学报': {zh: 1, per: [250, 550]}, 'Journal of Sports Sciences': {zh: 0, per: [80, 180]},
+  'Medicine and Science in Sports and Exercise': {zh: 0, per: [90, 200]}, 'Sports Medicine': {zh: 0, per: [90, 200]},
+  'International Journal of Sports Physiology and Performance': {zh: 0, per: [80, 180]},
+  'European Journal of Sport Science': {zh: 0, per: [80, 180]}, 'Journal of Strength and Conditioning Research': {zh: 0, per: [100, 220]}
+};
+
+function pubPageFeeUI() {
+  var box = document.getElementById('pubPageFeeBox');
+  if (!box) return;
+  var all = PHD_JOURNALS.concat(CN_JOURNALS);
+  var opts = '<option value="">— 选择期刊（未列出的按默认档估算）—</option>';
+  all.forEach(function(j) { opts += '<option value="' + j.name + '">' + j.name + '</option>'; });
+  box.innerHTML = '<div style="margin-bottom:10px"><label style="font-size:12px;color:#92400e;font-weight:600;display:block;margin-bottom:4px">目标期刊</label><select id="pfJournal" style="width:100%;padding:9px 12px;border:1px solid #fcd34d;border-radius:6px;font-size:12px;background:#fff;color:#92400e;outline:none">' + opts + '</select></div>';
+  box.innerHTML += '<div style="display:flex;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:120px"><label style="font-size:12px;color:#92400e;font-weight:600;display:block;margin-bottom:4px">正文页数（约）</label><input type="number" id="pfPages" value="8" min="1" style="width:100%;padding:9px 12px;border:1px solid #fcd34d;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#92400e;box-sizing:border-box"></div><div style="flex:1;min-width:120px"><label style="font-size:12px;color:#92400e;font-weight:600;display:block;margin-bottom:4px">图/表数（选填）</label><input type="number" id="pfFigs" value="2" min="0" style="width:100%;padding:9px 12px;border:1px solid #fcd34d;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#92400e;box-sizing:border-box"></div></div>';
+  box.innerHTML += '<button onclick="pubPageFeeCalc()" style="background:#d97706;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;margin-top:12px">💰 估算版面费</button>';
+  box.innerHTML += '<div id="pfResult" style="margin-top:14px"></div>';
+}
+
+function pubPageFeeCalc() {
+  var out = document.getElementById('pfResult');
+  var jname = (document.getElementById('pfJournal') || {}).value || '';
+  var pages = parseInt((document.getElementById('pfPages') || {}).value || 0, 10) || 0;
+  var figs = parseInt((document.getElementById('pfFigs') || {}).value || 0, 10) || 0;
+  if (!pages) { out.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px;font-size:12px;color:#991b1b">请填写页数</div>'; return; }
+  var fee = PUB_PAGE_FEES[jname];
+  var per = fee ? fee.per : (jname ? [250, 600] : [250, 600]);
+  var zh = fee ? fee.zh : 1;
+  var unit = zh ? '元' : '美元';
+  var lo = Math.round(per[0] * pages * 0.9);
+  var hi = Math.round(per[1] * pages * 1.1 + figs * 100);
+  var html = '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:16px">';
+  html += '<div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:6px">' + (jname || '默认中文刊') + ' · ' + pages + ' 页 · 约 ' + figs + ' 图/表</div>';
+  html += '<div style="font-size:22px;font-weight:800;color:#b45309;margin-bottom:8px">约 ' + lo + ' ~ ' + hi + ' ' + unit + '</div>';
+  html += '<div style="font-size:11px;color:#a16207;line-height:1.6">估算口径：按参考单价 ' + per[0] + '-' + per[1] + ' ' + unit + '/页 × 页数，含图/表附加；为公开信息与经验估算，实际以编辑部正式收费通知为准。' + (zh ? '' : '英文刊常为 OA 模式，部分免版面费、另有 APC 出版费，建议投前查官网 Author Charges。') + '</div>';
+  html += '</div>';
+  out.innerHTML = html;
+}
+
+// ---------- 版本管理 ----------
+
+function getPaperVersions() { try { return JSON.parse(localStorage.getItem('phd_paper_versions')) || []; } catch(e) { return []; } }
+function savePaperVersions(v) { localStorage.setItem('phd_paper_versions', JSON.stringify(v)); }
+
+function pubVersionsUI() {
+  var box = document.getElementById('pubVersionsBox');
+  if (!box) return;
+  var vs = getPaperVersions();
+  var groups = {};
+  vs.forEach(function(v) {
+    var k = v.paper || '未命名';
+    (groups[k] = groups[k] || []).push(v);
+  });
+  var html = '<div style="margin-bottom:10px"><label style="font-size:12px;color:#1e40af;font-weight:600;display:block;margin-bottom:4px">论文名</label><input type="text" id="pvPaper" placeholder="如：HIIT对肥胖女大学生体成分的影响" style="width:100%;padding:9px 12px;border:1px solid #93c5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#1e40af;box-sizing:border-box"></div>';
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px"><div style="flex:1;min-width:120px"><label style="font-size:12px;color:#1e40af;font-weight:600;display:block;margin-bottom:4px">版本号</label><input type="text" id="pvVer" placeholder="如 v1 / 修回稿" style="width:100%;padding:9px 12px;border:1px solid #93c5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#1e40af;box-sizing:border-box"></div><div style="flex:1;min-width:140px"><label style="font-size:12px;color:#1e40af;font-weight:600;display:block;margin-bottom:4px">说明</label><input type="text" id="pvNote" placeholder="如：按审稿意见修订" style="width:100%;padding:9px 12px;border:1px solid #93c5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#1e40af;box-sizing:border-box"></div></div>';
+  html += '<button onclick="pubVersionAdd()" style="background:#2563eb;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加版本</button>';
+  html += '<div style="margin-top:14px" id="pvList"></div>';
+  box.innerHTML = html;
+  pubVersionList();
+}
+
+function pubVersionList() {
+  var list = document.getElementById('pvList');
+  if (!list) return;
+  var vs = getPaperVersions();
+  var groups = {};
+  vs.forEach(function(v) { var k = v.paper || '未命名'; (groups[k] = groups[k] || []).push(v); });
+  var names = Object.keys(groups);
+  if (!names.length) { list.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:10px 0">暂无版本记录</div>'; return; }
+  var html = '';
+  names.forEach(function(nm) {
+    html += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:8px">📄 ' + nm + '</div>';
+    groups[nm].sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); }).forEach(function(v) {
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#fff;border:1px solid #dbeafe;border-radius:8px;margin-bottom:6px"><div style="flex:1;min-width:0"><span style="font-size:12px;font-weight:700;color:#1d4ed8">' + v.ver + '</span>' + (v.current ? ' <span style="font-size:10px;background:#059669;color:#fff;padding:2px 6px;border-radius:10px">当前</span>' : '') + '<div style="font-size:11px;color:#64748b">' + (v.note || '') + '</div><div style="font-size:10px;color:#94a3b8">' + (v.date || '') + '</div></div><button onclick="pubVersionCurrent(\'' + v.id + '\')" style="background:#059669;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">设为当前</button><button onclick="pubVersionDel(\'' + v.id + '\')" style="background:#fff;color:#dc2626;border:1px solid #fca5a5;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">删除</button></div>';
+    });
+    html += '</div>';
+  });
+  list.innerHTML = html;
+}
+
+function pubVersionAdd() {
+  var paper = (document.getElementById('pvPaper') || {}).value.trim();
+  var ver = (document.getElementById('pvVer') || {}).value.trim();
+  var note = (document.getElementById('pvNote') || {}).value.trim();
+  if (!paper || !ver) { alert('请填写论文名与版本号'); return; }
+  var vs = getPaperVersions();
+  vs.push({id: 'v' + Date.now(), paper: paper, ver: ver, note: note, date: new Date().toISOString().slice(0, 10), ts: Date.now(), current: vs.length === 0});
+  savePaperVersions(vs);
+  pubVersionList();
+  var v = document.getElementById('pvVer'); if (v) v.value = '';
+  var n = document.getElementById('pvNote'); if (n) n.value = '';
+}
+
+function pubVersionCurrent(id) {
+  var vs = getPaperVersions();
+  vs.forEach(function(v) { v.current = (String(v.id) === String(id)); });
+  savePaperVersions(vs);
+  pubVersionList();
+}
+
+function pubVersionDel(id) {
+  var vs = getPaperVersions().filter(function(v) { return String(v.id) !== String(id); });
+  savePaperVersions(vs);
+  pubVersionList();
+}
+
+// ---------- 风险全景 ----------
+
+function pubRiskPanorama() {
+  var out = document.getElementById('pubRiskBox');
+  if (!out) return;
+  var risks = []; var score = 100;
+  var papers = getPubPapers();
+  // 一稿多投
+  var dupGroups = {};
+  papers.forEach(function(p) { (p.submissions || []).forEach(function(s) { if (s.status === 'under_review' || s.status === 'revise') { var k = p.title; (dupGroups[k] = dupGroups[k] || []).push(s.journal); } }); });
+  Object.keys(dupGroups).forEach(function(k) { if (dupGroups[k].length > 1) { risks.push({lv: 3, name: '一稿多投风险', detail: '《' + k.slice(0, 15) + '》同时在投：' + dupGroups[k].join('、')}); } });
+  // 超期审稿
+  papers.forEach(function(p) { (p.submissions || []).forEach(function(s) { if (s.status === 'under_review' && s.submitDate) { var d = new Date(s.submitDate); var j = getPubJournalByName(s.journal); var days = j && j.reviewDays ? j.reviewDays : 90; if (!isNaN(d.getTime()) && (Date.now() - d.getTime()) > days * 1.5) { risks.push({lv: 2, name: '审稿超期', detail: '《' + p.title.slice(0, 15) + '》→' + s.journal + ' 已审 ' + Math.round((Date.now() - d.getTime()) / 86400000) + ' 天，超基准 1.5 倍'}); } } }); });
+  // 重复发表（跨语言）
+  try {
+    papers.forEach(function(p) {
+      var r = pubCrossLangRisk(p.title || '', '');
+      if (r.risk) risks.push({lv: 3, name: '重复发表风险', detail: r.detail});
+    });
+  } catch(e) {}
+  // 时间线冲突
+  var lines = [];
+  papers.forEach(function(p) { (p.submissions || []).forEach(function(s) { if (s.status === 'under_review' && s.submitDate) { var j = getPubJournalByName(s.journal); var d = new Date(s.submitDate); if (!isNaN(d.getTime())) { var dd = j && j.reviewDays ? j.reviewDays : 90; lines.push({s: d.getTime(), e: d.getTime() + dd * 86400000, name: (s.journal || '') + '（' + p.title.slice(0, 10) + '）'}); } } }); });
+  for (var i = 0; i < lines.length; i++) for (var k2 = i + 1; k2 < lines.length; k2++) {
+    if (lines[i].s < lines[k2].e && lines[k2].s < lines[i].e) risks.push({lv: 2, name: '时间线重叠', detail: lines[i].name + ' 与 ' + lines[k2].name + ' 的审稿窗口重叠'});
+  }
+  // 版面费压力
+  var feeHigh = papers.length >= 3 ? 1 : 0;
+  if (feeHigh) risks.push({lv: 1, name: '版面费压力', detail: '同时在投 ' + papers.length + ' 篇，若多篇录用需预留版面费预算'});
+  risks.forEach(function(r) { score -= r.lv * 10; });
+  score = Math.max(0, score);
+  var lvTxt = score >= 80 ? '低风险' : score >= 50 ? '中风险' : '高风险';
+  var lvColor = score >= 80 ? '#059669' : score >= 50 ? '#d97706' : '#dc2626';
+  var html = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div style="font-size:26px;font-weight:800;color:' + lvColor + '">' + lvTxt + '</div><div style="font-size:13px;color:#475569">综合评分 ' + score + '/100（发现 ' + risks.length + ' 项风险）</div></div>';
+  if (!risks.length) { html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:13px;color:#166534">✅ 当前无显著投稿风险</div>'; }
+  risks.forEach(function(r) {
+    html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12px"><span style="font-weight:700;color:#b91c1c">' + (r.lv >= 3 ? '🔴 ' : r.lv === 2 ? '🟠 ' : '🟡 ') + r.name + '</span><div style="color:#7f1d1d;margin-top:4px;line-height:1.5">' + r.detail + '</div></div>';
+  });
+  out.innerHTML = html;
+}
+
+// ---------- 并行排程 ----------
+
+function pubScheduleRun() {
+  var out = document.getElementById('pubScheduleBox');
+  if (!out) return;
+  var papers = getPubPapers();
+  var items = [];
+  var now = new Date(); now.setHours(0, 0, 0, 0);
+  papers.forEach(function(p) {
+    (p.submissions || []).forEach(function(s) {
+      if ((s.status === 'under_review' || s.status === 'revise') && s.submitDate) {
+        var j = getPubJournalByName(s.journal);
+        var d = new Date(s.submitDate);
+        if (!isNaN(d.getTime())) {
+          var dd = j && j.reviewDays ? j.reviewDays : 90;
+          var first = new Date(d.getTime() + dd * 86400000);
+          var revise = new Date(first.getTime() + 30 * 86400000);
+          items.push({name: (s.journal || '?'), paper: p.title.slice(0, 14), s: d.getTime(), first: first.getTime(), revise: revise.getTime(), days: dd});
+        }
+      }
+    });
+  });
+  if (!items.length) { out.innerHTML = '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px;font-size:13px;color:#075985">当前没有审稿中的投稿（under_review / revise），先去「投稿管理」添加</div>'; return; }
+  items.sort(function(a, b) { return a.s - b.s; });
+  var t0 = items[0].s;
+  var t1 = now.getTime();
+  items.forEach(function(it) { t1 = Math.max(t1, it.revise); });
+  var span = Math.max(1, t1 - t0);
+  var html = '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:16px">';
+  html += '<div style="font-size:13px;font-weight:700;color:#075985;margin-bottom:12px">🗓️ 并行投稿排程（' + items.length + ' 篇审稿中）</div>';
+  items.forEach(function(it) {
+    var sP = (it.s - t0) / span * 100;
+    var fP = (it.first - t0) / span * 100;
+    var rP = (it.revise - t0) / span * 100;
+    var bar1 = Math.max(2, fP - sP);
+    var bar2 = Math.max(2, rP - fP);
+    var f = new Date(it.first), r = new Date(it.revise);
+    var fmt = function(x) { return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+    html += '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:4px">' + it.name + ' · ' + it.paper + '（均审约 ' + it.days + ' 天）</div><div style="position:relative;height:20px;background:#f1f5f9;border-radius:6px;overflow:hidden"><div style="position:absolute;left:' + sP + '%;width:' + bar1 + '%;top:2px;height:8px;background:#0ea5e9;border-radius:4px"></div><div style="position:absolute;left:' + fP + '%;width:' + bar2 + '%;top:10px;height:8px;background:#f59e0b;border-radius:4px"></div></div><div style="font-size:10px;color:#64748b;margin-top:3px">投稿 → 首轮约 ' + fmt(f) + ' → 修回约 ' + fmt(r) + '</div></div>';
+  });
+  html += '<div style="font-size:10px;color:#94a3b8">蓝=审稿期 · 橙=修改期；若多条橙色重叠，建议错峰投稿或提前准备备选刊</div>';
+  html += '</div>';
+  out.innerHTML = html;
 }
 
 function pubFilterTools() {
@@ -116342,6 +116639,66 @@ function showPubTool(tool) {
 
     html += '<div id="pubHealthReport" style="margin-top:14px"></div>';
 
+  } else if (tool === 'afteraccept') {
+
+    html = '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:4px">🏆 录用后全流程</div>';
+
+    html += '<div style="font-size:12px;color:#047857;margin-bottom:14px">录用不是终点：校样 → 版面费 → 见刊 → 被收录，五阶段看板推进，每一步有日期与提醒。</div>';
+
+    html += '<div id="pubAfterAcceptBox"></div>';
+
+    setTimeout(function() { try { pubAfterAcceptUI(); } catch(e) {} }, 50);
+
+  } else if (tool === 'pagefee') {
+
+    html = '<div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#92400e;margin-bottom:4px">💰 版面费估算</div>';
+
+    html += '<div style="font-size:12px;color:#b45309;margin-bottom:14px">按目标期刊与篇幅估算版面费区间：中文核心多为按页计费，英文 OA 期刊多为 APD/APC 模式，投稿前算清成本。</div>';
+
+    html += '<div id="pubPageFeeBox"></div>';
+
+    setTimeout(function() { try { pubPageFeeUI(); } catch(e) {} }, 50);
+
+  } else if (tool === 'versions') {
+
+    html = '<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#1e40af;margin-bottom:4px">📁 论文版本管理</div>';
+
+    html += '<div style="font-size:12px;color:#2563eb;margin-bottom:14px">初稿 / 修回稿 / 终稿版本台账：每个版本留档说明与日期，标记当前版本，返修不再怕错稿。</div>';
+
+    html += '<div id="pubVersionsBox"></div>';
+
+    setTimeout(function() { try { pubVersionsUI(); } catch(e) {} }, 50);
+
+  } else if (tool === 'riskpanorama') {
+
+    html = '<div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#991b1b;margin-bottom:4px">🛡️ 风险全景</div>';
+
+    html += '<div style="font-size:12px;color:#b91c1c;margin-bottom:14px">一稿多投 / 重复发表 / 超期审稿 / 时间线冲突 / 版面费压力——全部投稿风险一屏聚合，给出综合风险等级。</div>';
+
+    html += '<button onclick="pubRiskPanorama()" style="background:#dc2626;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 生成风险全景</button>';
+
+    html += '<div id="pubRiskBox" style="margin-top:14px"></div>';
+
+  } else if (tool === 'schedule') {
+
+    html = '<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#075985;margin-bottom:4px">🗓️ 并行投稿排程</div>';
+
+    html += '<div style="font-size:12px;color:#0369a1;margin-bottom:14px">多刊并行投稿时间线排程：按各刊审稿周期推算首轮/修回/终审节点，重叠冲突一目了然，帮你排好投稿节奏。</div>';
+
+    html += '<button onclick="pubScheduleRun()" style="background:#0284c7;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📅 生成排程</button>';
+
+    html += '<div id="pubScheduleBox" style="margin-top:14px"></div>';
+
   } else if (tool === 'format') {
 
     html = '<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px">';
@@ -120161,15 +120518,51 @@ function generateJournalMatch() {
     html += '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + j.name + '</div><div style="font-size:11px;color:#6b7280">' + [tier, rate].filter(Boolean).join(' · ') + '</div></div>';
     html += '<div style="text-align:right"><div style="font-size:16px;font-weight:800;color:#0e7490">' + item.total + '</div><div style="font-size:10px;color:#94a3b8">综合分</div></div>';
     html += '</div>';
-    html += '<div style="font-size:11px;color:#475569;margin:-4px 4px 10px 44px;line-height:1.6">🔎 ' + reasons.join(' · ') + '</div>';
+    html += '<div style="font-size:11px;color:#475569;margin:-4px 4px 6px 44px;line-height:1.6">🔎 ' + reasons.join(' · ') + '</div>';
+    var pscore = 0;
+    try { pscore = Math.round(bayesAcceptRate(item.j, pW, pN) * 100); } catch(e) {}
+    item.prob = pscore;
+    html += '<div style="margin:0 4px 10px 44px;display:flex;align-items:center;gap:8px"><canvas id="pubRadar' + idx + '" width="150" height="80" style="width:150px;height:80px"></canvas><div style="font-size:10px;color:#94a3b8;line-height:1.5">主题 ' + item.theme + '<br>声望 ' + item.prestige + '<br>历史 ' + item.history + '<br>时效 ' + item.speed + '<br>录用概率 ' + pscore + '</div></div>';
   });
 
   html += '</div>';
 
   out.innerHTML = html;
 
+  setTimeout(function() {
+    scored.forEach(function(item, idx) {
+      try { pubRadar('pubRadar' + idx, [item.theme, item.prestige, item.history, item.speed, item.prob || 0], '#0e7490'); } catch(e) {}
+    });
+  }, 0);
+
   try { pubLogRecommend('match', title, scored.map(function(x) { return x.j.name; })); } catch(e) {}
 
+}
+
+function pubRadar(canvasId, vals, color) {
+  var cv = document.getElementById(canvasId);
+  if (!cv) return;
+  var ctx = cv.getContext('2d');
+  if (!ctx) return;
+  var w = cv.width, h = cv.height;
+  var cx = w / 2, cy = h / 2, r = Math.min(w, h) / 2 - 10;
+  var n = vals.length;
+  if (n < 3) return;
+  function pt(i, rr) { var a = -Math.PI / 2 + i * 2 * Math.PI / n; return [cx + rr * Math.cos(a), cy + rr * Math.sin(a)]; }
+  for (var g = 1; g <= 4; g++) {
+    var gr = r * g / 4; ctx.beginPath();
+    for (var i = 0; i < n; i++) { var p = pt(i, gr); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }
+    ctx.closePath(); ctx.strokeStyle = 'rgba(148,163,184,.35)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  for (var i2 = 0; i2 < n; i2++) { var p0 = pt(i2, r); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(p0[0], p0[1]); ctx.strokeStyle = 'rgba(148,163,184,.35)'; ctx.stroke(); }
+  ctx.beginPath();
+  for (var i3 = 0; i3 < n; i3++) {
+    var v = Math.max(0, Math.min(100, vals[i3] || 0)); var p1 = pt(i3, r * v / 100);
+    i3 ? ctx.lineTo(p1[0], p1[1]) : ctx.moveTo(p1[0], p1[1]);
+  }
+  ctx.closePath(); ctx.fillStyle = color + '44'; ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = '#64748b'; ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
+  for (var i4 = 0; i4 < n; i4++) { var p2 = pt(i4, r + 4); ctx.fillText(String(Math.round(vals[i4] || 0)), p2[0], p2[1] + 2); }
 }
 
 function generateSimilarJournals() {
