@@ -24853,6 +24853,61 @@ window.addEventListener('load', function(){
 
  <div id="matchResult" style="display:none;margin-bottom:20px"></div>
 
+ <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
+
+ <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">🎨 期刊风格画像与适配度诊断（P1）</div>
+
+ <div style="display:flex;gap:15px;flex-wrap:wrap;margin-bottom:15px">
+
+ <div style="flex:1;min-width:220px">
+
+ <label style="font-size:12px;color:#6b7280;font-weight:600">目标期刊</label>
+
+ <select id="styleJournalSelect" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff"></select>
+
+ </div>
+
+ <div style="min-width:160px">
+
+ <label style="font-size:12px;color:#6b7280;font-weight:600">论文类型</label>
+
+ <select id="stylePaperType" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
+
+ <option value="original">原创研究</option>
+
+ <option value="review">综述</option>
+
+ <option value="meta">Meta分析</option>
+
+ <option value="case">个案/教学/其他</option>
+
+ </select>
+
+ </div>
+
+ </div>
+
+ <div style="margin-bottom:15px">
+
+ <label style="font-size:12px;color:#6b7280;font-weight:600">论文文本（粘贴正文或摘要，用于风格特征提取）</label>
+
+ <textarea id="stylePaperText" placeholder="粘贴论文全文/摘要，系统将提取结构完整性、统计报告、篇幅、文献等特征并与目标期刊画像比对..." style="width:100%;min-height:140px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none;margin-top:4px"></textarea>
+
+ </div>
+
+ <div style="display:flex;gap:10px;flex-wrap:wrap">
+
+ <button onclick="runStyleMatch()" style="padding:12px 26px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🎨 风格适配度诊断</button>
+
+ <button onclick="aiStyleAdvice()" style="padding:12px 26px;background:#fff;color:#6d28d9;border:1.5px solid #8b5cf6;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🤖 AI 深度改写建议</button>
+
+ </div>
+
+ <div id="styleResult" style="margin-top:16px"></div>
+
+ </div>
+
+
  </div>
 
  </div>
@@ -183326,6 +183381,128 @@ async function matchJournals() {
 
 }
 
+
+// ========== 期刊风格画像（P1）==========
+const JOUR_STYLE_DB = [
+ {name:'体育科学', field:'体育学综合', titleStyle:'严谨学术，突出理论贡献', structure:'完整实证结构：问题提出—研究对象与方法—结果—讨论（理论对话）—结论', stat:'需完整报告统计量、p值、效应量；建议报告置信区间', lang:'中文，学术规范，术语统一', length:'6000-10000字', review:'3-6个月', reject:'创新性不足、理论对话薄弱、样本代表性不足', abstract:'结构式摘要：目的/方法/结果/结论'},
+ {name:'中国体育科技', field:'体育科技应用', titleStyle:'应用导向，关键词突出', structure:'应用研究导向：背景—方法—结果—应用价值讨论', stat:'需报告统计方法选择依据与检验结果', lang:'中文，强调数据与结论清晰', length:'5000-8000字', review:'2-5个月', reject:'应用价值不明、数据支撑不足', abstract:'结构式摘要'},
+ {name:'北京体育大学学报', field:'体育教育/训练', titleStyle:'规范实证或思辨皆可', structure:'实证或思辨均可：引言—（方法）—结果/论证—讨论', stat:'实证需规范统计报告', lang:'中文，学术规范', length:'6000-10000字', review:'3-6个月', reject:'选题陈旧、方法单一', abstract:'建议结构式摘要'},
+ {name:'上海体育大学学报', field:'体育学综合', titleStyle:'创新性导向，前沿议题', structure:'实证多元方法：引言—方法—结果—讨论（前沿理论对话）', stat:'统计方法需前沿规范，报告效应量', lang:'中文，学术规范', length:'7000-11000字', review:'3-6个月', reject:'创新不足、方法陈旧', abstract:'结构式摘要'},
+ {name:'体育学刊', field:'体育人文社科', titleStyle:'人文深度，问题意识', structure:'思辨/实证：引言—文献—分析—讨论', stat:'实证需规范统计；思辨重论证逻辑', lang:'中文，人文表达', length:'6000-9000字', review:'3-6个月', reject:'论证深度不足', abstract:'摘要概括核心论点'},
+ {name:'天津体育学院学报', field:'体育教育训练学', titleStyle:'教学与训练实证', structure:'引言—方法—结果—讨论', stat:'需完整统计报告', lang:'中文', length:'5000-8000字', review:'2-5个月', reject:'训练干预设计不严谨', abstract:'结构式摘要'},
+ {name:'武汉体育学院学报', field:'运动人体科学/训练', titleStyle:'实证严谨', structure:'IMRaD规范：引言—方法—结果—讨论', stat:'统计规范，报告效应量更佳', lang:'中文', length:'6000-9000字', review:'3-6个月', reject:'指标选择不当、统计不规范', abstract:'结构式摘要'},
+ {name:'成都体育学院学报', field:'体育人文+训练', titleStyle:'议题明确', structure:'引言—（方法）—结果/论证—讨论', stat:'实证需规范统计', lang:'中文', length:'6000-9000字', review:'2-5个月', reject:'选题价值不足', abstract:'建议结构式摘要'},
+ {name:'中国运动医学杂志', field:'运动医学临床', titleStyle:'临床循证导向', structure:'RCT/队列规范：背景—方法（CONSORT）—结果—讨论', stat:'严格统计：需报告CI、效应量、干预方案细节', lang:'中文医学规范', length:'4000-7000字', review:'3-6个月', reject:'非随机对照、样本量不足、无伦理声明', abstract:'结构式摘要（含干预描述）'},
+ {name:'体育与科学', field:'体育人文社科', titleStyle:'思辨理论导向', structure:'理论分析：问题—文献梳理—理论分析—结论', stat:'思辨为主，重逻辑链', lang:'中文人文表达', length:'8000-12000字', review:'3-6个月', reject:'理论深度不足', abstract:'概括核心论点'},
+ {name:'Journal of Sports Sciences', field:'运动科学综合', titleStyle:'简洁规范，突出发现', structure:'严格IMRaD：Introduction—Methods—Results—Discussion', stat:'完整统计报告：效应量、置信区间、检验假设', lang:'英文，学术规范', length:'5000-7000词', review:'6-10周', reject:'统计不完整、方法学缺陷、结论过度外推', abstract:'结构式摘要（≤250词）'},
+ {name:'Medicine & Science in Sports & Exercise', field:'运动生理/医学', titleStyle:'简洁有力，突出机制', structure:'IMRaD严格：目的—方法—结果—讨论（机制解释）', stat:'需报告ES、CI、统计功效；组间比较完整', lang:'英文，精确', length:'4000-6000词', review:'2-3个月', reject:'设计不严谨、机制解释缺失、统计不足', abstract:'结构化摘要（目的/方法/结果/结论）'},
+ {name:'Sports Medicine', field:'运动医学综述', titleStyle:'系统综述导向', structure:'系统评价PRISMA：背景—检索策略—纳入排除—结果—讨论', stat:'Meta分析需完整异质性与偏倚报告', lang:'英文，学术规范', length:'8000-12000词', review:'2-4个月', reject:'检索不系统、质量评估缺失', abstract:'结构式摘要'},
+ {name:'British Journal of Sports Medicine', field:'运动医学临床', titleStyle:'临床决策导向', structure:'RCT/队列/系统综述规范：背景—方法—结果—临床意义讨论', stat:'严格统计：需CI、NNT等临床效应指标', lang:'英文，临床规范', length:'3000-5000词', review:'4-8周', reject:'临床价值不足、方法学缺陷', abstract:'结构化摘要'},
+ {name:'Journal of Science and Medicine in Sport', field:'体育科学+临床', titleStyle:'应用实证', structure:'IMRaD：引言—方法—结果—讨论', stat:'需伦理声明、统计完整（ES/CI）', lang:'英文', length:'4000-6000词', review:'6-10周', reject:'伦理缺失、统计不足', abstract:'结构式摘要'}
+];
+(function(){
+  const sel = document.getElementById('styleJournalSelect');
+  if(sel && sel.options.length===0){
+    JOUR_STYLE_DB.forEach(function(j){
+      const o = document.createElement('option');
+      o.value = j.name; o.textContent = j.name;
+      sel.appendChild(o);
+    });
+  }
+})();
+function styleScoreDim(name, score, max, advice){
+  return {name:name, score:Math.min(100,Math.round(score/max*100)), advice:advice};
+}
+function runStyleMatch(){
+  const sel = document.getElementById('styleJournalSelect');
+  const text = (document.getElementById('stylePaperText')||{value:''}).value.trim();
+  const ptype = (document.getElementById('stylePaperType')||{value:'original'}).value;
+  const box = document.getElementById('styleResult');
+  if(!sel || !text){ alert('请先选择期刊并粘贴论文文本'); return; }
+  const jour = JOUR_STYLE_DB.filter(function(j){ return j.name===sel.value; })[0];
+  if(!jour){ alert('期刊画像不存在'); return; }
+  // 特征提取
+  const lower = text.toLowerCase();
+  const hasIntro = /引言|前言|introduction|background/.test(lower);
+  const hasMethod = /方法|研究对象|subjects|participants|methods|procedure|实验/.test(lower);
+  const hasResult = /结果|results/.test(lower);
+  const hasDisc = /讨论|discussion/.test(lower);
+  const hasConc = /结论|conclusion/.test(lower);
+  const hasStat = /[tFχ²]\s*[=(]|p\s*[<>=]|±|sd|mean|anova|t-test|m±|效应量|显著性|cohen|ci|置信区间/.test(lower);
+  const hasEffect = /效应量|effect size|cohen|eta|η|置信区间|confidence interval|ci[\s=]/.test(lower);
+  const hasEthics = /伦理|ethical|consent|知情同意|approval|approved/.test(lower);
+  const charLen = text.replace(/\s/g,'').length;
+  const refCount = (text.match(/\[[0-9]{1,3}\]/g)||[]).length + (text.match(/\(\d{4}\)/g)||[]).length;
+  const isEnglish = (text.match(/[a-zA-Z]/g)||[]).length > charLen * 0.3;
+  // 维度评分
+  const dims = [];
+  // 1 结构
+  const structHits = [hasIntro,hasMethod,hasResult,hasDisc,hasConc].filter(Boolean).length;
+  let structAdvice = '结构较完整（IMRaD齐全）';
+  if(structHits <= 3) structAdvice = '缺少' + (['引言','方法','结果','讨论','结论'].filter(function(x,i){ return ![hasIntro,hasMethod,hasResult,hasDisc,hasConc][i]; }).join('/')) + '等章节，建议补齐至完整IMRaD结构，符合' + jour.name + '的「' + jour.structure + '」偏好';
+  dims.push(styleScoreDim('结构完整性', structHits, 5, structAdvice));
+  // 2 统计报告
+  let statScore = hasStat ? 3 : 0;
+  if(hasEffect) statScore += 1;
+  if(statScore >= 4){ statScore = 5; }
+  let statAdvice = statScore>=4 ? '统计报告完整（含效应量/置信区间），符合期刊要求' : (hasStat ? '已含统计检验，建议补充效应量与置信区间（期刊要求：' + jour.stat + '）' : '未检测到统计报告，实证论文需完整报告统计量、p值与效应量（期刊要求：' + jour.stat + '）');
+  dims.push(styleScoreDim('统计报告', statScore, 5, statAdvice));
+  // 3 语言/术语
+  const langOk = isEnglish === /[a-z]/i.test(jour.lang) || (jour.lang.indexOf('英文')>=0) === isEnglish;
+  let langAdvice = langOk ? '语言与期刊一致（' + jour.lang + '）' : '期刊偏好「' + jour.lang + '」，当前文本以' + (isEnglish?'英文':'中文') + '为主，投稿前需完成语言转换与润色';
+  dims.push(styleScoreDim('语言匹配', langOk?4:(jour.lang.indexOf('英文')>=0?2:2), 4, langAdvice));
+  // 4 篇幅
+  const lenInfo = isEnglish ? jour.length.replace('字','词') : jour.length;
+  const lenRange = (lenInfo.match(/\d+/g)||[]).map(Number);
+  let lenScore = 3, lenAdvice = '篇幅适中';
+  if(lenRange.length>=2){
+    const lo=lenRange[0], hi=lenRange[1];
+    if(charLen < lo*0.7){ lenScore=1; lenAdvice='篇幅偏短（当前约'+charLen+'字，期刊偏好'+lenInfo+'），内容深度可能不足'; }
+    else if(charLen > hi*1.4){ lenScore=2; lenAdvice='篇幅偏长（当前约'+charLen+'字，期刊偏好'+lenInfo+'），建议精简'; }
+    else if(charLen >= lo && charLen <= hi){ lenScore=4; lenAdvice='篇幅符合期刊偏好（'+lenInfo+'）'; }
+    else { lenScore=3; lenAdvice='篇幅接近期刊偏好（'+lenInfo+'），可微调'; }
+  }
+  dims.push(styleScoreDim('篇幅', lenScore, 4, lenAdvice));
+  // 5 文献与规范
+  let refScore = refCount>=10 ? 4 : (refCount>=5 ? 3 : 1);
+  let refAdvice = refCount>=10 ? '文献支撑充分（检测到约'+refCount+'处引用）' : (refCount>=5 ? '文献引用中等（约'+refCount+'处），建议补充近年文献' : '文献引用偏少（约'+refCount+'处），实证/综述论文需充分文献支撑');
+  if(!hasEthics){ refScore = Math.min(refScore, 3); refAdvice += '；⚠️ 未检测到伦理声明（人体研究需知情同意/伦理审批，' + (isEnglish?'英文期刊强制要求':'医学类期刊必查') + '）'; }
+  dims.push(styleScoreDim('文献与规范', refScore, 4, refAdvice));
+  // 总分
+  const total = Math.round(dims.reduce(function(s,d){ return s+d.score; },0) / dims.length);
+  const level = total>=80 ? {label:'高度适配', color:'#047857', bg:'#ecfdf5'} : total>=60 ? {label:'基本适配（需修改）', color:'#b45309', bg:'#fffbeb'} : {label:'适配度较低（建议改投或大改）', color:'#b91c1c', bg:'#fef2f2'};
+  // 期刊画像展示 + 结果
+  let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><div style="font-size:15px;font-weight:700;color:#1f2937">🎨 ' + jour.name + ' 风格画像与适配度</div><span style="background:'+level.bg+';color:'+level.color+';padding:6px 14px;border-radius:10px;font-size:13px;font-weight:700">'+level.label+'（'+total+'分）</span></div>';
+  html += '<div style="background:#f5f3ff;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;line-height:2;color:#4c1d95"><b>📋 期刊画像：</b>标题风格：'+jour.titleStyle+'｜结构：'+jour.structure+'｜统计：'+jour.stat+'｜语言：'+jour.lang+'｜篇幅：'+jour.length+'｜审稿：'+jour.review+'｜常见拒稿点：'+jour.reject+'</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px">';
+  html += '<tr style="background:#f9fafb"><th style="padding:8px;text-align:left;border:1px solid #eef2f7">维度</th><th style="padding:8px;text-align:center;border:1px solid #eef2f7;width:90px">得分</th><th style="padding:8px;text-align:left;border:1px solid #eef2f7">诊断与建议</th></tr>';
+  dims.forEach(function(d){
+    const dc = d.score>=80?'#047857':d.score>=60?'#b45309':'#b91c1c';
+    html += '<tr><td style="padding:8px;border:1px solid #eef2f7;font-weight:600;color:#1f2937">'+d.name+'</td><td style="padding:8px;border:1px solid #eef2f7;text-align:center;color:'+dc+';font-weight:700">'+d.score+'</td><td style="padding:8px;border:1px solid #eef2f7;color:#374151">'+d.advice+'</td></tr>';
+  });
+  html += '</table>';
+  html += '<div style="font-size:12px;color:#6b7280;line-height:1.8;background:#f8fafc;border-radius:8px;padding:10px 12px">💡 下一步：点击「🤖 AI 深度改写建议」获取针对 '+jour.name+' 的逐节改写建议（标题/摘要/结构/统计/语言）。</div>';
+  html += '</div>';
+  box.innerHTML = html;
+}
+async function aiStyleAdvice(){
+  const sel = document.getElementById('styleJournalSelect');
+  const text = (document.getElementById('stylePaperText')||{value:''}).value.trim();
+  const box = document.getElementById('styleResult');
+  if(!sel || !text){ alert('请先选择期刊并粘贴论文文本'); return; }
+  const jour = JOUR_STYLE_DB.filter(function(j){ return j.name===sel.value; })[0];
+  if(!jour){ return; }
+  box.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280">🤖 AI 正在生成针对「' + jour.name + '」的深度改写建议（约30秒）...</div>';
+  try{
+    const sys = '你是资深学术出版顾问。基于目标期刊的风格画像，对论文给出针对性改写建议：1.标题改写建议 2.摘要结构与用词 3.章节结构调整 4.统计报告补全（期刊要求）5.语言与术语规范 6.投稿前检查清单。简洁具体、可直接执行。';
+    const usr = '目标期刊画像：' + JSON.stringify(jour) + '\n\n论文文本：\n' + text.slice(0,3000);
+    const r = await callDeepSeekAPI(sys, usr, 1500, 'glm-5.3');
+    box.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px"><div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:10px">🤖 AI 深度改写建议（' + jour.name + '）</div><div style="font-size:13px;line-height:1.9;color:#374151;white-space:pre-wrap">' + (r||'（生成失败，请重试）') + '</div></div>';
+  }catch(e){
+    box.innerHTML = '<div style="background:#fef2f2;border-radius:8px;padding:14px;color:#b91c1c;font-size:13px">AI 建议生成失败：' + e.message + '</div>';
+  }
+}
 
 
 // ========== 个人学术知识库 ==========
