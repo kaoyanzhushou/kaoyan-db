@@ -26505,6 +26505,30 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
  <div id="roundResult" style="display:none"></div>
 
+ <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:16px">
+
+ <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:4px">🧩 论证逻辑链检测（P2）</div>
+
+ <div style="font-size:12px;color:#6b7280;margin-bottom:14px">规则引擎逐句核查：结论是否有数据支撑、因果断言是否越界、方法-结果是否脱节、有无绝对化表述。投稿前快速自查论证链断裂点。</div>
+
+ <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:8px">论文内容</label>
+
+ <textarea id="logicText" rows="8" placeholder="粘贴论文全文（含引言、方法、结果、讨论、结论）..." style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;line-height:1.6;box-sizing:border-box;font-family:inherit"></textarea>
+
+ <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
+
+ <button onclick="runLogicChain()" style="background:#0891b2;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🧩 检测逻辑链</button>
+
+ <button onclick="aiLogicAdvice()" style="background:#fff;color:#0891b2;border:1.5px solid #22d3ee;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🤖 AI 深度逻辑审查</button>
+
+ <span id="logicStatus" style="font-size:12px;color:#6b7280"></span>
+
+ </div>
+
+ <div id="logicResult" style="margin-top:14px"></div>
+
+ </div>
+
  </div>
 
  <!-- 反思链（生成→自检→修正，三模型轮换） -->
@@ -183176,6 +183200,117 @@ function downloadFormattedPaper() {
 }
 
 
+
+// ========== 论证逻辑链检测（P2）==========
+function logicSplitSents(text){
+  return text.split(/[。！？!?\n]+/).map(function(s){ return s.trim(); }).filter(function(s){ return s.length>4; });
+}
+function runLogicChain(){
+  const text = (document.getElementById('logicText')||{value:''}).value.trim();
+  const box = document.getElementById('logicResult');
+  const st = document.getElementById('logicStatus');
+  if(!text){ alert('请粘贴论文内容'); return; }
+  st.textContent = '规则引擎分析中...';
+  const sents = logicSplitSents(text);
+  const issues = [];
+  const reEvid = /\d+(?:\.\d+)?\s*[±]|\bp\s*[<>=]|\bt\s*[=(]|\bF\s*[=(]|χ|χ²|效应量|显著性|％|%|参考文献?\s*\[|（\d{4}）|\[\d{1,3}\]|ci\s*[=(]|置信区间/i;
+  const reConc = /结论|综上所述|研究表明|结果证实|因此|可见|由此|总体而言|上述结果/i;
+  const reCaus = /导致|显著提升|显著改善|显著提高|显著增加|显著下降|显著降低|引起|证明|说明|表明|意味着/i;
+  const reAbs = /一定|必然|完全|所有|总是|无疑|彻底|全部|普遍|任何|毫无疑问|板上钉钉/i;
+  const reData = /数据|结果显示|结果发现|实验证实|统计|平均|组间|差异/i;
+  // R1+R3+R4 逐句
+  sents.forEach(function(s){
+    const isConc = reConc.test(s);
+    const isCaus = reCaus.test(s);
+    const hasEvid = reEvid.test(s);
+    if(isConc && !hasEvid && !reData.test(s)){
+      issues.push({type:'R1', sev:'高', msg:'结论缺少数据/统计/文献支撑', quote:s.slice(0,60), fix:'为结论补充关键统计量（M±SD、p值、效应量或置信区间），或明确引用支撑文献'});
+    }
+    if(isCaus && !hasEvid){
+      issues.push({type:'R3', sev:'中', msg:'因果/效果断言缺少统计证据', quote:s.slice(0,60), fix:'补充组间比较统计结果（如 t/F 值、p 值、效应量）并注明比较对象（与对照组/前测比较）'});
+    }
+    const absM = s.match(reAbs);
+    if(absM){
+      issues.push({type:'R4', sev:'低', msg:'绝对化表述「' + absM[0] + '」可能过度断言', quote:s.slice(0,60), fix:'改为限定性表述：在XX样本/条件下、本研究范围内、提示/倾向性支持'});
+    }
+  });
+  // R2 方法-结果脱节
+  const methodSec = (text.match(/[\s\S]*(?:方法|研究对象|实验|干预|测量|测试|问卷|量表)[\s\S]*(?:结果|发现|数据)/i) || [''])[0];
+  const methodKw = (text.match(/方法[\s\S]{0,600}/i) || [''])[0];
+  const resultSec = (text.match(/结果[\s\S]{0,800}/i) || [''])[0];
+  const coreKw = ['问卷','量表','干预','训练','测量','测试','实验','访谈','测试仪','负荷','强度'];
+  coreKw.forEach(function(kw){
+    if(methodSec.indexOf(kw)>=0 && resultSec && resultSec.indexOf(kw)<0 && !resultSec.match(/\d/)){
+      issues.push({type:'R2', sev:'中', msg:'方法中提到「' + kw + '」但结果段未见对应数据', quote:(methodSec.slice(0,40)||''), fix:'在结果段报告该测量/干预对应的数据与统计结果，确保方法-结果一一对应'});
+    }
+  });
+  // R5 样本-结论范围不匹配
+  const nMatch = text.match(/n\s*[=＝]\s*(\d+)/i) || text.match(/样本[量为]\s*(\d+)/);
+  if(nMatch){
+    const n = parseInt(nMatch[1],10);
+    if(n < 100){
+      sents.forEach(function(s){
+        if(reConc.test(s) && /所有|全部|普遍|任何|整体|广大/.test(s)){
+          issues.push({type:'R5', sev:'中', msg:'样本量 n=' + n + ' 但结论使用全称性表述', quote:s.slice(0,60), fix:'结论限定于本样本/人群范围，注明外推需更大样本验证'});
+        }
+      });
+    }
+  }
+  // 评分
+  const score = Math.max(0, Math.round(100 - issues.reduce(function(s0,i){ return s0 + (i.sev==='高'?12:i.sev==='中'?8:4); },0)));
+  const level = score>=85 ? {label:'逻辑链较完整', color:'#047857', bg:'#ecfdf5'} : score>=65 ? {label:'存在断裂点，需修补', color:'#b45309', bg:'#fffbeb'} : {label:'逻辑链薄弱，建议大改', color:'#b91c1c', bg:'#fef2f2'};
+  // 逻辑链图
+  const concSents = sents.filter(function(s){ return reConc.test(s); });
+  const evidCnt = sents.filter(function(s){ return reEvid.test(s); }).length;
+  const methodHas = /方法|实验|干预|测量|测试|问卷|量表/.test(text);
+  let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px"><div style="font-size:15px;font-weight:700;color:#1f2937">🧩 论证逻辑链诊断</div><span style="background:'+level.bg+';color:'+level.color+';padding:6px 14px;border-radius:10px;font-size:13px;font-weight:700">'+level.label+'（'+score+'分）</span></div>';
+  // 逻辑链图
+  html += '<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;font-size:12px">';
+  const chain = [
+    {name:'方法', ok: methodHas, note: methodHas?'已检测到方法/测量描述':'未检测到方法描述'},
+    {name:'证据', ok: evidCnt>0, note: evidCnt>0 ? '检测到 '+evidCnt+' 处数据/统计证据' : '⚠️ 全文未见统计证据'},
+    {name:'结论', ok: concSents.length>0, note: concSents.length>0 ? '检测到 '+concSents.length+' 处结论句' : '⚠️ 未见明确结论句'}
+  ];
+  chain.forEach(function(c,idx){
+    html += '<div style="flex:1;min-width:150px;text-align:center;padding:10px;border-radius:8px;background:'+(c.ok?'#f0fdf4':'#fef2f2')+';border:1px solid '+(c.ok?'#86efac':'#fca5a5')+'">';
+    html += '<div style="font-weight:700;color:'+(c.ok?'#047857':'#b91c1c')+'">'+c.name+'</div>';
+    html += '<div style="color:#374151;margin-top:4px">'+c.note+'</div></div>';
+    if(idx<2) html += '<div style="display:flex;align-items:center;color:#94a3b8">→</div>';
+  });
+  html += '</div>';
+  if(issues.length===0){
+    html += '<div style="background:#f0fdf4;border-radius:8px;padding:12px;color:#047857;font-size:13px">✅ 未检测到明显逻辑断裂点。建议仍用「🤖 AI 深度逻辑审查」做语义级复核。</div>';
+  } else {
+    html += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    html += '<tr style="background:#f9fafb"><th style="padding:8px;text-align:left;border:1px solid #eef2f7">类型</th><th style="padding:8px;text-align:center;border:1px solid #eef2f7;width:60px">级别</th><th style="padding:8px;text-align:left;border:1px solid #eef2f7">问题</th><th style="padding:8px;text-align:left;border:1px solid #eef2f7">修改建议</th></tr>';
+    issues.slice(0,15).forEach(function(iss){
+      const c = iss.sev==='高'?'#b91c1c':iss.sev==='中'?'#b45309':'#64748b';
+      html += '<tr><td style="padding:8px;border:1px solid #eef2f7;font-weight:600;color:'+c+'">'+iss.type+'</td><td style="padding:8px;border:1px solid #eef2f7;text-align:center;color:'+c+';font-weight:600">'+iss.sev+'</td><td style="padding:8px;border:1px solid #eef2f7;color:#374151">'+iss.msg+'<br><span style="color:#9ca3af;font-size:11px">原文：'+iss.quote+'</span></td><td style="padding:8px;border:1px solid #eef2f7;color:#374151">'+iss.fix+'</td></tr>';
+    });
+    html += '</table>';
+  }
+  html += '</div>';
+  box.innerHTML = html;
+  st.textContent = '检测完成，发现 '+issues.length+' 个待核查点';
+}
+async function aiLogicAdvice(){
+  const text = (document.getElementById('logicText')||{value:''}).value.trim();
+  const box = document.getElementById('logicResult');
+  const st = document.getElementById('logicStatus');
+  if(!text){ alert('请粘贴论文内容'); return; }
+  st.textContent = 'AI 深度逻辑审查中（约30秒）...';
+  box.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280">🤖 AI 正在做语义级论证链审查...</div>';
+  try{
+    const sys = '你是严谨的学术方法学专家。审查论文论证逻辑：1.论证链是否完整（论点-论据-结论）2.因果推断是否越界 3.方法-结果-结论是否一致 4.逻辑谬误与过度断言 5.给出逐条可执行修改建议。按「问题｜证据链现状｜建议改法」列表输出。';
+    const r = await callDeepSeekAPI(sys, '论文全文：\n' + text.slice(0,3500), 1500, 'glm-5.3');
+    box.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px"><div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:10px">🤖 AI 深度逻辑审查报告</div><div style="font-size:13px;line-height:1.9;color:#374151;white-space:pre-wrap">' + (r||'（生成失败，请重试）') + '</div></div>';
+    st.textContent = '审查完成';
+  }catch(e){
+    box.innerHTML = '<div style="background:#fef2f2;border-radius:8px;padding:14px;color:#b91c1c;font-size:13px">审查失败：' + e.message + '</div>';
+    st.textContent = '';
+  }
+}
 
 // ========== 期刊风格画像（P1）==========
 const JOUR_STYLE_DB = [
