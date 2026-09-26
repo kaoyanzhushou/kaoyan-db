@@ -18548,18 +18548,17 @@ window.addEventListener('load', function(){
 
  <h2>2027考研资料库<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;letter-spacing:0.5px">体育科研工作台</span><div class="quote-scroller" id="quoteScroller"></div></h2>
 
- <div class="nav-group">🔬 科研总览</div>
+ <div class="nav-group" onclick="switchTab('dashboard')" title="进入科研总览">🔬 科研总览<span class="nav-toggle">▾</span></div>
 
  <div class="nav-item active" data-tab="dashboard"><span class="icon">🔬</span><span>科研总览</span></div>
 
- <div class="nav-group nav-group-publish">📤 投稿中心<span class="nav-badge">NEW</span></div>
+ <div class="nav-group nav-group-publish" onclick="navigateToPublish()" title="进入投稿中心">📤 投稿中心<span class="nav-badge">NEW</span><span class="nav-toggle">▾</span></div>
 
  <div class="nav-item nav-item-publish" data-tab="publish" onclick="navigateToPublish()"><span class="icon">📤</span><span>投稿中心</span></div>
 
- <div class="nav-group">📚 考研学习中心</div>
 <div class="nav-item" onclick="location.href='learn/index.html'" style="background:linear-gradient(135deg,rgba(16,185,129,.16),rgba(59,130,246,.16));border:1px solid rgba(16,185,129,.35)"><span class="icon">🎓</span><span>进入考研学习中心</span><span style="margin-left:auto">→</span></div>
 
- <div class="nav-group nav-group-phd">🎓 体育考博<span class="nav-badge">HOT</span></div>
+ <div class="nav-group nav-group-phd" onclick="navigateToPhdSubTab('ai')" title="进入体育考博">🎓 体育考博<span class="nav-badge">HOT</span><span class="nav-toggle">▾</span></div>
 
  <div class="nav-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('ai')"><span class="icon">🎓</span><span>考博AI咨询</span></div>
 
@@ -18575,7 +18574,7 @@ window.addEventListener('load', function(){
 
  <div class="nav-item nav-sub-item nav-item-phd" data-tab="phd" onclick="navigateToPhdSubTab('taoci')"><span class="icon">✉️</span><span>套磁助手</span></div>
 
- <div class="nav-group nav-group-paper">📝 论文工作台<span class="nav-badge">NEW</span></div>
+ <div class="nav-group nav-group-paper" onclick="navigateToPaperSubTab('projects')" title="进入论文工作台">📝 论文工作台<span class="nav-badge">NEW</span><span class="nav-toggle">▾</span></div>
 
  <div class="nav-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('projects')"><span class="icon">📁</span><span>我的论文</span></div>
 
@@ -18593,17 +18592,16 @@ window.addEventListener('load', function(){
 
  <div class="nav-item nav-sub-item nav-item-paper" data-tab="paper" onclick="navigateToPaperSubTab('sports')"><span class="icon">🏃</span><span>体育学特色</span></div>
 
- <div class="nav-group nav-group-meta">🧠 元认知AI</div>
 
  <div class="nav-item nav-item-meta" data-tab="meta-cog" onclick="switchTab('meta-cog')"><span class="icon">🧠</span><span>元认知AI</span></div>
 
- <div class="nav-group nav-group-teacher">🎓 教师科研助手<span class="nav-badge">NEW</span></div>
+ <div class="nav-group nav-group-teacher" onclick="navigateToTeacherSubTab('topic')" title="进入教师科研助手">🎓 教师科研助手<span class="nav-badge">NEW</span><span class="nav-toggle">▾</span></div>
 
  <div class="nav-item nav-item-teacher" data-tab="teacher" onclick="navigateToTeacherSubTab('topic')"><span class="icon">🎯</span><span>课题申报中心</span></div>
 
  <div class="nav-item nav-item-teacher" data-tab="teacher" onclick="navigateToTeacherSubTab('lesson')"><span class="icon">📖</span><span>教案助手</span></div>
 
- <div class="nav-group nav-group-mechanism">🧬 运动科学机制库<span class="nav-badge">NEW</span></div>
+ <div class="nav-group nav-group-mechanism" onclick="navigateToMechanismSubTab('gen')" title="进入运动科学机制库">🧬 运动科学机制库<span class="nav-badge">NEW</span><span class="nav-toggle">▾</span></div>
 
  <div class="nav-item nav-item-mechanism" data-tab="mechanism" onclick="navigateToMechanismSubTab('gen')"><span class="icon">🧬</span><span>机制图生成</span></div>
 
@@ -228424,6 +228422,380 @@ setTimeout(function() {
 
 </style>
 
+<!-- ========== 导航栏高级视觉 v2.0 开始 ========== -->
+
+<style>
+
+/* 深色渐变侧栏 + 细滚动条 */
+
+.sidebar{
+
+    background:linear-gradient(180deg,#0f172a 0%,#1e293b 100%) !important;
+
+    box-shadow:inset -1px 0 0 rgba(255,255,255,0.05);
+
+    scrollbar-width:thin;
+
+    scrollbar-color:rgba(255,255,255,0.18) transparent;
+
+}
+
+.sidebar::-webkit-scrollbar{width:6px}
+
+.sidebar::-webkit-scrollbar-track{background:transparent}
+
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}
+
+.sidebar::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.3)}
+
+/* 品牌区：渐变标题 + 精致标语 */
+
+.sidebar h2{
+
+    letter-spacing:0.5px;
+
+    background:linear-gradient(90deg,#ffffff 30%,#a5b4fc 100%);
+
+    -webkit-background-clip:text;
+
+    background-clip:text;
+
+    -webkit-text-fill-color:transparent;
+
+    padding-bottom:14px;
+
+    border-bottom:1px solid rgba(255,255,255,0.08);
+
+    margin-bottom:10px;
+
+}
+
+.sidebar h2 span{
+
+    -webkit-text-fill-color:#94a3b8;
+
+    letter-spacing:0.2px;
+
+}
+
+/* 组头：小号大写感 + 顶部细分隔线 */
+
+.nav-group{
+
+    font-size:12px !important;
+
+    font-weight:700;
+
+    letter-spacing:0.6px;
+
+    color:#8ea3bf !important;
+
+    padding:12px 24px 8px 20px !important;
+
+    margin-top:4px;
+
+    border-top:1px solid rgba(255,255,255,0.05);
+
+    transition:color 0.2s;
+
+}
+
+.nav-group:first-of-type{border-top:none;margin-top:0}
+
+.nav-group:hover{color:#cbd5e1 !important}
+
+.nav-group::after{
+
+    font-size:9px !important;
+
+    color:#5b6b84 !important;
+
+    opacity:0.9;
+
+    transition:transform 0.3s ease, color 0.2s;
+
+}
+
+/* 菜单项：胶囊圆角 + 渐变 hover */
+
+.nav-item{
+
+    margin:2px 8px;
+
+    padding:9px 12px !important;
+
+    border-radius:8px;
+
+    border-left:3px solid transparent;
+
+    font-weight:500;
+
+    transition:all 0.18s ease;
+
+}
+
+.nav-item .icon{font-size:15px;opacity:0.95}
+
+.nav-item:hover{
+
+    background:linear-gradient(90deg,rgba(99,102,241,0.16),rgba(99,102,241,0.04)) !important;
+
+    color:#ffffff !important;
+
+    transform:translateX(2px);
+
+}
+
+.nav-item.active{
+
+    background:linear-gradient(90deg,#2563eb 0%,#4f46e5 100%) !important;
+
+    color:#fff !important;
+
+    border-left-color:#93c5fd;
+
+    box-shadow:0 2px 12px rgba(37,99,235,0.35);
+
+}
+
+/* 徽章统一：胶囊渐变 */
+
+.nav-badge{
+
+    background:linear-gradient(90deg,#6366f1,#8b5cf6) !important;
+
+    color:#fff !important;
+
+    font-size:9px !important;
+
+    padding:2px 7px !important;
+
+    border-radius:10px !important;
+
+    box-shadow:0 1px 4px rgba(99,102,241,0.45);
+
+    letter-spacing:0.3px;
+
+}
+
+/* 搜索框：内嵌深色 + 聚焦发光 */
+
+.nav-search-box input{
+
+    background:rgba(255,255,255,0.06) !important;
+
+    border:1px solid rgba(255,255,255,0.12) !important;
+
+    border-radius:8px !important;
+
+    transition:border-color 0.2s, box-shadow 0.2s;
+
+}
+
+.nav-search-box input:focus{
+
+    border-color:#818cf8 !important;
+
+    box-shadow:0 0 0 3px rgba(99,102,241,0.18);
+
+}
+
+.nav-search-icon{color:#64748b}
+
+/* 最近访问：胶囊条目微交互 */
+
+.recent-visits-title{
+
+    font-size:11px !important;
+
+    color:#8ea3bf !important;
+
+    letter-spacing:0.5px;
+
+}
+
+.recent-visit-item{
+
+    border-radius:6px;
+
+    transition:all 0.15s;
+
+    color:#cbd5e1;
+
+}
+
+.recent-visit-item:hover{
+
+    background:rgba(255,255,255,0.06);
+
+    color:#fff;
+
+    transform:translateX(2px);
+
+}
+
+/* 全部折叠按钮：柔和胶囊 */
+
+.nav-collapse-all{
+
+    margin:10px 12px 4px;
+
+    padding:7px 10px;
+
+    border-radius:8px;
+
+    font-size:11px;
+
+    color:#8ea3bf;
+
+    background:rgba(255,255,255,0.05);
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    text-align:center;
+
+    cursor:pointer;
+
+    transition:all 0.18s;
+
+    user-select:none;
+
+}
+
+.nav-collapse-all:hover{
+
+    background:rgba(99,102,241,0.15);
+
+    color:#fff;
+
+    border-color:rgba(99,102,241,0.4);
+
+}
+
+</style>
+
+<!-- ========== 导航栏高级视觉 v2.0 结束 ========== -->
+
+<!-- ========== 导航栏 v2.1 增强（箭头/色条/计数/拖拽）开始 ========== -->
+
+<style>
+
+/* 箭头：由 ::after 改为 .nav-toggle span */
+
+.nav-group::after{display:none !important}
+
+.nav-toggle{
+
+    position:absolute;
+
+    right:12px;
+
+    top:50%;
+
+    transform:translateY(-50%);
+
+    font-size:9px;
+
+    color:#5b6b84;
+
+    line-height:1;
+
+    transition:transform 0.3s ease, color 0.2s;
+
+    cursor:pointer;
+
+    pointer-events:auto;
+
+}
+
+.nav-group:hover .nav-toggle{color:#cbd5e1}
+
+.nav-group.collapsed .nav-toggle{transform:translateY(-50%) rotate(-90deg)}
+
+/* 组头主题色条 */
+
+.nav-group-publish{border-left:3px solid #8b5cf6 !important}
+
+.nav-group-phd{border-left:3px solid #f59e0b !important}
+
+.nav-group-paper{border-left:3px solid #3b82f6 !important}
+
+.nav-group-teacher{border-left:3px solid #10b981 !important}
+
+.nav-group-mechanism{border-left:3px solid #06b6d4 !important}
+
+.nav-group{border-left:3px solid rgba(255,255,255,0.14)}
+
+/* 折叠时显示条目数 */
+
+.nav-group-count{
+
+    display:none;
+
+    margin-left:6px;
+
+    font-size:10px;
+
+    color:#64748b;
+
+    font-weight:400;
+
+    letter-spacing:0;
+
+}
+
+.nav-group.collapsed .nav-group-count{display:inline-block}
+
+/* 组头 hover 微交互 */
+
+.nav-group:hover{
+
+    background:linear-gradient(90deg,rgba(99,102,241,0.08),transparent);
+
+}
+
+/* 拖拽把手 */
+
+.nav-resizer{
+
+    position:fixed;
+
+    left:237px;
+
+    top:0;
+
+    bottom:0;
+
+    width:6px;
+
+    cursor:col-resize;
+
+    z-index:101;
+
+    background:transparent;
+
+    transition:background 0.2s;
+
+}
+
+.nav-resizer:hover{
+
+    background:rgba(99,102,241,0.35);
+
+}
+
+@media (max-width:767px){
+
+    .nav-resizer{display:none !important}
+
+}
+
+</style>
+
+<!-- ========== 导航栏 v2.1 增强结束 ========== -->
+
+
+
 <script>
 
 (function() {
@@ -228442,6 +228814,10 @@ console.log('[导航优化] 开始加载导航栏折叠优化...');
 
 function init() {
 
+    if (window.__navInitDone) return;
+
+    window.__navInitDone = true;
+
     var sidebar = document.querySelector('.sidebar');
 
     if (!sidebar) {
@@ -228458,19 +228834,117 @@ function init() {
 
     var navGroups = sidebar.querySelectorAll('.nav-group');
 
+    function saveNavGroupState() {
+
+        var st = {};
+
+        navGroups.forEach(function(g, idx) { st['g' + idx] = g.classList.contains('collapsed'); });
+
+        try { localStorage.setItem('nav_group_state', JSON.stringify(st)); } catch(e) {}
+
+    }
+
+    // 恢复上次折叠状态
+
+    try {
+
+        var navSaved = JSON.parse(localStorage.getItem('nav_group_state') || '{}');
+
+        navGroups.forEach(function(g, idx) {
+
+            if (navSaved['g' + idx] === true) g.classList.add('collapsed');
+
+            else if (navSaved['g' + idx] === false) g.classList.remove('collapsed');
+
+        });
+
+    } catch(e) {}
+
+    // 组头点击：手风琴模式（展开当前组，自动收起其他组）；点击菜单项不触发折叠
+
+    // 组头箭头(.nav-toggle)点击 = 折叠/展开（手风琴）；组头标题点击 = 跳转模块
+
     navGroups.forEach(function(group) {
 
-        // 默认不折叠，保持原有展开状态
+        var tg = group.querySelector('.nav-toggle');
 
-        group.addEventListener('click', function(e) {
+        if (!tg) return;
+
+        tg.addEventListener('click', function(e) {
 
             e.stopPropagation();
 
-            group.classList.toggle('collapsed');
+            if (group.classList.contains('collapsed')) {
+
+                navGroups.forEach(function(g) {
+
+                    if (g !== group) g.classList.add('collapsed');
+
+                });
+
+                group.classList.remove('collapsed');
+
+            } else {
+
+                group.classList.add('collapsed');
+
+            }
+
+            saveNavGroupState();
 
         });
 
     });
+
+    // 折叠计数：每个组头显示条目数（折叠时可见）
+
+    function renderNavGroupCounts() {
+
+        navGroups.forEach(function(group) {
+
+            if (group.querySelector('.nav-group-count')) return;
+
+            var n = 0, el = group.nextElementSibling;
+
+            while (el && !el.classList.contains('nav-group')) {
+
+                if (el.classList.contains('nav-item')) n++;
+
+                el = el.nextElementSibling;
+
+            }
+
+            var s = document.createElement('span');
+
+            s.className = 'nav-group-count';
+
+            s.textContent = '· ' + n;
+
+            group.appendChild(s);
+
+        });
+
+    }
+
+    renderNavGroupCounts();
+
+    // 自动展开当前模块所在组（切换功能时，若目标组被折叠则展开）
+
+    function groupOfItem(item) {
+
+        var el = item.previousElementSibling;
+
+        while (el) {
+
+            if (el.classList && el.classList.contains('nav-group')) return el;
+
+            el = el.previousElementSibling;
+
+        }
+
+        return null;
+
+    }
 
 
 
@@ -228681,6 +229155,16 @@ function init() {
 
             originalSwitchTab.apply(this, arguments);
 
+            var act = sidebar.querySelector('.nav-item.active');
+
+            if (act) {
+
+                var g = groupOfItem(act);
+
+                if (g && g.classList.contains('collapsed')) g.classList.remove('collapsed');
+
+            }
+
             // 获取当前tab的名称
 
             var activeItem = sidebar.querySelector('.nav-item.active span:last-child');
@@ -228729,6 +229213,8 @@ function init() {
 
             collapseBtn.textContent = allCollapsed ? '📂 全部展开' : '📂 全部折叠';
 
+            try { localStorage.setItem('nav_group_state', JSON.stringify(navGroups.map(function(g){ return g.classList.contains('collapsed'); }))); } catch(e) {}
+
         });
 
         sidebar.appendChild(collapseBtn);
@@ -228736,6 +229222,78 @@ function init() {
     }
 
 
+
+    // 拖拽调整侧栏宽度
+
+    function initNavResizer() {
+
+        if (window.innerWidth < 768) return;
+
+        if (document.getElementById('navResizer')) return;
+
+        var sidebarEl = document.querySelector('.sidebar');
+
+        var mainEl = document.querySelector('.main');
+
+        if (!sidebarEl || !mainEl) return;
+
+        function applyW(w) {
+
+            sidebarEl.style.width = w + 'px';
+
+            mainEl.style.marginLeft = w + 'px';
+
+            resizer.style.left = (w - 3) + 'px';
+
+        }
+
+        var resizer = document.createElement('div');
+
+        resizer.className = 'nav-resizer';
+
+        resizer.id = 'navResizer';
+
+        document.body.appendChild(resizer);
+
+        try {
+
+            var sw = parseInt(localStorage.getItem('nav_width') || '0', 10);
+
+            if (sw >= 160 && sw <= 320) applyW(sw);
+
+        } catch(e3) {}
+
+        resizer.addEventListener('mousedown', function(e) {
+
+            e.preventDefault();
+
+            var startX = e.clientX, startW = sidebarEl.offsetWidth;
+
+            function mv(ev) {
+
+                applyW(Math.min(320, Math.max(160, startW + (ev.clientX - startX))));
+
+            }
+
+            function up() {
+
+                document.removeEventListener('mousemove', mv);
+
+                document.removeEventListener('mouseup', up);
+
+                try { localStorage.setItem('nav_width', String(sidebarEl.offsetWidth)); } catch(e4) {}
+
+            }
+
+            document.addEventListener('mousemove', mv);
+
+            document.addEventListener('mouseup', up);
+
+        });
+
+    }
+
+    initNavResizer();
 
     console.log('✅ 导航栏折叠优化 v1.0 已加载（折叠功能/搜索框/最近访问/全部折叠按钮）');
 
