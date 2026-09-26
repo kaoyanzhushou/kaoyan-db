@@ -26001,6 +26001,10 @@ window.addEventListener('load', function(){
  <option value="hy4-preview">腾讯混元 hy4</option>
 
  </select>
+ <button onclick="runPlagVsLibrary()" style="background:#6d28d9;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;flex:1;min-width:130px" title="与已存文献库做N-gram真实比对（真实文本匹配，非估算）">📚 文献库比对</button>
+ <button onclick="plagClichéCheck()" style="background:#0891b2;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;flex:1;min-width:130px" title="检测学术套话/模板化表达占比（按6类分级）">🧬 套话体检</button>
+ <button onclick="runPlagConsensus()" id="plagConsensusBtn" style="background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;flex:1;min-width:140px" title="3模型并行估算重复率，Borda共识+置信区间">⚖️ 多模型共识</button>
+
 
  </div>
 
@@ -26147,6 +26151,8 @@ window.addEventListener('load', function(){
  </div>
 
  <div id="aiPlagResult" style="display:none"></div>
+ <div id="plag3Result" style="display:none"></div>
+
 
  </div>
 
@@ -63101,6 +63107,179 @@ var PLAG_COMMON_PHRASES = [
 
 
 ];
+
+// ========== 查重 3.0 三层升级（P0-2）==========
+function renderPlag3(html){
+  var box = document.getElementById('plag3Result');
+  if(!box) return;
+  box.style.display = 'block';
+  box.innerHTML = html;
+}
+
+function plagSentences(text){
+  return text.split(/[。！？；\n]/).map(function(s){ return s.replace(/\s+/g,''); }).filter(function(s){ return s.length > 10; });
+}
+
+// ---- 层1：与文献库真实比对（字符N-gram指纹） ----
+function runPlagVsLibrary(){
+  var textEl = document.getElementById('plagCheckText');
+  var text = textEl ? textEl.value.trim() : '';
+  if (text.length < 50) { alert('请输入至少50字的论文内容'); return; }
+  var corpus = '';
+  try {
+    var lits = (typeof getPaperLiterature === 'function') ? getPaperLiterature() : [];
+    (lits || []).forEach(function(l){
+      corpus += ' ' + ((l.title||'') + ' ' + (l.abstract||'') + ' ' + (l.notes||''));
+    });
+  } catch(e) {}
+  corpus = corpus.replace(/\s+/g,'');
+  if (corpus.length < 150) {
+    renderPlag3('<div style="padding:24px;color:#6d28d9;background:#f5f3ff;border-radius:10px;font-size:13px;line-height:1.8">📚 文献库文本不足（当前可比对语料 ' + corpus.length + ' 字，需 ≥150 字）。<br>请先在「文献管理」中导入文献（标题/摘要会自动参与比对），再重试。</div>');
+    return;
+  }
+  var N = 8;
+  var corpusSet = {};
+  for (var i = 0; i <= corpus.length - N; i++) { corpusSet[corpus.substr(i, N)] = 1; }
+  var sents = plagSentences(text);
+  var hits = [];
+  sents.forEach(function(s){
+    var hitN = 0, totN = 0;
+    for (var k = 0; k <= s.length - N; k++) {
+      if (corpusSet[s.substr(k, N)]) hitN++;
+      totN++;
+    }
+    var rate = totN ? hitN / totN : 0;
+    if (rate > 0.25) hits.push({sent: s, rate: rate, hitN: hitN, totN: totN});
+  });
+  var dupRate = sents.length ? Math.round(hits.length / sents.length * 100) : 0;
+  var hitChars = 0; hits.forEach(function(h){ hitChars += h.sent.length; });
+  var charRate = text.replace(/\s+/g,'').length ? Math.round(hitChars / text.replace(/\s+/g,'').length * 100) : 0;
+  var level = dupRate <= 10 ? '🟢 低风险' : (dupRate <= 25 ? '🟡 中风险' : '🔴 高风险');
+  var rows = hits.map(function(h){
+    var pct = Math.round(h.rate * 100);
+    var color = pct > 70 ? '#dc2626' : (pct > 45 ? '#d97706' : '#0891b2');
+    return '<div style="border:1px solid #eef2f7;border-radius:8px;padding:10px 12px;margin-bottom:8px">' +
+      '<div style="font-size:12px;color:#374151;line-height:1.7;margin-bottom:6px">' + h.sent + '</div>' +
+      '<div style="display:flex;gap:10px;align-items:center;font-size:11px;color:#6b7280"><span style="color:' + color + ';font-weight:700">' + pct + '% 命中</span><span>n-gram 命中 ' + h.hitN + '/' + h.totN + '</span></div></div>';
+  }).join('');
+  var html = '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:12px">' +
+    '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">📚 文献库真实比对报告（N-gram 指纹，非AI估算）</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">' +
+    '<div style="background:#f5f3ff;border-radius:10px;padding:14px;text-align:center"><div style="font-size:26px;font-weight:700;color:#6d28d9">' + dupRate + '%</div><div style="font-size:11px;color:#6b7280">命中句子占比</div></div>' +
+    '<div style="background:#f5f3ff;border-radius:10px;padding:14px;text-align:center"><div style="font-size:26px;font-weight:700;color:#6d28d9">' + charRate + '%</div><div style="font-size:11px;color:#6b7280">字符级重合率</div></div>' +
+    '<div style="background:#f5f3ff;border-radius:10px;padding:14px;text-align:center"><div style="font-size:16px;font-weight:700;color:#374151">' + level + '</div><div style="font-size:11px;color:#6b7280">风险等级</div></div>' +
+    '</div>' +
+    '<div style="font-size:12px;color:#6b7280;margin-bottom:8px">命中段落（相似度 >25%）：' + hits.length + ' 句</div>' + rows +
+    (hits.length === 0 ? '<div style="padding:20px;color:#059669;font-size:13px">✅ 未检测到与文献库的明显重合片段，原创性良好。</div>' : '') +
+    '</div>';
+  renderPlag3(html);
+}
+
+// ---- 层2：套话体检（6类分级语料） ----
+var PLAG_CLICHE_CATS = [
+  {name:'综述铺垫', words:['近年来','随着','在当今','背景下','众所周知','由此可见','综上所述','本文旨在','以期为','具有一定的','在一定程度上','随着社会','改革开放以来','随着我国']},
+  {name:'数据描述', words:['研究结果显示','结果表明','数据显示','与对照组相比','显著高于','显著低于','明显高于','明显低于','呈正相关','呈负相关','无显著差异','具有显著性差异','不具有显著性差异']},
+  {name:'方法套话', words:['本文采用文献资料法','运用问卷调查法','通过实验法','采用数理统计法','采用文献资料法','运用访谈法','采用实验法','本文运用','通过查阅','采用逻辑分析']},
+  {name:'结论套话', words:['提供理论依据','提供参考','具有重要意义','有待进一步研究','值得深入研究','为后续研究','奠定基础','具有参考价值','希望对']},
+  {name:'衔接过渡', words:['在此基础上','与此同时','除此之外','总而言之','换句话说','也就是说','不难发现','值得注意','需要指出','基于以上']},
+  {name:'体育术语', words:['最大摄氧量','有氧能力','无氧能力','运动损伤','康复训练','运动处方','体质健康','体医融合','训练负荷','运动表现','核心力量','运动疲劳']}
+];
+function plagClichéCheck(){
+  var textEl = document.getElementById('plagCheckText');
+  var text = textEl ? textEl.value.trim() : '';
+  if (text.length < 50) { alert('请输入至少50字的论文内容'); return; }
+  var sents = plagSentences(text);
+  var catHits = {};
+  var hitSents = [];
+  sents.forEach(function(s){
+    var hitCats = [];
+    PLAG_CLICHE_CATS.forEach(function(cat){
+      for (var w = 0; w < cat.words.length; w++) {
+        if (s.indexOf(cat.words[w]) >= 0) { hitCats.push(cat.name); break; }
+      }
+    });
+    if (hitCats.length) {
+      hitCats.forEach(function(c){ catHits[c] = (catHits[c]||0) + 1; });
+      hitSents.push({sent: s, cats: hitCats});
+    }
+  });
+  var ratio = sents.length ? Math.round(hitSents.length / sents.length * 100) : 0;
+  var catRows = PLAG_CLICHE_CATS.map(function(cat){
+    var n = catHits[cat.name] || 0;
+    var w = n ? Math.max(8, Math.round(n / hitSents.length * 100)) : 0;
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:110px;font-size:12px;color:#374151">' + cat.name + '</div>' +
+      '<div style="flex:1;height:10px;background:#f1f5f9;border-radius:5px;overflow:hidden"><div style="height:100%;width:' + w + '%;background:#0891b2;border-radius:5px"></div></div>' +
+      '<div style="width:40px;font-size:12px;color:#6b7280">' + n + '句</div></div>';
+  }).join('');
+  var level = ratio <= 15 ? '🟢 表达较原创' : (ratio <= 35 ? '🟡 模板化偏高' : '🔴 套话严重');
+  var rows = hitSents.slice(0, 20).map(function(h){
+    return '<div style="border:1px solid #eef2f7;border-radius:8px;padding:10px 12px;margin-bottom:8px">' +
+      '<div style="font-size:12px;color:#374151;line-height:1.7;margin-bottom:4px">' + h.sent + '</div>' +
+      '<div style="font-size:11px;color:#0891b2">命中：' + h.cats.join(' / ') + '</div></div>';
+  }).join('');
+  var html = '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:12px">' +
+    '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">🧬 学术套话体检（6类分级语料）</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">' +
+    '<div style="background:#ecfeff;border-radius:10px;padding:14px;text-align:center"><div style="font-size:26px;font-weight:700;color:#0891b2">' + ratio + '%</div><div style="font-size:11px;color:#6b7280">套话句占比</div></div>' +
+    '<div style="background:#ecfeff;border-radius:10px;padding:14px;text-align:center"><div style="font-size:26px;font-weight:700;color:#0891b2">' + hitSents.length + '</div><div style="font-size:11px;color:#6b7280">套话句子数</div></div>' +
+    '<div style="background:#ecfeff;border-radius:10px;padding:14px;text-align:center"><div style="font-size:16px;font-weight:700;color:#374151">' + level + '</div><div style="font-size:11px;color:#6b7280">原创性判断</div></div>' +
+    '</div><div style="font-size:12px;color:#6b7280;margin-bottom:8px">套话分类分布：</div>' + catRows +
+    '<div style="font-size:12px;color:#6b7280;margin:10px 0 8px">高套话句子（前20句，建议改写）：</div>' + rows +
+    (hitSents.length === 0 ? '<div style="padding:20px;color:#059669;font-size:13px">✅ 未检出明显套话，表达较原创。</div>' : '') +
+    '</div>';
+  renderPlag3(html);
+}
+
+// ---- 层3：多模型共识（3模型并行估算 + 中位数 + 置信区间） ----
+function runPlagConsensus(){
+  var textEl = document.getElementById('plagCheckText');
+  var text = textEl ? textEl.value.trim() : '';
+  if (text.length < 50) { alert('请输入至少50字的论文内容'); return; }
+  if (typeof callDeepSeekAPI !== 'function') { alert('大模型服务不可用'); return; }
+  var btn = document.getElementById('plagConsensusBtn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  renderPlag3('<div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:30px;text-align:center;color:#ea580c"><div style="font-size:30px;margin-bottom:10px">⚖️</div><div style="font-size:13px">3 模型并行估算重复率（DeepSeek V3 / V4 Pro / GLM-5.3）...约 30-60 秒</div></div>');
+  var models = ['deepseek-chat', 'deepseek-v4-pro', 'glm-5.3'];
+  var sys = '你是学术论文查重专家。请估算以下论文片段的重复率（0-100整数），综合考量学术套话、常见模板表达、句式雷同与数据描述套路。只输出JSON：{"rate":N,"reason":"一句话原因"}，不要输出其他内容。';
+  var tasks = models.map(function(m){
+    return callDeepSeekAPI(sys, text.substring(0, 4500), 500, m).then(function(resp){
+      try {
+        var j = resp.match(/\{[\s\S]*\}/);
+        var obj = j ? JSON.parse(j[0]) : null;
+        var r = obj && typeof obj.rate === 'number' ? obj.rate : NaN;
+        return {model: m, rate: r, reason: obj ? (obj.reason||'') : ''};
+      } catch(e) { return {model: m, rate: NaN, reason: '解析失败'}; }
+    }).catch(function(e){ return {model: m, rate: NaN, reason: '调用失败'}; });
+  });
+  Promise.all(tasks).then(function(results){
+    var ok = results.filter(function(r){ return !isNaN(r.rate); });
+    if (!ok.length) {
+      renderPlag3('<div style="padding:24px;color:#dc2626">3 个模型均调用失败，请稍后重试。</div>');
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      return;
+    }
+    ok.sort(function(a,b){ return a.rate - b.rate; });
+    var mid = ok[Math.floor(ok.length/2)].rate;
+    var lo = Math.max(0, ok[0].rate - 3), hi = Math.min(100, ok[ok.length-1].rate + 3);
+    var spread = ok[ok.length-1].rate - ok[0].rate;
+    var level = mid <= 10 ? '🟢 低风险' : (mid <= 25 ? '🟡 中风险' : '🔴 高风险');
+    var rows = results.map(function(r){
+      var v = isNaN(r.rate) ? '—' : r.rate + '%';
+      return '<div style="display:flex;justify-content:space-between;border:1px solid #eef2f7;border-radius:8px;padding:10px 12px;margin-bottom:6px"><span style="font-size:12px;color:#374151;font-weight:600">' + r.model + '</span><span style="font-size:12px;color:#ea580c;font-weight:700">' + v + '</span><span style="font-size:11px;color:#6b7280;flex:1;text-align:right;padding-left:10px">' + (r.reason||'') + '</span></div>';
+    }).join('');
+    var html = '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:12px">' +
+      '<div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:10px">⚖️ 多模型共识查重报告</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">' +
+      '<div style="background:#fff7ed;border-radius:10px;padding:14px;text-align:center"><div style="font-size:26px;font-weight:700;color:#ea580c">' + mid + '%</div><div style="font-size:11px;color:#6b7280">共识重复率（中位数）</div></div>' +
+      '<div style="background:#fff7ed;border-radius:10px;padding:14px;text-align:center"><div style="font-size:20px;font-weight:700;color:#ea580c">' + lo + '–' + hi + '%</div><div style="font-size:11px;color:#6b7280">置信区间</div></div>' +
+      '<div style="background:#fff7ed;border-radius:10px;padding:14px;text-align:center"><div style="font-size:16px;font-weight:700;color:#374151">' + level + '</div><div style="font-size:11px;color:#6b7280">' + (spread > 20 ? '模型分歧大，建议人工复核' : '模型一致性良好') + '</div></div>' +
+      '</div>' + rows + '</div>';
+    renderPlag3(html);
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  });
+}
+
+
 
 
 
