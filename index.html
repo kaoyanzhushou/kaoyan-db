@@ -183199,6 +183199,56 @@ const JOUR_STYLE_DB = [
  {name:'PLOS ONE', field:'综合学科', titleStyle:'数据驱动，客观陈述', structure:'IMRaD标准：引言—方法—结果—讨论', stat:'统计严谨：报告CI与效应量，可复现性要求高', lang:'英文', length:'5000-8000词', review:'8-12周', reject:'可复现性不足、统计方法不当', abstract:'结构式摘要'},
  {name:'Scientific Reports', field:'综合学科', titleStyle:'简洁客观，突出发现', structure:'IMRaD标准：引言—方法—结果—讨论', stat:'统计完整（ES/CI），原始数据可获取性要求', lang:'英文', length:'4000-7000词', review:'6-10周', reject:'创新性不足、统计支撑薄弱', abstract:'结构式摘要'}
 ];
+// 从投稿中心期刊库动态扩充风格画像（自动转换，去重）
+(function(){
+  function isCN(j){
+    return !!(j.jcr && (j.jcr.indexOf('CSSCI')>=0 || j.jcr.indexOf('北大核心')>=0)) || !!(j.name && /[\u4e00-\u9fa5]/.test(j.name));
+  }
+  function convert(j){
+    const cn = isCN(j);
+    const types = j.types || [];
+    let structure = 'IMRaD规范：引言—方法—结果—讨论';
+    if(types.join(',').indexOf('系统综述')>=0 || types.join(',').indexOf('Meta分析')>=0 || types.join(',').indexOf('元分析')>=0){
+      structure = '系统评价PRISMA：背景—检索策略—纳入排除—结果—讨论';
+    } else if(types.join(',').indexOf('病例报告')>=0){
+      structure = '病例报告规范：背景—病例描述—干预/康复方案—讨论';
+    } else if(types.join(',').indexOf('理论论文')>=0 || types.join(',').indexOf('评论')>=0){
+      structure = '理论分析：问题—文献—理论分析—结论';
+    } else if(types.join(',').indexOf('综述')>=0){
+      structure = '综述规范：背景—文献梳理—主题分析—展望';
+    }
+    let length = cn ? '5000-9000字' : '4000-7000词';
+    if(types.join(',').indexOf('综述')>=0 || types.join(',').indexOf('Meta')>=0 || types.join(',').indexOf('元分析')>=0){
+      length = cn ? '8000-12000字' : '6000-10000词';
+    }
+    const rd = j.reviewDays || 60;
+    const review = rd>=90 ? '约' + Math.round(rd/30) + '个月' : '约' + rd + '天';
+    return {
+      name: j.name,
+      field: (j.scope||j.field||'').slice(0,30),
+      titleStyle: cn ? '严谨学术，突出理论贡献' : '简洁规范，突出关键发现',
+      structure: structure,
+      stat: '需完整统计报告（效应量/置信区间）；本刊录用率约' + (j.acceptRate!=null?j.acceptRate:'?') + '%，审稿周期约' + rd + '天',
+      lang: cn ? '中文，学术规范' : '英文，学术规范',
+      length: length,
+      review: review,
+      reject: j.pitfalls || '创新性不足',
+      abstract: '结构式摘要（' + types.join('/') + '）',
+      _if: j.if, _jcr: j.jcr, _oa: j.oa, _fee: j.fee
+    };
+  }
+  var pool = [];
+  if(typeof PHD_JOURNALS!=='undefined') pool = pool.concat(PHD_JOURNALS);
+  if(typeof CN_JOURNALS!=='undefined') pool = pool.concat(CN_JOURNALS);
+  var added = 0;
+  pool.forEach(function(j){
+    if(j && j.name && !JOUR_STYLE_DB.some(function(x){ return x.name===j.name; })){
+      JOUR_STYLE_DB.push(convert(j));
+      added++;
+    }
+  });
+  if(added>0) console.log('风格画像库并入投稿中心期刊 ' + added + ' 本，共 ' + JOUR_STYLE_DB.length + ' 本');
+})();
 (function(){
   const sel = document.getElementById('styleJournalSelect');
   if(sel && sel.options.length===0){
@@ -183273,6 +183323,7 @@ function runStyleMatch(){
   // 期刊画像展示 + 结果
   let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><div style="font-size:15px;font-weight:700;color:#1f2937">🎨 ' + jour.name + ' 风格画像与适配度</div><span style="background:'+level.bg+';color:'+level.color+';padding:6px 14px;border-radius:10px;font-size:13px;font-weight:700">'+level.label+'（'+total+'分）</span></div>';
+  html += '<div style="font-size:11px;color:#8b5cf6;margin-bottom:6px">📚 风格画像库共收录 ' + JOUR_STYLE_DB.length + ' 本期刊（含投稿中心期刊库）</div>';
   html += '<div style="background:#f5f3ff;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;line-height:2;color:#4c1d95"><b>📋 期刊画像：</b>标题风格：'+jour.titleStyle+'｜结构：'+jour.structure+'｜统计：'+jour.stat+'｜语言：'+jour.lang+'｜篇幅：'+jour.length+'｜审稿：'+jour.review+'｜常见拒稿点：'+jour.reject+'</div>';
   html += '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px">';
   html += '<tr style="background:#f9fafb"><th style="padding:8px;text-align:left;border:1px solid #eef2f7">维度</th><th style="padding:8px;text-align:center;border:1px solid #eef2f7;width:90px">得分</th><th style="padding:8px;text-align:left;border:1px solid #eef2f7">诊断与建议</th></tr>';
