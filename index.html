@@ -112981,6 +112981,67 @@ function clearAdvisorLog() {
 
 }
 
+// ========== Phase 1 精度地基：概率校准 ==========
+
+function pubNormalize(v, min, max) {
+
+  if (max <= min) return 50;
+  return Math.round((Math.min(max, Math.max(min, v)) - min) / (max - min) * 100);
+
+}
+
+function wilsonScore(win, n, z) {
+
+  z = z || 1.96;
+  if (n <= 0) return {p: 0.5, lo: 0, hi: 1, raw: 0};
+  var p = win / n;
+  var denom = 1 + z * z / n;
+  var c = (p + z * z / (2 * n)) / denom;
+  var h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / denom;
+  return {p: c, lo: Math.max(0, c - h), hi: Math.min(1, c + h), raw: p};
+
+}
+
+function bayesAcceptRate(j, wins, n) {
+
+  var prior = (j && j.acceptRate) ? j.acceptRate / 100 : 0.3;
+  var alpha0 = prior * 10, beta0 = (1 - prior) * 10;
+  var a = alpha0 + (wins || 0), b = beta0 + Math.max(0, (n || 0) - (wins || 0));
+  return a / (a + b);
+
+}
+
+function pubStageProb(j, stage, wins, n, matchScore) {
+
+  var base = bayesAcceptRate(j, wins, n);
+  var s = matchScore || 60;
+  var adj = 0.7 + (s / 100) * 0.5;
+  var p;
+  if (stage === 'resub') {
+    p = Math.min(0.88, base * adj * 1.08);
+  } else if (stage === 'revision') {
+    var pre = pubPrestigeScore(j);
+    p = 0.7 + (100 - pre) / 100 * 0.15;
+  } else {
+    p = Math.min(0.85, base * adj);
+  }
+  return Math.max(0.05, Math.round(p * 100));
+
+}
+
+function pubProbText(j, wins, n, score) {
+
+  var w = wilsonScore(wins, n);
+  var mixed = bayesAcceptRate(j, wins, n);
+  var first = pubStageProb(j, 'first', wins, n, score);
+  var resub = pubStageProb(j, 'resub', wins, n, score);
+  var rev = pubStageProb(j, 'revision', wins, n, score);
+  var lo = Math.max(0, Math.round((mixed - (w.hi - w.lo) / 2) * 100));
+  var hi = Math.min(100, Math.round((mixed + (w.hi - w.lo) / 2) * 100));
+  return {first: first, resub: resub, rev: rev, lo: lo, hi: hi, n: n};
+
+}
+
 function getPubJournalStats() {
 
   var out = {};
@@ -113313,6 +113374,18 @@ function showJournalDetail(id) {
   if (mine && mine.subs) {
     var winRate = Math.round(mine.accepted / mine.subs * 100);
     html += '<div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:8px;padding:8px 12px;font-size:11px;color:#065f46;margin-bottom:12px">📈 你的实测数据：投过 <b>' + mine.subs + '</b> 次（录用 ' + mine.accepted + ' · 拒稿 ' + mine.rejected + ' · 在审/其他 ' + (mine.subs - mine.accepted - mine.rejected) + '），实测录用率 <b>' + winRate + '%</b>' + (mine.avgDays ? '，实测平均审稿 ' + mine.avgDays + ' 天' : '') + '（随投稿记录自动更新）</div>';
+
+  var pStat2 = getPubJournalStats()[j.name];
+  var pW2 = (pStat2 && pStat2.accepted) ? pStat2.accepted : 0;
+  var pN2 = (pStat2 && (pStat2.accepted + pStat2.rejected)) ? (pStat2.accepted + pStat2.rejected) : 0;
+  var pT2 = pubProbText(j, pW2, pN2, 70);
+  var chip = function(label, v, color, bg) { return '<div style="background:' + bg + ';border:1px solid ' + color + ';border-radius:8px;padding:8px 12px;text-align:center;flex:1"><div style="font-size:10px;color:#6b7280;margin-bottom:2px">' + label + '</div><div style="font-size:16px;font-weight:800;color:' + color + '">' + v + '</div></div>'; };
+  var mixedTxt = (j.acceptRate ? '公开录用率 ' + j.acceptRate + '%' : '公开数据缺失') + (pN2 ? ' × 你的实测 ' + pW2 + '/' + pN2 : '（暂无实测记录）');
+  html += '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px;margin-bottom:12px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:13px;font-weight:700;color:#075985">📊 录取概率（已校准）</div><div style="font-size:10px;color:#94a3b8">' + (pN2 ? '样本 ' + pN2 + ' · 区间为 Wilson 95% 置信' : '样本不足 · 区间较宽仅供参考') + '</div></div>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:8px">' + chip('首投', pT2.first + '%', '#0369a1', '#e0f2fe') + chip('改投', pT2.resub + '%', '#0e7490', '#cffafe') + chip('修回后', pT2.rev + '%', '#047857', '#d1fae5') + '</div>';
+  html += '<div style="font-size:10px;color:#64748b;line-height:1.7">口径：' + mixedTxt + '，经贝叶斯融合与匹配度修正；修回后按"意见已回应"经验区间（70%~85%）。概率为统计估算，非录取保证。</div>';
+  html += '</div>';
   }
 
 
@@ -119060,6 +119133,11 @@ function generateJournalMatch() {
     if (item.history >= 70) reasons.push('你的历史记录显示该刊对你较友好');
     if (item.history < 70 && item.history > 55) reasons.push('你曾投过该刊（结果一般）');
     if (item.j.reviewDays) reasons.push('均审约' + item.j.reviewDays + '天');
+    var pStat = getPubJournalStats()[item.j.name];
+    var pW = (pStat && pStat.accepted) ? pStat.accepted : 0;
+    var pN = (pStat && (pStat.accepted + pStat.rejected)) ? (pStat.accepted + pStat.rejected) : 0;
+    var pT = pubProbText(item.j, pW, pN, item.total);
+    reasons.push('🎯 首投录用概率 ' + pT.first + '%' + (pT.n ? '±' + Math.max(5, Math.round((pT.hi - pT.lo) / 2 * 100)) + '%' : '（数据有限）'));
     var rate = item.j.acceptRate ? '录用率约' + item.j.acceptRate + '%' : '';
     var tier = item.j.jcr || item.j.cas || '';
     html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #cffafe;border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="showJournalDetail(\'' + j.id + '\')">';
