@@ -107074,6 +107074,8 @@ function renderPhdPublish(containerId) {
 
   html += '<button onclick="switchPublishTab(\'format\')" id="pubTab-format" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">论文润色</button>';
 
+  html += '<button onclick="switchPublishTab(\'advisor\')" id="pubTab-advisor" style="padding:10px 20px;border:none;background:#fff;color:#7c3aed;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🤖 投稿顾问</button>';
+
 
 
   html += '</div>';
@@ -107274,6 +107276,8 @@ function renderPhdPublish(containerId) {
 
   html += '<div id="pubLibCount" style="font-size:13px;color:#6b21a8;margin-bottom:12px">共 ' + PHD_JOURNALS.length + ' 本期刊</div>';
 
+  html += '<div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:8px 12px;font-size:11px;color:#6d28d9;margin-bottom:12px">📅 期刊数据最后整理于 2026-09（公开信息+经验估算，仅供参考）；你的投稿结果会自动反哺各刊"实测数据"，投得越多推荐越准</div>';
+
 
 
   html += '<div id="pubLibList"></div>';
@@ -107358,6 +107362,10 @@ function renderPhdPublish(containerId) {
 
   html += '<div onclick="showPubTool(\'refs\')" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📚</div><div style="font-size:15px;font-weight:700;color:#166534;margin-bottom:4px">参考文献格式转换</div><div style="font-size:12px;color:#15803d">一键转换 GB/T 7714 / APA / Vancouver，换刊不用重排文献</div></div>';
 
+  html += '<div onclick="showPubTool(\'compet\')" style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid #fdba74;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🔍</div><div style="font-size:15px;font-weight:700;color:#9a3412;margin-bottom:4px">投稿竞争力报告</div><div style="font-size:12px;color:#c2410c">AI 预审：5 维评分 + 风险清单，投稿前先当一次审稿人</div></div>';
+
+  html += '<div onclick="showPubTool(\'resub\')" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🔄</div><div style="font-size:15px;font-weight:700;color:#991b1b;margin-bottom:4px">拒稿改投引擎</div><div style="font-size:12px;color:#b91c1c">拒稿不用慌：提取原因、推荐改投期刊、自动记录履历</div></div>';
+
 
 
   html += '</div>';
@@ -107380,7 +107388,7 @@ function renderPhdPublish(containerId) {
 
 
 
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><div style="display:flex;gap:8px"><button onclick="checkDuplicateSubmissions()" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚠️ 一稿多投检测</button><button onclick="togglePubReport()" style="background:#0e7490;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 投稿报表</button><button onclick="togglePubCalendar()" style="background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📅 投稿日历</button><button onclick="togglePubReminder()" style="background:#0891b2;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔔 提醒检查</button><button onclick="exportAllData()" style="background:#4b5563;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">💾 全量备份</button><button onclick="importAllData()" style="background:#fff;color:#4b5563;border:1px solid #9ca3af;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📥 恢复备份</button><button onclick="showExportMenu()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">导出数据</button><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div></div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><div style="display:flex;gap:8px"><button onclick="checkDuplicateSubmissions()" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚠️ 一稿多投检测</button><button onclick="togglePubReport()" style="background:#0e7490;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 投稿报表</button><button onclick="togglePubCalendar()" style="background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📅 投稿日历</button><button onclick="togglePubReminder()" style="background:#0891b2;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔔 提醒检查</button><button onclick="toggleRejectLog()" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📋 拒稿履历</button><button onclick="exportAllData()" style="background:#4b5563;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">💾 全量备份</button><button onclick="importAllData()" style="background:#fff;color:#4b5563;border:1px solid #9ca3af;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📥 恢复备份</button><button onclick="showExportMenu()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">导出数据</button><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div></div>';
 
 
 
@@ -107409,6 +107417,8 @@ function renderPhdPublish(containerId) {
 
 
   html += '<div id="pubContent-plan" style="display:none"></div>';
+
+  html += '<div id="pubContent-advisor" style="display:none"></div>';
 
 
 
@@ -112654,6 +112664,36 @@ function renderJournalList(list) {
 
 
 
+function getPubJournalStats() {
+
+  var out = {};
+  try {
+    var papers = getPubPapers();
+    papers.forEach(function(p) {
+      (p.submissions || []).forEach(function(s) {
+        if (!s.journal) return;
+        var st = out[s.journal] || {subs: 0, accepted: 0, rejected: 0, active: 0, days: []};
+        st.subs++;
+        if (s.status === 'accepted' || s.status === 'published') st.accepted++;
+        else if (s.status === 'rejected') st.rejected++;
+        else st.active++;
+        if (s.submitDate && s.resultDate && (s.status === 'accepted' || s.status === 'published' || s.status === 'rejected')) {
+          var d1 = new Date(s.submitDate), d2 = new Date(s.resultDate);
+          if (!isNaN(d1) && !isNaN(d2) && d2 >= d1) st.days.push(Math.round((d2 - d1) / 86400000));
+        }
+        out[s.journal] = st;
+      });
+    });
+    Object.keys(out).forEach(function(k) {
+      var st = out[k];
+      st.avgDays = st.days.length ? Math.round(st.days.reduce(function(a, b) { return a + b; }, 0) / st.days.length) : null;
+      delete st.days;
+    });
+  } catch(e) {}
+  return out;
+
+}
+
 function showJournalDetail(id) {
 
 
@@ -112673,6 +112713,12 @@ function showJournalDetail(id) {
   html += '<div style="font-size:20px;font-weight:700;color:#1e293b;margin-bottom:4px">' + j.name + '</div>';
 
   html += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:11px;color:#92400e;margin-bottom:12px">📌 数据口径：影响因子/分区/录用率/审稿周期由公开信息整理并结合经验估算，仅供参考；投稿前请以期刊官网最新要求为准</div>';
+
+  var mine = getPubJournalStats()[j.name];
+  if (mine && mine.subs) {
+    var winRate = Math.round(mine.accepted / mine.subs * 100);
+    html += '<div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:8px;padding:8px 12px;font-size:11px;color:#065f46;margin-bottom:12px">📈 你的实测数据：投过 <b>' + mine.subs + '</b> 次（录用 ' + mine.accepted + ' · 拒稿 ' + mine.rejected + ' · 在审/其他 ' + (mine.subs - mine.accepted - mine.rejected) + '），实测录用率 <b>' + winRate + '%</b>' + (mine.avgDays ? '，实测平均审稿 ' + mine.avgDays + ' 天' : '') + '（随投稿记录自动更新）</div>';
+  }
 
 
 
@@ -114499,6 +114545,45 @@ function showPubTool(tool) {
     html += '<button onclick="convertRefs()" style="background:#16a34a;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔄 一键转换</button>';
 
     html += '</div><div id="refsResult" style="margin-top:16px"></div>';
+
+  } else if (tool === 'compet') {
+
+    var allJ = PHD_JOURNALS.concat(CN_JOURNALS);
+    var compOptions = allJ.map(function(j) { return '<option value="' + j.name + '">' + j.name + '</option>'; }).join('');
+
+    html = '<div style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid #fdba74;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#9a3412;margin-bottom:4px">🔍 投稿竞争力报告</div>';
+
+    html += '<div style="font-size:12px;color:#c2410c;margin-bottom:14px">像审稿人一样提前诊断：选题新颖性/方法完整性/数据质量/逻辑结构/期刊匹配度 五维评分 + 风险点清单</div>';
+
+    html += '<div style="display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap"><div style="flex:1;min-width:220px"><label style="font-size:12px;color:#9a3412;font-weight:600;display:block;margin-bottom:4px">论文标题</label><input type="text" id="compTitle" placeholder="论文标题" style="width:100%;padding:9px 12px;border:1px solid #fdba74;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#9a3412"></div><div style="flex:1;min-width:180px"><label style="font-size:12px;color:#9a3412;font-weight:600;display:block;margin-bottom:4px">目标期刊（可选）</label><select id="compJournal" style="width:100%;padding:9px 12px;border:1px solid #fdba74;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#9a3412;cursor:pointer"><option value="">未指定（取全库最高匹配）</option>' + compOptions + '</select></div></div>';
+
+    html += '<div style="margin-bottom:14px"><label style="font-size:12px;color:#9a3412;font-weight:600;display:block;margin-bottom:4px">论文摘要</label><textarea id="compAbs" rows="6" placeholder="粘贴论文摘要（含目的、方法、结果、结论要素评分更准）" style="width:100%;padding:9px 12px;border:1px solid #fdba74;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#9a3412;resize:vertical;box-sizing:border-box"></textarea></div>';
+
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="generateCompetReport()" style="background:#c2410c;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 生成竞争力报告</button><button onclick="aiDeepDiagnose()" id="aiDiagBtn" style="background:#fff;color:#c2410c;border:1px solid #fdba74;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🤖 AI 深度诊断（DeepSeek）</button></div>';
+
+    html += '</div><div id="competResult" style="margin-top:16px"></div>';
+
+  } else if (tool === 'resub') {
+
+    var rej = getRejectedSubs();
+    var optHtml = '<option value="">— 选择被拒投稿 —</option>';
+    rej.forEach(function(r, i) { optHtml += '<option value="' + i + '">' + r.pTitle + ' → ' + r.sub.journal + '</option>'; });
+
+    html = '<div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#991b1b;margin-bottom:4px">🔄 拒稿改投引擎</div>';
+
+    html += '<div style="font-size:12px;color:#b91c1c;margin-bottom:14px">选中被拒投稿，填写拒稿原因，系统推荐最合适的改投期刊并记录你的拒稿履历</div>';
+
+    html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:#991b1b;font-weight:600;display:block;margin-bottom:4px">被拒投稿</label><select id="resubSel" style="width:100%;padding:9px 12px;border:1px solid #fca5a5;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#991b1b;cursor:pointer">' + optHtml + '</select></div>';
+
+    html += '<div style="margin-bottom:14px"><label style="font-size:12px;color:#991b1b;font-weight:600;display:block;margin-bottom:4px">拒稿原因（选填，记录进履历便于复盘）</label><textarea id="resubNote" rows="2" placeholder="如：创新性不足 / 与期刊范围不符 / 样本量偏小 / 未说明原因" style="width:100%;padding:9px 12px;border:1px solid #fca5a5;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#991b1b;resize:vertical;box-sizing:border-box"></textarea></div>';
+
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="showResubRecs()" style="background:#dc2626;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 推荐改投期刊</button><button onclick="toggleRejectLog()" style="background:#fff;color:#991b1b;border:1px solid #fca5a5;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📋 查看拒稿履历</button></div>';
+
+    html += '</div><div id="resubResult" style="margin-top:16px"></div>';
 
   } else if (tool === 'format') {
 
@@ -117905,6 +117990,302 @@ function fmtVancouver(f) {
 
   var authors = (f.authors || '').replace(/,\s*/g, ' ').trim();
   return authors + '. ' + f.title + '. ' + f.journal + '. ' + f.year + (f.vol ? ';' + f.vol + (f.issue ? '(' + f.issue + ')' : '') : '') + (f.pages ? ':' + f.pages : '') + '.';
+
+}
+
+function competRuleScore(title, abs) {
+
+  var t = (title || '').toLowerCase();
+  var a = (abs || '').toLowerCase();
+  var text = t + ' ' + a;
+
+  var novelty = 50;
+  if (/(创新|首次|新方法|新机制|新模型|meta|系统综述|机制)/.test(text)) novelty += 25;
+  if (/(现状|调查|浅析|初探|分析报告)/.test(text)) novelty -= 20;
+  if (/(随机对照|队列|多中心|双盲)/.test(text)) novelty += 10;
+
+  var method = 40;
+  var mHits = 0;
+  ['随机', '对照', '样本', '招募', '测量', '统计', '问卷', '量表', '实验', '分组', '干预', '随访'].forEach(function(k) { if (text.indexOf(k) >= 0) mHits++; });
+  method += Math.min(60, mHits * 10);
+
+  var data = 40;
+  var dHits = 0;
+  ['数据', '结果', '显著性', '效应量', '标准差', '置信', 'p<', 'p =', '均值', '差异'].forEach(function(k) { if (text.indexOf(k) >= 0) dHits++; });
+  data += Math.min(60, dHits * 10);
+
+  var logic = 40;
+  var len = a.length;
+  if (len >= 80 && len <= 500) logic += 30; else if (len >= 30) logic += 15;
+  ['目的', '方法', '结果', '结论'].forEach(function(k) { if (a.indexOf(k) >= 0) logic += 8; });
+  logic = Math.min(100, logic);
+
+  var match = 50;
+  try {
+    var text2 = text;
+    var all = PHD_JOURNALS.concat(CN_JOURNALS);
+    var best = 0;
+    all.forEach(function(j) {
+      var kwHit = (j.matchKeywords || []).filter(function(k) { return text2.indexOf(String(k).toLowerCase()) >= 0; }).length;
+      var s = Math.min(100, kwHit / Math.max(1, (j.matchKeywords || []).length) * 100);
+      if (s > best) best = s;
+    });
+    match = best;
+  } catch(e) {}
+
+  return {novelty: novelty, method: method, data: data, logic: logic, match: match};
+
+}
+
+function getRejectedSubs() {
+
+  var out = [];
+  try {
+    var papers = getPubPapers();
+    papers.forEach(function(p, pi) {
+      (p.submissions || []).forEach(function(s, si) {
+        if (s.status === 'rejected') out.push({pIdx: pi, sIdx: si, pTitle: p.title || '未命名论文', sub: s});
+      });
+    });
+  } catch(e) {}
+  return out;
+
+}
+
+function showResubRecs() {
+
+  var sel = document.getElementById('resubSel');
+  var note = (document.getElementById('resubNote').value || '').trim();
+  var out = document.getElementById('resubResult');
+  var rej = getRejectedSubs();
+  if (!sel || sel.value === '') { out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">请先选择一条被拒投稿</div>'; return; }
+  var r = rej[parseInt(sel.value, 10)];
+  if (!r) return;
+
+  var text = (r.pTitle || '').toLowerCase();
+  var all = PHD_JOURNALS.concat(CN_JOURNALS);
+  var already = (r.sub && r.sub.journal) ? [r.sub.journal] : [];
+  (r.paperSubs || []).forEach(function(j) { if (already.indexOf(j) < 0) already.push(j); });
+  // 该论文全部已投期刊
+  try {
+    var papers = getPubPapers();
+    var p = papers[r.pIdx];
+    if (p && p.submissions) p.submissions.forEach(function(s) { if (already.indexOf(s.journal) < 0) already.push(s.journal); });
+  } catch(e) {}
+
+  var srcJ = getPubJournalByName(r.sub.journal);
+  var srcIsCn = srcJ && (srcJ.if === 0 || /CSSCI|北大核心|中文核心/.test(String(srcJ.jcr || '')));
+  var scored = all.filter(function(j) { return already.indexOf(j.name) < 0; }).map(function(j) {
+    var kwHit = (j.matchKeywords || []).filter(function(k) { return text.indexOf(String(k).toLowerCase()) >= 0; }).length;
+    var theme = Math.min(100, kwHit / Math.max(1, (j.matchKeywords || []).length) * 100);
+    var prestige = pubPrestigeScore(j);
+    var speed = j.reviewDays ? Math.max(0, Math.round(100 - (j.reviewDays - 30) * 1.2)) : 60;
+    var total = Math.round(theme * 0.6 + prestige * 0.3 + speed * 0.1);
+    if (theme < 20) total = Math.round(total * 0.5);
+    var isCn = j.if === 0 || /CSSCI|北大核心|中文核心/.test(String(j.jcr || ''));
+    if (srcIsCn && isCn) total += 15;
+    return {j: j, total: total, theme: theme, prestige: prestige, kwHit: kwHit, cn: isCn};
+  }).sort(function(a, b) { return b.total - a.total; }).slice(0, 5);
+
+  var html = '<div style="background:#fff;border:1px solid #fca5a5;border-radius:12px;padding:16px">';
+
+  html += '<div style="font-size:14px;font-weight:700;color:#991b1b;margin-bottom:4px">🔄 改投推荐 · 《' + r.sub.journal + '》被拒后</div>';
+
+  html += '<div style="font-size:11px;color:#b91c1c;margin-bottom:6px">已排除原投期刊与已投期刊；评分为估算，投稿前请以期刊官网要求为准</div>';
+
+  if (note) html += '<div style="font-size:11px;color:#475569;background:#fef2f2;border:1px solid #fee2e2;border-radius:6px;padding:6px 10px;margin-bottom:10px">📝 拒稿原因记录：' + note + '</div>';
+
+  scored.forEach(function(item, idx) {
+    var j = item.j;
+    var badge = ['🥇','🥈','🥉','4','5'][idx];
+    var reasons = [];
+    if (item.kwHit.length) reasons.push('命中方向词：' + item.kwHit.slice(0,3).join('、'));
+    reasons.push('声望' + item.prestige + '分');
+    if (item.j.reviewDays) reasons.push('均审约' + item.j.reviewDays + '天');
+    var tier = item.j.jcr || item.j.cas || '';
+    var rate = item.j.acceptRate ? '录用率约' + item.j.acceptRate + '%' : '';
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #fee2e2;border-radius:8px;margin-bottom:8px">';
+    html += '<div style="width:30px;font-size:14px;font-weight:700;color:#b91c1c;text-align:center">' + badge + '</div>';
+    html += '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + j.name + '</div><div style="font-size:11px;color:#6b7280">' + [tier, rate].filter(Boolean).join(' · ') + '</div></div>';
+    html += '<div style="text-align:right;display:flex;align-items:center;gap:6px"><div><div style="font-size:14px;font-weight:800;color:#b91c1c">' + item.total + '</div><div style="font-size:10px;color:#94a3b8">匹配分</div></div><button onclick="markResubmit(\'' + j.name.replace(/'/g, "\\'") + '\',' + r.pIdx + ',' + r.sIdx + ')" style="background:#dc2626;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">📌 标记改投</button></div>';
+    html += '</div>';
+    html += '<div style="font-size:11px;color:#475569;margin:-4px 4px 10px 44px;line-height:1.6">🔎 ' + reasons.join(' · ') + '</div>';
+  });
+
+  html += '</div>';
+
+  out.innerHTML = html;
+
+}
+
+function markResubmit(journalName, pIdx, sIdx) {
+
+  var note = (document.getElementById('resubNote').value || '').trim();
+  try {
+    var papers = getPubPapers();
+    var p = papers[pIdx];
+    var s = p && p.submissions ? p.submissions[sIdx] : null;
+    if (!s) { alert('未找到该投稿记录'); return; }
+    var log = [];
+    try { log = JSON.parse(localStorage.getItem('phd_resubmit_log') || '[]'); } catch(e) {}
+    log.push({paper: p.title || '未命名论文', from: s.journal, to: journalName, note: note, date: new Date().toISOString().slice(0, 10)});
+    localStorage.setItem('phd_resubmit_log', JSON.stringify(log));
+    var out = document.getElementById('resubResult');
+    if (out) {
+      out.insertAdjacentHTML('afterbegin', '<div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:8px;padding:8px 12px;font-size:12px;color:#065f46;font-weight:600;margin-bottom:10px">✅ 已记录改投：' + s.journal + ' → ' + journalName + (note ? '（原因：' + note + '）' : '') + '</div>');
+    }
+  } catch(e) { alert('记录失败：' + e.message); }
+
+}
+
+function toggleRejectLog() {
+
+  var cont = document.getElementById('rejectLogPanel');
+  if (cont) { cont.parentNode.removeChild(cont); return; }
+
+  var rej = getRejectedSubs();
+  var log = [];
+  try { log = JSON.parse(localStorage.getItem('phd_resubmit_log') || '[]'); } catch(e) {}
+
+  var h = '<div id="rejectLogPanel" style="background:#fff;border:1px solid #fca5a5;border-radius:12px;padding:16px;margin-top:12px">';
+
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:14px;font-weight:700;color:#991b1b">📋 拒稿履历</div><button onclick="toggleRejectLog()" style="background:none;border:none;color:#991b1b;cursor:pointer;font-size:12px">收起 ✕</button></div>';
+
+  if (rej.length === 0 && log.length === 0) {
+    h += '<div style="padding:16px;text-align:center;color:#9ca3af;font-size:13px">暂无拒稿记录 🎉</div>';
+  }
+
+  var used = {};
+  rej.forEach(function(r) {
+    var key = (r.pTitle || '') + '|' + r.sub.journal;
+    used[key] = 1;
+    h += '<div style="background:#fef2f2;border:1px solid #fee2e2;border-radius:8px;padding:10px 12px;margin-bottom:8px">';
+    h += '<div style="font-size:12px;font-weight:600;color:#1e293b">' + r.pTitle + ' <span style="color:#dc2626;font-weight:700">→ 被拒</span>（' + r.sub.journal + '）</div>';
+    var matched = log.filter(function(l) { return l.paper === r.pTitle && l.from === r.sub.journal; });
+    if (matched.length) {
+      matched.forEach(function(m) { h += '<div style="font-size:11px;color:#059669;margin-top:4px">↳ ' + m.date + ' 改投 <b>' + m.to + '</b>' + (m.note ? '（原因：' + m.note + '）' : '') + '</div>'; });
+    } else {
+      h += '<div style="font-size:11px;color:#9ca3af;margin-top:4px">↳ 尚未标记改投（可在"拒稿改投引擎"中推荐并记录）</div>';
+    }
+    h += '</div>';
+  });
+
+  log.forEach(function(m) {
+    var key = (m.paper || '') + '|' + m.from;
+    if (used[key]) return;
+    h += '<div style="background:#fef2f2;border:1px solid #fee2e2;border-radius:8px;padding:10px 12px;margin-bottom:8px">';
+    h += '<div style="font-size:12px;font-weight:600;color:#1e293b">' + m.paper + '</div><div style="font-size:11px;color:#059669;margin-top:4px">↳ ' + m.date + ' 改投：' + m.from + ' → <b>' + m.to + '</b>' + (m.note ? '（原因：' + m.note + '）' : '') + '</div>';
+    h += '</div>';
+  });
+
+  h += '</div>';
+
+  var statsEl = document.getElementById('pubManageStats');
+  if (statsEl && statsEl.parentNode) statsEl.parentNode.insertBefore(createElFromHtml(h), statsEl.nextSibling);
+  else alert('请在投稿管理页查看拒稿履历');
+
+}
+
+function createElFromHtml(h) {
+
+  var d = document.createElement('div');
+  d.innerHTML = h;
+  return d.firstChild;
+
+}
+
+function competRisks(title, abs) {
+
+  var a = (abs || '').toLowerCase();
+  var risks = [];
+  if (a.length < 50) risks.push('摘要过于简短（' + a.length + '字），信息量不足，难以判断研究价值');
+  if (a.indexOf('样本') < 0 && a.indexOf('样本量') < 0 && !/\d+[名例例例]/.test(a)) risks.push('摘要未交代样本量，审稿人可能质疑统计效力');
+  if (a.indexOf('对照') < 0 && a.indexOf('比较') < 0) risks.push('未提及对照组/比较组设置，因果推断说服力不足');
+  if (a.indexOf('统计') < 0 && a.indexOf('p<') < 0 && a.indexOf('p =') < 0) risks.push('未说明统计分析方法');
+  if (a.indexOf('结论') < 0) risks.push('摘要缺少明确结论，建议补充研究价值总结');
+  if (/(现状|调查|浅析)/.test(a)) risks.push('偏描述性研究，创新性有限，建议强化机制或因果分析');
+  if (risks.length === 0) risks.push('摘要要素较完整，未发现明显硬伤（仍建议按目标期刊格式自查）');
+  return risks;
+
+}
+
+function generateCompetReport() {
+
+  var title = (document.getElementById('compTitle').value || '').trim();
+  var abs = (document.getElementById('compAbs').value || '').trim();
+  var jname = document.getElementById('compJournal').value;
+  var out = document.getElementById('competResult');
+  if (!title) { out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">请先填写论文标题</div>'; return; }
+
+  var s = competRuleScore(title, abs);
+  var risks = competRisks(title, abs);
+  var total = Math.round((s.novelty + s.method + s.data + s.logic + s.match) / 5);
+  var level = total >= 80 ? '🟢 高竞争力' : (total >= 60 ? '🟡 中等竞争力' : '🔴 竞争力偏弱');
+
+  var dims = [
+    ['选题新颖性', s.novelty], ['方法完整性', s.method], ['数据质量', s.data],
+    ['逻辑结构', s.logic], ['期刊匹配度', s.match]
+  ];
+
+  var html = '<div style="background:#fff;border:1px solid #fdba74;border-radius:12px;padding:16px">';
+
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:#9a3412">🔍 竞争力报告</div><div style="text-align:right"><div style="font-size:24px;font-weight:800;color:' + (total >= 80 ? '#16a34a' : (total >= 60 ? '#d97706' : '#dc2626')) + '">' + total + '</div><div style="font-size:11px;color:#6b7280">' + level + '</div></div></div>';
+
+  html += '<div style="font-size:11px;color:#c2410c;margin-bottom:12px">评分为规则估算，仅供参考；正式投稿前请结合期刊要求与导师意见综合判断</div>';
+
+  dims.forEach(function(d) {
+    var w = d[1];
+    var c = w >= 75 ? '#16a34a' : (w >= 55 ? '#d97706' : '#dc2626');
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="width:80px;font-size:12px;color:#334155;white-space:nowrap">' + d[0] + '</div><div style="flex:1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden"><div style="width:' + w + '%;height:100%;background:' + c + ';border-radius:4px"></div></div><div style="width:34px;font-size:12px;font-weight:700;color:' + c + ';text-align:right">' + w + '</div></div>';
+  });
+
+  html += '<div style="margin-top:14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#991b1b">';
+  html += '<div style="font-weight:700;margin-bottom:6px">⚠️ 风险点清单（' + risks.length + '）</div>';
+  risks.forEach(function(r) { html += '<div style="margin-bottom:4px">· ' + r + '</div>'; });
+  html += '</div>';
+
+  if (jname) {
+    var j = getPubJournalByName(jname);
+    if (j) {
+      html += '<div style="margin-top:10px;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:10px 12px;font-size:12px;color:#9a3412">📌 目标期刊《' + j.name + '》匹配分 ' + s.match + '，' + (s.match >= 70 ? '匹配度良好' : '匹配度一般，建议核对收稿范围后再投') + '</div>';
+    }
+  }
+
+  html += '<div style="margin-top:10px;font-size:11px;color:#94a3b8">💡 建议：点击"🤖 AI 深度诊断"获取审稿人视角的详细修改建议</div>';
+
+  html += '</div>';
+
+  out.innerHTML = html;
+
+}
+
+async function aiDeepDiagnose() {
+
+  var title = (document.getElementById('compTitle').value || '').trim();
+  var abs = (document.getElementById('compAbs').value || '').trim();
+  var jname = document.getElementById('compJournal').value;
+  var out = document.getElementById('competResult');
+  if (!title) { out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">请先填写论文标题</div>'; return; }
+
+  var btn = document.getElementById('aiDiagBtn');
+  var oldText = btn ? btn.textContent : '';
+  if (btn) btn.textContent = '🤖 诊断中，请稍候…';
+  try {
+    btn.disabled = true;
+    out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">🤖 AI 正在以审稿人视角诊断，通常需要 15-30 秒…</div>';
+
+    var sys = '你是一位有20年经验、发表过50篇以上论文的体育科学领域资深审稿人。请从审稿人视角诊断论文竞争力，输出格式：\n【总体评价】一句话\n【分维度点评】选题新颖性/方法完整性/数据质量/逻辑结构（各1-2句）\n【主要风险】3-5条具体风险\n【改进建议】3-5条可执行建议';
+    var usr = '论文标题：' + title + '\n论文摘要：' + (abs || '（未提供）') + (jname ? '\n目标期刊：' + jname : '');
+
+    var resp = await callDeepSeekAPI(sys, usr, 2500);
+    var txt = typeof resp === 'string' ? resp : (resp && resp.content ? resp.content : (resp && resp.text ? resp.text : JSON.stringify(resp)));
+    var esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>'); };
+    out.innerHTML = '<div style="background:#fff;border:1px solid #fdba74;border-radius:12px;padding:16px"><div style="font-size:14px;font-weight:700;color:#9a3412;margin-bottom:10px">🤖 AI 深度诊断（DeepSeek）</div><div style="font-size:13px;color:#1e293b;line-height:1.9">' + esc(txt) + '</div><div style="margin-top:10px;font-size:11px;color:#94a3b8">诊断由大模型生成，供参考；正式投稿请结合期刊要求综合判断</div></div>';
+  } catch(e) {
+    out.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;font-size:13px;color:#991b1b">🤖 AI 深度诊断暂时不可用（' + (e && e.message ? e.message : '服务异常') + '）。可先参考上方本地评分报告，或稍后重试。</div>';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = oldText; }
+  }
 
 }
 
@@ -124905,7 +125286,7 @@ function switchPublishTab(tab) {
 
 
 
-  ['recommend','library','compare','tools','manage','format','plan'].forEach(function(t) {
+  ['recommend','library','compare','tools','manage','format','plan','advisor'].forEach(function(t) {
 
 
 
@@ -124937,11 +125318,187 @@ function switchPublishTab(tab) {
 
   if (tab === 'plan') renderPubPlan();
 
+  if (tab === 'advisor') renderPublishAdvisor();
+
 
 
 }
 
 
+
+// ========== 投稿顾问（M2-③，RAG） ==========
+
+function buildAdvisorContext(q) {
+
+  var ctx = [];
+  var text = String(q || '').toLowerCase();
+  var qWords = text.match(/[a-z]{3,}/g) || [];
+
+  // 1) 相关期刊档案（问题关键词匹配 Top3：中文关键词 + 英文词交集 + 期刊名 + 收稿范围）
+  try {
+    var all = PHD_JOURNALS.concat(CN_JOURNALS);
+    var scored = all.map(function(j) {
+      var kwHit = (j.matchKeywords || []).filter(function(k) { return text.indexOf(String(k).toLowerCase()) >= 0; }).length;
+      var kwWords = String((j.matchKeywords || []).join(' ')).toLowerCase().match(/[a-z]{3,}/g) || [];
+      var enHit = qWords.filter(function(w) { return kwWords.indexOf(w) >= 0; }).length;
+      var nameHit = text.indexOf(String(j.name).toLowerCase()) >= 0 ? 1 : 0;
+      var scHit = text.indexOf(String(j.scope || '').toLowerCase()) >= 0 ? 2 : 0;
+      return {j: j, s: kwHit * 2 + enHit * 3 + nameHit * 3 + scHit};
+    }).sort(function(a, b) { return b.s - a.s; }).slice(0, 3);
+    var hot = scored.filter(function(x) { return x.s > 0; });
+    if (hot.length) {
+      ctx.push('【相关期刊档案（本地期刊库检索命中）】');
+      hot.forEach(function(x) {
+        var j = x.j;
+        ctx.push('期刊：' + j.name + '；分区/收录：' + (j.jcr || j.cas || '普通刊') + '；影响因子：' + (j.if || '—') + '；录用率约：' + (j.acceptRate || '—') + '%；平均审稿周期约：' + (j.reviewDays || '—') + '天；收稿范围关键词：' + (j.matchKeywords || []).slice(0, 8).join('、'));
+      });
+    } else {
+      var fb = [getPubJournalByName('体育科学'), getPubJournalByName('北京体育大学学报'), getPubJournalByName('Sports Medicine')].filter(Boolean);
+      ctx.push('【相关期刊档案（未精确命中关键词，给出常用综合期刊参考）】');
+      fb.forEach(function(j) {
+        ctx.push('期刊：' + j.name + '；分区/收录：' + (j.jcr || j.cas || '普通刊') + '；影响因子：' + (j.if || '—') + '；录用率约：' + (j.acceptRate || '—') + '%；平均审稿周期约：' + (j.reviewDays || '—') + '天；收稿范围关键词：' + (j.matchKeywords || []).slice(0, 8).join('、'));
+      });
+    }
+  } catch(e) {}
+
+  // 2) 用户投稿记录统计
+  try {
+    var papers = getPubPapers();
+    var total = 0, st = {};
+    papers.forEach(function(p) { (p.submissions || []).forEach(function(s) { total++; st[s.status] = (st[s.status] || 0) + 1; }); });
+    if (total) {
+      ctx.push('【你的投稿记录】总投稿 ' + total + ' 次：在审 ' + (st.under_review || 0) + '、修回 ' + ((st.minor_revision || 0) + (st.major_revision || 0)) + '、录用 ' + ((st.accepted || 0) + (st.published || 0)) + '、拒稿 ' + (st.rejected || 0) + '。');
+      var last = null;
+      papers.forEach(function(p) { (p.submissions || []).forEach(function(s) { if (!last || (s.resultDate || s.submitDate || '') > (last.d || '')) last = {d: s.resultDate || s.submitDate || '', j: s.journal, st: s.status}; }); });
+      if (last && last.d) ctx.push('最近一条记录：' + last.d + ' ' + last.j + '（' + last.st + '）');
+    } else {
+      ctx.push('【你的投稿记录】暂无投稿记录。');
+    }
+  } catch(e) {}
+
+  ctx.push('【期刊库规模】本地期刊库共 ' + (PHD_JOURNALS.length + CN_JOURNALS.length) + ' 本（国际 ' + PHD_JOURNALS.length + ' + 中文核心/体育期刊 ' + CN_JOURNALS.length + '）。');
+  ctx.push('【数据口径】以上期刊数据由公开信息整理并结合经验估算，仅供参考。');
+
+  return ctx.join('\n');
+
+}
+
+function renderPublishAdvisor() {
+
+  var container = document.getElementById('pubContent-advisor');
+  if (!container) return;
+
+  var logs = [];
+  try { logs = JSON.parse(localStorage.getItem('phd_advisor_log') || '[]'); } catch(e) {}
+
+  var html = '';
+
+  html += '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:12px;padding:20px;margin-bottom:16px">';
+
+  html += '<div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:4px">🤖 投稿顾问（基于期刊库与你的投稿记录）</div>';
+
+  html += '<div style="font-size:12px;color:#7c3aed;margin-bottom:12px">问任何投稿问题：选刊、审稿周期、拒稿对策、投稿流程…顾问会结合 86 本期刊档案与你的投稿记录作答</div>';
+
+  html += '<div id="advisorChat" style="max-height:380px;overflow-y:auto;background:#fff;border:1px solid #e9d5ff;border-radius:10px;padding:14px;margin-bottom:12px">';
+
+  if (logs.length === 0) {
+    html += '<div style="text-align:center;color:#a78bfa;font-size:12px;padding:20px">👋 你好！我是你的投稿顾问。可以问我：</div>';
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px"><button onclick="askAdvisorQuick(0)" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px">🧭 我这篇 HIIT 论文该投哪？</button><button onclick="askAdvisorQuick(1)" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px">⏱️ 期刊审稿周期一般多久？</button><button onclick="askAdvisorQuick(2)" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px">🔄 被拒稿后怎么办？</button></div>';
+  } else {
+    logs.forEach(function(m) {
+      var mine = m.role === 'user';
+      html += '<div style="display:flex;justify-content:' + (mine ? 'flex-end' : 'flex-start') + ';margin-bottom:10px"><div style="max-width:85%;background:' + (mine ? '#7c3aed' : '#f5f3ff') + ';color:' + (mine ? '#fff' : '#1e293b') + ';border-radius:12px;padding:10px 14px;font-size:13px;line-height:1.7;white-space:pre-wrap">' + (mine ? escHtml(m.text) : m.text) + '</div></div>';
+    });
+  }
+
+  html += '</div>';
+
+  html += '<div style="display:flex;gap:8px"><input type="text" id="advisorInput" placeholder="输入你的投稿问题…" style="flex:1;padding:10px 14px;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;outline:none;background:#fff;color:#1e293b" onkeydown="if(event.key===\'Enter\')sendAdvisorQuestion()"><button onclick="sendAdvisorQuestion()" id="advisorSendBtn" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">发送</button></div>';
+
+  html += '</div>';
+
+  container.innerHTML = html;
+
+}
+
+function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function advisorQuickText(i) {
+
+  return ['我有一篇关于高强度间歇训练(HIIT)对肥胖人群影响的论文，适合投哪些期刊？', '这些期刊的平均审稿周期一般多久？投稿后多久可以催稿？', '我的论文被拒稿了，接下来应该怎么调整和改投？'][i] || '';
+
+}
+
+function askAdvisorQuick(i) {
+
+  var input = document.getElementById('advisorInput');
+  if (input) input.value = advisorQuickText(i);
+  sendAdvisorQuestion();
+
+}
+
+function advisorAppendMsg(role, text) {
+
+  var chat = document.getElementById('advisorChat');
+  if (!chat) return;
+  var mine = role === 'user';
+  var div = document.createElement('div');
+  div.style.cssText = 'display:flex;justify-content:' + (mine ? 'flex-end' : 'flex-start') + ';margin-bottom:10px';
+  var bubble = document.createElement('div');
+  bubble.style.cssText = 'max-width:85%;background:' + (mine ? '#7c3aed' : '#f5f3ff') + ';color:' + (mine ? '#fff' : '#1e293b') + ';border-radius:12px;padding:10px 14px;font-size:13px;line-height:1.7;white-space:pre-wrap';
+  bubble.textContent = text;
+  div.appendChild(bubble);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+
+}
+
+function saveAdvisorLog(role, text) {
+
+  try {
+    var logs = JSON.parse(localStorage.getItem('phd_advisor_log') || '[]');
+    logs.push({role: role, text: text, time: new Date().toISOString()});
+    if (logs.length > 20) logs = logs.slice(-20);
+    localStorage.setItem('phd_advisor_log', JSON.stringify(logs));
+  } catch(e) {}
+
+}
+
+async function sendAdvisorQuestion() {
+
+  var input = document.getElementById('advisorInput');
+  var btn = document.getElementById('advisorSendBtn');
+  var q = input ? input.value.trim() : '';
+  if (!q) return;
+  if (btn) btn.disabled = true;
+  input.value = '';
+
+  advisorAppendMsg('user', q);
+  saveAdvisorLog('user', q);
+  advisorAppendMsg('ai', '🤔 正在检索期刊库与你的投稿记录，请稍候…');
+
+  var ctx = '';
+  try { ctx = buildAdvisorContext(q); } catch(e) {}
+
+  var sys = '你是一位体育科研投稿顾问，熟悉国内体育类核心期刊与国际运动科学期刊。请基于【本地检索资料】与【你的投稿记录】中的数据作答，不要编造数据；期刊录用率与审稿周期均为估算值，回答时注明"仅供参考"。回答用简体中文，结构清晰、分点作答，控制在 400 字以内。';
+  var usr = q + '\n\n【本地检索资料】\n' + ctx;
+
+  try {
+    var resp = await callDeepSeekAPI(sys, usr, 1500);
+    var txt = typeof resp === 'string' ? resp : (resp && resp.content ? resp.content : (resp && resp.text ? resp.text : JSON.stringify(resp)));
+    var chat = document.getElementById('advisorChat');
+    if (chat) chat.removeChild(chat.lastChild);
+    advisorAppendMsg('ai', txt);
+    saveAdvisorLog('ai', txt);
+  } catch(e) {
+    var chat2 = document.getElementById('advisorChat');
+    if (chat2) chat2.removeChild(chat2.lastChild);
+    advisorAppendMsg('ai', '⚠️ 顾问服务暂时不可用（' + (e && e.message ? e.message : '网络异常') + '）。可稍后重试，或先使用投稿工具中的"精准匹配引擎"与"竞争力报告"。');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+
+}
 
 // ========== 投稿计划（P1） ==========
 
