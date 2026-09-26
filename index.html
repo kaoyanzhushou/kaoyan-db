@@ -107320,7 +107320,7 @@ function renderPhdPublish(containerId) {
 
 
 
-  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">';
+  html += '<div id="pubToolGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">';
 
 
 
@@ -107383,6 +107383,7 @@ function renderPhdPublish(containerId) {
   html += '<div onclick="showPubTool(\'learnloop\')" style="background:linear-gradient(135deg,#ecfeff,#cffafe);border:1px solid #67e8f9;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📈</div><div style="font-size:15px;font-weight:700;color:#0e7490;margin-bottom:4px">学习闭环</div><div style="font-size:12px;color:#155e75">推荐命中率 + 选择回填 + 时间衰减概率校准，越用越准</div></div>';
 
   html += '<div onclick="showPubTool(\'deepai\')" style="background:linear-gradient(135deg,#fff7ed,#eff6ff);border:1px solid #fdba74;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🧠</div><div style="font-size:15px;font-weight:700;color:#7c2d12;margin-bottom:4px">大模型深度</div><div style="font-size:12px;color:#c2410c">全文五维评审 + 选刊AI解读 + 语义查重升级 + 审稿周期预测</div></div>';
+  html += '<div onclick="showPubTool(\'datahealth\')" style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border:1px solid #86efac;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📊</div><div style="font-size:15px;font-weight:700;color:#166534;margin-bottom:4px">数据健康检查</div><div style="font-size:12px;color:#15803d">体检投稿/学习数据：重复论文、缺字段、损坏记录一键修复</div></div>';
 
 
 
@@ -107392,9 +107393,12 @@ function renderPhdPublish(containerId) {
 
   html += '<div id="pubToolContent" style="margin-top:20px"></div>';
 
+  setTimeout(function() { try { organizePubToolCards(); } catch(e) {} }, 0);
+
 
 
   html += '</div>';
+
 
 
 
@@ -107912,6 +107916,182 @@ async function aiRecommendJournals() {
 
 
 
+}
+// ========== P6-UI 投稿工具页分组整理（分区 + 搜索 + 紧凑化） ==========
+
+var PUB_TOOL_GROUPS = [
+  {name: '🎯 选刊决策', color: '#155e75', tools: ['matcher', 'similar', 'multimodel', 'compet', 'resub']},
+  {name: '✍️ 投稿准备', color: '#065f46', tools: ['coverletter', 'checklist', 'title', 'highlights', 'reviewer', 'refs', 'translate']},
+  {name: '🛡️ 审稿应对', color: '#991b1b', tools: ['response', 'simreview', 'rltable', 'followup']},
+  {name: '🧭 选题进阶', color: '#92400e', tools: ['reverse', 'hotspot', 'ladder']},
+  {name: '🔬 深度与系统', color: '#5b21b6', tools: ['deepai', 'datahealth', 'learnloop', 'citations', 'privacy']}
+];
+
+function pubToolCardTool(el) {
+  var m = /showPubTool\('([^']+)'\)/.exec(el.getAttribute('onclick') || '');
+  return m ? m[1] : '';
+}
+
+function organizePubToolCards() {
+  var grid = document.getElementById('pubToolGrid');
+  if (!grid) return;
+  if (grid.parentNode.querySelector('#pubToolOrganized')) return;
+  var cards = [];
+  grid.querySelectorAll('div[onclick^="showPubTool("]').forEach(function(c) {
+    cards.push({tool: pubToolCardTool(c), el: c});
+  });
+  var byTool = {};
+  cards.forEach(function(c) { byTool[c.tool] = c.el; });
+  var searchHtml = '<div style="margin-bottom:16px"><input id="pubToolSearch" oninput="pubFilterTools()" placeholder="🔍 搜索工具：如 审稿 / 期刊 / 翻译 / 查重…" style="width:100%;padding:11px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;background:#fff;color:#1e293b;box-sizing:border-box"></div>';
+  var secHtml = '';
+  PUB_TOOL_GROUPS.forEach(function(g) {
+    secHtml += '<div class="pubToolSection" data-group="' + g.name + '" style="margin-bottom:18px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:14px;font-weight:700;color:' + g.color + '">' + g.name + '</span><span class="pubToolSecCount" style="font-size:11px;color:#94a3b8"></span><div style="flex:1;height:2px;background:linear-gradient(90deg,' + g.color + '44,transparent)"></div></div><div class="pubToolSecGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:12px"></div></div>';
+  });
+  grid.style.display = 'none';
+  var wrap = document.createElement('div');
+  wrap.id = 'pubToolOrganized';
+  wrap.innerHTML = searchHtml + secHtml;
+  grid.parentNode.insertBefore(wrap, grid);
+  PUB_TOOL_GROUPS.forEach(function(g) {
+    var sec = wrap.querySelector('.pubToolSection[data-group="' + g.name + '"] .pubToolSecGrid');
+    if (!sec) return;
+    g.tools.forEach(function(t) {
+      var el = byTool[t];
+      if (el) sec.appendChild(el);
+    });
+  });
+  // 紧凑化
+  wrap.querySelectorAll('div[onclick^="showPubTool("]').forEach(function(c) {
+    c.style.padding = '14px';
+    var icon = c.querySelector('div[style*="font-size:28px"]');
+    if (icon) { icon.style.fontSize = '22px'; icon.style.marginBottom = '6px'; }
+    var desc = c.querySelector('div[style*="font-size:12px"]');
+    if (desc) { desc.style.fontSize = '11px'; desc.style.marginTop = '2px'; }
+  });
+  PUB_TOOL_GROUPS.forEach(function(g) {
+    var sec = wrap.querySelector('.pubToolSection[data-group="' + g.name + '"]');
+    var n = sec ? sec.querySelectorAll('div[onclick^="showPubTool("]').length : 0;
+    var cnt = sec ? sec.querySelector('.pubToolSecCount') : null;
+    if (cnt) cnt.textContent = n + ' 个工具';
+  });
+}
+
+function pubDataHealthRun() {
+  var out = document.getElementById('pubHealthReport');
+  if (!out) return;
+  var issues = []; var checks = [];
+  var keyDefs = [
+    ['phd_publish_papers', '投稿记录'], ['phd_publish_plan', '投稿计划'], ['phd_rl_table', '审稿对照表'],
+    ['phd_learn_events', '学习日志'], ['phd_mab_weights', 'MAB权重'], ['phd_journal_corrections', '期刊更正'],
+    ['phd_cite_track', '引用追踪'], ['phd_resubmit_log', '拒稿履历']
+  ];
+  keyDefs.forEach(function(kd) {
+    var raw = null; try { raw = localStorage.getItem(kd[0]); } catch(e) {}
+    if (!raw) { checks.push({name: kd[1], ok: 1, desc: '未使用（空）'}); return; }
+    var arr = null;
+    try { arr = JSON.parse(raw); } catch(e) {}
+    if (arr === null || arr === undefined) { checks.push({name: kd[1], ok: 0, desc: 'JSON 损坏 ⚠'}); issues.push(kd[0] + ' JSON 损坏'); return; }
+    var n = (arr && arr.length !== undefined) ? arr.length : 1;
+    checks.push({name: kd[1], ok: 1, desc: '正常 · ' + n + ' 条'});
+  });
+  try {
+    var papers = getPubPapers();
+    var seen = {}; var dups = [];
+    papers.forEach(function(p) {
+      var t = (p.title || '').trim();
+      if (!t) { dups.push('论文缺少标题'); return; }
+      if (seen[t] !== undefined) dups.push('重复论文：《' + t.slice(0, 20) + '》');
+      else seen[t] = 1;
+    });
+    papers.forEach(function(p) {
+      (p.submissions || []).forEach(function(s) {
+        if (!s.submitDate) dups.push('投稿缺日期：《' + (p.title || '').slice(0, 15) + '》→' + (s.journal || '?'));
+        if (!s.status) dups.push('投稿缺状态：《' + (p.title || '').slice(0, 15) + '》');
+      });
+      if (!p.addedTs) dups.push('论文缺时间戳：《' + (p.title || '').slice(0, 15) + '》');
+    });
+    var allNames = {};
+    try {
+      (typeof PHD_JOURNALS !== 'undefined' ? PHD_JOURNALS : []).concat(typeof CN_JOURNALS !== 'undefined' ? CN_JOURNALS : []).forEach(function(j) { if (j && j.name) allNames[j.name] = 1; });
+    } catch(e2) {}
+    papers.forEach(function(p) {
+      (p.submissions || []).forEach(function(s) {
+        if (s.journal && !allNames[s.journal]) dups.push('期刊不在库内：' + s.journal);
+      });
+    });
+    papers.forEach(function(p) {
+      (p.submissions || []).forEach(function(s) {
+        if (s.status === 'under_review' && s.submitDate) {
+          var d = new Date(s.submitDate);
+          if (!isNaN(d.getTime()) && (Date.now() - d.getTime()) > 365 * 86400000) dups.push('审稿超1年：《' + (p.title || '').slice(0, 15) + '》');
+        }
+      });
+    });
+    issues = issues.concat(dups);
+  } catch(e) { issues.push('投稿记录读取异常: ' + e.message); }
+  try {
+    var ev = JSON.parse(localStorage.getItem('phd_learn_events') || '[]');
+    if (ev && ev.length !== undefined) {
+      var bad = ev.filter(function(x) { return !x || (!x.tool && !x.journal); }).length;
+      if (bad) issues.push('学习日志有 ' + bad + ' 条不完整记录');
+    }
+  } catch(e) { issues.push('学习日志损坏'); }
+  var score = Math.max(0, 100 - issues.length * 8);
+  var h = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div style="font-size:28px;font-weight:800;color:' + (score >= 90 ? '#059669' : score >= 60 ? '#d97706' : '#dc2626') + '">' + score + '</div><div style="font-size:13px;color:#475569">健康评分（100 满分，发现 ' + issues.length + ' 个问题）</div></div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:12px">';
+  checks.forEach(function(c) {
+    h += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:12px"><span style="font-weight:600;color:#1e293b">' + c.name + '</span><span style="margin-left:6px;color:' + (c.ok ? '#059669' : '#dc2626') + '">' + (c.ok ? '✓' : '⚠') + '</span><div style="color:#64748b;margin-top:2px">' + c.desc + '</div></div>';
+  });
+  h += '</div>';
+  if (issues.length) {
+    h += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#b91c1c;margin-bottom:6px">发现的问题</div>';
+    issues.slice(0, 12).forEach(function(it) { h += '<div style="font-size:12px;color:#7f1d1d;padding:3px 0">⚠ ' + it + '</div>'; });
+    if (issues.length > 12) h += '<div style="font-size:11px;color:#94a3b8">…等 ' + issues.length + ' 项</div>';
+    h += '</div>';
+    h += '<button onclick="pubDataHealthFix()" style="background:#dc2626;color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🛠 一键修复可自动项（损坏JSON/重复论文）</button>';
+  } else {
+    h += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:13px;color:#166534">✅ 全部数据健康，无需修复</div>';
+  }
+  out.innerHTML = h;
+}
+
+function pubDataHealthFix() {
+  var fixed = [];
+  var keys = ['phd_publish_plan', 'phd_rl_table', 'phd_learn_events', 'phd_mab_weights', 'phd_journal_corrections', 'phd_cite_track', 'phd_resubmit_log'];
+  keys.forEach(function(k) {
+    var raw = null; try { raw = localStorage.getItem(k); } catch(e) {}
+    if (raw) { try { JSON.parse(raw); } catch(e) { try { localStorage.setItem(k, '[]'); fixed.push(k + ' 已重置'); } catch(e2) {} } }
+  });
+  var papers = getPubPapers();
+  var seen = {}; var kept = []; var removed = 0;
+  papers.forEach(function(p) {
+    var t = (p.title || '').trim();
+    if (!t) { if (!p.addedTs) p.addedTs = Date.now(); kept.push(p); return; }
+    if (seen[t]) {
+      if ((p.addedTs || 0) > (seen[t].addedTs || 0)) { kept.push(p); removed++; fixed.push('保留最新《' + t.slice(0, 12) + '》'); }
+      else { removed++; fixed.push('移除重复《' + t.slice(0, 12) + '》'); }
+    } else { seen[t] = p; kept.push(p); }
+  });
+  if (kept.length !== papers.length) { savePubPapers(kept); }
+  if (removed) fixed.push('论文去重 ' + removed + ' 条');
+  alert('✅ 修复完成：' + (fixed.length ? fixed.join('；') : '无可修复项'));
+  pubDataHealthRun();
+}
+
+function pubFilterTools() {
+  var q = (document.getElementById('pubToolSearch').value || '').trim().toLowerCase();
+  var wrap = document.getElementById('pubToolOrganized');
+  if (!wrap) return;
+  var any = false;
+  wrap.querySelectorAll('div[onclick^="showPubTool("]').forEach(function(c) {
+    var show = !q || (c.textContent || '').toLowerCase().indexOf(q) >= 0;
+    c.style.display = show ? '' : 'none';
+    if (show) any = true;
+  });
+  wrap.querySelectorAll('.pubToolSection').forEach(function(sec) {
+    var vis = sec.querySelectorAll('div[onclick^="showPubTool("]').length;
+    sec.style.display = vis ? '' : 'none';
+  });
 }
 
 
@@ -116150,6 +116330,18 @@ function showPubTool(tool) {
       try { pubTimelinePredictUI(); } catch(e) {}
     }, 50);
 
+  } else if (tool === 'datahealth') {
+
+    html = '<div style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border:1px solid #86efac;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#166534;margin-bottom:4px">📊 数据健康检查</div>';
+
+    html += '<div style="font-size:12px;color:#15803d;margin-bottom:14px">体检全部投稿/学习数据：重复论文、缺失字段、损坏记录、期刊名校验——数据干净，算法才精准。检查为只读，修复需你点击确认。</div>';
+
+    html += '<button onclick="pubDataHealthRun()" style="background:#059669;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 开始体检</button>';
+
+    html += '<div id="pubHealthReport" style="margin-top:14px"></div>';
+
   } else if (tool === 'format') {
 
     html = '<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px">';
@@ -121481,6 +121673,18 @@ function getPubPapers() {
 function savePubPapers(papers) {
 
 
+
+  var now = Date.now();
+
+  (papers || []).forEach(function(p) {
+
+    if (!p.id) p.id = 'p' + now + '_' + Math.random().toString(36).slice(2, 7);
+
+    if (!p.addedTs) p.addedTs = now;
+
+    (p.submissions || []).forEach(function(s) { if (!s.ts) s.ts = now; });
+
+  });
 
   localStorage.setItem(PUB_PAPERS_KEY, JSON.stringify(papers));
 
