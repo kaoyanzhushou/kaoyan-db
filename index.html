@@ -23469,7 +23469,7 @@ window.addEventListener('load', function(){
 
  <!-- 子标签栏 -->
 
- <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid #e5e7eb;flex-wrap:wrap">
+ <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid #e5e7eb;flex-wrap:wrap" id="paperTabBar">
 
  <button onclick="switchPaperSubTab('projects')" id="paperTab-projects" style="padding:10px 20px;border:none;background:#16a34a;color:#fff;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">我的论文</button>
 
@@ -23507,7 +23507,6 @@ window.addEventListener('load', function(){
 
  <button onclick="switchPaperSubTab('debate2')" id="paperTab-debate2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">⚖️ 模型辩论</button>
 
- <button onclick="switchPaperSubTab('toolbox')" id="paperTab-toolbox" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🧰 学术工具箱</button>
 
  <button onclick="switchPaperSubTab('format2')" id="paperTab-format2" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📝 格式排版</button>
 
@@ -23558,6 +23557,119 @@ window.addEventListener('load', function(){
 <button class="paper-tab-btn" data-paper-tab="experiment-design" id="paperTab-experiment-design" onclick="navigateToPaperSubTab('experiment-design')">🧪 实验设计</button>
 
  </div>
+
+<script>
+// ========== 论文工作台 tab 分组收敛（P0-1）==========
+(function(){
+  var bar = document.getElementById('paperTabBar');
+  if(!bar || bar.getAttribute('data-grouped')) return;
+  var btns = Array.prototype.slice.call(bar.querySelectorAll('button'));
+  if(!btns.length) return;
+
+  var GROUPS = [
+    {name:'📁 项目管理', core:['我的论文','研究设计'], extra:['决策日志','论文转教案','技术路线图']},
+    {name:'✍️ 写作与润色', core:['AI写作助手','论文润色'], extra:['写作助手','体育学特色','学术英语','写作流水线','论文助手']},
+    {name:'🔍 检查与查重', core:['格式检查','论文查重'], extra:['查重自检','引用核验','格式排版']},
+    {name:'🧠 深度分析', core:['评审圆桌','研究趋势'], extra:['反思链','想法评估','数据链路','预注册','模型辩论','审稿人模拟器','影响力']},
+    {name:'📤 投稿与发表', core:['投稿中心','期刊匹配'], extra:['审稿人预测','投稿时机','引用格式化','实验设计']},
+    {name:'📚 文献与研究', core:['文献管理','文献增强'], extra:['知识库','个人知识库','模型流水线','图表生成','学术工具箱','研究辅助']}
+  ];
+
+  var getTxt = function(b){ return (b.textContent||'').replace(/\s+/g,'').trim(); };
+
+  var findGroup = function(b){
+    var txt = getTxt(b);
+    for(var g=0; g<GROUPS.length; g++){
+      var all = GROUPS[g].core.concat(GROUPS[g].extra);
+      for(var k=0; k<all.length; k++){
+        if(txt.indexOf(all[k]) >= 0) return g;
+      }
+    }
+    return 6; // 未匹配 → 其他组
+  };
+
+  var isCore = function(b){
+    var txt = getTxt(b);
+    for(var g=0; g<GROUPS.length; g++){
+      for(var k=0; k<GROUPS[g].core.length; k++){
+        if(txt === GROUPS[g].core[k]) return true;
+      }
+    }
+    return false;
+  };
+
+  // 按组收集（g=6 为"其他"）
+  var map = {};
+  btns.forEach(function(b){
+    var g = findGroup(b);
+    if(!map[g]) map[g] = {name: (g<6 ? GROUPS[g].name : '🗂️ 其他'), core: [], extra: []};
+    if(isCore(b)) map[g].core.push(b); else map[g].extra.push(b);
+  });
+
+  var frag = document.createDocumentFragment();
+  var allOpen = false;
+
+  var makeHead = function(gi){
+    var head = document.createElement('span');
+    head.style.cssText = 'display:inline-flex;align-items:center;padding:10px 10px 10px 4px;font-size:13px;font-weight:700;color:#374151;cursor:pointer;user-select:none;white-space:nowrap';
+    head.setAttribute('data-group-head', gi);
+    head.textContent = map[gi].name;
+    head.title = '点击展开/收起本组更多工具';
+    head.onclick = function(){
+      var gi2 = parseInt(this.getAttribute('data-group-head'), 10);
+      var ex = map[gi2].extra;
+      var showing = ex.length && ex[0].style.display !== 'none';
+      ex.forEach(function(b){ b.style.display = showing ? 'none' : ''; });
+      var m = bar.querySelector('.grp-more[data-group-head="' + gi2 + '"]');
+      if(m) m.textContent = showing ? ('▸ +' + ex.length) : ('▾ -' + ex.length);
+    };
+    return head;
+  };
+
+  // 组渲染顺序：先渲染各组（core 常显 + extra 折叠 + 更多标签），其他组最后
+  var order = [0,1,2,3,4,5,6];
+  order.forEach(function(gi){
+    if(!map[gi]) return;
+    frag.appendChild(makeHead(gi));
+    map[gi].core.forEach(function(b){ frag.appendChild(b); });
+    if(map[gi].extra.length){
+      var more = document.createElement('span');
+      more.style.cssText = 'display:inline-flex;align-items:center;padding:10px 12px;font-size:12px;color:#6b7280;cursor:pointer;user-select:none;white-space:nowrap;background:#f9fafb;border-radius:8px 8px 0 0;margin-right:4px';
+      more.textContent = '▸ +' + map[gi].extra.length;
+      more.className = 'grp-more';
+      more.setAttribute('data-group-head', gi);
+      frag.appendChild(more);
+      more.onclick = makeHead(gi).onclick;
+      map[gi].extra.forEach(function(b){ b.style.display = 'none'; frag.appendChild(b); });
+    }
+  });
+
+  // 全部展开/收起
+  var toggle = document.createElement('span');
+  toggle.style.cssText = 'display:inline-flex;align-items:center;margin-left:auto;padding:6px 12px;font-size:12px;color:#16a34a;cursor:pointer;user-select:none;white-space:nowrap;font-weight:600';
+  toggle.textContent = '全部展开';
+  toggle.title = '显示/隐藏全部工具按钮';
+  frag.appendChild(toggle);
+  toggle.onclick = function(){
+    allOpen = !allOpen;
+    toggle.textContent = allOpen ? '收起' : '全部展开';
+    if(allOpen){
+      btns.forEach(function(b){ b.style.display = ''; });
+      bar.querySelectorAll('.grp-more').forEach(function(m){ m.style.display = 'none'; });
+    } else {
+      btns.forEach(function(b){ b.style.display = ''; });
+      [0,1,2,3,4,5,6].forEach(function(gi){
+        if(map[gi]) map[gi].extra.forEach(function(b){ b.style.display = 'none'; });
+      });
+      bar.querySelectorAll('.grp-more').forEach(function(m){ m.style.display = ''; });
+    }
+  };
+
+  bar.appendChild(frag);
+  bar.setAttribute('data-grouped', '1');
+})();
+</script>
+
 
  <!-- 我的论文页面 -->
 
