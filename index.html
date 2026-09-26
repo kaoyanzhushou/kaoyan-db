@@ -26529,6 +26529,38 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
  </div>
 
+ <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-top:16px">
+
+ <div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:4px">🗺️ 研究空白地图（P2）</div>
+
+ <div style="font-size:12px;color:#6b7280;margin-bottom:14px">基于「文献管理」库真实统计 12 大体育科研方向的文献覆盖度，标出空白/薄弱领域，为选题与投稿方向提供数据支撑。</div>
+
+ <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+
+ <div style="flex:1;min-width:220px">
+
+ <label style="font-size:12px;color:#6b7280;font-weight:600">我的研究主题（可选，用于相对空白分析）</label>
+
+ <input id="gapTopic" placeholder="如：高强度间歇训练对大学生心肺功能的影响" style="width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box;margin-top:4px;outline:none">
+
+ </div>
+
+ </div>
+
+ <div style="display:flex;gap:10px;align-items:center">
+
+ <button onclick="runGapMap()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🗺️ 生成空白地图</button>
+
+ <button onclick="aiGapAdvice()" style="background:#fff;color:#7c3aed;border:1.5px solid #a78bfa;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">🤖 AI 选题建议</button>
+
+ <span id="gapStatus" style="font-size:12px;color:#6b7280"></span>
+
+ </div>
+
+ <div id="gapResult" style="margin-top:14px"></div>
+
+ </div>
+
  </div>
 
  <!-- 反思链（生成→自检→修正，三模型轮换） -->
@@ -183308,6 +183340,126 @@ async function aiLogicAdvice(){
     st.textContent = '审查完成';
   }catch(e){
     box.innerHTML = '<div style="background:#fef2f2;border-radius:8px;padding:14px;color:#b91c1c;font-size:13px">审查失败：' + e.message + '</div>';
+    st.textContent = '';
+  }
+}
+
+// ========== 研究空白地图（P2）==========
+const GAP_DOMAINS = [
+ {name:'运动训练学', kw:['训练','负荷','周期','力量训练','速度','耐力','专项','竞技','间歇']},
+ {name:'运动生理学', kw:['生理','摄氧','VO2','心率','乳酸','肌酸','代谢','心肺','血乳酸','最大摄氧']},
+ {name:'运动生物力学', kw:['生物力学','力学','关节','力矩','步态','动作分析','肌电','地面反作用力']},
+ {name:'运动心理学', kw:['心理','动机','焦虑','情绪','自信','注意力','自我效能','心理疲劳']},
+ {name:'体育人文社会学', kw:['人文','社会','文化','政策','历史','治理','社会学','符号','认同']},
+ {name:'体育教育', kw:['教学','课程','教育','学生','课堂','体育课','学习','师范']},
+ {name:'运动医学', kw:['损伤','医学','伤病','治疗','膝','踝','肩','前交叉','ACL','半月板']},
+ {name:'运动康复', kw:['康复','理疗','功能评估','活动度','肌力恢复','神经肌肉','运动处方']},
+ {name:'体能训练', kw:['体能','核心','敏捷','爆发力','FMS','功能性','柔韧','灵敏']},
+ {name:'体育产业', kw:['产业','经济','消费','市场','赛事运营','赞助','品牌','数字化']},
+ {name:'运动营养', kw:['营养','补充','蛋白','碳水','肌酸','饮食','膳食']},
+ {name:'体质健康', kw:['体质','健康','体脂','BMI','久坐','体力活动','青少年','大学生']}
+];
+function runGapMap(){
+  const box = document.getElementById('gapResult');
+  const st = document.getElementById('gapStatus');
+  const topic = (document.getElementById('gapTopic')||{value:''}).value.trim();
+  const lit = (typeof getPaperLiterature==='function') ? getPaperLiterature() : [];
+  st.textContent = '统计中（文献库 ' + lit.length + ' 篇）...';
+  if(lit.length === 0){
+    box.innerHTML = '<div style="background:#fef2f2;border-radius:8px;padding:14px;color:#b91c1c;font-size:13px">📭 文献库为空。请先到「文献管理」导入文献（标题/摘要/笔记均可），空白地图基于你的真实文献库统计。</div>';
+    st.textContent = '';
+    return;
+  }
+  const domains = GAP_DOMAINS.map(function(d){
+    return {name:d.name, kw:d.kw, papers:0, hits:0, sample:[]};
+  });
+  lit.forEach(function(p){
+    const txt = ((p.title||'') + ' ' + (p.abstract||'') + ' ' + (p.notes||'')).toLowerCase();
+    domains.forEach(function(d){
+      let hit = false;
+      d.kw.forEach(function(k){
+        if(txt.indexOf(k.toLowerCase())>=0){ d.hits++; hit = true; }
+      });
+      if(hit){ d.papers++; if(d.sample.length<2) d.sample.push((p.title||'').slice(0,30)); }
+    });
+  });
+  const maxPapers = Math.max(1, Math.max.apply(null, domains.map(function(d){ return d.papers; })));
+  // 主题相关领域
+  let topicHits = [];
+  if(topic){
+    const tl = topic.toLowerCase();
+    domains.forEach(function(d){
+      d.kw.forEach(function(k){
+        if(tl.indexOf(k.toLowerCase())>=0) topicHits.push(d.name);
+      });
+    });
+    topicHits = Array.from(new Set(topicHits));
+  }
+  // 输出
+  let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px"><div style="font-size:15px;font-weight:700;color:#1f2937">🗺️ 领域覆盖度地图</div><span style="font-size:12px;color:#6b7280">基于你的文献库共 ' + lit.length + ' 篇文献的真实统计</span></div>';
+  // 矩阵
+  html += '<div style="margin-bottom:14px">';
+  domains.forEach(function(d){
+    const pct = Math.round(d.papers / maxPapers * 100);
+    const level = d.papers===0 ? {label:'空白', color:'#b91c1c', bg:'#fef2f2'} : d.papers<=2 ? {label:'薄弱', color:'#b45309', bg:'#fffbeb'} : d.papers<=5 ? {label:'中等', color:'#2563eb', bg:'#eff6ff'} : {label:'成熟', color:'#047857', bg:'#ecfdf5'};
+    const rel = topicHits.indexOf(d.name)>=0 ? ' 🔗主题相关' : '';
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
+    html += '<div style="width:130px;font-size:12px;color:#1f2937;font-weight:600">' + d.name + rel + '</div>';
+    html += '<div style="flex:1;background:#f1f5f9;border-radius:6px;height:18px;position:relative"><div style="width:' + pct + '%;background:' + level.color + ';border-radius:6px;height:18px;opacity:0.85"></div></div>';
+    html += '<div style="width:80px;font-size:11px;color:' + level.color + ';font-weight:700">' + level.label + '(' + d.papers + '篇)</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  // 空白清单
+  const blanks = domains.filter(function(d){ return d.papers===0; });
+  const weak = domains.filter(function(d){ return d.papers>0 && d.papers<=2; });
+  if(blanks.length>0 || weak.length>0){
+    html += '<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:12px">';
+    html += '<div style="font-size:13px;font-weight:700;color:#1f2937;margin-bottom:8px">🎯 空白与薄弱方向（选题机会）</div>';
+    if(blanks.length>0){
+      html += '<div style="font-size:12px;color:#b91c1c;line-height:2">🔴 完全空白：' + blanks.map(function(d){ return d.name; }).join('、') + '（文献库 0 覆盖）</div>';
+    }
+    if(weak.length>0){
+      html += '<div style="font-size:12px;color:#b45309;line-height:2">🟠 覆盖薄弱：' + weak.map(function(d){ return d.name; }).join('、') + '（1-2 篇）</div>';
+    }
+    if(topicHits.length>0 && (blanks.some(function(d){ return topicHits.indexOf(d.name)>=0; }) || weak.some(function(d){ return topicHits.indexOf(d.name)>=0; }))){
+      html += '<div style="font-size:12px;color:#7c3aed;line-height:2;margin-top:4px">💡 你的主题「' + topic.slice(0,20) + '」相关方向中，' + topicHits.filter(function(n){ return blanks.some(function(d){return d.name===n;}) || weak.some(function(d){return d.name===n;}); }).join('、') + ' 覆盖不足——是最直接的选题切入点。</div>';
+    }
+    html += '</div>';
+  } else {
+    html += '<div style="background:#f0fdf4;border-radius:8px;padding:12px;color:#047857;font-size:13px;margin-bottom:12px">✅ 12 大方向均有文献覆盖，建议向细分方向深耕或跨方向交叉选题。</div>';
+  }
+  html += '<div style="font-size:11px;color:#94a3b8">提示：覆盖度基于文献标题/摘要/笔记的关键词命中，用于辅助选题定位；投稿前建议用「🎨 期刊风格画像」确认目标期刊适配度。</div>';
+  html += '</div>';
+  box.innerHTML = html;
+  st.textContent = '统计完成：覆盖 ' + (12-blanks.length) + ' / 12 个方向';
+}
+async function aiGapAdvice(){
+  const box = document.getElementById('gapResult');
+  const st = document.getElementById('gapStatus');
+  const topic = (document.getElementById('gapTopic')||{value:''}).value.trim();
+  const lit = (typeof getPaperLiterature==='function') ? getPaperLiterature() : [];
+  if(lit.length===0){ alert('文献库为空，请先到「文献管理」导入文献'); return; }
+  st.textContent = 'AI 生成选题建议中（约30秒）...';
+  box.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280">🤖 AI 正在结合你的文献覆盖度生成选题建议...</div>';
+  // 先跑规则统计拿到覆盖数据
+  const domains = GAP_DOMAINS.map(function(d){ return {name:d.name, papers:0, kw:d.kw}; });
+  lit.forEach(function(p){
+    const txt = ((p.title||'') + ' ' + (p.abstract||'') + ' ' + (p.notes||'')).toLowerCase();
+    domains.forEach(function(d){
+      d.kw.forEach(function(k){ if(txt.indexOf(k.toLowerCase())>=0){ d.papers++; } });
+    });
+  });
+  const summary = domains.map(function(d){ return d.name + ':' + d.papers + '篇'; }).join('，');
+  try{
+    const sys = '你是体育科研选题专家。基于用户文献库的领域覆盖度统计，结合其研究主题（如有），给出：1.最值得做的空白/薄弱方向（结合该方向当前国际研究趋势）2.3个具体可操作的选题（含研究设计要点）3.推荐投稿期刊方向。要求数据驱动、可执行。';
+    const usr = '研究主题：' + (topic || '未填写') + '\n\n文献库覆盖度统计：' + summary + '\n\n覆盖空白与薄弱方向见统计（0篇为空白，1-2篇为薄弱）。请优先推荐与主题相关的空白方向。';
+    const r = await callDeepSeekAPI(sys, usr, 1600, 'glm-5.3');
+    box.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px"><div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:10px">🤖 AI 选题建议报告</div><div style="font-size:13px;line-height:1.9;color:#374151;white-space:pre-wrap">' + (r||'（生成失败，请重试）') + '</div></div>';
+    st.textContent = '建议已生成';
+  }catch(e){
+    box.innerHTML = '<div style="background:#fef2f2;border-radius:8px;padding:14px;color:#b91c1c;font-size:13px">建议生成失败：' + e.message + '</div>';
     st.textContent = '';
   }
 }
