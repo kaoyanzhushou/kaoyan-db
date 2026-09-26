@@ -107388,7 +107388,7 @@ function renderPhdPublish(containerId) {
 
 
 
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><div style="display:flex;gap:8px"><button onclick="checkDuplicateSubmissions()" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚠️ 一稿多投检测</button><button onclick="togglePubReport()" style="background:#0e7490;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 投稿报表</button><button onclick="togglePubCalendar()" style="background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📅 投稿日历</button><button onclick="togglePubReminder()" style="background:#0891b2;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔔 提醒检查</button><button onclick="toggleRejectLog()" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📋 拒稿履历</button><button onclick="exportAllData()" style="background:#4b5563;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">💾 全量备份</button><button onclick="importAllData()" style="background:#fff;color:#4b5563;border:1px solid #9ca3af;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📥 恢复备份</button><button onclick="showExportMenu()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">导出数据</button><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div></div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><div style="display:flex;gap:8px"><button onclick="checkDuplicateSubmissions()" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚠️ 一稿多投检测</button><button onclick="togglePubReport()" style="background:#0e7490;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 投稿报表</button><button onclick="togglePubCalendar()" style="background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📅 投稿日历</button><button onclick="togglePubReminder()" style="background:#0891b2;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔔 提醒检查</button><button onclick="toggleRejectLog()" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📋 拒稿履历</button><button onclick="togglePubProfile()" style="background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🎯 科研画像</button><button onclick="toggleSyncGuide()" style="background:#0f766e;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔄 云端同步</button><button onclick="exportAllData()" style="background:#4b5563;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">💾 全量备份</button><button onclick="importAllData()" style="background:#fff;color:#4b5563;border:1px solid #9ca3af;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📥 恢复备份</button><button onclick="showExportMenu()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">导出数据</button><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div></div>';
 
 
 
@@ -112694,6 +112694,284 @@ function getPubJournalStats() {
 
 }
 
+// ========== M3 工具函数 ==========
+
+function getJournalCorrections() {
+
+  try { return JSON.parse(localStorage.getItem('phd_journal_corrections') || '{}'); } catch(e) { return {}; }
+
+}
+
+function submitJournalCorrection(id) {
+
+  var a = document.getElementById('corrAccept');
+  var r = document.getElementById('corrReview');
+  var jc = document.getElementById('corrJcr');
+  var acc = a && a.value ? parseInt(a.value, 10) : null;
+  var rev = r && r.value ? parseInt(r.value, 10) : null;
+  var jr = jc && jc.value ? String(jc.value).trim() : null;
+  if (acc === null && rev === null && !jr) { alert('请至少填写一项更正'); return; }
+  var corr = getJournalCorrections();
+  corr[id] = {acceptRate: acc, reviewDays: rev, jcr: jr, date: new Date().toISOString().slice(0, 10)};
+  localStorage.setItem('phd_journal_corrections', JSON.stringify(corr));
+  alert('✅ 已保存更正（仅本机生效，将用于匹配与推荐计算）');
+  var j = getPubJournalById(id);
+  if (j) showJournalDetail(id);
+
+}
+
+function calcMabWeights() {
+
+  var w = {theme: 40, prestige: 25, history: 25, timing: 10};
+  var acc = {theme: [], prestige: [], history: []}, rej = {theme: [], prestige: [], history: []};
+  try {
+    var papers = getPubPapers();
+    papers.forEach(function(p) {
+      var t = String(p.title || '').toLowerCase();
+      (p.submissions || []).forEach(function(s) {
+        if (s.status !== 'accepted' && s.status !== 'published' && s.status !== 'rejected') return;
+        var j = getPubJournalByName(s.journal);
+        if (!j) return;
+        var kwHit = (j.matchKeywords || []).filter(function(k) { return t.indexOf(String(k).toLowerCase()) >= 0; }).length;
+        var theme = Math.min(100, kwHit / Math.max(1, (j.matchKeywords || []).length) * 100);
+        var prestige = pubPrestigeScore(j);
+        var hist = pubHistoryScore(j);
+        var arr = (s.status === 'rejected') ? rej : acc;
+        arr.theme.push(theme); arr.prestige.push(prestige); arr.history.push(hist);
+      });
+    });
+    var mean = function(a) { return a.length ? a.reduce(function(x, y) { return x + y; }, 0) / a.length : null; };
+    var mA = mean(acc.theme), mR = mean(rej.theme);
+    if (mA !== null && mR !== null) w.theme = Math.min(55, Math.max(25, 40 + Math.round((mA - mR) * 0.6)));
+    var pA = mean(acc.prestige), pR = mean(rej.prestige);
+    if (pA !== null && pR !== null) w.prestige = Math.min(40, Math.max(15, 25 + Math.round((pA - pR) * 0.5)));
+    var tot = w.theme + w.prestige + w.history + w.timing;
+    w.theme = Math.round(w.theme / tot * 100); w.prestige = Math.round(w.prestige / tot * 100);
+    w.history = Math.round(w.history / tot * 100); w.timing = 100 - w.theme - w.prestige - w.history;
+  } catch(e) {}
+  return w;
+
+}
+
+function getMabWeights() {
+
+  try { var w = JSON.parse(localStorage.getItem('phd_mab_weights')); if (w && w.theme && w.prestige && w.history && w.timing) return w; } catch(e) {}
+  return {theme: 40, prestige: 25, history: 25, timing: 10};
+
+}
+
+function applyMabWeights() {
+
+  localStorage.setItem('phd_mab_weights', JSON.stringify(calcMabWeights()));
+  alert('✅ 已应用校准后的匹配权重，下次匹配生效');
+
+}
+
+function toggleMabCalib() {
+
+  var out = document.getElementById('matcherResult');
+  if (!out) return;
+  var cur = getMabWeights();
+  var sug = calcMabWeights();
+  var nRes = 0;
+  try { getPubPapers().forEach(function(p) { (p.submissions || []).forEach(function(s) { if (s.status === 'accepted' || s.status === 'published' || s.status === 'rejected') nRes++; }); }); } catch(e) {}
+
+  var bar = function(label, v) {
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><div style="width:56px;font-size:12px;color:#334155">' + label + '</div><div style="flex:1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden"><div style="width:' + v + '%;height:100%;background:#0e7490;border-radius:4px"></div></div><div style="width:34px;font-size:12px;font-weight:700;color:#0e7490;text-align:right">' + v + '</div></div>';
+  };
+
+  var html = '<div style="background:#fff;border:1px solid #67e8f9;border-radius:12px;padding:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="font-size:14px;font-weight:700;color:#155e75">⚙️ 匹配权重自校准（MAB）</div><button onclick="toggleMabCalib()" style="background:none;border:none;color:#0e7490;cursor:pointer;font-size:12px">收起 ✕</button></div>';
+  html += '<div style="font-size:11px;color:#0e7490;margin-bottom:10px">根据你的历史投稿结果（有结果记录 ' + nRes + ' 条）自动校准：录用多的高分因子权重自动提升</div>';
+  html += '<div style="font-size:12px;color:#334155;margin-bottom:4px">当前权重</div>' + bar('主题', cur.theme) + bar('声望', cur.prestige) + bar('历史', cur.history) + bar('时效', cur.timing);
+  html += '<div style="font-size:12px;color:#334155;margin:10px 0 4px">建议权重（基于你的投稿结果）</div>' + bar('主题', sug.theme) + bar('声望', sug.prestige) + bar('历史', sug.history) + bar('时效', sug.timing);
+  var changed = (sug.theme !== cur.theme || sug.prestige !== cur.prestige || sug.history !== cur.history || sug.timing !== cur.timing);
+  html += '<button onclick="applyMabWeights()" style="background:#0e7490;color:#fff;border:none;padding:9px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;margin-top:10px">✅ 应用建议权重' + (changed ? '' : '（已是最优）') + '</button>';
+  html += '</div>';
+
+  out.innerHTML = html;
+
+}
+
+function togglePubProfile() {
+
+  var cont = document.getElementById('pubProfilePanel');
+  if (cont) { cont.parentNode.removeChild(cont); return; }
+
+  var papers = getPubPapers();
+  var subs = [];
+  papers.forEach(function(p) { (p.submissions || []).forEach(function(s) { subs.push({p: p, s: s}); }); });
+
+  var total = subs.length, acc = 0, rejN = 0, active = 0, rev = 0;
+  subs.forEach(function(x) {
+    var st = x.s.status;
+    if (st === 'accepted' || st === 'published') acc++;
+    else if (st === 'rejected') rejN++;
+    else if (st === 'minor_revision' || st === 'major_revision') rev++;
+    else active++;
+  });
+  var rate = total ? Math.round(acc / total * 100) : 0;
+
+  // 月度趋势（近 6 个月，按 submitDate）
+  var months = [];
+  var now = new Date();
+  for (var i = 5; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({k: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'), sub: 0, ok: 0, no: 0, label: (d.getMonth() + 1) + '月'});
+  }
+  subs.forEach(function(x) {
+    var d = x.s.submitDate || '';
+    var m = d.slice(0, 7);
+    months.forEach(function(mm) { if (mm.k === m) { mm.sub++; if (x.s.status === 'accepted' || x.s.status === 'published') mm.ok++; if (x.s.status === 'rejected') mm.no++; } });
+  });
+  var maxSub = 1; months.forEach(function(mm) { if (mm.sub > maxSub) maxSub = mm.sub; });
+
+  // 期刊偏好 Top5
+  var jc = {};
+  subs.forEach(function(x) { jc[x.s.journal] = (jc[x.s.journal] || 0) + 1; });
+  var jTop = Object.keys(jc).sort(function(a, b) { return jc[b] - jc[a]; }).slice(0, 5);
+
+  // 领域偏好：标题关键词词频
+  var stop = ['研究', '分析', '影响', '作用', '效果', '探讨', '基于', '中国', '及其', '对', '的', '与', '及', '论', '观察', '评价'];
+  var wc = {};
+  papers.forEach(function(p) {
+    var t = String(p.title || '');
+    var seg = t.match(/[一-龥]{2,4}/g) || [];
+    seg.forEach(function(w) { if (stop.indexOf(w) < 0 && w !== t.slice(0, 4)) wc[w] = (wc[w] || 0) + 1; });
+  });
+  var wTop = Object.keys(wc).sort(function(a, b) { return wc[b] - wc[a]; }).slice(0, 6);
+
+  // 竞争力雷达（平均 rubric）
+  var dims = {novelty: 0, method: 0, data: 0, logic: 0, match: 0};
+  var nP = 0;
+  papers.forEach(function(p) {
+    var s = competRuleScore(p.title || '', p.abstract || '');
+    dims.novelty += s.novelty; dims.method += s.method; dims.data += s.data; dims.logic += s.logic; dims.match += s.match;
+    nP++;
+  });
+  if (nP) Object.keys(dims).forEach(function(k) { dims[k] = Math.round(dims[k] / nP); });
+
+  var h = '<div id="pubProfilePanel" style="background:#fff;border:1px solid #ddd6fe;border-radius:12px;padding:16px;margin-top:12px">';
+
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:#5b21b6">🎯 科研画像仪表盘</div><button onclick="togglePubProfile()" style="background:none;border:none;color:#7c3aed;cursor:pointer;font-size:12px">收起 ✕</button></div>';
+
+  h += '<div style="font-size:11px;color:#7c3aed;margin-bottom:12px">基于你的投稿记录与论文档案实时计算（共 ' + total + ' 次投稿 · ' + papers.length + ' 篇论文）</div>';
+
+  // KPI
+  h += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px">';
+  var kpis = [['总投稿', total, '#1e293b'], ['在审', active, '#2563eb'], ['修回', rev, '#d97706'], ['录用', acc, '#059669'], ['拒稿', rejN, '#dc2626'], ['录用率', rate + '%', '#7c3aed']];
+  kpis.forEach(function(k) {
+    h += '<div style="background:#f5f3ff;border:1px solid #ede9fe;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:' + k[2] + '">' + k[1] + '</div><div style="font-size:11px;color:#6b7280">' + k[0] + '</div></div>';
+  });
+  h += '</div>';
+
+  // 月度趋势
+  h += '<div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:6px">📆 近 6 个月投稿节奏</div>';
+  h += '<div style="display:flex;gap:6px;align-items:flex-end;height:90px;margin-bottom:14px">';
+  months.forEach(function(mm) {
+    h += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><div style="width:100%;max-width:36px;height:' + Math.round(mm.sub / maxSub * 64) + 'px;background:#7c3aed;border-radius:4px 4px 0 0;position:relative" title="' + mm.sub + ' 次投稿"></div><div style="font-size:10px;color:#6b7280;margin-top:4px">' + mm.label + '</div><div style="font-size:10px;color:#7c3aed;font-weight:600">' + mm.sub + '</div></div>';
+  });
+  h += '</div>';
+
+  // 期刊偏好 + 领域偏好
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">';
+  h += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:8px">📚 期刊偏好 Top5</div>';
+  if (jTop.length === 0) h += '<div style="font-size:11px;color:#94a3b8">暂无投稿记录</div>';
+  jTop.forEach(function(j, i) {
+    h += '<div style="display:flex;justify-content:space-between;font-size:12px;color:#334155;padding:3px 0"><span>' + (i + 1) + '. ' + j + '</span><span style="color:#7c3aed;font-weight:600">' + jc[j] + ' 次</span></div>';
+  });
+  h += '</div>';
+  h += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:8px">🧭 研究领域聚焦</div>';
+  if (wTop.length === 0) h += '<div style="font-size:11px;color:#94a3b8">暂无论文档案</div>';
+  wTop.forEach(function(w, i) {
+    h += '<div style="display:flex;justify-content:space-between;font-size:12px;color:#334155;padding:3px 0"><span>' + (i + 1) + '. ' + w + '</span><span style="color:#7c3aed;font-weight:600">' + wc[w] + '</span></div>';
+  });
+  h += '</div>';
+  h += '</div>';
+
+  // 竞争力雷达（平均）
+  h += '<div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:8px">📊 论文竞争力均值（基于 ' + nP + ' 篇论文）</div>';
+  if (nP) {
+    var dArr = [['选题新颖', dims.novelty], ['方法完整', dims.method], ['数据质量', dims.data], ['逻辑结构', dims.logic], ['期刊匹配', dims.match]];
+    dArr.forEach(function(d) {
+      var c = d[1] >= 75 ? '#16a34a' : (d[1] >= 55 ? '#d97706' : '#dc2626');
+      h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><div style="width:70px;font-size:12px;color:#334155">' + d[0] + '</div><div style="flex:1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden"><div style="width:' + d[1] + '%;height:100%;background:' + c + ';border-radius:4px"></div></div><div style="width:34px;font-size:12px;font-weight:700;color:' + c + ';text-align:right">' + d[1] + '</div></div>';
+    });
+  } else {
+    h += '<div style="font-size:11px;color:#94a3b8">添加论文后可计算竞争力均值</div>';
+  }
+
+  h += '<div style="margin-top:10px;font-size:11px;color:#94a3b8">💡 画像全部由本地数据实时计算，不依赖网络；录用率/竞争力评分为估算，仅供参考</div>';
+
+  h += '</div>';
+
+  var statsEl = document.getElementById('pubManageStats');
+  if (statsEl && statsEl.parentNode) {
+    var d = document.createElement('div');
+    d.innerHTML = h;
+    statsEl.parentNode.insertBefore(d.firstChild, statsEl.nextSibling);
+  } else {
+    alert('请在投稿管理页查看科研画像');
+  }
+
+}
+
+function toggleSyncGuide() {
+
+  var cont = document.getElementById('syncGuidePanel');
+  if (cont) { cont.parentNode.removeChild(cont); return; }
+
+  var keys = [];
+  for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && (k.indexOf('phd_') === 0 || k.indexOf('pub') === 0)) keys.push(k); }
+  var payload = {};
+  keys.forEach(function(k) { payload[k] = localStorage.getItem(k); });
+  var json = JSON.stringify(payload);
+
+  var h = '<div id="syncGuidePanel" style="background:#fff;border:1px solid #99f6e4;border-radius:12px;padding:16px;margin-top:12px">';
+
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="font-size:14px;font-weight:700;color:#0f766e">🔄 云端同步指引</div><button onclick="toggleSyncGuide()" style="background:none;border:none;color:#0f766e;cursor:pointer;font-size:12px">收起 ✕</button></div>';
+
+  h += '<div style="font-size:11px;color:#0f766e;margin-bottom:10px">投稿数据存于本机浏览器。跨设备同步方式：复制数据 → 在另一台设备的"恢复备份"中粘贴导入</div>';
+
+  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">';
+  h += '<div style="background:#f0fdf9;border:1px solid #99f6e4;border-radius:10px;padding:10px 12px"><div style="font-size:13px;font-weight:700;color:#0f766e;margin-bottom:4px">① 复制</div><div style="font-size:11px;color:#334155;line-height:1.6">在本机点击下方"复制全部数据"，生成备份 JSON（共 ' + keys.length + ' 个数据项，约 ' + Math.round(json.length / 1024) + ' KB）</div></div>';
+  h += '<div style="background:#f0fdf9;border:1px solid #99f6e4;border-radius:10px;padding:10px 12px"><div style="font-size:13px;font-weight:700;color:#0f766e;margin-bottom:4px">② 传输</div><div style="font-size:11px;color:#334155;line-height:1.6">通过微信/邮件/网盘把这段 JSON 发给另一台设备</div></div>';
+  h += '<div style="background:#f0fdf9;border:1px solid #99f6e4;border-radius:10px;padding:10px 12px"><div style="font-size:13px;font-weight:700;color:#0f766e;margin-bottom:4px">③ 导入</div><div style="font-size:11px;color:#334155;line-height:1.6">在另一台设备打开站点 → 投稿管理 → "恢复备份" → 粘贴导入</div></div>';
+  h += '</div>';
+
+  h += '<div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="copySyncPayload()" style="background:#0f766e;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📋 复制全部数据</button><button onclick="exportAllData()" style="background:#fff;color:#0f766e;border:1px solid #99f6e4;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">💾 下载备份文件</button></div>';
+
+  h += '<div style="margin-top:10px;font-size:11px;color:#94a3b8">提示：数据不经过服务器，隐私安全；后续可接入账号体系实现真正的自动云同步</div>';
+
+  h += '</div>';
+
+  var statsEl = document.getElementById('pubManageStats');
+  if (statsEl && statsEl.parentNode) {
+    var d = document.createElement('div');
+    d.innerHTML = h;
+    statsEl.parentNode.insertBefore(d.firstChild, statsEl.nextSibling);
+  }
+
+}
+
+function copySyncPayload() {
+
+  var keys = [];
+  for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && (k.indexOf('phd_') === 0 || k.indexOf('pub') === 0)) keys.push(k); }
+  var payload = {};
+  keys.forEach(function(k) { payload[k] = localStorage.getItem(k); });
+  var json = JSON.stringify(payload);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(json).then(function() { alert('✅ 已复制 ' + keys.length + ' 项数据，可粘贴到另一台设备的"恢复备份"'); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = json; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); alert('✅ 已复制，可粘贴到另一台设备'); } catch(e) { alert('复制失败，请手动选择复制'); }
+    document.body.removeChild(ta);
+  }
+
+}
+
 function showJournalDetail(id) {
 
 
@@ -112797,6 +113075,14 @@ function showJournalDetail(id) {
   html += '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">注意事项 / 常见拒稿原因</div><div style="font-size:13px;color:#991b1b;line-height:1.8;background:#fef2f2;padding:12px;border-radius:8px;border-left:3px solid #ef4444">' + (j.pitfalls || '暂无') + '</div></div>';
 
 
+
+  var corr = getJournalCorrections();
+  var myCorr = corr[j.id] || null;
+  if (myCorr) {
+    html += '<div style="background:#ecfdf5;border:1px solid #6ee7b7;border-radius:8px;padding:8px 12px;font-size:11px;color:#065f46;margin-bottom:12px">✏️ 你的更正记录（' + myCorr.date + '）：录用率 ' + myCorr.acceptRate + '% · 审稿 ' + myCorr.reviewDays + ' 天 · 分区 ' + myCorr.jcr + '（仅本机生效）</div>';
+  }
+
+  html += '<div style="background:#f0fdf9;border:1px solid #99f6e4;border-radius:8px;padding:10px 12px;margin-bottom:12px"><div style="font-size:12px;font-weight:600;color:#0f766e;margin-bottom:6px">✏️ 更正数据（数据有误？提交你的更正，仅保存在本机并用于推荐）</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="number" id="corrAccept" placeholder="录用率%" min="0" max="100" style="width:90px;padding:7px 9px;border:1px solid #99f6e4;border-radius:6px;font-size:12px;outline:none"><input type="number" id="corrReview" placeholder="审稿天数" min="0" max="365" style="width:90px;padding:7px 9px;border:1px solid #99f6e4;border-radius:6px;font-size:12px;outline:none"><input type="text" id="corrJcr" placeholder="分区如 Q2/CSSCI" style="width:110px;padding:7px 9px;border:1px solid #99f6e4;border-radius:6px;font-size:12px;outline:none"><button onclick="submitJournalCorrection(\'' + j.id + '\')" style="background:#0f766e;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">提交更正</button></div></div>';
 
   html += '<div style="display:flex;gap:10px;margin-top:20px">';
 
@@ -114528,7 +114814,7 @@ function showPubTool(tool) {
 
     html += '<div style="margin-bottom:14px"><label style="font-size:12px;color:#155e75;font-weight:600;display:block;margin-bottom:4px">摘要/关键词（选填，填得越细匹配越准）</label><textarea id="matcherAbs" rows="3" placeholder="粘贴论文摘要或关键词，如：肥胖女大学生、高强度间歇训练、体成分、心肺功能" style="width:100%;padding:9px 12px;border:1px solid #67e8f9;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#155e75;resize:vertical;box-sizing:border-box"></textarea></div>';
 
-    html += '<button onclick="generateJournalMatch()" style="background:#0e7490;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🎯 开始匹配</button>';
+    html += '<button onclick="generateJournalMatch()" style="background:#0e7490;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🎯 开始匹配</button><button onclick="toggleMabCalib()" style="background:#fff;color:#0e7490;border:1px solid #67e8f9;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚙️ 权重自校准</button>';
 
     html += '</div><div id="matcherResult" style="margin-top:16px"></div>';
 
@@ -118365,7 +118651,8 @@ function generateJournalMatch() {
     var prestige = pubPrestigeScore(j);
     var history = pubHistoryScore(j);
     var speed = j.reviewDays ? Math.max(0, Math.round(100 - (j.reviewDays - 30) * 1.2)) : 60;
-    var total = Math.round(theme * 0.4 + prestige * 0.25 + history * 0.25 + speed * 0.1);
+    var w = getMabWeights();
+    var total = Math.round(theme * w.theme / 100 + prestige * w.prestige / 100 + history * w.history / 100 + speed * w.timing / 100);
     return {j: j, total: total, theme: theme, prestige: prestige, history: history, speed: speed, kwHit: kwHit};
   }).sort(function(a, b) { return b.total - a.total; }).slice(0, 5);
 
