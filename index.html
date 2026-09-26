@@ -107378,6 +107378,8 @@ function renderPhdPublish(containerId) {
 
   html += '<div onclick="showPubTool(\'translate\')" style="background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:1px solid #e9d5ff;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🌐</div><div style="font-size:15px;font-weight:700;color:#86198f;margin-bottom:4px">论文翻译改写</div><div style="font-size:12px;color:#a21caf">中英互译：英文标题候选×3 + 学术化摘要 + 关键词对照</div></div>';
 
+  html += '<div onclick="showPubTool(\'multimodel\')" style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #ddd6fe;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🧠</div><div style="font-size:15px;font-weight:700;color:#5b21b6;margin-bottom:4px">多模型协作中心</div><div style="font-size:12px;color:#7c3aed">模型路由 + Borda共识选刊 + 自动分歧仲裁 + 降级链</div></div>';
+
 
 
   html += '</div>';
@@ -114116,6 +114118,230 @@ async function publishMultiModels() {
 
 
 
+// ========== Phase 3 多模型协作层（模型路由 + Borda共识 + 分歧仲裁 + 降级链 + 溯源） ==========
+
+var PUB_MODEL_ROUTES = {
+  'journal-match': {name: '选刊匹配', primary: 'deepseek-v4-pro', backups: ['glm-5.3', 'deepseek-chat'], desc: '综合推理选刊，主推 V4 Pro'},
+  'review-sim':    {name: '模拟审稿', primary: 'glm-5.3', backups: ['deepseek-v4-pro', 'deepseek-chat'], desc: '审稿人视角，GLM 风格更接近评审'},
+  'translate':     {name: '翻译改写', primary: 'deepseek-chat', backups: ['kimi-k3', 'deepseek-v4-flash'], desc: '学术化改写，V3 表达更顺'},
+  'advisor':       {name: '投稿顾问', primary: 'hy3', backups: ['deepseek-v4-flash', 'deepseek-chat'], desc: '问答型顾问，混元响应快'},
+  'plagiarism':    {name: '查重/重复发表', primary: 'deepseek-v4-pro', backups: ['deepseek-chat'], desc: '风险识别用最强推理'},
+  'resubmit':      {name: '拒稿改投', primary: 'glm-5.3', backups: ['deepseek-chat', 'hy3'], desc: '改投策略建议'}
+};
+var PUB_MODEL_NAMES = {'deepseek-v4-pro': 'DeepSeek V4 Pro', 'deepseek-v4-flash': 'DeepSeek V4 Flash', 'deepseek-chat': 'DeepSeek V3', 'glm-5.3': 'GLM-5.3', 'kimi-k3': 'Kimi K3', 'hy3': '混元 Turbo', 'hy4-preview': '混元 V4 Preview'};
+
+function pubRouteTask(task) {
+  var r = PUB_MODEL_ROUTES[task];
+  if (!r) return {primary: 'deepseek-v4-pro', backups: ['deepseek-chat']};
+  return {primary: r.primary, backups: r.backups};
+}
+
+async function pubCallWithRoute(task, sys, usr, tk) {
+  var r = pubRouteTask(task);
+  var chain = [r.primary].concat(r.backups);
+  var lastErr = '';
+  for (var i = 0; i < chain.length; i++) {
+    try {
+      var t = await callDeepSeekAPI(sys, usr, tk, chain[i]);
+      if (t && String(t).trim()) return {text: String(t).trim(), model: chain[i], fallback: i > 0};
+    } catch(e) { lastErr = String(e || '').slice(0, 60); }
+  }
+  return {text: null, model: '', fallback: false, err: lastErr || '全部模型失败'};
+}
+
+function pubBordaMerge(parsed) {
+  var scores = {};
+  parsed.forEach(function(p) {
+    var list = (p.journals || []).slice(0, 3);
+    list.forEach(function(j, idx) {
+      var name = String(j.name || '').trim();
+      if (!name) return;
+      if (!scores[name]) scores[name] = {name: name, pts: 0, votes: [], ranks: {}, tierCount: {}};
+      var rec = scores[name];
+      var pts = idx === 0 ? 3 : (idx === 1 ? 2 : 1);
+      rec.pts += pts;
+      rec.votes.push(p.name);
+      rec.ranks[p.name] = idx + 1;
+      var tier = j.tier || '未标注';
+      rec.tierCount[tier] = (rec.tierCount[tier] || 0) + 1;
+    });
+  });
+  var list = Object.keys(scores).map(function(k) { return scores[k]; });
+  list.sort(function(a, b) { return b.pts - a.pts; });
+  list.forEach(function(x, i) { x.rank = i + 1; });
+  return list;
+}
+
+function pubDivergenceCheck(parsed) {
+  var firsts = {};
+  parsed.forEach(function(p) {
+    var f = p.journals[0] && String(p.journals[0].name || '').trim();
+    if (f) firsts[p.name] = f;
+  });
+  var uniq = {};
+  Object.keys(firsts).forEach(function(k) { uniq[firsts[k]] = (uniq[firsts[k]] || 0) + 1; });
+  var keys = Object.keys(uniq);
+  return {firsts: firsts, uniqCount: keys.length, disputed: keys.length > 1, uniq: uniq};
+}
+
+async function pubArbitrate(dispute, sysBase, usr) {
+  var names = Object.keys(dispute.uniq || {}).slice(0, 3).map(function(n, i) { return (i + 1) + '. ' + n; }).join('\n');
+  var sys = sysBase + '\n\n【仲裁任务】以下是多个模型对同一篇论文的首选期刊出现分歧。请作为首席仲裁编辑，综合期刊定位、论文主题匹配度与投稿成功率，从分歧期刊中选出**唯一最优**的一本，并说明理由。只输出JSON：{"choice":"期刊全名（必须来自分歧列表）","reason":"不超过50字"}';
+  var r = await pubCallWithRoute('journal-match', sys, usr + '\n\n分歧期刊列表：\n' + names, 1500);
+  var choice = null;
+  if (r.text) {
+    try {
+      var txt = r.text.replace(/^```json\s*/,'').replace(/```\s*$/,'');
+      var s = txt.indexOf('{'), e = txt.lastIndexOf('}');
+      if (s >= 0 && e > s) choice = JSON.parse(txt.substring(s, e + 1));
+    } catch(e2) { choice = null; }
+  }
+  return {choice: choice, model: r.model, fallback: r.fallback, err: r.err};
+}
+
+function pubParseModelJson(r, modelNames) {
+  var txt = String(r.text || '').trim();
+  var m = null;
+  try {
+    txt = txt.replace(/^```json\s*/,'').replace(/```\s*$/,'').replace(/^```\s*/,'');
+    var start = txt.indexOf('{'), end = txt.lastIndexOf('}');
+    if (start >= 0 && end > start) txt = txt.substring(start, end + 1);
+    m = JSON.parse(txt);
+  } catch(e) { m = null; }
+  if (m && Array.isArray(m.journals)) {
+    var js = m.journals.map(function(j) {
+      return {
+        name: j.name || j['期刊名'] || j['期刊'] || j['journal'] || '',
+        tier: j.tier || j['档位'] || j['档次'] || '未标注',
+        matchScore: typeof j.matchScore === 'number' ? j.matchScore : (typeof j['匹配度'] === 'number' ? j['匹配度'] : 0),
+        difficultyScore: typeof j.difficultyScore === 'number' ? j.difficultyScore : (typeof j['录用难度'] === 'number' ? j['录用难度'] : 0),
+        reason: j.reason || j['理由'] || ''
+      };
+    }).filter(function(j) { return j.name; });
+    if (js.length) return {model: r.model, name: modelNames[r.model] || r.model, journals: js};
+  }
+  return null;
+}
+
+function renderPubBorda(bor, parsed, div, arb, failedDesc) {
+  var out = document.getElementById('pubBordaResult');
+  if (!out) return;
+  var html = '';
+  html += '<div style="background:#fff;border:1px solid #ddd6fe;border-radius:12px;padding:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:15px;font-weight:700;color:#6d28d9">⚖️ Borda 共识排序（3 模型加权）</div><div style="font-size:11px;color:#9ca3af">' + parsed.length + ' 个模型有效' + (failedDesc ? ' · ' + failedDesc : '') + '</div></div>';
+  if (failedDesc) html += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:#9a3412">⚠️ 降级提示：' + failedDesc + '</div>';
+  html += '<div style="font-size:11px;color:#6d28d9;background:#f5f3ff;border-radius:6px;padding:8px 10px;margin-bottom:10px">计分规则：各模型按内部排序计 Borda 分（第1名 3 分 / 第2名 2 分 / 第3名 1 分）合并，兼顾“多个模型同时认可”与“模型内部优先级”。</div>';
+  if (!bor.length) {
+    html += '<div style="padding:16px;text-align:center;color:#9ca3af;font-size:12px">无有效共识结果，请重试</div></div>';
+    out.innerHTML = html;
+    return;
+  }
+  bor.slice(0, 3).forEach(function(x, i) {
+    var medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : '🥉');
+    var rankTxt = Object.keys(x.ranks).map(function(k) { return (PUB_MODEL_NAMES[k] || k) + ' 第' + x.ranks[k] + '名'; }).join(' · ');
+    html += '<div style="border:1px solid ' + (i === 0 ? '#a78bfa' : '#e5e7eb') + ';border-radius:10px;padding:12px;margin-bottom:8px;background:' + (i === 0 ? '#faf5ff' : '#fff') + '"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700;color:#1e293b;font-size:14px">' + medal + ' ' + x.name + '</div><div style="font-size:13px;font-weight:700;color:#6d28d9">' + x.pts + ' 分</div></div><div style="font-size:11px;color:#64748b;margin-top:4px">' + rankTxt + '</div><div style="font-size:11px;color:#94a3b8;margin-top:4px">档位：' + Object.keys(x.tierCount).map(function(t) { return t + '×' + x.tierCount[t]; }).join(' / ') + '</div></div>';
+  });
+  // 分歧检测
+  if (div && div.disputed) {
+    var fl = Object.keys(div.firsts).map(function(k) { return (PUB_MODEL_NAMES[k] || k) + ' 首选「' + div.firsts[k] + '」'; }).join('<br>');
+    html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;margin-top:8px;font-size:12px;color:#991b1b"><b>⚡ 检测到首选分歧</b>（' + div.uniqCount + ' 种首选期刊）<br>' + fl + '</div>';
+  } else if (div) {
+    html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;margin-top:8px;font-size:12px;color:#166534">✅ 模型间首选一致，共识稳定</div>';
+  }
+  // 仲裁结果
+  if (arb) {
+    if (arb.choice && arb.choice.choice) {
+      html += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin-top:8px;font-size:12px;color:#1e40af"><b>⚖️ 仲裁结论（' + (PUB_MODEL_NAMES[arb.model] || arb.model) + '）：</b>' + arb.choice.choice + ' —— ' + (arb.choice.reason || '') + (arb.fallback ? ' <span style="color:#9ca3af">（经降级链）</span>' : '') + '</div>';
+    } else if (arb.err) {
+      html += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;margin-top:8px;font-size:12px;color:#9a3412">仲裁模型暂不可用（' + arb.err + '），可稍后重试</div>';
+    }
+  }
+  // 溯源
+  html += '<div style="font-size:11px;color:#94a3b8;margin-top:10px;border-top:1px dashed #e5e7eb;padding-top:8px">🔍 输出溯源：每条推荐均标注来源模型与内部排名；Borda 结果由 ' + parsed.map(function(p) { return (PUB_MODEL_NAMES[p.model] || p.model); }).join('、') + ' 独立排序后合并生成。</div>';
+  html += '</div>';
+  out.innerHTML = html;
+}
+
+async function pubBordaConsensus() {
+  var title = ((document.getElementById('pubBordaTitle') || {}).value || (document.getElementById('matcherTitle') || {}).value || '').trim();
+  var abs = ((document.getElementById('pubBordaAbs') || {}).value || (document.getElementById('matcherAbs') || {}).value || '').trim();
+  var out = document.getElementById('pubBordaResult');
+  if (!title && !abs) { out.innerHTML = '<div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:16px;font-size:13px;color:#854d0e">💡 请先在上方输入论文标题/摘要，再运行 Borda 共识选刊</div>'; return; }
+  var type = (document.getElementById('pubType') || {}).value || '原创研究';
+  var direction = (document.getElementById('pubDirection') || {}).value || '运动康复';
+  var goal = (document.getElementById('pubGoal') || {}).value || '求稳妥';
+  out.innerHTML = '<div style="background:#fff;border:1px solid #ddd6fe;border-radius:12px;padding:24px;text-align:center"><div style="font-size:24px;margin-bottom:8px">⚖️</div><div style="font-size:14px;color:#6d28d9;font-weight:600">Borda 共识选刊运行中…</div><div style="font-size:12px;color:#9ca3af;margin-top:6px" id="pubBordaProgress">3 个模型独立排序中（约 20-40 秒）</div></div>';
+  // 候选池（与选刊同一口径：IF 范围 + 方向过滤，取前 14）
+  var minIF = parseFloat((document.getElementById('pubMinIF') || {}).value) || 0;
+  var maxIF = parseFloat((document.getElementById('pubMaxIF') || {}).value) || 999;
+  var allJ = PHD_JOURNALS.concat(CN_JOURNALS);
+  var candidates = allJ.filter(function(j) {
+    if (j.if > 0 && (j.if < minIF || j.if > maxIF)) return false;
+    var scopeText = (j.scope + ' ' + (j.matchKeywords || []).join(' ')).toLowerCase();
+    var dirKey = (direction || '').replace('运动', '').replace('体育', '').toLowerCase();
+    if (direction && scopeText.indexOf(direction.toLowerCase()) < 0 && scopeText.indexOf(dirKey) < 0) {
+      if (j.if > 0) return false;
+    }
+    return true;
+  });
+  if (candidates.length < 3) candidates = allJ.slice();
+  var pool = candidates.slice(0, 14).map(function(j, i) {
+    return (i + 1) + '. ' + j.name + ' [IF:' + j.if + ', ' + j.jcr + ', 审稿:' + j.reviewDays + '天, 录用率:' + j.acceptRate + '%, OA:' + j.oa + ']';
+  }).join('\n');
+  var sys = '你是体育学/运动科学领域的资深期刊编辑与投稿顾问。请从候选期刊列表中按适合程度从高到低精选 3 本期刊（第 1 本必须是综合最适合的）。\n\n【输出要求-严格遵守】只输出一个JSON对象（不要任何其他文字/注释/代码块标记），格式：{"journals":[{"name":"期刊全名（必须来自候选列表）","tier":"冲刺|稳妥|保底","matchScore":0-100整数(主题匹配度),"difficultyScore":0-100整数(录用难度),"reason":"一句话理由(30字内)"}]}';
+  var usr = '论文标题：' + title + '\n研究类型：' + type + '\n研究方向：' + direction + '\n投稿目标：' + goal + '\n摘要：' + (abs ? abs.substring(0, 800) : '（未提供）') + '\n\n候选期刊列表：\n' + pool + (typeof buildPubChartCtxText === 'function' ? buildPubChartCtxText() : '');
+  var route = pubRouteTask('journal-match');
+  var chain = [route.primary].concat(route.backups);
+  var prog = document.getElementById('pubBordaProgress');
+  var parsed = [];
+  var fails = [];
+  var done = 0;
+  await Promise.all(chain.map(function(model) {
+    return callDeepSeekAPI(sys, usr, 2500, model).then(function(text) {
+      var pr = pubParseModelJson({model: model, text: text}, PUB_MODEL_NAMES);
+      if (pr) parsed.push(pr); else fails.push(model);
+    }).catch(function(e) {
+      fails.push(model + '(' + String(e || '').slice(0, 40) + ')');
+    }).then(function() {
+      done++;
+      if (prog) prog.textContent = '已完成 ' + done + '/' + chain.length + ' 个模型独立排序…';
+    });
+  }));
+  if (!parsed.length) {
+    out.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;color:#b91c1c;font-size:13px">❌ 全部模型均未返回有效结果，请稍后重试</div>';
+    return;
+  }
+  var bor = pubBordaMerge(parsed);
+  var div = pubDivergenceCheck(parsed);
+  var arb = null;
+  if (div.disputed) {
+    if (prog) prog.textContent = '检测到首选分歧，首席仲裁模型裁决中…';
+    arb = await pubArbitrate(div, sys, usr);
+  }
+  var failedDesc = fails.length ? fails.map(function(f) { return (PUB_MODEL_NAMES[f.split('(')[0]] || f); }).join('、') : '';
+  renderPubBorda(bor, parsed, div, arb, failedDesc);
+}
+
+function renderPubMultiModelPanel() {
+  var el = document.getElementById('pubMultiModelPanel');
+  if (!el) return;
+  var html = '';
+  html += '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #ddd6fe;border-radius:12px;padding:20px">';
+  html += '<div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:4px">🧠 多模型协作中心</div>';
+  html += '<div style="font-size:12px;color:#6d28d9;margin-bottom:14px">模型路由 + Borda 共识 + 自动分歧仲裁 + 降级链 + 输出溯源。所有 AI 能力均走“任务→最优模型链”调度，主模型失败自动降级。</div>';
+  html += '<div style="font-size:12px;font-weight:700;color:#5b21b6;margin-bottom:6px">📋 模型路由表（任务 → 主模型 → 备用链）</div>';
+  var rows = Object.keys(PUB_MODEL_ROUTES).map(function(k) {
+    var r = PUB_MODEL_ROUTES[k];
+    return '<div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e9d5ff;border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px"><div style="font-weight:600;color:#4c1d95;min-width:90px">' + r.name + '</div><div style="flex:1;color:#6d28d9;padding:0 8px">' + (PUB_MODEL_NAMES[r.primary] || r.primary) + '</div><div style="color:#94a3b8;font-size:11px;max-width:220px">备用：' + r.backups.map(function(m) { return PUB_MODEL_NAMES[m] || m; }).join(' → ') + '</div><div style="color:#a78bfa;font-size:11px;max-width:150px">' + r.desc + '</div></div>';
+  }).join('');
+  html += rows;
+  html += '<div style="margin-top:14px"><button onclick="pubBordaConsensus()" style="width:100%;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">⚖️ 运行 Borda 共识选刊（V4 Pro + GLM + V3 独立排序合并）</button></div>';
+  html += '<div style="font-size:11px;color:#7c3aed;margin-top:6px">运行前请先在「精准匹配引擎」填写论文标题/摘要；自动检测首选分歧并请首席仲裁模型裁决。</div>';
+  html += '<div id="pubBordaResult" style="margin-top:12px"></div>';
+  html += '</div>';
+  el.innerHTML = html;
+}
+
 // ========== 选刊辩论裁决模式（v4-pro vs glm-5.3 → hy3综合裁决） ==========
 
 async function publishDebateVerdict() {
@@ -115484,6 +115710,33 @@ function showPubTool(tool) {
     html += '<button onclick="translatePaper()" style="background:#a21caf;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🤖 AI 翻译改写</button>';
 
     html += '</div><div id="trResult" style="margin-top:16px"></div>';
+
+  } else if (tool === 'multimodel') {
+
+    html = '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #ddd6fe;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:4px">🧠 多模型协作中心</div>';
+
+    html += '<div style="font-size:12px;color:#6d28d9;margin-bottom:14px">模型路由 + Borda 共识 + 自动分歧仲裁 + 降级链 + 输出溯源。选刊等任务由多个大模型独立排序后按 Borda 计分合并，主模型失败自动降级备用模型。</div>';
+
+    html += '<div style="font-size:12px;font-weight:700;color:#5b21b6;margin-bottom:6px">📋 模型路由表（任务 → 主模型 → 备用链）</div>';
+
+    var rows = Object.keys(PUB_MODEL_ROUTES).map(function(k) {
+      var r = PUB_MODEL_ROUTES[k];
+      return '<div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e9d5ff;border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px"><div style="font-weight:600;color:#4c1d95;min-width:90px">' + r.name + '</div><div style="flex:1;color:#6d28d9;padding:0 8px">' + (PUB_MODEL_NAMES[r.primary] || r.primary) + '</div><div style="color:#94a3b8;font-size:11px;max-width:220px">备用：' + r.backups.map(function(m) { return PUB_MODEL_NAMES[m] || m; }).join(' → ') + '</div><div style="color:#a78bfa;font-size:11px;max-width:150px">' + r.desc + '</div></div>';
+    }).join('');
+
+    html += rows;
+
+    html += '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><div style="flex:1;min-width:200px"><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">论文标题</label><input type="text" id="pubBordaTitle" placeholder="粘贴标题" style="width:100%;padding:9px 12px;border:1px solid #e9d5ff;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#4c1d95"></div></div>';
+
+    html += '<div style="margin-top:8px"><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">摘要/关键词（选填）</label><textarea id="pubBordaAbs" rows="3" placeholder="粘贴摘要或关键词" style="width:100%;padding:9px 12px;border:1px solid #e9d5ff;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#4c1d95;resize:vertical;box-sizing:border-box"></textarea></div>';
+
+    html += '<div style="margin-top:14px"><button onclick="pubBordaConsensus()" style="width:100%;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">⚖️ 运行 Borda 共识选刊（V4 Pro + GLM + V3 独立排序合并）</button></div>';
+
+    html += '<div style="font-size:11px;color:#7c3aed;margin-top:6px">三个模型各自独立排序后按 Borda 计分合并；自动检测首选分歧并请首席仲裁模型裁决。</div>';
+
+    html += '<div id="pubBordaResult" style="margin-top:12px"></div>';
 
   } else if (tool === 'format') {
 
