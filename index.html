@@ -186169,79 +186169,109 @@ async function runRefCheck() {
   }
 
   let verified=0, fake=0, pending=0;
-
+  let high=0, mid=0, low=0;
+  function refYearMatch(userLine, apiYear){
+    if(!apiYear) return null;
+    const yrs=(userLine.match(/[12][09]\d{2}/g)||[]).map(Number);
+    if(!yrs.length) return null;
+    return yrs.indexOf(Number(apiYear))>=0;
+  }
+  function refTitleSim(apiTitle, userLine){
+    if(!apiTitle) return 0;
+    const a=apiTitle.toLowerCase().replace(/\s+/g,' ').trim();
+    const b=userLine.toLowerCase().replace(/\s+/g,' ');
+    if(!a) return 0;
+    const aw=a.match(/[a-z][a-z0-9-]{2,}/g)||[];
+    if(aw.length>=3){
+      let hit=0;
+      aw.forEach(function(w){ if(b.indexOf(w)>=0) hit++; });
+      return hit/aw.length;
+    }
+    const ac=a.replace(/[^a-z0-9\u4e00-\u9fff]/g,'');
+    const bc=b.replace(/[^a-z0-9\u4e00-\u9fff]/g,'');
+    let total=0, hit=0;
+    for(let i=0;i<ac.length-1;i++){ const g=ac.slice(i,i+2); total++; if(bc.indexOf(g)>=0) hit++; }
+    return total? hit/total : 0;
+  }
+  function refJournalSim(apiJournal, userLine){
+    if(!apiJournal) return 0;
+    const stop=['journal','of','the','and','for','research','international','journal'];
+    const jw=(apiJournal.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g)||[]).filter(function(w){ return stop.indexOf(w)<0; });
+    const b=userLine.toLowerCase();
+    let hit=0;
+    jw.forEach(function(w){ if(b.indexOf(w)>=0) hit++; });
+    return jw.length? hit/jw.length : 0;
+  }
   const rows = entries.map(function(e){
-
     if (e.type==='doi') {
-
       const r = doiResults[e.id];
-
-      if (r && r.ok) { verified++; return {line:e.line, type:'DOI', id:e.id, state:'ok', title:r.title, extra:(r.journal?r.journal:'') + (r.year?' ('+r.year+')':'')}; }
-
-      fake++; return {line:e.line, type:'DOI', id:e.id, state:'fake', title:'', extra:'Crossref 查无此文'};
-
+      if (r && r.ok) {
+        const ym = refYearMatch(e.line, r.year);
+        const ts = refTitleSim(r.title, e.line);
+        const js = refJournalSim(r.journal, e.line);
+        const hasExtra = e.line.length > e.id.length + 25;
+        let conf='mid', reason='标识真实，比对信息不足';
+        if ((ym===true && ts>=0.5) || ts>=0.6) { conf='high'; reason='年份与标题均匹配'; }
+        else if (ym===true || ts>=0.3 || js>=0.5) { conf='mid'; reason='部分字段匹配（建议核对）'; }
+        else if (ym===false || (ts>0 && ts<0.3) || (hasExtra && ts===0)) { conf='low'; reason='信息疑似不符（谨防张冠李戴）'; }
+        if (conf==='high') high++; else if (conf==='mid') mid++; else low++;
+        verified++;
+        const detail = '年份'+(ym===true?'✓':(ym===false?'✗':'—'))+' | 标题匹配'+Math.round(ts*100)+'% | 期刊匹配'+Math.round(js*100)+'%';
+        return {line:e.line, type:'DOI', id:e.id, state:'ok', conf:conf, reason:reason, detail:detail, title:r.title, extra:(r.journal?r.journal:'')+(r.year?' ('+r.year+')':'')};
+      }
+      fake++; return {line:e.line, type:'DOI', id:e.id, state:'fake', conf:'fake', reason:'', detail:'', title:'', extra:'Crossref 查无此文'};
     }
-
     if (e.type==='pmid') {
-
       const r = pmidResults[e.id];
-
-      if (r && r.ok) { verified++; return {line:e.line, type:'PMID', id:e.id, state:'ok', title:r.title, extra:(r.journal?r.journal:'') + (r.year?' ('+r.year+')':'')}; }
-
-      fake++; return {line:e.line, type:'PMID', id:e.id, state:'fake', title:'', extra:'PubMed 查无此文'};
-
+      if (r && r.ok) {
+        const ym = refYearMatch(e.line, r.year);
+        const ts = refTitleSim(r.title, e.line);
+        const js = refJournalSim(r.journal, e.line);
+        const hasExtra = e.line.length > e.id.length + 25;
+        let conf='mid', reason='标识真实，比对信息不足';
+        if ((ym===true && ts>=0.5) || ts>=0.6) { conf='high'; reason='年份与标题均匹配'; }
+        else if (ym===true || ts>=0.3 || js>=0.5) { conf='mid'; reason='部分字段匹配（建议核对）'; }
+        else if (ym===false || (ts>0 && ts<0.3) || (hasExtra && ts===0)) { conf='low'; reason='信息疑似不符（谨防张冠李戴）'; }
+        if (conf==='high') high++; else if (conf==='mid') mid++; else low++;
+        verified++;
+        const detail = '年份'+(ym===true?'✓':(ym===false?'✗':'—'))+' | 标题匹配'+Math.round(ts*100)+'% | 期刊匹配'+Math.round(js*100)+'%';
+        return {line:e.line, type:'PMID', id:e.id, state:'ok', conf:conf, reason:reason, detail:detail, title:r.title, extra:(r.journal?r.journal:'')+(r.year?' ('+r.year+')':'')};
+      }
+      fake++; return {line:e.line, type:'PMID', id:e.id, state:'fake', conf:'fake', reason:'', detail:'', title:'', extra:'PubMed 查无此文'};
     }
-
-    pending++; return {line:e.line, type:'-', id:'', state:'pending', title:'', extra:'无 DOI/PMID，需人工确认'};
-
+    pending++; return {line:e.line, type:'-', id:'', state:'pending', conf:'pending', reason:'', detail:'', title:'', extra:'无 DOI/PMID，需人工确认'};
   });
-
   let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px">';
-
-  html += '<div style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:12px">📊 核验结果</div>';
-
+  html += '<div style="font-size:16px;font-weight:700;color:#1f2937;margin-bottom:12px">📊 核验结果（含字段比对与置信度）</div>';
   html += '<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">';
-
-  html += '<span style="background:#ecfdf5;color:#047857;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">✅ 已验证 '+verified+' 条</span>';
-
-  html += '<span style="background:#fef2f2;color:#b91c1c;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">❌ 疑似虚构 '+fake+' 条</span>';
-
-  html += '<span style="background:#fffbeb;color:#b45309;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">⚠️ 待人工确认 '+pending+' 条</span>';
-
+  html += '<span style="background:#ecfdf5;color:#047857;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">✅ 高置信 '+high+' 条</span>';
+  html += '<span style="background:#fffbeb;color:#b45309;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">⚠️ 部分匹配 '+mid+' 条</span>';
+  html += '<span style="background:#fef2f2;color:#b91c1c;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">❌ 信息不符 '+low+' 条</span>';
+  html += '<span style="background:#fef2f2;color:#b91c1c;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">疑似虚构 '+fake+' 条</span>';
+  html += '<span style="background:#fffbeb;color:#b45309;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600">待人工确认 '+pending+' 条</span>';
   html += '</div>';
-
+  html += '<div style="font-size:12px;color:#6b7280;background:#f8fafc;border-radius:8px;padding:8px 12px;margin-bottom:12px;line-height:1.7">比对逻辑：年份直接匹配；标题/期刊用关键词重叠率。若 DOI 真实但所填年份/标题对不上（信息不符），提示谨防「真 DOI 配假信息」——建议按真实文献信息重新核对引用。</div>';
   html += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
-
   html += '<tr style="background:#f9fafb"><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb">引用条目</th><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb">标识</th><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb">状态</th><th style="padding:8px;text-align:left;border-bottom:1px solid #e5e7eb">核验信息</th></tr>';
-
   rows.forEach(function(r){
-
-    const badge = r.state==='ok' ? '<span style="background:#ecfdf5;color:#047857;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">✅ 真实</span>'
-
+    const badge = r.state==='ok'
+      ? (r.conf==='high' ? '<span style="background:#ecfdf5;color:#047857;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">✅ 高置信</span>'
+        : r.conf==='mid' ? '<span style="background:#fffbeb;color:#b45309;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">⚠️ 部分匹配</span>'
+        : '<span style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">❌ 信息不符</span>')
       : r.state==='fake' ? '<span style="background:#fef2f2;color:#b91c1c;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">❌ 疑似虚构</span>'
-
       : '<span style="background:#fffbeb;color:#b45309;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">⚠️ 待确认</span>';
-
-    const titleHtml = r.title ? '<div style="color:#1f2937;font-weight:500">'+r.title+'</div><div style="color:#6b7280">'+r.extra+'</div>' : '<div style="color:#6b7280">'+r.extra+'</div>';
-
+    const titleHtml = r.title
+      ? '<div style="color:#1f2937;font-weight:500">'+r.title+'</div><div style="color:#6b7280">'+r.extra+'</div>'+(r.conf&&r.conf!=='fake'&&r.conf!=='pending'?'<div style="color:'+(r.conf==='high'?'#047857':r.conf==='mid'?'#b45309':'#b91c1c')+';font-size:11px;margin-top:3px">'+r.reason+'（'+r.detail+'）</div>':'')
+      : '<div style="color:#6b7280">'+r.extra+'</div>';
     html += '<tr><td style="padding:8px;border-bottom:1px solid #f3f4f6;max-width:320px;word-break:break-all">'+r.line.slice(0,120)+'</td><td style="padding:8px;border-bottom:1px solid #f3f4f6">'+(r.type==='DOI'||r.type==='PMID'?'<span style="background:#eef2ff;color:#4338ca;padding:2px 6px;border-radius:4px;font-size:11px">'+r.type+'</span>':'—')+'</td><td style="padding:8px;border-bottom:1px solid #f3f4f6">'+badge+'</td><td style="padding:8px;border-bottom:1px solid #f3f4f6">'+titleHtml+'</td></tr>';
-
   });
-
   html += '</table>';
-
-  html += '<div style="font-size:11px;color:#9ca3af;margin-top:12px">数据来源：Crossref（DOI）、NCBI PubMed（PMID）。核验的是标识存在性，具体引用格式请按目标期刊规范自行核对。</div>';
-
+  html += '<div style="font-size:11px;color:#9ca3af;margin-top:12px">数据来源：Crossref（DOI）、NCBI PubMed（PMID）。核验含标识存在性 + 字段匹配（年份/标题/期刊）。</div>';
   html += '</div>';
-
   resultEl.innerHTML = html;
-
   resultEl.style.display = 'block';
-
-  status.textContent = '核验完成：'+verified+' 真实 / '+fake+' 疑似虚构 / '+pending+' 待确认';
-
+  status.textContent = '核验完成：高置信 '+high+' / 部分匹配 '+mid+' / 信息不符 '+low+' / 疑似虚构 '+fake+' / 待确认 '+pending;
   window._refCheckRows = rows;
-
 }
 
 
