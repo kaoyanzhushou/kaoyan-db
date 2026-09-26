@@ -23544,7 +23544,8 @@ window.addEventListener('load', function(){
 
  <button onclick="switchPaperSubTab('assistant')" id="paperTab-assistant" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">论文助手</button>
 
- <button onclick="switchPaperSubTab('impact')" id="paperTab-impact" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">影响力</button>
+ <button onclick="switchPaperSubTab('impact')" id="paperTab-impact" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">影响力</button> <button onclick="switchPaperSubTab('stats')" id="paperTab-stats" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">📊 统计助手</button>
+
 
 <button class="paper-tab-btn" data-paper-tab="cite-format" id="paperTab-cite-format" onclick="navigateToPaperSubTab('cite-format')">📚 引用格式化</button>
 
@@ -23569,7 +23570,7 @@ window.addEventListener('load', function(){
   var GROUPS = [
     {name:'项目管理', keywords:['我的论文','研究设计','决策日志','论文转教案','技术路线图']},
     {name:'写作与润色', keywords:['AI写作助手','论文润色','写作助手','体育学特色','学术英语','写作流水线','论文助手']},
-    {name:'检查与查重', keywords:['格式检查','论文查重','查重自检','引用核验','格式排版','伦理合规']},
+    {name:'检查与查重', keywords:['格式检查','论文查重','查重自检','引用核验','格式排版','伦理合规','统计助手']},
     {name:'深度分析', keywords:['评审圆桌','研究趋势','反思链','想法评估','数据链路','预注册','模型辩论','审稿人模拟器','影响力','导师视角']},
     {name:'投稿与发表', keywords:['投稿中心','期刊匹配','审稿人预测','投稿时机','引用格式化','实验设计']},
     {name:'文献与研究', keywords:['文献管理','文献增强','知识库','个人知识库','模型流水线','图表生成','学术工具箱','研究辅助']}
@@ -26152,6 +26153,63 @@ window.addEventListener('load', function(){
 
  <div id="aiPlagResult" style="display:none"></div>
  <div id="plag3Result" style="display:none"></div>
+
+ <div id="paperContent-stats" style="display:none">
+
+ <div style="background:linear-gradient(135deg,#e0f2fe,#bae6fd);border-radius:12px;padding:20px;margin-bottom:16px">
+
+ <div style="font-size:18px;font-weight:700;color:#075985;margin-bottom:4px">📊 统计助手（体育论文专用）</div>
+
+ <div style="font-size:13px;color:#0369a1">数据清洗 → 描述统计 → 正态性检验 → 检验方法推荐 → APA/体育期刊格式报告（真实 p 值计算）</div>
+
+ </div>
+
+ <div style="display:flex;gap:16px;flex-wrap:wrap">
+
+ <div style="flex:1;min-width:320px">
+
+ <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;margin-bottom:16px">
+
+ <div style="font-size:14px;font-weight:600;color:#1f2937;margin-bottom:10px">数据输入（支持多组，空格/逗号/换行分隔）</div>
+
+ <div style="font-size:12px;color:#6b7280;margin-bottom:8px;line-height:1.7">示例：<br>组1 对照组: 12.5 13.1 11.8 12.9 13.4 12.2<br>组2 训练组: 15.2 16.1 14.8 15.6 16.4 15.1<br>组3 高强度组: 17.3 18.2 16.9 17.8 18.5 17.1<br>也可只贴一组数值（自动视为单组）。</div>
+
+ <textarea id="statsDataText" placeholder="每行一组：组名: 数值 数值 ..." style="width:100%;height:200px;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;line-height:1.8;resize:vertical;font-family:inherit"></textarea>
+
+ <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+
+ <button onclick="runStatsAnalysis()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;flex:1;min-width:140px">📊 开始统计分析</button>
+
+ <button onclick="document.getElementById('statsDataText').value='';document.getElementById('statsResult').innerHTML='';" style="background:#f3f4f6;color:#374151;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">清空</button>
+
+ </div>
+
+ </div>
+
+ </div>
+
+ <div style="flex:1;min-width:320px">
+
+ <div id="statsResult" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:16px;min-height:300px">
+
+ <div style="text-align:center;padding:60px 20px;color:#9ca3af">
+
+ <div style="font-size:48px;margin-bottom:16px">📊</div>
+
+ <div style="font-size:15px;margin-bottom:8px">等待统计分析</div>
+
+ <div style="font-size:12px">在左侧粘贴数据，点击「开始统计分析」</div>
+
+ </div>
+
+ </div>
+
+ </div>
+
+ </div>
+
+ </div>
+
 
 
  </div>
@@ -50594,7 +50652,7 @@ function switchPaperSubTab(subTab) {
 
 
 
-  ['projects','editor','format','format2','literature','literature2','design','assist','polish','publish','journalmatch','review','trend','writing','pipeline2','chart','knowledge2','debate2','toolbox','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact','cite-format','plagiarism-check','reviewer-predict','submit-timing','experiment-design'].forEach(function(t) {
+  ['projects','editor','format','format2','literature','literature2','design','assist','polish','publish','journalmatch','review','trend','writing','pipeline2','chart','knowledge2','debate2','toolbox','sports','check','route','refcheck','pipeline','idea','roundtable','reflect','prereg','dataflow','ailog','acadeng','ethics','mentor','knowledge','assistant','impact','cite-format','plagiarism-check','reviewer-predict','submit-timing','experiment-design','stats'].forEach(function(t) {
 
 
 
@@ -63107,6 +63165,334 @@ var PLAG_COMMON_PHRASES = [
 
 
 ];
+
+
+// ========== 统计模块（P0-2 体育论文统计助手）==========
+function statsGammaLn(xx){
+  var cof=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  var y=xx, x=xx, tmp=x+5.5; tmp-=(x+0.5)*Math.log(tmp);
+  var ser=1.000000000190015;
+  for(var j=0;j<6;j++){ ser+=cof[j]/++y; }
+  return -tmp+Math.log(2.5066282746310005*ser/x);
+}
+function statsGammaP(a,x){
+  if(x<0||a<=0) return NaN;
+  if(x<a+1){
+    var ap=a, sum=1/a, del=sum;
+    while(del>1e-12*sum){ ap++; del*=x/ap; sum+=del; }
+    return sum*Math.exp(-x+a*Math.log(x)-statsGammaLn(a));
+  } else {
+    var b=x+1-a, c=1e300, d=1/b, h=d, an;
+    for(var i=1;i<=200;i++){
+      an=-i*(i-a); b+=2; d=an*d+b;
+      if(Math.abs(d)<1e-300) d=1e-300;
+      c=b+an/c;
+      if(Math.abs(c)<1e-300) c=1e-300;
+      d=1/d; h*=d*c;
+    }
+    return 1-h*Math.exp(-x+a*Math.log(x)-statsGammaLn(a));
+  }
+}
+function statsErf(x){
+  var sign=1;
+  if(x<0) sign=-1;
+  x=Math.abs(x);
+  var a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  var t=1/(1+p*x);
+  var y=1-((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return sign*y;
+}
+function statsNormCDF(z){ return 0.5*(1+statsErf(z/Math.SQRT2)); }
+function statsBetaCF(a,b,x){
+  var MAXIT=200, EPS=3e-14, FPMIN=1e-300;
+  var qab=a+b, qap=a+1, qam=a-1;
+  var c=1, d=1-qab*x/qap;
+  if(Math.abs(d)<FPMIN) d=FPMIN;
+  d=1/d; var h=d;
+  for(var m=1;m<=MAXIT;m++){
+    var m2=2*m;
+    var aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN) d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN) c=FPMIN;
+    d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN) d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN) c=FPMIN;
+    d=1/d; var del=d*c; h*=del;
+    if(Math.abs(del-1)<EPS) break;
+  }
+  return h;
+}
+function statsBetai(a,b,x){
+  if(x<=0) return 0; if(x>=1) return 1;
+  var bt=Math.exp(statsGammaLn(a+b)-statsGammaLn(a)-statsGammaLn(b)+a*Math.log(x)+b*Math.log(1-x));
+  if(x<(a+1)/(a+b+2)) return bt*statsBetaCF(a,b,x)/a;
+  return 1-bt*statsBetaCF(b,a,1-x)/b;
+}
+function statsTCDF(t,dof){
+  if(dof<=0) return NaN;
+  var x=dof/(dof+t*t);
+  var p=0.5*statsBetai(dof/2, 0.5, x);
+  return t>0 ? 1-p : p;
+}
+function statsFCDF(f,d1,d2){
+  if(f<=0||d1<=0||d2<=0) return NaN;
+  return statsBetai(d1/2, d2/2, d1*f/(d1*f+d2));
+}
+function statsChi2CDF(x,dof){
+  if(x<=0) return 0;
+  return statsGammaP(dof/2, x/2);
+}
+function statsTInv(p,dof){
+  if(dof<=0) return NaN;
+  var t=0, lo=-1e6, hi=1e6;
+  for(var i=0;i<100;i++){
+    t=(lo+hi)/2;
+    var c=statsTCDF(t,dof);
+    if(c<p) lo=t; else hi=t;
+  }
+  return t;
+}
+function statsMean(arr){ return arr.reduce(function(a,b){return a+b;},0)/arr.length; }
+function statsSD(arr){
+  var m=statsMean(arr), s=0;
+  arr.forEach(function(v){ s+=(v-m)*(v-m); });
+  return Math.sqrt(s/(arr.length-1));
+}
+function statsSEM(arr){ return statsSD(arr)/Math.sqrt(arr.length); }
+function statsMedian(arr){
+  return statsQuantile(arr.slice().sort(function(x,y){return x-y;}), 0.5);
+}
+function statsQuantile(sorted, q){
+  var n=sorted.length;
+  if(!n) return NaN;
+  var pos=(n-1)*q, lo=Math.floor(pos), hi=Math.ceil(pos);
+  if(lo===hi) return sorted[lo];
+  return sorted[lo]+(sorted[hi]-sorted[lo])*(pos-lo);
+}
+function statsJBTest(arr){
+  var n=arr.length, m=statsMean(arr), s=statsSD(arr);
+  var m3=0, m4=0;
+  arr.forEach(function(v){ var d=(v-m)/s; m3+=d*d*d; m4+=d*d*d*d; });
+  var skew=m3/n, kurt=m4/n;
+  var jb=n/6*(skew*skew+(kurt-3)*(kurt-3)/4);
+  var p=1-statsChi2CDF(jb,2);
+  var strongSkew=Math.abs(skew)>2;
+  var strongKurt=Math.abs(kurt-3)>7;
+  return {jb:jb, p:p, skew:skew, kurt:kurt, strongSkew:strongSkew, strongKurt:strongKurt, normal: p>0.05 && !strongSkew && !strongKurt};
+}
+function statsAndersonDarling(x){
+  var n=x.length;
+  if(n<3) return {A2:NaN, p:NaN};
+  var a=x.slice().sort(function(p,q){return p-q;});
+  var m=statsMean(a), sd=statsSD(a);
+  var s=0;
+  for(var i=0;i<n;i++){
+    var z1=(a[i]-m)/sd, z2=(a[n-1-i]-m)/sd;
+    var c1=statsNormCDF(z1), c2=statsNormCDF(z2);
+    if(c1<=0) c1=1e-15; if(c2>=1) c2=1-1e-15;
+    s+=(2*(i+1)-1)*(Math.log(c1)+Math.log(1-c2));
+  }
+  var A2=-n-s/n;
+  var A2adj=A2*(1+0.75/n+2.25/(n*n));
+  var p;
+  if(A2adj<0.2){ p=1-Math.exp(-13.436+101.14*A2adj-223.73*A2adj*A2adj); }
+  else if(A2adj<0.34){ p=1-Math.exp(-8.318+42.796*A2adj-59.938*A2adj*A2adj); }
+  else if(A2adj<0.6){ p=Math.exp(0.9177-4.279*A2adj-1.38*A2adj*A2adj); }
+  else { p=Math.exp(1.2937-5.709*A2adj+0.0186*A2adj*A2adj); }
+  if(p<0) p=0; if(p>1) p=1;
+  return {A2:A2adj, p:p};
+}
+function statsParseGroups(text){
+  var lines=text.split(/[\r\n]+/).map(function(s){return s.trim();}).filter(function(s){return s.length>0;});
+  var groups=[];
+  lines.forEach(function(line){
+    var vals=null, name='组'+(groups.length+1);
+    var m=line.match(/^([^:：0-9][^:：]*)[:：](.+)$/);
+    if(m && m[2].trim().length>0){
+      name=m[1].trim();
+      vals=m[2].match(/-?\d+(\.\d+)?/g);
+    } else {
+      vals=line.match(/-?\d+(\.\d+)?/g);
+    }
+    if(vals && vals.length>=2){
+      groups.push({name:name, values:vals.map(Number)});
+    }
+  });
+  return groups;
+}
+function statsTTest2(g1,g2){
+  var n1=g1.length, n2=g2.length;
+  var m1=statsMean(g1), m2=statsMean(g2);
+  var s1=statsSD(g1), s2=statsSD(g2);
+  var se=Math.sqrt(s1*s1/n1+s2*s2/n2);
+  var t=(m1-m2)/se;
+  var dof=Math.floor((s1*s1/n1+s2*s2/n2)*(s1*s1/n1+s2*s2/n2)/((s1*s1/n1)*(s1*s1/n1)/(n1-1)+(s2*s2/n2)*(s2*s2/n2)/(n2-1)));
+  var p=2*(1-statsTCDF(Math.abs(t),dof));
+  var sp=Math.sqrt(((n1-1)*s1*s1+(n2-1)*s2*s2)/(n1+n2-2));
+  var d=(m1-m2)/sp;
+  return {t:t,dof:dof,p:p,d:d,se:se,m1:m1,m2:m2,s1:s1,s2:s2};
+}
+function statsANOVA(groups){
+  var all=[], k=groups.length;
+  groups.forEach(function(g){ all=all.concat(g.values); });
+  var gm=statsMean(all), n=all.length;
+  var ssb=0, ssw=0;
+  groups.forEach(function(g){
+    var gm2=statsMean(g.values);
+    ssb+=g.values.length*(gm2-gm)*(gm2-gm);
+    g.values.forEach(function(v){ ssw+=(v-gm2)*(v-gm2); });
+  });
+  var dfb=k-1, dfw=n-k;
+  var msb=ssb/dfb, msw=ssw/dfw;
+  var F=msb/msw;
+  var p=1-statsFCDF(F,dfb,dfw);
+  var eta2=ssb/(ssb+ssw);
+  return {F:F,dfb:dfb,dfw:dfw,p:p,eta2:eta2,ssb:ssb,ssw:ssw};
+}
+function statsMannWhitney(g1,g2){
+  var all=[]; g1.forEach(function(v){all.push({v:v,g:0});}); g2.forEach(function(v){all.push({v:v,g:1});});
+  all.sort(function(a,b){return a.v-b.v;});
+  var ranks=[], n=all.length, i=0;
+  while(i<n){
+    var j=i;
+    while(j+1<n && all[j+1].v===all[i].v) j++;
+    var r=(i+j)/2+1;
+    for(var k=i;k<=j;k++) ranks.push(r);
+    i=j+1;
+  }
+  var R1=0, n1=g1.length, n2=g2.length;
+  all.forEach(function(item,idx){ if(item.g===0) R1+=ranks[idx]; });
+  var U1=R1-n1*(n1+1)/2, U2=n1*n2-U1;
+  var U=Math.min(U1,U2);
+  var mu=n1*n2/2;
+  var sd=Math.sqrt(n1*n2*(n1+n2+1)/12);
+  var z=(U-mu)/sd;
+  var p=2*(1-statsNormCDF(Math.abs(z)));
+  return {U:U,z:z,p:p,n1:n1,n2:n2};
+}
+function statsKruskal(groups){
+  var all=[], k=groups.length;
+  groups.forEach(function(g,gi){ g.values.forEach(function(v){ all.push({v:v,g:gi}); }); });
+  all.sort(function(a,b){return a.v-b.v;});
+  var ranks=[], n=all.length, i=0;
+  while(i<n){
+    var j=i;
+    while(j+1<n && all[j+1].v===all[i].v) j++;
+    var r=(i+j)/2+1;
+    for(var kk=i;kk<=j;kk++) ranks.push(r);
+    i=j+1;
+  }
+  var R=groups.map(function(){return 0;});
+  all.forEach(function(item,idx){ R[item.g]+=ranks[idx]; });
+  var H=12/(n*(n+1))*R.reduce(function(s,r,gi){ return s+r*r/groups[gi].values.length; },0)-3*(n+1);
+  var p=1-statsChi2CDF(H,k-1);
+  return {H:H,dof:k-1,p:p};
+}
+function statsDescTable(groups){
+  return groups.map(function(g){
+    var v=g.values, n=v.length, m=statsMean(v), sd=statsSD(v), se=statsSEM(v), med=statsMedian(v), mn=Math.min.apply(null,v), mx=Math.max.apply(null,v);
+    return '<tr><td style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px;color:#1f2937">' + g.name + '</td>' +
+      '<td style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px;text-align:center">' + n + '</td>' +
+      '<td style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px;text-align:center">' + m.toFixed(2) + '±' + sd.toFixed(2) + '</td>' +
+      '<td style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px;text-align:center">' + med.toFixed(2) + '</td>' +
+      '<td style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px;text-align:center">' + mn.toFixed(2) + '–' + mx.toFixed(2) + '</td>' +
+      '<td style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px;text-align:center">' + se.toFixed(2) + '</td></tr>';
+  }).join('');
+}
+function runStatsAnalysis(){
+  var textEl = document.getElementById('statsDataText');
+  var text = textEl ? textEl.value.trim() : '';
+  if (!text) { alert('请先输入数据'); return; }
+  var groups = statsParseGroups(text);
+  if (!groups.length) { alert('未识别到有效数据（至少2个数值/组）'); return; }
+  var box = document.getElementById('statsResult');
+  if (!box) return;
+  var k = groups.length;
+  var normals = groups.map(function(g){
+    var j=statsJBTest(g.values);
+    var ad=statsAndersonDarling(g.values);
+    return {name:g.name, jb:j.jb, jb_p:j.p, skew:j.skew, kurt:j.kurt, A2:ad.A2, ad_p:ad.p,
+      normal: j.normal && ad.p>0.05};
+  });
+  var allNormal = normals.every(function(j){ return j.normal; });
+  var html = '<div style="font-size:15px;font-weight:700;color:#1f2937;margin-bottom:12px">📊 统计分析报告</div>';
+  // 描述统计表
+  html += '<div style="font-size:13px;font-weight:600;color:#075985;margin:10px 0 6px">1. 描述性统计（M±SD）</div>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:12px"><tr style="background:#f0f9ff">' +
+    '<th style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px;text-align:left">组别</th>' +
+    '<th style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px">n</th>' +
+    '<th style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px">M±SD</th>' +
+    '<th style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px">中位数</th>' +
+    '<th style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px">范围</th>' +
+    '<th style="padding:8px 10px;border:1px solid #eef2f7;font-size:12px">SE</th></tr>' + statsDescTable(groups) + '</table>';
+  // 正态性
+  html += '<div style="font-size:13px;font-weight:600;color:#075985;margin:10px 0 6px">2. 正态性检验（JB + Anderson-Darling 双检）</div>';
+  normals.forEach(function(j,idx){
+    html += '<div style="font-size:12px;color:#374151;margin-bottom:4px">' + j.name + '：JB=' + j.jb.toFixed(2) + '（p=' + j.jb_p.toFixed(3) + '），AD=' + j.A2.toFixed(3) + '（p=' + j.ad_p.toFixed(3) + '）→ ' + (j.normal ? '✅ 近似正态' : '⚠️ 非正态（偏度' + j.skew.toFixed(2) + '，峰度' + j.kurt.toFixed(2) + '）') + '</div>';
+  });
+  // 异常值检测（IQR 1.5 倍法，稳健）
+  var outliers = [];
+  groups.forEach(function(g,gi){
+    var sorted=g.values.slice().sort(function(a,b){return a-b;});
+    var q1=statsQuantile(sorted,0.25), q3=statsQuantile(sorted,0.75);
+    var iqr=q3-q1;
+    var lo=q1-1.5*iqr, hi=q3+1.5*iqr;
+    g.values.forEach(function(v){
+      if(v<lo||v>hi) outliers.push({gi:gi, v:v});
+    });
+  });
+  if(outliers.length){
+    html += '<div style="font-size:12px;color:#b45309;background:#fffbeb;border-radius:8px;padding:8px 12px;margin:8px 0">⚠️ 检测到' + outliers.length + '个可能离群值（IQR 1.5倍法）：' + outliers.map(function(o){ return groups[o.gi].name + '(' + o.v + ')'; }).join('、') + '。请核对原始数据是否录入错误，离群值会显著影响检验结果。</div>';
+  }
+  // 小样本提示
+  if(groups.some(function(g){ return g.values.length < 10; })){
+    html += '<div style="font-size:12px;color:#6b7280;background:#f8fafc;border-radius:8px;padding:8px 12px;margin:8px 0">ℹ️ 存在样本量小于10的组，正态性检验功效有限，建议结合直方图/QQ图人工判断，或咨询统计指导。</div>';
+  }
+  // 方法推荐 + 检验
+  html += '<div style="font-size:13px;font-weight:600;color:#075985;margin:12px 0 6px">3. 假设检验与推荐</div>';
+  var rec = '';
+  if (k === 1) {
+    rec = '单组数据：适合做单样本t检验（需提供总体均值假设值）或描述统计报告。';
+  } else if (k === 2) {
+    if (allNormal) {
+      var tt = statsTTest2(groups[0].values, groups[1].values);
+      var sig = tt.p < 0.05;
+      rec = '<div style="background:#f0fdf4;border-radius:8px;padding:12px;font-size:13px;line-height:1.9">✅ 推荐 <b>独立样本t检验</b>（Welch修正）<br>' +
+        't(' + tt.dof + ') = ' + tt.t.toFixed(2) + ', p = ' + tt.p.toFixed(3) + '，两组差异' + (sig ? '<b style="color:#dc2626">具有统计学显著性</b>' : '不具有统计学显著性') + '，Cohen\'s d = ' + Math.abs(tt.d).toFixed(2) + '（' + (Math.abs(tt.d)<0.2?'小':Math.abs(tt.d)<0.5?'中':'大') + '效应）<br>' +
+        '报告格式：' + groups[0].name + ' M=' + tt.m1.toFixed(2) + '±' + tt.s1.toFixed(2) + '，' + groups[1].name + ' M=' + tt.m2.toFixed(2) + '±' + tt.s2.toFixed(2) + '，t(' + tt.dof + ')=' + tt.t.toFixed(2) + '，p=' + (tt.p<0.001?'<.001':tt.p.toFixed(3)) + '，d=' + Math.abs(tt.d).toFixed(2) + '。</div>';
+    } else {
+      var mw = statsMannWhitney(groups[0].values, groups[1].values);
+      var sig2 = mw.p < 0.05;
+      rec = '<div style="background:#f0fdf4;border-radius:8px;padding:12px;font-size:13px;line-height:1.9">⚠️ 数据非正态，推荐 <b>Mann-Whitney U 检验</b><br>' +
+        'U = ' + mw.U.toFixed(1) + ', z = ' + mw.z.toFixed(2) + ', p = ' + mw.p.toFixed(3) + '，两组差异' + (sig2 ? '<b style="color:#dc2626">具有统计学显著性</b>' : '不具有统计学显著性') + '<br>' +
+        '报告格式：' + groups[0].name + '组（Mdn=' + statsMedian(groups[0].values).toFixed(2) + '）与' + groups[1].name + '组（Mdn=' + statsMedian(groups[1].values).toFixed(2) + '）差异' + (sig2?'显著':'不显著') + '（U=' + mw.U.toFixed(1) + '，p=' + mw.p.toFixed(3) + '）。</div>';
+    }
+  } else {
+    if (allNormal) {
+      var av = statsANOVA(groups);
+      var sig3 = av.p < 0.05;
+      rec = '<div style="background:#f0fdf4;border-radius:8px;padding:12px;font-size:13px;line-height:1.9">✅ 推荐 <b>单因素方差分析（ANOVA）</b><br>' +
+        'F(' + av.dfb + ', ' + av.dfw + ') = ' + av.F.toFixed(2) + ', p = ' + av.p.toFixed(3) + '，组间差异' + (sig3 ? '<b style="color:#dc2626">具有统计学显著性</b>' : '不具有统计学显著性') + '，η² = ' + av.eta2.toFixed(3) + '（' + (av.eta2<0.06?'小':av.eta2<0.14?'中':'大') + '效应）<br>' +
+        '报告格式：F(' + av.dfb + ', ' + av.dfw + ')=' + av.F.toFixed(2) + '，p=' + (av.p<0.001?'<.001':av.p.toFixed(3)) + '，η²=' + av.eta2.toFixed(3) + '。</div>';
+    } else {
+      var kw = statsKruskal(groups);
+      var sig4 = kw.p < 0.05;
+      rec = '<div style="background:#f0fdf4;border-radius:8px;padding:12px;font-size:13px;line-height:1.9">⚠️ 数据非正态，推荐 <b>Kruskal-Wallis 检验</b><br>' +
+        'H(' + kw.dof + ') = ' + kw.H.toFixed(2) + ', p = ' + kw.p.toFixed(3) + '，组间差异' + (sig4 ? '<b style="color:#dc2626">具有统计学显著性</b>' : '不具有统计学显著性') + '<br>' +
+        '报告格式：H(' + kw.dof + ')=' + kw.H.toFixed(2) + '，p=' + (kw.p<0.001?'<.001':kw.p.toFixed(3)) + '。</div>';
+    }
+  }
+  html += rec;
+  // 规范提醒
+  html += '<div style="font-size:13px;font-weight:600;color:#075985;margin:12px 0 6px">4. 报告规范提醒</div>' +
+    '<div style="font-size:12px;color:#6b7280;line-height:1.9;background:#f8fafc;border-radius:8px;padding:10px 12px">' +
+    '· 体育类期刊要求报告 M±SD、t/F/H 值、自由度、p 值（p<0.001 用 "<.001"）、效应量（d/η²）<br>' +
+    '· 显著性的判定标准：p<0.05 为显著，p<0.01 为非常显著，p<0.001 为极显著<br>' +
+    '· 若样本量过小（n<5）或数据严重偏态，建议咨询统计专业指导或使用稳健方法' +
+    '</div>';
+  box.innerHTML = html;
+}
 
 // ========== 查重 3.0 三层升级（P0-2）==========
 function renderPlag3(html){
