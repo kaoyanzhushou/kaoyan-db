@@ -228991,6 +228991,36 @@ function init() {
 
     syncGroupActive();
 
+    // 页面完全加载后再同步一次（覆盖异步恢复 active 的逻辑）
+
+    setTimeout(syncGroupActive, 1500);
+
+    // 监听 nav-item 的 active 变化，自动同步组头高亮（任何方式切换都生效）
+
+    if (window.MutationObserver) {
+
+        try {
+
+            new MutationObserver(function(muts) {
+
+                var need = false;
+
+                for (var i = 0; i < muts.length; i++) {
+
+                    var mt = muts[i].target;
+
+                    if (mt && mt.classList && mt.classList.contains('nav-item') && muts[i].attributeName === 'class') need = true;
+
+                }
+
+                if (need) syncGroupActive();
+
+            }).observe(sidebar, {attributes: true, attributeFilter: ['class'], subtree: true});
+
+        } catch(e) {}
+
+    }
+
     // 自动展开当前模块所在组（切换功能时，若目标组被折叠则展开）
 
     function groupOfItem(item) {
