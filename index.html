@@ -18550,11 +18550,11 @@ window.addEventListener('load', function(){
 
  <div class="nav-group" onclick="switchTab('dashboard')" title="进入科研总览">🔬 科研总览<span class="nav-toggle">▾</span></div>
 
- <div class="nav-item active" data-tab="dashboard"><span class="icon">🔬</span><span>科研总览</span></div>
+ <div class="nav-item active nav-dup-hide" data-tab="dashboard"><span class="icon">🔬</span><span>科研总览</span></div>
 
  <div class="nav-group nav-group-publish" onclick="navigateToPublish()" title="进入投稿中心">📤 投稿中心<span class="nav-badge">NEW</span><span class="nav-toggle">▾</span></div>
 
- <div class="nav-item nav-item-publish" data-tab="publish" onclick="navigateToPublish()"><span class="icon">📤</span><span>投稿中心</span></div>
+ <div class="nav-item nav-item-publish nav-dup-hide" data-tab="publish" onclick="navigateToPublish()"><span class="icon">📤</span><span>投稿中心</span></div>
 
 <div class="nav-item" onclick="location.href='learn/index.html'" style="background:linear-gradient(135deg,rgba(16,185,129,.16),rgba(59,130,246,.16));border:1px solid rgba(16,185,129,.35)"><span class="icon">🎓</span><span>进入考研学习中心</span><span style="margin-left:auto">→</span></div>
 
@@ -228676,6 +228676,49 @@ setTimeout(function() {
 
 <!-- ========== 导航栏高级视觉 v2.0 结束 ========== -->
 
+<!-- ========== 导航栏 v2.2 开始 ========== -->
+
+<style>
+
+/* 隐藏与组头同名的重复菜单项（B2） */
+
+.nav-dup-hide{display:none !important}
+
+/* 组头高亮：当前模块 */
+
+.nav-group.active{
+
+    color:#fff !important;
+
+    background:linear-gradient(90deg,rgba(99,102,241,0.16),rgba(99,102,241,0.03)) !important;
+
+    border-left-color:#818cf8 !important;
+
+    border-radius:0 8px 8px 0;
+
+}
+
+.nav-group.active .nav-toggle{color:#a5b4fc}
+
+/* 组头左侧色条：按模块主题区分（C5） */
+
+.nav-group{border-left:3px solid transparent}
+
+.nav-group-publish{border-left-color:#8b5cf6}
+
+.nav-group-paper{border-left-color:#3b82f6}
+
+.nav-group-phd{border-left-color:#f97316}
+
+.nav-group-teacher{border-left-color:#10b981}
+
+.nav-group-mechanism{border-left-color:#06b6d4}
+
+</style>
+
+<!-- ========== 导航栏 v2.2 结束 ========== -->
+
+
 <!-- ========== 导航栏 v2.1 增强（箭头/色条/计数/拖拽）开始 ========== -->
 
 <style>
@@ -228928,6 +228971,26 @@ function init() {
 
     renderNavGroupCounts();
 
+    // 组头高亮同步：当前激活菜单项所在组高亮
+
+    function syncGroupActive() {
+
+        navGroups.forEach(function(g) { g.classList.remove('active'); });
+
+        var actItem = sidebar.querySelector('.nav-item.active');
+
+        if (actItem) {
+
+            var g = groupOfItem(actItem);
+
+            if (g) g.classList.add('active');
+
+        }
+
+    }
+
+    syncGroupActive();
+
     // 自动展开当前模块所在组（切换功能时，若目标组被折叠则展开）
 
     function groupOfItem(item) {
@@ -229162,6 +229225,12 @@ function init() {
                 var g = groupOfItem(act);
 
                 if (g && g.classList.contains('collapsed')) g.classList.remove('collapsed');
+
+                syncGroupActive();
+
+            } else {
+
+                syncGroupActive();
 
             }
 
