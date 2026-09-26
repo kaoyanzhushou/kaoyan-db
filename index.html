@@ -107366,6 +107366,16 @@ function renderPhdPublish(containerId) {
 
   html += '<div onclick="showPubTool(\'resub\')" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🔄</div><div style="font-size:15px;font-weight:700;color:#991b1b;margin-bottom:4px">拒稿改投引擎</div><div style="font-size:12px;color:#b91c1c">拒稿不用慌：提取原因、推荐改投期刊、自动记录履历</div></div>';
 
+  html += '<div onclick="showPubTool(\'reverse\')" style="background:linear-gradient(135deg,#ecfeff,#cffafe);border:1px solid #67e8f9;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🧭</div><div style="font-size:15px;font-weight:700;color:#155e75;margin-bottom:4px">逆向选题</div><div style="font-size:12px;color:#0e7490">从期刊录用偏好反推可写方向，先定期刊再定题</div></div>';
+
+  html += '<div onclick="showPubTool(\'hotspot\')" style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid #fdba74;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🔥</div><div style="font-size:15px;font-weight:700;color:#9a3412;margin-bottom:4px">发文热点</div><div style="font-size:12px;color:#c2410c">期刊重点方向归纳 + AI 热点查询，追热点不踩空</div></div>';
+
+  html += '<div onclick="showPubTool(\'ladder\')" style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🪜</div><div style="font-size:15px;font-weight:700;color:#5b21b6;margin-bottom:4px">爬坡策略</div><div style="font-size:12px;color:#7c3aed">冲刺-稳妥-保底三级投稿阶梯，规划投稿节奏</div></div>';
+
+  html += '<div onclick="showPubTool(\'citations\')" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📊</div><div style="font-size:15px;font-weight:700;color:#166534;margin-bottom:4px">引用追踪</div><div style="font-size:12px;color:#15803d">已发表论文台账 + 定期检查被引情况</div></div>';
+
+  html += '<div onclick="showPubTool(\'privacy\')" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🔐</div><div style="font-size:15px;font-weight:700;color:#075985;margin-bottom:4px">本地隐私提示</div><div style="font-size:12px;color:#0369a1">数据存哪、AI 会用哪些内容、如何管理</div></div>';
+
 
 
   html += '</div>';
@@ -112664,6 +112674,313 @@ function renderJournalList(list) {
 
 
 
+// ========== P5 可选功能 ==========
+
+var pubTopicsPool = ['老年人', '青少年', '女大学生', '肥胖人群', '糖尿病患者', '运动员', '大学生', '久坐人群', '儿童', '职业人群'];
+var pubMethodsPool = ['随机对照试验', 'Meta分析', '队列研究', '横向调查', '运动干预研究', '个案研究', '量表编制与验证', '质性研究'];
+
+function escPub(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function showReverseTopics() {
+
+  var sel = document.getElementById('reverseJournal');
+  var out = document.getElementById('reverseResult');
+  var j = getPubJournalByName(sel ? sel.value : '');
+  if (!j) { out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">请先选择期刊</div>'; return; }
+
+  var kws = (j.matchKeywords || []).slice(0, 8);
+  var scopeWords = String(j.scope || '').split(/[、,，;；]/).filter(Boolean).slice(0, 6);
+  var sugg = [];
+  var seed = kws.concat(scopeWords);
+  for (var i = 0; i < 3; i++) {
+    var core = seed[i % seed.length];
+    var pop = pubTopicsPool[(i * 3 + 1) % pubTopicsPool.length];
+    var method = pubMethodsPool[(i * 2 + 2) % pubMethodsPool.length];
+    sugg.push('《' + core + '》对' + pop + '的' + method + '（贴合《' + j.name + '》收稿范围）');
+  }
+  sugg.push('结合期刊偏好：' + (j.strengths || '综合类研究') + '，优先产出符合其审稿口味的选题');
+
+  var html = '<div style="background:#fff;border:1px solid #67e8f9;border-radius:12px;padding:16px">';
+
+  html += '<div style="font-size:14px;font-weight:700;color:#155e75;margin-bottom:6px">🧭 《' + j.name + '》可写方向反推</div>';
+
+  html += '<div style="font-size:11px;color:#0e7490;margin-bottom:12px">选题由期刊收稿范围与偏好自动组合，仅作思路参考；建议结合导师意见与领域最新动态定题</div>';
+
+  html += '<div style="background:#f0fdfa;border:1px solid #ccfbf1;border-radius:8px;padding:10px 12px;margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:#0f766e;margin-bottom:4px">收稿范围关键词</div><div style="font-size:12px;color:#334155">' + kws.concat(scopeWords).map(escPub).join(' · ') + '</div></div>';
+
+  html += '<div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:6px">📌 选题建议</div>';
+  sugg.forEach(function(s, i) { html += '<div style="font-size:12px;color:#334155;padding:5px 0;border-bottom:1px dashed #e2e8f0">' + (i + 1) + '. ' + escPub(s) + '</div>'; });
+
+  html += '<div style="margin-top:10px;font-size:11px;color:#94a3b8">💡 点击"🤖 AI 深度选题建议"让 AI 结合该刊偏好给出更具体的选题</div>';
+
+  html += '</div>';
+
+  out.innerHTML = html;
+
+}
+
+async function aiReverseTopics() {
+
+  var sel = document.getElementById('reverseJournal');
+  var out = document.getElementById('reverseResult');
+  var j = getPubJournalByName(sel ? sel.value : '');
+  if (!j) { out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">请先选择期刊</div>'; return; }
+
+  out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">🤖 AI 正在结合期刊偏好构思选题，请稍候…</div>';
+
+  var sys = '你是一位体育科研选题策划专家。请针对指定期刊，结合其收稿范围、发表偏好，给出 5 个具体可写的选题方向（题目 + 研究思路 + 创新点），要求贴合该刊口味、具有可操作性。';
+  var usr = '期刊：' + j.name + '\n收稿范围：' + (j.scope || '') + '\n收录/分区：' + (j.jcr || j.cas || '') + '\n期刊优势：' + (j.strengths || '') + '\n审稿偏好/拒稿原因：' + (j.pitfalls || '');
+
+  try {
+    var resp = await callDeepSeekAPI(sys, usr, 1800);
+    var txt = typeof resp === 'string' ? resp : (resp && resp.content ? resp.content : (resp && resp.text ? resp.text : JSON.stringify(resp)));
+    out.innerHTML = '<div style="background:#fff;border:1px solid #67e8f9;border-radius:12px;padding:16px"><div style="font-size:14px;font-weight:700;color:#155e75;margin-bottom:10px">🤖 AI 深度选题建议（' + j.name + '）</div><div style="font-size:13px;color:#1e293b;line-height:1.9;white-space:pre-wrap">' + escPub(txt) + '</div><div style="margin-top:10px;font-size:11px;color:#94a3b8">建议由大模型生成，请结合期刊官网最新征稿方向核实</div></div>';
+  } catch(e) {
+    out.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;font-size:13px;color:#991b1b">🤖 AI 服务暂时不可用，可先参考上方本地选题建议</div>';
+  }
+
+}
+
+function showHotTopics() {
+
+  var sel = document.getElementById('hotJournal');
+  var out = document.getElementById('hotResult');
+  var j = getPubJournalByName(sel ? sel.value : '');
+  if (!j) { out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">请先选择期刊</div>'; return; }
+
+  var words = (j.matchKeywords || []).concat(String(j.scope || '').split(/[、,，;；]/).filter(Boolean));
+  var uniq = [];
+  words.forEach(function(w) { if (uniq.indexOf(w) < 0) uniq.push(w); });
+
+  var html = '<div style="background:#fff;border:1px solid #fdba74;border-radius:12px;padding:16px">';
+
+  html += '<div style="font-size:14px;font-weight:700;color:#9a3412;margin-bottom:6px">🔥 《' + j.name + '》发文热点方向</div>';
+
+  html += '<div style="font-size:11px;color:#c2410c;margin-bottom:12px">由期刊档案归纳（收稿范围 + 关键词），近刊动态请到期刊官网 / CNKI / PubMed 最新目录核对</div>';
+
+  html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
+  uniq.slice(0, 16).forEach(function(w) { html += '<span style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:4px 12px;font-size:12px;color:#9a3412">' + escPub(w) + '</span>'; });
+  html += '</div>';
+
+  html += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e;margin-bottom:10px">📌 追踪建议：登录 CNKI（知网）→ 期刊导航 → 该刊最新 3 期目录，按上述方向检索近两年高频关键词；或点击"🤖 AI 热点查询"获取 AI 参考判断</div>';
+
+  html += '</div>';
+
+  out.innerHTML = html;
+
+}
+
+async function aiHotTopics() {
+
+  var sel = document.getElementById('hotJournal');
+  var out = document.getElementById('hotResult');
+  var j = getPubJournalByName(sel ? sel.value : '');
+  if (!j) { out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">请先选择期刊</div>'; return; }
+
+  out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">🤖 AI 正在查询该刊热点方向，请稍候…</div>';
+
+  var sys = '你是一位熟悉体育学术期刊动态的编辑。请基于期刊信息，判断该刊近 1-2 年可能的发文热点方向（研究主题、方法、人群），给出 5 条并说明理由。注意：你的知识可能滞后，回答开头注明"热点判断基于模型知识，可能滞后，请以最新目录为准"。';
+  var usr = '期刊：' + j.name + '\n收稿范围：' + (j.scope || '') + '\n收录/分区：' + (j.jcr || j.cas || '') + '\n发表偏好：' + (j.strengths || '');
+
+  try {
+    var resp = await callDeepSeekAPI(sys, usr, 1600);
+    var txt = typeof resp === 'string' ? resp : (resp && resp.content ? resp.content : (resp && resp.text ? resp.text : JSON.stringify(resp)));
+    out.innerHTML = '<div style="background:#fff;border:1px solid #fdba74;border-radius:12px;padding:16px"><div style="font-size:14px;font-weight:700;color:#9a3412;margin-bottom:10px">🤖 AI 热点查询（' + j.name + '）</div><div style="font-size:13px;color:#1e293b;line-height:1.9;white-space:pre-wrap">' + escPub(txt) + '</div></div>';
+  } catch(e) {
+    out.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;font-size:13px;color:#991b1b">🤖 AI 服务暂时不可用，可先参考上方本地方向归纳</div>';
+  }
+
+}
+
+function pubJournalDiff(j) {
+
+  var prestige = pubPrestigeScore(j);
+  var acc = j.acceptRate || 30;
+  var days = j.reviewDays || 60;
+  return Math.round(prestige * 0.5 + (100 - acc) * 0.35 + Math.min(20, days / 8));
+
+}
+
+function showPubLadder() {
+
+  var title = (document.getElementById('ladderTitle').value || '').trim();
+  var out = document.getElementById('ladderResult');
+  if (!title) { out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">请先输入论文标题或研究方向</div>'; return; }
+
+  var text = title.toLowerCase();
+  var all = PHD_JOURNALS.concat(CN_JOURNALS);
+  var scored = all.map(function(j) {
+    var kwHit = (j.matchKeywords || []).filter(function(k) { return text.indexOf(String(k).toLowerCase()) >= 0; }).length;
+    var theme = Math.min(100, kwHit / Math.max(1, (j.matchKeywords || []).length) * 100);
+    var diff = pubJournalDiff(j);
+    return {j: j, theme: theme, diff: diff, total: Math.round(theme * 0.6 + (100 - diff) * 0.4)};
+  }).filter(function(x) { return x.theme > 0; }).sort(function(a, b) { return b.total - a.total; });
+
+  var groups = {chong: [], wen: [], bao: []};
+  scored.forEach(function(x) {
+    if (x.diff >= 75) groups.chong.push(x);
+    else if (x.diff >= 55) groups.wen.push(x);
+    else groups.bao.push(x);
+  });
+
+  var pick = function(arr, n) { return arr.slice(0, n); };
+
+  var html = '<div style="background:#fff;border:1px solid #c4b5fd;border-radius:12px;padding:16px">';
+
+  html += '<div style="font-size:14px;font-weight:700;color:#5b21b6;margin-bottom:4px">🪜 投稿爬坡阶梯</div>';
+
+  html += '<div style="font-size:11px;color:#7c3aed;margin-bottom:12px">难度按声望+录用率估算；建议：先投冲刺档（同轮 1 本），被拒快速改投稳妥档，保底档兜底；一稿多投违规，请遵守期刊规则</div>';
+
+  var tiers = [
+    ['🚀 冲刺档（高分高难，中了血赚）', groups.chong, '冲', '#7c3aed', '#ede9fe'],
+    ['🎯 稳妥档（匹配适中，性价比高）', groups.wen, '稳', '#0e7490', '#cffafe'],
+    ['🛟 保底档（录用率较高，求稳上岸）', groups.bao, '保', '#059669', '#dcfce7']
+  ];
+
+  tiers.forEach(function(t) {
+    var list = pick(t[1], 3);
+    html += '<div style="background:' + t[4] + ';border:1px solid ' + t[3] + ';border-radius:10px;padding:12px;margin-bottom:10px">';
+    html += '<div style="font-size:13px;font-weight:700;color:' + t[3] + ';margin-bottom:8px">' + t[0] + (list.length ? '（匹配 ' + list.length + ' 本）' : '（暂无匹配）') + '</div>';
+    if (!list.length) { html += '<div style="font-size:11px;color:#94a3b8">该档暂无可匹配期刊，可调整方向或扩充期刊库</div>'; }
+    list.forEach(function(x) {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer" onclick="showJournalDetail(\'' + x.j.id + '\')">';
+      html += '<div style="min-width:0"><div style="font-size:12px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + x.j.name + '</div><div style="font-size:10px;color:#6b7280">主题匹配 ' + x.theme + ' · 录用率约 ' + (x.j.acceptRate || '—') + '% · 均审 ' + (x.j.reviewDays || '—') + ' 天</div></div>';
+      html += '<span style="font-size:11px;font-weight:700;color:' + t[3] + ';background:' + t[4] + ';border-radius:10px;padding:2px 10px;white-space:nowrap">' + t[2] + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  html += '<div style="margin-top:8px;font-size:11px;color:#94a3b8">💡 投稿节奏参考：冲刺档审稿周期通常较长，可同步准备稳妥档；保底档用于 deadline 前确保有产出</div>';
+
+  html += '</div>';
+
+  out.innerHTML = html;
+
+}
+
+function getCiteTracks() {
+
+  try { return JSON.parse(localStorage.getItem('phd_cite_track') || '[]'); } catch(e) { return []; }
+
+}
+
+function addCiteTrack() {
+
+  var t = (document.getElementById('citeTitle').value || '').trim();
+  var d = (document.getElementById('citeDoi').value || '').trim();
+  var jj = (document.getElementById('citeJournal').value || '').trim();
+  var y = document.getElementById('citeYear').value || '';
+  if (!t) { alert('请填写论文标题'); return; }
+  var list = getCiteTracks();
+  list.unshift({title: t, doi: d, journal: jj, year: y, lastCheck: '', note: ''});
+  localStorage.setItem('phd_cite_track', JSON.stringify(list));
+  ['citeTitle', 'citeDoi', 'citeJournal', 'citeYear'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+  renderCiteTracks();
+
+}
+
+function markCiteCheck(i) {
+
+  var list = getCiteTracks();
+  if (!list[i]) return;
+  list[i].lastCheck = new Date().toISOString().slice(0, 10);
+  localStorage.setItem('phd_cite_track', JSON.stringify(list));
+  renderCiteTracks();
+
+}
+
+function removeCiteTrack(i) {
+
+  var list = getCiteTracks();
+  list.splice(i, 1);
+  localStorage.setItem('phd_cite_track', JSON.stringify(list));
+  renderCiteTracks();
+
+}
+
+function renderCiteTracks() {
+
+  var cont = document.getElementById('citeList');
+  if (!cont) return;
+  var list = getCiteTracks();
+  var today = new Date().toISOString().slice(0, 10);
+  var overdue = 0;
+
+  var html = '';
+  if (!list.length) {
+    html = '<div style="background:#fff;border:1px dashed #cbd5e1;border-radius:12px;padding:30px;text-align:center;color:#94a3b8;font-size:13px">还没有追踪的论文，添加后定期检查被引情况（建议每 3 个月一次）</div>';
+  } else {
+    list.forEach(function(c, i) {
+      var days = 0;
+      if (c.lastCheck) days = Math.round((new Date(today) - new Date(c.lastCheck)) / 86400000);
+      var st = !c.lastCheck ? '🆕 待首次检查' : (days > 90 ? '⚠️ 超' + days + '天未检查' : '✅ ' + days + '天前已查');
+      var sc = !c.lastCheck ? '#d97706' : (days > 90 ? '#dc2626' : '#059669');
+      if (days > 90 || !c.lastCheck) overdue++;
+      html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px">';
+      html += '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📄 ' + escPub(c.title) + '</div><div style="font-size:11px;color:#6b7280">' + [c.journal, c.year, c.doi ? 'DOI: ' + c.doi : ''].filter(Boolean).join(' · ') + '</div></div>';
+      html += '<span style="font-size:11px;font-weight:600;color:' + sc + ';white-space:nowrap">' + st + '</span>';
+      html += '<div style="display:flex;gap:6px"><button onclick="markCiteCheck(' + i + ')" style="background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">✓ 已检查</button><button onclick="removeCiteTrack(' + i + ')" style="background:#fff;color:#dc2626;border:1px solid #fca5a5;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">🗑</button></div>';
+      html += '</div>';
+    });
+    html = '<div style="font-size:12px;color:#334155;margin-bottom:10px">共追踪 ' + list.length + ' 篇，待检查 ' + overdue + ' 篇（建议每 3 个月检查一次被引）</div>' + html;
+  }
+
+  cont.innerHTML = html;
+
+}
+
+function renderPrivacyPanel() {
+
+  var out = document.getElementById('privacyResult');
+  if (!out) return;
+  var keys = [];
+  var totalBytes = 0;
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if (k && (k.indexOf('phd_') === 0 || k.indexOf('pub') === 0 || k.indexOf('pubCk') === 0)) {
+      var v = localStorage.getItem(k) || '';
+      keys.push(k); totalBytes += v.length * 2;
+    }
+  }
+
+  var html = '<div style="background:#fff;border:1px solid #7dd3fc;border-radius:12px;padding:16px">';
+
+  html += '<div style="font-size:14px;font-weight:700;color:#075985;margin-bottom:6px">🔐 数据与隐私说明</div>';
+
+  html += '<div style="font-size:11px;color:#0369a1;margin-bottom:12px">了解你的数据存储与流向，按需管理</div>';
+
+  html += '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px;margin-bottom:12px">';
+  html += '<div style="font-size:13px;font-weight:700;color:#075985;margin-bottom:6px">📦 本地存储（' + keys.length + ' 个数据项 · 约 ' + Math.round(totalBytes / 1024) + ' KB）</div>';
+  html += '<div style="font-size:12px;color:#334155;line-height:1.8">投稿记录、投稿计划、审稿对照表、改投履历、AI 顾问对话、检查清单进度等全部保存在<b>你本机浏览器</b>（localStorage），不经过任何服务器。清除浏览器缓存或换设备前请先"💾 全量备份"。</div>';
+  html += '</div>';
+
+  html += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:12px">';
+  html += '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px">🤖 AI 调用会发送的内容</div>';
+  html += '<div style="font-size:12px;color:#334155;line-height:1.8">只有你主动点击"AI 生成/深度诊断/顾问问答"时，才会把<b>当前输入的内容</b>（论文标题、摘要、期刊名等）发送到 DeepSeek 接口用于生成；其余操作全部本地完成。敏感内容请勿输入。</div>';
+  html += '</div>';
+
+  html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;margin-bottom:12px">';
+  html += '<div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:6px">🛡️ 隐私建议</div>';
+  html += '<div style="font-size:12px;color:#334155;line-height:1.8">① 定期全量备份（投稿管理 → 💾 全量备份）；② 涉及未发表数据的 AI 对话，避免粘贴可识别身份信息；③ 公共电脑使用后建议清除浏览数据。</div>';
+  html += '</div>';
+
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="exportAllData()" style="background:#0e7490;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">💾 导出备份</button><button onclick="clearAdvisorLog()" style="background:#fff;color:#92400e;border:1px solid #fde68a;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🗑️ 清除 AI 顾问对话</button></div>';
+
+  html += '</div>';
+
+  out.innerHTML = html;
+
+}
+
+function clearAdvisorLog() {
+
+  localStorage.removeItem('phd_advisor_log');
+  alert('✅ 已清除 AI 顾问对话记录');
+  renderPrivacyPanel();
+
+}
+
 function getPubJournalStats() {
 
   var out = {};
@@ -114870,6 +115187,78 @@ function showPubTool(tool) {
     html += '<div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="showResubRecs()" style="background:#dc2626;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔍 推荐改投期刊</button><button onclick="toggleRejectLog()" style="background:#fff;color:#991b1b;border:1px solid #fca5a5;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📋 查看拒稿履历</button></div>';
 
     html += '</div><div id="resubResult" style="margin-top:16px"></div>';
+
+  } else if (tool === 'reverse') {
+
+    var optJ = PHD_JOURNALS.concat(CN_JOURNALS).map(function(j) { return '<option value="' + j.name + '">' + j.name + '</option>'; }).join('');
+
+    html = '<div style="background:linear-gradient(135deg,#ecfeff,#cffafe);border:1px solid #67e8f9;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#155e75;margin-bottom:4px">🧭 逆向选题</div>';
+
+    html += '<div style="font-size:12px;color:#0e7490;margin-bottom:14px">选定目标期刊 → 从它的收稿范围、审稿偏好反推"它喜欢什么选题"，先定刊再定题</div>';
+
+    html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:#155e75;font-weight:600;display:block;margin-bottom:4px">目标期刊</label><select id="reverseJournal" style="width:100%;padding:9px 12px;border:1px solid #67e8f9;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#155e75;cursor:pointer">' + optJ + '</select></div>';
+
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="showReverseTopics()" style="background:#0e7490;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🧭 生成选题方向</button><button onclick="aiReverseTopics()" style="background:#fff;color:#0e7490;border:1px solid #67e8f9;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🤖 AI 深度选题建议</button></div>';
+
+    html += '</div><div id="reverseResult" style="margin-top:16px"></div>';
+
+  } else if (tool === 'hotspot') {
+
+    var optH = PHD_JOURNALS.concat(CN_JOURNALS).map(function(j) { return '<option value="' + j.name + '">' + j.name + '</option>'; }).join('');
+
+    html = '<div style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid #fdba74;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#9a3412;margin-bottom:4px">🔥 发文热点</div>';
+
+    html += '<div style="font-size:12px;color:#c2410c;margin-bottom:14px">归纳期刊重点关注方向（来自期刊档案），或让 AI 基于该刊信息给出近期热点判断</div>';
+
+    html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:#9a3412;font-weight:600;display:block;margin-bottom:4px">期刊</label><select id="hotJournal" style="width:100%;padding:9px 12px;border:1px solid #fdba74;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#9a3412;cursor:pointer">' + optH + '</select></div>';
+
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="showHotTopics()" style="background:#c2410c;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔥 归纳重点方向</button><button onclick="aiHotTopics()" style="background:#fff;color:#c2410c;border:1px solid #fdba74;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🤖 AI 热点查询</button></div>';
+
+    html += '</div><div id="hotResult" style="margin-top:16px"></div>';
+
+  } else if (tool === 'ladder') {
+
+    html = '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#5b21b6;margin-bottom:4px">🪜 爬坡策略</div>';
+
+    html += '<div style="font-size:12px;color:#7c3aed;margin-bottom:14px">输入论文方向，生成"冲刺-稳妥-保底"三级投稿阶梯，规划投稿节奏与备选路线</div>';
+
+    html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:#5b21b6;font-weight:600;display:block;margin-bottom:4px">论文标题/研究方向</label><input type="text" id="ladderTitle" placeholder="如：运动干预对老年肌少症的影响" style="width:100%;padding:9px 12px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#5b21b6"></div>';
+
+    html += '<button onclick="showPubLadder()" style="background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🪜 生成爬坡阶梯</button>';
+
+    html += '</div><div id="ladderResult" style="margin-top:16px"></div>';
+
+  } else if (tool === 'citations') {
+
+    html = '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#166534;margin-bottom:4px">📊 引用追踪</div>';
+
+    html += '<div style="font-size:12px;color:#15803d;margin-bottom:14px">登记已发表论文，定期检查被引情况（Google Scholar / CNKI 核对），避免"发完就忘"</div>';
+
+    html += '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:10px;align-items:center"><input type="text" id="citeTitle" placeholder="论文标题" style="padding:9px 10px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#166534"><input type="text" id="citeDoi" placeholder="DOI（可选）" style="padding:9px 10px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#166534"><input type="text" id="citeJournal" placeholder="发表期刊" style="padding:9px 10px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#166534"><input type="number" id="citeYear" placeholder="年份" style="padding:9px 10px;border:1px solid #86efac;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#166534"><button onclick="addCiteTrack()" style="background:#16a34a;color:#fff;border:none;padding:9px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">➕ 添加</button></div>';
+
+    html += '</div><div id="citeList" style="margin-top:16px"></div>';
+
+    setTimeout(function() { renderCiteTracks(); }, 0);
+
+  } else if (tool === 'privacy') {
+
+    html = '<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#075985;margin-bottom:4px">🔐 本地隐私提示</div>';
+
+    html += '<div style="font-size:12px;color:#0369a1;margin-bottom:14px">清楚了解你的数据存在哪、哪些内容会发送给 AI、如何管理</div>';
+
+    html += '</div><div id="privacyResult" style="margin-top:16px"></div>';
+
+    setTimeout(function() { renderPrivacyPanel(); }, 0);
 
   } else if (tool === 'format') {
 
