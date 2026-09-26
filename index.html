@@ -187070,17 +187070,53 @@ async function runRoundTable(){
 
   status.textContent = '主持人正在汇总圆桌决议...';
 
-  const expertsHtml = html;
+  let expertsHtml = html;
 
   resultEl.innerHTML = expertsHtml + '<div style="text-align:center;color:#6b7280;padding:30px;font-size:14px">⏳ 主持人汇总决议中...</div>';
+
+  // ===== 交叉质询轮（P1）：质询者 + 专家回应 =====
+  status.textContent = '交叉质询中：质询者正在审查专家分歧...';
+  let challenge = '';
+  try{
+    const chalSys = '你是学术论文评审会议的质询者。四位专家已给出评审意见。请找出2-3个最关键的专家分歧点或疑点（例如：统计学家与体育专家对样本量/统计方法的意见冲突、期刊编辑对创新性的质疑、语言编辑与内容专家的要求矛盾），对相关专家提出尖锐但专业的质询问题。每个质询点一行，格式：【质询N】对[专家名]：问题。只输出质询问题，不要结论。';
+    const chalUsr = '论文主题简介：' + inputShort.slice(0,300) + '\n\n--- 四位专家意见 ---\n\n' + ROUND_EXPERTS.map(function(e){ return '【' + e.name + '】\n' + ((expertsOut[e.id]||'').slice(0,1000)); }).join('\n\n');
+    challenge = (await callDeepSeekAPI(chalSys, chalUsr, 900, 'deepseek-chat')) || '';
+    window._roundChallenge = challenge;
+  }catch(e){ challenge = ''; }
+  // 专家回应轮（2 位核心专家回应质询）
+  let responseHtml = '';
+  if(challenge && challenge.trim().length > 20){
+    status.textContent = '交叉质询中：专家正在回应质询...';
+    const respSys = '你是学术论文评审专家。会议质询者对你提出了质询问题。请专业、简洁地回应每个质询（认可/反驳/补充数据依据），每条回应一行，格式：【回应】针对质询N：你的回应。不要重复评审意见。';
+    const respUsr = '质询问题：\n' + challenge + '\n\n你的角色与评审意见：\n';
+    const respPairs = [
+      {e:ROUND_EXPERTS[0], prefix:'你是统计学家。你的评审意见：\n' + ((expertsOut.stat||'').slice(0,800))},
+      {e:ROUND_EXPERTS[1], prefix:'你是体育科学专家。你的评审意见：\n' + ((expertsOut.sport||'').slice(0,800))}
+    ];
+    const respOut = {};
+    await Promise.all(respPairs.map(async function(p){
+      try{
+        const r = await callDeepSeekAPI(respSys, respUsr + p.prefix, 700, 'deepseek-chat');
+        respOut[p.e.id] = r || '';
+      }catch(e){ respOut[p.e.id] = ''; }
+    }));
+    responseHtml = '<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;border-radius:12px;padding:16px;margin-top:14px"><div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px">⚔️ 交叉质询记录</div>' +
+      '<div style="font-size:13px;line-height:1.8;color:#78350f;white-space:pre-wrap;margin-bottom:10px">' + challenge + '</div>' +
+      '<div style="font-size:12px;line-height:1.8;color:#374151;background:#fff;border-radius:8px;padding:10px 12px">' +
+      (respOut.stat? '<b>📊 统计学家回应：</b><br>' + respOut.stat.replace(/\n/g,'<br>') + '<br><br>' : '') +
+      (respOut.sport? '<b>🏃 体育科学专家回应：</b><br>' + respOut.sport.replace(/\n/g,'<br>') : '') +
+      '</div></div>';
+  }
+  expertsHtml = expertsHtml + responseHtml;
+
 
   let verdict = '';
 
   try{
 
-    const modSys = '你是学术论文评审会议主持人。四位专家已给出独立意见，请汇总成「圆桌决议」：1.【必须修改】（专家共识必须改的问题，去重合并）2.【建议修改】3.【可保留】4.【综合结论】一句话总结论文水平与修改后录用前景。简洁、有重点、可直接执行。';
+    const modSys = '你是学术论文评审会议主持人。四位专家已给出独立意见，且经过了交叉质询（专家互相质疑与回应）。请汇总成「圆桌决议」：1.【必须修改】（专家共识必须改的问题，去重合并，按严重度排序）2.【建议修改】3.【可保留】4.【质询裁定】就质询记录中的每个分歧点给出裁定意见 5.【修改任务清单】输出编号任务清单，每行格式：T1. [优先级:高/中/低] 问题一句话 | 具体改法 6.【综合结论】一句话总结论文水平与修改后录用前景。简洁、有重点、可直接执行。';
 
-    const modUsr = '论文主题简介：' + inputShort.slice(0,300) + '\n\n--- 四位专家意见（节选） ---\n\n' + ROUND_EXPERTS.map(function(e){ return '【' + e.name + '】\n' + ((expertsOut[e.id]||'').slice(0,1200)); }).join('\n\n');
+    const modUsr = '论文主题简介：' + inputShort.slice(0,300) + '\n\n--- 四位专家意见（节选） ---\n\n' + ROUND_EXPERTS.map(function(e){ return '【' + e.name + '】\n' + ((expertsOut[e.id]||'').slice(0,1200)); }).join('\n\n') + '\n\n--- 交叉质询记录 ---\n\n' + (window._roundChallenge || '（无质询）');
 
     verdict = (await callDeepSeekAPI(modSys, modUsr, 2000, 'glm-5.3')) || '';
 
@@ -187155,8 +187191,23 @@ async function runRoundTable(){
   }
 
   resultEl.innerHTML = expertsHtml + verdictHtml;
+  // 任务清单提取与复制按钮
+  const tasksHtml = (verdict || '').match(/T\d+\..*/g);
+  if(tasksHtml && tasksHtml.length){
+    window._roundTasks = tasksHtml;
+    resultEl.innerHTML += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-top:14px"><div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:8px">✅ 修改任务清单（' + tasksHtml.length + ' 项）</div><div style="font-size:13px;line-height:2;color:#374151;white-space:pre-wrap">' + tasksHtml.map(function(x){ return x.replace(/^T\d+\.\s*\[优先级:/, '【').replace(/\]/,'】 '); }).join('\n') + '</div><button onclick="copyRoundTasks()" style="margin-top:10px;background:#16a34a;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px">📋 复制任务清单</button></div>';
+  }
+
 
   status.textContent = '圆桌评审完成';
+function copyRoundTasks(){
+  const tasks = window._roundTasks || [];
+  if(!tasks.length){ alert('暂无任务清单'); return; }
+  const text = '论文修改任务清单（'+tasks.length+'项）：\n' + tasks.join('\n');
+  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(function(){ alert('任务清单已复制到剪贴板'); }); }
+  else { const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('任务清单已复制'); }
+}
+
 
 }
 
