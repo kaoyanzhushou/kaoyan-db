@@ -107376,6 +107376,8 @@ function renderPhdPublish(containerId) {
 
   html += '<div onclick="showPubTool(\'privacy\')" style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #7dd3fc;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🔐</div><div style="font-size:15px;font-weight:700;color:#075985;margin-bottom:4px">本地隐私提示</div><div style="font-size:12px;color:#0369a1">数据存哪、AI 会用哪些内容、如何管理</div></div>';
 
+  html += '<div onclick="showPubTool(\'translate\')" style="background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:1px solid #e9d5ff;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🌐</div><div style="font-size:15px;font-weight:700;color:#86198f;margin-bottom:4px">论文翻译改写</div><div style="font-size:12px;color:#a21caf">中英互译：英文标题候选×3 + 学术化摘要 + 关键词对照</div></div>';
+
 
 
   html += '</div>';
@@ -113042,6 +113044,136 @@ function pubProbText(j, wins, n, score) {
 
 }
 
+// ========== Phase 2 语言与合规 ==========
+
+var PUB_BI_SYN = [
+  ['hiit', 'high-intensity interval training', '高强度间歇训练', '间歇训练'],
+  ['sprint interval training', '冲刺间歇训练'],
+  ['resistance training', '力量训练', '抗阻训练'],
+  ['aerobic exercise', '有氧运动', '有氧训练'],
+  ['muscle mass', '肌肉量', '肌量'],
+  ['sarcopenia', '肌少症', '肌肉衰减', '少肌症'],
+  ['body composition', '体成分', '身体成分'],
+  ['physical activity', '身体活动', '体力活动'],
+  ['elderly', '老年人', '老年人群'],
+  ['adolescents', '青少年'],
+  ['obesity', '肥胖人群', '肥胖'],
+  ['blood pressure', '血压'],
+  ['cardiorespiratory fitness', '心肺适能', '心肺耐力'],
+  ['metabolic syndrome', '代谢综合征'],
+  ['randomized controlled trial', '随机对照试验', '随机对照'],
+  ['meta-analysis', 'meta分析', '荟萃分析', '元分析'],
+  ['bone density', '骨密度'],
+  ['physical education', '体育教育', '学校体育'],
+  ['sports injury', '运动损伤'],
+  ['rehabilitation', '康复', '运动康复']
+];
+
+function pubJournalLang(j) {
+
+  return (j && j.if === 0) ? 'zh' : 'en';
+
+}
+
+function pubSynGroupOf(kw) {
+
+  var k = String(kw || '').toLowerCase();
+  for (var i = 0; i < PUB_BI_SYN.length; i++) {
+    for (var j = 0; j < PUB_BI_SYN[i].length; j++) {
+      if (String(PUB_BI_SYN[i][j]).toLowerCase() === k) return PUB_BI_SYN[i];
+    }
+  }
+  return null;
+
+}
+
+function pubSemanticHit(text, kw) {
+
+  var t = String(text || '').toLowerCase();
+  if (t.indexOf(String(kw).toLowerCase()) >= 0) return true;
+  var g = pubSynGroupOf(kw);
+  if (!g) return false;
+  for (var i = 0; i < g.length; i++) {
+    if (t.indexOf(String(g[i]).toLowerCase()) >= 0) return true;
+  }
+  return false;
+
+}
+
+function pubConceptSet(text) {
+
+  var set = [];
+  var t = String(text || '').toLowerCase();
+  PUB_BI_SYN.forEach(function(g, gi) {
+    for (var i = 0; i < g.length; i++) {
+      if (t.indexOf(String(g[i]).toLowerCase()) >= 0) { set.push(gi); break; }
+    }
+  });
+  return set;
+
+}
+
+function pubTitleSim(a, b) {
+
+  var sa = pubConceptSet(a), sb = pubConceptSet(b);
+  var inter = 0;
+  sa.forEach(function(x) { if (sb.indexOf(x) >= 0) inter++; });
+  if (inter >= 2) return inter;
+  if (inter === 1 && sa.length === 1 && sb.length === 1) return 1;
+  return 0;
+
+}
+
+function pubCrossLangRisk(title, targetLang) {
+
+  try {
+    var hits = [];
+    var papers = getPubPapers();
+    papers.forEach(function(p) {
+      var t = String(p.title || '').toLowerCase();
+      if (!t) return;
+      (p.submissions || []).forEach(function(s) {
+        if (s.status === 'withdrawn') return;
+        var j = getPubJournalByName(s.journal);
+        if (!j || pubJournalLang(j) !== 'zh') return;
+        if (pubTitleSim(t, String(title || '').toLowerCase()) > 0) {
+          hits.push({journal: s.journal, status: s.status, date: s.submitDate || ''});
+        }
+      });
+    });
+    if (hits.length && targetLang === 'en') {
+      var stTxt = {preparing: '准备中', submitted: '已投稿', under_review: '审稿中', minor_revision: '小修', major_revision: '大修', accepted: '已录用', published: '已发表', rejected: '已拒稿'};
+      var detail = hits.map(function(h) { return '《' + h.journal + '》' + (stTxt[h.status] || h.status) + (h.date ? '（' + h.date + '）' : ''); }).join('、');
+      return {risk: true, detail: '检测到该论文存在中文投稿记录：' + detail + '。改投英文刊前请确认：①中文版未发表或版权已回收；②避免同一研究内容的重复发表/自我抄袭；③部分期刊要求翻译稿附原刊许可。'};
+    }
+  } catch(e) {}
+  return {risk: false, detail: ''};
+
+}
+
+async function translatePaper() {
+
+  var out = document.getElementById('trResult');
+  var title = (document.getElementById('trTitle').value || '').trim();
+  var abs = (document.getElementById('trAbs').value || '').trim();
+  if (!title && !abs) { out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">请至少输入论文标题</div>'; return; }
+  var dir = (function(){ var el = document.querySelector('input[name="trDir"]:checked'); return el ? el.value : 'zh2en'; })();
+
+  out.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">🤖 AI 正在翻译改写，请稍候…</div>';
+
+  var sys = '你是体育学术论文翻译与润色专家。将论文标题与摘要进行' + (dir === 'zh2en' ? '中译英学术化改写' : '英译中学术化改写') + '，输出三段：1）标题候选 3 个（从贴近原意到更凝练，逐条列出）2）摘要（学术化改写，非机械翻译，符合' + (dir === 'zh2en' ? '英文体育期刊' : '中文体育期刊') + '表达习惯，约 250 词）3）关键词（5-8 个' + (dir === 'zh2en' ? '英文' : '中文') + '，附中文/英文对照）。';
+  var usr = '标题：' + title + '\n摘要：' + abs;
+
+  try {
+    var resp = await callDeepSeekAPI(sys, usr, 1800);
+    var txt = typeof resp === 'string' ? resp : (resp && resp.content ? resp.content : (resp && resp.text ? resp.text : JSON.stringify(resp)));
+    out.innerHTML = '<div style="background:#fff;border:1px solid #e9d5ff;border-radius:12px;padding:16px"><div style="font-size:14px;font-weight:700;color:#86198f;margin-bottom:10px">🌐 ' + (dir === 'zh2en' ? '中译英改写结果' : '英译中改写结果') + '</div><div style="font-size:13px;color:#1e293b;line-height:1.9;white-space:pre-wrap">' + escPub(txt) + '</div><div style="margin-top:10px;font-size:11px;color:#94a3b8">由大模型生成，投稿前请结合目标期刊语言要求与专业术语规范核对</div></div>';
+  } catch(e) {
+    out.innerHTML = '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;font-size:13px;color:#991b1b">🤖 AI 服务暂时不可用，请稍后重试</div>';
+  }
+
+}
+
 function getPubJournalStats() {
 
   var out = {};
@@ -115204,6 +115336,8 @@ function showPubTool(tool) {
 
     html += '<div style="margin-bottom:14px"><label style="font-size:12px;color:#155e75;font-weight:600;display:block;margin-bottom:4px">摘要/关键词（选填，填得越细匹配越准）</label><textarea id="matcherAbs" rows="3" placeholder="粘贴论文摘要或关键词，如：肥胖女大学生、高强度间歇训练、体成分、心肺功能" style="width:100%;padding:9px 12px;border:1px solid #67e8f9;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#155e75;resize:vertical;box-sizing:border-box"></textarea></div>';
 
+    html += '<div style="margin-bottom:14px"><label style="font-size:12px;color:#155e75;font-weight:600;display:block;margin-bottom:4px">目标语言模式（中文论文可翻译改写后投英文刊，语言只做筛选不做惩罚）</label><div style="display:flex;gap:8px"><label style="flex:1;text-align:center;background:#fff;border:1px solid #cffafe;border-radius:8px;padding:8px;cursor:pointer;font-size:12px;color:#155e75"><input type="radio" name="matcherLang" value="all" checked style="margin-right:4px">🌐 不限</label><label style="flex:1;text-align:center;background:#fff;border:1px solid #cffafe;border-radius:8px;padding:8px;cursor:pointer;font-size:12px;color:#155e75"><input type="radio" name="matcherLang" value="zh" style="margin-right:4px">🇨🇳 中文刊</label><label style="flex:1;text-align:center;background:#fff;border:1px solid #cffafe;border-radius:8px;padding:8px;cursor:pointer;font-size:12px;color:#155e75"><input type="radio" name="matcherLang" value="en" style="margin-right:4px">🇬🇧 英文刊</label></div></div>';
+
     html += '<button onclick="generateJournalMatch()" style="background:#0e7490;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🎯 开始匹配</button><button onclick="toggleMabCalib()" style="background:#fff;color:#0e7490;border:1px solid #67e8f9;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚙️ 权重自校准</button>';
 
     html += '</div><div id="matcherResult" style="margin-top:16px"></div>';
@@ -115332,6 +115466,24 @@ function showPubTool(tool) {
     html += '</div><div id="privacyResult" style="margin-top:16px"></div>';
 
     setTimeout(function() { renderPrivacyPanel(); }, 0);
+
+  } else if (tool === 'translate') {
+
+    html = '<div style="background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:1px solid #e9d5ff;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#86198f;margin-bottom:4px">🌐 论文翻译改写</div>';
+
+    html += '<div style="font-size:12px;color:#a21caf;margin-bottom:14px">中英互译 + 学术化改写：生成英文标题候选、符合英文期刊表达习惯的摘要、中英关键词对照（非机械翻译）</div>';
+
+    html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:#86198f;font-weight:600;display:block;margin-bottom:4px">方向</label><div style="display:flex;gap:8px"><label style="flex:1;text-align:center;background:#fff;border:1px solid #e9d5ff;border-radius:8px;padding:8px;cursor:pointer;font-size:12px;color:#86198f"><input type="radio" name="trDir" value="zh2en" checked style="margin-right:4px">🇨🇳 → 🇬🇧 中文转英文</label><label style="flex:1;text-align:center;background:#fff;border:1px solid #e9d5ff;border-radius:8px;padding:8px;cursor:pointer;font-size:12px;color:#86198f"><input type="radio" name="trDir" value="en2zh" style="margin-right:4px">🇬🇧 → 🇨🇳 英文转中文</label></div></div>';
+
+    html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:#86198f;font-weight:600;display:block;margin-bottom:4px">论文标题</label><input type="text" id="trTitle" placeholder="粘贴原标题" style="width:100%;padding:9px 12px;border:1px solid #e9d5ff;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#86198f"></div>';
+
+    html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:#86198f;font-weight:600;display:block;margin-bottom:4px">论文摘要</label><textarea id="trAbs" rows="5" placeholder="粘贴摘要正文" style="width:100%;padding:9px 12px;border:1px solid #e9d5ff;border-radius:6px;font-size:12px;outline:none;background:#fff;color:#86198f;resize:vertical;box-sizing:border-box"></textarea></div>';
+
+    html += '<button onclick="translatePaper()" style="background:#a21caf;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🤖 AI 翻译改写</button>';
+
+    html += '</div><div id="trResult" style="margin-top:16px"></div>';
 
   } else if (tool === 'format') {
 
@@ -119116,9 +119268,16 @@ function generateJournalMatch() {
     var w = getMabWeights();
     var total = Math.round(theme * w.theme / 100 + prestige * w.prestige / 100 + history * w.history / 100 + speed * w.timing / 100);
     return {j: j, total: total, theme: theme, prestige: prestige, history: history, speed: speed, kwHit: kwHit};
-  }).sort(function(a, b) { return b.total - a.total; }).slice(0, 5);
+  });
+  var langMode = (function(){ var el = document.querySelector('input[name="matcherLang"]:checked'); return el ? el.value : 'all'; })();
+  if (langMode === 'zh') scored = scored.filter(function(x) { return pubJournalLang(x.j) === 'zh'; });
+  if (langMode === 'en') scored = scored.filter(function(x) { return pubJournalLang(x.j) === 'en'; });
+  scored = scored.sort(function(a, b) { return b.total - a.total; }).slice(0, 5);
 
   var html = '<div style="background:#fff;border:1px solid #67e8f9;border-radius:12px;padding:16px">';
+
+  var risk2 = pubCrossLangRisk(title, langMode === 'en' ? 'en' : '');
+  if (risk2.risk) html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#991b1b;margin-bottom:10px;line-height:1.7">⚠️ ' + risk2.detail + '</div>';
 
   html += '<div style="font-size:14px;font-weight:700;color:#155e75;margin-bottom:4px">🎯 匹配结果 Top 5</div>';
 
