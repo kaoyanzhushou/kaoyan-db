@@ -107384,6 +107384,7 @@ function renderPhdPublish(containerId) {
 
   html += '<div onclick="showPubTool(\'deepai\')" style="background:linear-gradient(135deg,#fff7ed,#eff6ff);border:1px solid #fdba74;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🧠</div><div style="font-size:15px;font-weight:700;color:#7c2d12;margin-bottom:4px">大模型深度</div><div style="font-size:12px;color:#c2410c">全文五维评审 + 选刊AI解读 + 语义查重升级 + 审稿周期预测</div></div>';
   html += '<div onclick="showPubTool(\'datahealth\')" style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border:1px solid #86efac;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📊</div><div style="font-size:15px;font-weight:700;color:#166534;margin-bottom:4px">数据健康检查</div><div style="font-size:12px;color:#15803d">体检投稿/学习数据：重复论文、缺字段、损坏记录一键修复</div></div>';
+  html += '<div onclick="showPubTool(\'analytics\')" style="background:linear-gradient(135deg,#ecfeff,#f0f9ff);border:1px solid #67e8f9;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📈</div><div style="font-size:15px;font-weight:700;color:#155e75;margin-bottom:4px">使用分析</div><div style="font-size:12px;color:#0e7490">工具使用排行 + 数据规模 + 模型状态，一目了然</div></div>';
   html += '<div onclick="showPubTool(\'afteraccept\')" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🏆</div><div style="font-size:15px;font-weight:700;color:#065f46;margin-bottom:4px">录用后全流程</div><div style="font-size:12px;color:#047857">录用→校样→版面费→见刊→收录，五阶段看板推进</div></div>';
   html += '<div onclick="showPubTool(\'pagefee\')" style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">💰</div><div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:4px">版面费估算</div><div style="font-size:12px;color:#b45309">按期刊+页数估算费用区间，投稿前算清成本</div></div>';
   html += '<div onclick="showPubTool(\'versions\')" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📁</div><div style="font-size:15px;font-weight:700;color:#1e40af;margin-bottom:4px">论文版本管理</div><div style="font-size:12px;color:#2563eb">初稿/修回稿/终稿版本台账，当前版本一目了然</div></div>';
@@ -107929,7 +107930,7 @@ var PUB_TOOL_GROUPS = [
   {name: '✍️ 投稿准备', color: '#065f46', tools: ['coverletter', 'checklist', 'title', 'highlights', 'reviewer', 'refs', 'translate']},
   {name: '🛡️ 审稿应对', color: '#991b1b', tools: ['response', 'simreview', 'rltable', 'followup']},
   {name: '🧭 选题进阶', color: '#92400e', tools: ['reverse', 'hotspot', 'ladder']},
-  {name: '🔬 深度与系统', color: '#5b21b6', tools: ['deepai', 'datahealth', 'learnloop', 'citations', 'privacy']},
+  {name: '🔬 深度与系统', color: '#5b21b6', tools: ['deepai', 'datahealth', 'learnloop', 'analytics', 'citations', 'privacy']},
   {name: '🏁 录用与收尾', color: '#065f46', tools: ['afteraccept', 'pagefee', 'versions', 'riskpanorama']}
 ];
 
@@ -107980,6 +107981,8 @@ function organizePubToolCards() {
     var cnt = sec ? sec.querySelector('.pubToolSecCount') : null;
     if (cnt) cnt.textContent = n + ' 个工具';
   });
+  try { pubWelcomeUI(); } catch(e) {}
+  try { pubBindHotkeys(); } catch(e) {}
 }
 
 function pubDataHealthRun() {
@@ -108373,6 +108376,152 @@ function pubScheduleRun() {
   html += '<div style="font-size:10px;color:#94a3b8">蓝=审稿期 · 橙=修改期；若多条橙色重叠，建议错峰投稿或提前准备备选刊</div>';
   html += '</div>';
   out.innerHTML = html;
+}
+
+// ========== P8 度量与体验 ==========
+
+var PUB_TOOL_NAMES = {
+  coverletter: 'Cover Letter', checklist: '投稿前检查清单', title: '标题/摘要优化', reviewer: '审稿人推荐',
+  highlights: 'Highlights', response: '审稿意见回复', simreview: '审稿意见模拟', followup: '催审稿邮件',
+  rltable: '审稿对照表', similar: '相似期刊推荐', matcher: '精准匹配引擎', refs: '参考文献格式',
+  compet: '竞争力报告', resub: '拒稿改投引擎', reverse: '逆向选题', hotspot: '发文热点',
+  ladder: '爬坡策略', citations: '引用追踪', privacy: '本地隐私提示', translate: '论文翻译改写',
+  multimodel: '多模型协作', learnloop: '学习闭环', deepai: '大模型深度', datahealth: '数据健康检查',
+  afteraccept: '录用后全流程', pagefee: '版面费估算', versions: '论文版本管理', riskpanorama: '风险全景',
+  schedule: '并行投稿排程', analytics: '使用分析'
+};
+
+function pubToolHit(tool) {
+  var s = {};
+  try { s = JSON.parse(localStorage.getItem('phd_tool_stats')) || {}; } catch(e) {}
+  var d = new Date();
+  var k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  s[tool] = s[tool] || {n: 0, days: {}};
+  s[tool].n += 1;
+  s[tool].days[k] = (s[tool].days[k] || 0) + 1;
+  try { localStorage.setItem('phd_tool_stats', JSON.stringify(s)); } catch(e) {}
+}
+
+function pubAnalyticsRun() {
+  var out = document.getElementById('pubAnalyticsBox');
+  if (!out) return;
+  var s = {};
+  try { s = JSON.parse(localStorage.getItem('phd_tool_stats')) || {}; } catch(e) {}
+  var tools = Object.keys(s);
+  var total = 0;
+  tools.forEach(function(t) { total += (s[t].n || 0); });
+  var today = new Date();
+  var todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  var todayN = 0;
+  var weekN = 0;
+  var weekStart = new Date(today.getTime() - 6 * 86400000);
+  tools.forEach(function(t) {
+    var days = s[t].days || {};
+    Object.keys(days).forEach(function(dk) {
+      var d = new Date(dk);
+      if (dk === todayKey) todayN += days[dk];
+      if (!isNaN(d.getTime()) && d.getTime() >= weekStart.getTime()) weekN += days[dk];
+    });
+  });
+  var top = tools.map(function(t) { return {tool: t, n: s[t].n || 0}; }).sort(function(a, b) { return b.n - a.n; }).slice(0, 5);
+  var papers = 0, subs = 0;
+  try { var pp = getPubPapers(); papers = pp.length; pp.forEach(function(p) { subs += (p.submissions || []).length; }); } catch(e) {}
+  var learnN = 0;
+  try { learnN = (JSON.parse(localStorage.getItem('phd_learn_events') || '[]') || []).length; } catch(e) {}
+  var verN = 0;
+  try { verN = (JSON.parse(localStorage.getItem('phd_paper_versions') || '[]') || []).length; } catch(e) {}
+  var phaseN = 0;
+  try { phaseN = Object.keys(JSON.parse(localStorage.getItem('phd_pub_phases') || '{}') || {}).length; } catch(e) {}
+  var hitRate = null;
+  try { var hr = pubRecHitRate(); if (hr && hr.rate !== undefined) hitRate = hr; } catch(e) {}
+  var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px">';
+  var cards = [
+    ['总使用次数', total + ' 次'], ['今日使用', todayN + ' 次'], ['近 7 天', weekN + ' 次'],
+    ['投稿记录', papers + ' 篇 / ' + subs + ' 投'], ['学习事件', learnN + ' 条'], ['版本记录', verN + ' 条'],
+    ['录用阶段', phaseN + ' 条']
+  ];
+  cards.forEach(function(c) {
+    html += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px"><div style="font-size:11px;color:#64748b">' + c[0] + '</div><div style="font-size:18px;font-weight:800;color:#155e75;margin-top:2px">' + c[1] + '</div></div>';
+  });
+  html += '</div>';
+  html += '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px;margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#075985;margin-bottom:8px">🏆 使用排行 Top 5</div>';
+  if (!top.length) html += '<div style="font-size:12px;color:#94a3b8">暂无使用记录——多用几次工具，这里会越来越有参考价值</div>';
+  top.forEach(function(t, i) {
+    var badge = ['🥇', '🥈', '🥉'][i] || (i + 1);
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px"><span style="width:22px;font-weight:700">' + badge + '</span><span style="flex:1;color:#1e293b">' + (PUB_TOOL_NAMES[t.tool] || t.tool) + '</span><span style="font-weight:700;color:#0e7490">' + t.n + ' 次</span></div>';
+  });
+  html += '</div>';
+  if (hitRate) {
+    html += '<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:#065f46">🎯 推荐命中率：<b>' + Math.round(hitRate.rate * 100) + '%</b>（命中 ' + hitRate.hit + ' / 未中 ' + hitRate.miss + '）· 越用越准</div>';
+  }
+  html += '<div id="pubModelStatus" style="font-size:12px;color:#64748b">⏳ 正在检查大模型可用状态…</div>';
+  out.innerHTML = html;
+  pubModelStatusUI();
+}
+
+function pubModelStatusUI() {
+  var box = document.getElementById('pubModelStatus');
+  if (!box) return;
+  var base = (typeof BACKEND_API_URL !== 'undefined') ? BACKEND_API_URL : 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com';
+  fetch(base + '/api/model-status').then(function(r) { return r.json(); }).then(function(raw) {
+    var names = {deepseek: 'DeepSeek', glm: '智谱GLM', kimi: 'Kimi', qwen: '通义千问', hunyuan: '混元', doubao: '豆包'};
+    var ok = 0, totalN = 0;
+    var cells = '';
+    var list = (raw && Array.isArray(raw.data)) ? raw.data : null;
+    if (list) {
+      list.forEach(function(m) {
+        if (!m || !m.key) return;
+        totalN++;
+        var st = !!m.available;
+        if (st) ok++;
+        cells += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:11px"><span style="font-weight:600;color:#1e293b">' + (names[m.key] || m.name || m.key) + '</span> <span style="color:' + (st ? '#059669' : '#dc2626') + '">' + (st ? '✓ 可用' : '✗ 不可用') + '</span></div>';
+      });
+    } else {
+      var data = (raw && raw.data && typeof raw.data === 'object') ? raw.data : raw;
+      var skip = ['code', 'message', 'msg', 'success', 'available_count'];
+      Object.keys(data || {}).forEach(function(k) {
+        var v = data[k];
+        var st;
+        if (v === true) st = true;
+        else if (v === false) st = false;
+        else if (v && typeof v === 'object') st = !!(v.ok || v.available);
+        else if (skip.indexOf(k) >= 0) return;
+        else return;
+        totalN++;
+        if (st) ok++;
+        cells += '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:11px"><span style="font-weight:600;color:#1e293b">' + (names[k] || k) + '</span> <span style="color:' + (st ? '#059669' : '#dc2626') + '">' + (st ? '✓ 可用' : '✗ 不可用') + '</span></div>';
+      });
+    }
+    box.innerHTML = '🤖 大模型状态：' + ok + '/' + totalN + ' 可用 · <button onclick="pubModelStatusUI()" style="background:#0e7490;color:#fff;border:none;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;margin-left:6px">刷新</button><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + cells + '</div>';
+  }).catch(function() {
+    box.innerHTML = '🤖 大模型状态：暂无法连接（点击上方工具仍会走降级链自动切换可用模型）';
+  });
+}
+
+function pubWelcomeUI() {
+  try { if (localStorage.getItem('phd_pub_welcome')) return; } catch(e) { return; }
+  var wrap = document.getElementById('pubToolOrganized');
+  if (!wrap) return;
+  var d = document.createElement('div');
+  d.id = 'pubWelcomeBar';
+  d.style.cssText = 'background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#1e40af;display:flex;align-items:center;gap:10px;line-height:1.6';
+  d.innerHTML = '👋 欢迎使用投稿中心（8 阶段强化版）：数据全部存在你的浏览器本地、不上传服务器；AI 智能选刊 / 全文评审 / 风险全景 / 学习闭环——投得越多，推荐越准。<button onclick="pubWelcomeClose()" style="margin-left:auto;background:#fff;border:1px solid #93c5fd;color:#1d4ed8;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap">知道了</button>';
+  wrap.parentNode.insertBefore(d, wrap);
+}
+
+function pubWelcomeClose() {
+  try { localStorage.setItem('phd_pub_welcome', '1'); } catch(e) {}
+  var d = document.getElementById('pubWelcomeBar');
+  if (d && d.parentNode) d.parentNode.removeChild(d);
+}
+
+function pubBindHotkeys() {
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+      var s = document.getElementById('pubToolSearch');
+      if (s) { e.preventDefault(); s.focus(); try { s.scrollIntoView({block: 'center'}); } catch(e2) {} }
+    }
+  });
 }
 
 function pubFilterTools() {
@@ -115948,6 +116097,10 @@ function showPubTool(tool) {
 
   if (!container) return;
 
+  try { pubToolHit(tool); } catch(e) {}
+
+
+
 
 
   var html = '';
@@ -116698,6 +116851,18 @@ function showPubTool(tool) {
     html += '<button onclick="pubScheduleRun()" style="background:#0284c7;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📅 生成排程</button>';
 
     html += '<div id="pubScheduleBox" style="margin-top:14px"></div>';
+
+  } else if (tool === 'analytics') {
+
+    html = '<div style="background:linear-gradient(135deg,#ecfeff,#f0f9ff);border:1px solid #67e8f9;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#155e75;margin-bottom:4px">📈 使用分析</div>';
+
+    html += '<div style="font-size:12px;color:#0e7490;margin-bottom:14px">工具使用排行、数据规模、模型可用性——你的投稿中心正在积累的真实度量。所有统计均存本地。</div>';
+
+    html += '<button onclick="pubAnalyticsRun()" style="background:#0e7490;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 生成分析</button>';
+
+    html += '<div id="pubAnalyticsBox" style="margin-top:14px"></div>';
 
   } else if (tool === 'format') {
 
