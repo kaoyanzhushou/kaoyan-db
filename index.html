@@ -107329,7 +107329,7 @@ function renderPhdPublish(containerId) {
 
 
 
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><div style="display:flex;gap:8px"><button onclick="checkDuplicateSubmissions()" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚠️ 一稿多投检测</button><button onclick="togglePubReport()" style="background:#0e7490;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 投稿报表</button><button onclick="togglePubCalendar()" style="background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📅 投稿日历</button><button onclick="showExportMenu()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">导出数据</button><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div></div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700;color:#1e293b">我的论文投稿管理</div><div style="display:flex;gap:8px"><button onclick="checkDuplicateSubmissions()" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚠️ 一稿多投检测</button><button onclick="togglePubReport()" style="background:#0e7490;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 投稿报表</button><button onclick="togglePubCalendar()" style="background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📅 投稿日历</button><button onclick="togglePubReminder()" style="background:#0891b2;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔔 提醒检查</button><button onclick="showExportMenu()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">导出数据</button><button onclick="showAddPaperForm()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">+ 添加论文</button></div></div>';
 
 
 
@@ -114398,7 +114398,7 @@ function showPubTool(tool) {
 
     html += '</div>';
 
-    html += '<div style="display:flex;gap:8px"><button onclick="saveRlTable();generateRlResponseLetter();" style="background:#be185d;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📨 生成 Response Letter</button><button onclick="saveRlTable()" style="background:#fff;color:#9d174d;border:1px solid #f9a8d4;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">保存表格</button></div>';
+    html += '<div style="display:flex;gap:8px"><button onclick="saveRlTable();generateRlResponseLetter();" style="background:#be185d;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📨 生成 Response Letter</button><button onclick="exportRlTableCsv()" style="background:#fff;color:#9d174d;border:1px solid #f9a8d4;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">⬇️ 导出CSV</button><button onclick="saveRlTable()" style="background:#fff;color:#9d174d;border:1px solid #f9a8d4;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">保存表格</button></div>';
 
     html += '</div><div id="rlResult" style="margin-top:16px"></div>';
 
@@ -119284,6 +119284,146 @@ function pubCalMove(dir) {
 
 }
 
+function downloadCsv(filename, rows) {
+
+  var csv = rows.map(function(r) { return r.map(function(c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+  var blob = new Blob(['\ufeff' + csv], {type: 'text/csv;charset=utf-8;'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function() { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 100);
+
+}
+
+function exportPubReportCsv() {
+
+  var papers = getPubPapers();
+  var rows = [['论文标题', '期刊', '状态', '投稿日期']];
+  papers.forEach(function(p) {
+    if (p.submissions) p.submissions.forEach(function(s) {
+      rows.push([p.title || '', s.journal || '', getStatusInfo(s.status).label, s.submitDate || '']);
+    });
+  });
+  if (rows.length === 1) rows.push(['（无投稿记录）', '', '', '']);
+  downloadCsv('投稿报表_' + new Date().toISOString().slice(0,10) + '.csv', rows);
+
+}
+
+function exportPubPlanCsv() {
+
+  var stMap = {planned: '待投', submitted: '已投', done: '已完成', dropped: '已放弃'};
+  var rows = [['论文标题', '目标期刊', '目标投稿日期', '状态', '备注']];
+  getPubPlan().forEach(function(p) {
+    rows.push([p.title || '', p.journal || '', p.targetDate || '', stMap[p.status] || p.status, p.note || '']);
+  });
+  if (rows.length === 1) rows.push(['（无投稿计划）', '', '', '', '']);
+  downloadCsv('投稿计划_' + new Date().toISOString().slice(0,10) + '.csv', rows);
+
+}
+
+function exportRlTableCsv() {
+
+  var data = {rows: []};
+  try { data = JSON.parse(localStorage.getItem(RLT_KEY) || '{"journal":"","rows":[]}'); } catch(e) {}
+  var rows = [['编号', '审稿意见', '修改说明', '修改位置', '已完成']];
+  data.rows.forEach(function(r, i) {
+    rows.push([i + 1, r.opinion || '', r.reply || '', r.location || '', r.done ? '是' : '否']);
+  });
+  if (rows.length === 1) rows.push(['（无对照表数据）', '', '', '', '']);
+  downloadCsv('审稿意见对照表_' + new Date().toISOString().slice(0,10) + '.csv', rows);
+
+}
+
+function togglePubReminder() {
+
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+    alert('请允许浏览器通知权限，之后进入投稿中心时会自动提醒修回截止、审稿超期与计划投稿');
+    return;
+  }
+
+  var list = checkPubReminders();
+  var out = document.getElementById('pubReminderResult');
+  if (out && out.parentNode) out.parentNode.removeChild(out);
+
+  var container = document.getElementById('pubManageList');
+  if (!container) return;
+  var div = document.createElement('div');
+  div.id = 'pubReminderResult';
+  div.style.cssText = 'margin-bottom:16px';
+
+  if (list.length === 0) {
+    div.innerHTML = '<div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #6ee7b7;border-radius:10px;padding:14px 16px;font-size:13px;color:#065f46;font-weight:600">✅ 当前无紧急提醒：修回未临近、审稿未超期、计划无临近</div>';
+  } else {
+    var h = '<div style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid #fdba74;border-radius:10px;padding:14px 16px">';
+    h += '<div style="font-size:13px;font-weight:700;color:#9a3412;margin-bottom:8px">🔔 投稿提醒（' + list.length + '条）</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:6px">';
+    list.forEach(function(item) {
+      h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#fff;border-radius:6px;font-size:12px"><span style="color:#1e293b">' + item.text + '</span><span style="color:' + item.color + ';font-weight:600;white-space:nowrap">' + item.badge + '</span></div>';
+    });
+    h += '</div></div>';
+    div.innerHTML = h;
+  }
+
+  container.parentNode.insertBefore(div, container);
+
+  // 浏览器通知（权限已授予时）
+  if ('Notification' in window && Notification.permission === 'granted') {
+    list.slice(0, 3).forEach(function(item) {
+      try { new Notification('📌 投稿提醒', {body: item.text, icon: undefined}); } catch(e) {}
+    });
+  }
+
+}
+
+function checkPubReminders() {
+
+  var list = [];
+  var today = new Date().toISOString().slice(0, 10);
+  var last = '';
+  try { last = localStorage.getItem('pub_last_remind') || ''; } catch(e) {}
+  if (last === today) return list;
+  try { localStorage.setItem('pub_last_remind', today); } catch(e) {}
+
+  var papers = getPubPapers();
+  var plans = getPubPlan();
+
+  papers.forEach(function(p) {
+    if (!p.submissions) return;
+    p.submissions.forEach(function(s) {
+      // 修回截止 ≤3 天或已逾期
+      if (s.revisionDeadline && (s.status === 'minor_revision' || s.status === 'major_revision')) {
+        var days = daysUntil(s.revisionDeadline);
+        if (days !== null && days <= 3) {
+          list.push({text: '修回截止：' + (p.title || '') + ' → ' + s.journal, badge: days < 0 ? '已逾期' + Math.abs(days) + '天' : '剩余' + days + '天', color: '#dc2626'});
+        }
+      }
+      // 审稿超期未更新
+      if (s.status === 'under_review' && s.submitDate) {
+        var jr = getPubJournalByName(s.journal);
+        var elapsed = Math.max(0, Math.floor((Date.now() - new Date(s.submitDate).getTime()) / 86400000));
+        if (jr && jr.reviewDays && elapsed > jr.reviewDays) {
+          list.push({text: '审稿超期：' + (p.title || '') + ' → ' + s.journal, badge: '已审' + elapsed + '天 超' + (elapsed - jr.reviewDays) + '天', color: '#d97706'});
+        }
+      }
+    });
+  });
+
+  plans.forEach(function(pl) {
+    if (pl.targetDate && pl.status === 'planned') {
+      var diff = Math.round((new Date(pl.targetDate).getTime() - Date.now()) / 86400000);
+      if (diff >= 0 && diff <= 7) {
+        list.push({text: '计划投稿临近：' + (pl.title || '') + ' → ' + pl.journal, badge: diff === 0 ? '今天' : '剩' + diff + '天', color: '#7c3aed'});
+      }
+    }
+  });
+
+  return list;
+
+}
+
 function togglePubReport() {
 
   var old = document.getElementById('pubReportArea');
@@ -119314,7 +119454,7 @@ function togglePubReport() {
 
   var h = '<div id="pubReportArea" style="margin-bottom:16px">';
   h += '<div style="background:linear-gradient(135deg,#ecfeff,#cffafe);border:1px solid #67e8f9;border-radius:12px;padding:16px">';
-  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:#155e75">📊 投稿数据报表</div><button onclick="togglePubReport()" style="background:none;border:none;color:#0e7490;cursor:pointer;font-size:12px">收起 ✕</button></div>';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:#155e75">📊 投稿数据报表</div><div style="display:flex;gap:8px;align-items:center"><button onclick="exportPubReportCsv()" style="background:#0e7490;color:#fff;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">⬇️ 导出CSV</button><button onclick="togglePubReport()" style="background:none;border:none;color:#0e7490;cursor:pointer;font-size:12px">收起 ✕</button></div></div>';
 
   // 统计卡片
   h += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">';
@@ -124433,7 +124573,7 @@ function renderPubPlan() {
 
   html += '<div id="pubPlanFormWrap"></div>';
 
-  html += '<button onclick="togglePubPlanForm()" id="pubPlanAddBtn" style="background:#0e7490;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">＋ 添加投稿计划</button>';
+  html += '<button onclick="exportPubPlanCsv()" style="background:#fff;color:#0e7490;border:1px solid #67e8f9;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⬇️ 导出CSV</button><button onclick="togglePubPlanForm()" id="pubPlanAddBtn" style="background:#0e7490;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">＋ 添加投稿计划</button>';
 
   html += '</div>';
 
