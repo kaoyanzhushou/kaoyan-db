@@ -114456,6 +114456,13 @@ async function pubSyncChoiceRun() {
   var recs = evs.filter(function(e) { return e.type === 'recommend'; }).slice(-8).reverse();
   var r = '';
   if (!out) return;
+  var recCount2 = evs.filter(function(e) { return e.type === 'recommend'; }).length;
+  var rc = document.getElementById('pubLearnRateCard');
+  if (rc) rc.innerHTML = '<div style="font-size:20px;font-weight:800;color:#0e7490">' + (rate.rate === null ? '—' : rate.rate + '%') + '</div><div style="font-size:11px;color:#155e75">推荐命中率</div><div style="font-size:10px;color:#94a3b8">命中 ' + rate.hit + ' · 未中 ' + rate.miss + '</div>';
+  var rr = document.getElementById('pubLearnRecCard');
+  if (rr) rr.innerHTML = '<div style="font-size:20px;font-weight:800;color:#0e7490">' + recCount2 + '</div><div style="font-size:11px;color:#155e75">推荐事件</div>';
+  var cc = document.getElementById('pubLearnChoiceCard');
+  if (cc) cc.innerHTML = '<div style="font-size:20px;font-weight:800;color:#0e7490">' + choices.length + '</div><div style="font-size:11px;color:#155e75">选择记录</div>';
   r += '<div style="background:#fff;border:1px solid #a5f3fc;border-radius:10px;padding:14px;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0e7490;margin-bottom:8px">🎯 推荐命中分析（最近 ' + choices.length + ' 条）</div>';
   if (!choices.length) r += '<div style="font-size:12px;color:#94a3b8">暂无选择记录。点击「同步学习」分析投稿记录，或先运行选刊并实际投稿后回来同步。</div>';
   choices.forEach(function(c) {
