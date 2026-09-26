@@ -23485,7 +23485,7 @@ window.addEventListener('load', function(){
 
  <button onclick="navigateToPublish()" id="paperTab-publish" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">投稿中心</button>
 
- <button onclick="switchPaperSubTab('journalmatch')" id="paperTab-journalmatch" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🎯 期刊匹配</button>
+ <button onclick="switchPaperSubTab('journalmatch')" id="paperTab-journalmatch" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🎨 期刊风格</button>
 
  <button onclick="switchPaperSubTab('review')" id="paperTab-review" style="padding:10px 20px;border:none;background:#fff;color:#16a34a;border-radius:8px 8px 0 0;cursor:pointer;font-size:14px;font-weight:600">🤖 审稿人模拟器</button>
 
@@ -24787,71 +24787,7 @@ window.addEventListener('load', function(){
 
  <div style="max-width:1100px;margin:0 auto">
 
- <div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);padding:20px;border-radius:12px;margin-bottom:20px;border:1px solid #fde68a">
 
- <h2 style="margin:0 0 8px 0;font-size:20px;color:#92400e">🎯 期刊匹配深度引擎</h2>
-
- <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">三模型协同：Kimi分析论文领域，DeepSeek匹配期刊库，GLM制定投稿策略，给出推荐期刊、匹配度评分和完整投稿方案。</p>
-
- </div>
-
- <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
-
- <div style="font-weight:700;color:#1f2937;margin-bottom:15px;font-size:15px">⚙️ 论文信息</div>
-
- <div style="display:flex;gap:15px;flex-wrap:wrap;margin-bottom:15px">
-
- <div style="flex:1;min-width:200px">
-
- <label style="font-size:12px;color:#6b7280;font-weight:600">研究领域</label>
-
- <select id="matchField" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none;background:#fff">
-
- <option value="运动医学">运动医学</option>
-
- <option value="运动生理学">运动生理学</option>
-
- <option value="运动生物力学">运动生物力学</option>
-
- <option value="运动心理学">运动心理学</option>
-
- <option value="体育教育">体育教育</option>
-
- <option value="体育人文社会学">体育人文社会学</option>
-
- <option value="运动训练学">运动训练学</option>
-
- <option value="其他">其他</option>
-
- </select>
-
- </div>
-
- <div style="min-width:150px">
-
- <label style="font-size:12px;color:#6b7280;font-weight:600">目标影响因子</label>
-
- <input type="number" id="matchIF" placeholder="例如：5.0" step="0.1" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-top:4px;outline:none">
-
- </div>
-
- </div>
-
- <div style="margin-bottom:15px">
-
- <label style="font-size:12px;color:#6b7280;font-weight:600">论文摘要</label>
-
- <textarea id="matchAbstract" placeholder="粘贴论文摘要，AI将分析研究内容并匹配最合适的期刊..." style="width:100%;min-height:150px;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none;margin-top:4px"></textarea>
-
- </div>
-
- <button onclick="matchJournals()" style="padding:12px 30px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🚀 开始匹配</button>
-
- </div>
-
- <div id="matchStatus" style="display:none;margin-bottom:20px"></div>
-
- <div id="matchResult" style="display:none;margin-bottom:20px"></div>
 
  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px">
 
@@ -183241,147 +183177,6 @@ function downloadFormattedPaper() {
 
 
 
-// ========== 期刊匹配深度引擎 ==========
-
-// 内置体育科学期刊库
-
-const SPORTS_JOURNALS = [
-
-  { name: 'Sports Medicine', if: 8.5, field: '运动医学', type: '综述/原创', country: '瑞士', openAccess: false },
-
-  { name: 'British Journal of Sports Medicine', if: 20.0, field: '运动医学', type: '原创/综述', country: '英国', openAccess: false },
-
-  { name: 'Journal of Sports Sciences', if: 3.2, field: '运动科学', type: '原创', country: '英国', openAccess: false },
-
-  { name: 'Journal of Science and Medicine in Sport', if: 4.5, field: '体育科学', type: '原创', country: '澳大利亚', openAccess: false },
-
-  { name: '体育科学', if: 0, field: '体育学', type: '原创/综述', country: '中国', openAccess: false },
-
-  { name: '中国运动医学杂志', if: 0, field: '运动医学', type: '原创', country: '中国', openAccess: false },
-
-  { name: 'Frontiers in Physiology', if: 4.0, field: '生理学', type: '原创', country: '瑞士', openAccess: true },
-
-  { name: 'PLOS ONE', if: 3.7, field: '综合', type: '原创', country: '美国', openAccess: true },
-
-  { name: 'Scientific Reports', if: 4.6, field: '综合', type: '原创', country: '英国', openAccess: true },
-
-  { name: 'Medicine & Science in Sports & Exercise', if: 6.0, field: '运动科学', type: '原创', country: '美国', openAccess: false }
-
-];
-
-
-
-// 期刊匹配
-
-async function matchJournals() {
-
-  const abstract = document.getElementById('matchAbstract').value.trim();
-
-  const field = document.getElementById('matchField').value;
-
-  const targetIF = parseFloat(document.getElementById('matchIF').value) || 0;
-
-
-
-  if (!abstract) { mechToast('请输入论文摘要', 'warn'); return; }
-
-
-
-  const statusEl = document.getElementById('matchStatus');
-
-  const resultEl = document.getElementById('matchResult');
-
-
-
-  statusEl.style.display = 'block';
-
-  resultEl.style.display = 'none';
-
-  statusEl.innerHTML = '<div style="padding:15px;background:#f0f9ff;border-radius:8px"><div style="font-weight:600;color:#0369a1">🎯 正在分析论文并匹配期刊...</div></div>';
-
-
-
-  try {
-
-    // 多模型分析：Kimi做领域分析，DeepSeek做期刊匹配，GLM做投稿策略
-
-    const [analysisResult, matchResult, strategyResult] = await Promise.all([
-
-      callDeepSeekAPI('你是一位体育科学领域专家。请分析以下论文摘要，提取研究领域、研究方法、创新点、适用期刊类型。', abstract.substring(0, 2000), 1000, 'kimi-k3'),
-
-      callDeepSeekAPI('你是一位期刊投稿专家。请根据以下论文摘要，从体育科学期刊库中推荐5本最合适的期刊，并给出匹配度评分（0-100）和推荐理由。期刊库：' + JSON.stringify(SPORTS_JOURNALS), `研究领域：${field}
-
-目标IF：${targetIF}
-
-摘要：${abstract.substring(0, 2000)}`, 2000, 'deepseek-v4-flash'),
-
-      callDeepSeekAPI('你是一位资深学术编辑。请为以下论文给出投稿策略建议，包括：投稿顺序、每本期刊的优缺点、拒稿后的备选方案、时间规划。', `研究领域：${field}
-
-摘要：${abstract.substring(0, 1500)}`, 1500, 'glm-5.3')
-
-    ]);
-
-
-
-    let html = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">';
-
-    html += '<div style="padding:15px 20px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff">';
-
-    html += '<div style="font-weight:700;font-size:16px">🎯 期刊匹配深度分析结果</div></div>';
-
-
-
-    // 论文分析
-
-    html += '<div style="padding:15px 20px;border-bottom:1px solid #e5e7eb">';
-
-    html += '<div style="font-size:13px;font-weight:700;color:#1f2937;margin-bottom:8px">📋 论文分析（Kimi）</div>';
-
-    html += '<div style="font-size:12px;color:#6b7280;line-height:1.8">' + analysisResult.replace(/\n/g, '<br>') + '</div></div>';
-
-
-
-    // 期刊推荐
-
-    html += '<div style="padding:15px 20px;border-bottom:1px solid #e5e7eb">';
-
-    html += '<div style="font-size:13px;font-weight:700;color:#1f2937;margin-bottom:8px">🏆 推荐期刊（DeepSeek）</div>';
-
-    html += '<div style="font-size:12px;color:#6b7280;line-height:1.8">' + matchResult.replace(/\n/g, '<br>') + '</div></div>';
-
-
-
-    // 投稿策略
-
-    html += '<div style="padding:15px 20px">';
-
-    html += '<div style="font-size:13px;font-weight:700;color:#1f2937;margin-bottom:8px">📝 投稿策略（GLM）</div>';
-
-    html += '<div style="font-size:12px;color:#6b7280;line-height:1.8">' + strategyResult.replace(/\n/g, '<br>') + '</div></div>';
-
-
-
-    html += '</div>';
-
-
-
-    resultEl.innerHTML = html;
-
-    resultEl.style.display = 'block';
-
-    statusEl.style.display = 'none';
-
-    mechToast('期刊匹配完成！', 'success');
-
-  } catch(e) {
-
-    statusEl.innerHTML = '<div style="padding:15px;background:#fef2f2;border-radius:8px;color:#dc2626">匹配失败：' + e.message + '</div>';
-
-  }
-
-}
-
-
 // ========== 期刊风格画像（P1）==========
 const JOUR_STYLE_DB = [
  {name:'体育科学', field:'体育学综合', titleStyle:'严谨学术，突出理论贡献', structure:'完整实证结构：问题提出—研究对象与方法—结果—讨论（理论对话）—结论', stat:'需完整报告统计量、p值、效应量；建议报告置信区间', lang:'中文，学术规范，术语统一', length:'6000-10000字', review:'3-6个月', reject:'创新性不足、理论对话薄弱、样本代表性不足', abstract:'结构式摘要：目的/方法/结果/结论'},
@@ -183399,6 +183194,10 @@ const JOUR_STYLE_DB = [
  {name:'Sports Medicine', field:'运动医学综述', titleStyle:'系统综述导向', structure:'系统评价PRISMA：背景—检索策略—纳入排除—结果—讨论', stat:'Meta分析需完整异质性与偏倚报告', lang:'英文，学术规范', length:'8000-12000词', review:'2-4个月', reject:'检索不系统、质量评估缺失', abstract:'结构式摘要'},
  {name:'British Journal of Sports Medicine', field:'运动医学临床', titleStyle:'临床决策导向', structure:'RCT/队列/系统综述规范：背景—方法—结果—临床意义讨论', stat:'严格统计：需CI、NNT等临床效应指标', lang:'英文，临床规范', length:'3000-5000词', review:'4-8周', reject:'临床价值不足、方法学缺陷', abstract:'结构化摘要'},
  {name:'Journal of Science and Medicine in Sport', field:'体育科学+临床', titleStyle:'应用实证', structure:'IMRaD：引言—方法—结果—讨论', stat:'需伦理声明、统计完整（ES/CI）', lang:'英文', length:'4000-6000词', review:'6-10周', reject:'伦理缺失、统计不足', abstract:'结构式摘要'}
+,
+ {name:'Frontiers in Physiology', field:'运动生理学', titleStyle:'机制导向，方法透明', structure:'IMRaD规范：引言—方法—结果—讨论（机制）', stat:'完整统计报告（ES/CI），开放数据更佳', lang:'英文，学术规范', length:'6000-9000词', review:'4-8周', reject:'机制解释不足、统计不完整', abstract:'结构式摘要'},
+ {name:'PLOS ONE', field:'综合学科', titleStyle:'数据驱动，客观陈述', structure:'IMRaD标准：引言—方法—结果—讨论', stat:'统计严谨：报告CI与效应量，可复现性要求高', lang:'英文', length:'5000-8000词', review:'8-12周', reject:'可复现性不足、统计方法不当', abstract:'结构式摘要'},
+ {name:'Scientific Reports', field:'综合学科', titleStyle:'简洁客观，突出发现', structure:'IMRaD标准：引言—方法—结果—讨论', stat:'统计完整（ES/CI），原始数据可获取性要求', lang:'英文', length:'4000-7000词', review:'6-10周', reject:'创新性不足、统计支撑薄弱', abstract:'结构式摘要'}
 ];
 (function(){
   const sel = document.getElementById('styleJournalSelect');
