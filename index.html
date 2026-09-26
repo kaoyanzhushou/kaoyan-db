@@ -107380,6 +107380,8 @@ function renderPhdPublish(containerId) {
 
   html += '<div onclick="showPubTool(\'multimodel\')" style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #ddd6fe;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">🧠</div><div style="font-size:15px;font-weight:700;color:#5b21b6;margin-bottom:4px">多模型协作中心</div><div style="font-size:12px;color:#7c3aed">模型路由 + Borda共识选刊 + 自动分歧仲裁 + 降级链</div></div>';
 
+  html += '<div onclick="showPubTool(\'learnloop\')" style="background:linear-gradient(135deg,#ecfeff,#cffafe);border:1px solid #67e8f9;border-radius:12px;padding:20px;cursor:pointer;transition:transform .2s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'translateY(0)\'"><div style="font-size:28px;margin-bottom:8px">📈</div><div style="font-size:15px;font-weight:700;color:#0e7490;margin-bottom:4px">学习闭环</div><div style="font-size:12px;color:#155e75">推荐命中率 + 选择回填 + 时间衰减概率校准，越用越准</div></div>';
+
 
 
   html += '</div>';
@@ -114320,6 +114322,7 @@ async function pubBordaConsensus() {
   }
   var failedDesc = fails.length ? fails.map(function(f) { return (PUB_MODEL_NAMES[f.split('(')[0]] || f); }).join('、') : '';
   renderPubBorda(bor, parsed, div, arb, failedDesc);
+  try { pubLogRecommend('borda', title, bor.slice(0, 3).map(function(x) { return x.name; })); } catch(e) {}
 }
 
 function renderPubMultiModelPanel() {
@@ -114340,6 +114343,151 @@ function renderPubMultiModelPanel() {
   html += '<div id="pubBordaResult" style="margin-top:12px"></div>';
   html += '</div>';
   el.innerHTML = html;
+}
+
+// ========== Phase 4 学习闭环（推荐事件 → 选择回填 → 命中率 → 时间衰减校准） ==========
+
+var PUB_LEARN_KEY = 'phd_learn_events';
+
+function pubLearnEvents() {
+  try { return JSON.parse(localStorage.getItem(PUB_LEARN_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function pubPushLearn(ev) {
+  try {
+    var list = pubLearnEvents();
+    list.push(ev);
+    if (list.length > 600) list = list.slice(-600);
+    localStorage.setItem(PUB_LEARN_KEY, JSON.stringify(list));
+  } catch(e) {}
+}
+
+// 推荐事件：匹配/共识跑完时自动记录（纯追加，不影响结果渲染）
+function pubLogRecommend(src, title, recs) {
+  pubPushLearn({type: 'recommend', src: src, ts: Date.now(), title: String(title || '').slice(0, 80), recs: (recs || []).slice(0, 5).map(function(r) { return String(r).slice(0, 60); })});
+}
+
+// 同步学习：分析最近 30 天新增的投稿，判断是否命中历史推荐
+function pubSyncChoice() {
+  var papers = getPubPapers();
+  var evs = pubLearnEvents();
+  var recs = evs.filter(function(e) { return e.type === 'recommend'; });
+  if (!recs.length) return 0;
+  var synced = {};
+  evs.forEach(function(e) { if (e.type === 'choice_hit' || e.type === 'choice_miss') synced[e.journal + '|' + e.title] = 1; });
+  var cutoff = Date.now() - 30 * 86400000;
+  var added = 0;
+  papers.forEach(function(p) {
+    (p.submissions || []).forEach(function(s) {
+      var t = Date.parse(s.submitDate || '');
+      if (!t || t < cutoff) return;
+      var key = s.journal + '|' + String(p.title || '').slice(0, 40);
+      if (synced[key]) return;
+      var jn = s.journal || '';
+      var hit = recs.some(function(r) { return (r.recs || []).indexOf(jn) >= 0; });
+      pubPushLearn({type: hit ? 'choice_hit' : 'choice_miss', ts: t, journal: jn, title: String(p.title || '').slice(0, 60)});
+      added++;
+    });
+  });
+  return added;
+}
+
+// 推荐命中率
+function pubRecHitRate() {
+  var evs = pubLearnEvents();
+  var hits = evs.filter(function(e) { return e.type === 'choice_hit'; }).length;
+  var miss = evs.filter(function(e) { return e.type === 'choice_miss'; }).length;
+  return {hit: hits, miss: miss, rate: (hits + miss) ? Math.round(100 * hits / (hits + miss)) : null};
+}
+
+// 时间衰减加权实测录用率（越近的投稿权重越高）
+function pubWeightedAcceptRate(j) {
+  try {
+    var papers = getPubPapers();
+    var n = 0, accW = 0, wsum = 0, rawAcc = 0;
+    papers.forEach(function(p) {
+      (p.submissions || []).forEach(function(s) {
+        if (s.journal !== j.name) return;
+        var t = Date.parse(s.submitDate || '');
+        if (!t) return;
+        var ageY = (Date.now() - t) / 86400000 / 365;
+        var w = Math.max(0.3, Math.exp(-ageY * 0.6));
+        wsum += w; n++;
+        if (s.status === 'accepted' || s.status === 'published') { accW += w; rawAcc++; }
+      });
+    });
+    if (!n) return null;
+    return {n: n, weighted: Math.round(100 * accW / wsum), raw: Math.round(100 * rawAcc / n)};
+  } catch(e) { return null; }
+}
+
+function renderPubLearnLoop() {
+  var el = document.getElementById('pubLearnPanel');
+  if (!el) return;
+  var rate = pubRecHitRate();
+  var evs = pubLearnEvents();
+  var recCount = evs.filter(function(e) { return e.type === 'recommend'; }).length;
+  var choices = evs.filter(function(e) { return e.type === 'choice_hit' || e.type === 'choice_miss'; }).slice(-12).reverse();
+  var html = '';
+  html += '<div style="background:linear-gradient(135deg,#ecfeff,#cffafe);border:1px solid #67e8f9;border-radius:12px;padding:20px">';
+  html += '<div style="font-size:16px;font-weight:700;color:#0e7490;margin-bottom:4px">📈 学习闭环</div>';
+  html += '<div style="font-size:12px;color:#155e75;margin-bottom:14px">系统记录每次 AI 推荐与你的实际选择，用真实投稿结果反哺概率与偏好——投得越多，推荐越准。</div>';
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">';
+  html += '<div style="flex:1;min-width:120px;background:#fff;border:1px solid #a5f3fc;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#0e7490">' + (rate.rate === null ? '—' : rate.rate + '%') + '</div><div style="font-size:11px;color:#155e75">推荐命中率</div><div style="font-size:10px;color:#94a3b8">命中 ' + rate.hit + ' · 未中 ' + rate.miss + '</div></div>';
+  html += '<div style="flex:1;min-width:120px;background:#fff;border:1px solid #a5f3fc;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#0e7490">' + recCount + '</div><div style="font-size:11px;color:#155e75">推荐事件</div><div style="font-size:10px;color:#94a3b8">匹配/共识自动记录</div></div>';
+  html += '<div style="flex:1;min-width:120px;background:#fff;border:1px solid #a5f3fc;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#0e7490">' + choices.length + '</div><div style="font-size:11px;color:#155e75">选择记录</div><div style="font-size:10px;color:#94a3b8">最近 30 天投稿回填</div></div>';
+  html += '</div>';
+  html += '<button onclick="pubSyncChoice()" style="width:100%;background:#0e7490;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔄 同步学习：分析我的投稿记录（命中历史推荐？）</button>';
+  html += '<div id="pubLearnSyncMsg" style="font-size:11px;color:#155e75;margin-top:6px"></div>';
+  html += '<div id="pubLearnResult" style="margin-top:12px"></div>';
+  html += '<div style="font-size:11px;color:#155e75;border-top:1px dashed #67e8f9;margin-top:12px;padding-top:8px">🔬 校准原理：录用概率 = 公开先验（贝叶斯）× 你的实测记录，实测按时间衰减加权（最近投稿权重最高）。</div>';
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+async function pubSyncChoiceRun() {
+  var msg = document.getElementById('pubLearnSyncMsg');
+  var out = document.getElementById('pubLearnResult');
+  var added = pubSyncChoice();
+  if (msg) msg.textContent = added > 0 ? ('✅ 已回填 ' + added + ' 条选择记录') : ('ℹ️ 近 30 天无新增投稿可分析（或已有记录）');
+  var rate = pubRecHitRate();
+  var evs = pubLearnEvents();
+  var choices = evs.filter(function(e) { return e.type === 'choice_hit' || e.type === 'choice_miss'; }).slice(-12).reverse();
+  var recs = evs.filter(function(e) { return e.type === 'recommend'; }).slice(-8).reverse();
+  var r = '';
+  if (!out) return;
+  r += '<div style="background:#fff;border:1px solid #a5f3fc;border-radius:10px;padding:14px;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0e7490;margin-bottom:8px">🎯 推荐命中分析（最近 ' + choices.length + ' 条）</div>';
+  if (!choices.length) r += '<div style="font-size:12px;color:#94a3b8">暂无选择记录。点击「同步学习」分析投稿记录，或先运行选刊并实际投稿后回来同步。</div>';
+  choices.forEach(function(c) {
+    var ok = c.type === 'choice_hit';
+    r += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed #e0f2fe;font-size:12px"><span style="background:' + (ok ? '#d1fae5' : '#fee2e2') + ';color:' + (ok ? '#047857' : '#b91c1c') + ';border-radius:4px;padding:2px 6px;font-weight:600;font-size:11px">' + (ok ? '命中' : '未中') + '</span><div style="flex:1;min-width:0"><div style="font-weight:600;color:#1e293b">' + c.journal + '</div><div style="font-size:11px;color:#94a3b8">' + c.title + '</div></div></div>';
+  });
+  r += '</div>';
+  // 概率校准表
+  var stats = getPubJournalStats();
+  var calRows = '';
+  Object.keys(stats).forEach(function(name) {
+    var j = getPubJournalByName(name);
+    if (!j) return;
+    var w = pubWeightedAcceptRate(j);
+    var st = stats[name];
+    var pub = j.acceptRate || '—';
+    var row = '<tr style="font-size:12px"><td style="padding:6px 8px;color:#1e293b;font-weight:600">' + name + '</td><td style="padding:6px 8px;color:#64748b;text-align:center">' + pub + '</td><td style="padding:6px 8px;color:#64748b;text-align:center">' + (st && (st.accepted + st.rejected) ? st.accepted + '/' + (st.accepted + st.rejected) : '—') + '</td><td style="padding:6px 8px;color:#0e7490;text-align:center;font-weight:700">' + (w ? w.weighted + '%' : '—') + '</td></tr>';
+    calRows += row;
+  });
+  if (!calRows) calRows = '<tr><td colspan="4" style="padding:12px;text-align:center;color:#94a3b8;font-size:12px">投过期刊后这里会显示「公开录用率 vs 实测 vs 时间加权校准」</td></tr>';
+  r += '<div style="background:#fff;border:1px solid #a5f3fc;border-radius:10px;padding:14px;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0e7490;margin-bottom:8px">📊 概率校准表（公开 vs 实测 vs 时间加权）</div><table style="width:100%;border-collapse:collapse"><tr style="background:#f0fdfa;font-size:11px;color:#155e75"><th style="padding:6px 8px;text-align:left">期刊</th><th style="padding:6px 8px">公开录用率</th><th style="padding:6px 8px">实测（录/投）</th><th style="padding:6px 8px">校准后</th></tr>' + calRows + '</table></div>';
+  // 推荐事件溯源
+  if (recs.length) {
+    r += '<div style="background:#fff;border:1px solid #a5f3fc;border-radius:10px;padding:14px"><div style="font-size:13px;font-weight:700;color:#0e7490;margin-bottom:8px">🧾 最近推荐事件（' + recs.length + ' 条）</div>';
+    recs.forEach(function(rec) {
+      var d = new Date(rec.ts);
+      var ds = (d.getMonth() + 1) + '-' + d.getDate();
+      r += '<div style="font-size:11px;color:#475569;padding:5px 0;border-bottom:1px dashed #e0f2fe">[' + ds + ' ' + (rec.src === 'match' ? '精准匹配' : 'Borda共识') + '] ' + rec.title + '<br><span style="color:#94a3b8">推荐：' + rec.recs.join(' → ') + '</span></div>';
+    });
+    r += '</div>';
+  }
+  out.innerHTML = r;
 }
 
 // ========== 选刊辩论裁决模式（v4-pro vs glm-5.3 → hy3综合裁决） ==========
@@ -115737,6 +115885,32 @@ function showPubTool(tool) {
     html += '<div style="font-size:11px;color:#7c3aed;margin-top:6px">三个模型各自独立排序后按 Borda 计分合并；自动检测首选分歧并请首席仲裁模型裁决。</div>';
 
     html += '<div id="pubBordaResult" style="margin-top:12px"></div>';
+
+  } else if (tool === 'learnloop') {
+
+    html = '<div style="background:linear-gradient(135deg,#ecfeff,#cffafe);border:1px solid #67e8f9;border-radius:12px;padding:20px">';
+
+    html += '<div style="font-size:16px;font-weight:700;color:#0e7490;margin-bottom:4px">📈 学习闭环</div>';
+
+    html += '<div style="font-size:12px;color:#155e75;margin-bottom:14px">系统记录每次 AI 推荐与你的实际选择，用真实投稿结果反哺概率与偏好——投得越多，推荐越准。</div>';
+
+    html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">';
+
+    html += '<div id="pubLearnRateCard" style="flex:1;min-width:120px;background:#fff;border:1px solid #a5f3fc;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#0e7490">—</div><div style="font-size:11px;color:#155e75">推荐命中率</div></div>';
+
+    html += '<div id="pubLearnRecCard" style="flex:1;min-width:120px;background:#fff;border:1px solid #a5f3fc;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#0e7490">0</div><div style="font-size:11px;color:#155e75">推荐事件</div></div>';
+
+    html += '<div id="pubLearnChoiceCard" style="flex:1;min-width:120px;background:#fff;border:1px solid #a5f3fc;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#0e7490">0</div><div style="font-size:11px;color:#155e75">选择记录</div></div>';
+
+    html += '</div>';
+
+    html += '<button onclick="pubSyncChoiceRun()" style="width:100%;background:#0e7490;color:#fff;border:none;padding:11px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🔄 同步学习：分析我的投稿记录（命中历史推荐？）</button>';
+
+    html += '<div id="pubLearnSyncMsg" style="font-size:11px;color:#155e75;margin-top:6px"></div>';
+
+    html += '<div id="pubLearnResult" style="margin-top:12px"></div>';
+
+    html += '<div style="font-size:11px;color:#155e75;border-top:1px dashed #67e8f9;margin-top:12px;padding-top:8px">🔬 校准原理：录用概率 = 公开先验（贝叶斯）× 你的实测记录，实测按时间衰减加权（最近投稿权重最高）。</div>';
 
   } else if (tool === 'format') {
 
@@ -119563,6 +119737,8 @@ function generateJournalMatch() {
   html += '</div>';
 
   out.innerHTML = html;
+
+  try { pubLogRecommend('match', title, scored.map(function(x) { return x.j.name; })); } catch(e) {}
 
 }
 
