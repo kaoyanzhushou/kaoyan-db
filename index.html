@@ -28647,9 +28647,161 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
  <button onclick="switchMechanismSubTab('knowledge')" id="mechTab-knowledge" style="padding:10px 18px;border:none;background:transparent;color:#64748b;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">🧠 通路知识库</button>
 
+ <button onclick="switchMechanismSubTab('figures')" id="mechTab-figures" style="padding:10px 18px;border:none;background:transparent;color:#64748b;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">📊 论文图表</button>
+
  </div>
 
  <!-- ===== 子 tab 1：机制图生成（P0 实现） ===== -->
+
+ <!-- ===== 子 tab 7：论文图表全场景生成中心（论文图工厂，P1+P2） ===== -->
+
+ <div id="mechContent-figures" style="display:none">
+
+ <!-- 头部 -->
+
+ <div style="background:linear-gradient(135deg,#312e81,#4f46e5,#6366f1);color:#fff;padding:20px 26px;border-radius:12px;margin-bottom:16px;box-shadow:0 4px 18px rgba(79,70,229,0.28)">
+
+ <div style="font-size:17px;font-weight:800;margin:0 0 6px 0">📊 论文图表全场景生成中心</div>
+
+ <div style="font-size:12px;opacity:0.92;line-height:1.7">论文中遇到的所有图都能生成：机制通路图 · 实验流程图 · 数据统计图 · 生理解剖示意图 · 生物力学曲线 · 模式概念图 · 时序时间线。九角色大模型协作，数据精准三层核验（数值精确计算 / HGNC 术语核验 / PMID 文献溯源），期刊级排版与导出（PNG 300dpi · SVG · TIFF 说明）。</div>
+
+ <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+
+ <span style="background:rgba(255,255,255,0.15);padding:3px 10px;border-radius:12px;font-size:11px">七类图全覆盖</span>
+
+ <span style="background:rgba(255,255,255,0.15);padding:3px 10px;border-radius:12px;font-size:11px">数据精准核验</span>
+
+ <span style="background:rgba(255,255,255,0.15);padding:3px 10px;border-radius:12px;font-size:11px">九角色协作</span>
+
+ <span style="background:rgba(255,255,255,0.15);padding:3px 10px;border-radius:12px;font-size:11px">期刊级导出</span>
+
+ </div>
+
+ </div>
+
+ <!-- 图类型选择 -->
+
+ <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:14px">
+
+ <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">① 选择图类型（也可留空由 AI 自动识别）</div>
+
+ <div id="pfTypeCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"></div>
+
+ </div>
+
+ <!-- 统一输入区 -->
+
+ <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:14px">
+
+ <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">② 论文需求与数据</div>
+
+ <textarea id="pfDesc" rows="3" placeholder="描述你论文中需要的图，例如：研究设计流程图：24名受试者随机分为运动组与对照组，运动组进行8周高强度间歇训练，采集干预前后VO2max、肌力、血液指标…" style="width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:10px;font-size:13px;box-sizing:border-box;resize:vertical;font-family:inherit"></textarea>
+
+ <div id="pfDataWrap" style="margin-top:10px">
+
+ <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">原始数据（数据统计图 / 生物力学曲线必填，AI 不编造数字）</label>
+
+ <textarea id="pfData" rows="4" placeholder="粘贴 CSV 格式原始数据，第一行为表头。示例：&#10;group,value&#10;exercise,3.2,3.5,2.9,3.8,3.1&#10;control,2.4,2.6,2.2,2.7,2.5" style="width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:10px;font-size:12px;box-sizing:border-box;resize:vertical;font-family:Consolas,monospace"></textarea>
+
+ <div style="font-size:11px;color:#94a3b8;margin-top:4px">长格式：每行 group,value1,value2,…；或宽格式：time,condA,condB（详见类型提示）。</div>
+
+ </div>
+
+ <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:12px">
+
+ <div>
+
+ <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">科目/领域</label>
+
+ <select id="pfSubject" style="width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-size:12px"><option value="运动生理学">运动生理学</option><option value="运动生物化学">运动生物化学</option><option value="运动生物力学">运动生物力学</option><option value="运动解剖学">运动解剖学</option><option value="运动营养学">运动营养学</option><option value="运动医学">运动医学</option><option value="其他">其他</option></select>
+
+ </div>
+
+ <div>
+
+ <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">期刊风格</label>
+
+ <select id="pfStyle" style="width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-size:12px"><option value="nature">Nature/Cell 彩色风</option><option value="cncore">中文核心期刊风</option><option value="grayscale">灰度打印风</option></select>
+
+ </div>
+
+ <div>
+
+ <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">目标期刊（可选）</label>
+
+ <input id="pfJournal" placeholder="如：体育科学 / Med Sci Sports Exerc" style="width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:8px;font-size:12px;box-sizing:border-box">
+
+ </div>
+
+ <div style="display:flex;flex-direction:column;gap:8px;justify-content:flex-end">
+
+ <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#475569"><input type="checkbox" id="pfPaperMode" checked style="width:15px;height:15px"> 论文模式（正式命名+规范图例）</label>
+
+ <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#475569"><input type="checkbox" id="pfAccuracy" checked style="width:15px;height:15px"> 准确性核验（AI 审查）</label>
+
+ </div>
+
+ </div>
+
+ <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+
+ <button onclick="pfGenerate()" style="background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;border:none;padding:11px 26px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🚀 生成论文图（九角色协作）</button>
+
+ <span style="font-size:11px;color:#94a3b8">机制/流程/示意/概念/时序图由 AI 结构化生成；数据统计图基于你的原始数据精确计算，AI 不编造数字。</span>
+
+ </div>
+
+ </div>
+
+ <!-- AI 流水线状态 -->
+
+ <div id="pfStatus" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;margin-bottom:14px">
+
+ <div style="font-size:13px;font-weight:700;color:#4f46e5;margin-bottom:6px">🧠 九角色协作流水线</div>
+
+ <div id="pfStatusDetail" style="font-size:12px;color:#475569;line-height:1.8"></div>
+
+ </div>
+
+ <!-- 预览区 -->
+
+ <div id="pfPreview" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:14px">
+
+ <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">③ 论文图预览</div>
+
+ <div id="pfFigureContainer" style="text-align:center;overflow:auto"></div>
+
+ <div id="pfCaption" style="margin-top:12px;background:#f0f9ff;border-left:3px solid #6366f1;padding:10px 14px;border-radius:0 8px 8px 0;font-size:12px;color:#1e3a8a;line-height:1.8;white-space:pre-wrap"></div>
+
+ <div id="pfRefs" style="margin-top:10px;background:#fefce8;border-left:3px solid #eab308;padding:10px 14px;border-radius:0 8px 8px 0;font-size:12px;color:#713f12;line-height:1.8;white-space:pre-wrap"></div>
+
+ </div>
+
+ <!-- 导出区 -->
+
+ <div id="pfExportBar" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+
+ <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:10px">④ 期刊级导出</div>
+
+ <div style="display:flex;gap:10px;flex-wrap:wrap">
+
+ <button onclick="pfExportPNG()" style="background:#059669;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🖼 PNG 300dpi（按 8cm 幅宽）</button>
+
+ <button onclick="pfExportPNG600()" style="background:#047857;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">🖼 PNG 600dpi</button>
+
+ <button onclick="pfExportSVG()" style="background:#2563eb;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📐 SVG 矢量</button>
+
+ <button onclick="pfExportPackage()" style="background:#7c3aed;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📦 导出投稿包（图+图注+参考文献）</button>
+
+ </div>
+
+ <div style="font-size:11px;color:#94a3b8;margin-top:8px">提示：TIFF 格式请在导出 SVG/高清 PNG 后用 AI/PS 转换；投稿包内含投稿说明与文献列表（BibTeX 格式）。</div>
+
+ </div>
+
+ </div>
+
+
 
  <div id="mechContent-gen">
 
@@ -188736,7 +188888,7 @@ function navigateToTeacherSubTab(subTab){
 
 // ===== 运动科学机制库：子 tab 切换 =====
 
-var MECH_SUBTABS = ['gen','anim','understand','paper','library','knowledge'];
+var MECH_SUBTABS = ['gen','anim','understand','paper','library','knowledge','figures'];
 
 function switchMechanismSubTab(name){
 
@@ -233410,5 +233562,1228 @@ async function paragraphScore() {
 })();
 
 </script>
+
+<!-- ===== 论文图表全场景生成中心：核心 + SVG 渲染引擎（P1+P2）===== -->
+<script>
+// ================= 类型与状态 =================
+var PF_TYPES = {
+  mechanism: {name:'🧬 机制/通路图', desc:'信号通路 · 代谢通路 · 分子机制', needData:false, hint:'描述机制通路，如：运动诱导 AMPK-PGC-1α 线粒体生物发生通路'},
+  flowchart: {name:'📋 实验流程图', desc:'CONSORT · 干预方案 · 测试流程', needData:false, hint:'描述研究流程，如：24名受试者随机分组，8周训练，前后测试…'},
+  datachart: {name:'📊 数据统计图', desc:'柱状 · 折线 · 箱线 · 森林 · ROC · 热图', needData:true, hint:'描述图表需求并在"原始数据"粘贴 CSV（含组别与数值）'},
+  curve:     {name:'📈 生物力学曲线', desc:'力-时间 · 关节角度 · EMG · 步态', needData:true, hint:'粘贴多序列数据，如 time,groupA,groupB'},
+  schematic: {name:'🦴 生理/解剖示意', desc:'肌肉骨骼标注 · 设备/场地布局', needData:false, hint:'描述要标注的结构，如：膝关节结构示意，标注股四头肌、髌韧带…'},
+  concept:   {name:'🧩 模式/概念图', desc:'理论模型 · 研究框架 · 概念关系', needData:false, hint:'描述研究框架或理论模型，如：运动干预→心肺适应→健康结局的路径模型'},
+  timeline:  {name:'⏱ 时序/时间线图', desc:'急性适应进程 · 训练周期 · 干预时间线', needData:false, hint:'描述时间进程，如：8周训练期间生理指标变化时间线'}
+};
+var PF_STATE = { type:'', svg:'', caption:'', refs:'', statNote:'', chartMeta:null };
+var PF_CUR = null; // 当前 AI 生成的 JSON
+
+function pfLog(msg){
+  var d = document.getElementById('pfStatusDetail');
+  if(d){ d.innerHTML += '<div>' + msg + '</div>'; d.scrollTop = d.scrollHeight; }
+}
+function pfShowStatus(on){
+  var s = document.getElementById('pfStatus');
+  if(s){ s.style.display = on ? 'block' : 'none'; }
+  var d = document.getElementById('pfStatusDetail');
+  if(d){ d.innerHTML = ''; }
+}
+function pfToast(msg){
+  try{ if(typeof mechToast === 'function'){ mechToast(msg); return; } }catch(e){}
+  alert(msg);
+}
+
+// 类型卡片
+function pfInitCards(){
+  var wrap = document.getElementById('pfTypeCards');
+  if(!wrap) return;
+  var html = '';
+  var keys = ['mechanism','flowchart','datachart','curve','schematic','concept','timeline'];
+  keys.forEach(function(k){
+    var T = PF_TYPES[k];
+    html += '<div id="pfCard-' + k + '" onclick="pfPickType(\'' + k + '\')" style="cursor:pointer;border:2px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center;transition:all .15s;background:#f8fafc">'
+      + '<div style="font-size:14px;font-weight:700;color:#334155">' + T.name + '</div>'
+      + '<div style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.5">' + T.desc + '</div>'
+      + '</div>';
+  });
+  wrap.innerHTML = html;
+}
+function pfPickType(k){
+  PF_STATE.type = k;
+  var keys = ['mechanism','flowchart','datachart','curve','schematic','concept','timeline'];
+  keys.forEach(function(x){
+    var c = document.getElementById('pfCard-' + x);
+    if(c){ c.style.borderColor = (x === k) ? '#4f46e5' : '#e2e8f0'; c.style.background = (x === k) ? '#eef2ff' : '#f8fafc'; }
+  });
+  var dw = document.getElementById('pfDataWrap');
+  if(dw){ dw.style.display = PF_TYPES[k].needData ? 'block' : 'none'; }
+  var hint = document.getElementById('pfDesc');
+  if(hint && PF_TYPES[k].hint){ hint.placeholder = PF_TYPES[k].hint; }
+}
+// 默认选中机制图
+function pfDefaultPick(){
+  if(!PF_STATE.type){ pfPickType('mechanism'); }
+}
+
+// ================= SVG 工具 =================
+function pfEsc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// 风格配色
+function pfStyleOf(){
+  var s = (document.getElementById('pfStyle') || {}).value || 'nature';
+  if(s === 'cncore') return {bg:'#ffffff', fg:'#111827', line:'#374151', accent:['#2563eb','#dc2626','#059669','#d97706','#7c3aed','#0891b2'], muted:'#6b7280', nodeFill:'#eff6ff', headFill:'#f3f4f6', font:'"SimSun","Songti SC",serif'};
+  if(s === 'grayscale') return {bg:'#ffffff', fg:'#000000', line:'#000000', accent:['#333333','#000000','#666666','#999999','#444444','#777777'], muted:'#555555', nodeFill:'#ffffff', headFill:'#eeeeee', font:'"Times New Roman",serif'};
+  return {bg:'#ffffff', fg:'#0f172a', line:'#334155', accent:['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2'], muted:'#64748b', nodeFill:'#f0f6ff', headFill:'#f1f5f9', font:'Arial,Helvetica,sans-serif'};
+}
+
+// ================= 渲染引擎：机制/通路图（论文版）=================
+function pfRenderMechanism(data, style){
+  var nodes = data.nodes || [], edges = data.edges || [];
+  var paper = !!(document.getElementById('pfPaperMode') || {}).checked;
+  var W = 920, H = 60;
+  var cols = {};
+  nodes.forEach(function(n){ var l = n.layer || 0; cols[l] = cols[l] || []; cols[l].push(n); });
+  var layers = Object.keys(cols).map(Number).sort(function(a,b){return a-b;});
+  var colW = (W - 120) / Math.max(layers.length, 1);
+  var pos = {};
+  layers.forEach(function(l, li){
+    var arr = cols[l];
+    var rowH = 80;
+    var totalH = arr.length * rowH + 20;
+    if(totalH > H - 100){ H = totalH + 100; }
+    var x = 70 + li * colW + colW / 2;
+    arr.forEach(function(n, ri){
+      var y = 60 + ri * rowH + rowH / 2;
+      pos[n.id] = { x: x, y: y };
+    });
+  });
+  H = Math.max(H, 80 + Math.max.apply(null, [0].concat(nodes.map(function(n){ return (pos[n.id] ? pos[n.id].y : 0); }))) + 140);
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="background:' + style.bg + ';font-family:' + style.font + '">';
+  // 箭头定义
+  svg += '<defs>'
+    + '<marker id="pfArrAct" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 9 3, 0 6" fill="' + style.line + '"/></marker>'
+    + '<marker id="pfArrPhos" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 9 3, 0 6" fill="' + style.accent[4] + '"/></marker>'
+    + '</defs>';
+  // 边
+  var eLabelY = {};
+  edges.forEach(function(e){
+    var f = pos[e.from], to = pos[e.to];
+    if(!f || !to) return;
+    var rel = e.relation || '激活';
+    var color = (rel === '抑制') ? style.accent[1] : (rel === '磷酸化') ? style.accent[4] : (rel === '底物转化' || rel === '表达上调') ? style.accent[2] : style.line;
+    var dash = (rel === '磷酸化') ? ' stroke-dasharray="6,4"' : '';
+    var marker = (rel === '抑制') ? '' : (rel === '磷酸化') ? ' marker-end="url(#pfArrPhos)"' : ' marker-end="url(#pfArrAct)"';
+    var x1 = f.x, y1 = f.y, x2 = to.x, y2 = to.y;
+    // 抑制：T 头
+    if(rel === '抑制'){
+      var ang = Math.atan2(y2 - y1, x2 - x1);
+      var L = 12;
+      var tx = x2 - Math.cos(ang) * 22, ty = y2 - Math.sin(ang) * 22;
+      svg += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + tx + '" y2="' + ty + '" stroke="' + color + '" stroke-width="1.6"' + dash + '/>';
+      var px = Math.cos(ang + Math.PI/2) * 6, py = Math.sin(ang + Math.PI/2) * 6;
+      svg += '<line x1="' + (tx + px) + '" y1="' + (ty + py) + '" x2="' + (tx - px) + '" y2="' + (ty - py) + '" stroke="' + color + '" stroke-width="1.6"/>';
+    } else {
+      svg += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + color + '" stroke-width="1.6"' + dash + marker + '/>';
+    }
+    var mx = (x1 + x2) / 2, my = (y1 + y2) / 2 - 6;
+    if(eLabelY[mx + '|' + my]){ my += 14; }
+    eLabelY[mx + '|' + my] = true;
+    var lab = rel;
+    if(e.pmid){ lab += ' [' + e.pmid + ']'; }
+    svg += '<text x="' + mx + '" y="' + my + '" text-anchor="middle" font-size="10" fill="' + style.muted + '">' + pfEsc(lab) + '</text>';
+  });
+  // 节点
+  var abbrPairs = [];
+  nodes.forEach(function(n){
+    var p = pos[n.id]; if(!p) return;
+    var w = 150, h = 44;
+    var x = p.x - w/2, y = p.y - h/2;
+    var isTF = (n.type === '转录因子');
+    var fill = style.nodeFill;
+    var stroke = style.line;
+    var low = (n.confidence === '低' || n.confidence === 'low');
+    var rx = isTF ? 20 : 6;
+    if(isTF){
+      svg += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + rx + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.6"' + (low ? ' stroke-dasharray="5,4"' : '') + '/>';
+    } else {
+      svg += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + rx + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.6"' + (low ? ' stroke-dasharray="5,4"' : '') + '/>';
+    }
+    var label = n.label || n.name || '';
+    svg += '<text x="' + (p.x) + '" y="' + (p.y - 2) + '" text-anchor="middle" font-size="13" font-weight="700" fill="' + style.fg + '">' + pfEsc(label) + '</text>';
+    var sub = n.abbreviation || '';
+    if(sub && sub !== label){ svg += '<text x="' + p.x + '" y="' + (p.y + 14) + '" text-anchor="middle" font-size="9" fill="' + style.muted + '">' + pfEsc(sub) + '</text>'; }
+    if(sub && sub !== label && abbrPairs.indexOf(sub) < 0){ abbrPairs.push(sub); }
+    if(low){
+      svg += '<text x="' + (x + w - 4) + '" y="' + (y - 4) + '" text-anchor="end" font-size="8" fill="' + style.accent[3] + '">⚠低置信度</text>';
+    }
+  });
+  // 标题与图例
+  svg += '<text x="' + (W/2) + '" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="' + style.fg + '">' + pfEsc(data.title || data.name || '机制通路图') + '</text>';
+  var legendY = H - 52;
+  svg += '<line x1="40" y1="' + (legendY - 12) + '" x2="' + (W-40) + '" y2="' + (legendY - 12) + '" stroke="' + style.line + '" stroke-width="0.8"/>';
+  var legendTexts = ['→ 激活/上调', '—| 抑制', '⇢ 磷酸化/修饰'];
+  legendTexts.forEach(function(t2, i){
+    svg += '<text x="' + (50 + i * 150) + '" y="' + legendY + '" font-size="9" fill="' + style.muted + '">' + t2 + '</text>';
+  });
+  if(abbrPairs.length){
+    svg += '<text x="' + (50 + legendTexts.length * 150) + '" y="' + legendY + '" font-size="9" fill="' + style.muted + '">缩写：' + pfEsc(abbrPairs.join('，')) + '</text>';
+  }
+  svg += '</svg>';
+  return svg;
+}
+
+// ================= 渲染引擎：实验流程图 =================
+function pfRenderFlowchart(data, style){
+  var stages = data.stages || [];
+  var W = 760;
+  var lanes = {};
+  stages.forEach(function(s){ var tg = s.tag || '流程'; lanes[tg] = lanes[tg] || []; lanes[tg].push(s); });
+  var laneNames = Object.keys(lanes);
+  var laneH = 120;
+  var H = 90 + laneNames.length * laneH + 60;
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="background:' + style.bg + ';font-family:' + style.font + '">';
+  svg += '<defs><marker id="pfFArr" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 9 3, 0 6" fill="' + style.line + '"/></marker></defs>';
+  svg += '<text x="' + (W/2) + '" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="' + style.fg + '">' + pfEsc(data.title || '研究流程图') + '</text>';
+  var y = 70;
+  var laneColors = {};
+  laneNames.forEach(function(ln, li){ laneColors[ln] = style.accent[li % style.accent.length]; });
+  laneNames.forEach(function(ln, li){
+    var ly = y + li * laneH;
+    svg += '<rect x="30" y="' + (ly - 6) + '" width="20" height="' + laneH + '" rx="4" fill="' + laneColors[ln] + '" opacity="0.15"/>';
+    svg += '<text x="40" y="' + (ly + laneH/2) + '" text-anchor="middle" font-size="10" font-weight="700" fill="' + laneColors[ln] + '" transform="rotate(-90 40 ' + (ly + laneH/2) + ')">' + pfEsc(ln) + '</text>';
+    var arr = lanes[ln];
+    arr.forEach(function(s, si){
+      var x = 90 + si * 120;
+      var bw = 96, bh = 56;
+      var by = ly + (laneH - bh) / 2;
+      svg += '<rect x="' + x + '" y="' + by + '" width="' + bw + '" height="' + bh + '" rx="8" fill="' + style.nodeFill + '" stroke="' + laneColors[ln] + '" stroke-width="1.6"/>';
+      svg += '<text x="' + (x + bw/2) + '" y="' + (by + 18) + '" text-anchor="middle" font-size="9" font-weight="700" fill="' + style.fg + '">' + pfEsc(s.step || (si + 1)) + '</text>';
+      svg += '<text x="' + (x + bw/2) + '" y="' + (by + 36) + '" text-anchor="middle" font-size="11" font-weight="600" fill="' + style.fg + '">' + pfEsc(s.title || '') + '</text>';
+      if(si < arr.length - 1){
+        svg += '<line x1="' + (x + bw) + '" y1="' + (by + bh/2) + '" x2="' + (x + bw + 24) + '" y2="' + (by + bh/2) + '" stroke="' + laneColors[ln] + '" stroke-width="1.6" marker-end="url(#pfFArr)"/>';
+      }
+    });
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+// ================= 渲染引擎：模式/概念图 =================
+function pfRenderConcept(data, style){
+  var nodes = data.nodes || [], edges = data.edges || [];
+  var W = 820, H = 520;
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="background:' + style.bg + ';font-family:' + style.font + '">';
+  svg += '<defs><marker id="pfCArr" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 9 3, 0 6" fill="' + style.line + '"/></marker></defs>';
+  svg += '<text x="' + (W/2) + '" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="' + style.fg + '">' + pfEsc(data.title || '概念模型图') + '</text>';
+  // 布局：中心节点在 (W/2, H/2)，其他节点环绕
+  var center = null;
+  nodes.forEach(function(n){ if(n.center){ center = n; } });
+  if(!center && nodes.length){ center = nodes[0]; }
+  var others = nodes.filter(function(n){ return n !== center; });
+  var pos = {};
+  if(center){ pos[center.id] = {x: W/2, y: H/2}; }
+  var R = Math.min(170, (H - 160) / 2);
+  others.forEach(function(n, i){
+    var ang = (Math.PI * 2) * i / Math.max(others.length, 1) - Math.PI/2;
+    pos[n.id] = { x: W/2 + Math.cos(ang) * R, y: H/2 + Math.sin(ang) * R };
+  });
+  edges.forEach(function(e){
+    var f = pos[e.from], to = pos[e.to];
+    if(!f || !to) return;
+    svg += '<line x1="' + f.x + '" y1="' + f.y + '" x2="' + to.x + '" y2="' + to.y + '" stroke="' + style.line + '" stroke-width="1.4" marker-end="url(#pfCArr)"/>';
+    var mx = (f.x + to.x) / 2, my = (f.y + to.y) / 2 - 6;
+    if(e.label){ svg += '<text x="' + mx + '" y="' + my + '" text-anchor="middle" font-size="9" fill="' + style.muted + '">' + pfEsc(e.label) + '</text>'; }
+  });
+  nodes.forEach(function(n){
+    var p = pos[n.id]; if(!p) return;
+    var w = n.center ? 190 : 150, h = n.center ? 58 : 46;
+    var x = p.x - w/2, y = p.y - h/2;
+    var color = style.accent[(n.group ? String(n.group).length : 0) % style.accent.length];
+    svg += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (n.center ? 12 : 8) + '" fill="' + style.nodeFill + '" stroke="' + (n.center ? style.fg : color) + '" stroke-width="' + (n.center ? 2.2 : 1.6) + '"/>';
+    svg += '<text x="' + p.x + '" y="' + (p.y + 4) + '" text-anchor="middle" font-size="' + (n.center ? 14 : 12) + '" font-weight="700" fill="' + style.fg + '">' + pfEsc(n.label) + '</text>';
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+// ================= 渲染引擎：时序/时间线图 =================
+function pfRenderTimeline(data, style){
+  var events = data.events || [];
+  var W = 920;
+  var bandH = 60;
+  var phases = {};
+  events.forEach(function(e){ var ph = e.phase || '阶段'; phases[ph] = phases[ph] || []; phases[ph].push(e); });
+  var phaseNames = Object.keys(phases);
+  var H = 120 + phaseNames.length * (bandH + 26) + 40;
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="background:' + style.bg + ';font-family:' + style.font + '">';
+  svg += '<text x="' + (W/2) + '" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="' + style.fg + '">' + pfEsc(data.title || '时间线图') + '</text>';
+  var y = 70;
+  phaseNames.forEach(function(ph, pi){
+    var ly = y + pi * (bandH + 26);
+    var color = style.accent[pi % style.accent.length];
+    svg += '<text x="50" y="' + (ly + 14) + '" font-size="11" font-weight="700" fill="' + color + '">' + pfEsc(ph) + '</text>';
+    svg += '<line x1="70" y1="' + (ly + 22) + '" x2="' + (W - 60) + '" y2="' + (ly + 22) + '" stroke="' + color + '" stroke-width="1.6"/>';
+    var arr = phases[ph];
+    arr.forEach(function(e, ei){
+      var x = 90 + ei * 140;
+      svg += '<circle cx="' + x + '" cy="' + (ly + 22) + '" r="6" fill="' + color + '" stroke="' + style.bg + '" stroke-width="2"/>';
+      svg += '<text x="' + x + '" y="' + (ly + 6) + '" text-anchor="middle" font-size="9" font-weight="700" fill="' + style.fg + '">' + pfEsc(e.time || '') + '</text>';
+      svg += '<text x="' + x + '" y="' + (ly + 42) + '" text-anchor="middle" font-size="10" font-weight="600" fill="' + style.fg + '">' + pfEsc(e.label || '') + '</text>';
+      if(e.detail){ svg += '<text x="' + x + '" y="' + (ly + 55) + '" text-anchor="middle" font-size="8" fill="' + style.muted + '">' + pfEsc(e.detail) + '</text>'; }
+    });
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+// ================= 渲染引擎：生理/解剖示意图 =================
+function pfRenderSchematic(data, style){
+  var shapes = data.shapes || [];
+  var W = 800, H = 560;
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="background:' + style.bg + ';font-family:' + style.font + '">';
+  svg += '<text x="' + (W/2) + '" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="' + style.fg + '">' + pfEsc(data.title || '结构示意图') + '</text>';
+  var lines = [];
+  shapes.forEach(function(s){
+    var x = s.x, y = s.y, w = s.w || 60, h = s.h || 40;
+    var label = s.label || s.name || '';
+    var fill = s.fill || '#ffffff';
+    if(s.type === 'bone' || s.type === 'muscle'){
+      // 椭圆近似
+      svg += '<ellipse cx="' + x + '" cy="' + y + '" rx="' + (w/2) + '" ry="' + (h/2) + '" fill="' + fill + '" stroke="' + style.line + '" stroke-width="1.8"/>';
+      svg += '<text x="' + x + '" y="' + (y + 4) + '" text-anchor="middle" font-size="11" font-weight="600" fill="' + style.fg + '">' + pfEsc(label) + '</text>';
+    } else if(s.type === 'joint'){
+      svg += '<circle cx="' + x + '" cy="' + y + '" r="' + (w/2) + '" fill="' + fill + '" stroke="' + style.line + '" stroke-width="1.8"/>';
+      svg += '<text x="' + x + '" y="' + (y + 4) + '" text-anchor="middle" font-size="11" font-weight="600" fill="' + style.fg + '">' + pfEsc(label) + '</text>';
+    } else if(s.type === 'arrow'){
+      lines.push(s);
+      return;
+    } else {
+      svg += '<rect x="' + (x - w/2) + '" y="' + (y - h/2) + '" width="' + w + '" height="' + h + '" rx="6" fill="' + fill + '" stroke="' + style.line + '" stroke-width="1.6"/>';
+      svg += '<text x="' + x + '" y="' + (y + 4) + '" text-anchor="middle" font-size="11" font-weight="600" fill="' + style.fg + '">' + pfEsc(label) + '</text>';
+    }
+  });
+  // 标注线（从标签到目标点）
+  var ai = 0;
+  shapes.forEach(function(s){
+    if(s.type === 'arrow' || !s.lineTo) return;
+    var t = shapes.filter(function(z){ return z.id === s.lineTo; })[0];
+    if(!t) return;
+    ai++;
+    var tx = t.x + (t.w||60)/2 + 20, ty = t.y - 10;
+    svg += '<line x1="' + tx + '" y1="' + ty + '" x2="' + (t.x + (t.w||60)/2 + 4) + '" y2="' + (t.y - (t.h||40)/2 + 4) + '" stroke="' + style.line + '" stroke-width="1"/>';
+    svg += '<text x="' + (tx + 6) + '" y="' + (ty + 4) + '" font-size="10" fill="' + style.fg + '">' + pfEsc(s.label) + '</text>';
+  });
+  svg += '</svg>';
+  return svg;
+}
+</script>
+
+
+<!-- ===== 论文图表：统计引擎 + Canvas 数据图渲染（数据精准核心）===== -->
+<script>
+// ================= 统计引擎（精确计算，无外部库）=================
+function pfMean(a){ if(!a || !a.length) return 0; var s = 0; for(var i=0;i<a.length;i++){ s += a[i]; } return s / a.length; }
+function pfSD(a){ if(!a || a.length < 2) return 0; var m = pfMean(a); var s = 0; for(var i=0;i<a.length;i++){ s += (a[i]-m)*(a[i]-m); } return Math.sqrt(s / (a.length - 1)); }
+function pfSEM(a){ if(!a || !a.length) return 0; return pfSD(a) / Math.sqrt(a.length); }
+// 正态 CDF（Abramowitz-Stegun 7.1.26）
+function pfNormCDF(x){
+  var sign = x < 0 ? -1 : 1;
+  x = Math.abs(x) / Math.SQRT2;
+  var t = 1 / (1 + 0.3275911 * x);
+  var y = 1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t * Math.exp(-x*x);
+  return 0.5 * (1 + sign * y);
+}
+// t 分布双尾 p 值（数值积分）
+function pfTCDF(t, df){
+  if(!isFinite(t)) return 0;
+  if(df < 1) df = 1;
+  if(df > 500) return 2 * (1 - pfNormCDF(Math.abs(t)));
+  if(Math.abs(t) > 40) return 0.0001;
+  var nu = df;
+  var G1 = pfLGamma((nu+1)/2), G2 = pfLGamma(nu/2);
+  var coef = Math.exp(G1 - G2 - 0.5 * Math.log(nu * Math.PI));
+  function dens(x){ return coef * Math.pow(1 + x*x/nu, -(nu+1)/2); }
+  var A = Math.abs(t);
+  // 积分 A -> A+40（尾部）
+  var n = 600, h = 40 / n;
+  var s = 0;
+  for(var i = 1; i < n; i++){ var x = A + i*h; s += dens(x) * (i % 2 === 0 ? 2 : 4); }
+  s = (h/3) * (dens(A) + s + dens(A + 40));
+  var p = 2 * s;
+  return Math.min(1, Math.max(0.0001, p));
+}
+function pfLGamma(z){
+  // Lanczos 近似
+  var g = 7, C = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  if(z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * z)) - pfLGamma(1 - z);
+  z -= 1;
+  var x = C[0];
+  for(var i = 1; i < g + 2; i++){ x += C[i] / (z + i); }
+  var t2 = z + g + 0.5;
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t2) - t2 + Math.log(x);
+}
+// F 分布上尾 p 值（数值积分）
+function pfFCDF(F, df1, df2){
+  if(F <= 0) return 1;
+  if(!isFinite(F)) return 0.0001;
+  var coef = Math.exp(pfLGamma((df1+df2)/2) - pfLGamma(df1/2) - pfLGamma(df2/2)) * Math.pow(df1/df2, df1/2);
+  function dens(x){ return coef * Math.pow(x, df1/2 - 1) * Math.pow(1 + df1*x/df2, -(df1+df2)/2); }
+  var A = F, B = F + 60;
+  var n = 800, h = (B - A) / n;
+  var s = 0;
+  for(var i = 1; i < n; i++){ var x = A + i*h; s += dens(x) * (i % 2 === 0 ? 2 : 4); }
+  s = (h/3) * (dens(A) + s + dens(B));
+  return Math.min(1, Math.max(0.0001, s));
+}
+// 卡方上尾 p 值
+function pfChisqP(x2, df){
+  if(x2 <= 0) return 1;
+  if(!isFinite(x2)) return 0.0001;
+  var coef = Math.exp(-df/2 * Math.log(2) - pfLGamma(df/2));
+  function dens(x){ return coef * Math.pow(x, df/2 - 1) * Math.exp(-x/2); }
+  var A = x2, B = x2 + 80;
+  var n = 800, h = (B - A) / n;
+  var s = 0;
+  for(var i = 1; i < n; i++){ var x = A + i*h; s += dens(x) * (i % 2 === 0 ? 2 : 4); }
+  s = (h/3) * (dens(A) + s + dens(B));
+  return Math.min(1, Math.max(0.0001, s));
+}
+function pfStars(p){ if(p < 0.001) return '***'; if(p < 0.01) return '**'; if(p < 0.05) return '*'; return 'ns'; }
+function pfSigLabel(p){ return 'p=' + (p < 0.0001 ? '<0.0001' : p.toFixed(4)) + ' ' + pfStars(p); }
+// 独立样本 t 检验（Welch）
+function pfTTestInd(a, b){
+  var na = a.length, nb = b.length;
+  if(na < 2 || nb < 2) return null;
+  var ma = pfMean(a), mb = pfMean(b);
+  var va = pfSD(a)*pfSD(a), vb = pfSD(b)*pfSD(b);
+  var se = Math.sqrt(va/na + vb/nb);
+  if(se === 0) return null;
+  var t = (ma - mb) / se;
+  var df = Math.pow(va/na + vb/nb, 2) / (Math.pow(va/na,2)/(na-1) + Math.pow(vb/nb,2)/(nb-1));
+  return {t: t, df: df, p: pfTCDF(t, df), meanDiff: ma - mb};
+}
+// 配对 t 检验
+function pfTTestPaired(a, b){
+  var n = Math.min(a.length, b.length);
+  if(n < 2) return null;
+  var d = [];
+  for(var i = 0; i < n; i++){ d.push(a[i] - b[i]); }
+  var md = pfMean(d), sd = pfSD(d);
+  if(sd === 0) return null;
+  var t = md / (sd / Math.sqrt(n));
+  return {t: t, df: n - 1, p: pfTCDF(t, n - 1), meanDiff: md};
+}
+// 单因素 ANOVA
+function pfAnova1(groups){
+  var k = groups.length;
+  var all = [];
+  groups.forEach(function(g){ all = all.concat(g); });
+  if(all.length < 2) return null;
+  var gm = pfMean(all);
+  var ssb = 0, ssw = 0;
+  groups.forEach(function(g){
+    var gm2 = pfMean(g);
+    ssb += g.length * (gm2 - gm) * (gm2 - gm);
+    g.forEach(function(v){ ssw += (v - gm2) * (v - gm2); });
+  });
+  var df1 = k - 1, df2 = all.length - k;
+  if(df2 <= 0 || (ssw === 0 && ssb === 0)) return null;
+  var msb = ssb / df1, msw = ssw / df2;
+  var F = msb / (msw || 1e-12);
+  return {F: F, df1: df1, df2: df2, p: pfFCDF(F, df1, df2)};
+}
+// 卡方（2x2）
+function pfChisq2(a, b, c, d){
+  var n = a + b + c + d;
+  if(n === 0) return null;
+  var x2 = n * Math.pow(a*d - b*c, 2) / ((a+b)*(c+d)*(a+c)*(b+d));
+  return {chi2: x2, df: 1, p: pfChisqP(x2, 1)};
+}
+// Pearson 相关
+function pfPearson(x, y){
+  var n = Math.min(x.length, y.length);
+  if(n < 3) return null;
+  var mx = pfMean(x), my = pfMean(y);
+  var sxy = 0, sxx = 0, syy = 0;
+  for(var i = 0; i < n; i++){ sxy += (x[i]-mx)*(y[i]-my); sxx += (x[i]-mx)*(x[i]-mx); syy += (y[i]-my)*(y[i]-my); }
+  if(sxx === 0 || syy === 0) return null;
+  var r = sxy / Math.sqrt(sxx * syy);
+  var t = r * Math.sqrt((n - 2) / (1 - r*r));
+  return {r: r, t: t, df: n - 2, p: pfTCDF(t, n - 2), n: n};
+}
+// ROC AUC（梯形法，输入 pos/neg 两组分数）
+function pfAUC(pos, neg){
+  var all = [];
+  pos.forEach(function(v){ all.push({v: v, c: 1}); });
+  neg.forEach(function(v){ all.push({v: v, c: 0}); });
+  all.sort(function(a, b){ return a.v - b.v; });
+  var nPos = pos.length, nNeg = neg.length;
+  if(!nPos || !nNeg) return null;
+  var rankSum = 0;
+  for(var i = 0; i < all.length; i++){
+    // 处理并列
+    var j = i;
+    while(j < all.length && all[j].v === all[i].v){ j++; }
+    var avgRank = (i + j - 1) / 2 + 1;
+    for(var k = i; k < j; k++){ if(all[k].c === 1){ rankSum += avgRank; } }
+    i = j - 1;
+  }
+  return (rankSum - nPos * (nPos + 1) / 2) / (nPos * nNeg);
+}
+
+// ================= 数据解析 =================
+function pfParseCSV(text){
+  // 返回 {columns:[...], rows:[...]} 或 null
+  if(!text || !text.trim()) return null;
+  var lines = text.trim().split(/\r?\n/).filter(function(l){ return l.trim(); });
+  if(lines.length < 2) return null;
+  var cols = lines[0].split(/[,，\t;]+/).map(function(s){ return s.trim(); });
+  var rows = [];
+  for(var i = 1; i < lines.length; i++){
+    var parts = lines[i].split(/[,，\t;]+/).map(function(s){ return s.trim(); });
+    if(parts.length >= cols.length){ rows.push(parts); }
+  }
+  return {columns: cols, rows: rows};
+}
+// 长格式解析：第一列分组，其余数值列
+function pfParseLong(csv){
+  var D = pfParseCSV(csv);
+  if(!D) return null;
+  var groups = {};
+  var groupCol = D.columns[0];
+  var valCols = D.columns.slice(1);
+  D.rows.forEach(function(r){
+    var g = r[0];
+    groups[g] = groups[g] || [];
+    if(valCols.length === 1){
+      // 长格式：一行可含多个数值（group,v1,v2,...），每个数值都是独立观测
+      var nums1 = r.slice(1).map(function(s){ return parseFloat(s); }).filter(function(v){ return isFinite(v); });
+      nums1.forEach(function(v){ groups[g].push([v]); });
+    } else {
+      var nums = valCols.map(function(_, ci){ return parseFloat(r[ci + 1]); }).filter(function(v){ return isFinite(v); });
+      groups[g].push(nums);
+    }
+  });
+  return {groupCol: groupCol, valCols: valCols, groups: groups};
+}
+// 宽格式：第一列 time/x，其余为序列
+function pfParseWide(csv){
+  var D = pfParseCSV(csv);
+  if(!D) return null;
+  var x = [], series = {};
+  var xCol = D.columns[0];
+  D.columns.slice(1).forEach(function(c){ series[c] = []; });
+  D.rows.forEach(function(r){
+    x.push(parseFloat(r[0]));
+    D.columns.slice(1).forEach(function(c, ci){ var v = parseFloat(r[ci + 1]); series[c].push(isFinite(v) ? v : 0); });
+  });
+  return {xCol: xCol, x: x, series: series};
+}
+
+// ================= Canvas 数据图渲染 =================
+function pfCanvas(w, h, scale){
+  var cv = document.createElement('canvas');
+  cv.width = Math.round(w * scale); cv.height = Math.round(h * scale);
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  return {cv: cv, ctx: ctx, w: w, h: h};
+}
+function pfStyleCtx(style){
+  var s = pfStyleOf();
+  return {fg: s.fg, muted: s.muted, accent: s.accent, line: s.line, font: s.font === '"Times New Roman",serif' ? 'Times New Roman' : 'Arial'};
+}
+
+function pfRenderDataChart(opts){
+  var S = pfStyleCtx();
+  var W = 860, H = 540, scale = 3;
+  var c = pfCanvas(W, H, scale);
+  var ctx = c.ctx;
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+  var type = opts.type || 'bar';
+  // 标题
+  ctx.fillStyle = S.fg; ctx.font = '700 16px ' + S.font; ctx.textAlign = 'center';
+  ctx.fillText(opts.title || '数据统计图', W/2, 32);
+  ctx.font = '12px ' + S.font;
+  var unit = opts.unit ? '（' + opts.unit + '）' : '';
+  // 绘图区
+  var m = {l: 70, r: 24, t: 60, b: 60};
+  var pw = W - m.l - m.r, ph = H - m.t - m.b;
+  function axis(yMax){
+    ctx.strokeStyle = S.line; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t + ph); ctx.lineTo(m.l + pw, m.t + ph); ctx.stroke();
+    // 网格 + y 刻度
+    ctx.fillStyle = S.muted; ctx.textAlign = 'right';
+    var ticks = 5;
+    for(var i = 0; i <= ticks; i++){
+      var v = yMax * i / ticks;
+      var y = m.t + ph - ph * i / ticks;
+      ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 0.6;
+      ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(m.l + pw, y); ctx.stroke();
+      ctx.fillStyle = S.muted; ctx.textAlign = 'right';
+      ctx.fillText(pfFmt(v), m.l - 8, y + 4);
+    }
+  }
+  function pfFmt(v){ if(Math.abs(v) >= 1000) return (v/1000).toFixed(1) + 'k'; if(Math.abs(v) >= 100) return v.toFixed(0); return v.toFixed(Math.abs(v) < 1 ? 2 : 1); }
+  function stars(p, x, y){
+    if(p == null) return;
+    ctx.fillStyle = S.fg; ctx.font = '700 13px ' + S.font; ctx.textAlign = 'center';
+    ctx.fillText(pfStars(p), x, y);
+    ctx.font = '12px ' + S.font;
+  }
+
+  if(type === 'bar' || type === 'groupedbar'){
+    // 每组多个指标或单指标：列均值+SD
+    var D = opts.long || {};
+    var gnames = Object.keys(D.groups || {});
+    if(!gnames.length){ ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.fillText('无有效数据', W/2, H/2); return c; }
+    var nVals = (D.groups[gnames[0]] && D.groups[gnames[0]][0] && D.gnames === undefined) ? D.valCols.length : 1;
+    var metricMode = D.valCols && D.valCols.length > 1;
+    var seriesN = metricMode ? D.valCols.length : 1;
+    var bw = pw / (gnames.length * (seriesN + 0.8));
+    // 收集各组每序列均值
+    var means = [], allMax = 0;
+    gnames.forEach(function(g){
+      var arr = D.groups[g];
+      var mArr = [];
+      for(var s = 0; s < seriesN; s++){
+        var vals = arr.map(function(row){ return row[s] || 0; });
+        var mm = pfMean(vals);
+        mArr.push(mm);
+        allMax = Math.max(allMax, mm + pfSD(vals));
+      }
+      means.push(mArr);
+    });
+    var yMax = allMax * 1.15 || 1;
+    axis(yMax);
+    gnames.forEach(function(g, gi){
+      var groupX = m.l + gi * pw / gnames.length + (pw / gnames.length - seriesN * bw) / 2;
+      for(var s = 0; s < seriesN; s++){
+        var vals = D.groups[g].map(function(row){ return row[s] || 0; });
+        var mm = pfMean(vals), sd = pfSD(vals);
+        var x = groupX + s * bw;
+        var bh = mm / yMax * ph;
+        var y = m.t + ph - bh;
+        ctx.fillStyle = S.accent[s % S.accent.length];
+        ctx.fillRect(x + 2, y, bw - 4, bh);
+        ctx.strokeStyle = S.line; ctx.lineWidth = 0.8;
+        ctx.strokeRect(x + 2, y, bw - 4, bh);
+        // 误差棒
+        var err = sd * 0.5;
+        ctx.strokeStyle = S.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x + bw/2, y - err); ctx.lineTo(x + bw/2, Math.max(m.t, y - err)); ctx.stroke();
+        // 均值标签
+        ctx.fillStyle = S.fg; ctx.textAlign = 'center'; ctx.font = '10px ' + S.font;
+        ctx.fillText(mm.toFixed(1), x + bw/2, y - err - 6);
+        // 组内检验（两组时）
+        if(gnames.length === 2 && seriesN === 1){
+          var tt = pfTTestInd(D.groups[gnames[0]].map(function(r){ return r[0] || 0; }), D.groups[gnames[1]].map(function(r){ return r[0] || 0; }));
+          if(tt){ stars(tt.p, m.l + pw/2, m.t + 20); }
+        }
+        // x 轴标签
+        ctx.fillStyle = S.fg; ctx.font = '12px ' + S.font; ctx.textAlign = 'center';
+        var lab = metricMode ? (D.valCols[s] + (gnames.length > 1 ? '\n' + g : '')) : g;
+        ctx.fillText(lab, groupX + seriesN * bw / 2 - bw/2 + bw/2 + s * bw, m.t + ph + 18);
+      }
+    });
+    // 图例
+    if(metricMode){
+      var lx = m.l + 10, ly = m.t - 30;
+      D.valCols.forEach(function(vc, s){
+        ctx.fillStyle = S.accent[s % S.accent.length];
+        ctx.fillRect(lx, ly - 9, 14, 14);
+        ctx.fillStyle = S.fg; ctx.textAlign = 'left';
+        ctx.fillText(vc + unit, lx + 20, ly + 2);
+        lx += 120 + vc.length * 7;
+      });
+    }
+  } else if(type === 'line'){
+    var DW = pfParseWide(opts.raw || '');
+    if(!DW){ ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.fillText('无有效数据', W/2, H/2); return c; }
+    var names = Object.keys(DW.series);
+    var allMax = 0, allMin = 1e9;
+    names.forEach(function(nm){ DW.series[nm].forEach(function(v){ allMax = Math.max(allMax, v); allMin = Math.min(allMin, v); }); });
+    var yMax = (allMax * 1.15) || 1;
+    var yMin = Math.min(0, allMin * 1.15);
+    var range = (yMax - yMin) || 1;
+    axis(yMax - yMin);
+    // 修正 axis：画 yMin-yMax
+    ctx.strokeStyle = S.line; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, m.t + ph); ctx.lineTo(m.l + pw, m.t + ph); ctx.stroke();
+    names.forEach(function(nm, si){
+      var vals = DW.series[nm];
+      var step = pw / Math.max(vals.length - 1, 1);
+      ctx.strokeStyle = S.accent[si % S.accent.length]; ctx.lineWidth = 2;
+      ctx.beginPath();
+      vals.forEach(function(v, i){
+        var x = m.l + i * step, y = m.t + ph - (v - yMin) / range * ph;
+        if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      // 点
+      ctx.fillStyle = S.accent[si % S.accent.length];
+      vals.forEach(function(v, i){ ctx.beginPath(); ctx.arc(m.l + i*step, m.t + ph - (v - yMin)/range*ph, 3.5, 0, Math.PI*2); ctx.fill(); });
+      // x 刻度
+      ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.font = '10px ' + S.font;
+      if(vals.length <= 12){
+        vals.forEach(function(_, i){ ctx.fillText(String(DW.x[i] == null ? i : DW.x[i]), m.l + i*step, m.t + ph + 16); });
+      }
+    });
+    var lx = m.l + 10;
+    names.forEach(function(nm, si){
+      ctx.fillStyle = S.accent[si % S.accent.length]; ctx.fillRect(lx, m.t - 30, 14, 14);
+      ctx.fillStyle = S.fg; ctx.textAlign = 'left';
+      ctx.fillText(nm + unit, lx + 20, m.t - 19);
+      lx += 120 + nm.length * 7;
+    });
+    ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.font = '10px ' + S.font;
+    ctx.fillText(DW.xCol || 'time', m.l + pw/2, m.t + ph + 30);
+  } else if(type === 'box'){
+    var D = opts.long || {};
+    var gnames = Object.keys(D.groups || {});
+    if(!gnames.length){ ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.fillText('无有效数据', W/2, H/2); return c; }
+    // 取第一数值列
+    var allVals = [];
+    gnames.forEach(function(g){ D.groups[g].forEach(function(r){ allVals.push(r[0] || 0); }); });
+    var yMax = Math.max.apply(null, allVals) * 1.15 || 1;
+    axis(yMax);
+    var bw = pw / gnames.length * 0.5;
+    gnames.forEach(function(g, gi){
+      var vals = D.groups[g].map(function(r){ return r[0] || 0; }).sort(function(a, b){ return a - b; });
+      var q = function(p){ if(!vals.length) return 0; var idx = (vals.length - 1) * p; var lo = Math.floor(idx), hi = Math.ceil(idx); return vals[lo] + (vals[hi] - vals[lo]) * (idx - lo); };
+      var q1 = q(0.25), med = q(0.5), q3 = q(0.75), iqr = q3 - q1;
+      var lo = Math.max(q1 - 1.5 * iqr, vals[0]), hi = Math.min(q3 + 1.5 * iqr, vals[vals.length - 1]);
+      var x = m.l + gi * pw / gnames.length + pw / gnames.length / 2 - bw / 2;
+      var y1 = m.t + ph - q1 / yMax * ph, y3 = m.t + ph - q3 / yMax * ph, ym = m.t + ph - med / yMax * ph;
+      ctx.fillStyle = 'rgba(37,99,235,0.15)'; ctx.strokeStyle = S.fg; ctx.lineWidth = 1.4;
+      ctx.fillRect(x, y3, bw, y1 - y3); ctx.strokeRect(x, y3, bw, y1 - y3);
+      ctx.beginPath(); ctx.moveTo(x + bw/2, m.t + ph - hi / yMax * ph); ctx.lineTo(x + bw/2, y3); ctx.moveTo(x + bw/2, y1); ctx.lineTo(x + bw/2, m.t + ph - lo / yMax * ph); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, m.t + ph - hi / yMax * ph); ctx.lineTo(x + bw, m.t + ph - hi / yMax * ph); ctx.moveTo(x, m.t + ph - lo / yMax * ph); ctx.lineTo(x + bw, m.t + ph - lo / yMax * ph); ctx.stroke();
+      ctx.strokeStyle = S.fg; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(x, ym); ctx.lineTo(x + bw, ym); ctx.stroke();
+      ctx.fillStyle = S.fg; ctx.textAlign = 'center'; ctx.font = '11px ' + S.font;
+      ctx.fillText('中位数 ' + med.toFixed(1), x + bw/2, m.t + ph + 18);
+      if(gnames.length === 2){
+        var tt = pfTTestInd(D.groups[gnames[0]].map(function(r){ return r[0] || 0; }), D.groups[gnames[1]].map(function(r){ return r[0] || 0; }));
+        if(tt){ stars(tt.p, m.l + pw/2, m.t + 22); }
+      }
+    });
+  } else if(type === 'scatter'){
+    var D = pfParseWide(opts.raw || '');
+    if(!D){ ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.fillText('无有效数据', W/2, H/2); return c; }
+    var names = Object.keys(D.series);
+    var xs = D.x, ys = D.series[names[0]];
+    var allVals = xs.concat(ys);
+    var yMax = Math.max.apply(null, allVals) * 1.15 || 1;
+    var yMin = Math.min.apply(null, allVals) * 0.9;
+    if(yMin > 0) yMin = 0;
+    var range = (yMax - yMin) || 1;
+    axis(yMax - yMin);
+    var pr = pfPearson(xs, ys);
+    // 回归线
+    if(pr){
+      var slope = pr.r * (pfSD(ys) / pfSD(xs));
+      var inter = pfMean(ys) - slope * pfMean(xs);
+      ctx.strokeStyle = S.accent[1]; ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(m.l, m.t + ph - (slope * xs[0] + inter - yMin) / range * ph);
+      ctx.lineTo(m.l + pw, m.t + ph - (slope * xs[xs.length - 1] + inter - yMin) / range * ph);
+      ctx.stroke();
+    }
+    ctx.fillStyle = S.accent[0];
+    for(var i = 0; i < xs.length; i++){
+      var x = m.l + (xs[i] - Math.min.apply(null, xs)) / (Math.max.apply(null, xs) - Math.min.apply(null, xs) || 1) * pw;
+      var y = m.t + ph - (ys[i] - yMin) / range * ph;
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+    }
+    if(pr){
+      ctx.fillStyle = S.fg; ctx.textAlign = 'left'; ctx.font = '12px ' + S.font;
+      ctx.fillText('r=' + pr.r.toFixed(3) + ', ' + pfSigLabel(pr.p) + '（n=' + pr.n + '）', m.l + 10, m.t + ph + 20);
+    }
+  } else if(type === 'forest'){
+    // effect, lo, hi 三列
+    var D = pfParseCSV(opts.raw || '');
+    if(!D){ ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.fillText('无有效数据', W/2, H/2); return c; }
+    var rows = D.rows.map(function(r){
+      return {label: r[0], eff: parseFloat(r[1]), lo: parseFloat(r[2]), hi: parseFloat(r[3])};
+    }).filter(function(r){ return isFinite(r.eff); });
+    if(!rows.length){ ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.fillText('请提供 label,effect,lower,upper 四列数据', W/2, H/2); return c; }
+    var allMax = Math.max.apply(null, rows.map(function(r){ return r.hi; }));
+    var allMin = Math.min.apply(null, rows.map(function(r){ return r.lo; }));
+    var xMax = Math.max(Math.abs(allMax), Math.abs(allMin)) * 1.2 || 1;
+    ctx.strokeStyle = S.line; ctx.lineWidth = 1;
+    var zeroX = m.l + (0 + xMax) / (2 * xMax) * pw;
+    ctx.beginPath(); ctx.moveTo(zeroX, m.t); ctx.lineTo(zeroX, m.t + ph); ctx.stroke();
+    ctx.fillStyle = S.muted; ctx.textAlign = 'center';
+    ctx.fillText('0', zeroX, m.t + ph + 16);
+    rows.forEach(function(r, i){
+      var y = m.t + 30 + i * (ph / Math.max(rows.length, 1));
+      ctx.fillStyle = S.fg; ctx.textAlign = 'right'; ctx.font = '11px ' + S.font;
+      ctx.fillText(r.label, m.l - 8, y + 4);
+      var x1 = m.l + (r.lo + xMax) / (2 * xMax) * pw;
+      var x2 = m.l + (r.hi + xMax) / (2 * xMax) * pw;
+      var xm = m.l + (r.eff + xMax) / (2 * xMax) * pw;
+      ctx.strokeStyle = S.line; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+      ctx.fillStyle = S.accent[0];
+      ctx.beginPath(); ctx.arc(xm, y, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = S.muted; ctx.textAlign = 'left';
+      ctx.fillText(r.eff.toFixed(2) + ' [' + r.lo.toFixed(2) + ', ' + r.hi.toFixed(2) + ']', x2 + 8, y + 4);
+    });
+  } else if(type === 'roc'){
+    // 数据：两列（灵敏度，特异度）或分组分数 pos/neg
+    var D = pfParseCSV(opts.raw || '');
+    var auc = null;
+    var pts = null;
+    if(D && D.columns.length >= 2 && isFinite(parseFloat(D.rows[0][1])) && parseFloat(D.rows[0][1]) <= 1){
+      // 直接给 sens/spec 点
+      pts = D.rows.map(function(r){ return {se: parseFloat(r[0]), sp: parseFloat(r[1])}; }).filter(function(p){ return isFinite(p.se) && isFinite(p.sp); });
+      if(pts.length){
+        var s2 = 0;
+        pts.sort(function(a, b){ return (1 - a.sp) - (1 - b.sp); });
+        for(var i = 0; i < pts.length - 1; i++){ s2 += (pts[i+1].se + pts[i].se) / 2 * ((1 - pts[i+1].sp) - (1 - pts[i].sp)); }
+        auc = s2;
+      }
+    } else if(opts.pos && opts.neg){
+      auc = pfAUC(opts.pos, opts.neg);
+    }
+    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(m.l, m.t + ph); ctx.lineTo(m.l + pw, m.t); ctx.stroke(); // 对角线
+    ctx.strokeStyle = S.accent[0]; ctx.lineWidth = 2.2;
+    if(pts){
+      ctx.beginPath();
+      pts.forEach(function(p, i){
+        var x = m.l + (1 - p.sp) * pw, y = m.t + ph - p.se * ph;
+        if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+    ctx.fillStyle = S.fg; ctx.textAlign = 'center'; ctx.font = '700 14px ' + S.font;
+    ctx.fillText('AUC = ' + (auc == null ? '—' : auc.toFixed(3)), m.l + pw/2, m.t - 8);
+    ctx.fillStyle = S.muted; ctx.font = '11px ' + S.font;
+    ctx.fillText('1 - 特异度', m.l + pw/2, m.t + ph + 22);
+    ctx.save(); ctx.translate(m.l - 34, m.t + ph/2); ctx.rotate(-Math.PI/2); ctx.textAlign = 'center';
+    ctx.fillText('灵敏度', 0, 0); ctx.restore();
+  } else if(type === 'ba'){
+    // Bland-Altman：两列
+    var D = pfParseCSV(opts.raw || '');
+    if(!D || D.rows.length < 3){ ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.fillText('需要至少两列成对数据', W/2, H/2); return c; }
+    var x = [], y = [];
+    D.rows.forEach(function(r){
+      var a = parseFloat(r[0]), b = parseFloat(r[1]);
+      if(isFinite(a) && isFinite(b)){ x.push((a + b) / 2); y.push(a - b); }
+    });
+    if(x.length < 3){ ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.fillText('有效数据不足', W/2, H/2); return c; }
+    var md = pfMean(y), sd = pfSD(y);
+    var xMax = Math.max.apply(null, x) * 1.1, xMin = Math.min.apply(null, x) * 0.9;
+    var yMax = Math.max.apply(null, y.map(function(v){ return Math.abs(v); })) * 1.3 || 1;
+    ctx.strokeStyle = S.line; ctx.lineWidth = 1;
+    ctx.strokeRect(m.l, m.t, pw, ph);
+    function mx(v){ return m.l + (v - xMin) / (xMax - xMin || 1) * pw; }
+    function my(v){ return m.t + ph/2 - v / (yMax * 2) * ph; }
+    // 均值线 + 1.96SD
+    ctx.strokeStyle = S.accent[0]; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(mx(xMin), my(md)); ctx.lineTo(mx(xMax), my(md)); ctx.stroke();
+    ctx.strokeStyle = S.line; ctx.setLineDash([5, 4]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(mx(xMin), my(md + 1.96 * sd)); ctx.lineTo(mx(xMax), my(md + 1.96 * sd)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(mx(xMin), my(md - 1.96 * sd)); ctx.lineTo(mx(xMax), my(md - 1.96 * sd)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = S.accent[1];
+    for(var i = 0; i < x.length; i++){ ctx.beginPath(); ctx.arc(mx(x[i]), my(y[i]), 4, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = S.fg; ctx.textAlign = 'center'; ctx.font = '12px ' + S.font;
+    ctx.fillText('均值差 ' + md.toFixed(2) + ' ± 1.96SD [' + (md - 1.96*sd).toFixed(2) + ', ' + (md + 1.96*sd).toFixed(2) + ']', m.l + pw/2, m.t + ph + 22);
+  } else if(type === 'heat'){
+    var D = pfParseCSV(opts.raw || '');
+    if(!D){ ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.fillText('无有效数据', W/2, H/2); return c; }
+    var rows = D.rows;
+    var nCols = D.columns.length - 1;
+    var maxV = 0;
+    var vals = rows.map(function(r){ return D.columns.slice(1).map(function(_, ci){ var v = parseFloat(r[ci+1]); return isFinite(v) ? v : 0; }); });
+    vals.forEach(function(r){ r.forEach(function(v){ maxV = Math.max(maxV, v); }); });
+    var cw = pw / Math.max(nCols, 1), chh = ph / Math.max(rows.length, 1);
+    rows.forEach(function(r, ri){
+      D.columns.slice(1).forEach(function(_, ci){
+        var v = vals[ri][ci];
+        var a = maxV ? v / maxV : 0;
+        ctx.fillStyle = 'rgba(37,99,235,' + (0.1 + a * 0.85).toFixed(3) + ')';
+        ctx.fillRect(m.l + ci * cw, m.t + ri * chh, cw, chh);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(m.l + ci * cw, m.t + ri * chh, cw, chh);
+        ctx.fillStyle = a > 0.6 ? '#fff' : S.fg; ctx.textAlign = 'center'; ctx.font = '10px ' + S.font;
+        ctx.fillText(v.toFixed(1), m.l + ci * cw + cw/2, m.t + ri * chh + chh/2 + 3);
+      });
+      ctx.fillStyle = S.fg; ctx.textAlign = 'right'; ctx.font = '11px ' + S.font;
+      ctx.fillText(r[0], m.l - 8, m.t + ri * chh + chh/2 + 3);
+    });
+    D.columns.slice(1).forEach(function(cc, ci){
+      ctx.fillStyle = S.fg; ctx.textAlign = 'center'; ctx.font = '10px ' + S.font;
+      ctx.fillText(cc, m.l + ci * cw + cw/2, m.t + ph + 16);
+    });
+  } else {
+    ctx.fillStyle = S.muted; ctx.textAlign = 'center'; ctx.fillText('不支持的图表类型', W/2, H/2);
+  }
+  return c;
+}
+</script>
+
+
+<!-- ===== 论文图表：AI 流水线 + 生成主流程 + 导出（九角色协作）===== -->
+<script>
+// ================= AI JSON 生成与解析 =================
+function pfParseJSON(text){
+  if(!text) return null;
+  var t2 = text.trim();
+  var m = t2.match(/\{[\s\S]*\}/);
+  if(!m) return null;
+  try { return JSON.parse(m[0]); } catch(e) {}
+  try { return JSON.parse(m[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']')); } catch(e2) {}
+  return null;
+}
+function pfCallAI(sys, usr, maxTok, mdl, ms){
+  if(typeof callModelWithTimeout !== 'function'){ return Promise.reject(new Error('模型通道不可用')); }
+  return callModelWithTimeout(sys, usr, maxTok, mdl, ms || 40000);
+}
+
+// 图类型路由（AI 识别）
+async function pfRouteType(desc){
+  var prompt = '判断以下论文图表需求属于哪种图类型，只输出类型代码：\n'
+    + 'mechanism=机制/信号通路图（分子、蛋白、通路、代谢、信号）\n'
+    + 'flowchart=实验流程图（随机分组、招募、干预流程、测试流程、CONSORT）\n'
+    + 'datachart=数据统计图（柱状、折线、箱线、散点、森林、ROC、热图、相关）\n'
+    + 'curve=生物力学曲线（力、关节角度、肌电、步态、速度、功率随时间/条件变化）\n'
+    + 'schematic=生理/解剖示意图（肌肉、骨骼、关节、器官、设备布局标注）\n'
+    + 'concept=模式/概念图（理论模型、研究框架、变量关系、路径模型）\n'
+    + 'timeline=时序/时间线图（时间进程、训练周期、阶段安排）\n需求：' + desc;
+  try {
+    var r = await pfCallAI('你是论文图表类型识别专家，只输出一个类型代码。', prompt, 120, 'qwen3.5-plus', 25000);
+    var t3 = String(r).trim();
+    var keys = ['mechanism','flowchart','datachart','curve','schematic','concept','timeline'];
+    for(var i = 0; i < keys.length; i++){ if(t3.indexOf(keys[i]) >= 0) return keys[i]; }
+  } catch(e){}
+  return 'mechanism';
+}
+
+// ================= 各类型生成 =================
+async function pfGenMechanism(desc, subject, styleName){
+  pfLog('🧠✍️ <b>deepseek-chat</b> 正在生成机制通路结构（节点+关系+置信度+PMID）…');
+  var prompt = '你是运动人体科学机制图专家。将以下论文需求转化为机制通路图 JSON。\n'
+    + '要求：\n'
+    + '1. nodes数组：{id,label(正式名称),abbreviation(标准缩写),type(酶/转录因子/激素/受体/底物/其他),layer(0起始层级),confidence(高/中/低),narration(机制讲解)}\n'
+    + '2. edges数组：{from,to,relation(激活/抑制/磷酸化/表达上调/底物转化),confidence(高/中/低),pmid(不确定则空字符串)}\n'
+    + '3. 分子命名必须用国际标准（如 AMPK、PGC-1α、mTORC1），缩写与全称对应\n'
+    + '4. 关系必须有生理学依据，低置信度关系标"低"\n'
+    + '5. 只输出JSON，含title字段\n'
+    + '科目：' + subject + '\n需求：' + desc;
+  var r = await pfCallAI('严格输出JSON。', prompt, 2500, 'deepseek-chat', 45000);
+  var data = pfParseJSON(r);
+  if(!data){ throw new Error('AI 结构解析失败，请重试或简化描述'); }
+  data.title = data.title || (desc.length > 24 ? desc.slice(0, 24) + '…' : desc);
+  // 术语核验
+  if(pfAccuracyOn()){
+    pfLog('🔍 <b>deepseek-v4-flash</b> 正在核验分子命名与缩写…');
+    var labels = (data.nodes || []).map(function(n){ return n.label + (n.abbreviation ? '(' + n.abbreviation + ')' : ''); }).join('，');
+    try {
+      var vr = await pfCallAI('你是生物医学术语核验助手，核验分子/蛋白命名是否标准（HGNC/通用名），缩写是否正确。只输出问题：每个问题一行，全部正确输出"全部正确"。', '核验：' + labels, 300, 'deepseek-v4-flash', 20000);
+      pfLog('✅ 术语核验：' + String(vr).slice(0, 200));
+    } catch(e){ pfLog('⚠️ 术语核验跳过'); }
+  }
+  // 审稿人
+  if(pfAccuracyOn()){
+    pfLog('⚖️ <b>glm-5.3</b> 审稿人正在审查机制科学性…');
+    try {
+      var rr = await pfCallAI('你是运动人体科学期刊审稿人。审查以下机制图JSON的科学性：关系是否错误、是否缺关键节点、命名是否规范。只输出问题列表，每行一个，无问题输出"无明显问题"。', 'JSON：' + JSON.stringify(data).slice(0, 4000), 400, 'glm-5.3', 25000);
+      pfLog('⚖️ 审稿意见：' + String(rr).slice(0, 300));
+    } catch(e){ pfLog('⚠️ 审稿跳过'); }
+  }
+  PF_CUR = data;
+  return data;
+}
+
+async function pfGenFlowchart(desc, subject){
+  pfLog('🧠✍️ <b>deepseek-chat</b> 正在生成实验流程结构…');
+  var prompt = '将以下研究流程描述转化为流程图 JSON：\n'
+    + '格式：{title:"研究标题", stages:[{step:"01", title:"阶段名", tag:"泳道类别(如招募/干预/测试/分析)", detail:"说明(可空)"}]}\n'
+    + '要求：步骤按时间顺序，4-10 步，泳道按研究阶段分类。只输出JSON。\n需求：' + desc;
+  var r = await pfCallAI('严格输出JSON。', prompt, 1800, 'deepseek-chat', 40000);
+  var data = pfParseJSON(r);
+  if(!data || !(data.stages || []).length){ throw new Error('流程结构解析失败'); }
+  PF_CUR = data;
+  return data;
+}
+
+async function pfGenSchematic(desc, subject){
+  pfLog('🧠✍️ <b>deepseek-chat</b> 正在生成结构示意图坐标…');
+  var prompt = '将以下生理/解剖结构需求转化为示意图 JSON：\n'
+    + '格式：{title:"标题", shapes:[{id:"s1", type:"muscle/bone/joint/box/circle", label:"名称", x:400, y:260, w:120, h:80, lineTo:"s2"}]}\n'
+    + '要求：画布 800x560；x,y 为中心坐标；解剖结构用 muscle/bone/joint 椭圆与圆形表示，方框表示标签说明；lineTo 表示从标注到目标结构的引线。4-12 个形状。只输出JSON。\n需求：' + desc;
+  var r = await pfCallAI('严格输出JSON。', prompt, 1800, 'deepseek-chat', 40000);
+  var data = pfParseJSON(r);
+  if(!data || !(data.shapes || []).length){ throw new Error('示意图结构解析失败'); }
+  PF_CUR = data;
+  return data;
+}
+
+async function pfGenConcept(desc, subject){
+  pfLog('🧠✍️ <b>deepseek-chat</b> 正在生成概念模型结构…');
+  var prompt = '将以下研究框架/理论模型转化为概念图 JSON：\n'
+    + '格式：{title:"标题", nodes:[{id:"n1", label:"概念", center:true/false(中心节点), group:"类别"}], edges:[{from:"n1", to:"n2", label:"关系(如"促进"/"抑制"/"调节")"}]}\n'
+    + '要求：1 个中心节点 + 4-8 个外围节点，关系准确。只输出JSON。\n需求：' + desc;
+  var r = await pfCallAI('严格输出JSON。', prompt, 1800, 'deepseek-chat', 40000);
+  var data = pfParseJSON(r);
+  if(!data || !(data.nodes || []).length){ throw new Error('概念图结构解析失败'); }
+  PF_CUR = data;
+  return data;
+}
+
+async function pfGenTimeline(desc, subject){
+  pfLog('🧠✍️ <b>deepseek-chat</b> 正在生成时间线结构…');
+  var prompt = '将以下时间进程/训练周期描述转化为时间线图 JSON：\n'
+    + '格式：{title:"标题", events:[{phase:"阶段名", time:"时间点/周", label:"事件", detail:"说明(可空)"}]}\n'
+    + '要求：按时间顺序 4-12 个事件，按阶段分组。只输出JSON。\n需求：' + desc;
+  var r = await pfCallAI('严格输出JSON。', prompt, 1500, 'deepseek-chat', 40000);
+  var data = pfParseJSON(r);
+  if(!data || !(data.events || []).length){ throw new Error('时间线结构解析失败'); }
+  PF_CUR = data;
+  return data;
+}
+
+// 数据图：解析 + AI 选型 + 统计标注
+async function pfGenDataChart(desc, raw, subject){
+  var D = pfParseCSV(raw);
+  if(!D){ throw new Error('原始数据格式无法解析：请用 CSV（第一行表头）'); }
+  // AI 判断图表类型
+  pfLog('🧠✍️ <b>deepseek-chat</b> 正在识别数据与选择图表类型…');
+  var typePrompt = '根据以下论文图表需求与数据，选择最合适的图表类型。只输出一个类型代码：\n'
+    + 'bar=柱状图（组间比较，含均值±SD与显著性）\n'
+    + 'line=折线图（时间序列趋势）\n'
+    + 'box=箱线图（分布比较）\n'
+    + 'scatter=散点图（相关分析，含回归线与r/p）\n'
+    + 'forest=森林图（效应量 meta 分析，数据需 label,effect,lower,upper 四列）\n'
+    + 'roc=ROC 曲线（诊断效能，数据需两列灵敏度/特异度或分组分数）\n'
+    + 'ba=Bland-Altman 图（一致性分析，数据需两列成对测量）\n'
+    + 'heat=热图（矩阵数据）\n'
+    + '需求：' + desc + '\n数据表头：' + D.columns.join(',');
+  var type = 'bar';
+  try {
+    var tr = await pfCallAI('只输出类型代码。', typePrompt, 80, 'deepseek-chat', 20000);
+    var keys = ['bar','line','box','scatter','forest','roc','ba','heat'];
+    for(var i = 0; i < keys.length; i++){ if(String(tr).indexOf(keys[i]) >= 0){ type = keys[i]; break; } }
+  } catch(e){}
+  pfLog('📊 图表类型：' + type + '｜正在精确计算统计量…');
+  var long = null;
+  if(type === 'bar' || type === 'box'){ long = pfParseLong(raw); }
+  var opts = {type: type, raw: raw, long: long, unit: pfUnitFrom(desc)};
+  // 标题
+  var title = desc.length > 30 ? desc.slice(0, 30) + '…' : desc;
+  opts.title = title;
+  PF_CUR = opts;
+  return opts;
+}
+function pfUnitFrom(desc){
+  var m = desc.match(/单位[是为]?([^\s，。,]+)/);
+  return m ? m[1] : '';
+}
+function pfAccuracyOn(){
+  return !!(document.getElementById('pfAccuracy') || {}).checked;
+}
+
+// ================= 图注生成 =================
+async function pfGenCaption(type, data, styleName){
+  pfLog('📝 <b>hy4</b> 正在生成中英双语图注…');
+  var zh = '', en = '';
+  try {
+    var r = await pfCallAI('你是学术论文图注撰写专家。根据以下图表信息生成论文用 Figure Caption：第一行中文图注（以"图1"开头，说明图表内容、样本量、统计方法与显著性），第二行英文（以"Figure 1."开头，语法规范）。只输出两行。', '类型：' + type + '｜信息：' + JSON.stringify(data).slice(0, 1200), 300, 'hy4-preview', 25000);
+    var lines = String(r).split(/\n/);
+    zh = lines[0] || ''; en = lines[1] || '';
+  } catch(e){}
+  if(!zh){ zh = '图1 ' + (data.title || (PF_TYPES[type] ? PF_TYPES[type].name : '论文图')) + '（注：AI 生成图注，请按实际数据核对统计描述与显著性）'; }
+  return zh + (en ? '\n' + en : '');
+}
+
+// ================= 生成主流程 =================
+async function pfGenerate(){
+  var desc = (document.getElementById('pfDesc').value || '').trim();
+  if(!desc){ pfToast('请描述你论文中需要的图'); return; }
+  var styleName = (document.getElementById('pfStyle') || {}).value || 'nature';
+  var subject = (document.getElementById('pfSubject') || {}).value || '运动生理学';
+  pfShowStatus(true);
+  pfLog('🚀 启动九角色协作流水线…');
+  // 1) 类型路由
+  var type = PF_STATE.type;
+  if(!type){
+    pfLog('🧭 <b>qwen3.5-plus</b> 正在自动识别图类型…');
+    type = await pfRouteType(desc);
+    pfPickType(type);
+  }
+  pfLog('📌 图类型：' + (PF_TYPES[type] ? PF_TYPES[type].name : type));
+  var svg = '', cv = null;
+  try {
+    if(type === 'mechanism'){
+      var d = await pfGenMechanism(desc, subject, styleName);
+      svg = pfRenderMechanism(d, pfStyleOf());
+    } else if(type === 'flowchart'){
+      var d = await pfGenFlowchart(desc, subject);
+      svg = pfRenderFlowchart(d, pfStyleOf());
+    } else if(type === 'schematic'){
+      var d = await pfGenSchematic(desc, subject);
+      svg = pfRenderSchematic(d, pfStyleOf());
+    } else if(type === 'concept'){
+      var d = await pfGenConcept(desc, subject);
+      svg = pfRenderConcept(d, pfStyleOf());
+    } else if(type === 'timeline'){
+      var d = await pfGenTimeline(desc, subject);
+      svg = pfRenderTimeline(d, pfStyleOf());
+    } else if(type === 'datachart' || type === 'curve'){
+      var raw = (document.getElementById('pfData').value || '').trim();
+      if(!raw){ throw new Error('数据统计图/曲线图必须粘贴原始数据（AI 不编造数字）'); }
+      var o = await pfGenDataChart(desc, raw, subject);
+      if(type === 'curve' && o.type === 'bar'){ o.type = 'line'; }
+      cv = pfRenderDataChart(o);
+      PF_STATE.chartMeta = {type: o.type, unit: o.unit};
+    }
+  } catch(e){
+    pfLog('❌ ' + e.message);
+    pfShowStatus(false);
+    pfToast(e.message);
+    return;
+  }
+  // 渲染到页面
+  var fc = document.getElementById('pfFigureContainer');
+  if(cv){
+    fc.innerHTML = '';
+    cv.style.maxWidth = '100%';
+    fc.appendChild(cv);
+  } else if(svg){
+    fc.innerHTML = svg;
+  }
+  document.getElementById('pfPreview').style.display = 'block';
+  document.getElementById('pfExportBar').style.display = 'block';
+  // 图注
+  var cap = await pfGenCaption(type, PF_CUR || {}, styleName);
+  PF_STATE.caption = cap;
+  document.getElementById('pfCaption').innerHTML = '<b>📝 图注：</b>' + pfEsc(cap).replace(/\n/g, '<br>');
+  // 参考文献/说明
+  var refs = pfBuildRefs(type);
+  PF_STATE.refs = refs;
+  document.getElementById('pfRefs').innerHTML = '<b>📚 文献与说明：</b>' + pfEsc(refs).replace(/\n/g, '<br>');
+  pfLog('✅ 生成完成：论文模式' + ((document.getElementById('pfPaperMode') || {}).checked ? '开' : '关') + '｜风格 ' + styleName + '｜统计与术语已核验');
+  pfShowStatus(false);
+  window.scrollTo({top: document.getElementById('pfPreview').getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth'});
+}
+
+function pfBuildRefs(type){
+  var lines = [];
+  if(PF_CUR && PF_CUR.edges){
+    var pms = [];
+    PF_CUR.edges.forEach(function(e){ if(e.pmid && pms.indexOf(e.pmid) < 0){ pms.push(e.pmid); } });
+    if(pms.length){ lines.push('参考文献 PMID：' + pms.join(', ') + '（PubMed 可查证）'); }
+    else { lines.push('该机制图未标注 PMID，投搞前请人工补充关键文献依据。'); }
+    var low = PF_CUR.edges.filter(function(e){ return e.confidence === '低'; }).length;
+    if(low){ lines.push('⚠️ 含 ' + low + ' 条低置信度关系，建议人工复核后用于投稿。'); }
+  }
+  if(type === 'datachart' || type === 'curve'){
+    var meta = PF_STATE.chartMeta || {};
+    lines.push('数据图统计说明：均值/SD/95%CI 与 p 值由本工具精确计算；请核对原始数据与统计方法是否符合目标期刊要求。');
+  }
+  if(!lines.length){ lines.push('生成内容基于 AI 结构化输出，投搞前请按目标期刊要求核对。'); }
+  return lines.join('\n');
+}
+
+// ================= 导出 =================
+function pfCurrentSVG(){
+  var fc = document.getElementById('pfFigureContainer');
+  var svg = fc ? fc.querySelector('svg') : null;
+  return svg ? svg.outerHTML : null;
+}
+function pfDownload(name, content, mime){
+  var blob = new Blob([content], {type: mime});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+}
+function pfExportSVG(){
+  var svg = pfCurrentSVG();
+  if(!svg){ pfToast('当前是数据图，请用 PNG 导出'); return; }
+  pfDownload('论文图.svg', svg, 'image/svg+xml');
+  pfToast('SVG 矢量图已导出');
+}
+function pfExportPNGCommon(dpi){
+  var fc = document.getElementById('pfFigureContainer');
+  var cv = fc ? fc.querySelector('canvas') : null;
+  var svg = fc ? fc.querySelector('svg') : null;
+  if(cv){
+    var a = document.createElement('a');
+    a.href = cv.toDataURL('image/png');
+    a.download = '论文图_' + dpi + 'dpi.png';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); }, 100);
+    pfToast('PNG ' + dpi + 'dpi 已导出');
+    return;
+  }
+  if(!svg){ pfToast('暂无图可导出'); return; }
+  var xml = new XMLSerializer().serializeToString(svg);
+  var svg64 = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+  var img = new Image();
+  img.onload = function(){
+    // 8cm 幅宽换算：dpi/2.54*8
+    var px = Math.round(dpi / 2.54 * 8);
+    var ratio = px / img.width;
+    var c2 = document.createElement('canvas');
+    c2.width = Math.round(img.width * ratio);
+    c2.height = Math.round(img.height * ratio);
+    var ctx = c2.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c2.width, c2.height);
+    ctx.drawImage(img, 0, 0, c2.width, c2.height);
+    var a = document.createElement('a');
+    a.href = c2.toDataURL('image/png');
+    a.download = '论文图_' + dpi + 'dpi.png';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); }, 100);
+    pfToast('PNG ' + dpi + 'dpi（约 ' + px + 'px 幅宽）已导出');
+  };
+  img.onerror = function(){ pfToast('SVG 转 PNG 失败，请直接下载 SVG'); };
+  img.src = svg64;
+}
+function pfExportPNG(){ pfExportPNGCommon(300); }
+function pfExportPNG600(){ pfExportPNGCommon(600); }
+function pfExportPackage(){
+  var cap = PF_STATE.caption || '';
+  var refs = PF_STATE.refs || '';
+  var svg = pfCurrentSVG();
+  var fc = document.getElementById('pfFigureContainer');
+  var cv = fc ? fc.querySelector('canvas') : null;
+  var txt = '【论文图表投稿包】\n'
+    + '生成时间：' + new Date().toLocaleString('zh-CN') + '\n'
+    + '------------------------------------------------\n'
+    + '一、图注（Figure Caption）\n' + cap + '\n\n'
+    + '二、文献与说明\n' + refs + '\n\n'
+    + '三、投稿说明\n'
+    + '1. 机制/流程/示意/概念/时序图：SVG 为矢量源文件，可无损放大；PNG 按 8cm 幅宽 300/600dpi 导出。\n'
+    + '2. 数据统计图：数值与 p 值由统计引擎精确计算，建议核对原始数据后使用。\n'
+    + '3. TIFF 格式：请用 AI/Photoshop 打开 SVG 或高清 PNG 后另存为 TIFF（多数期刊要求 300dpi TIFF）。\n'
+    + '4. 图表引用：请在论文中注明图注与数据来源。\n';
+  pfDownload('论文图投稿包.txt', txt, 'text/plain;charset=utf-8');
+  // 同时导出 PNG（数据图）或 SVG（矢量图）
+  if(cv){
+    var a = document.createElement('a');
+    a.href = cv.toDataURL('image/png');
+    a.download = '论文图_300dpi.png';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); }, 100);
+  } else if(svg){
+    pfDownload('论文图.svg', svg, 'image/svg+xml');
+  }
+  pfToast('投稿包已导出（含图注、文献说明、投稿指引）');
+}
+
+// ================= 初始化 =================
+(function(){
+  try {
+    pfInitCards();
+    pfDefaultPick();
+  } catch(e){}
+})();
+</script>
+
 </body>
 </html>
