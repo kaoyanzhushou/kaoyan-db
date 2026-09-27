@@ -115637,15 +115637,16 @@ function showPubTool(tool) {
 
 
 
-    html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#075985">文档图片（<span id="fmtImgCount">0</span>张）</div><div style="display:flex;gap:6px"><button onclick="detectAllImageFormats()" style="background:#0284c7;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检测图片格式</button><button onclick="checkFigureCaptions()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检查标题与引用</button><button onclick="toggleImageTool()" style="background:#d97706;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">图片处理工具</button><button onclick="analyzeAllImagesAI()" style="background:#0891b2;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">AI分析图片</button><button onclick="ocrAllImages()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">OCR文字检查</button></div></div><div id="fmtAIAnalysisResults" style="margin-top:10px"></div><div id="fmtOCRResults" style="margin-top:10px"></div><div id="fmtImageToolPanel" style="display:none;margin-bottom:10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px">图片压缩与格式转换</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标格式</label><select id="imgToolFormat" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;background:#fff;color:#92400e;cursor:pointer"><option value="image/jpeg">JPG（照片，体积小）</option><option value="image/png">PNG（线图，无损）</option><option value="image/webp">WebP（高压缩率）</option></select></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">质量（JPG/WebP）: <span id="imgToolQualityVal">85</span></label><input type="range" id="imgToolQuality" min="10" max="100" value="85" oninput="document.getElementById(\'imgToolQualityVal\').textContent=this.value" style="width:100%;accent-color:#d97706"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标宽度（px，0=不缩放）</label><input type="number" id="imgToolWidth" value="0" min="0" max="5000" placeholder="如1600" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标DPI（用于计算尺寸，0=不使用）</label><input type="number" id="imgToolDPI" value="0" min="0" max="1200" placeholder="如300" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">印刷宽度（cm，配合DPI使用）</label><input type="number" id="imgToolPrintWidth" value="8.5" min="1" max="30" step="0.5" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onclick="processAllImages()" style="background:#d97706;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">批量处理并下载ZIP</button><button onclick="processImagesPreview()" style="background:#92400e;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">预览处理效果</button><span style="font-size:10px;color:#92400e">提示：DPI+印刷宽度会自动计算目标像素宽度</span></div><div id="imgToolProgress" style="display:none;margin-top:10px"><div style="font-size:10px;color:#92400e;margin-bottom:4px">处理进度: <span id="imgToolProgressText">0/0</span></div><div style="background:#fef3c7;border-radius:4px;height:8px;overflow:hidden"><div id="imgToolProgressBar" style="background:#d97706;height:100%;width:0%;transition:width .3s"></div></div></div><div id="imgToolResults" style="margin-top:10px"></div></div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div><div id="fmtImageDetectResults" style="margin-top:10px"></div><div id="fmtCaptionCheckResult" style="margin-top:10px"></div></div>';
+    html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#075985">文档图片（<span id="fmtImgCount">0</span>张）</div><div style="display:flex;gap:6px"><button onclick="runFigureTableAudit()" style="background:#5b21b6;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">📋 图表审计</button><button onclick="detectAllImageFormats()" style="background:#0284c7;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检测图片格式</button><button onclick="checkFigureCaptions()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检查标题与引用</button><button onclick="toggleImageTool()" style="background:#d97706;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">图片处理工具</button><button onclick="analyzeAllImagesAI()" style="background:#0891b2;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">AI分析图片</button><button onclick="ocrAllImages()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">OCR文字检查</button></div></div><div id="fmtAIAnalysisResults" style="margin-top:10px"></div><div id="fmtOCRResults" style="margin-top:10px"></div><div id="fmtImageToolPanel" style="display:none;margin-bottom:10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px">图片压缩与格式转换</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标格式</label><select id="imgToolFormat" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;background:#fff;color:#92400e;cursor:pointer"><option value="image/jpeg">JPG（照片，体积小）</option><option value="image/png">PNG（线图，无损）</option><option value="image/webp">WebP（高压缩率）</option></select></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">质量（JPG/WebP）: <span id="imgToolQualityVal">85</span></label><input type="range" id="imgToolQuality" min="10" max="100" value="85" oninput="document.getElementById(\'imgToolQualityVal\').textContent=this.value" style="width:100%;accent-color:#d97706"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标宽度（px，0=不缩放）</label><input type="number" id="imgToolWidth" value="0" min="0" max="5000" placeholder="如1600" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标DPI（用于计算尺寸，0=不使用）</label><input type="number" id="imgToolDPI" value="0" min="0" max="1200" placeholder="如300" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">印刷宽度（cm，配合DPI使用）</label><input type="number" id="imgToolPrintWidth" value="8.5" min="1" max="30" step="0.5" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onclick="processAllImages()" style="background:#d97706;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">批量处理并下载ZIP</button><button onclick="processImagesPreview()" style="background:#92400e;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">预览处理效果</button><span style="font-size:10px;color:#92400e">提示：DPI+印刷宽度会自动计算目标像素宽度</span></div><div id="imgToolProgress" style="display:none;margin-top:10px"><div style="font-size:10px;color:#92400e;margin-bottom:4px">处理进度: <span id="imgToolProgressText">0/0</span></div><div style="background:#fef3c7;border-radius:4px;height:8px;overflow:hidden"><div id="imgToolProgressBar" style="background:#d97706;height:100%;width:0%;transition:width .3s"></div></div></div><div id="imgToolResults" style="margin-top:10px"></div></div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div><div id="fmtFigureAuditResult" style="margin-top:10px"></div><div id="fmtImageDetectResults" style="margin-top:10px"></div><div id="fmtCaptionCheckResult" style="margin-top:10px"></div></div>';
 
 
 
-    html += '<div style="display:flex;gap:10px;margin-bottom:16px"><button onclick="checkPaperFormat()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI检查格式问题</button><button onclick="autoFixPaperFormat()" style="background:#075985;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">一键检查并修改</button></div>';
+    html += '<div style="display:flex;gap:10px;margin-bottom:16px"><button onclick="checkPaperFormat()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI检查格式问题</button><button onclick="autoFixPaperFormat()" style="background:#075985;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">一键检查并修改</button><button onclick="fmtRunFullReport()" style="background:#4f46e5;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 格式体检报告</button></div>';
 
 
 
     html += '<div id="fmtResult"></div>';
+html += '<div id="fmtReport"></div>';
 
 
 
@@ -115785,23 +115786,36 @@ async function handleFmtFileUpload(input) {
 
 
 
-      var result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
-
-
-
-      var text = result.value;
-
-
-
-      // 尝试用convertToHtml获取更丰富的格式，然后转纯文本保留表格
-
-
-
-      var htmlResult = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
-
-
-
+      // ===== P0 升级：结构化解析（图片内联回正文原位 + 图注/表注/标题样式映射）=====
+      fmtInlineImages = [];
+      var htmlResult = await mammoth.convertToHtml({
+        arrayBuffer: arrayBuffer,
+        convertImage: mammoth.images.imgElement(function(image) {
+          return image.read('base64').then(function(imageBuffer) {
+            var ct = image.contentType || 'image/png';
+            return { src: 'data:' + ct + ';base64,' + imageBuffer };
+          });
+        }),
+        styleMap: [
+          "p[style-name='图注'] => p.figure-caption:fresh",
+          "p[style-name='表注'] => p.table-caption:fresh",
+          "p[style-name='Figure Caption'] => p.figure-caption:fresh",
+          "p[style-name='Table Caption'] => p.table-caption:fresh",
+          "p[style-name='图表标题'] => p.figure-caption:fresh",
+          "p[style-name='表格标题'] => p.table-caption:fresh",
+          "p[style-name='标题 1'] => h1:fresh",
+          "p[style-name='标题 2'] => h2:fresh",
+          "p[style-name='标题 3'] => h3:fresh",
+          "p[style-name='Heading 1'] => h1:fresh",
+          "p[style-name='Heading 2'] => h2:fresh",
+          "p[style-name='Heading 3'] => h3:fresh"
+        ]
+      });
       var html = htmlResult.value;
+      // 降级：结构化解析失败时回退纯文本提取
+      var result = null;
+      try { result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer }); } catch(e) { result = {value: ''}; }
+      var text = result.value;
 
 
 
@@ -116021,15 +116035,63 @@ function htmlToFormattedText(html) {
 
 
 
+      } else if (tag === 'p' && (node.className || '').indexOf('figure-caption') >= 0) {
+
+
+
+        var fcText = node.textContent.trim();
+
+
+
+        if (fcText) result.push('[图注] ' + fcText);
+
+
+
+      } else if (tag === 'p' && (node.className || '').indexOf('table-caption') >= 0) {
+
+
+
+        var tcText = node.textContent.trim();
+
+
+
+        if (tcText) result.push('[表注] ' + tcText);
+
+
+
       } else if (tag === 'p') {
 
 
 
-        var pText = node.textContent.trim();
+        if (node.querySelector('img')) {
 
 
 
-        if (pText) result.push(pText);
+          // 图片段落：递归输出图片占位与文字，保持图片在正文原位
+
+
+
+          node.childNodes.forEach(processNode);
+
+
+
+          result.push('');
+
+
+
+        } else {
+
+
+
+          var pText = node.textContent.trim();
+
+
+
+          if (pText) result.push(pText);
+
+
+
+        }
 
 
 
@@ -116053,11 +116115,11 @@ function htmlToFormattedText(html) {
 
 
 
-        var alt = node.getAttribute('alt') || '图片';
+        fmtInlineImages.push({order: fmtInlineImages.length + 1, src: node.getAttribute('src') || '', alt: node.getAttribute('alt') || ''});
 
 
 
-        result.push('[图片: ' + alt + ']');
+        result.push('【图' + fmtInlineImages.length + '】');
 
 
 
@@ -116110,6 +116172,8 @@ function htmlToFormattedText(html) {
 
 
 var fmtImagesMeta = [];
+var fmtInlineImages = [];   // P0：正文内联图片（顺序=文档中出现顺序，含 base64 原位）
+var fmtAuditLastResult = null; // P1：最近一次图表审计结果
 
 
 
@@ -116709,7 +116773,411 @@ function detectAllImageFormats() {
 
 
 
-// 检查图片标题与引用
+// ========== P1 图表审计：清单生成 + 编号连续性 + 文内引用一致性 ==========
+function runFigureTableAudit() {
+  var content = document.getElementById('fmtContent').value;
+  if (!content) { alert('请先输入或上传论文内容'); return; }
+  var resultEl = document.getElementById('fmtFigureAuditResult') || document.getElementById('fmtCaptionCheckResult');
+  if (!resultEl) return;
+  resultEl.innerHTML = '<div style="padding:12px;text-align:center;color:#5b21b6;font-size:12px">正在执行图表审计（清单 / 编号 / 引用一致性）...</div>';
+
+  var figures = [], tables = [], citeFigs = [], citeTabs = [], placeholders = [];
+  var section = '前言';
+  var lines = content.split('\n');
+
+  lines.forEach(function(line, idx) {
+    var t = line.trim();
+    if (!t) return;
+    var hMatch = t.match(/^#{1,4}\s+(.+)$/);
+    if (hMatch) { section = hMatch[1].replace(/\s+/g, ' '); return; }
+    // 图片内联占位（P0 解析产生）
+    var ph;
+    var phRe = /【图(\d+)】/g;
+    while ((ph = phRe.exec(t)) !== null) placeholders.push({num: parseInt(ph[1], 10), line: idx + 1});
+    if (/^【图\d+】$/.test(t)) return; // 纯占位行不视为文内引用
+    // 图注行：[图注] 前缀 或 "图 N xxx"
+    var fCap = t.match(/^\[图注\]\s*(?:图\s*)?(\d+)[\s．.、:：-]{1,3}(.+)$/) || t.match(/^图\s*(\d+)[\s．.、:：-]{1,3}(.+)$/);
+    if (fCap) { figures.push({num: parseInt(fCap[1], 10), caption: (fCap[2] || '').trim(), section: section, line: idx + 1}); return; }
+    var tCap = t.match(/^\[表注\]\s*(?:表\s*)?(\d+)[\s．.、:：-]{1,3}(.+)$/) || t.match(/^表\s*(\d+)[\s．.、:：-]{1,3}(.+)$/);
+    if (tCap) { tables.push({num: parseInt(tCap[1], 10), caption: (tCap[2] || '').trim(), section: section, line: idx + 1}); return; }
+    // 文内引用（题注行已排除）
+    var m;
+    var fRe2 = /图\s*(\d+)/g;
+    while ((m = fRe2.exec(t)) !== null) citeFigs.push({num: parseInt(m[1], 10), text: t.slice(Math.max(0, m.index - 12), m.index + 14), line: idx + 1, section: section});
+    var tRe2 = /表\s*(\d+)/g;
+    while ((m = tRe2.exec(t)) !== null) citeTabs.push({num: parseInt(m[1], 10), text: t.slice(Math.max(0, m.index - 12), m.index + 14), line: idx + 1, section: section});
+  });
+
+  // —— 编号连续性 ——
+  function continuity(arr, kind) {
+    var issues = [];
+    var nums = arr.map(function(x) { return x.num; }).sort(function(a, b) { return a - b; });
+    var seen = {};
+    nums.forEach(function(n) { seen[n] = (seen[n] || 0) + 1; });
+    for (var k in seen) if (seen[k] > 1) issues.push({level: '必改', msg: kind + '编号 ' + k + ' 重复出现 ' + seen[k] + ' 次'});
+    if (nums.length) {
+      var min = nums[0], max = nums[nums.length - 1];
+      for (var n = min; n <= max; n++) if (!seen[n]) issues.push({level: '必改', msg: kind + '编号 ' + n + ' 缺失（' + kind + min + '→' + kind + max + ' 不连续）'});
+    }
+    return issues;
+  }
+  var figIssues = continuity(figures, '图');
+  var tabIssues = continuity(tables, '表');
+
+  // —— 引用 ↔ 题注 一致性 ——
+  var figNums = {}, tabNums = {};
+  figures.forEach(function(f) { figNums[f.num] = 1; });
+  tables.forEach(function(t) { tabNums[t.num] = 1; });
+  var citeIssues = [];
+  var citedFig = {}, citedTab = {};
+  citeFigs.forEach(function(c) {
+    citedFig[c.num] = 1;
+    if (!figNums[c.num]) citeIssues.push({level: '必改', msg: '第' + c.line + '行引用图' + c.num + '，但文档中无图' + c.num + '的题注（' + c.section + '节）'});
+  });
+  citeTabs.forEach(function(c) {
+    citedTab[c.num] = 1;
+    if (!tabNums[c.num]) citeIssues.push({level: '必改', msg: '第' + c.line + '行引用表' + c.num + '，但文档中无表' + c.num + '的题注'});
+  });
+  figures.forEach(function(f) { if (!citedFig[f.num]) citeIssues.push({level: '建议', msg: '图' + f.num + '（' + f.caption.slice(0, 20) + '）未被正文引用，建议在文中说明或删除'}); });
+  tables.forEach(function(t) { if (!citedTab[t.num]) citeIssues.push({level: '建议', msg: '表' + t.num + '（' + t.caption.slice(0, 20) + '）未被正文引用，建议在文中说明或删除'}); });
+
+  // —— 占位 ↔ 题注 ——
+  var phIssues = [];
+  var phNums = {};
+  placeholders.forEach(function(p) { phNums[p.num] = 1; });
+  placeholders.forEach(function(p) {
+    if (!figNums[p.num]) phIssues.push({level: '必改', msg: '正文第' + p.line + '行有图片占位【图' + p.num + '】，但缺少对应图注'});
+  });
+  figures.forEach(function(f) { if (!phNums[f.num]) phIssues.push({level: '建议', msg: '图' + f.num + '有题注但正文未检测到图片占位（图片可能未上传或不在正文中）'}); });
+
+  // —— 渲染 ——
+  var allIssues = figIssues.concat(tabIssues, citeIssues, phIssues);
+  var must = allIssues.filter(function(i) { return i.level === '必改'; });
+  var adv = allIssues.filter(function(i) { return i.level === '建议'; });
+  var html = '<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;padding:12px">';
+  html += '<div style="font-size:12px;font-weight:700;color:#5b21b6;margin-bottom:10px">📋 图表审计报告（编号 / 引用 / 题注）</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">';
+  html += '<div style="text-align:center;padding:8px;background:#fff;border-radius:6px"><div style="font-size:18px;font-weight:700;color:#5b21b6">' + figures.length + '</div><div style="font-size:9px;color:#6b7280">图题注</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#fff;border-radius:6px"><div style="font-size:18px;font-weight:700;color:#5b21b6">' + tables.length + '</div><div style="font-size:9px;color:#6b7280">表题注</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#fff;border-radius:6px"><div style="font-size:18px;font-weight:700;color:#0284c7">' + citeFigs.length + '/' + citeTabs.length + '</div><div style="font-size:9px;color:#6b7280">图/表引用</div></div>';
+  html += '<div style="text-align:center;padding:8px;background:#fff;border-radius:6px"><div style="font-size:18px;font-weight:700;color:' + (must.length ? '#dc2626' : '#059669') + '">' + must.length + '/' + adv.length + '</div><div style="font-size:9px;color:#6b7280">必改/建议</div></div>';
+  html += '</div>';
+
+  if (figures.length || tables.length) {
+    html += '<div style="font-size:11px;font-weight:700;color:#5b21b6;margin-bottom:6px">图表清单</div>';
+    html += '<div style="overflow-x:auto;margin-bottom:10px"><table style="width:100%;border-collapse:collapse;font-size:10.5px;background:#fff;border-radius:6px">';
+    html += '<tr style="background:#ede9fe"><th style="padding:5px 8px;text-align:left;color:#5b21b6">类型</th><th style="padding:5px 8px;text-align:left;color:#5b21b6">编号</th><th style="padding:5px 8px;text-align:left;color:#5b21b6">题注</th><th style="padding:5px 8px;text-align:left;color:#5b21b6">所在章节</th><th style="padding:5px 8px;text-align:left;color:#5b21b6">状态</th></tr>';
+    figures.forEach(function(f) { html += '<tr><td style="padding:4px 8px;border-top:1px solid #ede9fe">图</td><td style="padding:4px 8px;border-top:1px solid #ede9fe;font-weight:600">' + f.num + '</td><td style="padding:4px 8px;border-top:1px solid #ede9fe">' + f.caption.slice(0, 40) + '</td><td style="padding:4px 8px;border-top:1px solid #ede9fe">' + f.section + '</td><td style="padding:4px 8px;border-top:1px solid #ede9fe">' + (citedFig[f.num] ? '<span style="color:#059669">已引用</span>' : '<span style="color:#d97706">未引用</span>') + '</td></tr>'; });
+    tables.forEach(function(t) { html += '<tr><td style="padding:4px 8px;border-top:1px solid #ede9fe">表</td><td style="padding:4px 8px;border-top:1px solid #ede9fe;font-weight:600">' + t.num + '</td><td style="padding:4px 8px;border-top:1px solid #ede9fe">' + t.caption.slice(0, 40) + '</td><td style="padding:4px 8px;border-top:1px solid #ede9fe">' + t.section + '</td><td style="padding:4px 8px;border-top:1px solid #ede9fe">' + (citedTab[t.num] ? '<span style="color:#059669">已引用</span>' : '<span style="color:#d97706">未引用</span>') + '</td></tr>'; });
+    html += '</table></div>';
+  }
+
+  if (must.length) { html += '<div style="font-size:11px;font-weight:700;color:#b91c1c;margin-bottom:6px">必改问题（' + must.length + '）</div>'; must.forEach(function(i) { html += '<div style="font-size:11px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:4px;padding:5px 8px;margin-bottom:4px">⚠ ' + i.msg + '</div>'; }); }
+  if (adv.length) { html += '<div style="font-size:11px;font-weight:700;color:#b45309;margin:8px 0 6px">建议（' + adv.length + '）</div>'; adv.forEach(function(i) { html += '<div style="font-size:11px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:5px 8px;margin-bottom:4px">💡 ' + i.msg + '</div>'; }); }
+  if (!allIssues.length) html += '<div style="font-size:12px;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:8px">✅ 未发现图表编号与引用问题</div>';
+  html += '</div>';
+
+  fmtAuditLastResult = {figures: figures, tables: tables, citeFigs: citeFigs, citeTabs: citeTabs, issues: allIssues};
+  resultEl.innerHTML = html;
+}
+
+// ========== P2 格式规则引擎（六域确定性检查，不依赖 AI，防幻觉） ==========
+var FMT_RULES_VER = '2.0';
+
+function runFmtRuleEngine() {
+  var el = document.getElementById('fmtContent');
+  var content = el ? el.value : '';
+  var journal = (document.getElementById('fmtJournal') || {}).value || '';
+  var refStyle = (document.getElementById('fmtRefStyle') || {}).value || 'Vancouver';
+  var issues = [];
+  var lines = content.split('\n');
+  var curSection = '前言';
+  var abbrSeen = {};   // 缩写是否已定义
+  var hPrev = {};      // 各级标题上一编号
+  var refZone = false; // 是否已进入参考文献区
+  var bodyCites = [];  // 正文引用编号
+  var refEntries = []; // 参考文献条目编号
+
+  // 常见缩写词表（≥2 字符，避免误报）
+  var abbrList = ['VO2max','VO2Max','VO₂max','BMI','SD','CI','HR','RPE','MET','DOMS','ACL','EMG','ROM','MVPA','PA','PE','RCT','ANOVA','ATP','CK','LDH','IL-6','TNF-α','CRP'];
+
+  lines.forEach(function(line, idx) {
+    var t = line.trim();
+    if (!t) return;
+    var n = idx + 1;
+    var hMatch = t.match(/^#{1,4}\s+(.+)$/);
+    if (hMatch) {
+      curSection = hMatch[1].replace(/\s+/g, ' ');
+      var lv = t.match(/^(#+)/)[1].length;
+      var numMatch = t.match(/^(#+)\s+(\d+(?:\.\d+)*)/);
+      if (numMatch) {
+        var num = numMatch[2];
+        var parts = num.split('.');
+        if (lv === 1 && hPrev[1] !== undefined && parseInt(parts[0], 10) !== hPrev[1] + 1) {
+          issues.push({domain:'structure', level:'warning', line:n, section:curSection, original:t, message:'一级标题编号跳号：上一编号 ' + hPrev[1] + '，当前为 ' + parts[0] + '，应连续（如 ' + (hPrev[1]+1) + '）', fix: t.replace(num, String(hPrev[1]+1))});
+        }
+        hPrev[1] = parseInt(parts[0], 10);
+        if (lv === 2 && parts.length === 2 && hPrev['2-'+parts[0]] !== undefined && parseInt(parts[1], 10) !== hPrev['2-'+parts[0]] + 1) {
+          issues.push({domain:'structure', level:'warning', line:n, section:curSection, original:t, message:'二级标题编号跳号：' + parts[0] + ' 下上一编号为 ' + hPrev['2-'+parts[0]] + '，当前为 ' + parts[1], fix: t.replace(num, parts[0] + '.' + String(hPrev['2-'+parts[0]]+1))});
+        }
+        if (lv === 2 && parts.length === 2) hPrev['2-'+parts[0]] = parseInt(parts[1], 10);
+      }
+      if (/参考文献|REFERENCES|References/i.test(t)) refZone = true;
+      return;
+    }
+    if (/^\s*\[\d+\]\s+/.test(t)) { var rm = t.match(/^\[(\d+)\]\s+/); if (rm) refEntries.push(parseInt(rm[1], 10)); }
+
+    // ===== 域1 统计报告规范（statistics） =====
+    var pm;
+    var pRe = /(?:^|[^A-Za-z])([pP])\s*([<>=]=?)\s*(0\.\d+)/g;
+    while ((pm = pRe.exec(t)) !== null) {
+      var op = pm[2];
+      if (pm[1] === 'P') {
+        issues.push({domain:'statistics', level:'warning', line:n, section:curSection, original:pm[0], message:'统计显著性 P 应为小写斜体 p（' + pm[0] + ' → p ' + op + ' ' + pm[3] + '）', fix: 'p ' + op + ' ' + pm[3]});
+      } else if (pm[0].indexOf(' ') < 0) {
+        issues.push({domain:'statistics', level:'warning', line:n, section:curSection, original:pm[0], message:'统计符号与比较符之间应有空格（' + pm[0] + ' → p ' + op + ' ' + pm[3] + '）', fix: 'p ' + op + ' ' + pm[3]});
+      }
+    }
+    var mSd = t.match(/\bM\s*±\s*SD\b|\bM±SD\b/);
+    if (mSd && t.indexOf('M±SD') >= 0) {
+      issues.push({domain:'statistics', level:'suggestion', line:n, section:curSection, original:'M±SD', message:'均值±标准差建议写作 "M ± SD"（± 前后加空格，M、SD 为正体缩写）', fix: 'M ± SD'});
+    }
+    var ciM = t.match(/\b95\s*%?\s*CI\b/);
+    if (ciM && t.indexOf('95%CI') >= 0) {
+      issues.push({domain:'statistics', level:'suggestion', line:n, section:curSection, original:'95%CI', message:'置信区间建议写作 "95% CI"（% 与 CI 之间加空格）', fix: '95% CI'});
+    }
+
+    // ===== 域2 单位量纲规范（units） =====
+    var uRe = /\b(\d+(?:\.\d+)?)\s*(ml|mL|kg|mg|g|mm|cm|km|min|h|s|Hz|kPa|mmHg|mmol|μmol|µmol|L|m\/s|m\/min|kg\/m2|kg\/m²)\b/g;
+    var um;
+    while ((um = uRe.exec(t)) !== null) {
+      var gap = t.slice(um.index, um.index + um[0].length);
+      if (gap.indexOf(' ') < 0 && gap.indexOf('　') < 0) {
+        issues.push({domain:'units', level:'warning', line:n, section:curSection, original:gap, message:'数值与单位之间应加空格（' + gap + ' → ' + um[1] + ' ' + um[2] + '）', fix: um[1] + ' ' + um[2]});
+      }
+    }
+    var badUnit = t.match(/\b(ML|KG|MG|KM|MM|CM|HZ|KPA)\b/);
+    if (badUnit) {
+      issues.push({domain:'units', level:'warning', line:n, section:curSection, original:badUnit[0], message:'单位大小写不规范：' + badUnit[0] + ' → ' + badUnit[0][0] + badUnit[0].slice(1).toLowerCase() + '（国际单位制正体，注意大小写）', fix: badUnit[0][0] + badUnit[0].slice(1).toLowerCase()});
+    }
+    var fullWidthPct = t.match(/\d+％/);
+    if (fullWidthPct) {
+      issues.push({domain:'units', level:'warning', line:n, section:curSection, original:fullWidthPct[0], message:'全角百分号应改为半角（' + fullWidthPct[0] + ' → ' + fullWidthPct[0].replace('％','%') + '）', fix: fullWidthPct[0].replace('％','%')});
+    }
+
+    // ===== 域3 术语与缩写（terminology） =====
+    abbrList.forEach(function(ab) {
+      var re = new RegExp('\\b' + ab.replace(/[+.]/g, '\\$&') + '\\b');
+      var m = t.match(re);
+      if (m && !abbrSeen[ab]) {
+        abbrSeen[ab] = 1;
+        var near = (lines[Math.max(0, idx-1)] || '') + t;
+        var defined = near.indexOf('（' + ab + '）') >= 0 || near.indexOf('(' + ab + ')') >= 0 || near.indexOf(ab + '（') >= 0 || near.indexOf(ab + '(') >= 0;
+        if (!defined && t.indexOf('缩写') < 0) {
+          issues.push({domain:'terminology', level:'suggestion', line:n, section:curSection, original:m[0], message:'缩写 "' + ab + '" 首次出现（第 ' + n + ' 行）建议给出全称定义，如 "全称（' + ab + '）"'});
+        }
+      }
+    });
+
+    // ===== 域4 参考文献与引用（literature） =====
+    var cRe = /\[(\d+)\]/g;
+    var cm;
+    while ((cm = cRe.exec(t)) !== null) {
+      if (!refZone) bodyCites.push({num: parseInt(cm[1], 10), line: n});
+    }
+    // 参考文献条目格式抽查（Vancouver）
+    if (refZone && /^\[\d+\]\s+/.test(t)) {
+      var entry = t;
+      var hasAuthor = /[A-Za-z\u4e00-\u9fa5]{2,}/.test(entry);
+      var hasYear = /\b(19|20)\d{2}\b/.test(entry);
+      if (!hasYear) {
+        issues.push({domain:'literature', level:'warning', line:n, section:'参考文献', original:entry.slice(0, 60), message:'参考文献条目缺少年份'});
+      }
+      if (refStyle === 'Vancouver' && entry.indexOf(';') < 0 && entry.indexOf('.') < 0) {
+        issues.push({domain:'literature', level:'suggestion', line:n, section:'参考文献', original:entry.slice(0, 60), message:'Vancouver 格式条目建议含 "年;卷(期):页码" 结构，如 "2021;39(5):100-110"'});
+      }
+    }
+  });
+
+  // ===== 域5 文献诚信：正文引用 ↔ 文末参考文献 双向对应 =====
+  var citedSet = {}, entrySet = {};
+  bodyCites.forEach(function(c) { citedSet[c.num] = 1; });
+  refEntries.forEach(function(r) { entrySet[r] = 1; });
+  var refMax = refEntries.length ? Math.max.apply(null, refEntries) : 0;
+  bodyCites.forEach(function(c) {
+    if (!entrySet[c.num]) issues.push({domain:'literature', level:'critical', line:c.line, section:'正文', original:'[' + c.num + ']', message:'正文第 ' + c.line + ' 行引用文献 [' + c.num + ']，但文末参考文献列表中无此编号（引用↔文献不匹配）'});
+  });
+  refEntries.forEach(function(r) {
+    if (!citedSet[r]) issues.push({domain:'literature', level:'warning', line:0, section:'参考文献', original:'[' + r + ']', message:'参考文献 [' + r + '] 在文末列出，但正文中未引用（建议删除或补充引用）'});
+  });
+
+  // ===== 域6 期刊画像驱动（journal） =====
+  var jh = FMT_JOURNAL_HINTS[journal];
+  if (jh) {
+    jh.forEach(function(h) {
+      issues.push({domain:'journal', level:'suggestion', line:0, section:'期刊要求', original:'', message:h});
+    });
+  }
+  if (journal && journal.indexOf('体育') >= 0) {
+    issues.push({domain:'journal', level:'suggestion', line:0, section:'期刊要求', original:'', message:'体育类期刊通常要求：中英文题目与摘要齐全、关键词 3-8 个、图表随文插入并附英文图注'});
+  }
+
+  return issues;
+}
+
+var FMT_JOURNAL_HINTS = {
+  '北京体育大学学报': ['参考文献采用 GB/T 7714 格式，著录项目需完整（作者. 题名. 刊名, 年, 卷(期): 页码.）', '论文需提供中英文题目、摘要与关键词'],
+  '体育科学': ['建议提供中英文摘要与关键词', '统计结果需报告效应量或置信区间（如有显著性检验）'],
+  'Medicine & Science in Sports & Exercise': ['结构化摘要：目的/方法/结果/结论', '参考文献采用 Vancouver 格式，正文引用用上标编号'],
+  'British Journal of Sports Medicine': ['结构化摘要（Objectives/Methods/Results/Conclusion）', '建议附 PRISMA 声明（如为系统综述/Meta 分析）'],
+  'Journal of Sports Sciences': ['摘要不超过 250 词', '图表标题需同时提供英文图注']
+};
+
+// ========== P4 多模型调度：任务-模型分工 + 失败自动降级 ==========
+async function callFmtAI(sys, user, maxTok) {
+  var main = (document.getElementById('phdAIModelSelect') || {}).value || 'deepseek-chat';
+  var queue = [main];
+  if (main.indexOf('kimi') >= 0) queue.push('deepseek-chat', 'glm-4-flash');
+  else if (main.indexOf('glm') >= 0) queue.push('kimi-latest', 'deepseek-chat');
+  else queue.push('glm-4-flash', 'kimi-latest');
+  var lastErr = null;
+  for (var i = 0; i < queue.length; i++) {
+    try {
+      return await callDeepSeekAPI(sys, user, maxTok || 4000, queue[i]);
+    } catch (e) {
+      lastErr = e;
+      if (i === queue.length - 1) throw e;
+    }
+  }
+  throw lastErr;
+}
+
+// ========== P5 格式体检报告：合并规则 + 图表审计 + AI，A/B/C 总评 ==========
+function fmtScore(issues) {
+  var c = 0, w = 0, s = 0;
+  issues.forEach(function(i) {
+    if (i.level === 'critical') c++;
+    else if (i.level === 'warning') w++;
+    else s++;
+  });
+  return {critical: c, warning: w, suggestion: s, score: Math.max(0, 100 - c * 10 - w * 5 - s * 2)};
+}
+
+function fmtGrade(score) {
+  if (score >= 90) return {g: 'A', label: '优秀 — 格式规范，可直接投稿', color: '#059669'};
+  if (score >= 75) return {g: 'B', label: '良好 — 存在少量问题，修改后投稿', color: '#d97706'};
+  return {g: 'C', label: '待改进 — 存在较多格式问题，需逐项修改', color: '#dc2626'};
+}
+
+var FMT_DOMAIN_NAMES = {
+  statistics: '统计报告', units: '单位量纲', terminology: '术语缩写',
+  figures: '图表内容', literature: '文献诚信', journal: '期刊要求', structure: '标题结构'
+};
+
+function renderFormatReport(ruleIssues, aiIssues, audit) {
+  var area = document.getElementById('fmtReport');
+  if (!area) return;
+  // 合并：以 域+行号+原文 为键去重（规则优先）
+  var merged = [];
+  var seen = {};
+  var all = ruleIssues.concat(aiIssues || []);
+  all.forEach(function(i) {
+    if (!i || !i.message) return;
+    var key = (i.domain || '') + '|' + (i.line || 0) + '|' + (i.original || '').slice(0, 40);
+    if (seen[key]) return;
+    seen[key] = 1;
+    merged.push(i);
+  });
+  // 追加图表审计问题（域 figures）
+  var auditIssues = [];
+  if (audit && audit.issues) {
+    audit.issues.forEach(function(i) {
+      var level = i.level === '必改' ? 'critical' : 'suggestion';
+      auditIssues.push({domain: 'figures', level: level, line: i.line || 0, original: '', message: i.msg, source: '图表审计'});
+    });
+  }
+  merged = auditIssues.concat(merged);
+  var sc = fmtScore(merged);
+  var gr = fmtGrade(sc.score);
+  var html = '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-top:12px">';
+  // 总评卡片
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1e293b,#334155);border-radius:10px;padding:14px 16px;color:#fff;margin-bottom:12px">';
+  html += '<div><div style="font-size:11px;color:#94a3b8;letter-spacing:1px">格式体检报告 · 规则引擎v' + FMT_RULES_VER + ' · ' + new Date().toLocaleTimeString('zh-CN', {hour12: false}) + '</div>';
+  html += '<div style="font-size:16px;font-weight:700;margin-top:4px">总评 ' + gr.g + ' 级 — ' + gr.label + '</div></div>';
+  html += '<div style="text-align:center"><div style="font-size:26px;font-weight:800;color:' + gr.color + '">' + sc.score + '</div><div style="font-size:9px;color:#94a3b8">综合得分</div></div></div>';
+  // 六域统计
+  var domCount = {};
+  merged.forEach(function(i) { domCount[i.domain] = (domCount[i.domain] || 0) + 1; });
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">';
+  html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:6px;text-align:center"><div style="font-size:15px;font-weight:700;color:#dc2626">' + sc.critical + '</div><div style="font-size:9px;color:#6b7280">严重</div></div>';
+  html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:6px;text-align:center"><div style="font-size:15px;font-weight:700;color:#d97706">' + sc.warning + '</div><div style="font-size:9px;color:#6b7280">警告</div></div>';
+  html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:6px;text-align:center"><div style="font-size:15px;font-weight:700;color:#0284c7">' + sc.suggestion + '</div><div style="font-size:9px;color:#6b7280">建议</div></div>';
+  html += '</div>';
+  // 问题清单（按域分组）
+  if (!merged.length) {
+    html += '<div style="font-size:12px;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:10px">✅ 未发现任何格式问题</div>';
+  } else {
+    var doms = Object.keys(domCount).sort();
+    doms.forEach(function(d) {
+      var items = merged.filter(function(i) { return i.domain === d; });
+      html += '<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:5px">' + (FMT_DOMAIN_NAMES[d] || d) + '（' + items.length + '）</div>';
+      items.forEach(function(i) {
+        var bg = i.level === 'critical' ? '#fef2f2' : i.level === 'warning' ? '#fffbeb' : '#f0f9ff';
+        var bd = i.level === 'critical' ? '#fecaca' : i.level === 'warning' ? '#fde68a' : '#bae6fd';
+        var col = i.level === 'critical' ? '#b91c1c' : i.level === 'warning' ? '#92400e' : '#0369a1';
+        var tag = i.level === 'critical' ? '严重' : i.level === 'warning' ? '警告' : '建议';
+        html += '<div style="background:' + bg + ';border:1px solid ' + bd + ';border-left:3px solid ' + bd.replace('#', '') + ';border-radius:6px;padding:6px 8px;margin-bottom:4px;font-size:11px;color:#374151">';
+        html += '<span style="font-weight:700;color:' + col + '">[' + tag + ']</span> ' + (i.source ? '<span style="color:#7c3aed;font-size:10px">' + i.source + '</span> ' : '') + (i.line ? '<span style="color:#64748b">第' + i.line + '行</span> ' : '') + i.message;
+        if (i.original) html += '<div style="margin-top:3px;color:#64748b;font-family:Consolas,monospace;font-size:10px;word-break:break-all">原文：' + i.original + '</div>';
+        if (i.fix) html += '<div style="margin-top:2px;color:#059669;font-size:10px">修改：' + i.fix + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+  }
+  html += '<div style="font-size:10px;color:#94a3b8;margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:6px">注：规则引擎问题为确定性判定（高可信）；AI 语义问题来自大模型；图表审计来自编号/引用/题注一致性分析。AI 检查失败时自动降级为纯规则报告。</div>';
+  html += '</div>';
+  area.innerHTML = html;
+  fmtReportLast = merged;
+}
+
+var fmtReportLast = null;
+
+// ========== 体检报告总入口：规则引擎 + 图表审计 + AI 并行 ==========
+async function fmtRunFullReport() {
+  var content = document.getElementById('fmtContent').value.trim();
+  if (!content) { alert('请先粘贴或上传论文内容'); return; }
+  if (content.length < 100) { alert('论文内容过短，请粘贴更多内容'); return; }
+  var area = document.getElementById('fmtReport');
+  if (!area) return;
+  area.innerHTML = '<div style="padding:24px;text-align:center;color:#0284c7;font-size:13px">正在生成格式体检报告（规则引擎 → 图表审计 → 多模型 AI）...<br><span style="font-size:11px;color:#94a3b8">确定性规则先行，AI 仅补语义类问题，防止幻觉</span></div>';
+  // 1) 规则引擎（同步、确定性）
+  var ruleIssues = runFmtRuleEngine();
+  // 2) 图表审计（同步）
+  var audit = null;
+  try {
+    runFigureTableAudit();
+    audit = fmtAuditLastResult || null;
+  } catch (e) { audit = null; }
+  // 3) AI 语义检查（失败自动降级为纯规则）
+  var aiIssues = [];
+  try {
+    var journal = (document.getElementById('fmtJournal') || {}).value || '通用学术';
+    var refStyle = (document.getElementById('fmtRefStyle') || {}).value || 'Vancouver';
+    var sys = '你是一名资深学术论文格式编辑。请检查论文的语义与表达类问题：1)统计表述是否规范（效应量、置信区间、统计符号）2)单位与量纲是否正确 3)术语缩写首次是否定义 4)语言是否地道（中式英语、连接词）5)时态是否一致 6)段落结构是否合理。只报告确定存在的问题，禁止编造。以 JSON 数组输出，每项含 domain(statistics/units/terminology/language/tense/structure)、level(critical/warning/suggestion)、line(行号)、original(原文)、message(中文问题说明)、fix(修改后文本)。不要输出 JSON 以外的内容。';
+    var user = '目标期刊：' + journal + '\n参考文献格式：' + refStyle + '\n\n论文内容：\n' + content;
+    var resp = await callFmtAI(sys, user, 6000);
+    var m = resp.match(/\[[\s\S]*\]/);
+    if (m) {
+      var arr = JSON.parse(m[0]);
+      if (Array.isArray(arr)) aiIssues = arr;
+    }
+  } catch (e) {
+    aiIssues = [];
+  }
+  renderFormatReport(ruleIssues, aiIssues, audit);
+}
+
 
 
 
@@ -126771,15 +127239,16 @@ function renderPublishFormat() {
 
 
 
-  html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#075985">文档图片（<span id="fmtImgCount">0</span>张）</div><div style="display:flex;gap:6px"><button onclick="detectAllImageFormats()" style="background:#0284c7;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检测图片格式</button><button onclick="checkFigureCaptions()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检查标题与引用</button><button onclick="toggleImageTool()" style="background:#d97706;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">图片处理工具</button><button onclick="analyzeAllImagesAI()" style="background:#0891b2;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">AI分析图片</button><button onclick="ocrAllImages()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">OCR文字检查</button></div></div><div id="fmtAIAnalysisResults" style="margin-top:10px"></div><div id="fmtOCRResults" style="margin-top:10px"></div><div id="fmtImageToolPanel" style="display:none;margin-bottom:10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px">图片压缩与格式转换</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标格式</label><select id="imgToolFormat" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;background:#fff;color:#92400e;cursor:pointer"><option value="image/jpeg">JPG（照片，体积小）</option><option value="image/png">PNG（线图，无损）</option><option value="image/webp">WebP（高压缩率）</option></select></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">质量（JPG/WebP）: <span id="imgToolQualityVal">85</span></label><input type="range" id="imgToolQuality" min="10" max="100" value="85" oninput="document.getElementById(\'imgToolQualityVal\').textContent=this.value" style="width:100%;accent-color:#d97706"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标宽度（px，0=不缩放）</label><input type="number" id="imgToolWidth" value="0" min="0" max="5000" placeholder="如1600" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标DPI（用于计算尺寸，0=不使用）</label><input type="number" id="imgToolDPI" value="0" min="0" max="1200" placeholder="如300" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">印刷宽度（cm，配合DPI使用）</label><input type="number" id="imgToolPrintWidth" value="8.5" min="1" max="30" step="0.5" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onclick="processAllImages()" style="background:#d97706;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">批量处理并下载ZIP</button><button onclick="processImagesPreview()" style="background:#92400e;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">预览处理效果</button><span style="font-size:10px;color:#92400e">提示：DPI+印刷宽度会自动计算目标像素宽度</span></div><div id="imgToolProgress" style="display:none;margin-top:10px"><div style="font-size:10px;color:#92400e;margin-bottom:4px">处理进度: <span id="imgToolProgressText">0/0</span></div><div style="background:#fef3c7;border-radius:4px;height:8px;overflow:hidden"><div id="imgToolProgressBar" style="background:#d97706;height:100%;width:0%;transition:width .3s"></div></div></div><div id="imgToolResults" style="margin-top:10px"></div></div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div><div id="fmtImageDetectResults" style="margin-top:10px"></div><div id="fmtCaptionCheckResult" style="margin-top:10px"></div></div>';
+  html += '<div id="fmtImagesArea" style="display:none;margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#075985">文档图片（<span id="fmtImgCount">0</span>张）</div><div style="display:flex;gap:6px"><button onclick="runFigureTableAudit()" style="background:#5b21b6;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">📋 图表审计</button><button onclick="detectAllImageFormats()" style="background:#0284c7;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检测图片格式</button><button onclick="checkFigureCaptions()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">检查标题与引用</button><button onclick="toggleImageTool()" style="background:#d97706;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">图片处理工具</button><button onclick="analyzeAllImagesAI()" style="background:#0891b2;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">AI分析图片</button><button onclick="ocrAllImages()" style="background:#7c3aed;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">OCR文字检查</button></div></div><div id="fmtAIAnalysisResults" style="margin-top:10px"></div><div id="fmtOCRResults" style="margin-top:10px"></div><div id="fmtImageToolPanel" style="display:none;margin-bottom:10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px"><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px">图片压缩与格式转换</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标格式</label><select id="imgToolFormat" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;background:#fff;color:#92400e;cursor:pointer"><option value="image/jpeg">JPG（照片，体积小）</option><option value="image/png">PNG（线图，无损）</option><option value="image/webp">WebP（高压缩率）</option></select></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">质量（JPG/WebP）: <span id="imgToolQualityVal">85</span></label><input type="range" id="imgToolQuality" min="10" max="100" value="85" oninput="document.getElementById(\'imgToolQualityVal\').textContent=this.value" style="width:100%;accent-color:#d97706"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标宽度（px，0=不缩放）</label><input type="number" id="imgToolWidth" value="0" min="0" max="5000" placeholder="如1600" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">目标DPI（用于计算尺寸，0=不使用）</label><input type="number" id="imgToolDPI" value="0" min="0" max="1200" placeholder="如300" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div><div><label style="font-size:10px;color:#92400e;font-weight:600;display:block;margin-bottom:3px">印刷宽度（cm，配合DPI使用）</label><input type="number" id="imgToolPrintWidth" value="8.5" min="1" max="30" step="0.5" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:4px;font-size:11px;outline:none;color:#92400e"></div></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onclick="processAllImages()" style="background:#d97706;color:#fff;border:none;padding:7px 18px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600">批量处理并下载ZIP</button><button onclick="processImagesPreview()" style="background:#92400e;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">预览处理效果</button><span style="font-size:10px;color:#92400e">提示：DPI+印刷宽度会自动计算目标像素宽度</span></div><div id="imgToolProgress" style="display:none;margin-top:10px"><div style="font-size:10px;color:#92400e;margin-bottom:4px">处理进度: <span id="imgToolProgressText">0/0</span></div><div style="background:#fef3c7;border-radius:4px;height:8px;overflow:hidden"><div id="imgToolProgressBar" style="background:#d97706;height:100%;width:0%;transition:width .3s"></div></div></div><div id="imgToolResults" style="margin-top:10px"></div></div><div id="fmtImagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div><div id="fmtFigureAuditResult" style="margin-top:10px"></div><div id="fmtImageDetectResults" style="margin-top:10px"></div><div id="fmtCaptionCheckResult" style="margin-top:10px"></div></div>';
 
 
 
-  html += '<div style="display:flex;gap:10px;margin-bottom:16px"><button onclick="checkPaperFormat()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI检查格式问题</button><button onclick="autoFixPaperFormat()" style="background:#075985;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">一键检查并修改</button></div>';
+  html += '<div style="display:flex;gap:10px;margin-bottom:16px"><button onclick="checkPaperFormat()" style="background:#0284c7;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">AI检查格式问题</button><button onclick="autoFixPaperFormat()" style="background:#075985;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">一键检查并修改</button><button onclick="fmtRunFullReport()" style="background:#4f46e5;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📊 格式体检报告</button></div>';
 
 
 
   html += '<div id="fmtResult"></div>';
+html += '<div id="fmtReport"></div>';
 
 
 
