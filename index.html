@@ -18609,7 +18609,6 @@ window.addEventListener('load', function(){
 
  <div class="nav-item nav-sub-item nav-item-mechanism" data-tab="mechanism" onclick="navigateToMechanismSubTab('understand')"><span class="icon">📖</span><span>图解理解</span></div>
 
- <div class="nav-item nav-sub-item nav-item-mechanism" data-tab="mechanism" onclick="navigateToMechanismSubTab('paper')"><span class="icon">📝</span><span>论文机制图</span></div>
 
  <div class="nav-item nav-sub-item nav-item-mechanism" data-tab="mechanism" onclick="navigateToMechanismSubTab('library')"><span class="icon">📚</span><span>机制素材库</span></div>
 
@@ -28633,7 +28632,6 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
  <button onclick="switchMechanismSubTab('understand')" id="mechTab-understand" style="padding:10px 18px;border:none;background:transparent;color:#64748b;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">📖 图解理解</button>
 
- <button onclick="switchMechanismSubTab('paper')" id="mechTab-paper" style="padding:10px 18px;border:none;background:transparent;color:#64748b;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">📝 论文机制图</button>
 
  <button onclick="switchMechanismSubTab('library')" id="mechTab-library" style="padding:10px 18px;border:none;background:transparent;color:#64748b;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600">📚 机制素材库</button>
 
@@ -28676,6 +28674,26 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
  <!-- 统一输入区 -->
 
  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:14px">
+
+ <!-- 从论文摘要提取（能力迁自原「论文机制图」） -->
+ <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:14px">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+ <div style="font-size:14px;font-weight:700;color:#0f172a">📝 从论文摘要提取机制描述（可选）</div>
+ <button onclick="pfTogglePaperExtract()" id="pfPaperExtractToggle" style="background:none;border:none;color:#6366f1;cursor:pointer;font-size:12px;font-weight:600">展开 ▾</button>
+ </div>
+ <div id="pfPaperExtractWrap" style="display:none">
+ <div style="margin-bottom:10px">
+ <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">论文标题</label>
+ <input type="text" id="paperMechTitle" placeholder="例如：运动诱导骨骼肌线粒体生物发生的分子机制" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;box-sizing:border-box">
+ </div>
+ <div style="margin-bottom:10px">
+ <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">论文摘要（AI 提取核心机制后自动填入「论文需求与数据」）</label>
+ <textarea id="paperMechAbstract" rows="3" placeholder="粘贴论文摘要，AI 将提取核心分子机制通路..." style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+ </div>
+ <button onclick="pfExtractFromPaper()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:9px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">🧠 AI 提取机制 → 填入描述框</button>
+ <div id="pfPaperExtractStatus" style="font-size:12px;color:#6d28d9;margin-top:8px;display:none"></div>
+ </div>
+ </div>
 
  <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">② 论文需求与数据</div>
 
@@ -28796,6 +28814,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:16px">
 
  <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">📝 机制描述</div>
+
+ <div style="font-size:11px;color:#64748b;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:6px 10px;margin-bottom:10px">🔬 教学演示模式：预置通路模板 + 动画联动；投稿请用底部「🚀 送论文图表中心精修」生成投稿级图（正式命名·置信度·PMID·期刊导出）。</div>
 
  <textarea id="mechDesc" rows="4" placeholder="例如：运动诱导骨骼肌线粒体生物发生的信号通路，包括 AMPK 激活 PGC-1α，p38 MAPK 磷酸化 PGC-1α，以及 CaMK 信号..." style="width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:12px;font-size:13px;box-sizing:border-box;resize:vertical;font-family:inherit"></textarea>
 
@@ -29350,96 +29370,6 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
  </div>
 
  </div>
-
- <div id="mechContent-paper" style="display:none">
-
- <!-- 整合引导条 -->
- <div style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);border:1px solid #c7d2fe;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
- <span style="font-size:13px;color:#3730a3;font-weight:600">✨ 投稿级机制图已整合至「📊 论文图表中心」</span>
- <span style="font-size:12px;color:#4338ca;flex:1;min-width:200px">这里继续负责「从论文摘要提取机制」；提取后点下方紫色按钮，即可送入论文图表中心生成投稿级机制图（正式命名·置信度·PMID·期刊级导出）。</span>
- </div>
-
- <!-- 论文信息输入 -->
-
- <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:16px">
-
- <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:12px">📝 从论文提取机制图</div>
-
- <div style="margin-bottom:12px">
-
- <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">论文标题</label>
-
- <input type="text" id="paperMechTitle" placeholder="例如：运动诱导骨骼肌线粒体生物发生的分子机制" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px">
-
- </div>
-
- <div style="margin-bottom:12px">
-
- <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">论文摘要（可选，提供后提取更准确）</label>
-
- <textarea id="paperMechAbstract" rows="4" placeholder="粘贴论文摘要，AI 将从中提取核心分子机制通路..." style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;resize:vertical"></textarea>
-
- </div>
-
- <div style="margin-bottom:12px">
-
- <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px">科目</label>
-
- <select id="paperMechSubject" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;background:#fff">
-
- <option value="运动生物化学">运动生物化学</option>
-
- <option value="运动生理学">运动生理学</option>
-
- <option value="运动医学">运动医学</option>
-
- <option value="运动康复学">运动康复学</option>
-
- <option value="体育教育训练学">体育教育训练学</option>
-
- <option value="运动人体科学">运动人体科学</option>
-
- <option value="其他">其他</option>
-
- </select>
-
- </div>
-
- <button onclick="extractMechanismFromPaper()" style="background:#7c3aed;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">🧠 AI 提取核心机制</button>
-
- </div>
-
- <!-- 提取状态 -->
-
- <div id="paperMechStatus" style="display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:#0369a1"></div>
-
- <!-- 提取结果 -->
-
- <div id="paperMechResult" style="display:none">
-
- <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px">
-
- <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:8px">📋 AI 提取的机制描述（可编辑）</div>
-
- <textarea id="paperMechExtracted" rows="5" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;resize:vertical;background:#f8fafc"></textarea>
-
- <div style="margin-top:12px;display:flex;gap:10px">
-
- <button onclick="generatePaperMechanism()" style="background:#0891b2;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">🎨 生成机制图</button>
-
- <button onclick="pfSendFromPaper()" style="background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600" title="把提取的机制描述送入论文图表中心，生成投稿级机制图（正式命名+置信度+PMID+期刊导出）">🚀 送论文图表中心</button>
-
- <span style="font-size:11px;color:#94a3b8;align-self:center">将自动切换到机制图生成面板，调用七模型协作生成</span>
-
- </div>
-
- </div>
-
- </div>
-
- </div>
-
- <!-- ===== 子 tab 5：机制素材库（P0 实现） ===== -->
 
  <div id="mechContent-library" style="display:none">
 
@@ -188886,7 +188816,7 @@ function navigateToTeacherSubTab(subTab){
 
 // ===== 运动科学机制库：子 tab 切换 =====
 
-var MECH_SUBTABS = ['gen','anim','understand','paper','library','knowledge','figures'];
+var MECH_SUBTABS = ['gen','anim','understand','library','knowledge','figures'];
 
 function switchMechanismSubTab(name){
 
@@ -234875,6 +234805,39 @@ function pfSavePFToLibrary(){
 .mech-card{transition:box-shadow .2s ease}
 .mech-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1)}
 </style>
+
+
+<!-- 论文摘要提取（并入论文图表中心） -->
+<script>
+function pfTogglePaperExtract(){
+  var w = document.getElementById('pfPaperExtractWrap');
+  var b = document.getElementById('pfPaperExtractToggle');
+  if(!w || !b){ return; }
+  var open = w.style.display !== 'none';
+  w.style.display = open ? 'none' : 'block';
+  b.textContent = open ? '展开 ▾' : '收起 ▴';
+}
+async function pfExtractFromPaper(){
+  var title = (document.getElementById('paperMechTitle') || {}).value || '';
+  var abs = (document.getElementById('paperMechAbstract') || {}).value || '';
+  if(!title && !abs){ if(typeof mechToast === 'function') mechToast('请输入论文标题或摘要'); else alert('请输入论文标题或摘要'); return; }
+  var status = document.getElementById('pfPaperExtractStatus');
+  status.style.display = 'block';
+  status.textContent = '🤖 AI 正在提取核心机制（deepseek-v4-flash）...';
+  var sys = '你是运动人体科学论文机制提取专家。从论文标题和摘要中提取核心机制/信号通路，输出一段简明、严谨的机制描述（120字内），列出关键分子/节点及激活、抑制、磷酸化等关系，用中文。只输出描述本身，不要解释。';
+  var usr = '论文标题：' + title + '\n\n论文摘要：' + abs;
+  try{
+    var res = await callModelWithTimeout(sys, usr, 600, 'deepseek-v4-flash', 60000);
+    var text = (res && res.text) ? res.text.trim() : '';
+    if(!text){ throw new Error('AI 未返回有效内容'); }
+    var pf = document.getElementById('pfDesc');
+    if(pf){ pf.value = text; }
+    status.textContent = '✅ 已提取并填入「论文需求与数据」描述框，可继续编辑后点「生成论文图」';
+  }catch(e){
+    status.textContent = '⚠️ 提取失败：' + (e.message || '未知错误');
+  }
+}
+</script>
 
 </body>
 </html>
