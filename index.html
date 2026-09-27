@@ -28793,6 +28793,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
  <button onclick="pfExportPackage()" style="background:#7c3aed;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">📦 导出投稿包（图+图注+参考文献）</button>
 
+ <button onclick="pfSavePFToLibrary()" style="background:#db2777;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600" title="把当前论文图存入机制素材库，供后续复用">💾 存入素材库</button>
+
  </div>
 
  <div style="font-size:11px;color:#94a3b8;margin-top:8px">提示：TIFF 格式请在导出 SVG/高清 PNG 后用 AI/PS 转换；投稿包内含投稿说明与文献列表（BibTeX 格式）。</div>
@@ -28916,6 +28918,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
  <button onclick="exportMechPDF()" style="background:#dc2626;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📄 导出PDF</button>
 
  <button onclick="exportMechPPT()" style="background:#ea580c;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📊 导出PPT</button>
+
+ <button onclick="pfSendFromGen()" style="background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="把当前描述送入论文图表中心，生成投稿级机制图">🚀 送论文图表中心精修</button>
 
  <button onclick="optimizeMechLayout()" style="background:#059669;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔧 优化布局</button>
 
@@ -29116,6 +29120,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
  <button onclick="animTogglePlay()" id="animPlayBtn" style="background:#0891b2;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">▶ 自动播放</button>
 
  <button onclick="animStep(1)" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#334155;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">下一步 ⏭</button>
+
+ <button onclick="pfExportAnimFrame()" style="background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="导出当前动画帧为 SVG（可转 300dpi PNG/TIFF 投稿）">🖼 导出当前帧</button>
 
  <button onclick="animReset()" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#334155;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">🔄 重置</button>
 
@@ -29363,6 +29369,12 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
  <div id="mechContent-paper" style="display:none">
 
+ <!-- 整合引导条 -->
+ <div style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);border:1px solid #c7d2fe;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+ <span style="font-size:13px;color:#3730a3;font-weight:600">✨ 投稿级机制图已整合至「📊 论文图表中心」</span>
+ <span style="font-size:12px;color:#4338ca;flex:1;min-width:200px">这里继续负责「从论文摘要提取机制」；提取后点下方紫色按钮，即可送入论文图表中心生成投稿级机制图（正式命名·置信度·PMID·期刊级导出）。</span>
+ </div>
+
  <!-- 论文信息输入 -->
 
  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:16px">
@@ -29430,6 +29442,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
  <div style="margin-top:12px;display:flex;gap:10px">
 
  <button onclick="generatePaperMechanism()" style="background:#0891b2;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">🎨 生成机制图</button>
+
+ <button onclick="pfSendFromPaper()" style="background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600" title="把提取的机制描述送入论文图表中心，生成投稿级机制图（正式命名+置信度+PMID+期刊导出）">🚀 送论文图表中心</button>
 
  <span style="font-size:11px;color:#94a3b8;align-self:center">将自动切换到机制图生成面板，调用七模型协作生成</span>
 
@@ -190092,6 +190106,8 @@ function renderMechLibrary(){
 
     html += '<button onclick="deleteMechFromLibrary(\'' + item.id + '\')" style="background:#fee2e2;color:#b91c1c;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px">删除</button>';
 
+    html += '<button onclick="pfSendLibToFigures(\'' + item.id + '\')" style="background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600" title="把素材库机制图送入论文图表中心生成投稿级版本">🚀 送图表中心</button>';
+
     html += '</div></div>';
 
   });
@@ -192197,6 +192213,8 @@ function renderMechKnowledge(){
     html += '<button onclick="loadMechPathway(\'' + p.id + '\')" style="flex:1;background:#0891b2;color:#fff;border:none;padding:8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">📥 加载编辑</button>';
 
     html += '<button onclick="previewMechPathway(\'' + p.id + '\')" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:12px">预览</button>';
+
+    html += '<button onclick="pfSendPathwayToFigures(\'' + p.id + '\')" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600" title="用该通路一键生成论文级通路图（正式命名+置信度+PMID+期刊导出）">📐 生成论文版通路图</button>';
 
     html += '</div></div>';
 
@@ -234783,6 +234801,89 @@ function pfExportPackage(){
     pfDefaultPick();
   } catch(e){}
 })();
+</script>
+
+
+<!-- ===== 机制库与论文图表中心联动（整合升级 v1.1）===== -->
+<script>
+// 送入论文图表中心（填写描述+切换面板）
+function pfSendToFigures(desc, type){
+  var d = document.getElementById('pfDesc');
+  if(d && desc){ d.value = desc; }
+  if(type && window.pfPickType){ try{ pfPickType(type); }catch(e){} }
+  try{
+    if(typeof switchTab === 'function'){ switchTab('mechanism'); }
+    setTimeout(function(){ if(typeof switchMechanismSubTab === 'function'){ switchMechanismSubTab('figures'); } }, 120);
+  }catch(e){}
+  if(typeof mechToast === 'function'){ mechToast('已送入论文图表中心，点「生成论文图」完成投稿级精修'); }
+}
+// 通路知识库 → 论文版通路图
+function pfSendPathwayToFigures(id){
+  var p = (window.MECH_PATHWAYS || []).filter(function(x){ return x.id === id; })[0];
+  if(!p){ if(typeof mechToast === 'function') mechToast('未找到通路'); return; }
+  var desc = p.name + '：' + p.description + '。关键节点：' + ((p.keyNodes || []).join('、') || '') + '。请生成论文级机制通路图：节点用国际标准名称与标准缩写，标注激活/抑制/磷酸化等关系，低置信度关系需标注。';
+  pfSendToFigures(desc, 'mechanism');
+}
+// 机制图生成 → 论文图表中心
+function pfSendFromGen(){
+  var desc = (document.getElementById('mechDesc') || {}).value || '';
+  pfSendToFigures(desc || '请生成论文级机制通路图（含正式命名、关系标注与置信度）', 'mechanism');
+}
+// 论文提取 → 论文图表中心
+function pfSendFromPaper(){
+  var tv = (document.getElementById('paperMechExtracted') || {}).value || (document.getElementById('paperMechTitle') || {}).value || '';
+  pfSendToFigures(tv || '请根据论文摘要生成论文级机制通路图', 'mechanism');
+}
+// 素材库 → 论文图表中心
+function pfSendLibToFigures(id){
+  var lib = JSON.parse(localStorage.getItem('mechLibrary') || '[]');
+  var item = lib.filter(function(i){ return i.id === id; })[0];
+  if(!item){ if(typeof mechToast === 'function') mechToast('未找到'); return; }
+  var cap0 = (item.caption || '').split('\n')[0] || '';
+  var desc = (item.title || '') + '：' + cap0 + (item.data && item.data.description ? item.data.description : '');
+  pfSendToFigures(desc || '请生成论文级机制通路图', 'mechanism');
+}
+// 动画当前帧 → 导出 SVG
+function pfExportAnimFrame(){
+  var svg = document.getElementById('animSvgContainer');
+  if(!svg || !svg.innerHTML){ if(typeof mechToast === 'function') mechToast('请先生成机制动画'); return; }
+  var xml = new XMLSerializer().serializeToString(svg);
+  if(typeof pfDownload === 'function'){ pfDownload('机制动画当前帧.svg', xml, 'image/svg+xml'); }
+  else {
+    var blob = new Blob([xml], {type:'image/svg+xml'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url; a.download = '机制动画当前帧.svg';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+  }
+  if(typeof mechToast === 'function') mechToast('动画帧 SVG 已导出（可再用 AI/PS 转 300dpi PNG/TIFF）');
+}
+// 论文图表中心 → 素材库
+function pfSavePFToLibrary(){
+  var fc = document.getElementById('pfFigureContainer');
+  var svgEl = fc ? fc.querySelector('svg') : null;
+  var svg = svgEl ? svgEl.outerHTML : null;
+  var cap = (typeof PF_STATE !== 'undefined' && PF_STATE.caption) || '';
+  var title = (cap.split('\n')[0] || '').replace(/^图\d+[\.\s]*/, '') || '论文图表中心导出';
+  if(!svg && !(typeof PF_CUR !== 'undefined' && PF_CUR)){ if(typeof mechToast === 'function') mechToast('请先生成论文图'); return; }
+  var lib = JSON.parse(localStorage.getItem('mechLibrary') || '[]');
+  var item = {
+    id: 'pf_' + new Date().getTime(),
+    title: title,
+    subject: (document.getElementById('pfSubject') || {}).value || '',
+    template: '论文图表中心',
+    data: { title: title, nodes: [], edges: [] },
+    svg: svg,
+    caption: cap,
+    savedAt: new Date().toISOString(),
+    tags: ['论文图表']
+  };
+  lib.unshift(item);
+  if(lib.length > 20){ lib = lib.slice(0, 20); }
+  localStorage.setItem('mechLibrary', JSON.stringify(lib));
+  if(typeof mechToast === 'function') mechToast('已存入素材库（共 ' + lib.length + ' 份）');
+  if(typeof renderMechLibrary === 'function'){ renderMechLibrary(); }
+}
 </script>
 
 </body>
