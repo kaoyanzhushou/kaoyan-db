@@ -117361,7 +117361,14 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
   html += '<div style="text-align:center;position:relative;width:78px;height:78px">';
   html += '<svg width="78" height="78" viewBox="0 0 78 78" style="transform:rotate(-90deg)"><circle cx="39" cy="39" r="' + R + '" fill="none" stroke="#475569" stroke-width="6"/><circle cx="39" cy="39" r="' + R + '" fill="none" stroke="' + gr.color + '" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + (Cc * pct / 100).toFixed(1) + ' ' + Cc.toFixed(1) + '"/></svg>';
   html += '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:22px;font-weight:800;color:' + gr.color + '">' + sc.score + '</div><div style="font-size:8px;color:#94a3b8">综合得分</div></div></div></div>';
-  html += '<div style="font-size:10px;color:#94a3b8;margin:0 0 10px;text-align:center">扣分明细：严重 −5/项 · 警告 −2/项 · 建议 −0.5/项（满分 100，四舍五入）</div>';
+  html += '<div style="font-size:10px;color:#94a3b8;margin:0 0 6px;text-align:center">扣分明细：严重 −5/项 · 警告 −2/项 · 建议 −0.5/项（满分 100，四舍五入）</div>';
+  if (window.fmtVoteStats) {
+    var vs = window.fmtVoteStats;
+    var vsTxt = '🤖 三模型共识投票：主模型 ' + vs.primary + ' 条 · GLM ' + vs.glm + ' 条 · Kimi ' + vs.kimi + ' 条';
+    if (vs.glmFail) vsTxt += '（GLM 超时）';
+    if (vs.kimiFail) vsTxt += '（Kimi 超时）';
+    html += '<div style="font-size:10px;color:#7c3aed;margin:0 0 10px;text-align:center">' + vsTxt + '</div>';
+  }
   html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">';
   html += '<div style="background:#fff;border:1px solid #fecaca;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#dc2626">' + sc.critical + '</div><div style="font-size:10px;color:#6b7280">🔴 严重</div></div>';
   html += '<div style="background:#fff;border:1px solid #fde68a;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#d97706">' + sc.warning + '</div><div style="font-size:10px;color:#6b7280">🟡 警告</div></div>';
@@ -117498,23 +117505,34 @@ var fmtFixCount = 0;
 var fmtAppliedCount = 0;
 
 // ===== P2: E7 三模型 Borda 共识 =====
+var fmtVoteStats = null;
 function fmtAITimed(p, ms) {
   return Promise.race([p, new Promise(function (res) { setTimeout(function () { res(null); }, ms); })]);
 }
+function fmtParseAIArray(resp) {
+  if (!resp) return null;
+  var m2 = String(resp).match(/\[[\s\S]*\]/);
+  if (!m2) return null;
+  try { var a = JSON.parse(m2[0]); return Array.isArray(a) ? a : null; } catch (e) { return null; }
+}
 function fmtNormMsg(s) { return (s || '').replace(/\s+/g, '').slice(0, 24); }
+// 双轨匹配：L级=同域+同行号+消息前12字一致；M级=消息前24字一致
+function fmtMatchKey(i) {
+  if (i.domain && i.line > 0) return 'L|' + (i.domain || '') + '|' + i.line + '|' + fmtNormMsg(i.message).slice(0, 12);
+  return 'M|' + fmtNormMsg(i.message);
+}
 function fmtBordaConsensus(primary, votes) {
   var out = [];
   var votes2 = votes || [];
-  var cnt = {}, rep = {};
+  var cnt = {};
   votes2.forEach(function (v) {
     if (!v || !v.message) return;
-    var k = fmtNormMsg(v.message);
+    var k = fmtMatchKey(v);
     cnt[k] = (cnt[k] || 0) + 1;
-    rep[k] = rep[k] || v;
   });
   primary.forEach(function (p) {
     if (!p || !p.message) return;
-    var k = fmtNormMsg(p.message);
+    var k = fmtMatchKey(p);
     var n = cnt[k] || 0;
     var it = {domain: p.domain || 'structure', level: p.level || 'suggestion', line: p.line || 0, original: p.original || '', message: p.message, fix: p.fix || ''};
     if (n >= 2) { it.source = '三模型共识'; }
@@ -117523,10 +117541,10 @@ function fmtBordaConsensus(primary, votes) {
     out.push(it);
   });
   var seen = {};
-  out.forEach(function (o) { seen[fmtNormMsg(o.message)] = 1; });
+  out.forEach(function (o) { seen[fmtMatchKey(o)] = 1; });
   votes2.forEach(function (v) {
     if (!v || !v.message) return;
-    var k = fmtNormMsg(v.message);
+    var k = fmtMatchKey(v);
     if (seen[k]) return;
     if ((cnt[k] || 0) >= 2) {
       seen[k] = 1;
@@ -117818,22 +117836,22 @@ async function fmtRunFullReport() {
     var refStyle = (document.getElementById('fmtRefStyle') || {}).value || 'Vancouver';
     var sys = '你是一名资深学术论文格式编辑。请检查论文的语义与表达类问题：1)统计表述是否规范（效应量、置信区间、统计符号）2)单位与量纲是否正确 3)术语缩写首次是否定义 4)语言是否地道（中式英语、连接词）5)时态是否一致 6)段落结构是否合理。只报告确定存在的问题，禁止编造。以 JSON 数组输出，每项含 domain(statistics/units/terminology/language/tense/structure)、level(critical/warning/suggestion)、line(行号)、original(原文)、message(中文问题说明)、fix(修改后文本)。不要输出 JSON 以外的内容。';
     var user = '目标期刊：' + journal + '\n参考文献格式：' + refStyle + '\n\n论文内容：\n' + content;
-    var resp = await fmtAITimed(callFmtAI(sys, user, 5000), 90000);
+    area.innerHTML = '<div style="padding:24px;text-align:center;color:#0284c7;font-size:13px">① 规则引擎 ✓ → ② 图表审计 ✓ → ③ 三模型 AI 共识（主模型 + GLM + Kimi 并行，约 15-30 秒）...<br><span style="font-size:11px;color:#94a3b8">确定性规则先行，AI 仅补语义类问题并跨模型投票，防止幻觉</span></div>';
+    var resp = await fmtAITimed(callFmtAI(sys, user, 4000), 70000);
     var arr0 = null;
     var m = resp.match(/\[[\s\S]*\]/);
     if (m) { try { var a0 = JSON.parse(m[0]); if (Array.isArray(a0)) arr0 = a0; } catch (e0) {} }
     // 双验证模型并行（GLM 中文语义 + Kimi 长文本核查），单模型失败不影响主结果
     var respB = await Promise.all([
-      fmtAITimed(callDeepSeekAPI(sys, user, 3500, 'glm-5.3').catch(function () { return null; }), 45000),
-      fmtAITimed(callDeepSeekAPI(sys, user, 3500, 'kimi-k3').catch(function () { return null; }), 45000)
+      fmtAITimed(callDeepSeekAPI(sys, user, 1500, 'glm').catch(function () { return null; }), 40000),
+      fmtAITimed(callDeepSeekAPI(sys, user, 1500, 'kimi').catch(function () { return null; }), 40000)
     ]);
     var arrB = [];
-    respB.forEach(function (rb) {
-      if (!rb) return;
-      var mb = rb.match(/\[[\s\S]*\]/);
-      if (mb) { try { var ab = JSON.parse(mb[0]); if (Array.isArray(ab)) arrB = arrB.concat(ab); } catch (eb) {} }
-    });
+    var glmIssues = 0, kimiIssues = 0, glmFail = false, kimiFail = false;
+    if (respB[0]) { var ab0 = fmtParseAIArray(respB[0]); if (ab0) { arrB = arrB.concat(ab0); glmIssues = ab0.length; } else glmFail = true; }
+    if (respB[1]) { var ab1 = fmtParseAIArray(respB[1]); if (ab1) { arrB = arrB.concat(ab1); kimiIssues = ab1.length; } else kimiFail = true; }
     aiIssues = fmtBordaConsensus(arr0 || [], arrB);
+    fmtVoteStats = {primary: (arr0 || []).length, glm: glmIssues, kimi: kimiIssues, glmFail: glmFail, kimiFail: kimiFail};
   } catch (e) {
     aiIssues = [];
   }
