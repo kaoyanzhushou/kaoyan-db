@@ -116877,12 +116877,46 @@ function runFigureTableAudit() {
   if (!allIssues.length) html += '<div style="font-size:12px;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:8px">✅ 未发现图表编号与引用问题</div>';
   html += '</div>';
 
+
+  // ===== E4 图表审计升级（P1 新增）：图注三要素 / 三线表 / 图注图片对应 / 中英图注 =====
+  var fmtAuditContent = document.getElementById('fmtContent').value || '';
+  figures.forEach(function(f) {
+    if (f.caption.length < 6) allIssues.push({level:'建议', line:f.line, msg:'图' + f.num + ' 题注过短（' + f.caption + '），建议按"图序号 + 主题 + 说明（指标/单位/时间/地点）"完整描述（图注三要素）'});
+  });
+  tables.forEach(function(t) {
+    if (t.caption.length < 6) allIssues.push({level:'建议', line:t.line, msg:'表' + t.num + ' 题注过短（' + t.caption + '），建议补充表格说明（比较内容/样本量/统计方法）'});
+  });
+  var figCapNums = {};
+  figures.forEach(function(f){ figCapNums[f.num] = 1; });
+  var figPhNums = {};
+  placeholders.forEach(function(p){ figPhNums[p.num] = 1; });
+  figures.forEach(function(f){
+    if (!figPhNums[f.num]) allIssues.push({level:'建议', line:f.line, msg:'图' + f.num + ' 有题注但未检测到图片内容（请确认图片是否已插入文档）'});
+  });
+  placeholders.forEach(function(p){
+    if (!figCapNums[p.num]) allIssues.push({level:'必改', line:p.line, msg:'存在图' + p.num + ' 的图片占位，但文档中无对应题注，请补充"图N 标题"题注行'});
+  });
+  if (/Abstract|Key\s*words/i.test(fmtAuditContent)) {
+    figures.forEach(function(f){
+      if (!/[A-Za-z]{4,}/.test(f.caption)) allIssues.push({level:'建议', line:f.line, msg:'图' + f.num + ' 建议补充英文题注（文档含英文摘要/关键词时，图表题注宜中英对照，便于国际检索）'});
+    });
+  }
+  var fmtTblIdx = [];
+  lines.forEach(function(l, li2){ var pc2=(l.match(/\|/g)||[]).length; if (pc2>=3 || (/^\|/.test(l)&&pc2>=2)) fmtTblIdx.push(li2); });
+  if (fmtTblIdx.length >= 3) {
+    var hasSep = false;
+    for (var ti = 0; ti < fmtTblIdx.length - 1; ti++) {
+      var ta = lines[fmtTblIdx[ti]].trim(), tb = lines[fmtTblIdx[ti+1]].trim();
+      if (/^\|[\s:|-]+\|$/.test(tb) && !/\d/.test(tb.replace(/[-:|\s]/g, ''))) { hasSep = true; break; }
+    }
+    if (!hasSep) allIssues.push({level:'建议', line:fmtTblIdx[0]+1, msg:'检测到管道表格数据，但表头行下方未见分隔线，建议按三线表排版（顶线/栏目线/底线）规范表格'});
+  }
   fmtAuditLastResult = {figures: figures, tables: tables, citeFigs: citeFigs, citeTabs: citeTabs, issues: allIssues};
   resultEl.innerHTML = html;
 }
 
 // ========== P2 格式规则引擎（六域确定性检查，不依赖 AI，防幻觉） ==========
-var FMT_RULES_VER = '2.0';
+var FMT_RULES_VER = '3.0';
 
 function runFmtRuleEngine() {
   var el = document.getElementById('fmtContent');
@@ -117142,6 +117176,85 @@ function runFmtRuleEngine() {
     }
   });
 
+
+  // ===== E5 格式扩展（P1 新增）：标点 / 单位符号 / 摘要结构 / 关键词规范 =====
+  var fmtSeenE = {};
+  lines.forEach(function(l, ei2) {
+    var t5 = l.trim();
+    if (!t5) return;
+    var en = ei2 + 1;
+    var p1 = t5.match(/[\u4e00-\u9fa5][,.][\u4e00-\u9fa5]/);
+    if (p1) {
+      var ek = 'p1|' + en;
+      if (!fmtSeenE[ek]) {
+        fmtSeenE[ek] = 1;
+        var fixP = p1[0].replace(/,/g, '，').replace(/\./g, '。');
+        issues.push({domain:'units', level:'suggestion', line:en, section:curSection, original:p1[0], message:'中文语境中出现半角标点「' + p1[0] + '」，建议使用全角标点：' + p1[0] + ' → ' + fixP, fix:fixP});
+      }
+    }
+    var u1 = t5.match(/\d+(?:\.\d+)?\s*(千米|米|厘米|毫米|公斤|分钟|小时)/);
+    if (u1) {
+      var umap = {千米:'km', 米:'m', 厘米:'cm', 毫米:'mm', 公斤:'kg', 分钟:'min', 小时:'h'};
+      var sym = umap[u1[1]];
+      var ek2 = 'u1|' + en + '|' + u1[0];
+      if (!fmtSeenE[ek2] && sym) {
+        fmtSeenE[ek2] = 1;
+        var fixU = u1[0].replace(/\s*(千米|米|厘米|毫米|公斤|分钟|小时)/, sym);
+        issues.push({domain:'units', level:'suggestion', line:en, section:curSection, original:u1[0], message:'建议使用标准单位符号：' + u1[0] + ' → ' + fixU, fix:fixU});
+      }
+    }
+  });
+  var absStart = -1, absEnd = -1;
+  for (var ai2 = 0; ai2 < lines.length; ai2++) {
+    var at = lines[ai2].trim();
+    if (/^(摘要|Abstract|ABSTRACT)\s*[:：]/.test(at) && absStart < 0) absStart = ai2;
+    if (absStart >= 0 && /^(关键词|Keywords|Key\s*words|KEY\s*WORDS)/i.test(at)) { absEnd = ai2; break; }
+  }
+  if (absStart >= 0 && absEnd > absStart) {
+    var absText = lines.slice(absStart, absEnd).join('');
+    var missing = [];
+    if (!/目的|Objective/i.test(absText)) missing.push('目的');
+    if (!/方法|Methods/i.test(absText)) missing.push('方法');
+    if (!/结果|Results/i.test(absText)) missing.push('结果');
+    if (!/结论|Conclusions/i.test(absText)) missing.push('结论');
+    if (missing.length && missing.length < 4) issues.push({domain:'structure', level:'suggestion', line:absStart+1, section:'摘要', original:lines[absStart].trim().slice(0, 40), message:'摘要缺少结构化要素：' + missing.join('、') + '（建议按 目的/方法/结果/结论 四段式撰写，便于目标期刊与数据库收录）'});
+  }
+  for (var ki = 0; ki < lines.length; ki++) {
+    var kt = lines[ki].trim();
+    if (/^(关键词|Keywords|Key\s*words|KEY\s*WORDS)/i.test(kt)) {
+      var kw = kt.replace(/^(关键词|Keywords|Key\s*words|KEY\s*WORDS)\s*[:：]\s*/i, '');
+      var partsKw = kw.split(/[;；、,，]/).filter(function(x){ return x.trim(); });
+      if (partsKw.length < 3) issues.push({domain:'structure', level:'warning', line:ki+1, section:'关键词', original:kt.slice(0, 40), message:'关键词仅 ' + partsKw.length + ' 个，建议 3-8 个（便于检索与期刊要求）'});
+      else if (partsKw.length > 8) issues.push({domain:'structure', level:'suggestion', line:ki+1, section:'关键词', original:kt.slice(0, 40), message:'关键词 ' + partsKw.length + ' 个偏多，建议控制在 3-8 个'});
+      break;
+    }
+  }
+
+  // ===== E6 文献引擎升级（P1 新增）：年份/卷期页码/DOI 完整性 + 样式适配 =====
+  var fmtSeenL = {};
+  refEntries.forEach(function(r) {
+    var rLine = -1;
+    for (var ri = 0; ri < lines.length; ri++) {
+      var rx = new RegExp('^\\[' + r + '\\]\\s');
+      if (rx.test(lines[ri].trim())) { rLine = ri; break; }
+    }
+    if (rLine < 0) return;
+    var rt = lines[rLine];
+    if (!/\b(19|20)\d{2}\b/.test(rt)) {
+      var lk = 'yr|' + r;
+      if (!fmtSeenL[lk]) { fmtSeenL[lk] = 1; issues.push({domain:'literature', level:'warning', line:rLine+1, section:'参考文献', original:'[' + r + ']', message:'参考文献 [' + r + '] 未检出出版年份（如 2021），Vancouver / GB 7714 均要求著录出版年份'}); }
+    }
+    if (!/\d+\s*[（(]\s*\d+\s*[）)]\s*[:：]\s*\d+/.test(rt) && !/\d+\s*:\s*\d+/.test(rt)) {
+      var lk2 = 'vp|' + r;
+      if (!fmtSeenL[lk2]) { fmtSeenL[lk2] = 1; issues.push({domain:'literature', level:'suggestion', line:rLine+1, section:'参考文献', original:'[' + r + ']', message:'参考文献 [' + r + '] 建议补全 卷(期): 页码（如 39(5): 100-110），便于读者定位原文'}); }
+    }
+    if (!/doi\s*[:：]?\s*10\.|10\.\d{4,}/i.test(rt)) {
+      var lk3 = 'doi|' + r;
+      if (!fmtSeenL[lk3]) { fmtSeenL[lk3] = 1; issues.push({domain:'literature', level:'suggestion', line:rLine+1, section:'参考文献', original:'[' + r + ']', message:'参考文献 [' + r + '] 未附 DOI（如 doi:10.xxxx/xxxx），建议补充便于审稿与读者核验（引用真实性可再经大模型核验）'}); }
+    }
+    if (refStyle === 'APA' && /^\[\d+\]/.test(rt)) issues.push({domain:'literature', level:'suggestion', line:rLine+1, section:'参考文献', original:'[' + r + ']', message:'当前文献格式为 APA，但条目使用数字编号 [N]，APA 应改为 (作者, 年份) 著录格式'});
+  });
+
   // ===== 域6 期刊画像驱动（journal） =====
   var jh = FMT_JOURNAL_HINTS[journal];
   if (jh) {
@@ -117214,7 +117327,7 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
   var all = (ruleIssues || []).concat(aiIssues || []);
   all.forEach(function(i) {
     if (!i || !i.message) return;
-    var key = (i.domain || '') + '|' + (i.line || 0) + '|' + (i.original || '').slice(0, 40);
+    var key = (i.domain || '') + '|' + (i.line || 0) + '|' + (i.original || '').slice(0, 40) + '|' + (i.message || '').slice(0, 24);
     if (seen[key]) return;
     seen[key] = 1;
     merged.push(i);
@@ -117262,13 +117375,65 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
   }
   var domCount = {};
   merged.forEach(function(i) { domCount[i.domain] = (domCount[i.domain] || 0) + 1; });
+  // ===== P1：8域过滤条 =====
+  var allDomains = ['statistics','units','terminology','figures','literature','journal','structure','data'];
+  html += '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;align-items:center">';
+  html += '<span style="font-size:10px;color:#64748b;font-weight:700">域过滤：</span>';
+  allDomains.forEach(function(dm) {
+    var cnt = domCount[dm] || 0;
+    html += '<button id="fmtChip-' + dm + '" onclick="fmtToggleDom(\'' + dm + '\')" style="border:1px solid ' + (cnt ? '#cbd5e1' : '#e2e8f0') + ';background:' + (cnt ? '#fff' : '#f8fafc') + ';color:' + (cnt ? '#334155' : '#94a3b8') + ';padding:4px 10px;border-radius:14px;cursor:pointer;font-size:11px;font-weight:600">' + (FMT_DOMAIN_NAMES[dm] || dm) + ' <span style="color:' + (cnt ? '#dc2626' : '#94a3b8') + '">' + cnt + '</span></button>';
+  });
+  html += '</div>';
+  // ===== P1：雷达图 + 覆盖矩阵（SVG 确定性绘制） =====
+  var radarMax = 0, weights = {};
+  allDomains.forEach(function(dm) {
+    var w = 0;
+    merged.forEach(function(i) { if (i.domain === dm) w += i.level === 'critical' ? 3 : i.level === 'warning' ? 2 : 1; });
+    weights[dm] = w; if (w > radarMax) radarMax = w;
+  });
+  if (!radarMax) radarMax = 1;
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px">';
+  html += '<div style="flex:1;min-width:250px"><div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:4px">📊 问题分布雷达（严重×3 / 警告×2 / 建议×1 加权）</div>';
+  var cxm = 130, cym = 108, Rr = 58;
+  var ang0 = -Math.PI / 2;
+  html += '<svg width="260" height="216" viewBox="0 0 260 216">';
+  for (var gi = 0; gi < 4; gi++) {
+    var rr = Rr * (gi + 1) / 4, ptsG = [];
+    allDomains.forEach(function(dm, di) { var ang = ang0 + (2 * Math.PI * di) / allDomains.length; ptsG.push((cxm + Math.cos(ang) * rr).toFixed(1) + ',' + (cym + Math.sin(ang) * rr).toFixed(1)); });
+    html += '<polygon points="' + ptsG.join(' ') + '" fill="none" stroke="#eef2f7" stroke-width="1"/>';
+  }
+  var ptsP = [], ptsGrid = [];
+  allDomains.forEach(function(dm, di) {
+    var ang = ang0 + (2 * Math.PI * di) / allDomains.length;
+    var v = (weights[dm] || 0) / radarMax;
+    ptsP.push((cxm + Math.cos(ang) * Rr * v).toFixed(1) + ',' + (cym + Math.sin(ang) * Rr * v).toFixed(1));
+    ptsGrid.push((cxm + Math.cos(ang) * Rr).toFixed(1) + ',' + (cym + Math.sin(ang) * Rr).toFixed(1));
+  });
+  html += '<polygon points="' + ptsGrid.join(' ') + '" fill="none" stroke="#cbd5e1" stroke-width="1"/>';
+  html += '<polygon points="' + ptsP.join(' ') + '" fill="rgba(99,102,241,0.25)" stroke="#6366f1" stroke-width="2"/>';
+  allDomains.forEach(function(dm, di) {
+    var ang = ang0 + (2 * Math.PI * di) / allDomains.length;
+    var lx = cxm + Math.cos(ang) * (Rr + 15), ly = cym + Math.sin(ang) * (Rr + 15);
+    var va = weights[dm] || 0;
+    html += '<text x="' + lx.toFixed(0) + '" y="' + ly.toFixed(0) + '" font-size="9" fill="' + (va ? '#334155' : '#cbd5e1') + '" text-anchor="middle" dominant-baseline="middle">' + (FMT_DOMAIN_NAMES[dm] || dm).slice(0, 4) + '</text>';
+  });
+  html += '</svg></div>';
+  html += '<div style="flex:1;min-width:250px"><div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:4px">✅ 检查覆盖矩阵</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:11px"><tr style="background:#f1f5f9"><th style="padding:4px;text-align:left">检查域</th><th style="padding:4px">严重</th><th style="padding:4px">警告</th><th style="padding:4px">建议</th><th style="padding:4px">状态</th></tr>';
+  allDomains.forEach(function(dm) {
+    var c0 = 0, w0 = 0, s0 = 0;
+    merged.forEach(function(i) { if (i.domain === dm) { if (i.level === 'critical') c0++; else if (i.level === 'warning') w0++; else s0++; } });
+    var stat = c0 + w0 + s0 === 0 ? '<span style="color:#059669">✓ 通过</span>' : c0 > 0 ? '<span style="color:#dc2626">需整改</span>' : w0 > 0 ? '<span style="color:#d97706">需关注</span>' : '<span style="color:#0284c7">可优化</span>';
+    html += '<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:3px">' + (FMT_DOMAIN_NAMES[dm] || dm) + '</td><td style="padding:3px;text-align:center;color:#dc2626">' + c0 + '</td><td style="padding:3px;text-align:center;color:#d97706">' + w0 + '</td><td style="padding:3px;text-align:center;color:#0284c7">' + s0 + '</td><td style="padding:3px;text-align:center">' + stat + '</td></tr>';
+  });
+  html += '</table></div></div>';
   if (!merged.length) {
     html += '<div style="font-size:12px;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:10px">✅ 未发现任何格式问题</div>';
   } else {
     var doms = Object.keys(domCount).sort();
     doms.forEach(function(d) {
       var items = merged.filter(function(i) { return i.domain === d; });
-      html += '<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:5px">' + (FMT_DOMAIN_NAMES[d] || d) + '（' + items.length + '）</div>';
+      html += '<div id="fmtDom-' + d + '" style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:5px">' + (FMT_DOMAIN_NAMES[d] || d) + '（' + items.length + '）</div>';
       items.forEach(function(i) {
         var bg = i.level === 'critical' ? '#fef2f2' : i.level === 'warning' ? '#fffbeb' : '#f0f9ff';
         var bd = i.level === 'critical' ? '#fecaca' : i.level === 'warning' ? '#fde68a' : '#bae6fd';
@@ -117288,6 +117453,25 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
       });
       html += '</div>';
     });
+  }
+  if (merged.length) {
+    var remMap = {
+      data: '统一表格与正文/摘要数值，以原始数据为准逐项核对',
+      statistics: '补齐 p 值、效应量（Cohen\'s d / η²）与 95% CI；M±SD 空格、显著性配对报告',
+      units: '统一单位符号与数值范围连接符；中英文标点分离',
+      terminology: '缩写首次出现给出全称并建立缩写表；术语前后一致',
+      figures: '图注补全三要素（序号/主题/说明），表格按三线表排版，图注中英对照',
+      literature: '正文引用↔文末文献一一对应；补全年份/卷期页码/DOI；按目标期刊格式统一',
+      journal: '按目标期刊"作者指南"逐项核对篇幅、摘要结构与图表要求',
+      structure: '标题编号连续、摘要四要素（目的/方法/结果/结论）、关键词 3-8 个'
+    };
+    html += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;margin-top:10px">';
+    html += '<div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:8px">📋 期刊投稿整改清单（按问题域自动生成）</div>';
+    allDomains.forEach(function(dm) {
+      if (!domCount[dm]) return;
+      html += '<div style="display:flex;gap:6px;font-size:11px;margin-bottom:4px"><span style="flex-shrink:0;color:#1e40af;font-weight:600">▸ ' + (FMT_DOMAIN_NAMES[dm] || dm) + '：</span><span style="color:#334155">' + (remMap[dm] || '按报告逐项修改') + '</span></div>';
+    });
+    html += '</div>';
   }
   html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px dashed #e2e8f0">';
   html += '<button onclick="fmtApplyAllFixes()" style="background:#059669;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚡ 一键应用全部可修（' + fixCount + '）</button>';
@@ -117309,6 +117493,20 @@ var fmtPrevScore = null;
 var fmtLastScore = null;
 var fmtFixCount = 0;
 var fmtAppliedCount = 0;
+
+// ===== P1 域过滤切换 =====
+var fmtDomHidden = {};
+function fmtToggleDom(dm) {
+  var el = document.getElementById('fmtDom-' + dm);
+  var chip = document.getElementById('fmtChip-' + dm);
+  if (!el) return;
+  fmtDomHidden[dm] = !fmtDomHidden[dm];
+  el.style.display = fmtDomHidden[dm] ? 'none' : '';
+  if (chip) {
+    chip.style.opacity = fmtDomHidden[dm] ? '0.45' : '1';
+    chip.style.boxShadow = fmtDomHidden[dm] ? 'none' : '0 0 0 1px #6366f1';
+  }
+}
 
 // ===== P0 交互修复：定位 / 逐条应用 / 一键应用 / 撤销 =====
 function showFmtToast(msg) {
