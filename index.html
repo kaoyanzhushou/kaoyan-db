@@ -117011,6 +117011,137 @@ function runFmtRuleEngine() {
     if (!citedSet[r]) issues.push({domain:'literature', level:'warning', line:0, section:'参考文献', original:'[' + r + ']', message:'参考文献 [' + r + '] 在文末列出，但正文中未引用（建议删除或补充引用）'});
   });
 
+
+  // ===== E1 数据一致性：表格行 ↔ 正文/摘要 数值交叉比对（P0 新增） =====
+  var fmtTableLines = [], fmtAbsLines = [], fmtBodyLines = [];
+  var fmtInAbs = false, fmtAbsDone = false;
+  for (var fi = 0; fi < lines.length; fi++) {
+    var ft = lines[fi].trim();
+    if (!ft) continue;
+    if (!fmtAbsDone && /^(摘要|Abstract|ABSTRACT)\s*[:：]/.test(ft)) fmtInAbs = true;
+    if (/^(关键词|Keywords|Key\s*words|KEY\s*WORDS)/i.test(ft)) { fmtInAbs = false; fmtAbsDone = true; }
+    var pc = (ft.match(/\|/g) || []).length;
+    if (pc >= 3 || (/^\|/.test(ft) && pc >= 2)) fmtTableLines.push({t: ft, n: fi + 1});
+    else if (fmtInAbs) fmtAbsLines.push({t: ft, n: fi + 1});
+    else fmtBodyLines.push({t: ft, n: fi + 1});
+  }
+  function fmtExtNums(t) {
+    var r = {pct: [], msd: []}, m;
+    var re1 = /(\d+(?:\.\d+)?)\s*%/g;
+    while ((m = re1.exec(t))) r.pct.push(m[1]);
+    var re2 = /(\d+(?:\.\d+)?)\s*±\s*(\d+(?:\.\d+)?)/g;
+    while ((m = re2.exec(t))) r.msd.push(m[1] + '±' + m[2]);
+    return r;
+  }
+  var fmtSeenC = {};
+  var fmtTableKeys = [];
+  fmtTableLines.forEach(function(tl) {
+    var tNums0 = fmtExtNums(tl.t);
+    if (!tNums0.pct.length) return;
+    var tBody0 = tl.t.replace(/^\|+|\|+$/g, '').replace(/\|/g, ' ').trim();
+    var key0 = tBody0.replace(/[0-9%.±\s]/g, '').slice(0, 8);
+    if (key0.length >= 2) fmtTableKeys.push(key0);
+  });
+  fmtTableLines.forEach(function(tl) {
+    var tNums = fmtExtNums(tl.t);
+    if (!tNums.pct.length) return;
+    var tBody = tl.t.replace(/^\|+|\|+$/g, '').replace(/\|/g, ' ').trim();
+    var key = tBody.replace(/[0-9%.±\s]/g, '').slice(0, 8);
+    if (key.length < 2) return;
+    fmtBodyLines.concat(fmtAbsLines).forEach(function(bl) {
+      if (bl.t.indexOf(key) < 0) return;
+      var hitKeys = fmtTableKeys.filter(function(k) { return k && k !== key && bl.t.indexOf(k) >= 0; });
+      if (hitKeys.length > 0) return;
+      var bNums = fmtExtNums(bl.t);
+      if (bNums.pct.length !== 1 || tNums.pct.length !== 1) return;
+      if (bNums.pct[0] === tNums.pct[0]) return;
+      var ck = key + '|' + tNums.pct[0] + '|' + bNums.pct[0] + '|' + bl.n;
+      if (fmtSeenC[ck]) return;
+      fmtSeenC[ck] = 1;
+      issues.push({domain: 'data', level: 'critical', line: bl.n, section: curSection, original: bl.t.slice(0, 60), message: '数据一致性冲突：表格第 ' + tl.n + ' 行「' + key + '」为 ' + tNums.pct[0] + '%，而正文/摘要第 ' + bl.n + ' 行为 ' + bNums.pct[0] + '%，同一指标数值不一致，请核对并统一', fix: ''});
+    });
+  });
+
+  // ===== E2 统计报告完整性（P0 新增，行级确定性检查） =====
+  var fmtSeenS = {};
+  lines.forEach(function(l, si) {
+    var t = l.trim();
+    if (!t) return;
+    var sn = si + 1;
+    var sKey;
+    // 显著无 p 值
+    if (/(显著|有统计学意义|明显高于|明显低于|显著提高|明显改善)/.test(t) && !/\bp\s*[<>=]=?\s*0?\.\d/.test(t)) {
+      sKey = 'sig|' + sn;
+      if (!fmtSeenS[sKey]) {
+        fmtSeenS[sKey] = 1;
+        issues.push({domain: 'statistics', level: 'suggestion', line: sn, section: curSection, original: t.slice(0, 60), message: '本行出现显著性表述，但未见具体 p 值（如 p < 0.05 或 p = 0.038），请补充报告', fix: ''});
+      }
+    }
+    // 检验统计量配对
+    var st = t.match(/(?:χ²|χ2|x2|X2|卡方|t|F)\s*[=＝]\s*[\d.]+(?:[.,，]\s*[\d.]+)*|F\s*[（(]\s*[\d.]+\s*[,，]\s*[\d.]+\s*[）)]\s*[=＝]\s*[\d.]+/);
+    if (st && !/\bp\s*[<>=]=?\s*0?\.\d/.test(t) && t.indexOf('|') < 0) {
+      sKey = 'st|' + sn + '|' + st[0];
+      if (!fmtSeenS[sKey]) {
+        fmtSeenS[sKey] = 1;
+        issues.push({domain: 'statistics', level: 'warning', line: sn, section: curSection, original: st[0], message: '检验统计量 ' + st[0] + ' 后应配对报告 p 值（示例：χ² = 4.32, p = 0.038；t(118) = 2.31, p = 0.022）', fix: ''});
+      }
+    }
+    // 效应量缺失
+    if (/(显著|有统计学意义)/.test(t) && !/效应量|Cohen|η2?|eta|effect size|\bOR\b|\bRR\b|\bHR\b|d\s*[=＝]/.test(t)) {
+      sKey = 'es|' + sn;
+      if (!fmtSeenS[sKey]) {
+        fmtSeenS[sKey] = 1;
+        issues.push({domain: 'statistics', level: 'suggestion', line: sn, section: curSection, original: t.slice(0, 60), message: '显著性结论建议补充效应量（Cohen\'s d / η² / OR 及 95% CI），仅 p 值不足以说明效应大小', fix: ''});
+      }
+    }
+    // OR/RR/HR 无 CI
+    var orm = t.match(/\b(OR|RR|HR)\s*[=＝]\s*[\d.]+/);
+    if (orm && !/\bCI\b/.test(t)) {
+      sKey = 'ci|' + sn + '|' + orm[0];
+      if (!fmtSeenS[sKey]) {
+        fmtSeenS[sKey] = 1;
+        issues.push({domain: 'statistics', level: 'warning', line: sn, section: curSection, original: orm[0], message: '风险比 ' + orm[0] + ' 应附 95% 置信区间（如 OR = 0.58, 95% CI: 0.35–0.96）', fix: ''});
+      }
+    }
+    // M±SD 缺空格（可修复）
+    var msdm = t.match(/\d+(?:\.\d+)?\s*±\s*\d+(?:\.\d+)?/);
+    if (msdm && msdm[0].indexOf(' ± ') < 0) {
+      var msdFix = msdm[0].replace(/\s*±\s*/, ' ± ');
+      sKey = 'msd|' + sn + '|' + msdm[0];
+      if (!fmtSeenS[sKey]) {
+        fmtSeenS[sKey] = 1;
+        issues.push({domain: 'statistics', level: 'warning', line: sn, section: curSection, original: msdm[0], message: '均值±标准差应写为 "均值 ± SD"（± 前后加空格）：' + msdm[0] + ' → ' + msdFix, fix: msdFix});
+      }
+    }
+  });
+
+  // ===== E3 数字规范扩展（P0 新增） =====
+  var fmtSeenU = {};
+  lines.forEach(function(l, ui) {
+    var t = l.trim();
+    if (!t) return;
+    var un = ui + 1;
+    // 数值范围连接符（排除 4 位年份，避免误报）
+    var rg = t.match(/\b(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\b/);
+    if (rg && parseFloat(rg[1]) < parseFloat(rg[2]) && !(/^\d{4}$/.test(rg[1]) && /^\d{4}$/.test(rg[2]))) {
+      var uKey = 'rg|' + un + '|' + rg[0];
+      if (!fmtSeenU[uKey]) {
+        fmtSeenU[uKey] = 1;
+        var rgFix = rg[1] + '–' + rg[2];
+        issues.push({domain: 'units', level: 'suggestion', line: un, section: curSection, original: rg[0], message: '数值范围建议使用范围号（– 或 ~）：' + rg[0] + ' → ' + rg[1] + '–' + rg[2], fix: rgFix});
+      }
+    }
+    // 正文百分比无分子分母（非表格行）
+    var pcm = t.match(/\d+(?:\.\d+)?\s*%/);
+    if (pcm && t.indexOf('|') < 0 && !/n\s*[=＝]\s*\d|\d+\s*[（(]\s*\d+/.test(t) && /发生率|比例|占比|检出率|有效率/.test(t)) {
+      uKey = 'pn|' + un;
+      if (!fmtSeenU[uKey]) {
+        fmtSeenU[uKey] = 1;
+        issues.push({domain: 'statistics', level: 'suggestion', line: un, section: curSection, original: pcm[0], message: '报告百分比建议同时给出分子/分母（如 46（38.5%）），便于读者核对与后续统计', fix: ''});
+      }
+    }
+  });
+
   // ===== 域6 期刊画像驱动（journal） =====
   var jh = FMT_JOURNAL_HINTS[journal];
   if (jh) {
@@ -117071,16 +117202,16 @@ function fmtGrade(score) {
 
 var FMT_DOMAIN_NAMES = {
   statistics: '统计报告', units: '单位量纲', terminology: '术语缩写',
-  figures: '图表内容', literature: '文献诚信', journal: '期刊要求', structure: '标题结构'
+  figures: '图表内容', literature: '文献诚信', journal: '期刊要求', structure: '标题结构', data: '数据一致性'
 };
 
 function renderFormatReport(ruleIssues, aiIssues, audit) {
   var area = document.getElementById('fmtReport');
   if (!area) return;
-  // 合并：以 域+行号+原文 为键去重（规则优先）
   var merged = [];
   var seen = {};
-  var all = ruleIssues.concat(aiIssues || []);
+  (ruleIssues || []).forEach(function(i) { if (i) i._r = 1; });
+  var all = (ruleIssues || []).concat(aiIssues || []);
   all.forEach(function(i) {
     if (!i || !i.message) return;
     var key = (i.domain || '') + '|' + (i.line || 0) + '|' + (i.original || '').slice(0, 40);
@@ -117088,7 +117219,6 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
     seen[key] = 1;
     merged.push(i);
   });
-  // 追加图表审计问题（域 figures）
   var auditIssues = [];
   if (audit && audit.issues) {
     audit.issues.forEach(function(i) {
@@ -117099,21 +117229,39 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
   merged = auditIssues.concat(merged);
   var sc = fmtScore(merged);
   var gr = fmtGrade(sc.score);
-  var html = '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-top:12px">';
-  // 总评卡片
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1e293b,#334155);border-radius:10px;padding:14px 16px;color:#fff;margin-bottom:12px">';
+  var conflicts = merged.filter(function(i){ return i.domain === 'data' && i.level === 'critical'; });
+  var fixCount = merged.filter(function(i){ return i.fix && i._r; }).length;
+  fmtFixCount = fixCount;
+  fmtReportLast = merged;
+  fmtLastScore = sc.score;
+  fmtReportMeta = {ruleIssues: ruleIssues || [], aiIssues: aiIssues || [], audit: audit || null};
+  var html = '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-top:12px">';
+  if (fmtPrevScore !== null && fmtPrevScore !== undefined) {
+    var delta = sc.score - fmtPrevScore;
+    html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:13px;color:#047857">✅ 修复后自动复检完成：得分 <b>' + fmtPrevScore + '</b> → <b>' + sc.score + '</b> <span style="font-weight:700">(' + (delta > 0 ? '+' : '') + delta + ' 分)</span> · 本次应用确定性修复 <b>' + fmtAppliedCount + '</b> 处</div>';
+  }
+  var R = 26, Cc = 2 * Math.PI * R;
+  var pct = Math.min(100, Math.max(0, sc.score));
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1e293b,#334155);border-radius:12px;padding:14px 18px;color:#fff;margin-bottom:12px;flex-wrap:wrap;gap:10px">';
   html += '<div><div style="font-size:11px;color:#94a3b8;letter-spacing:1px">格式体检报告 · 规则引擎v' + FMT_RULES_VER + ' · ' + new Date().toLocaleTimeString('zh-CN', {hour12: false}) + '</div>';
-  html += '<div style="font-size:16px;font-weight:700;margin-top:4px">总评 ' + gr.g + ' 级 — ' + gr.label + '</div></div>';
-  html += '<div style="text-align:center"><div style="font-size:26px;font-weight:800;color:' + gr.color + '">' + sc.score + '</div><div style="font-size:9px;color:#94a3b8">综合得分</div></div></div>';
-  // 六域统计
+  html += '<div style="font-size:16px;font-weight:700;margin-top:4px">总评 <span style="font-size:24px;font-weight:800;color:' + gr.color + '">' + gr.g + '</span> 级 — ' + gr.label + '</div></div>';
+  html += '<div style="text-align:center;position:relative;width:78px;height:78px">';
+  html += '<svg width="78" height="78" viewBox="0 0 78 78" style="transform:rotate(-90deg)"><circle cx="39" cy="39" r="' + R + '" fill="none" stroke="#475569" stroke-width="6"/><circle cx="39" cy="39" r="' + R + '" fill="none" stroke="' + gr.color + '" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + (Cc * pct / 100).toFixed(1) + ' ' + Cc.toFixed(1) + '"/></svg>';
+  html += '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:22px;font-weight:800;color:' + gr.color + '">' + sc.score + '</div><div style="font-size:8px;color:#94a3b8">综合得分</div></div></div></div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">';
+  html += '<div style="background:#fff;border:1px solid #fecaca;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#dc2626">' + sc.critical + '</div><div style="font-size:10px;color:#6b7280">🔴 严重</div></div>';
+  html += '<div style="background:#fff;border:1px solid #fde68a;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#d97706">' + sc.warning + '</div><div style="font-size:10px;color:#6b7280">🟡 警告</div></div>';
+  html += '<div style="background:#fff;border:1px solid #bae6fd;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#0284c7">' + sc.suggestion + '</div><div style="font-size:10px;color:#6b7280">🔵 建议</div></div></div>';
+  if (conflicts.length) {
+    html += '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;margin-bottom:12px">';
+    html += '<div style="font-size:13px;font-weight:700;color:#b91c1c;margin-bottom:8px">🚨 数据一致性冲突（' + conflicts.length + ' 处，务必逐项核对）</div>';
+    conflicts.forEach(function(c) {
+      html += '<div style="background:#fff;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:12px;color:#7f1d1d">' + c.message + '<div style="font-size:10px;color:#b91c1c;margin-top:3px">📍 位置：第 ' + c.line + ' 行</div></div>';
+    });
+    html += '</div>';
+  }
   var domCount = {};
   merged.forEach(function(i) { domCount[i.domain] = (domCount[i.domain] || 0) + 1; });
-  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">';
-  html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:6px;text-align:center"><div style="font-size:15px;font-weight:700;color:#dc2626">' + sc.critical + '</div><div style="font-size:9px;color:#6b7280">严重</div></div>';
-  html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:6px;text-align:center"><div style="font-size:15px;font-weight:700;color:#d97706">' + sc.warning + '</div><div style="font-size:9px;color:#6b7280">警告</div></div>';
-  html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:6px;text-align:center"><div style="font-size:15px;font-weight:700;color:#0284c7">' + sc.suggestion + '</div><div style="font-size:9px;color:#6b7280">建议</div></div>';
-  html += '</div>';
-  // 问题清单（按域分组）
   if (!merged.length) {
     html += '<div style="font-size:12px;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:10px">✅ 未发现任何格式问题</div>';
   } else {
@@ -117126,22 +117274,199 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
         var bd = i.level === 'critical' ? '#fecaca' : i.level === 'warning' ? '#fde68a' : '#bae6fd';
         var col = i.level === 'critical' ? '#b91c1c' : i.level === 'warning' ? '#92400e' : '#0369a1';
         var tag = i.level === 'critical' ? '严重' : i.level === 'warning' ? '警告' : '建议';
-        html += '<div style="background:' + bg + ';border:1px solid ' + bd + ';border-left:3px solid ' + bd.replace('#', '') + ';border-radius:6px;padding:6px 8px;margin-bottom:4px;font-size:11px;color:#374151">';
-        html += '<span style="font-weight:700;color:' + col + '">[' + tag + ']</span> ' + (i.source ? '<span style="color:#7c3aed;font-size:10px">' + i.source + '</span> ' : '') + (i.line ? '<span style="color:#64748b">第' + i.line + '行</span> ' : '') + i.message;
-        if (i.original) html += '<div style="margin-top:3px;color:#64748b;font-family:Consolas,monospace;font-size:10px;word-break:break-all">原文：' + i.original + '</div>';
-        if (i.fix) html += '<div style="margin-top:2px;color:#059669;font-size:10px">修改：' + i.fix + '</div>';
+        var key = encodeURIComponent((i.domain || 'x') + '|' + (i.line || 0) + '|' + (i.original || '') + '|' + (i.fix || ''));
+        html += '<div style="background:' + bg + ';border:1px solid ' + bd + ';border-left:4px solid ' + bd + ';border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;color:#374151">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">';
+        html += '<div style="flex:1;min-width:200px"><span style="font-weight:700;color:' + col + '">[' + tag + ']</span> ' + (i.source ? '<span style="color:#7c3aed;font-size:10px">' + i.source + '</span> ' : '') + (i.line ? '<span style="color:#64748b;font-size:11px">第' + i.line + '行</span> ' : '') + i.message + '</div>';
+        html += '<div style="display:flex;gap:4px;flex-shrink:0">';
+        if (i.line) html += '<button onclick="fmtLocateLine(' + i.line + ')" style="background:#fff;color:#6366f1;border:1px solid #c7d2fe;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">📍 定位</button>';
+        if (i.fix && i._r) html += '<button onclick="fmtApplyFix(\'' + key + '\')" style="background:#059669;color:#fff;border:none;padding:3px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">✅ 应用</button>';
+        html += '</div></div>';
+        if (i.original) html += '<div style="margin-top:4px;color:#64748b;font-family:Consolas,monospace;font-size:11px;word-break:break-all">原文：' + i.original + '</div>';
+        if (i.fix) html += '<div style="margin-top:2px;color:#059669;font-size:11px">修改：' + i.fix + '</div>';
         html += '</div>';
       });
       html += '</div>';
     });
   }
-  html += '<div style="font-size:10px;color:#94a3b8;margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:6px">注：规则引擎问题为确定性判定（高可信）；AI 语义问题来自大模型；图表审计来自编号/引用/题注一致性分析。AI 检查失败时自动降级为纯规则报告。</div>';
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px dashed #e2e8f0">';
+  html += '<button onclick="fmtApplyAllFixes()" style="background:#059669;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">⚡ 一键应用全部可修（' + fixCount + '）</button>';
+  html += '<button onclick="fmtExportReportTxt()" style="background:#4b5563;color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">📤 导出 TXT</button>';
+  html += '<button onclick="fmtExportReportMd()" style="background:#4b5563;color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">📄 导出 MD</button>';
+  html += '<button onclick="fmtUndoFixes()" style="background:#fff;color:#4b5563;border:1px solid #9ca3af;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">↩ 撤销上次修复</button>';
+  html += '<button onclick="fmtRunFullReport()" style="background:#4f46e5;color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">🔄 重新体检</button>';
+  html += '</div>';
+  html += '<div style="font-size:10px;color:#94a3b8;margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:6px">注：规则引擎问题为确定性判定（高可信，带"应用"按钮可一键修复）；AI 语义问题来自大模型；图表审计来自编号/引用/题注一致性分析。AI 检查失败时自动降级为纯规则报告。确定性修复应用后自动复检并对比得分。</div>';
   html += '</div>';
   area.innerHTML = html;
   fmtReportLast = merged;
 }
 
 var fmtReportLast = null;
+var fmtReportMeta = null;
+var fmtPreFixContent = null;
+var fmtPrevScore = null;
+var fmtLastScore = null;
+var fmtFixCount = 0;
+var fmtAppliedCount = 0;
+
+// ===== P0 交互修复：定位 / 逐条应用 / 一键应用 / 撤销 =====
+function showFmtToast(msg) {
+  var old = document.getElementById('fmtToast');
+  if (old) old.remove();
+  var d = document.createElement('div');
+  d.id = 'fmtToast';
+  d.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:80vw';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(function(){ d.style.transition = 'opacity .4s'; d.style.opacity = '0'; setTimeout(function(){ d.remove(); }, 400); }, 2600);
+}
+
+function fmtLocateLine(line) {
+  var el = document.getElementById('fmtContent');
+  if (!el) return;
+  var linesArr = el.value.split('\n');
+  if (line < 1 || line > linesArr.length) { alert('行号超出范围'); return; }
+  var offset = 0;
+  for (var i = 0; i < line - 1; i++) offset += linesArr[i].length + 1;
+  el.focus();
+  el.setSelectionRange(offset, offset + linesArr[line - 1].length);
+  el.scrollTop = Math.max(0, (offset / Math.max(1, el.value.length)) * (el.scrollHeight - el.clientHeight) - el.clientHeight / 3);
+  showFmtToast('📍 已定位第 ' + line + ' 行（已选中该行内容）');
+}
+
+function fmtApplyFix(key) {
+  var el = document.getElementById('fmtContent');
+  if (!el) return;
+  var parts;
+  try { parts = decodeURIComponent(key).split('|'); } catch (e) { alert('修复参数无效'); return; }
+  if (parts.length < 4) { alert('修复参数无效'); return; }
+  var line = parseInt(parts[1], 10), original = parts[2], fix = parts[3];
+  if (!original || !fix) { alert('该项不可自动修复，请手动修改'); return; }
+  if (fmtPreFixContent === null) fmtPreFixContent = el.value;
+  var linesArr = el.value.split('\n');
+  var done = false;
+  if (line > 0 && line <= linesArr.length) {
+    var li = linesArr[line - 1];
+    var idx = li.indexOf(original);
+    if (idx >= 0) { linesArr[line - 1] = li.slice(0, idx) + fix + li.slice(idx + original.length); done = true; }
+  }
+  if (!done) {
+    for (var i = 0; i < linesArr.length; i++) {
+      var idx2 = linesArr[i].indexOf(original);
+      if (idx2 >= 0) { linesArr[i] = linesArr[i].slice(0, idx2) + fix + linesArr[i].slice(idx2 + original.length); done = true; break; }
+    }
+  }
+  if (!done) { alert('未在正文中找到该原文片段（可能已被修改），请手动处理'); return; }
+  el.value = linesArr.join('\n');
+  document.getElementById('fmtCharCount').textContent = el.value.length + ' 字符';
+  fmtAppliedCount = 1;
+  showFmtToast('✅ 已应用：' + original.slice(0, 28) + ' → ' + fix.slice(0, 28));
+  fmtRecheckAfterFix();
+}
+
+function fmtApplyAllFixes() {
+  if (!fmtReportMeta) { alert('请先生成格式体检报告'); return; }
+  var el = document.getElementById('fmtContent');
+  if (!el) return;
+  var fixable = (fmtReportMeta.ruleIssues || []).filter(function(i) { return i.fix; });
+  if (!fixable.length) { alert('当前无可自动修复的确定性问题'); return; }
+  if (fmtPreFixContent === null) fmtPreFixContent = el.value;
+  var linesArr = el.value.split('\n');
+  var applied = 0, missed = [];
+  fixable.forEach(function(i) {
+    var original = i.original, fix = i.fix, line = i.line || 0;
+    var done = false;
+    if (line > 0 && line <= linesArr.length) {
+      var li = linesArr[line - 1];
+      var idx = li.indexOf(original);
+      if (idx >= 0) { linesArr[line - 1] = li.slice(0, idx) + fix + li.slice(idx + original.length); done = true; }
+    }
+    if (!done) {
+      for (var k = 0; k < linesArr.length; k++) {
+        var idx2 = linesArr[k].indexOf(original);
+        if (idx2 >= 0) { linesArr[k] = linesArr[k].slice(0, idx2) + fix + linesArr[k].slice(idx2 + original.length); done = true; break; }
+      }
+    }
+    if (done) applied++; else missed.push(original.slice(0, 20));
+  });
+  el.value = linesArr.join('\n');
+  document.getElementById('fmtCharCount').textContent = el.value.length + ' 字符';
+  fmtAppliedCount = applied;
+  showFmtToast('⚡ 已应用 ' + applied + ' 处确定性修复' + (missed.length ? '，' + missed.length + ' 处未匹配（可能已修改，请手动处理）' : ''));
+  fmtRecheckAfterFix();
+}
+
+function fmtRecheckAfterFix() {
+  fmtPrevScore = fmtLastScore;
+  var newRule = runFmtRuleEngine();
+  var audit2 = null;
+  try { runFigureTableAudit(); audit2 = fmtAuditLastResult || null; } catch (e) { audit2 = null; }
+  renderFormatReport(newRule, (fmtReportMeta && fmtReportMeta.aiIssues) || [], audit2);
+}
+
+function fmtUndoFixes() {
+  var el = document.getElementById('fmtContent');
+  if (!el || fmtPreFixContent === null) { alert('暂无可撤销的修复'); return; }
+  el.value = fmtPreFixContent;
+  fmtPreFixContent = null;
+  document.getElementById('fmtCharCount').textContent = el.value.length + ' 字符';
+  showFmtToast('↩ 已撤销本次修复');
+  if (fmtReportMeta) {
+    fmtPrevScore = fmtLastScore;
+    var newRule = runFmtRuleEngine();
+    var audit2 = null;
+    try { runFigureTableAudit(); audit2 = fmtAuditLastResult || null; } catch (e) { audit2 = null; }
+    renderFormatReport(newRule, (fmtReportMeta && fmtReportMeta.aiIssues) || [], audit2);
+  }
+}
+
+// ===== P0 报告导出 TXT / MD =====
+function fmtDownloadFile(name, content) {
+  var blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1000);
+}
+
+function fmtReportText(md) {
+  if (!fmtReportLast || !fmtReportLast.length) return null;
+  var sc = fmtScore(fmtReportLast);
+  var gr = fmtGrade(sc.score);
+  var NL = md ? '\n' : '\n';
+  var txt = '';
+  txt += '# 格式体检报告\n\n' + (md ? '' : '');
+  txt += '- 生成时间：' + new Date().toLocaleString('zh-CN', {hour12: false}) + '\n';
+  txt += '- 总评：' + gr.g + ' 级（' + gr.label + '）\n';
+  txt += '- 综合得分：' + sc.score + '（严重 ' + sc.critical + ' / 警告 ' + sc.warning + ' / 建议 ' + sc.suggestion + '）\n\n';
+  var doms = {};
+  fmtReportLast.forEach(function(i) { doms[i.domain] = doms[i.domain] || []; doms[i.domain].push(i); });
+  Object.keys(doms).sort().forEach(function(d) {
+    txt += '## ' + (FMT_DOMAIN_NAMES[d] || d) + '\n\n';
+    doms[d].forEach(function(i) {
+      var tag = i.level === 'critical' ? '严重' : i.level === 'warning' ? '警告' : '建议';
+      txt += '- [' + tag + '] ' + (i.line ? '第' + i.line + '行 ' : '') + i.message + '\n';
+      if (i.original) txt += '  - 原文：' + i.original + '\n';
+      if (i.fix) txt += '  - 修改：' + i.fix + '\n';
+    });
+    txt += '\n';
+  });
+  return txt;
+}
+
+function fmtExportReportTxt() {
+  var txt = fmtReportText(false);
+  if (!txt) { alert('请先生成格式体检报告'); return; }
+  fmtDownloadFile('格式体检报告.txt', txt);
+}
+
+function fmtExportReportMd() {
+  var txt = fmtReportText(true);
+  if (!txt) { alert('请先生成格式体检报告'); return; }
+  fmtDownloadFile('格式体检报告.md', txt);
+}
 
 // ========== 体检报告总入口：规则引擎 + 图表审计 + AI 并行 ==========
 async function fmtRunFullReport() {
@@ -117175,6 +117500,8 @@ async function fmtRunFullReport() {
   } catch (e) {
     aiIssues = [];
   }
+  fmtPrevScore = null;
+  fmtReportMeta = {ruleIssues: ruleIssues || [], aiIssues: aiIssues || [], audit: audit || null};
   renderFormatReport(ruleIssues, aiIssues, audit);
 }
 
