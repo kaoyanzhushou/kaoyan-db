@@ -117304,7 +117304,7 @@ function fmtScore(issues) {
     else if (i.level === 'warning') w++;
     else s++;
   });
-  return {critical: c, warning: w, suggestion: s, score: Math.max(0, 100 - c * 10 - w * 5 - s * 2)};
+  return {critical: c, warning: w, suggestion: s, score: Math.max(0, Math.round(100 - c * 5 - w * 2 - s * 0.5))};
 }
 
 function fmtGrade(score) {
@@ -117335,7 +117335,7 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
   var auditIssues = [];
   if (audit && audit.issues) {
     audit.issues.forEach(function(i) {
-      var level = i.level === '必改' ? 'critical' : 'suggestion';
+      var level = i.level === '必改' ? 'warning' : 'suggestion';
       auditIssues.push({domain: 'figures', level: level, line: i.line || 0, original: '', message: i.msg, source: '图表审计'});
     });
   }
@@ -117361,6 +117361,7 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
   html += '<div style="text-align:center;position:relative;width:78px;height:78px">';
   html += '<svg width="78" height="78" viewBox="0 0 78 78" style="transform:rotate(-90deg)"><circle cx="39" cy="39" r="' + R + '" fill="none" stroke="#475569" stroke-width="6"/><circle cx="39" cy="39" r="' + R + '" fill="none" stroke="' + gr.color + '" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + (Cc * pct / 100).toFixed(1) + ' ' + Cc.toFixed(1) + '"/></svg>';
   html += '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:22px;font-weight:800;color:' + gr.color + '">' + sc.score + '</div><div style="font-size:8px;color:#94a3b8">综合得分</div></div></div></div>';
+  html += '<div style="font-size:10px;color:#94a3b8;margin:0 0 10px;text-align:center">扣分明细：严重 −5/项 · 警告 −2/项 · 建议 −0.5/项（满分 100，四舍五入）</div>';
   html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">';
   html += '<div style="background:#fff;border:1px solid #fecaca;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#dc2626">' + sc.critical + '</div><div style="font-size:10px;color:#6b7280">🔴 严重</div></div>';
   html += '<div style="background:#fff;border:1px solid #fde68a;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#d97706">' + sc.warning + '</div><div style="font-size:10px;color:#6b7280">🟡 警告</div></div>';
@@ -117427,6 +117428,7 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
     html += '<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:3px">' + (FMT_DOMAIN_NAMES[dm] || dm) + '</td><td style="padding:3px;text-align:center;color:#dc2626">' + c0 + '</td><td style="padding:3px;text-align:center;color:#d97706">' + w0 + '</td><td style="padding:3px;text-align:center;color:#0284c7">' + s0 + '</td><td style="padding:3px;text-align:center">' + stat + '</td></tr>';
   });
   html += '</table></div></div>';
+  html += fmtTrendBlock(merged);
   if (!merged.length) {
     html += '<div style="font-size:12px;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:10px">✅ 未发现任何格式问题</div>';
   } else {
@@ -117479,6 +117481,7 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
   html += '<button onclick="fmtExportReportMd()" style="background:#4b5563;color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">📄 导出 MD</button>';
   html += '<button onclick="fmtUndoFixes()" style="background:#fff;color:#4b5563;border:1px solid #9ca3af;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">↩ 撤销上次修复</button>';
   html += '<button onclick="fmtRunFullReport()" style="background:#4f46e5;color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">🔄 重新体检</button>';
+  html += '<button onclick="fmtGenRevisionNote()" style="background:#0d9488;color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">📝 修改说明</button>';
   html += '</div>';
   html += '<div style="font-size:10px;color:#94a3b8;margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:6px">注：规则引擎问题为确定性判定（高可信，带"应用"按钮可一键修复）；AI 语义问题来自大模型；图表审计来自编号/引用/题注一致性分析。AI 检查失败时自动降级为纯规则报告。确定性修复应用后自动复检并对比得分。</div>';
   html += '</div>';
@@ -117493,6 +117496,132 @@ var fmtPrevScore = null;
 var fmtLastScore = null;
 var fmtFixCount = 0;
 var fmtAppliedCount = 0;
+
+// ===== P2: E7 三模型 Borda 共识 =====
+function fmtAITimed(p, ms) {
+  return Promise.race([p, new Promise(function (res) { setTimeout(function () { res(null); }, ms); })]);
+}
+function fmtNormMsg(s) { return (s || '').replace(/\s+/g, '').slice(0, 24); }
+function fmtBordaConsensus(primary, votes) {
+  var out = [];
+  var votes2 = votes || [];
+  var cnt = {}, rep = {};
+  votes2.forEach(function (v) {
+    if (!v || !v.message) return;
+    var k = fmtNormMsg(v.message);
+    cnt[k] = (cnt[k] || 0) + 1;
+    rep[k] = rep[k] || v;
+  });
+  primary.forEach(function (p) {
+    if (!p || !p.message) return;
+    var k = fmtNormMsg(p.message);
+    var n = cnt[k] || 0;
+    var it = {domain: p.domain || 'structure', level: p.level || 'suggestion', line: p.line || 0, original: p.original || '', message: p.message, fix: p.fix || ''};
+    if (n >= 2) { it.source = '三模型共识'; }
+    else if (n === 1) { it.source = '双模型共识'; if (it.level === 'critical') it.level = 'warning'; }
+    else { it.source = '单模型观点'; if (it.level === 'critical') it.level = 'warning'; }
+    out.push(it);
+  });
+  var seen = {};
+  out.forEach(function (o) { seen[fmtNormMsg(o.message)] = 1; });
+  votes2.forEach(function (v) {
+    if (!v || !v.message) return;
+    var k = fmtNormMsg(v.message);
+    if (seen[k]) return;
+    if ((cnt[k] || 0) >= 2) {
+      seen[k] = 1;
+      out.push({domain: v.domain || 'structure', level: 'suggestion', line: v.line || 0, original: v.original || '', message: v.message, fix: v.fix || '', source: '双模型共识'});
+    }
+  });
+  return out;
+}
+
+// ===== P2: 历次体检趋势 + 高频错误 Top5 =====
+function fmtTrendBlock(merged) {
+  var h = [];
+  try { h = JSON.parse(localStorage.getItem('fmt_history_v2') || '[]'); } catch (e) { h = []; }
+  var html = '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">';
+  if (h.length) {
+    var W = 300, H = 90, padL = 28, padB = 18, padT = 12;
+    var pts = h.slice(0, 12).reverse();
+    var X = function (i) { return padL + (pts.length === 1 ? 0 : i * (W - padL - 10) / (pts.length - 1)); };
+    var Y = function (v) { return H - padB - (v - 0) * (H - padB - padT) / 100; };
+    var line = pts.map(function (p, i) { return X(i).toFixed(1) + ',' + Y(Math.max(0, Math.min(100, p.score))).toFixed(1); }).join(' ');
+    var last = pts[pts.length - 1];
+    var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="display:block">' +
+      '<line x1="' + padL + '" y1="' + (H - padB) + '" x2="' + (W - 6) + '" y2="' + (H - padB) + '" stroke="#e2e8f0"/>' +
+      '<polyline points="' + line + '" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linejoin="round"/>' +
+      pts.map(function (p, i) { return '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(Math.max(0, Math.min(100, p.score))).toFixed(1) + '" r="3" fill="#4f46e5"><title>' + p.score + ' 分</title></circle>'; }).join('') +
+      '<text x="' + padL + '" y="11" font-size="9" fill="#64748b">历次体检得分趋势（近 ' + Math.min(h.length, 12) + ' 次）</text>' +
+      '<text x="' + (W - 8) + '" y="' + (H - 4) + '" font-size="10" fill="#4f46e5" text-anchor="end" font-weight="700">最新 ' + last.score + ' 分</text></svg>';
+    html += '<div style="flex:1;min-width:250px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px">' + svg + '</div>';
+  } else {
+    html += '<div style="flex:1;min-width:250px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px;font-size:11px;color:#94a3b8">📈 历次体检趋势：完成 2 次以上体检后自动生成得分曲线（本地保留近 20 次）</div>';
+  }
+  var cnt = {};
+  h.forEach(function (p) { (p.msgs || []).forEach(function (m) { var k = (m || '').slice(0, 24); if (k) cnt[k] = (cnt[k] || 0) + 1; }); });
+  var top = Object.keys(cnt).map(function (k) { return [cnt[k], k]; }).sort(function (a, b) { return b[0] - a[0]; }).slice(0, 5);
+  html += '<div style="flex:1;min-width:250px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px"><div style="font-size:11px;color:#64748b;margin-bottom:6px">🔁 高频错误 Top' + (top.length || 0) + '（历史累计）</div>';
+  if (!top.length) html += '<div style="font-size:11px;color:#94a3b8">完成多次体检后统计反复出现的问题</div>';
+  top.forEach(function (t) {
+    html += '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px"><span style="background:#eef2ff;color:#4338ca;border-radius:4px;padding:1px 6px;font-weight:700;flex:none">' + t[0] + ' 次</span><span style="color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + t[1] + '</span></div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function fmtPushHistory(ruleIssues, aiIssues, audit) {
+  try {
+    var all = (ruleIssues || []).concat(aiIssues || []);
+    if (audit && audit.issues) audit.issues.forEach(function (i) { all.push({level: i.level === '必改' ? 'warning' : 'suggestion', message: i.msg}); });
+    var sc = fmtScore(all);
+    var msgs = [];
+    all.forEach(function (i) { if (i && i.message) { var m = i.message.replace(/\s+/g, ''); if (msgs.indexOf(m) < 0 && msgs.length < 12) msgs.push(m); } });
+    var h = [];
+    try { h = JSON.parse(localStorage.getItem('fmt_history_v2') || '[]'); } catch (e) { h = []; }
+    h.unshift({t: Date.now(), score: sc.score, c: sc.critical, w: sc.warning, s: sc.suggestion, msgs: msgs});
+    if (h.length > 20) h.length = 20;
+    localStorage.setItem('fmt_history_v2', JSON.stringify(h));
+  } catch (e) {}
+}
+
+// ===== P2: 修改说明生成器 =====
+function fmtGenRevisionNote() {
+  var issues = fmtReportLast || [];
+  if (!issues.length) { alert('暂无体检问题，无需生成修改说明'); return; }
+  var lines = ['# 修改说明（Response to Reviewers / 返修说明）', '', '> 由「论文润色 · 格式体检」自动生成，请按投稿实际要求核对后提交。', ''];
+  var byDom = {};
+  issues.forEach(function (i) {
+    var d = (FMT_DOMAIN_NAMES && FMT_DOMAIN_NAMES[i.domain]) || i.domain || '其他';
+    (byDom[d] = byDom[d] || []).push(i);
+  });
+  Object.keys(byDom).forEach(function (d) {
+    lines.push('## ' + d, '');
+    byDom[d].forEach(function (i, idx) {
+      var lv = i.level === 'critical' ? '严重' : i.level === 'warning' ? '警告' : '建议';
+      lines.push((idx + 1) + '. **' + (i.message || '') + '**（' + lv + (i.source ? ' · ' + i.source : '') + (i.line ? ' · 第' + i.line + '行' : '') + '）');
+      lines.push('   - 处理方式：' + (i.fix ? '已按建议修改：' + i.fix : '待修改，请核对原文后按建议处理'));
+    });
+    lines.push('');
+  });
+  var txt = lines.join('\n');
+  var ov = document.getElementById('fmtRevNoteOv');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'fmtRevNoteOv';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.innerHTML = '<div style="background:#fff;border-radius:12px;max-width:760px;width:100%;max-height:82vh;display:flex;flex-direction:column">' +
+      '<div style="padding:12px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center"><b>📝 修改说明</b><button onclick="document.getElementById(\'fmtRevNoteOv\').remove()" style="border:none;background:#f1f5f9;border-radius:6px;padding:4px 10px;cursor:pointer">✕ 关闭</button></div>' +
+      '<pre id="fmtRevNoteTxt" style="flex:1;overflow:auto;padding:16px;margin:0;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-all"></pre>' +
+      '<div style="padding:12px 16px;border-top:1px solid #e2e8f0;text-align:right"><button onclick="fmtDownloadRevNote()" style="background:#4f46e5;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-weight:600">⬇ 下载 MD</button></div></div>';
+    document.body.appendChild(ov);
+  }
+  document.getElementById('fmtRevNoteTxt').textContent = txt;
+  window._fmtRevNote = txt;
+}
+function fmtDownloadRevNote() {
+  fmtDownloadFile(window._fmtRevNote || '', '修改说明.md');
+}
 
 // ===== P1 域过滤切换 =====
 var fmtDomHidden = {};
@@ -117682,33 +117811,42 @@ async function fmtRunFullReport() {
     runFigureTableAudit();
     audit = fmtAuditLastResult || null;
   } catch (e) { audit = null; }
-  // 3) AI 语义检查（失败自动降级为纯规则）
+  // 3) AI 语义检查（E7 三模型 Borda 共识：主模型 + GLM/Kimi 双验证，失败自动降级纯规则）
   var aiIssues = [];
   try {
     var journal = (document.getElementById('fmtJournal') || {}).value || '通用学术';
     var refStyle = (document.getElementById('fmtRefStyle') || {}).value || 'Vancouver';
     var sys = '你是一名资深学术论文格式编辑。请检查论文的语义与表达类问题：1)统计表述是否规范（效应量、置信区间、统计符号）2)单位与量纲是否正确 3)术语缩写首次是否定义 4)语言是否地道（中式英语、连接词）5)时态是否一致 6)段落结构是否合理。只报告确定存在的问题，禁止编造。以 JSON 数组输出，每项含 domain(statistics/units/terminology/language/tense/structure)、level(critical/warning/suggestion)、line(行号)、original(原文)、message(中文问题说明)、fix(修改后文本)。不要输出 JSON 以外的内容。';
     var user = '目标期刊：' + journal + '\n参考文献格式：' + refStyle + '\n\n论文内容：\n' + content;
-    var resp = await callFmtAI(sys, user, 6000);
+    var resp = await fmtAITimed(callFmtAI(sys, user, 5000), 90000);
+    var arr0 = null;
     var m = resp.match(/\[[\s\S]*\]/);
-    if (m) {
-      var arr = JSON.parse(m[0]);
-      if (Array.isArray(arr)) aiIssues = arr;
-    }
+    if (m) { try { var a0 = JSON.parse(m[0]); if (Array.isArray(a0)) arr0 = a0; } catch (e0) {} }
+    // 双验证模型并行（GLM 中文语义 + Kimi 长文本核查），单模型失败不影响主结果
+    var respB = await Promise.all([
+      fmtAITimed(callDeepSeekAPI(sys, user, 3500, 'glm-5.3').catch(function () { return null; }), 45000),
+      fmtAITimed(callDeepSeekAPI(sys, user, 3500, 'kimi-k3').catch(function () { return null; }), 45000)
+    ]);
+    var arrB = [];
+    respB.forEach(function (rb) {
+      if (!rb) return;
+      var mb = rb.match(/\[[\s\S]*\]/);
+      if (mb) { try { var ab = JSON.parse(mb[0]); if (Array.isArray(ab)) arrB = arrB.concat(ab); } catch (eb) {} }
+    });
+    aiIssues = fmtBordaConsensus(arr0 || [], arrB);
   } catch (e) {
     aiIssues = [];
   }
   fmtPrevScore = null;
   fmtReportMeta = {ruleIssues: ruleIssues || [], aiIssues: aiIssues || [], audit: audit || null};
   renderFormatReport(ruleIssues, aiIssues, audit);
+  try { fmtPushHistory(ruleIssues, aiIssues, audit); } catch (e) {}
 }
 
 
 
 
 async function checkFigureCaptions() {
-
-
 
   var content = document.getElementById('fmtContent').value;
 
