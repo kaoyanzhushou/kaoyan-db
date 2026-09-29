@@ -117304,7 +117304,7 @@ function fmtScore(issues) {
     else if (i.level === 'warning') w++;
     else s++;
   });
-  return {critical: c, warning: w, suggestion: s, score: Math.max(0, Math.round(100 - c * 5 - w * 2 - s * 0.5))};
+  return {critical: c, warning: w, suggestion: s, score: Math.max(0, Math.round(100 - c * 10 - Math.sqrt(w) * 2.5 - Math.sqrt(s) * 0.8))};
 }
 
 function fmtGrade(score) {
@@ -117860,20 +117860,25 @@ async function fmtRunFullReport() {
       var m = String(resp).match(/\[[\s\S]*\]/);
       if (m) { try { var a0 = JSON.parse(m[0]); if (Array.isArray(a0)) arr0 = a0; } catch (e0) {} }
     }
-    // 双验证模型（主模型完成后再跑；截断论文避免 GLM 长输入返回空）
-    var userShort = user.length > 8000 ? user.substring(0, 8000) : user;
-    var respB = await Promise.all([
-      fmtAITimed(callDeepSeekAPI(sys, userShort, 2000, 'glm').catch(function () { return null; }), 90000),
-      fmtAITimed(callDeepSeekAPI(sys, userShort, 2000, 'kimi').catch(function () { return null; }), 90000)
-    ]);
+    // 复核投票模式：GLM/Kimi 不独立检查全文，而是复核主模型发现的问题
+    var arr0safe = arr0 || [];
     var arrB = [];
     var glmIssues = 0, kimiIssues = 0, glmFail = false, kimiFail = false;
-    if (respB[0]) { var ab0 = fmtParseAIArray(respB[0]); if (ab0 && ab0.length) { arrB = arrB.concat(ab0); glmIssues = ab0.length; } else glmFail = true; }
-    else glmFail = true;
-    if (respB[1]) { var ab1 = fmtParseAIArray(respB[1]); if (ab1 && ab1.length) { arrB = arrB.concat(ab1); kimiIssues = ab1.length; } else kimiFail = true; }
-    else kimiFail = true;
-    aiIssues = fmtBordaConsensus(arr0 || [], arrB);
-    fmtVoteStats = {primary: (arr0 || []).length, glm: glmIssues, kimi: kimiIssues, glmFail: glmFail, kimiFail: kimiFail};
+    if (arr0safe.length > 0) {
+      var reviewSys = '你是论文审稿专家。以下是主模型发现的格式问题，请结合论文原文逐条判断每条是否真的成立。只输出你认为成立的问题（同意主模型判断的），以 JSON 数组输出，格式与输入完全一致（含 domain/level/line/original/message/fix）。不要编造新问题，不要修改原文。';
+      var paperExcerpt = content.length > 2000 ? content.substring(0, 2000) : content;
+      var reviewUser = '论文原文摘录：\n' + paperExcerpt + '\n\n主模型发现的问题：\n' + JSON.stringify(arr0safe.slice(0, 40));
+      var respB = await Promise.all([
+        fmtAITimed(callDeepSeekAPI(reviewSys, reviewUser, 2000, 'glm').catch(function () { return null; }), 60000),
+        fmtAITimed(callDeepSeekAPI(reviewSys, reviewUser, 2000, 'kimi').catch(function () { return null; }), 60000)
+      ]);
+      if (respB[0]) { var ab0 = fmtParseAIArray(respB[0]); if (ab0 && ab0.length) { arrB = arrB.concat(ab0); glmIssues = ab0.length; } }
+      else glmFail = true;
+      if (respB[1]) { var ab1 = fmtParseAIArray(respB[1]); if (ab1 && ab1.length) { arrB = arrB.concat(ab1); kimiIssues = ab1.length; } }
+      else kimiFail = true;
+    }
+    aiIssues = fmtBordaConsensus(arr0safe, arrB);
+    fmtVoteStats = {primary: arr0safe.length, glm: glmIssues, kimi: kimiIssues, glmFail: glmFail, kimiFail: kimiFail};
   } catch (e) {
     aiIssues = [];
   }
