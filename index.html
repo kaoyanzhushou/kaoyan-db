@@ -117513,7 +117513,24 @@ function fmtParseAIArray(resp) {
   if (!resp) return null;
   var m2 = String(resp).match(/\[[\s\S]*\]/);
   if (!m2) return null;
-  try { var a = JSON.parse(m2[0]); return Array.isArray(a) ? a : null; } catch (e) { return null; }
+  try {
+    var a = JSON.parse(m2[0]);
+    if (!Array.isArray(a)) return null;
+    return a.map(function(it){
+      if (typeof it === 'string') return {domain:'general', level:'warning', line:0, original:'', message:it, fix:''};
+      if (typeof it === 'object' && it) {
+        return {
+          domain: it.domain || it['\u7c7b\u578b'] || 'general',
+          level: it.level || 'warning',
+          line: it.line || 0,
+          original: it.original || it['\u539f\u6587'] || '',
+          message: it.message || it['\u95ee\u9898'] || it.issue || '',
+          fix: it.fix || it['\u4fee\u6539\u5efa\u8bae'] || it.suggestion || ''
+        };
+      }
+      return null;
+    }).filter(Boolean);
+  } catch (e) { return null; }
 }
 function fmtNormMsg(s) { return (s || '').replace(/\s+/g, '').slice(0, 24); }
 // 双轨匹配：L级=同域+同行号+消息前12字一致；M级=消息前24字一致
@@ -185807,21 +185824,12 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens = 2000, model
 
         headers: { 'Content-Type': 'application/json' },
 
-        body: JSON.stringify({
-
-          model: model,
-
-          messages: [
-
-            { role: 'system', content: systemPrompt },
-
-            { role: 'user', content: userPrompt }
-
-          ],
-
-          max_tokens: maxTokens
-
-        })
+        body: (function(){
+          var _known = ['deepseek','glm','kimi','qwen','hunyuan'];
+          var _b = { messages: [ { role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt } ], max_tokens: maxTokens };
+          if (_known.indexOf(model) >= 0) _b.model = model;
+          return JSON.stringify(_b);
+        })()
 
       });
 
