@@ -117854,14 +117854,16 @@ async function fmtRunFullReport() {
     var sys = '你是一名资深学术论文格式编辑。请检查论文的语义与表达类问题：1)统计表述是否规范（效应量、置信区间、统计符号）2)单位与量纲是否正确 3)术语缩写首次是否定义 4)语言是否地道（中式英语、连接词）5)时态是否一致 6)段落结构是否合理。只报告确定存在的问题，禁止编造。以 JSON 数组输出，每项含 domain(statistics/units/terminology/language/tense/structure)、level(critical/warning/suggestion)、line(行号)、original(原文)、message(中文问题说明)、fix(修改后文本)。不要输出 JSON 以外的内容。';
     var user = '目标期刊：' + journal + '\n参考文献格式：' + refStyle + '\n\n论文内容：\n' + content;
     area.innerHTML = '<div style="padding:24px;text-align:center;color:#0284c7;font-size:13px">① 规则引擎 ✓ → ② 图表审计 ✓ → ③ 三模型 AI 共识（主模型 + GLM + Kimi 并行，约 15-30 秒）...<br><span style="font-size:11px;color:#94a3b8">确定性规则先行，AI 仅补语义类问题并跨模型投票，防止幻觉</span></div>';
-    var resp = await fmtAITimed(callFmtAI(sys, user, 4000), 70000);
+    var resp = await fmtAITimed(callFmtAI(sys, user, 5000), 90000);
     var arr0 = null;
-    var m = resp.match(/\[[\s\S]*\]/);
-    if (m) { try { var a0 = JSON.parse(m[0]); if (Array.isArray(a0)) arr0 = a0; } catch (e0) {} }
-    // 双验证模型并行（GLM 中文语义 + Kimi 长文本核查），单模型失败不影响主结果
+    if (resp) {
+      var m = String(resp).match(/\[[\s\S]*\]/);
+      if (m) { try { var a0 = JSON.parse(m[0]); if (Array.isArray(a0)) arr0 = a0; } catch (e0) {} }
+    }
+    // 双验证模型（主模型完成后再跑，避免并发排队）
     var respB = await Promise.all([
-      fmtAITimed(callDeepSeekAPI(sys, user, 1500, 'glm').catch(function () { return null; }), 60000),
-      fmtAITimed(callDeepSeekAPI(sys, user, 1500, 'kimi').catch(function () { return null; }), 60000)
+      fmtAITimed(callDeepSeekAPI(sys, user, 2000, 'glm').catch(function () { return null; }), 90000),
+      fmtAITimed(callDeepSeekAPI(sys, user, 2000, 'kimi').catch(function () { return null; }), 90000)
     ]);
     var arrB = [];
     var glmIssues = 0, kimiIssues = 0, glmFail = false, kimiFail = false;
