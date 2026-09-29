@@ -117361,13 +117361,14 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
   html += '<div style="text-align:center;position:relative;width:78px;height:78px">';
   html += '<svg width="78" height="78" viewBox="0 0 78 78" style="transform:rotate(-90deg)"><circle cx="39" cy="39" r="' + R + '" fill="none" stroke="#475569" stroke-width="6"/><circle cx="39" cy="39" r="' + R + '" fill="none" stroke="' + gr.color + '" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + (Cc * pct / 100).toFixed(1) + ' ' + Cc.toFixed(1) + '"/></svg>';
   html += '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:22px;font-weight:800;color:' + gr.color + '">' + sc.score + '</div><div style="font-size:8px;color:#94a3b8">综合得分</div></div></div></div>';
-  html += '<div style="font-size:10px;color:#94a3b8;margin:0 0 6px;text-align:center">扣分明细：严重 −5/项 · 警告 −2/项 · 建议 −0.5/项（满分 100，四舍五入）</div>';
+  html += '<div style="font-size:10px;color:#94a3b8;margin:0 0 6px;text-align:center">扣分明细：严重 −10/项 · √警告×2.5 · √建议×0.8（满分 100，四舍五入）</div>';
   if (window.fmtVoteStats) {
     var vs = window.fmtVoteStats;
-    var vsTxt = '🤖 三模型共识投票：主模型 ' + vs.primary + ' 条 · GLM ' + vs.glm + ' 条 · Kimi ' + vs.kimi + ' 条';
-    if (vs.glmFail) vsTxt += '（GLM 超时）';
-    if (vs.kimiFail) vsTxt += '（Kimi 超时）';
-    html += '<div style="font-size:10px;color:#7c3aed;margin:0 0 10px;text-align:center">' + vsTxt + '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">';
+    html += '<div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:#7c3aed">' + vs.primary + '</div><div style="font-size:10px;color:#6d28d9">🤖 主模型</div></div>';
+    html += '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:#16a34a">' + vs.glm + '</div><div style="font-size:10px;color:#158039">🟢 GLM' + (vs.glmFail ? ' ⚠️' : '') + '</div></div>';
+    html += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:700;color:#2563eb">' + vs.kimi + '</div><div style="font-size:10px;color:#1d4ed8">🔵 Kimi' + (vs.kimiFail ? ' ⚠️' : '') + '</div></div>';
+    html += '</div>';
   }
   html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">';
   html += '<div style="background:#fff;border:1px solid #fecaca;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:700;color:#dc2626">' + sc.critical + '</div><div style="font-size:10px;color:#6b7280">🔴 严重</div></div>';
