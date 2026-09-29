@@ -117444,23 +117444,34 @@ function renderFormatReport(ruleIssues, aiIssues, audit) {
     doms.forEach(function(d) {
       var items = merged.filter(function(i) { return i.domain === d; });
       html += '<div id="fmtDom-' + d + '" style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:5px">' + (FMT_DOMAIN_NAMES[d] || d) + '（' + items.length + '）</div>';
-      items.forEach(function(i) {
+      var critItems = items.filter(function(i){return i.level==='critical';});
+      var warnItems = items.filter(function(i){return i.level==='warning';});
+      var suggItems = items.filter(function(i){return i.level==='suggestion';});
+      var renderItem = function(i) {
         var bg = i.level === 'critical' ? '#fef2f2' : i.level === 'warning' ? '#fffbeb' : '#f0f9ff';
         var bd = i.level === 'critical' ? '#fecaca' : i.level === 'warning' ? '#fde68a' : '#bae6fd';
         var col = i.level === 'critical' ? '#b91c1c' : i.level === 'warning' ? '#92400e' : '#0369a1';
         var tag = i.level === 'critical' ? '严重' : i.level === 'warning' ? '警告' : '建议';
         var key = encodeURIComponent((i.domain || 'x') + '|' + (i.line || 0) + '|' + (i.original || '') + '|' + (i.fix || ''));
-        html += '<div style="background:' + bg + ';border:1px solid ' + bd + ';border-left:4px solid ' + bd + ';border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;color:#374151">';
-        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">';
-        html += '<div style="flex:1;min-width:200px"><span style="font-weight:700;color:' + col + '">[' + tag + ']</span> ' + (i.source ? '<span style="color:#7c3aed;font-size:10px">' + i.source + '</span> ' : '') + (i.line ? '<span style="color:#64748b;font-size:11px">第' + i.line + '行</span> ' : '') + i.message + '</div>';
-        html += '<div style="display:flex;gap:4px;flex-shrink:0">';
-        if (i.line) html += '<button onclick="fmtLocateLine(' + i.line + ')" style="background:#fff;color:#6366f1;border:1px solid #c7d2fe;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">📍 定位</button>';
-        if (i.fix && i._r) html += '<button onclick="fmtApplyFix(\'' + key + '\')" style="background:#059669;color:#fff;border:none;padding:3px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">✅ 应用</button>';
-        html += '</div></div>';
-        if (i.original) html += '<div style="margin-top:4px;color:#64748b;font-family:Consolas,monospace;font-size:11px;word-break:break-all">原文：' + i.original + '</div>';
-        if (i.fix) html += '<div style="margin-top:2px;color:#059669;font-size:11px">修改：' + i.fix + '</div>';
-        html += '</div>';
-      });
+        var h = '<div style="background:' + bg + ';border:1px solid ' + bd + ';border-left:4px solid ' + bd + ';border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;color:#374151">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">';
+        h += '<div style="flex:1;min-width:200px"><span style="font-weight:700;color:' + col + '">[' + tag + ']</span> ' + (i.source ? '<span style="color:#7c3aed;font-size:10px">' + i.source + '</span> ' : '') + (i.line ? '<span style="color:#64748b;font-size:11px">第' + i.line + '行</span> ' : '') + i.message + '</div>';
+        h += '<div style="display:flex;gap:4px;flex-shrink:0">';
+        if (i.line) h += '<button onclick="fmtLocateLine(' + i.line + ')" style="background:#fff;color:#6366f1;border:1px solid #c7d2fe;padding:3px 10px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">📍 定位</button>';
+        if (i.fix && i._r) h += '<button onclick="fmtApplyFix(\'' + key + '\')" style="background:#059669;color:#fff;border:none;padding:3px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600">✅ 应用</button>';
+        h += '</div></div>';
+        if (i.original) h += '<div style="margin-top:4px;color:#64748b;font-family:Consolas,monospace;font-size:11px;word-break:break-all">原文：' + i.original + '</div>';
+        if (i.fix) h += '<div style="margin-top:2px;color:#059669;font-size:11px">修改：' + i.fix + '</div>';
+        h += '</div>';
+        return h;
+      };
+      critItems.forEach(function(i){ html += renderItem(i); });
+      warnItems.forEach(function(i){ html += renderItem(i); });
+      if (suggItems.length) {
+        html += '<details style="margin-bottom:6px"><summary style="cursor:pointer;font-size:11px;color:#64748b;padding:4px 0">📋 展开 ' + suggItems.length + ' 条建议（点击折叠/展开）</summary>';
+        suggItems.forEach(function(i){ html += renderItem(i); });
+        html += '</details>';
+      }
       html += '</div>';
     });
   }
