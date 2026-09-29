@@ -117877,7 +117877,7 @@ async function fmtRunFullReport() {
     var arrB = [];
     var glmIssues = 0, kimiIssues = 0, glmFail = false, kimiFail = false;
     if (arr0safe.length > 0) {
-      var reviewSys = '你是论文审稿专家。以下是主模型发现的格式问题，请结合论文原文逐条判断每条是否真的成立。只输出你认为成立的问题（同意主模型判断的），以 JSON 数组输出，格式与输入完全一致（含 domain/level/line/original/message/fix）。不要编造新问题，不要修改原文。';
+      var reviewSys = '你是论文审稿专家。以下是主模型发现的格式问题。请逐条判断：如果这条问题看起来合理（统计表述不规范、单位错误、缩写未定义等），就同意主模型的判断并原样输出该条。只有当你明确知道这条问题是错误的（比如原文其实没有这个问题），才跳过。不要过度严格，不要因为不确定就跳过。以 JSON 数组输出你同意的问题，格式与输入完全一致。不要编造新问题。';
       var paperExcerpt = content.length > 2000 ? content.substring(0, 2000) : content;
       var reviewUser = '论文原文摘录：\n' + paperExcerpt + '\n\n主模型发现的问题：\n' + JSON.stringify(arr0safe.slice(0, 40));
       var respB = await Promise.all([
