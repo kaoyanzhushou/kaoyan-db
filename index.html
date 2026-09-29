@@ -117864,14 +117864,30 @@ async function fmtRunFullReport() {
     var journal = (document.getElementById('fmtJournal') || {}).value || '通用学术';
     var refStyle = (document.getElementById('fmtRefStyle') || {}).value || 'Vancouver';
     var sys = '你是一名资深学术论文格式编辑。请检查论文的语义与表达类问题：1)统计表述是否规范（效应量、置信区间、统计符号）2)单位与量纲是否正确 3)术语缩写首次是否定义 4)语言是否地道（中式英语、连接词）5)时态是否一致 6)段落结构是否合理。只报告确定存在的问题，禁止编造。以 JSON 数组输出，每项含 domain(statistics/units/terminology/language/tense/structure)、level(critical/warning/suggestion)、line(行号)、original(原文)、message(中文问题说明)、fix(修改后文本)。不要输出 JSON 以外的内容。';
-    var user = '目标期刊：' + journal + '\n参考文献格式：' + refStyle + '\n\n论文内容：\n' + content;
-    area.innerHTML = '<div style="padding:24px;text-align:center;color:#0284c7;font-size:13px">① 规则引擎 ✓ → ② 图表审计 ✓ → ③ 三模型 AI 共识（主模型 + GLM + Kimi 并行，约 15-30 秒）...<br><span style="font-size:11px;color:#94a3b8">确定性规则先行，AI 仅补语义类问题并跨模型投票，防止幻觉</span></div>';
-    var resp = await fmtAITimed(callFmtAI(sys, user, 5000), 90000);
-    var arr0 = null;
-    if (resp) {
-      var m = String(resp).match(/\[[\s\S]*\]/);
-      if (m) { try { var a0 = JSON.parse(m[0]); if (Array.isArray(a0)) arr0 = a0; } catch (e0) {} }
+    area.innerHTML = '<div style="padding:24px;text-align:center;color:#0284c7;font-size:13px">① 规则引擎 ✓ → ② 图表审计 ✓ → ③ 主模型分段检查中...<br><span style="font-size:11px;color:#94a3b8">长论文自动分段，每段独立检查后合并</span></div>';
+    // 分段检查：按 10000 字切段，并行调用主模型
+    var SEG_SIZE = 10000;
+    var segCount = Math.ceil(content.length / SEG_SIZE);
+    var segPromises = [];
+    for (var si = 0; si < segCount; si++) {
+      var segText = content.substring(si * SEG_SIZE, (si + 1) * SEG_SIZE);
+      var segUser = '目标期刊：' + journal + '\n参考文献格式：' + refStyle + '\n（第' + (si+1) + '/' + segCount + '部分）\n\n论文内容：\n' + segText;
+      segPromises.push(fmtAITimed(callFmtAI(sys, segUser, 4000), 120000).catch(function(){return null;}));
     }
+    var segResps = await Promise.all(segPromises);
+    var arr0 = [];
+    segResps.forEach(function(r, si) {
+      if (!r) return;
+      var m = String(r).match(/\[[\s\S]*\]/);
+      if (m) { try { var a = JSON.parse(m[0]); if (Array.isArray(a)) arr0 = arr0.concat(a); } catch(e) {} }
+    });
+    // 去重（按原文前 20 字）
+    var seen = {};
+    arr0 = arr0.filter(function(i) {
+      var k = (i.original || '').substring(0, 20);
+      if (seen[k]) return false;
+      seen[k] = true; return true;
+    });
     // 复核投票模式：GLM/Kimi 不独立检查全文，而是复核主模型发现的问题
     var arr0safe = arr0 || [];
     var arrB = [];
