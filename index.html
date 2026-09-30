@@ -117266,6 +117266,38 @@ function runFmtRuleEngine() {
     issues.push({domain:'journal', level:'suggestion', line:0, section:'期刊要求', original:'', message:'体育类期刊通常要求：中英文题目与摘要齐全、关键词 3-8 个、图表随文插入并附英文图注'});
   }
 
+  // ===== P2 新增：伦理声明检查 =====
+  var hasEthics = /伦理|IRB|审查委员会|知情同意|ethic/i.test(content);
+  var hasConflict = /利益冲突|competing interest|conflict of interest/i.test(content);
+  if (!hasEthics && /受试者|被试|患者|志愿者|人体/i.test(content)) {
+    issues.push({domain:'journal', level:'warning', line:0, section:'伦理声明', original:'', message:'论文涉及人体受试者，但未找到伦理审查声明或知情同意说明', fix:'在方法部分补充："本研究已通过XX伦理委员会审查（批号：XXX），所有受试者均签署知情同意书"'});
+  }
+  if (!hasConflict) {
+    issues.push({domain:'journal', level:'suggestion', line:0, section:'伦理声明', original:'', message:'未找到利益冲突声明，建议在文末补充："作者声明无利益冲突"', fix:'作者声明：本文无利益冲突。'});
+  }
+
+  // ===== P2 新增：关键词数量检查 =====
+  var kwMatch = content.match(/关键词[：:]\s*(.+)/);
+  if (kwMatch) {
+    var kws = kwMatch[1].split(/[;；,，]/).map(function(s){return s.trim();}).filter(function(s){return s.length>0;});
+    if (kws.length < 3) issues.push({domain:'structure', level:'warning', line:0, section:'关键词', original:kwMatch[1], message:'关键词数量不足（当前 ' + kws.length + ' 个），建议 3-8 个', fix:''});
+    if (kws.length > 8) issues.push({domain:'structure', level:'suggestion', line:0, section:'关键词', original:kwMatch[1], message:'关键词数量过多（当前 ' + kws.length + ' 个），建议 3-8 个', fix:''});
+  }
+
+  // ===== P2 新增：摘要四要素检查 =====
+  var absMatch = content.match(/摘要[：:]\s*([\s\S]+?)(?=关键词|Abstract|ABSTRACT|$)/);
+  if (absMatch) {
+    var abs = absMatch[1];
+    var hasPurpose = /目的|aim|objective|background/i.test(abs);
+    var hasMethods = /方法|method|材料|对象/i.test(abs);
+    var hasResults = /结果|result|数据|发现/i.test(abs);
+    var hasConclusion = /结论|conclusion|表明|提示/i.test(abs);
+    if (!hasPurpose) issues.push({domain:'structure', level:'suggestion', line:0, section:'摘要', original:abs.substring(0,100), message:'摘要缺少"目的"要素', fix:''});
+    if (!hasMethods) issues.push({domain:'structure', level:'suggestion', line:0, section:'摘要', original:abs.substring(0,100), message:'摘要缺少"方法"要素', fix:''});
+    if (!hasResults) issues.push({domain:'structure', level:'suggestion', line:0, section:'摘要', original:abs.substring(0,100), message:'摘要缺少"结果"要素', fix:''});
+    if (!hasConclusion) issues.push({domain:'structure', level:'suggestion', line:0, section:'摘要', original:abs.substring(0,100), message:'摘要缺少"结论"要素', fix:''});
+  }
+
   return issues;
 }
 
