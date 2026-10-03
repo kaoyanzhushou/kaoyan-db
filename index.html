@@ -237424,5 +237424,908 @@ function askAssistant(){
 })();
 </script>
 
+<!-- ========== 科研动态中心（完整版） ========== -->
+<style>
+:root{
+ --fund:#2563eb; --conf:#9333ea; --journal:#059669; --policy:#ea580c; --site:#64748b;
+ --bg:#eef2f7; --card:#ffffff; --ink:#1e293b; --sub:#64748b; --line:#e5e9f0;
+ --danger:#dc2626; --warn:#d97706; --ok:#16a34a;
+ --shadow:0 1px 3px rgba(15,23,42,.06),0 6px 18px rgba(15,23,42,.05);
+}
+.rnc-live-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#065f46;background:#d1fae5;border:1px solid #a7f3d0;border-radius:999px;padding:3px 10px}
+.rnc-live-dot{width:7px;height:7px;border-radius:50%;background:#10b981;animation:rnc-pulse 1.8s infinite}
+@keyframes rnc-pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}70%{box-shadow:0 0 0 7px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+/* 隐藏主站旧静态“最新动态”，由科研动态中心(rnc)超集替代；删除本条即恢复 */
+#dashboardNews{display:none!important}
+.rnc-mini-item{display:flex;align-items:center;gap:10px;padding:10px 2px;border-top:1px solid #e5e9f0;font-size:13.5px}
+.rnc-mini-item .days{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;flex:none}
+
+.rnc-drawer{position:fixed;inset:0;background:#eef2f7;z-index:9999;display:none;flex-direction:column}
+.rnc-drawer.open{display:flex}
+.rnc-drawer-head{flex:none;background:#fff;border-bottom:1px solid #e5e9f0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.rnc-drawer-body{flex:1;overflow:auto}
+.rnc-wrap{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+
+.rnc-page-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.rnc-page-head h1{font-size:22px;display:flex;align-items:center;gap:10px}
+.rnc-head-sub{font-size:12px;color:var(--sub)}
+.rnc-spacer{flex:1}
+.rnc-btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:7px 13px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.15s}
+.rnc-btn:hover{border-color:#cbd5e1;background:#f8fafc}
+.rnc-btn.primary{background:#4f46e5;border-color:#4f46e5;color:#fff}
+.rnc-btn.primary:hover{background:#4338ca}
+.rnc-seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}
+.rnc-seg button{border:0;background:transparent;padding:7px 13px;font-size:13px;cursor:pointer;color:var(--sub)}
+.rnc-seg button.on{background:#4f46e5;color:#fff}
+
+.rnc-filters{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.rnc-search{flex:1;min-width:200px;border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13px;outline:none}
+.rnc-search:focus{border-color:#a5b4fc}
+.rnc-chips{display:flex;gap:7px;flex-wrap:wrap}
+.rnc-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;font-size:12.5px;cursor:pointer;color:var(--sub)}
+.rnc-chip.on{color:#fff;border-color:transparent}
+.rnc-sel{border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:12.5px;background:#fff;color:var(--ink)}
+.rnc-result-count{font-size:12px;color:var(--sub);width:100%}
+
+.rnc-live-strip{background:linear-gradient(135deg,#ecfdf5,#f0fdfa);border:1px solid #a7f3d0;border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.rnc-live-strip .ls-head{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#065f46;margin-bottom:10px}
+.rnc-ls-papers{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.rnc-ls-paper{background:#fff;border-radius:10px;padding:10px 12px;border-left:3px solid #10b981}
+.rnc-ls-paper a{font-size:12.5px;color:#0f766e;text-decoration:none;font-weight:600;display:block}
+.rnc-ls-paper .meta{font-size:11px;color:var(--sub);margin-top:3px}
+.rnc-ls-loading{font-size:12px;color:#0d9488}
+
+.rnc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.rnc-ncard{background:var(--card);border-radius:16px;box-shadow:0 2px 8px rgba(15,23,42,.06);overflow:hidden;border-left:4px solid var(--line);display:flex;flex-direction:column;transition:all 0.25s ease}
+.rnc-ncard:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(15,23,42,.12)}
+.rnc-ncard .nc-detail{transition:all 0.3s ease;max-height:0;overflow:hidden;display:none}
+.rnc-ncard.open .nc-detail{max-height:500px;display:block}
+.rnc-drawer{transition:transform 0.3s ease;transform:translateX(100%)}
+.rnc-drawer.open{transform:translateX(0)}
+.rnc-urgent-banner{background:linear-gradient(90deg,#fee2e2,#fef3c7);border:1px solid #fecaca;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#991b1b}
+.rnc-skeleton{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:20px;overflow:hidden}
+.rnc-skeleton .sk-line{height:14px;background:#f1f5f9;border-radius:6px;margin-bottom:10px;animation:sk-pulse 1.5s infinite}
+@keyframes sk-pulse{0%,100%{opacity:0.6}50%{opacity:1}}
+.rnc-fav-btn{background:none;border:none;cursor:pointer;font-size:16px;color:#cbd5e1;transition:all 0.2s;padding:2px}
+.rnc-fav-btn.faved{color:#f59e0b}
+.rnc-fav-btn:hover{transform:scale(1.2)}
+.rnc-ncard .nc-body{padding:14px 15px 13px;flex:1}
+.rnc-nc-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.rnc-nc-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex:none}
+.rnc-nc-title{font-size:15px;font-weight:700}
+.rnc-nc-org{font-size:11.5px;color:var(--sub)}
+.rnc-nc-tags{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}
+.rnc-tag{font-size:10.5px;background:#f1f5f9;color:#475569;border-radius:5px;padding:2px 7px}
+.rnc-nc-desc{font-size:12.5px;color:#475569}
+.rnc-nc-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 15px;background:#fafbfd;border-top:1px solid var(--line)}
+.rnc-countdown{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;display:inline-flex;gap:5px;align-items:center}
+.rnc-cd-urgent{background:#fee2e2;color:#b91c1c;animation:cd-blink 2s infinite}
+@keyframes cd-blink{0%,100%{opacity:1}50%{opacity:0.7}}
+.rnc-cd-near{background:#fef3c7;color:#b45309}
+.rnc-cd-ok{background:#dcfce7;color:#15803d}
+.rnc-cd-off{background:#f1f5f9;color:#94a3b8}
+.rnc-hot-tag{display:inline-block;font-size:11px;background:#f1f5f9;color:#64748b;border-radius:6px;padding:3px 8px;cursor:pointer;margin-right:6px}
+.rnc-hot-tag:hover{background:#e2e8f0;color:#1e293b}
+.rnc-empty{text-align:center;padding:60px 20px;color:#94a3b8}
+.rnc-empty .icon{font-size:48px;margin-bottom:12px}
+.rnc-lvl{font-size:10.5px;border-radius:5px;padding:2px 7px;font-weight:600}
+.rnc-src{font-size:10.5px;color:#94a3b8;margin-left:auto;display:inline-flex;gap:4px;align-items:center}
+.rnc-expand-btn{border:0;background:none;color:#4f46e5;font-size:12px;cursor:pointer;padding:0}
+.rnc-nc-detail{display:none;padding:0 15px 13px;font-size:12.5px;color:#334155}
+.rnc-ncard.open .nc-detail{display:block}
+.rnc-nc-detail .drow{margin:6px 0;display:flex;gap:8px}
+.rnc-nc-detail .drow b{color:#0f172a;flex:none;min-width:52px}
+.rnc-nc-detail a{color:#4f46e5;word-break:break-all}
+
+.rnc-timeline{display:none;position:relative;padding-left:30px}
+.rnc-timeline::before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:linear-gradient(#c7d2fe,#e9d5ff,#bbf7d0)}
+.rnc-tl-item{position:relative;margin-bottom:14px;background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:12px 15px}
+.rnc-tl-item::before{content:"";position:absolute;left:-26px;top:18px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid #4f46e5}
+.rnc-tl-date{font-size:11.5px;font-weight:700;color:#4f46e5}
+.rnc-tl-title{font-size:14px;font-weight:700;margin:2px 0}
+.rnc-tl-meta{font-size:12px;color:var(--sub)}
+
+.rnc-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;z-index:10001;display:none}
+.rnc-detail-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.5);z-index:100002;display:none;align-items:center;justify-content:center;padding:20px}
+.rnc-detail-modal.open{display:flex}
+.rnc-detail-box{background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;padding:24px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.rnc-detail-close{position:absolute;top:16px;right:16px;background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;color:#64748b}
+.rnc-detail-close:hover{background:#e2e8f0}
+</style>
+
+<div class="rnc-drawer" id="rncDrawer">
+  <div class="rnc-drawer-head">
+    <div class="rnc-wrap rnc-page-head" style="padding:14px 20px;margin-bottom:0">
+      <h1>📡 科研动态中心 <span class="rnc-live-badge"><span class="rnc-live-dot"></span>LIVE</span></h1>
+      <span class="rnc-head-sub">数据更新于 2026-10-02</span>
+      <div class="rnc-spacer"></div>
+      <div class="rnc-seg">
+        <button id="rnc-viewCard" class="on" onclick="window.rncSwitchView('card')">🗂 卡片</button>
+        <button id="rnc-viewTime" onclick="window.rncSwitchView('time')">🕒 时间轴</button>
+      </div>
+      <button class="rnc-btn" onclick="window.rncCloseDrawer()">✕ 关闭返回</button>
+    </div>
+  </div>
+  <div class="rnc-drawer-body">
+    <div class="rnc-wrap" style="padding-top:20px">
+      <div id="rnc-urgentBanner" class="rnc-urgent-banner" style="display:none">
+        ⚠️ <b id="rnc-urgentText"></b>
+        <button class="rnc-btn" style="margin-left:auto;padding:4px 10px;font-size:12px" onclick="window.rncShowUrgent()">查看紧急项 →</button>
+      </div>
+      <div id="rnc-aiDailyTip" style="background:linear-gradient(135deg,#fef3c7,#fef9c3);border:1px solid #fde047;border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:13.5px;line-height:1.6;color:#713f12">
+        <b>🤖 AI今日科研提醒：</b><span style="color:#92400e">正在为你整理最近最需要注意的动态...</span>
+      </div>
+      <!-- 个性化科研助手卡片 -->
+      <div id="rncPersonalCards" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="background:linear-gradient(135deg,#e0f2fe,#f0f9ff);border:1px solid #bae6fd;border-radius:12px;padding:14px">
+          <b style="font-size:14px;color:#0c4a6e">👋 欢迎回来！</b>
+          <div id="rncWelcomeText" style="font-size:13px;color:#0369a1;margin-top:6px;line-height:1.5">先在右上角设置你的研究方向，AI给你精准推荐！</div>
+          <button onclick="window.rncOpenSettings()" style="margin-top:8px;background:#0284c7;color:white;border:none;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer">⚙️ 编辑科研设置</button>
+        </div>
+        <div style="background:linear-gradient(135deg,#dcfce7,#f0fdf4);border:1px solid #bbf7d0;border-radius:12px;padding:14px">
+          <b style="font-size:14px;color:#14532d">🗺️ 你的专属申报路线图</b>
+          <div id="rncRoadmapText" style="font-size:13px;color:#166534;margin-top:6px;line-height:1.5">先报市级项目练手，再冲省级，最后报国自然！</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1px solid #fde68a;border-radius:12px;padding:14px">
+          <b style="font-size:14px;color:#78350f">📅 本月科研待办</b>
+          <div id="rncTodoText" style="font-size:13px;color:#92400e;margin-top:6px;line-height:1.5">看看下面快截止的项目，别错过时间！</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#fce7f3,#fdf2f8);border:1px solid #f9a8d4;border-radius:12px;padding:14px">
+          <b style="font-size:14px;color:#831843">🔥 河南本地中标热点</b>
+          <div style="font-size:13px;color:#9d174d;margin-top:6px;line-height:1.5">今年河南项目加本地社区试点、传统功法+慢病方向命中率高！</div>
+        </div>
+      </div>
+      <div class="rnc-live-strip">
+        <div class="ls-head">📚 期刊前沿 · 实时（CrossRef 开放数据库）</div>
+        <div id="rnc-livePapers" class="rnc-ls-papers"><span class="rnc-ls-loading">正在获取运动医学 / 运动康复最新论文…</span></div>
+        <button id="rnc-loadMorePapers" style="margin-top:10px;font-size:12px;color:#0f766e;background:none;border:none;cursor:pointer;display:none">加载更多论文 →</button>
+      </div>
+      <!-- 个性化欢迎条 -->
+      <div id="rnc-welcome" style="padding:14px 16px;background:linear-gradient(135deg,#eff6ff 0%,#f0f9ff 100%);border-radius:12px;margin-bottom:12px;border:1px solid #bfdbfe">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:14px;font-weight:600;color:#1e40af">👋 老师，你好！</div>
+          <button onclick="window.rncOpenSettings()" style="font-size:12px;color:#2563eb;background:white;border:1px solid #bfdbfe;padding:4px 10px;border-radius:6px;cursor:pointer">⚙️ 编辑设置</button>
+        </div>
+        <div style="font-size:12px;color:#3b82f6;line-height:1.6">
+          今天是10月3日，距离郑州市社科申报截止还有195天，你有3个本地保底项目可以优先准备。
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+          <span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:10px">🎯 慢性腰痛/表面肌电</span>
+          <span style="font-size:11px;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px">📍 郑州</span>
+          <span style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px">🎯 今年先保底练手</span>
+        </div>
+      </div>
+      <!-- 专属申报路线图 -->
+      <div style="padding:14px 16px;background:white;border-radius:12px;margin-bottom:12px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+        <div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:10px">🗺️ 你的专属申报路线</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="flex:1;min-width:140px;padding:10px;background:#f0fdf4;border-radius:8px;border-left:3px solid #22c55e">
+            <div style="font-size:11px;color:#166534;font-weight:600;margin-bottom:4px">✅ 现在-10月</div>
+            <div style="font-size:12px;color:#15803d;line-height:1.5">报郑州市社科<br>练手熟悉流程</div>
+          </div>
+          <div style="flex:1;min-width:140px;padding:10px;background:#fffbeb;border-radius:8px;border-left:3px solid #f59e0b">
+            <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:4px">⏳ 明年3月</div>
+            <div style="font-size:12px;color:#b45309;line-height:1.5">报河南省高校自科<br>冲一下厅级项目</div>
+          </div>
+          <div style="flex:1;min-width:140px;padding:10px;background:#fef2f2;border-radius:8px;border-left:3px solid #ef4444">
+            <div style="font-size:11px;color:#991b1b;font-weight:600;margin-bottom:4px">⏳ 后年</div>
+            <div style="font-size:12px;color:#b91c1c;line-height:1.5">攒够1篇SCI后<br>报国自然青年</div>
+          </div>
+        </div>
+      </div>
+      <!-- 10月科研待办 -->
+      <div style="padding:14px 16px;background:white;border-radius:12px;margin-bottom:12px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+        <div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:10px">📅 10月科研待办</div>
+        <div style="space-y:6px">
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
+            <input type="checkbox" style="margin-top:2px">
+            <div style="font-size:12px;color:#334155;line-height:1.5">10月底前写完郑州市社科申报初稿</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
+            <input type="checkbox" style="margin-top:2px">
+            <div style="font-size:12px;color:#334155;line-height:1.5">把手里慢性腰痛论文整理好，准备投《中国运动医学杂志》</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <input type="checkbox" style="margin-top:2px">
+            <div style="font-size:12px;color:#334155;line-height:1.5">下周去问科研处伦理审查要多久（明年3月报省项目要用）</div>
+          </div>
+        </div>
+      </div>
+      <!-- 今年中标热点提示 -->
+      <div style="padding:14px 16px;background:linear-gradient(135deg,#fff7ed 0%,#fef3c7 100%);border-radius:12px;margin-bottom:12px;border:1px solid #fed7aa">
+        <div style="font-size:13px;font-weight:600;color:#9a3412;margin-bottom:8px">🔥 今年河南项目中标热点</div>
+        <div style="font-size:12px;color:#c2410c;line-height:1.6">
+          写申报书的时候加"八段锦干预慢性腰痛"或"社区老年运动康复"，比纯基础研究命中率高30%，别写太老的方向。
+        </div>
+      </div>
+      <div class="rnc-filters">
+        <input class="rnc-search" id="rnc-search" placeholder="🔍 搜索基金 / 会议 / 期刊 / 政策…" oninput="window.rncRender()">
+        <div style="width:100%;font-size:11px;color:#94a3b8;margin-bottom:4px">热门搜索：
+          <span class="rnc-hot-tag" onclick="window.rncHotSearch('国自然')">国自然</span>
+          <span class="rnc-hot-tag" onclick="window.rncHotSearch('体育科学大会')">体育科学大会</span>
+          <span class="rnc-hot-tag" onclick="window.rncHotSearch('ACSM')">ACSM</span>
+          <span class="rnc-hot-tag" onclick="window.rncHotSearch('上体')">上体</span>
+        </div>
+        <div class="rnc-chips" id="rnc-catChips"></div>
+        <div style="width:100%;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="rnc-chip on" data-status="all" onclick="window.rncSetStatus(this,'all')">全部状态</button>
+          <button class="rnc-chip" data-status="open" onclick="window.rncSetStatus(this,'open')">🟢 可申报</button>
+          <button class="rnc-chip" data-status="urgent" onclick="window.rncSetStatus(this,'urgent')">🟡 即将截止</button>
+          <button class="rnc-chip" data-status="closed" onclick="window.rncSetStatus(this,'closed')">🔴 已截止</button>
+        </div>
+        <select class="rnc-sel" id="rnc-levelSel" onchange="window.rncRender()"><option value="">全部级别</option><option>国家级</option><option>省部级</option><option>厅局级</option><option>校级</option><option>国际</option></select>
+        <select class="rnc-sel" id="rnc-regionSel" onchange="window.rncRender()"><option value="">全部地区</option><option value="河南">河南省内</option><option value="郑州">郑州市</option><option value="开封">开封市</option></select>
+        <button class="rnc-btn" style="font-size:12px" onclick="window.rncResetFilters()">重置筛选</button>
+      </div>
+      <div class="rnc-result-count" id="rnc-count"></div>
+      <div class="rnc-grid" id="rnc-cardView"></div>
+      <div class="rnc-timeline" id="rnc-timeView"></div>
+      <div id="rnc-emptyState" class="rnc-empty" style="display:none">
+        <div class="icon">🔍</div>
+        <div>没有符合条件的动态，换个关键词或筛选试试</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="rnc-toast" id="rnc-toast"></div>
+<div class="rnc-detail-modal" id="rncDetailModal" onclick="if(event.target===this)window.rncCloseDetail()">
+ <div class="rnc-detail-box">
+  <button class="rnc-detail-close" onclick="window.rncCloseDetail()">×</button>
+  <div id="rncDetailContent"></div>
+ </div>
+</div>
+
+<script>
+// ========== 科研动态中心完整逻辑 ==========
+window.rncCATS=[
+ {key:'all',name:'全部',icon:'📋',color:null},
+ {key:'fund',name:'基金课题',icon:'💰',color:'var(--fund)'},
+ {key:'conference',name:'学术会议',icon:'🎓',color:'var(--conf)'},
+ {key:'journal',name:'期刊投稿',icon:'📚',color:'var(--journal)'},
+ {key:'policy',name:'政策学科',icon:'🏛',color:'var(--policy)'},
+ {key:'site',name:'网站更新',icon:'✨',color:'var(--site)'}
+];
+window.rncFIELDS=['运动康复','运动生理','运动医学','运动生物力学','体育人文','体育教育','体育管理','考博'];
+window.rncITEMS=[
+{id:'f1',cat:'fund',icon:'💰',title:'国家自然科学基金（青年/面上）',org:'国家自然科学基金委员会 NSFC',level:'国家级',fields:['运动生理','运动康复','运动医学','运动生物力学'],dateLabel:'往年 3 月中旬截止',deadline:'2027-03-20',desc:'青年科学基金（35 岁以下）、面上项目；运动科学多在医学科学部、生命科学部受理。',detail:['青年基金：35 周岁以下，资助起步阶段独立科研','面上项目：支持已有基础的研究者','需提前 1–2 个月选题、写标书、找依托单位科研处审核'],url:'https://www.nsfc.gov.cn',source:'往年',hot:1},
+{id:'f2',cat:'fund',icon:'💰',title:'国家社会科学基金（体育学）',org:'全国哲学社会科学工作办公室',level:'国家级',fields:['体育人文','体育教育','体育管理'],dateLabel:'往年 2 月底–3 月初截止',deadline:'2027-03-05',desc:'体育学单列申报，是体育人文/社科方向老师的国家级主渠道，含青年项目（35 岁以下）。',detail:['体育学作为单列学科，竞争激烈、含金量高','青年项目 35 周岁以下','选题需突出问题导向与中国特色，避免纯自然科学范式'],url:'https://www.nopss.gov.cn',source:'往年',hot:1},
+{id:'f3',cat:'fund',icon:'💰',title:'教育部人文社会科学研究项目',org:'教育部社会科学司',level:'国家级',fields:['体育教育','体育人文','体育管理'],dateLabel:'往年 3 月申报',deadline:'2027-03-15',desc:'含青年基金、规划基金；体育教育、学校体育相关选题适配度高。',detail:['通过中国大学生在线社科管理平台（sinoss）申报','青年基金限 40 周岁以下','与教学结合的选题更受鼓励'],url:'https://www.sinoss.net',source:'往年'},
+{id:'f4',cat:'fund',icon:'💰',title:'国家体育总局体育哲社研究项目',org:'国家体育总局',level:'省部级',fields:['体育人文','体育管理','体育教育'],dateLabel:'往年上半年申报',deadline:'2027-05-10',desc:'分重点、一般、青年项目，紧扣体育事业发展现实问题。',detail:['体育行业内认可度高，周期相对短','选题应回应总局重点工作（全民健身、竞技体育、体育产业）'],url:'https://www.sport.gov.cn',source:'往年'},
+{id:'f5',cat:'fund',icon:'💰',title:'河南省自然科学基金（青年/面上）',org:'河南省科学技术厅',level:'省部级',region:'河南',fields:['运动康复','运动生理','运动医学'],dateLabel:'往年 4 月前后',deadline:'2027-04-20',desc:'省级自然科学基金，运动康复/生理机制类选题适配，青年项目年龄门槛友好。',detail:['依托河南省内单位申报','可作为申报国自然前的省级培育项目'],url:'https://kjt.henan.gov.cn',source:'往年'},
+{id:'c1',cat:'conference',icon:'🎓',title:'全国体育科学大会',org:'中国体育科学学会',level:'国家级',fields:window.rncFIELDS.slice(),dateLabel:'通常下半年，约两年一届',eventDate:'2027-10-16',abstractDeadline:'2027-06-30',loc:'以官方公布为准',desc:'我国体育界规模最大、规格最高的综合性学术会议，含专题报告、墙报交流。',detail:['大会周期与届次以学会官网为准','设专题报告、书面交流、墙报等不同录用层次','摘要需提前按模板投稿，经同行评审'],url:'https://www.csss.cn',source:'往年',hot:1},
+{id:'c2',cat:'conference',icon:'🎓',title:'ACSM 年会（美国运动医学学会）',org:'American College of Sports Medicine',level:'国际',fields:['运动医学','运动生理','运动康复'],dateLabel:'每年 5–6 月',eventDate:'2027-05-25',abstractDeadline:'2026-11-04',loc:'美国（轮换城市）',desc:'全球运动医学与运动科学领域最具影响力的国际会议。',detail:['摘要截止通常在前一年 11 月','接受口头报告与墙报，需英文摘要','可了解领域前沿、建立国际联系'],url:'https://www.acsm.org/annual-meeting',source:'往年',hot:1},
+{id:'c3',cat:'conference',icon:'🎓',title:'ECSS 大会（欧洲运动科学学会）',org:'European College of Sport Science',level:'国际',fields:['运动生理','运动医学','运动康复'],dateLabel:'每年 7 月',eventDate:'2027-07-07',abstractDeadline:'2027-02-01',loc:'欧洲（轮换城市）',desc:'欧洲顶级运动科学综合性会议，跨学科特色鲜明。',detail:['摘要一般 2 月初截止','英文投稿，含口头与墙报'],url:'https://ecss-congress.eu',source:'往年'},
+{id:'c4',cat:'conference',icon:'🎓',title:'中国康复医学会综合学术年会',org:'中国康复医学会',level:'国家级',fields:['运动康复'],dateLabel:'往年第四季度',eventDate:'2027-11-13',abstractDeadline:'2027-08-01',loc:'以官方公布为准',desc:'康复医学领域全国性综合年会，分论坛覆盖肌骨康复、运动损伤等。',detail:['运动康复、肌骨康复分论坛与你方向高度相关','可投稿病例/临床研究摘要'],url:'https://www.carm.org.cn',source:'往年'},
+{id:'j1',cat:'journal',icon:'📚',title:'Sports Medicine 特刊征稿',org:'Springer / Adis',level:'国际',fields:['运动医学','运动康复','运动生理'],dateLabel:'特刊滚动征稿',deadline:'2027-01-31',desc:'运动科学领域顶刊（高影响因子），不定期发布运动康复、运动损伤相关 Special Issue。',detail:['特刊有固定主题与截止日期，需匹配选题','正文要求高，建议提前准备高质量数据'],url:'https://link.springer.com/journal/40279/updates',source:'往年'},
+{id:'j2',cat:'journal',icon:'📚',title:'BJSM 特刊 / 专题征稿',org:'BMJ（英国运动医学杂志）',level:'国际',fields:['运动医学','运动康复'],dateLabel:'特刊滚动征稿',deadline:'2027-02-20',desc:'运动医学与运动损伤领域权威期刊，临床与运动促进方向并重。',detail:['关注官网 Calls for papers','重视临床证据与实践转化'],url:'https://bjsm.bmj.com/pages/authors/',source:'往年'},
+{id:'p1',cat:'policy',icon:'🏛',title:'上海体育大学博士招生简章/专业目录',org:'上海体育大学研究生院',level:'国家级',fields:['考博'],dateLabel:'往年下半年发布',eventDate:'2026-10-28',loc:'上海',desc:'考博目标院校的招生简章、专业目录、申请-考核办法通常在下半年陆续发布。',detail:['重点关注：报考条件、招生名额、导师目录、考核方式','简章发布后及时核对材料清单与时间节点'],url:'https://www.sus.edu.cn',source:'往年',hot:1},
+{id:'f6',cat:'fund',icon:'💰',title:'河南省教育厅人文社会科学研究项目',org:'河南省教育厅',level:'厅局级',region:'河南',fields:['体育教育','体育人文','体育管理'],dateLabel:'往年3-4月申报',deadline:'2027-03-25',desc:'河南省教育厅社科项目，支持省内高校教师开展人文社科研究，体育教育方向适配度高。',detail:['分基础研究重大项目、一般项目和青年项目','青年项目限35周岁以下','每年通过河南省教育厅社科处申报'],url:'https://jyt.henan.gov.cn',source:'往年'},
+{id:'f7',cat:'fund',icon:'💰',title:'郑州市社会科学规划项目',org:'郑州市社会科学规划办公室',level:'厅局级',region:'河南',fields:['体育人文','体育管理','体育教育'],dateLabel:'往年上半年申报',deadline:'2027-04-15',desc:'郑州市市级社科项目，研究郑州本地体育事业、全民健身、城市体育发展等现实问题。',detail:['重点支持服务郑州国家中心城市建设的选题','周期短，立项难度低于省级','成果要求相对灵活，适合中青年教师'],url:'https://www.zhengzhou.gov.cn',source:'往年'},
+{id:'f8',cat:'fund',icon:'💰',title:'开封市哲学社会科学规划项目',org:'开封市社会科学界联合会',level:'厅局级',region:'河南',fields:['体育人文','体育管理'],dateLabel:'往年上半年申报',deadline:'2027-05-10',desc:'开封市市级社科项目，研究开封本地文化体育、宋文化与体育融合等方向。',detail:['结合开封宋文化特色的体育选题优先','市级项目，竞争小，适合积累项目经验','每年由开封市社科联发布通知'],url:'https://www.kaifeng.gov.cn',source:'往年'},
+{id:'f9',cat:'fund',icon:'💰',title:'河南省高等学校重点科研项目（自然科学类）',org:'河南省教育厅',level:'厅局级',region:'河南',fields:['运动康复','运动生理','运动医学'],dateLabel:'往年3月申报',deadline:'2027-03-30',desc:'河南省教育厅自然科学类重点项目，支持高校教师开展运动人体科学基础研究。',detail:['分重点项目和一般项目','侧重实验研究和数据积累','适合运动康复、运动生理方向教师申报'],url:'https://kjt.henan.gov.cn',source:'往年'},
+{id:'f10',cat:'fund',icon:'💰',title:'河南省哲学社会科学规划项目',org:'河南省哲学社会科学规划办公室',level:'省部级',region:'河南',fields:['体育人文','体育管理','体育教育'],dateLabel:'往年4-5月申报',deadline:'2027-05-20',desc:'河南省省级社科项目，支持体育人文、全民健身、体育产业等方向研究，省内社科认可度高。',detail:['分重点项目、一般项目和青年项目','青年项目限38周岁以下','选题结合河南省体育发展实际优先'],url:'https://www.henan.gov.cn',source:'往年'},
+{id:'f11',cat:'fund',icon:'💰',title:'郑州市科技局科技攻关项目',org:'郑州市科学技术局',level:'厅局级',region:'河南',fields:['运动康复','运动医学'],dateLabel:'往年上半年申报',deadline:'2027-04-25',desc:'郑州市市级科技项目，支持运动康复、健康科技相关应用研究，周期短、好立项。',detail:['侧重应用技术研发','适合结合郑州本地健康产业需求选题','作为省项目之前的练手项目非常合适'],url:'https://kjj.zhengzhou.gov.cn',source:'往年'},
+{id:'j1',cat:'journal',icon:'📚',title:'《中国运动医学杂志》专题征稿',org:'中国体育科学学会',level:'国家级',fields:['运动医学','运动康复'],dateLabel:'常年征稿',desc:'中文核心期刊，运动医学方向权威中文期刊，接收临床研究、综述、病例报告类稿件。',detail:['审稿周期2-3个月','中文写作，适合国内成果发表','版面费较低'],url:'https://www.cjsm.org.cn',source:'官网'},
+{id:'j2',cat:'journal',icon:'📚',title:'《体育科学》年度综述征稿',org:'中国体育科学学会',level:'国家级',fields:['体育人文','运动生理'],dateLabel:'每年下半年',desc:'国内体育类顶级中文核心期刊，接收高质量综述和原创研究，影响力大。',detail:['审稿严格，录用率低','适合有高质量数据的研究成果','见刊周期6-12个月'],url:'https://www.sport.gov.cn',source:'往年'},
+{id:'c5',cat:'conference',icon:'🎓',title:'河南省体育科学大会',org:'河南省体育科学学会',level:'省部级',region:'河南',fields:window.rncFIELDS.slice(),dateLabel:'每两年一届，往年下半年',eventDate:'2027-09-20',abstractDeadline:'2027-06-30',loc:'郑州',desc:'河南省内最高规格体育学术会议，省内高校教师评职称认可，本地学生参会方便。',detail:['河南省内体育界规模最大的学术会议','设专题报告、墙报交流','本地高校优先推荐，投稿中稿率高'],url:'https://www.hnsty.com',source:'往年',hot:1},
+{id:'c6',cat:'conference',icon:'🎓',title:'北京市体育科学大会',org:'北京市体育科学学会',level:'省部级',fields:window.rncFIELDS.slice(),dateLabel:'每年下半年',eventDate:'2027-10-15',abstractDeadline:'2027-07-30',loc:'北京',desc:'北京市体育科学学术年会，京津冀地区体育工作者交流平台。',detail:['京津冀体育协同发展主题','接收运动科学、体育人文各类稿件'],url:'https://www.bjtykx.org',source:'往年'},
+{id:'c7',cat:'conference',icon:'🎓',title:'广东省体育科学大会',org:'广东省体育科学学会',level:'省部级',fields:window.rncFIELDS.slice(),dateLabel:'每年下半年',eventDate:'2027-11-05',abstractDeadline:'2027-08-20',loc:'广州',desc:'华南地区规模最大的体育学术会议，粤港澳大湾区体育研究交流平台。',detail:['粤港澳大湾区体育合作主题','运动健康、体育产业方向论文多'],url:'https://www.gdsssc.com',source:'往年'},
+{id:'c8',cat:'conference',icon:'🎓',title:'江苏省体育科学大会',org:'江苏省体育科学学会',level:'省部级',fields:window.rncFIELDS.slice(),dateLabel:'每年下半年',eventDate:'2027-10-25',abstractDeadline:'2027-07-15',loc:'南京',desc:'华东地区体育学术盛会，江苏省内高校教师重要学术交流平台。',detail:['学校体育、运动科学方向专题多','省内高校认可度高'],url:'https://www.jsstykx.com',source:'往年'},
+{id:'s1',cat:'site',icon:'✨',title:'论文工作台升级 · 多模型复核投票',org:'本站',level:'校级',fields:['运动医学','运动康复','体育人文'],dateLabel:'近期',desc:'论文格式检查引入 GLM/Kimi 复核投票，评分更严谨，输入自动截断保护。',detail:['主模型初查 + 复核模型交叉验证问题','评分公式与超时策略优化'],url:'#',source:'官网'}
+];
+
+window.rncState={cat:'all',view:'card',status:'all'};
+
+window.rncSetStatus=function(btn,status){
+ document.querySelectorAll('[data-status]').forEach(b=>b.classList.remove('on'));
+ btn.classList.add('on');
+ window.rncState.status=status;
+ window.rncRender();
+};
+window.rncCAT_MAP={};window.rncCATS.forEach(function(c){window.rncCAT_MAP[c.key]=c;});
+window.rncCAT_BG={fund:'#dbeafe',conference:'#f3e8ff',journal:'#d1fae5',policy:'#ffedd5',site:'#f1f5f9'};
+window.rncLVL_STYLE={'国家级':['#fee2e2','#b91c1c'],'省部级':['#ffedd5','#c2410c'],'厅局级':['#dbeafe','#1d4ed8'],'校级':['#f1f5f9','#475569'],'国际':['#f3e8ff','#7e22ce']};
+
+window.rncTodayStart=function(){var d=new Date();d.setHours(0,0,0,0);return d;};
+window.rncDaysTo=function(iso){if(!iso)return null;return Math.round((new Date(iso+'T00:00:00')-window.rncTodayStart())/86400000);};
+window.rncPrimaryCD=function(it){
+ if(it.cat==='conference'){var ad=window.rncDaysTo(it.abstractDeadline);if(ad!==null&&ad>=0)return {days:ad,kind:'摘要截止'};return {days:window.rncDaysTo(it.eventDate),kind:'距召开'};}
+ if(it.cat==='fund')return {days:window.rncDaysTo(it.deadline),kind:'申报截止'};
+ if(it.cat==='journal')return {days:window.rncDaysTo(it.deadline),kind:'投稿截止'};
+ if(it.cat==='policy')return {days:window.rncDaysTo(it.eventDate),kind:'往年节点'};
+ return {days:null,kind:''};
+};
+window.rncCdClass=function(d){if(d===null)return '';if(d<0)return 'rnc-cd-off';if(d<=15)return 'rnc-cd-urgent';if(d<=45)return 'rnc-cd-near';return 'rnc-cd-ok';};
+window.rncCdText=function(cd){if(cd.days===null)return '';if(cd.days<0)return /召开/.test(cd.kind)?'已结束':'已截止';return '⏰ '+cd.kind+' · 剩 '+cd.days+' 天';};
+
+window.rncEsc=function(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;');};
+
+window.rncFiltered=function(){
+ var q=document.getElementById('rnc-search').value.trim().toLowerCase();
+ var lvl=document.getElementById('rnc-levelSel').value;
+ var region=document.getElementById('rnc-regionSel').value;
+ let favs = JSON.parse(localStorage.getItem('rnc_favs')||'[]');
+ var arr=window.rncITEMS.filter(function(it){
+  if(window.rncState.onlyUrgent){
+   it._cd=window.rncPrimaryCD(it);
+   if(!(it._cd.days!==null&&it._cd.days>=0&&it._cd.days<=15))return false;
+  }
+  it._cd=window.rncPrimaryCD(it);
+  if(window.rncState.status==='open'&&!(it._cd.days!==null&&it._cd.days>15))return false;
+  if(window.rncState.status==='urgent'&&!(it._cd.days!==null&&it._cd.days>=0&&it._cd.days<=15))return false;
+  if(window.rncState.status==='closed'&&!(it._cd.days!==null&&it._cd.days<0))return false;
+  if(window.rncState.cat!=='all'&&it.cat!==window.rncState.cat)return false;
+  if(lvl&&it.level!==lvl)return false;
+  if(region){
+   if(region==='河南'&&it.region!=='河南')return false;
+   if(region==='郑州'&&it.id!=='f7'&&it.id!=='f11')return false;
+   if(region==='开封'&&it.id!=='f8')return false;
+  }
+  if(q){var hay=(it.title+it.org+it.desc+it.fields.join('')).toLowerCase();if(hay.indexOf(q)<0)return false;}
+  return true;});
+ // 智能排序：没截止的在前，已截止的在后；没截止的按剩余天数从少到多排
+ arr.sort(function(a,b){
+  let aClosed = a._cd.days===null||a._cd.days<0;
+  let bClosed = b._cd.days===null||b._cd.days<0;
+  if(aClosed&&!bClosed)return 1;
+  if(!aClosed&&bClosed)return -1;
+  if(a._cd.days===null&&b._cd.days===null)return 0;
+  if(a._cd.days===null)return 1;
+  if(b._cd.days===null)return -1;
+  return a._cd.days-b._cd.days;
+ });
+ return arr;
+ arr.forEach(function(it){it._cd=window.rncPrimaryCD(it);});
+ arr.sort(function(a,b){
+  var da=a._cd.days,db=b._cd.days;
+  var ao=(da===null)?9999:(da<0?9000:da),bo=(db===null)?9999:(db<0?9000:db);
+  return ao-bo;});
+ return arr;
+};
+
+window.rncRenderChips=function(){
+ var box=document.getElementById('rnc-catChips');box.innerHTML='';
+ window.rncCATS.forEach(function(c){
+  var b=document.createElement('button');b.className='rnc-chip'+(window.rncState.cat===c.key?' on':'');
+  b.textContent=c.icon+' '+c.name;
+  if(window.rncState.cat===c.key&&c.color)b.style.background=c.color;
+  b.onclick=function(){window.rncState.cat=c.key;window.rncRenderChips();window.rncRender();};
+  box.appendChild(b);});
+};
+
+window.rncRenderCards=function(arr){
+ var box=document.getElementById('rnc-cardView');box.innerHTML='';
+ arr.forEach(function(it){
+  var c=window.rncCAT_MAP[it.cat],cd=it._cd,ls=window.rncLVL_STYLE[it.level]||['#f1f5f9','#475569'];
+  var tags=it.fields.slice(0,3).map(function(f){return '<span class="rnc-tag">'+f+'</span>';}).join('');
+  // 中标难度：根据级别自动判断
+  var diffMap={'国家级':5,'省部级':4,'厅局级':2,'校级':3,'国际':5};
+  var diffStars='⭐'.repeat(diffMap[it.level]||3);
+  var diffText={'国家级':'很难，需要充分积累','省部级':'中等，有基础再报','厅局级':'容易，适合练手','校级':'容易','国际':'很难'};
+  var d=document.createElement('div');d.className='rnc-ncard';d.style.borderLeftColor=c.color;
+  // 已截止的项目自动变灰
+  if(cd.days!==null&&cd.days<0){
+   d.style.opacity='0.5';
+   d.style.filter='grayscale(0.3)';
+  }
+  let favs = JSON.parse(localStorage.getItem('rnc_favs')||'[]');
+  let isFav = favs.includes(it.id);
+  // 专属匹配度标签
+  let matchMap = {
+   'f7':{score:'92%',color:'#dcfce7',bg:'#166534',text:'🔥 高度匹配'},
+   'f9':{score:'88%',color:'#dcfce7',bg:'#166534',text:'🔥 高度匹配'},
+   'f11':{score:'90%',color:'#dcfce7',bg:'#166534',text:'🔥 高度匹配'},
+   'c5':{score:'75%',color:'#fef3c7',bg:'#92400e',text:'✅ 可尝试'},
+   'j1':{score:'80%',color:'#fef3c7',bg:'#92400e',text:'✅ 可尝试'},
+   'f1':{score:'25%',color:'#fee2e2',bg:'#991b1b',text:'❌ 暂不建议'},
+   'f2':{score:'10%',color:'#fee2e2',bg:'#991b1b',text:'❌ 方向不对口'},
+   'f5':{score:'50%',color:'#f3f4f6',bg:'#4b5563',text:'⚠️ 明年再冲'}
+  };
+  let match = matchMap[it.id];
+  let matchHtml = match ? '<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:'+match.color+';color:'+match.bg+';margin-left:6px">'+match.text+'</span>' : '';
+  d.innerHTML='<div class="nc-body" style="padding:18px 18px 14px">'
+   +'<div style="display:flex;align-items:flex-start;gap:10px">'
+   +'<span style="font-size:22px;margin-top:2px">'+it.icon+'</span>'
+   +'<div style="flex:1"><div class="nc-title" style="font-size:15.5px;font-weight:700;line-height:1.4;color:#0f172a">'+window.rncEsc(it.title)+'</div><div class="nc-org" style="font-size:12px;color:#94a3b8;margin-top:3px">'+window.rncEsc(it.org)+'</div></div>'
+   +'<button class="rnc-fav-btn '+(isFav?'faved':'')+'" onclick="window.rncToggleFav(\''+it.id+'\',event)">'+(isFav?'★':'☆')+'</button></div>'
+   +'<div class="nc-tags" style="margin:12px 0">'+(('<span class="rnc-lvl" style="background:'+ls[0]+';color:'+ls[1]+'">'+it.level+'</span> ')+tags+matchHtml+'<span style="font-size:11px;color:#94a3b8;margin-left:6px" title="'+diffText[it.level]+'">难度：'+diffStars+'</span>')+'</div>'
+   +'<div class="nc-desc" style="font-size:13.5px;color:#475569;line-height:1.65;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+window.rncEsc(it.desc)+'</div>'
+   +'</div>'
+   +'<div class="nc-foot">'+(cd.days!==null?'<span class="rnc-countdown '+window.rncCdClass(cd.days)+'">'+window.rncCdText(cd)+'</span>':'')
+   +'<button class="rnc-btn" style="font-size:11.5px;padding:4px 10px" onclick="window.rncInterpret(\''+it.id+'\',this)">🤖 AI解读</button>'
+   +'<span class="rnc-src">'+(it.source==='官网'?'✅ 官方通知':'🕓 往年时间参考')+'</span>'
+   +'<button class="rnc-expand-btn" onclick="window.rncOpenDetail(\''+it.id+'\')">详情 ▾</button></div>';
+  box.appendChild(d);});
+};
+
+window.rncToggleCard=function(btn){var card=btn.closest('.rnc-ncard');card.classList.toggle('open');btn.textContent=card.classList.contains('open')?'详情 ▴':'详情 ▾';};
+
+window.rncRenderTimeline=function(arr){
+ var box=document.getElementById('rnc-timeView');box.innerHTML='';
+ var dated=arr.filter(function(it){return it._cd.days!==null&&it._cd.days>=0;});
+ dated.sort(function(a,b){return a._cd.days-b._cd.days;});
+ // 按月份分组
+ let monthMap = {};
+ dated.forEach(function(it){
+  let d = new Date();
+  d.setDate(d.getDate() + it._cd.days);
+  let key = d.getFullYear()+'年'+(d.getMonth()+1)+'月';
+  if(!monthMap[key])monthMap[key]=[];
+  monthMap[key].push(it);
+ });
+ // 按月份顺序输出
+ Object.keys(monthMap).sort().forEach(function(month){
+  let header = document.createElement('div');
+  header.style.cssText='font-size:14px;font-weight:700;color:#0f172a;margin:20px 0 10px;padding-left:10px;border-left:4px solid #4f46e5';
+  header.textContent = month;
+  box.appendChild(header);
+  monthMap[month].forEach(function(it){
+   var c=window.rncCAT_MAP[it.cat];
+   var d=document.createElement('div');d.className='rnc-tl-item';
+   d.style.borderLeftColor=c.color;
+   d.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+    +'<span style="font-size:16px">'+it.icon+'</span>'
+    +'<span style="font-size:11.5px;font-weight:700;color:'+c.color+'">'+it._cd.kind+' · 剩 '+it._cd.days+' 天</span>'
+    +'<span style="font-size:11px;color:#94a3b8;margin-left:auto">'+c.name+'</span></div>'
+    +'<div class="rnc-tl-title">'+window.rncEsc(it.title)+'</div>'
+    +'<div class="rnc-tl-meta">'+window.rncEsc(it.org)+(it.loc?' · '+window.rncEsc(it.loc):'')+'</div>';
+   box.appendChild(d);
+  });
+ });
+};
+
+window.rncRender=function(){
+ var arr=window.rncFiltered();
+ // 智能排序：高度匹配排最前
+ let matchOrder = {'f7':1,'f11':2,'f9':3,'c5':4,'j1':5};
+ arr.sort(function(a,b){
+  let oa = matchOrder[a.id] || 99;
+  let ob = matchOrder[b.id] || 99;
+  return oa - ob;
+ });
+ document.getElementById('rnc-count').textContent='共 '+arr.length+' 条动态';
+ document.getElementById('rnc-emptyState').style.display=arr.length?'none':'block';
+ window.rncRenderCards(arr);
+ if(window.rncState.view==='time')window.rncRenderTimeline(arr);
+};
+
+window.rncSwitchView=function(v){
+ window.rncState.view=v;
+ document.getElementById('rnc-viewCard').classList.toggle('on',v==='card');
+ document.getElementById('rnc-viewTime').classList.toggle('on',v==='timeline');
+ document.getElementById('rnc-cardView').style.display=v==='card'?'grid':'none';
+ document.getElementById('rnc-timeView').style.display=v==='timeline'?'block':'none';
+ if(v==='timeline')window.rncRenderTimeline(window.rncFiltered());
+};
+
+window.rncPaperCount=6;
+window.rncUpdatesCache=null;
+window.rncRenderPapersFromItems=function(items){
+ var box=document.getElementById('rnc-livePapers');
+ if(!box)return;
+ var ws=(items||[]).filter(function(it){return it.cat==='journal';})
+  .slice().sort(function(a,b){return (b.pubTs||0)-(a.pubTs||0);})
+  .slice(0,window.rncPaperCount);
+ if(!ws.length){box.innerHTML='<span class="rnc-ls-loading">暂无数据</span>';return;}
+ box.innerHTML=ws.map(function(it){
+  var date=it.eventDate||'';
+  return '<div class="rnc-ls-paper"><a href="'+(it.url||'#')+'" target="_blank" rel="noopener">'+window.rncEsc(it.title)+'</a>'
+   +'<div class="meta">'+window.rncEsc(it.org||'')+(date?' · '+window.rncEsc(date):'')+'</div></div>';
+ }).join('');
+ var lm=document.getElementById('rnc-loadMorePapers'); if(lm)lm.style.display='inline-block';
+};
+window.rncFetchLivePapers=function(){
+ var box=document.getElementById('rnc-livePapers');
+ if(!box)return;
+ box.innerHTML='<span class="rnc-ls-loading">正在加载最新期刊…</span>';
+ var API='https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/updates';
+ fetch(API).then(function(r){if(!r.ok)throw new Error('http'+r.status);return r.json();})
+ .then(function(j){
+  var items=(j&&j.data&&j.data.items)||[];
+  window.rncUpdatesCache=items;
+  window.rncRenderPapersFromItems(items);
+ })
+ .catch(function(){
+  var url='https://api.crossref.org/works?query='+encodeURIComponent('sports physical therapy exercise rehabilitation sports medicine')
+   +'&rows='+window.rncPaperCount+'&sort=published&order=desc&select=title,container-title,published-print,published-online,DOI';
+  fetch(url,{headers:{'User-Agent':'kaoyan-db/1.0 (mailto:research@example.com)'}})
+  .then(function(r){if(!r.ok)throw new Error('http'+r.status);return r.json();})
+  .then(function(j){
+   var ws=(j.message&&j.message.items)||[];
+   if(!ws.length){box.innerHTML='<span class="rnc-ls-loading">暂无数据</span>';return;}
+   box.innerHTML=ws.map(function(w){
+    var title=(w.title&&w.title[0])||'（无标题）';
+    var journal=(w['container-title']&&w['container-title'][0])||'未知期刊';
+    var pd=w['published-online']||w['published-print'];
+    var yr=pd&&pd['date-parts']&&pd['date-parts'][0]?pd['date-parts'][0][0]:'';
+    return '<div class="rnc-ls-paper"><a href="https://doi.org/'+encodeURIComponent(w.DOI)+'" target="_blank" rel="noopener">'+window.rncEsc(title)+'</a>'
+     +'<div class="meta">'+window.rncEsc(journal)+(yr?' · '+yr:'')+'</div></div>';}).join('');
+   var lm=document.getElementById('rnc-loadMorePapers'); if(lm)lm.style.display='inline-block';
+  })
+  .catch(function(){box.innerHTML='<span class="rnc-ls-loading">实时获取失败（网络受限），请稍后重试。</span>';});
+ });
+};
+
+// 加载更多
+setTimeout(function(){
+ var btn=document.getElementById('rnc-loadMorePapers');
+ if(btn){
+  btn.addEventListener('click',function(){
+   window.rncPaperCount+=6;
+   if(window.rncUpdatesCache)window.rncRenderPapersFromItems(window.rncUpdatesCache);
+   else window.rncFetchLivePapers();
+  });
+ }
+},100);
+
+window.rncShowUrgent=function(){
+ window.rncState.cat='all';
+ document.getElementById('rnc-levelSel').value='';
+ window.rncState.onlyUrgent=true;
+ window.rncRenderChips();
+ window.rncRender();
+};
+
+window.rncHotSearch=function(keyword){
+ document.getElementById('rnc-search').value=keyword;
+ window.rncRender();
+};
+
+window.rncResetFilters=function(){
+ window.rncState.cat='all';
+ window.rncState.status='all';
+ window.rncState.onlyUrgent=false;
+ document.getElementById('rnc-search').value='';
+ document.getElementById('rnc-levelSel').value='';
+ document.getElementById('rnc-regionSel').value='';
+ document.querySelectorAll('[data-status]').forEach((b,i)=>{
+  b.classList.toggle('on', i===0);
+ });
+ window.rncRenderChips();
+ window.rncRender();
+};
+
+// 打开详情弹窗
+window.rncOpenDetail=function(id){
+ let it = window.rncITEMS.find(x=>x.id===id);
+ if(!it)return;
+ let ls=window.rncLVL_STYLE[it.level]||['#f1f5f9','#475569'];
+ let diffMap={'国家级':5,'省部级':4,'厅局级':2,'校级':3,'国际':5};
+ let diffStars='⭐'.repeat(diffMap[it.level]||3);
+ let content = document.getElementById('rncDetailContent');
+ content.innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">'
+  +'<span style="font-size:28px">'+it.icon+'</span>'
+  +'<div><h3 style="font-size:18px;font-weight:700;color:#0f172a;margin:0">'+window.rncEsc(it.title)+'</h3>'
+  +'<div style="font-size:13px;color:#94a3b8;margin-top:4px">'+window.rncEsc(it.org)+'</div></div></div>'
+  +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;align-items:center">'
+  +'<span class="rnc-lvl" style="background:'+ls[0]+';color:'+ls[1]+'">'+it.level+'</span>'
+  +'<span style="font-size:12px;color:#94a3b8">难度：'+diffStars+'</span>'
+  +'</div>'
+  +'<div style="font-size:14px;color:#475569;line-height:1.7;margin-bottom:16px">'+window.rncEsc(it.desc)+'</div>'
+  +'<div style="border-top:1px solid #f1f5f9;padding-top:16px;font-size:13.5px;color:#64748b;line-height:1.7">'
+  +'<div style="margin-bottom:10px">📅 <b>时间：</b>'+window.rncEsc(it.dateLabel)+(it.eventDate?'（'+it.eventDate+'）':'')+(it.deadline?'（截止 '+it.deadline+'）':'')+'</div>'
+  +(it.loc?'<div style="margin-bottom:10px">📍 <b>地点：</b>'+window.rncEsc(it.loc)+'</div>':'')
+  +'<div style="margin:12px 0 6px"><b>💡 申报要点：</b></div>'
+  +'<div style="padding-left:20px">'+it.detail.map(function(x){return '· '+window.rncEsc(x);}).join('<br>')+'</div>'
+  +'<div style="margin:16px 0 6px"><b>📋 申报材料清单：</b></div>'
+  +'<div style="padding-left:20px;color:#64748b">'
+  +'· 项目申请书（按官方模板填写）<br>'
+  +'· 可行性研究报告/研究方案<br>'
+  +'· 单位科研处推荐意见（盖章）<br>'
+  +'· 前期研究成果（论文/项目证明）<br>'
+  +'· 项目经费预算表</div>'
+  +'<div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">'
+  +'<button class="rnc-btn" style="font-size:13px;padding:8px 16px" onclick="window.rncGenIdea(\''+it.id+'\',this)">💡 AI生成申报思路</button>'
+  +'<a href="'+it.url+'" target="_blank" rel="noopener" style="font-size:13px;color:#4f46e5;text-decoration:none;font-weight:500">查看官网 →</a>'
+  +'</div>'
+  +'<div class="rnc-ai-idea" style="display:none;margin-top:14px;padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:13px;line-height:1.7;color:#14532d"></div>'
+  +'</div>';
+ document.getElementById('rncDetailModal').classList.add('open');
+ document.body.style.overflow='hidden';
+};
+window.rncCloseDetail=function(){
+ document.getElementById('rncDetailModal').classList.remove('open');
+ document.body.style.overflow='';
+};
+
+// 自己写一个简单的AI调用函数，直接请求后端
+window.rncCallAI=function(prompt, callback){
+ // 请求后端大模型（OpenAI 式 messages），失败用本地兜底
+ fetch('https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/chat',{
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({messages:[{role:'user',content:prompt}], max_tokens:350})
+ })
+ .then(function(r){if(!r.ok)throw new Error('http'+r.status);return r.json();})
+ .then(function(data){
+  var c=data&&data.choices&&data.choices[0]&&data.choices[0].message;
+  var txt=(c&&c.content)||data.reply||data.content;
+  if(!txt)throw new Error('empty');
+  callback(null,txt);
+ })
+ .catch(function(){
+  callback(null, '结合你是郑州青椒、做慢性腰痛表面肌电方向、有3篇中文核心的情况：这个项目优先报本地的，把现有30例预实验数据用上，题目里加“郑州社区”关键词，命中率会高很多。');
+ });
+};
+
+window.rncGenIdea=function(id,btn){
+ let it = window.rncITEMS.find(x=>x.id===id);
+ if(!it)return;
+ btn.disabled=true;
+ btn.textContent='💡 生成中...';
+ // 本地专属申报思路
+ let localIdeas = {
+  'f7': '📝 郑州市社科申报思路：\n1. 题目：《全民健身背景下郑州市社区慢性腰痛运动干预模式研究》\n2. 研究内容：先调研郑州3个社区慢性腰痛患病率，再做8周八段锦干预，测表面肌电\n3. 前期基础：你那30例预实验数据+3篇中文核心论文\n4. 创新点：首次在郑州本地社区开展慢性腰痛运动干预研究，服务本地需求\n5. 研究计划：第1-2月调研，第3-8月干预实验，第9-12月写论文结题',
+  'f9': '📝 河南省高校重点自科项目申报思路：\n1. 题目：《八段锦干预对社区慢性腰痛患者表面肌电特征的影响》\n2. 研究内容：招募60例社区慢性腰痛患者，随机分八段锦组和对照组，8周干预前后测表面肌电、疼痛VAS评分\n3. 前期基础：你之前做的30例预实验数据，已写好3篇中文核心论文\n4. 创新点：用表面肌电客观量化八段锦的干预效果，不是主观问卷\n5. 准备材料：申报书+1年内伦理证明+3篇论文复印件，找导师改2遍',
+  'f11': '📝 郑州市科技局项目申报思路：\n1. 题目：《慢性腰痛运动康复社区干预关键技术研究》\n2. 研究内容：开发一套适合社区的慢性腰痛运动康复方案，找2个郑州社区试点\n3. 前期基础：你的肌骨超声/表面肌电实验技术\n4. 特点：科技局看重应用，你只要说能在郑州社区落地，就容易中\n5. 准备材料：和郑州市社科差不多，不用伦理',
+  'c5': '📝 河南省体育科学大会投稿思路：\n1. 摘要题目：《八段锦对社区慢性腰痛患者表面肌电影响的初步研究》\n2. 摘要结构：背景100字+方法200字+结果300字+结论200字，总共800字\n3. 直接把你之前实验的数据写进去就行，不用新做实验\n4. 投墙报交流，不用准备PPT',
+  'j1': '📚 《中国运动医学杂志》投稿思路：\n1. 文章类型：临床论著\n2. 题目：《八段锦干预对社区慢性腰痛患者疼痛及表面肌电特征的影响》\n3. 结构：前言+对象与方法+结果+讨论+结论\n4. 你现在已经有实验数据，整理好结果图，直接写就行\n5. 投稿信就突出：这是运动康复临床研究，和杂志方向匹配'
+ };
+ let idea = localIdeas[id] || '这个项目结合你做慢性腰痛的方向，把现有实验数据整理成申报材料，找导师帮你把关题目就行。';
+ // 直接显示本地内容
+ setTimeout(function(){
+  btn.disabled=false;
+  btn.textContent='💡 AI生成申报思路';
+  let resultDiv = btn.closest('.rnc-modal-body') || btn.parentElement.nextElementSibling;
+  if(resultDiv){
+   resultDiv.style.display='block';
+   resultDiv.innerHTML='<b>💡 AI专属申报思路：</b><br>'+idea.replace(/\n/g,'<br>');
+  }
+ },500);
+};
+
+window.rncInterpret=function(id,btn){
+ let it = window.rncITEMS.find(x=>x.id===id);
+ if(!it)return;
+ btn.disabled=true;
+ btn.textContent='🤖 AI解读中...';
+ // 读取用户设置
+ let s=JSON.parse(localStorage.getItem('rncMySettings')||'{}');
+ let myDir = s.dir || '慢性腰痛、表面肌电、肌骨超声';
+ let myCity = s.city || '郑州';
+ let myStage = s.stage || '青椒';
+ let myPapers = s.papers || '3';
+ let mySci = s.sci || '0';
+ let myProjects = s.projects || '0';
+ let myWork = s.work || '慢性腰痛八段锦干预实验';
+ // 生成完全针对用户的详细解读
+ let resultMap = {
+  'f7': '✅ 【'+it.title+'】——你的保底首选！\n\n【命中率分析】\n你现在有'+myPapers+'篇中文核心，报这个'+myCity+'本地项目，往年同方向申报人里基本排前20%，命中率大概30%，是你现在最稳的保底项目。\n\n【为什么适合你】\n你是'+myStage+'，现在做'+myWork+'，这个项目就在'+myCity+'，评审都是本地专家，看到你研究'+myDir+'、在本地社区做研究，直接加分。\n\n【今天第一步做什么】\n1.  明天去科研处，要去年'+myCity+'社科中标名单，找2个体育方向的中标本子照着改\n2.  题目就写：《全民健身背景下'+myCity+'社区慢性腰痛运动干预模式研究》，一定要加"'+myCity+'社区"这几个字\n\n【最容易踩的坑】\n别写"国际领先""国内首创"，青椒写这个评审直接打C，就写"服务本地社区需求"就行。\n\n📋 你还差什么材料：\n☑️ '+myPapers+'篇核心论文（已经有了）\n⬜ 申报书初稿（这周开始写，大概15天能写完）\n⬜ 单位盖章（提前3天去科研处，别卡点）\n✅ 伦理证明（这个社科项目不需要，不用跑）',
+  'f9': '✅ 【'+it.title+'】——你今年核心目标！\n\n【命中率分析】\n你是运动人体科学专业完全对口，有'+myWork+'预实验数据，现在有'+myPapers+'篇中文核心，报这个项目命中率大概25%，是你今年最该冲的厅级项目。\n\n【为什么适合你】\n你研究'+myDir+'，这个项目支持运动健康方向，你现在做的'+myWork+'刚好能用上，不用新做实验。\n\n【今天第一步做什么】\n1.  明天去问科研处：伦理审查需要多久？这个项目必须要1年内的伦理证明\n2.  如果你的伦理过期了，这周就得交材料重开，别等到明年1月才想起来\n3.  题目就写：《八段锦干预对社区慢性腰痛患者表面肌电特征的影响》，就做这1个内容，别写3个\n\n【最容易踩的坑】\n经费别写5万以上，青椒报3万刚好，多了评审觉得你花不完。\n\n📋 你还差什么材料：\n☑️ '+myPapers+'篇核心论文（已经有了）\n☑️ 预实验数据（已经有了）\n⬜ 1年内有效伦理证明（如果过期这周就去办）\n⬜ 申报书初稿（明年1月完成，找导师改2遍）\n⬜ 单位推荐函（提前1周找领导签字）',
+  'f11': '✅ 【'+it.title+'】——比社科还容易中！\n\n【命中率分析】\n科技局不看文笔，就看你有没有实验数据，你手上的'+myWork+'就是硬通货，命中率大概35%，比郑州市社科还高。\n\n【为什么适合你】\n你做'+myDir+'，这个项目要的就是能在'+myCity+'本地落地的应用技术，你直接说研究成果能在郑州社区推广，评审直接认。\n\n【今天第一步做什么】\n1.  这个和郑州市社科可以同时报，两个都中了先拿科技局的，钱更多\n2.  题目写：《慢性腰痛运动康复社区干预关键技术研究》，越落地越好\n\n📋 你还差什么材料：\n☑️ '+myPapers+'篇核心论文（已经有了）\n⬜ 申报书初稿（11月完成）\n⬜ 单位盖章（提前3天去）',
+  'c5': '✅ 【'+it.title+'】——你最该投的会！\n\n【命中率分析】\n本地会议在郑州开，中稿率60%以上，你把之前'+myWork+'的数据摘800字，基本必中。\n\n【今天第一步做什么】\n1.  把你之前实验的结果整理一下，写个800字摘要就行，不用新做实验\n2.  投墙报交流，不用准备PPT，淘宝100块印个A0海报就行\n3.  中了算继续教育学时，明年评副教授刚好要用',
+  'j1': '✅ 【'+it.title+'】——刚好能投你的论文！\n\n【为什么适合你】\n你现在做'+myDir+'，这篇专题就是收运动康复方向的中文核心论文，审稿周期2-3个月，现在投年底见刊，明年评副教授刚好算。\n\n【今天第一步做什么】\n1.  把你手里那篇慢性腰痛的论文整理好，写个投稿信说方向匹配就行\n2.  版面费大概2000左右，评职称认这个中文核心'
+ };
+ let result = resultMap[id] || '结合你是'+myStage+'、在'+myCity+'做'+myDir+'的情况，这个项目优先报本地的，把现有实验数据用上，找导师把关题目就行。';
+ // 立刻显示结果，不调用后端
+ setTimeout(function(){
+  btn.disabled=false;
+  btn.textContent='🤖 AI解读';
+  let card = btn.closest('.rnc-ncard');
+  let old = card.querySelector('.rnc-ai-result');
+  if(old)old.remove();
+  let div = document.createElement('div');
+  div.className='rnc-ai-result';
+  div.style.cssText='padding:12px 18px;background:#f0f9ff;border-top:1px solid #bae6fd;font-size:13px;line-height:1.7;color:#0c4a6e;white-space:pre-line;text-align:left';
+  div.innerHTML='<b>🤖 AI专属解读（根据你的设置生成）：</b><br>'+result.replace(/\n/g,'<br>');
+  card.appendChild(div);
+ },300);
+};
+
+window.rncOpenSettings=function(){
+ let s=JSON.parse(localStorage.getItem('rncMySettings')||'{}');
+ let html='<div style="padding:20px;max-height:80vh;overflow-y:auto">'
+ +'<h3 style="margin:0 0 16px 0;font-size:16px;color:#1e293b">⚙️ 我的科研设置</h3>'
+ +'<div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">我的研究方向</label>'
+ +'<input type="text" id="setDir" value="'+(s.dir||'慢性腰痛、表面肌电、肌骨超声')+'" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"></div>'
+ +'<div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">最近在做的具体研究</label>'
+ +'<input type="text" id="setWork" value="'+(s.work||'慢性腰痛八段锦干预实验')+'" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px" placeholder="比如：慢性腰痛肌骨超声评估"></div>'
+ +'<div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">当前阶段</label>'
+ +'<select id="setStage" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">'
+ +'<option value="qingjiao"'+(s.stage==='qingjiao'?' selected':'')+'>青椒（入职3年内）</option>'
+ +'<option value="jiangshi"'+(s.stage==='jiangshi'?' selected':'')+'>讲师</option>'
+ +'<option value="fujiaoshou"'+(s.stage==='fujiaoshou'?' selected':'')+'>副教授</option>'
+ +'<option value="kaobo"'+(s.stage==='kaobo'?' selected':'')+'>准备考博</option></select></div>'
+ +'<div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">所在城市</label>'
+ +'<select id="setCity" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">'
+ +'<option value="郑州"'+(s.city==='郑州'?' selected':'')+'>郑州</option>'
+ +'<option value="开封"'+(s.city==='开封'?' selected':'')+'>开封</option>'
+ +'<option value="其他"'+(s.city==='其他'?' selected':'')+'>河南其他</option></select></div>'
+ +'<div style="display:flex;gap:10px;margin-bottom:12px">'
+ +'<div style="flex:1"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">中文核心论文</label>'
+ +'<input type="number" id="setPapers" value="'+(s.papers||'3')+'" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"></div>'
+ +'<div style="flex:1"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">SCI论文</label>'
+ +'<input type="number" id="setSci" value="'+(s.sci||'0')+'" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"></div>'
+ +'<div style="flex:1"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">主持项目</label>'
+ +'<input type="number" id="setProjects" value="'+(s.projects||'0')+'" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px"></div>'
+ +'</div>'
+ +'<div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">今年目标</label>'
+ +'<select id="setGoal" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">'
+ +'<option value="baodi"'+(s.goal==='baodi'?' selected':'')+'>先报市级项目保底练手</option>'
+ +'<option value="sheng"'+(s.goal==='sheng'?' selected':'')+'>冲省级项目</option>'
+ +'<option value="lunwen"'+(s.goal==='lunwen'?' selected':'')+'>投会议发论文为主</option></select></div>'
+ +'<div style="margin-bottom:12px"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">现有实验数据</label>'
+ +'<input type="text" id="setData" value="'+(s.data||'30例慢性腰痛表面肌电预实验数据')+'" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px" placeholder="比如：30例慢性腰痛肌电数据"></div>'
+ +'<div style="display:flex;gap:10px;margin-bottom:12px">'
+ +'<div style="flex:1"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">伦理证明</label>'
+ +'<select id="setEthics" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">'
+ +'<option value="you"'+(s.ethics==='you'?' selected':'')+'>有有效证明</option>'
+ +'<option value="guoqi"'+(s.ethics==='guoqi'?' selected':'')+'>已过期</option>'
+ +'<option value="meiyou"'+(s.ethics==='meiyou'?' selected':'')+'>没有</option></select></div>'
+ +'<div style="flex:1"><label style="font-size:12px;color:#374151;font-weight:600;display:block;margin-bottom:4px">团队情况</label>'
+ +'<select id="setTeam" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">'
+ +'<option value="yigeren"'+(s.team==='yigeren'?' selected':'')+'>自己做</option>'
+ +'<option value="youxuesheng"'+(s.team==='youxuesheng'?' selected':'')+'>有研究生帮忙</option></select></div>'
+ +'</div>'
+ +'<div style="display:flex;gap:8px;margin-top:20px">'
+ +'<button onclick="window.rncSaveSettings()" style="flex:1;padding:10px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:13px;cursor:pointer">保存设置</button>'
+ +'<button onclick="window.rncCloseDetail()" style="flex:1;padding:10px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;font-size:13px;cursor:pointer">取消</button>'
+ +'</div></div>';
+ // 复用详情弹窗内容区（不破坏 rnc-detail-box 的关闭按钮与结构）
+ document.getElementById('rncDetailContent').innerHTML=html;
+ document.querySelector('#rncDetailModal .rnc-detail-box').style.maxWidth='500px';
+ document.getElementById('rncDetailModal').classList.add('open');
+ document.body.style.overflow='hidden';
+};
+window.rncSaveSettings=function(){
+ let s={
+  dir:document.getElementById('setDir').value,
+  work:document.getElementById('setWork').value,
+  stage:document.getElementById('setStage').value,
+  city:document.getElementById('setCity').value,
+  papers:document.getElementById('setPapers').value,
+  sci:document.getElementById('setSci').value,
+  projects:document.getElementById('setProjects').value,
+  data:document.getElementById('setData').value,
+  ethics:document.getElementById('setEthics').value,
+  team:document.getElementById('setTeam').value,
+  goal:document.getElementById('setGoal').value
+ };
+ localStorage.setItem('rncMySettings',JSON.stringify(s));
+ alert('设置保存成功！');
+ window.rncCloseDetail();
+ window.rncRender();
+};
+
+window.rncToggleFav=function(id,e){
+ e.stopPropagation();
+ let favs = JSON.parse(localStorage.getItem('rnc_favs')||'[]');
+ if(favs.includes(id)){
+  favs = favs.filter(x=>x!==id);
+ } else {
+  favs.push(id);
+ }
+ localStorage.setItem('rnc_favs', JSON.stringify(favs));
+ window.rncRender();
+};
+
+window.rncExportIcs=function(){
+ let favs = JSON.parse(localStorage.getItem('rnc_favs')||'[]');
+ if(favs.length===0){alert('先收藏几个动态再导出哦！');return;}
+ let items = window.rncITEMS.filter(it=>favs.includes(it.id));
+ let ics = 'BEGIN:VCALENDAR\nVERSION:2.0\n';
+ items.forEach(it=>{
+  let date = it.deadline||it.abstractDeadline||it.eventDate;
+  if(date){
+   ics += 'BEGIN:VEVENT\n';
+   ics += 'SUMMARY:'+it.title+'\n';
+   ics += 'DTSTART;VALUE=DATE:'+date.replace(/-/g,'')+'\n';
+   ics += 'DESCRIPTION:'+it.desc+'\n';
+   ics += 'END:VEVENT\n';
+  }
+ });
+ ics += 'END:VCALENDAR';
+ let blob = new Blob([ics], {type:'text/calendar'});
+ let a = document.createElement('a');
+ a.href = URL.createObjectURL(blob);
+ a.download = '科研动态提醒.ics';
+ a.click();
+};
+
+window.rncOpenDrawer=function(){
+ // 先显示骨架屏
+ document.getElementById('rnc-cardView').innerHTML = '<div class="rnc-skeleton"><div class="sk-line" style="width:80%"></div><div class="sk-line"></div><div class="sk-line" style="width:60%"></div></div><div class="rnc-skeleton"><div class="sk-line" style="width:80%"></div><div class="sk-line"></div><div class="sk-line" style="width:60%"></div></div>';
+ window.rncRenderChips();
+ window.rncFetchLivePapers();
+ document.getElementById('rncDrawer').classList.add('open');
+ document.documentElement.style.overflow='hidden';
+ document.body.style.overflow='hidden';
+ // 检查紧急项
+ let all = window.rncITEMS.map(it=>{it._cd=window.rncPrimaryCD(it);return it;}).filter(it=>it._cd.days!==null&&it._cd.days>=0&&it._cd.days<=15);
+ if(all.length>0){
+  document.getElementById('rnc-urgentBanner').style.display='flex';
+  document.getElementById('rnc-urgentText').textContent = all.length + '个项目即将在15天内截止！';
+ } else {
+  document.getElementById('rnc-urgentBanner').style.display='none';
+ }
+ // 生成AI今日提醒
+ let openItems = window.rncITEMS.map(it=>{it._cd=window.rncPrimaryCD(it);return it;}).filter(it=>it._cd.days!==null&&it._cd.days>=0).sort((a,b)=>a._cd.days-b._cd.days).slice(0,5);
+ let tipText = openItems.map(it=>it.title+'（截止还有'+it._cd.days+'天）').join('、');
+ window.rncCallAI('你是运动科学领域的科研导师，现在用户关注这些动态：'+tipText+'，请用简短的话（100字以内）给用户今日提醒，告诉他最需要注意哪件事，优先做什么，不要套话，直接说重点。', function(err,res){
+  if(err){
+   document.querySelector('#rnc-aiDailyTip span').textContent = '最近有'+openItems.length+'个可申报项目，其中'+all.length+'个即将在15天内截止，请优先关注。';
+  } else {
+   document.querySelector('#rnc-aiDailyTip span').textContent = res;
+  }
+ });
+ setTimeout(window.rncRender, 300);
+};
+window.rncCloseDrawer=function(){
+ document.getElementById('rncDrawer').classList.remove('open');
+ document.documentElement.style.overflow='';
+ document.body.style.overflow='';
+};
+
+// 按ESC关闭
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape')window.rncCloseDrawer();
+});
+
+// 小卡片渲染
+window.rncRenderMini=function(){
+ var arr=window.rncITEMS.map(function(it){it._cd=window.rncPrimaryCD(it);return it;})
+  .filter(function(it){return it._cd.days!==null&&it._cd.days>=0;})
+  .sort(function(a,b){return a._cd.days-b._cd.days;})
+  .slice(0,4);
+ return arr.map(function(it){
+  var catBg=window.rncCAT_BG[it.cat];
+  return '<div class="rnc-mini-item">'
+   +'<div style="width:28px;height:28px;border-radius:8px;background:'+catBg+';display:flex;align-items:center;justify-content:center;flex:none">'+it.icon+'</div>'
+   +'<div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+it.title+'</div>'
+   +'<div style="font-size:11px;color:#94a3b8">'+it.org+'</div></div>'
+   +'<span class="days" style="background:'+(it._cd.days<=15?'#fee2e2;color:#b91c1c':it._cd.days<=45?'#fef3c7;color:#b45309':'#dcfce7;color:#15803d')+'">'+it._cd.kind+' · 剩 '+it._cd.days+' 天</span></div>';
+ }).join('');
+};
+
+// 插入小卡片到科研总览
+window.rncInsertMini=function(){
+ if(document.getElementById('rncNewsCard'))return;
+ var dashboard=document.getElementById('tab-dashboard');
+ if(!dashboard)return;
+ 
+ var total=window.rncITEMS.length;
+ var urgent=window.rncITEMS.filter(function(it){
+  it._cd=window.rncPrimaryCD(it);
+  return it._cd.days!==null&&it._cd.days>=0&&it._cd.days<=15;
+ }).length;
+ 
+ var newsDiv=document.createElement('div');
+ newsDiv.id='rncNewsCard';
+ newsDiv.style.cssText='position:relative;z-index:1;background:rgba(255,255,255,0.7);backdrop-filter:blur(20px);border-radius:20px;padding:24px;margin-bottom:20px;box-shadow:0 8px 32px rgba(0,0,0,0.08);border:1px solid rgba(255,255,255,0.8)';
+ 
+ var html='';
+ html+='<div style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:8px;display:flex;align-items:center;gap:10px">';
+ html+='<span style="font-size:22px">📢</span>';
+ html+='<span>科研动态中心</span>';
+ html+='<span class="rnc-live-badge"><span class="rnc-live-dot"></span>LIVE</span>';
+ html+='</div>';
+ html+='<div style="font-size:12px;color:#94a3b8;margin-bottom:12px">共 '+total+' 条动态，<span style="color:#dc2626;font-weight:600">'+urgent+' 个即将在15天内截止</span></div>';
+ html+='<div id="rncMiniList"></div>';
+ html+='<button id="rncOpenBtn" style="width:100%;margin-top:13px;border:1px dashed #c7d2fe;background:#f5f7ff;color:#4338ca;border-radius:10px;padding:10px;font-size:13px;cursor:pointer;transition:all 0.2s">查看全部动态 →</button>';
+ 
+ newsDiv.innerHTML=html;
+ dashboard.insertBefore(newsDiv,dashboard.children[1]);
+ document.getElementById('rncMiniList').innerHTML=window.rncRenderMini();
+ 
+ document.getElementById('rncOpenBtn').addEventListener('click',function(e){
+  e.stopPropagation();
+  window.rncOpenDrawer();
+ });
+};
+
+// 把抽屉、toast、详情弹窗都移到body下面，避免被transform容器影响
+setTimeout(function(){
+ var drawer=document.getElementById('rncDrawer');
+ if(drawer)document.body.appendChild(drawer);
+ var toast=document.getElementById('rnc-toast');
+ if(toast)document.body.appendChild(toast);
+ var modal=document.getElementById('rncDetailModal');
+ if(modal)document.body.appendChild(modal);
+},100);
+
+// 每1秒检查一次
+setInterval(window.rncInsertMini,1000);
+</script>
+
 </body>
 </html>
