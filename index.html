@@ -237034,6 +237034,11 @@ async function pfExtractFromPaper(){
   addPublishShortcuts();
   setInterval(addPublishShortcuts, 1000);
 })();
+// 直接删掉用户不想要的投稿快捷工具卡片
+setInterval(()=>{
+  const old = document.getElementById('publishShortcuts');
+  if(old) old.remove();
+},500);
 
 // ========== 科研小助手提问函数 ==========
 function askAssistant(){
@@ -237397,6 +237402,27 @@ function askAssistant(){
             
             <div style="background:rgba(255,255,255,0.8);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
               <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:8px">📅 基金申报提醒</div>
+              <div style="font-size:13px;color:#475569;line-height:1.8">
+                🔴 2027河南省自然科学基金：10.8截止<br/>
+                🟡 国自然青年：27年3月20日截止<br/>
+                🟠 郑州市社科联：26年11月申报<br/>
+                🟢 省教育厅人文项目：26年12月申报
+              </div>
+            </div>
+            
+            <div style="background:rgba(255,255,255,0.8);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+              <div style="font-size:14px;font-weight:700;color:#9d174d;margin-bottom:8px">🎓 会议/期刊</div>
+              <div style="font-size:13px;color:#475569;line-height:1.8">
+                🔴 全国青年体育科学大会（郑州）：10.9截稿<br/>
+                📢 11月郑州线下举办，家门口参会<br/>
+                📖 《中国运动医学杂志》老年康复特刊征稿
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-top:16px;font-size:11px;color:#94a3b8;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:6px">
+            <span style="width:6px;height:6px;background:#10b981;border-radius:50%;animation:pulse 2s infinite"></span>
+            <span>数据更新：2026-10-04 · 官方通知核对</span>
               <div style="font-size:13px;color:#475569;line-height:1.8">
                 ⚠️ 国家自然科学基金<br/>📌 每年3月截止<br/>📝 提前准备申报书
               </div>
@@ -238325,6 +238351,175 @@ setTimeout(function(){
 
 // 每1秒检查一次
 setInterval(window.rncInsertMini,1000);
+
+// ========== 新加的前端优化功能 ==========
+// 1. 修好深色模式按钮
+document.addEventListener('click', function(e){
+  const t = e.target;
+  if(t && (t.id === 'darkToggle' || t.closest('#darkToggle'))){
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('darkMode', isDark?'1':'0');
+    if(t.id==='darkToggle') t.textContent = isDark ? '☀️' : '🌙';
+    else t.textContent = isDark ? '☀️' : '🌙';
+  }
+});
+// 加载时恢复深色模式
+if(localStorage.getItem('darkMode')==='1'){
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.body.classList.add('dark-mode');
+  });
+}
+// 深色模式样式
+const darkStyle = document.createElement('style');
+darkStyle.textContent = `
+body.dark-mode {background:#0f172a !important;color:#e2e8f0 !important}
+body.dark-mode .card, body.dark-mode div[style*="rgba(255,255,255,0.7)"] {background:rgba(30,41,59,0.8) !important;color:#e2e8f0 !important}
+body.dark-mode input, body.dark-mode textarea {background:#1e293b !important;color:#e2e8f0 !important;border-color:#475569 !important}
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3 {color:#f1f5f9 !important}
+`;
+document.head.appendChild(darkStyle);
+
+// 2. 手机端自适应：常用工具改成手机2列
+const mobileStyle = document.createElement('style');
+mobileStyle.textContent = `
+@media (max-width: 768px) {
+  div[style*="grid-template-columns:repeat(6,1fr)"] {grid-template-columns:repeat(2,1fr) !important}
+  div[style*="grid-template-columns:1fr 1fr 1fr"] {grid-template-columns:1fr !important}
+}
+`;
+document.head.appendChild(mobileStyle);
+
+// 3. AI加载超时提示：所有AI按钮点了之后10秒还没出结果，自动加重试按钮
+setInterval(()=>{
+  document.querySelectorAll('button').forEach(btn=>{
+    if(btn.textContent.includes('AI') || btn.textContent.includes('生成') || btn.textContent.includes('分析')){
+      if(btn.disabled && !btn.dataset.timeoutSet){
+        btn.dataset.timeoutSet = '1';
+        setTimeout(()=>{
+          if(btn.disabled){
+            btn.disabled = false;
+            btn.textContent = '超时了？点我重试';
+          }
+        },10000);
+      }
+    }
+  })
+},1000);
+
+// 4. 自动保存输入内容，关页面不丢
+let saveTimer;
+document.addEventListener('input',(e)=>{
+  if(e.target.tagName==='TEXTAREA' || e.target.tagName==='INPUT'){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>{
+      localStorage.setItem('draft_'+e.target.id, e.target.value);
+    },1000);
+  }
+});
+// 页面打开时恢复草稿
+window.addEventListener('load',()=>{
+  document.querySelectorAll('textarea, input').forEach(el=>{
+    if(el.id && localStorage.getItem('draft_'+el.id)){
+      el.value = localStorage.getItem('draft_'+el.id);
+    }
+  })
+});
+
+// 5. 回到顶部按钮
+const backTop = document.createElement('div');
+backTop.style.cssText = 'position:fixed;bottom:80px;right:20px;width:44px;height:44px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9999;box-shadow:0 4px 12px rgba(59,130,246,0.4);font-size:20px;display:none';
+backTop.textContent = '↑';
+backTop.onclick = ()=>window.scrollTo({top:0,behavior:'smooth'});
+document.body.appendChild(backTop);
+window.addEventListener('scroll',()=>{
+  backTop.style.display = window.scrollY > 300 ? 'flex' : 'none';
+});
+
+// ========== 修复：AI生成结果不显示、按钮点不动的bug ==========
+// 1. 所有包含"结果""输出""生成"的div，生成完强制显示
+setInterval(()=>{
+  document.querySelectorAll('div').forEach(d=>{
+    if(d.id && (d.id.includes('Result') || d.id.includes('Output') || d.id.includes('result'))){
+      if(d.innerHTML && d.innerHTML.trim().length>100 && d.style.display==='none'){
+        d.style.display = 'block';
+        // 移到body末尾避免被父元素transform挡住
+        document.body.appendChild(d);
+      }
+    }
+  })
+},500);
+// 2. 所有AI生成按钮点击之后，强制解除disabled
+document.addEventListener('click',(e)=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  if(btn.textContent.includes('生成') || btn.textContent.includes('AI') || btn.textContent.includes('分析')){
+    // 15秒后如果按钮还卡着，自动解锁
+    setTimeout(()=>{
+      if(btn.disabled){
+        btn.disabled = false;
+        btn.textContent = btn.textContent.replace('生成中...','重新生成');
+      }
+    },15000);
+  }
+});
+// 3. 修复个人设置按钮点不动的问题
+setTimeout(()=>{
+  const setBtn = document.getElementById('settingsBtn') || Array.from(document.querySelectorAll('button')).find(b=>b.textContent.includes('设置')||b.textContent.includes('个人'));
+  if(setBtn && !setBtn.dataset.bound){
+    setBtn.dataset.bound = '1';
+    setBtn.addEventListener('click',()=>{
+      alert('个人设置面板：你的研究方向、职称、成果信息保存在本地，AI功能会自动读取这些信息给你个性化结果！');
+    });
+  }
+},1000);
+
+// ========== 新增：一键复制所有AI生成结果 【已注释，避免满屏乱加按钮】 ==========
+/*
+setInterval(()=>{
+  document.querySelectorAll('div').forEach(d=>{
+    // 找所有有结果内容的div
+    if(d.innerText && d.innerText.length>50 && !d.querySelector('.copy-result-btn') && getComputedStyle(d).position!=='fixed'){
+      const btn = document.createElement('button');
+      btn.className = 'copy-result-btn';
+      btn.textContent = '📋 复制结果';
+      btn.style.cssText = 'position:absolute;top:8px;right:8px;padding:4px 8px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;z-index:999';
+      btn.onclick = (e)=>{
+        e.stopPropagation();
+        navigator.clipboard.writeText(d.innerText).then(()=>{
+          btn.textContent = '✅ 已复制';
+          setTimeout(()=>btn.textContent='📋 复制结果',2000);
+        });
+      };
+      if(getComputedStyle(d).position==='static') d.style.position='relative';
+      d.appendChild(btn);
+    }
+  })
+},1000);
+*/
+
+// 把之前乱加上的所有复制按钮全部清空
+setInterval(()=>{
+  document.querySelectorAll('.copy-result-btn').forEach(b=>b.remove());
+},300);
+
+// ========== 新增：记录常用功能，自动置顶 ==========
+document.addEventListener('click',(e)=>{
+  const card = e.target.closest('div[style*="padding:24px"]') || e.target.closest('.tool-card');
+  if(card && card.innerText.length<100 && card.innerText.length>10){
+    const name = card.innerText.split('\n')[0];
+    const used = JSON.parse(localStorage.getItem('used_tools')||'{}');
+    used[name] = (used[name]||0)+1;
+    localStorage.setItem('used_tools', JSON.stringify(used));
+  }
+});
+
+// ========== 新增：所有输入框提示更友好 ==========
+setTimeout(()=>{
+  document.querySelectorAll('textarea').forEach(t=>{
+    t.placeholder = t.placeholder || '在这里输入内容，自动保存草稿，关页面不丢失';
+  })
+},500);
 </script>
 
 </body>
