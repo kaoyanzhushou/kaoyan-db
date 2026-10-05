@@ -238808,8 +238808,8 @@ async function loadDrPapers(){
   if(!list || list.dataset.loaded) return;
   list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">📡 正在从CrossRef拉取最新论文...</div>';
   try {
-    // 精准匹配运动人体科学/运动康复方向
-    const res = await fetch('https://api.crossref.org/works?query=sports+medicine+rehabilitation+low+back+pain+exercise+therapy+physical+therapy+chronic+pain&filter=from-pub-date:2026-06-01&rows=10&sort=issued&order=desc&mailto=research@example.com');
+    // 精准匹配运动人体科学/运动康复方向，包含中英文期刊
+    const res = await fetch('https://api.crossref.org/works?query=sports+medicine+rehabilitation+low+back+pain+traditional+Chinese+exercise+baduanjin+tai+chi+physical+therapy&filter=from-pub-date:2026-03-01&rows=15&sort=issued&order=desc&mailto=research@example.com');
     const data = await res.json();
     const papers = data.message.items;
     let html = '';
@@ -238818,10 +238818,17 @@ async function loadDrPapers(){
       const journal = p['container-title'] ? p['container-title'][0] : '未知期刊';
       const year = p.issued && p.issued['date-parts'] ? p.issued['date-parts'][0][0] : '2026';
       const doi = p.DOI || '';
+      const citations = p['is-referenced-by-count'] || 0;
       const isReview = title.toLowerCase().includes('review') || title.toLowerCase().includes('meta-analysis');
       const isChinese = /[\u4e00-\u9fa5]/.test(title);
+      const keywords = ['low back pain', 'rehabilitation', 'traditional chinese', 'baduanjin', 'tai chi', 'physical therapy', 'chronic pain', 'sports medicine'];
+      let matchScore = 60;
+      keywords.forEach(k => { if(title.toLowerCase().includes(k)) matchScore += 8; });
+      matchScore = Math.min(matchScore, 98);
       let tags = `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:${isChinese ? '#dcfce7' : '#dbeafe'};color:${isChinese ? '#16a34a' : '#2563eb'};font-weight:500">${isChinese ? '中文' : '英文'}</span>`;
+      tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#dcfce7;color:#16a34a;font-weight:500">匹配度${matchScore}%</span>`;
       if(isReview) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#d97706;font-weight:500">综述</span>`;
+      if(citations > 50) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">高被引${citations}次</span>`;
       if(idx < 3) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">热点</span>`;
       html += `
       <div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">
