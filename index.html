@@ -238808,7 +238808,8 @@ async function loadDrPapers(){
   if(!list || list.dataset.loaded) return;
   list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">📡 正在从CrossRef拉取最新论文...</div>';
   try {
-    const res = await fetch('https://api.crossref.org/works?query=sports+medicine+rehabilitation+exercise+chronic+pain&filter=from-pub-date:2026-08-01&rows=10&sort=issued&order=desc&mailto=research@example.com');
+    // 混合查询：中文核心期刊 + 英文顶刊
+    const res = await fetch('https://api.crossref.org/works?query=中国康复医学杂志+OR+中国运动医学杂志+OR+体育科学+OR+sports+medicine+rehabilitation&filter=from-pub-date:2026-06-01&rows=10&sort=issued&order=desc&mailto=research@example.com');
     const data = await res.json();
     const papers = data.message.items;
     let html = '';
@@ -238818,7 +238819,8 @@ async function loadDrPapers(){
       const year = p.issued && p.issued['date-parts'] ? p.issued['date-parts'][0][0] : '2026';
       const doi = p.DOI || '';
       const isReview = title.toLowerCase().includes('review') || title.toLowerCase().includes('meta-analysis');
-      let tags = `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#f0fdf4;color:#16a34a;font-weight:500">研究论文</span>`;
+      const isChinese = /[\u4e00-\u9fa5]/.test(title);
+      let tags = `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:${isChinese ? '#dcfce7' : '#dbeafe'};color:${isChinese ? '#16a34a' : '#2563eb'};font-weight:500">${isChinese ? '中文' : '英文'}</span>`;
       if(isReview) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#d97706;font-weight:500">综述</span>`;
       if(idx < 3) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">热点</span>`;
       html += `
@@ -238829,8 +238831,8 @@ async function loadDrPapers(){
           <span style="background:#eff6ff;color:#2563eb;padding:3px 8px;border-radius:6px;font-weight:500">${journal}</span>
           <span>${year}年</span>
           <button onclick="alert('AI总结即将上线！')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dbeafe;color:#2563eb;cursor:pointer">🤖 AI总结</button>
-          <button onclick="navigator.clipboard.writeText('${title}. ${journal}, ${year}. DOI: ${doi}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dcfce7;color:#16a34a;cursor:pointer">📋 复制引用</button>
-          <a href="https://doi.org/${doi}" target="_blank" style="padding:4px 10px;border-radius:6px;font-size:12px;background:#fef3c7;color:#d97706;text-decoration:none">查看原文 →</a>
+          <button onclick="navigator.clipboard.writeText('${title}. ${journal}, ${year}. DOI: https://doi.org/${doi}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dcfce7;color:#16a34a;cursor:pointer">📋 复制引用</button>
+          <a href="https://doi.org/${doi}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:6px;font-size:12px;background:#fef3c7;color:#d97706;text-decoration:none">查看原文 →</a>
         </div>
       </div>`;
     });
