@@ -2852,9 +2852,97 @@ body.focus-mode .focus-mode-exit{display:flex}
 
 </style>
 
-<script async src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
+</script>
 
-<script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js">
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
+</script>
 
 <script>
 
@@ -3162,7 +3250,51 @@ window.paperFormatAnalyze = async function() {
 
 };
 
-if(window.mermaid){mermaid.initialize({startOnLoad:false,theme:'default',securityLevel:'loose',flowchart:{useMaxWidth:true,curve:'basis'}});}</script>
+if(window.mermaid){mermaid.initialize({startOnLoad:false,theme:'default',securityLevel:'loose',flowchart:{useMaxWidth:true,curve:'basis'}});}
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
+</script>
 
 <script>window.__allErrors = [];
 
@@ -17448,6 +17580,50 @@ console.log('✅ 学习工具入口已加载');
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <meta name="theme-color" content="#3b82f6">
@@ -17548,6 +17724,50 @@ console.log('✅ 学习工具入口已加载');
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <style>
@@ -17584,9 +17804,97 @@ console.log('✅ 学习工具入口已加载');
 
 </style>
 
-<script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js">
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
+</script>
 
-<script async src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js">
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
+</script>
 
 <!-- ========== 轻量加载提速优化 开始 ========== -->
 
@@ -17682,6 +17990,50 @@ console.log('[性能优化] 加载提速已启用');
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 轻量加载提速优化 结束 ========== -->
@@ -17836,13 +18188,145 @@ body.loading #loadingText{
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 加载优化v1.0 结束 ========== -->
 
-<script async src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
+</script>
 
-<script async src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js">
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
+</script>
 
 <style>
 
@@ -18204,6 +18688,50 @@ console.log('✅ 全局错误捕获已启用');
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <style>
@@ -18400,6 +18928,50 @@ console.log('✅ 全局错误捕获已启用');
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 
@@ -18424,6 +18996,50 @@ window.addEventListener('load', function(){
 
 });
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 </head>
@@ -23118,6 +23734,50 @@ window.addEventListener('load', function(){
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 文献引用格式化v1.0 结束 ========== -->
@@ -23268,6 +23928,50 @@ window.addEventListener('load', function(){
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 论文查重自检v1.0 结束 ========== -->
@@ -23418,6 +24122,50 @@ window.addEventListener('load', function(){
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 实验设计智能助手v1.0 结束 ========== -->
@@ -23647,6 +24395,50 @@ window.addEventListener('load', function(){
   bar.appendChild(body);
   bar.setAttribute('data-grouped', '1');
 })();
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 
@@ -27779,6 +28571,50 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
   var mechanism = document.getElementById('tab-mechanism');
   if(mechanism) main.appendChild(mechanism);
 })();
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- 考博知识点详情弹窗 -->
@@ -186866,6 +187702,50 @@ if (typeof initMockExam === "function") { setTimeout(initMockExam, 500); }
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- 全局AI模型选择器 -->
@@ -187106,6 +187986,50 @@ document.addEventListener('click', function(e) {
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <div class="admin-overlay" id="adminOverlay">
@@ -188036,6 +188960,50 @@ document.addEventListener('click', function(e) {
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -188096,6 +189064,50 @@ document.addEventListener('click', function(e) {
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -188342,6 +189354,50 @@ async function aiRefCheckReport() {
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -188802,6 +189858,50 @@ async function pipeGenCover(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -188976,6 +190076,50 @@ async function runIdeaEval(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189012,6 +190156,50 @@ async function runInnovationExtract(){
     status.textContent = '失败';
   }
 }
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189047,6 +190235,50 @@ async function runDataInterpret(){
     status.textContent = '失败';
   }
 }
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189081,6 +190313,50 @@ async function runGraphAbstract(){
     resultEl.innerHTML = '<div style="color:#dc2626;padding:20px">调用失败：' + e.message + '</div>';
     status.textContent = '失败';
   }
+}
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
 }
 </script>
 
@@ -189118,6 +190394,50 @@ async function runRejectRisk(){
     status.textContent = '失败';
   }
 }
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189153,6 +190473,50 @@ async function runTitleAbstractOptimize(){
     resultEl.innerHTML = '<div style="color:#dc2626;padding:20px">调用失败：' + e.message + '</div>';
     status.textContent = '失败';
   }
+}
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
 }
 </script>
 
@@ -189190,6 +190554,50 @@ async function runReplyLetterGenerate(){
     status.textContent = '失败';
   }
 }
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189225,6 +190633,50 @@ async function runStatsHelper(){
     status.textContent = '失败';
   }
 }
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189259,6 +190711,50 @@ async function runChartDesign(){
     resultEl.innerHTML = '<div style="color:#dc2626;padding:20px">调用失败：' + e.message + '</div>';
     status.textContent = '失败';
   }
+}
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
 }
 </script>
 
@@ -189296,6 +190792,50 @@ async function runGrantProposalGenerate(){
     status.textContent = '失败';
   }
 }
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189331,6 +190871,50 @@ async function runMechanismDiagramDesign(){
     status.textContent = '失败';
   }
 }
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189365,6 +190949,50 @@ async function runResearchGapAnalysis(){
     resultEl.innerHTML = '<div style="color:#dc2626;padding:20px">调用失败：' + e.message + '</div>';
     status.textContent = '失败';
   }
+}
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
 }
 </script>
 
@@ -189633,6 +191261,50 @@ function copyRoundTasks(){
   else { const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('任务清单已复制'); }
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189769,6 +191441,50 @@ async function runReflectChain(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189827,6 +191543,50 @@ async function runPrereg(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189901,6 +191661,50 @@ async function runDataChain(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -189985,6 +191789,50 @@ function clearAiLog(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -190051,6 +191899,50 @@ async function runAcadEng(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -190107,6 +191999,50 @@ async function runEthicsCheck(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -190165,6 +192101,50 @@ async function runMentorReview(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -190273,6 +192253,50 @@ function renderKn(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -190361,6 +192385,50 @@ async function askAssist(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -190553,6 +192621,50 @@ function diffDays(fromStr, toStr){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -190613,6 +192725,50 @@ async function askKnAi(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -196103,6 +198259,50 @@ function triggerMechImport(){
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -200633,6 +202833,50 @@ async function aiExtractChapter(){
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -205565,6 +207809,50 @@ async function convertLessonFormat(){
 
 // ========== 修改 runLessonGen：支持格式 ==========
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ============================================================
@@ -207003,6 +209291,50 @@ function rateAIOutput(modelId, rating) {
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -207495,6 +209827,50 @@ async function typewriterToElement(element, text, speed = 15) {
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -210155,6 +212531,50 @@ function downloadTechRoutePNG() {
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -210685,6 +213105,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -218841,6 +221305,50 @@ function renderStatCards(stats) {
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 稳定性核心框架 v1.0 开始 ========== -->
@@ -219523,6 +222031,50 @@ initStabilityFramework();
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 稳定性核心框架 v1.0 结束 ========== -->
@@ -220623,6 +223175,50 @@ setTimeout(initStabilityV11, 500);
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 稳定性框架 v1.1 扩展 结束 ========== -->
@@ -222025,6 +224621,50 @@ setTimeout(function() {
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 论文工作台增强包 v1.0 结束 ========== -->
@@ -223735,6 +226375,50 @@ setTimeout(function() {
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 论文写作审稿增强包 v2.0 结束 ========== -->
@@ -223923,6 +226607,50 @@ setTimeout(mergeButtons, 1500);
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 合并论文增强按钮 结束 ========== -->
@@ -224013,6 +226741,50 @@ setTimeout(fixButtonPosition, 2000);
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 修复论文AI工具箱按钮位置 结束 ========== -->
@@ -225365,6 +228137,50 @@ setTimeout(function() {
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 教案助手增强包 v1.0 结束 ========== -->
@@ -227031,6 +229847,50 @@ setTimeout(function() {
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 课题申报+PPT课件增强包 v1.0 结束 ========== -->
@@ -227069,6 +229929,50 @@ console.log('[性能优化] 页面已加载完成，AI增强包开始初始化')
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 延迟初始化增强包 结束 ========== -->
@@ -228843,6 +231747,50 @@ setTimeout(function() {
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 体育科研专属工具库 v1.0 结束 ========== -->
@@ -230095,6 +233043,50 @@ setTimeout(function() {
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 知识库沉淀+体验优化 v1.0 结束 ========== -->
@@ -231387,6 +234379,50 @@ if (document.readyState === 'loading') {
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 导航栏折叠优化 v1.0 结束 ========== -->
@@ -232251,6 +235287,50 @@ window.mcRunUnwritten = function() {
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 元认知AI工具库 v2.0 结束 ========== -->
@@ -232825,6 +235905,50 @@ window.sendGlobalChat = async function() {
 
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 全局对话助手v1.0 结束 ========== -->
@@ -232869,6 +235993,50 @@ document.addEventListener('click', function(e) {
 
 });
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -233109,6 +236277,50 @@ async function designExperiment() {
 
 console.log('✅ 5个新工具AI功能已加载');
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -233403,6 +236615,50 @@ async function handleFileUpload(file, targetInputId) {
 
 console.log('✅ 通用工具已加载');
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -233543,6 +236799,50 @@ setInterval(addUploadToAllTextareas, 10000);
 
 console.log('✅ 全局优化已加载：AI输出自动美化+输入框自动加上传');
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -233627,6 +236927,50 @@ async function autoAnalyzePaper(file, targetInputId) {
 
 console.log('✅ 论文自动分析功能已加载');
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -233773,6 +237117,50 @@ window.addEventListener('load', function() {
 
 });
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -233847,6 +237235,50 @@ window.addEventListener('load', function() {
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -233911,6 +237343,50 @@ window.addEventListener('load', function() {
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -233967,6 +237443,50 @@ window.addEventListener('load', function() {
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -234060,6 +237580,50 @@ window.addEventListener('load', function() {
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -234134,6 +237698,50 @@ window.addEventListener('load', function() {
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -234202,6 +237810,50 @@ window.addEventListener('load', function() {
 
 
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -234982,6 +238634,50 @@ async function paragraphScore() {
 
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <script>
@@ -235374,6 +239070,50 @@ async function paragraphScore() {
   window.__deepAnalyzeLoaded = true;
 })();
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ===== 论文图表全场景生成中心：核心 + SVG 渲染引擎（P1+P2）===== -->
@@ -235688,6 +239428,50 @@ function pfRenderSchematic(data, style){
   });
   svg += '</svg>';
   return svg;
+}
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
 }
 </script>
 
@@ -236235,6 +240019,50 @@ function pfRenderDataChart(opts){
   }
   return c;
 }
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 
@@ -236596,6 +240424,50 @@ function pfExportPackage(){
     pfDefaultPick();
   } catch(e){}
 })();
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 
@@ -236679,6 +240551,50 @@ function pfSavePFToLibrary(){
   if(typeof mechToast === 'function') mechToast('已存入素材库（共 ' + lib.length + ' 份）');
   if(typeof renderMechLibrary === 'function'){ renderMechLibrary(); }
 }
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 
@@ -236717,6 +240633,50 @@ async function pfExtractFromPaper(){
   }catch(e){
     status.textContent = '⚠️ 提取失败：' + (e.message || '未知错误');
   }
+}
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
 }
 </script>
 
@@ -237452,6 +241412,50 @@ function askAssistant(){
   // 然后每 1 秒执行一次，等页面加载完成
   setInterval(addDashboardNews, 1000);
 })();
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 <!-- ========== 科研动态中心（完整版） ========== -->
@@ -238837,7 +242841,7 @@ async function loadDrPapers(){
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:#94a3b8">
           <span style="background:#eff6ff;color:#2563eb;padding:3px 8px;border-radius:6px;font-weight:500">${journal}</span>
           <span>${year}年</span>
-          <button onclick="alert('AI总结即将上线！')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dbeafe;color:#2563eb;cursor:pointer">🤖 AI总结</button>
+          <button onclick="aiPaperSummary(this, '${title}', '${doi}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dbeafe;color:#2563eb;cursor:pointer">🤖 AI总结</button>
           <button onclick="navigator.clipboard.writeText('${title}. ${journal}, ${year}. DOI: https://doi.org/${doi}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dcfce7;color:#16a34a;cursor:pointer">📋 复制引用</button>
           <a href="https://doi.org/${doi}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:6px;font-size:12px;background:#fef3c7;color:#d97706;text-decoration:none">查看原文 →</a>
         </div>
@@ -238850,7 +242854,54 @@ async function loadDrPapers(){
   }
 }
 
+
+// AI论文总结（DeepSeek）
+async function aiPaperSummary(btn, title, doi){
+  const apiKey = 'sk-1f83d84558b64ef889d6891ab41643a6';
+  if(!apiKey){
+    const k = prompt('请输入你的DeepSeek API Key（只存在你浏览器本地，不会上传）：`n申请地址：https://platform.deepseek.com/');
+    if(k){
+      localStorage.setItem('deepseek_api_key', k);
+    } else {
+      alert('需要先设置DeepSeek API Key才能使用AI总结');
+      return;
+    }
+  }
+  btn.innerText = '🤖 总结中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'sk-1f83d84558b64ef889d6891ab41643a6'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是运动人体科学专业的资深科研导师，用专业详细的中文总结论文，严格按四个部分输出：1.研究目的 2.核心结果 3.临床/科研价值 4.对你（做运动康复/慢性腰痛/传统功法方向的青年研究者）的启发，总共400字左右，重点突出。'},
+          {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+        ],
+        max_tokens: 800
+      })
+    });
+    const data = await res.json();
+    const summary = data.choices[0].message.content;
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-top:10px;padding:12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0c4a6e;line-height:1.8;white-space:pre-line';
+    div.innerHTML = '<div style="font-weight:600;margin-bottom:8px;color:#1e40af">🤖 AI总结</div>' + summary.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>');
+    btn.parentNode.parentNode.appendChild(div);
+    btn.innerText = '🤖 已总结';
+  } catch(e) {
+    alert('AI总结失败：' + e.message + '`n请检查API Key是否正确');
+    btn.innerText = '🤖 AI总结';
+  }
+  btn.disabled = false;
+}
 </script>
 
 </body>
 </html>
+
+
+
