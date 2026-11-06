@@ -3,6 +3,40 @@
 <html lang="zh-CN">
 
 <head>
+<script>
+/* llm-proxy 中转包装器 v1 */
+(function () {
+  'use strict';
+  var PROXY = 'https://1482867313-hcocqv4xwz.ap-guangzhou.tencentscf.com';
+  var ROUTE = {
+    'api.deepseek.com': 'deepseek',
+    'open.bigmodel.cn': 'glm',
+    'api.moonshot.cn': 'kimi'
+  };
+  if (!PROXY || PROXY.indexOf('YOUR_') === 0) { return; }
+  var originalFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    var url = typeof input === 'string' ? input : (input && input.url) || '';
+    var provider = null;
+    for (var host in ROUTE) { if (url.indexOf(host) >= 0) { provider = ROUTE[host]; break; } }
+    if (!provider || !init || init.method !== 'POST') { return originalFetch(input, init); }
+    var payload = {};
+    try { payload = JSON.parse(init.body || '{}'); } catch (e) { payload = {}; }
+    var proxyBody = JSON.stringify({
+      provider: provider,
+      messages: payload.messages || [],
+      model: payload.model || null,
+      max_tokens: payload.max_tokens || 800
+    });
+    return originalFetch(PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: proxyBody
+    });
+  };
+})();
+</script>
+
 
 <meta charset="UTF-8">
 
@@ -2903,8 +2937,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -3013,8 +3047,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -3429,8 +3463,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -17823,8 +17857,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -18031,8 +18065,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -18175,8 +18209,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -18285,8 +18319,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -18489,8 +18523,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -18751,8 +18785,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -18863,8 +18897,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -18973,8 +19007,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -19443,8 +19477,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -19747,8 +19781,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -19879,8 +19913,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -24681,8 +24715,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -24939,8 +24973,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -25197,8 +25231,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -25534,8 +25568,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -29774,8 +29808,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -119613,8 +119647,8 @@ async function callFmtAI(sys, user, maxTok) {
   var main = (document.getElementById('phdAIModelSelect') || {}).value || 'deepseek-chat';
   var queue = [main];
   if (main.indexOf('kimi') >= 0) queue.push('deepseek-chat', 'glm-4-flash');
-  else if (main.indexOf('glm') >= 0) queue.push('kimi-latest', 'deepseek-chat');
-  else queue.push('glm-4-flash', 'kimi-latest');
+  else if (main.indexOf('glm') >= 0) queue.push('kimi-k2.6', 'deepseek-chat');
+  else queue.push('glm-4-flash', 'kimi-k2.6');
   var lastErr = null;
   for (var i = 0; i < queue.length; i++) {
     try {
@@ -188969,8 +189003,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -189317,8 +189351,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -190355,8 +190389,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -190523,8 +190557,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -190877,8 +190911,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -191445,8 +191479,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -191727,8 +191761,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -191871,8 +191905,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -192014,8 +192048,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -192157,8 +192191,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -192301,8 +192335,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -192445,8 +192479,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -192589,8 +192623,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -192732,8 +192766,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -192875,8 +192909,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -193019,8 +193053,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -193162,8 +193196,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -193305,8 +193339,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -193680,8 +193714,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -193924,8 +193958,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -194090,8 +194124,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -194272,8 +194306,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -194464,8 +194498,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -194638,8 +194672,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -194802,8 +194836,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -194968,8 +195002,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -195184,8 +195218,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -195380,8 +195414,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -195680,8 +195714,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -195848,8 +195882,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -201446,8 +201480,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -206084,8 +206118,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -211124,8 +211158,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -212670,8 +212704,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -213270,8 +213304,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -216038,8 +216072,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -216676,8 +216710,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -224940,8 +224974,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -225730,8 +225764,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -226938,8 +226972,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -228448,8 +228482,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -230266,8 +230300,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -230562,8 +230596,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -230760,8 +230794,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -232220,8 +232254,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -233994,8 +234028,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -234140,8 +234174,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -236022,8 +236056,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -237382,8 +237416,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -238782,8 +238816,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -239754,8 +239788,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -240436,8 +240470,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -240588,8 +240622,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -240936,8 +240970,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -241338,8 +241372,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -241586,8 +241620,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -241778,8 +241812,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -242032,8 +242066,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -242214,8 +242248,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -242386,8 +242420,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -242550,8 +242584,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -242751,8 +242785,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -242933,8 +242967,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -243109,8 +243143,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -243997,8 +244031,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -244497,8 +244531,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -244920,8 +244954,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -245574,8 +245608,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -246043,8 +246077,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -246234,8 +246268,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -246381,8 +246415,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -247246,8 +247280,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -248814,8 +248848,8 @@ async function aiPaperSummary(btn, title, doi){
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -248956,8 +248990,8 @@ async function runThreeModelReview() {
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是学术论文审稿专家，从格式规范、逻辑结构、学术表达、参考文献四个维度指出论文问题，按严重程度列出。'},
           {role: 'user', content: '请审稿：' + text.slice(0,5000)}
         ], max_tokens: 1000})
@@ -249059,8 +249093,8 @@ async function runPolish() {
     try {
       const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-GyCmrEnOajumw5gkXw9uXoIMkJlAsiLYZnNPpmn8bViNgc1R'},
-        body: JSON.stringify({model: 'moonshot-v1-8k', messages: [
+        headers: {'Content-Type': 'application/json','Authorization': 'Bearer sk-w2buOkurb3VmTtg4ZUk4XGYy0zHAMEwqSClozDVGYKBiSafT'},
+        body: JSON.stringify({model: 'kimi-k2.6', messages: [
           {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
           {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
         ], max_tokens: 800})
@@ -249103,5 +249137,6 @@ async function runPolish() {
 
 </body>
 </html>
+
 
 
