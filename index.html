@@ -18745,6 +18745,17 @@ body.loading #loadingText{
 
             text.textContent = '加载完成！';
 
+            // 兜底：清除加载过程或异常路径可能残留在 body/html 上的滚动锁定，恢复整页滚动
+            try {
+
+                document.body.style.overflow = '';
+
+                document.documentElement.style.overflow = '';
+
+                document.body.classList.remove('loading');
+
+            } catch(_) {}
+
             setTimeout(function() {
 
                 bar.style.opacity = '0';
@@ -188391,7 +188402,8 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens = 2000, model
 
       const data = await response.json();
 
-      return data.content || (data.choices && data.choices[0] && data.choices[0].message.content) || '';
+      var _mA = (data.choices && data.choices[0] && data.choices[0].message) || {};
+    return data.content || _mA.content || data.reasoning_content || _mA.reasoning_content || '';
 
       
 
@@ -213295,7 +213307,8 @@ throw new Error('后端API调用失败: ' + errMsg);
 
     const data = await response.json();
 
-    const respContent = data.content || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+    const _mB = (data.choices && data.choices[0] && data.choices[0].message) || {};
+    const respContent = data.content || _mB.content || data.reasoning_content || _mB.reasoning_content || '';
 
 
 
@@ -213317,7 +213330,7 @@ throw new Error('后端API调用失败: ' + errMsg);
 
         const fbData = await fb.json();
 
-        var fbC = fbData.content || (fbData.choices && fbData.choices[0] && fbData.choices[0].message && fbData.choices[0].message.content) || ''; if (fbC && fbC.trim()) return fbC;
+        var _fbM = (fbData.choices && fbData.choices[0] && fbData.choices[0].message) || {}; var fbC = fbData.content || _fbM.content || fbData.reasoning_content || _fbM.reasoning_content || ''; if (fbC && fbC.trim()) return fbC;
 
       }
 
@@ -213389,7 +213402,7 @@ async function typewriterToElement(element, text, speed = 15) {
 
           const fbData = await fb.json();
 
-          var fbC = fbData.content || (fbData.choices && fbData.choices[0] && fbData.choices[0].message && fbData.choices[0].message.content) || ''; if (fbC && fbC.trim()) return fbC;
+          var _fbM = (fbData.choices && fbData.choices[0] && fbData.choices[0].message) || {}; var fbC = fbData.content || _fbM.content || fbData.reasoning_content || _fbM.reasoning_content || ''; if (fbC && fbC.trim()) return fbC;
 
         }
 
@@ -213543,7 +213556,7 @@ async function typewriterToElement(element, text, speed = 15) {
 
           const fbData = await fbRes.json();
 
-          var fbC = fbData.content || (fbData.choices && fbData.choices[0] && fbData.choices[0].message && fbData.choices[0].message.content) || ''; if (fbC && fbC.trim()) {
+          var _fbM = (fbData.choices && fbData.choices[0] && fbData.choices[0].message) || {}; var fbC = fbData.content || _fbM.content || fbData.reasoning_content || _fbM.reasoning_content || ''; if (fbC && fbC.trim()) {
 
             console.log('✅ 自动切换到', fm);
 
@@ -248203,6 +248216,39 @@ window.rncITEMS=[
 {id:'f19',cat:'fund',icon:'💰',title:'河南省残疾人康复科研项目',org:'河南省残疾人联合会',level:'厅局级',region:'河南',fields:['运动康复','运动医学'],dateLabel:'往年4月申报',deadline:'2027-04-20',desc:'河南省残疾人康复科研项目，支持运动疗法、康复训练方向，竞争小，容易中。',detail:['竞争小，做运动康复方向特别对口','不需要大团队，青椒自己就能报','经费1-2万'],url:'https://www.hedpf.org.cn',source:'往年'}
 ];
 
+// ===== 科研动态在线数据源：JSON 增量/覆盖，失败回退本地静态基线 =====
+window.rncOnlineItems=[];
+// 合并：以本地静态 rncITEMS 为基线，在线条目同 id 覆盖字段、新 id 追加，按 id 去重
+window.rncMergedItems=function(){
+  var base=window.rncITEMS.map(function(it){return Object.assign({},it);});
+  var map={};
+  base.forEach(function(it){map[it.id]=it;});
+  (window.rncOnlineItems||[]).forEach(function(ov){
+    if(!ov||!ov.id)return;
+    if(map[ov.id]){
+      Object.keys(ov).forEach(function(k){map[ov.id][k]=ov[k];});
+    }else{
+      var copy=Object.assign({},ov);
+      base.push(copy);map[ov.id]=copy;
+    }
+  });
+  return base;
+};
+// 拉取在线动态 JSON；成功写入 rncOnlineItems 并重渲染，失败/超时静默回退基线
+window.rncLoadOnline=function(){
+  try{
+    fetch('rnc-updates.json',{cache:'no-store'})
+      .then(function(r){if(!r.ok)throw new Error('http'+r.status);return r.json();})
+      .then(function(j){
+        var items=(j&&j.items)||[];
+        window.rncOnlineItems=items;
+        if(typeof window.rncRender==='function')window.rncRender();
+        if(typeof window.rncRenderChips==='function')window.rncRenderChips();
+      })
+      .catch(function(){/* 在线源不可用，沿用本地静态基线 */});
+  }catch(e){/* 忽略，沿用基线 */}
+};
+
 window.rncState={cat:'all',view:'card',status:'all'};
 
 window.rncSetStatus=function(btn,status){
@@ -248234,7 +248280,7 @@ window.rncFiltered=function(){
  var lvl=document.getElementById('rnc-levelSel').value;
  var region=document.getElementById('rnc-regionSel').value;
  let favs = JSON.parse(localStorage.getItem('rnc_favs')||'[]');
- var arr=window.rncITEMS.filter(function(it){
+ var arr=window.rncMergedItems().filter(function(it){
   if(window.rncState.onlyUrgent){
    it._cd=window.rncPrimaryCD(it);
    if(!(it._cd.days!==null&&it._cd.days>=0&&it._cd.days<=15))return false;
@@ -248426,6 +248472,20 @@ window.rncSwitchView=function(v){
 
 window.rncPaperCount=6;
 window.rncUpdatesCache=null;
+// 将每日自动抓取的 daily-frontier.json 条目映射为科研动态小卡结构
+function drMapToRnc(items){
+  return (items||[]).map(function(p,i){
+    return {
+      id: p.id||('dr'+i),
+      cat: 'journal',
+      title: p.title||'',
+      org: p.journal||'',
+      eventDate: String(p.year||''),
+      url: p.url||(p.doi?('https://doi.org/'+p.doi):'#'),
+      pubTs: Date.parse(p.published||'')||0
+    };
+  });
+}
 window.rncRenderPapersFromItems=function(items){
  var box=document.getElementById('rnc-livePapers');
  if(!box)return;
@@ -248444,31 +248504,43 @@ window.rncFetchLivePapers=function(){
  var box=document.getElementById('rnc-livePapers');
  if(!box)return;
  box.innerHTML='<span class="rnc-ls-loading">正在加载最新期刊…</span>';
- var API='https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/updates';
- fetch(API).then(function(r){if(!r.ok)throw new Error('http'+r.status);return r.json();})
+ // 优先：每日自动抓取的 daily-frontier.json（GitHub Actions 定时生成）
+ fetch('daily-frontier.json',{cache:'no-store'})
+ .then(function(r){if(!r.ok)throw new Error('http'+r.status);return r.json();})
  .then(function(j){
-  var items=(j&&j.data&&j.data.items)||[];
-  window.rncUpdatesCache=items;
-  window.rncRenderPapersFromItems(items);
+  var ps=(j&&j.items)||[];
+  if(!ps.length)throw new Error('empty');
+  var mapped=drMapToRnc(ps);
+  window.rncUpdatesCache=mapped;
+  window.rncRenderPapersFromItems(mapped);
  })
  .catch(function(){
-  var url='https://api.crossref.org/works?query='+encodeURIComponent('sports physical therapy exercise rehabilitation sports medicine')
-   +'&rows='+window.rncPaperCount+'&sort=published&order=desc&select=title,container-title,published-print,published-online,DOI';
-  fetch(url,{headers:{'User-Agent':'kaoyan-db/1.0 (mailto:research@example.com)'}})
-  .then(function(r){if(!r.ok)throw new Error('http'+r.status);return r.json();})
+  var API='https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com/api/updates';
+  fetch(API).then(function(r){if(!r.ok)throw new Error('http'+r.status);return r.json();})
   .then(function(j){
-   var ws=(j.message&&j.message.items)||[];
-   if(!ws.length){box.innerHTML='<span class="rnc-ls-loading">暂无数据</span>';return;}
-   box.innerHTML=ws.map(function(w){
-    var title=(w.title&&w.title[0])||'（无标题）';
-    var journal=(w['container-title']&&w['container-title'][0])||'未知期刊';
-    var pd=w['published-online']||w['published-print'];
-    var yr=pd&&pd['date-parts']&&pd['date-parts'][0]?pd['date-parts'][0][0]:'';
-    return '<div class="rnc-ls-paper"><a href="https://doi.org/'+encodeURIComponent(w.DOI)+'" target="_blank" rel="noopener">'+window.rncEsc(title)+'</a>'
-     +'<div class="meta">'+window.rncEsc(journal)+(yr?' · '+yr:'')+'</div></div>';}).join('');
-   var lm=document.getElementById('rnc-loadMorePapers'); if(lm)lm.style.display='inline-block';
+   var items=(j&&j.data&&j.data.items)||[];
+   window.rncUpdatesCache=items;
+   window.rncRenderPapersFromItems(items);
   })
-  .catch(function(){box.innerHTML='<span class="rnc-ls-loading">实时获取失败（网络受限），请稍后重试。</span>';});
+  .catch(function(){
+   var url='https://api.crossref.org/works?query='+encodeURIComponent('sports physical therapy exercise rehabilitation sports medicine')
+    +'&rows='+window.rncPaperCount+'&sort=published&order=desc&select=title,container-title,published-print,published-online,DOI';
+   fetch(url,{headers:{'User-Agent':'kaoyan-db/1.0 (mailto:research@example.com)'}})
+   .then(function(r){if(!r.ok)throw new Error('http'+r.status);return r.json();})
+   .then(function(j){
+    var ws=(j.message&&j.message.items)||[];
+    if(!ws.length){box.innerHTML='<span class="rnc-ls-loading">暂无数据</span>';return;}
+    box.innerHTML=ws.map(function(w){
+     var title=(w.title&&w.title[0])||'（无标题）';
+     var journal=(w['container-title']&&w['container-title'][0])||'未知期刊';
+     var pd=w['published-online']||w['published-print'];
+     var yr=pd&&pd['date-parts']&&pd['date-parts'][0]?pd['date-parts'][0][0]:'';
+     return '<div class="rnc-ls-paper"><a href="https://doi.org/'+encodeURIComponent(w.DOI)+'" target="_blank" rel="noopener">'+window.rncEsc(title)+'</a>'
+      +'<div class="meta">'+window.rncEsc(journal)+(yr?' · '+yr:'')+'</div></div>';}).join('');
+    var lm=document.getElementById('rnc-loadMorePapers'); if(lm)lm.style.display='inline-block';
+   })
+   .catch(function(){box.innerHTML='<span class="rnc-ls-loading">实时获取失败（网络受限），请稍后重试。</span>';});
+  });
  });
 };
 
@@ -248513,7 +248585,7 @@ window.rncResetFilters=function(){
 
 // 打开详情弹窗
 window.rncOpenDetail=function(id){
- let it = window.rncITEMS.find(x=>x.id===id);
+ let it = window.rncMergedItems().find(x=>x.id===id);
  if(!it)return;
  // 读取用户设置
  let s=JSON.parse(localStorage.getItem('rncMySettings')||'{}');
@@ -248627,7 +248699,7 @@ window.rncCallAI=function(prompt, callback){
 };
 
 window.rncGenIdea=function(id,btn){
- let it = window.rncITEMS.find(x=>x.id===id);
+ let it = window.rncMergedItems().find(x=>x.id===id);
  if(!it)return;
  btn.disabled=true;
  btn.textContent='💡 生成中...';
@@ -248653,7 +248725,7 @@ window.rncGenIdea=function(id,btn){
 };
 
 window.rncInterpret=function(id,btn){
- let it = window.rncITEMS.find(x=>x.id===id);
+ let it = window.rncMergedItems().find(x=>x.id===id);
  if(!it)return;
  btn.disabled=true;
  btn.textContent='🤖 AI解读中...';
@@ -248819,7 +248891,7 @@ window.rncToggleFav=function(id,e){
 window.rncExportIcs=function(){
  let favs = JSON.parse(localStorage.getItem('rnc_favs')||'[]');
  if(favs.length===0){alert('先收藏几个动态再导出哦！');return;}
- let items = window.rncITEMS.filter(it=>favs.includes(it.id));
+ let items = window.rncMergedItems().filter(it=>favs.includes(it.id));
  let ics = 'BEGIN:VCALENDAR\nVERSION:2.0\n';
  items.forEach(it=>{
   let date = it.deadline||it.abstractDeadline||it.eventDate;
@@ -248843,12 +248915,15 @@ window.rncOpenDrawer=function(){
  // 先显示骨架屏
  document.getElementById('rnc-cardView').innerHTML = '<div class="rnc-skeleton"><div class="sk-line" style="width:80%"></div><div class="sk-line"></div><div class="sk-line" style="width:60%"></div></div><div class="rnc-skeleton"><div class="sk-line" style="width:80%"></div><div class="sk-line"></div><div class="sk-line" style="width:60%"></div></div>';
  window.rncRenderChips();
+ window.rncLoadOnline();
  window.rncFetchLivePapers();
- document.getElementById('rncDrawer').classList.add('open');
+ const __drawer=document.getElementById('rncDrawer');
+ __drawer.style.display=''; __drawer.style.visibility=''; __drawer.style.height=''; __drawer.style.overflow='';
+ __drawer.classList.add('open');
  document.documentElement.style.overflow='hidden';
  document.body.style.overflow='hidden';
  // 检查紧急项
- let all = window.rncITEMS.map(it=>{it._cd=window.rncPrimaryCD(it);return it;}).filter(it=>it._cd.days!==null&&it._cd.days>=0&&it._cd.days<=15);
+ let all = window.rncMergedItems().map(it=>{it._cd=window.rncPrimaryCD(it);return it;}).filter(it=>it._cd.days!==null&&it._cd.days>=0&&it._cd.days<=15);
  if(all.length>0){
   document.getElementById('rnc-urgentBanner').style.display='flex';
   document.getElementById('rnc-urgentText').textContent = all.length + '个项目即将在15天内截止！';
@@ -248856,7 +248931,7 @@ window.rncOpenDrawer=function(){
   document.getElementById('rnc-urgentBanner').style.display='none';
  }
  // 生成AI今日提醒
- let openItems = window.rncITEMS.map(it=>{it._cd=window.rncPrimaryCD(it);return it;}).filter(it=>it._cd.days!==null&&it._cd.days>=0).sort((a,b)=>a._cd.days-b._cd.days).slice(0,5);
+ let openItems = window.rncMergedItems().map(it=>{it._cd=window.rncPrimaryCD(it);return it;}).filter(it=>it._cd.days!==null&&it._cd.days>=0).sort((a,b)=>a._cd.days-b._cd.days).slice(0,5);
  let tipText = openItems.map(it=>it.title+'（截止还有'+it._cd.days+'天）').join('、');
  window.rncCallAI('你是运动科学领域的科研导师，现在用户关注这些动态：'+tipText+'，请用简短的话（100字以内）给用户今日提醒，告诉他最需要注意哪件事，优先做什么，不要套话，直接说重点。', function(err,res){
   if(err){
@@ -248868,7 +248943,9 @@ window.rncOpenDrawer=function(){
  setTimeout(window.rncRender, 300);
 };
 window.rncCloseDrawer=function(){
- document.getElementById('rncDrawer').classList.remove('open');
+ const __d=document.getElementById('rncDrawer');
+ __d.classList.remove('open');
+ __d.style.display=''; __d.style.visibility=''; __d.style.height=''; __d.style.overflow='';
  document.documentElement.style.overflow='';
  document.body.style.overflow='';
 };
@@ -248880,7 +248957,7 @@ document.addEventListener('keydown', function(e){
 
 // 小卡片渲染
 window.rncRenderMini=function(){
- var arr=window.rncITEMS.map(function(it){it._cd=window.rncPrimaryCD(it);return it;})
+ var arr=window.rncMergedItems().map(function(it){it._cd=window.rncPrimaryCD(it);return it;})
   .filter(function(it){return it._cd.days!==null&&it._cd.days>=0;})
   .sort(function(a,b){return a._cd.days-b._cd.days;})
   .slice(0,4);
@@ -248900,8 +248977,8 @@ window.rncInsertMini=function(){
  var dashboard=document.getElementById('tab-dashboard');
  if(!dashboard)return;
  
- var total=window.rncITEMS.length;
- var urgent=window.rncITEMS.filter(function(it){
+ var total=window.rncMergedItems().length;
+ var urgent=window.rncMergedItems().filter(function(it){
   it._cd=window.rncPrimaryCD(it);
   return it._cd.days!==null&&it._cd.days>=0&&it._cd.days<=15;
  }).length;
@@ -248956,6 +249033,9 @@ setTimeout(function(){
 
 // 每1秒检查一次
 setInterval(window.rncInsertMini,1000);
+
+// 页面加载即拉取在线动态 JSON（失败静默回退本地静态基线）
+window.rncLoadOnline();
 
 // ========== 新加的前端优化功能 ==========
 // 1. 修好深色模式按钮
@@ -249180,11 +249260,11 @@ window.addEventListener('load', function(){
         <div style="font-size:18px;font-weight:700;color:#1e293b">每日科研前沿 <span style="font-size:12px;background:#10b981;color:white;padding:2px 8px;border-radius:10px;margin-left:8px">每日更新</span></div>
       </div>
       <div style="font-size:13px;color:#64748b;line-height:1.8">
-        📄 今日更新 <b style="color:#2563eb">10篇</b> 最新论文（中文核心+英文顶刊）<br>
-        📢 <b style="color:#f59e0b">2个</b> 特刊正在征稿，青椒友好<br>
-        🔥 <b style="color:#ef4444">3个</b> 本周高被引热点方向
+        📄 今日更新 <b id="drTodayCount" style="color:#2563eb">--</b> 篇最新英文期刊论文（每日自动抓取）<br>
+        📢 <b id="drIssueCount" style="color:#f59e0b">2个</b> 特刊正在征稿，青椒友好<br>
+        🔥 <b id="drHotCount" style="color:#ef4444">3个</b> 本周高被引热点方向
       </div>
-      <button onclick="document.getElementById('drDrawer').style.display='block';loadDrPapers()" style="width:100%;margin-top:16px;border:1px dashed #c7d2fe;background:#f5f7ff;color:#4338ca;border-radius:10px;padding:10px;font-size:13px;cursor:pointer">查看全部前沿 →</button>
+      <button onclick="var __d=document.getElementById('drDrawer');__d.style.display='block';__d.style.visibility='';__d.style.height='';__d.style.overflow='';loadDrPapers()" style="width:100%;margin-top:16px;border:1px dashed #c7d2fe;background:#f5f7ff;color:#4338ca;border-radius:10px;padding:10px;font-size:13px;cursor:pointer">查看全部前沿 →</button>
 
       <div style="margin-top:16px;padding:16px;border-radius:12px;background:#faf5ff;border:1px solid #c4b5fd">
         <div style="font-size:15px;font-weight:700;color:#581c87;margin-bottom:8px">🎓 导师专属考博攻略（王友华教授）</div>
@@ -249215,10 +249295,11 @@ window.addEventListener('load', function(){
       </div>
       <div id="drPaperList" style="margin-bottom:20px"></div>
       <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px;margin-bottom:20px">
-        <div style="font-size:16px;font-weight:700;color:#92400e;margin-bottom:12px">🔥 本周高被引热点 TOP3</div>
-        <div style="font-size:13px;color:#78350f;line-height:1.8;margin-bottom:8px">1. 运动诱导心肌线粒体自噬改善心衰（3个月被引35次）</div>
-        <div style="font-size:13px;color:#78350f;line-height:1.8;margin-bottom:8px">2. 迷走神经抗炎通路与运动心脏保护（3个月被引28次）</div>
-        <div style="font-size:13px;color:#78350f;line-height:1.8">3. Piezo1机械敏感通道介导运动血管重塑（3个月被引21次）</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:16px;font-weight:700;color:#92400e">🔥 本周高被引热点 TOP3</div>
+          <div id="drHotUpdated" style="font-size:11px;color:#b45309"></div>
+        </div>
+        <div id="drHotTop3" style="font-size:13px;color:#78350f;line-height:1.8">加载中…</div>
       </div>
       <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:16px;margin-bottom:20px">
         <div style="font-size:16px;font-weight:700;color:#0c4a6e;margin-bottom:12px">📢 近期特刊征稿（青椒友好）</div>
@@ -249236,10 +249317,81 @@ window.addEventListener('load', function(){
   }, 1500);
 });
 
+// ===== 每日科研前沿：自动数据源渲染（daily-frontier.json，GitHub Actions 每日抓取）=====
+window.drFrontierCache = null;
+function drEsc(s){ return window.rncEsc ? window.rncEsc(s) : (s==null?'':String(s)); }
+
+function drPaperCardHTML(p, idx){
+  const title = drEsc(p.title||'');
+  const journal = drEsc(p.journal||'');
+  const year = p.year||'—';
+  const doi = p.doi||'';
+  const url = p.url || (doi ? 'https://doi.org/'+doi : '');
+  const citations = Number(p.citations||0);
+  const isReview = !!p.isReview;
+  const score = Math.max(0, Math.min(98, Number(p.matchScore||0)));
+  const safeTitle = (p.title||'').replace(/'/g, "\\'");
+  const cite = `${p.title||''}. ${p.journal||''}, ${year}. DOI: https://doi.org/${doi}`.replace(/'/g, "\\'");
+  let tags = `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#dbeafe;color:#2563eb;font-weight:500">英文</span>`;
+  tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#dcfce7;color:#16a34a;font-weight:500">匹配度${score}%</span>`;
+  if(isReview) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#d97706;font-weight:500">综述</span>`;
+  if(citations > 20) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">高被引${citations}次</span>`;
+  if(idx < 3) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">热点</span>`;
+  return `
+  <div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">${tags}</div>
+    <div style="font-size:15px;font-weight:600;color:#0f172a;line-height:1.6;margin-bottom:8px">${title}</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:#94a3b8">
+      <span style="background:#eff6ff;color:#2563eb;padding:3px 8px;border-radius:6px;font-weight:500">${journal}</span>
+      <span>${year}年</span>
+      <button onclick="aiPaperSummary(this, '${safeTitle}', '${doi}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dbeafe;color:#2563eb;cursor:pointer">🤖 AI总结</button>
+      <button onclick="navigator.clipboard.writeText('${cite}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dcfce7;color:#16a34a;cursor:pointer">📋 复制引用</button>
+      ${url ? `<a href="${drEsc(url)}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:6px;font-size:12px;background:#fef3c7;color:#d97706;text-decoration:none">查看原文 →</a>` : ''}
+    </div>
+  </div>`;
+}
+
+function drRenderAll(papers, meta){
+  const list = document.getElementById('drPaperList');
+  if(list){
+    list.innerHTML = papers.map((p,i)=>drPaperCardHTML(p,i)).join('');
+    list.dataset.loaded = '1';
+  }
+  const tc = document.getElementById('drTodayCount');
+  if(tc) tc.textContent = papers.length + '篇';
+  const hc = document.getElementById('drHotCount');
+  if(hc) hc.textContent = Math.min(3, papers.length) + '个';
+  const hot = [...papers]
+    .sort((a,b)=>Number(b.citations||0)-Number(a.citations||0) || Number(b.matchScore||0)-Number(a.matchScore||0))
+    .slice(0,3);
+  const hotEl = document.getElementById('drHotTop3');
+  if(hotEl){
+    hotEl.innerHTML = hot.map((p,i)=>{
+      const c = Number(p.citations||0);
+      return `<div style="margin-bottom:8px">${i+1}. ${drEsc(p.title||'')}${c>0?`（被引${c}次）`:''}</div>`;
+    }).join('') || '<div>暂无热点条目</div>';
+  }
+  const up = document.getElementById('drHotUpdated');
+  if(up && meta && meta.generatedAt){
+    const d = new Date(meta.generatedAt);
+    if(!isNaN(d)) up.textContent = '更新于 ' + d.toLocaleDateString('zh-CN');
+  }
+}
+
 // 自动加载最新论文
 async function loadDrPapers(){
   const list = document.getElementById('drPaperList');
   if(!list || list.dataset.loaded) return;
+  list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">📡 正在加载今日科研前沿...</div>';
+  // 优先：仓库内每日自动抓取的 daily-frontier.json（GitHub Actions 定时生成）
+  try {
+    const r = await fetch('daily-frontier.json', {cache:'no-store'});
+    if(r.ok){
+      const j = await r.json();
+      const ps = (j && j.items) || [];
+      if(ps.length){ window.drFrontierCache = ps; drRenderAll(ps, j.meta||{}); return; }
+    }
+  } catch(e){ /* 自动源不可用时，落到在线 Crossref 与本地兜底 */ }
   list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">📡 正在从CrossRef拉取最新论文...</div>';
   try {
     // 精准匹配运动心血管生物学方向（王友华教授方向）
@@ -249461,10 +249613,15 @@ window.addEventListener('load', function(){
       while(el){
         const next = el.nextSibling;
         if(el.style){
-          el.style.display = 'none';
-          el.style.visibility = 'hidden';
-          el.style.height = '0';
-          el.style.overflow = 'hidden';
+          // 跳过脚本与脱离文档流的固定定位弹层/悬浮件，避免误伤抽屉、弹窗、侧滑面板等功能组件
+          const tag = (el.tagName || '').toUpperCase();
+          const fixed = getComputedStyle(el).position === 'fixed';
+          if(tag !== 'SCRIPT' && !fixed){
+            el.style.display = 'none';
+            el.style.visibility = 'hidden';
+            el.style.height = '0';
+            el.style.overflow = 'hidden';
+          }
         }
         el = next;
       }
