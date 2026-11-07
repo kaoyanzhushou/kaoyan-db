@@ -30764,9 +30764,9 @@ async function aiPaperSummary(btn, title, doi){
 
  <select id="imageQuickModel" style="border:1px solid #fcd34d;border-radius:8px;padding:8px;font-size:12px;background:#fff">
 
- <option value="qwen-vl-plus">⚡ Qwen-VL-Plus（速度快）</option>
+ <option value="qwen3-vl-plus">⚡ Qwen3-VL-Plus（视觉理解）</option>
 
- <option value="qwen-vl-max">🎯 Qwen-VL-Max（更精准）</option>
+ <option value="qwen-vl-ocr">🎯 Qwen-VL-OCR（文字识别兜底）</option>
 
  </select>
 
@@ -209003,7 +209003,7 @@ async function ocrScanPDF(pdf, pages, callback){
 
 
 
-        // 调用多模态模型识别图片中的文字（使用qwen-vl-plus，更快更便宜）
+        // 调用多模态模型识别图片中的文字（使用qwen3.5-ocr，OCR专用）
 
         var ocrText = await recognizeImageText(imageData, pageNum);
 
@@ -209205,9 +209205,9 @@ async function recognizeImageText(imageBase64, pageNum){
 
 
 
-    // 使用qwen-vl-plus模型（速度更快，价格更便宜，教材文字识别足够准确）
+    // 使用qwen3.5-ocr模型（OCR专用，教材文字识别准确）
 
-    var result = await callQwenChat(messages, 'qwen-vl-plus', 0.3, 2000);
+    var result = await callQwenChat(messages, 'qwen3.5-ocr', 0.3, 2000);
 
 
 
@@ -244594,7 +244594,7 @@ async function aiPaperSummary(btn, title, doi){
 
 <script>
 // ============ 方案C：上传论文深度综合分析引擎 ============
-// 三通道：文本通道(DeepSeek分段全文分析) + 视觉通道(qwen-vl-max看图表) + 规则通道(确定性格式检查)
+// 三通道：文本通道(DeepSeek分段全文分析) + 视觉通道(qwen3-vl-plus看图表) + 规则通道(确定性格式检查)
 // 集成方式：内嵌增强现有功能（期刊匹配等），无独立浮动面板
 (function() {
   'use strict';
@@ -244774,7 +244774,7 @@ async function aiPaperSummary(btn, title, doi){
     return agg;
   }
 
-  // ---------- 4. 视觉通道：qwen-vl-max 分析图表 ----------
+  // ---------- 4. 视觉通道：qwen3-vl-plus 分析图表 ----------
   async function analyzeImagesWithVision(images, onProgress) {
     var reports = [];
     for (var i = 0; i < images.length; i++) {
@@ -244783,7 +244783,7 @@ async function aiPaperSummary(btn, title, doi){
       var sys = '你是学术论文图表审阅专家。请分析这张论文页面/图表图片，只输出一个JSON对象（不要其他文字）：{"page_type":"页面类型：摘要页/引言/方法/结果/讨论/图表页/其他","has_chart":true,"chart_type":"图表类型：折线图/柱状图/散点图/表格/机制图/流程图/照片/无","issues":["图表规范问题1","问题2"],"data_notes":"从图中读到的关键数据或趋势(25字内)","quality":"good|fair|poor"}。检查要点：坐标轴是否有单位、图注是否完整、数据标签是否清晰、表格是否有表头、图与正文是否对应。';
       var usr = { role: 'user', content: [{ type: 'text', text: '请分析这张论文图片（第' + img.page + '页）：' }, { type: 'image_url', image_url: { url: img.dataUrl } }] };
       var out = '';
-      try { out = await callQwenChat([{ role: 'system', content: sys }, usr], 'qwen-vl-max', 0.2, 2000); } catch (e) { out = ''; }
+      try { out = await callQwenChat([{ role: 'system', content: sys }, usr], 'qwen3-vl-plus', 0.2, 2000); } catch (e) { out = ''; }
       var parsed = null;
       try { parsed = JSON.parse(out); } catch (e) {
         var m = out.match(/\{[\s\S]*\}/);
@@ -244857,7 +244857,7 @@ async function aiPaperSummary(btn, title, doi){
       h.push('</ul>');
     }
     if (rep.vision && rep.vision.length > 0) {
-      h.push('<div style="font-size:14px;font-weight:700;color:#1f2937;margin:10px 0 6px">🖼️ 图表分析（qwen-vl-max 视觉模型）</div>');
+      h.push('<div style="font-size:14px;font-weight:700;color:#1f2937;margin:10px 0 6px">🖼️ 图表分析（qwen3-vl-plus 视觉模型）</div>');
       rep.vision.forEach(function(v) {
         var p = v.parsed;
         var qc = p.quality === 'good' ? '#059669' : p.quality === 'fair' ? '#d97706' : '#dc2626';
@@ -244897,7 +244897,7 @@ async function aiPaperSummary(btn, title, doi){
     var ctx = window.__paperChartCtx;
     if (!ctx || !ctx.vision || ctx.vision.length === 0) return '';
     var lines = [];
-    lines.push('\n\n【论文图表与数据上下文（视觉模型 qwen-vl-max 自动提取）】');
+    lines.push('\n\n【论文图表与数据上下文（视觉模型 qwen3-vl-plus 自动提取）】');
     lines.push('- 共提取 ' + ctx.vision.length + ' 处图表/关键页：');
     ctx.vision.slice(0, 8).forEach(function(v) {
       var p = v.parsed || {};
