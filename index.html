@@ -249158,11 +249158,11 @@ window.addEventListener('load', function(){
         <div style="font-size:18px;font-weight:700;color:#1e293b">每日科研前沿 <span style="font-size:12px;background:#10b981;color:white;padding:2px 8px;border-radius:10px;margin-left:8px">每日更新</span></div>
       </div>
       <div style="font-size:13px;color:#64748b;line-height:1.8">
-        📄 今日更新 <b id="drTodayCount" style="color:#2563eb">--</b> 篇最新英文期刊论文（每日自动抓取）<br>
-        📢 <b id="drIssueCount" style="color:#f59e0b">2个</b> 特刊正在征稿，青椒友好<br>
+        📄 今日更新 <b id="drTodayCount" style="color:#2563eb">--</b> 篇最新科研论文（每日自动抓取）<br>
+        📢 <b id="drIssueCount" style="color:#f59e0b">2个</b> 特刊正在征稿<br>
         🔥 <b id="drHotCount" style="color:#ef4444">3个</b> 本周高被引热点方向
       </div>
-      <button onclick="var __d=document.getElementById('drDrawer');__d.style.display='block';__d.style.visibility='';__d.style.height='';__d.style.overflow='';loadDrPapers()" style="width:100%;margin-top:16px;border:1px dashed #c7d2fe;background:#f5f7ff;color:#4338ca;border-radius:10px;padding:10px;font-size:13px;cursor:pointer">查看全部前沿 →</button>
+      <button onclick="var __d=document.getElementById('drDrawer');__d.style.display='block';__d.style.visibility='';document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';loadDrPapers()" style="width:100%;margin-top:16px;border:1px dashed #c7d2fe;background:#f5f7ff;color:#4338ca;border-radius:10px;padding:10px;font-size:13px;cursor:pointer">查看全部前沿 →</button>
 
       <div style="margin-top:16px;padding:16px;border-radius:12px;background:#faf5ff;border:1px solid #c4b5fd">
         <div style="font-size:15px;font-weight:700;color:#581c87;margin-bottom:8px">🎓 导师专属考博攻略（王友华教授）</div>
@@ -249177,20 +249177,35 @@ window.addEventListener('load', function(){
     // 抽屉，fixed定位，默认隐藏，不占页面位置
     var drDrawer = document.createElement('div');
     drDrawer.id = 'drDrawer';
-    drDrawer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;background:#f8fafc;z-index:9999;overflow-y:auto;padding:24px;display:none';
+    drDrawer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100vh;box-sizing:border-box;background:#f8fafc;z-index:9999;overflow-y:auto;overflow-x:hidden;padding:24px;display:none';
     drDrawer.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
-        <h2 style="font-size:20px;font-weight:700;color:#1e293b">📰 每日科研前沿</h2>
-        <button onclick="document.getElementById('drDrawer').style.display='none'" style="width:36px;height:36px;border-radius:50%;border:none;background:#e2e8f0;font-size:20px;cursor:pointer">×</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px">
+        <div>
+          <h2 style="font-size:20px;font-weight:700;color:#1e293b;margin:0">📰 每日科研前沿</h2>
+          <div id="drListCount" style="font-size:12px;color:#94a3b8;margin-top:4px"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="drRefresh()" title="重新加载最新论文" style="width:36px;height:36px;border-radius:50%;border:none;background:#eef2ff;color:#4338ca;font-size:16px;cursor:pointer">⟳</button>
+          <button onclick="document.getElementById('drDrawer').style.display='none';document.documentElement.style.overflow='';document.body.style.overflow=''" style="width:36px;height:36px;border-radius:50%;border:none;background:#e2e8f0;font-size:20px;cursor:pointer">×</button>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
-        <div style="padding:6px 14px;border-radius:20px;background:#2563eb;color:white;font-size:13px">全部</div>
-        <div style="padding:6px 14px;border-radius:20px;background:#e2e8f0;color:#475569;font-size:13px;cursor:pointer">中文论文</div>
-        <div style="padding:6px 14px;border-radius:20px;background:#e2e8f0;color:#475569;font-size:13px;cursor:pointer">英文论文</div>
-        <div style="padding:6px 14px;border-radius:20px;background:#e2e8f0;color:#475569;font-size:13px;cursor:pointer">综述</div>
-        <div style="padding:6px 14px;border-radius:20px;background:#e2e8f0;color:#475569;font-size:13px;cursor:pointer">临床研究</div>
-        <div style="padding:6px 14px;border-radius:20px;background:#e2e8f0;color:#475569;font-size:13px;cursor:pointer">🔥 只看热点</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+        <input id="drSearch" class="dr-tool" type="text" placeholder="搜索标题 / 期刊 / DOI" oninput="drSetKw(this.value)" style="flex:1;min-width:180px">
+        <select class="dr-tool" onchange="drSetSort(this.value)">
+          <option value="match">按匹配度</option>
+          <option value="year">按最新发表</option>
+          <option value="citations">按被引次数</option>
+        </select>
       </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <button class="dr-chip active" data-filter="all" onclick="drSetFilter('all')">全部</button>
+        <button class="dr-chip" data-filter="zh" onclick="drSetFilter('zh')">中文论文</button>
+        <button class="dr-chip" data-filter="en" onclick="drSetFilter('en')">英文论文</button>
+        <button class="dr-chip" data-filter="review" onclick="drSetFilter('review')">综述</button>
+        <button class="dr-chip" data-filter="clinical" onclick="drSetFilter('clinical')">临床研究</button>
+        <button class="dr-chip" data-filter="hot" onclick="drSetFilter('hot')">🔥 只看热点</button>
+      </div>
+      <div id="drSourceNote" style="display:none;font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:16px"></div>
       <div id="drPaperList" style="margin-bottom:20px"></div>
       <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px;margin-bottom:20px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -249200,15 +249215,8 @@ window.addEventListener('load', function(){
         <div id="drHotTop3" style="font-size:13px;color:#78350f;line-height:1.8">加载中…</div>
       </div>
       <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:16px;margin-bottom:20px">
-        <div style="font-size:16px;font-weight:700;color:#0c4a6e;margin-bottom:12px">📢 近期特刊征稿（青椒友好）</div>
-        <div style="font-size:13px;color:#075985;line-height:1.8;margin-bottom:10px">
-          <b>1. Frontiers in Cardiovascular Medicine：</b>运动与心血管健康专题<br>
-          <span style="font-size:12px;color:#0369a1">截稿：2026年12月31日 | SCI二区 | 录用率较高</span>
-        </div>
-        <div style="font-size:13px;color:#075985;line-height:1.8">
-          <b>2. 中国运动医学杂志：</b>运动心血管生物学新进展专题<br>
-          <span style="font-size:12px;color:#0369a1">截稿：2026年11月30日 | 中文核心 | 青椒一作友好</span>
-        </div>
+        <div style="font-size:16px;font-weight:700;color:#0c4a6e;margin-bottom:12px">📢 近期特刊征稿</div>
+        <div id="drIssueList"></div>
       </div>
     `;
     document.body.appendChild(drDrawer);
@@ -249217,7 +249225,78 @@ window.addEventListener('load', function(){
 
 // ===== 每日科研前沿：自动数据源渲染（daily-frontier.json，GitHub Actions 每日抓取）=====
 window.drFrontierCache = null;
+window.drMeta = {};
+window.drSource = 'online';
+window.drState = { filter: 'all', kw: '', sort: 'match' };
+window._drKwT = null;
+
+// 注入前沿板块专属样式（仅一次，沿用既有主题色）
+(function(){
+  if(document.getElementById('dr-style')) return;
+  var st=document.createElement('style'); st.id='dr-style';
+  st.textContent =
+    '.dr-card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);transition:box-shadow .18s ease,transform .18s ease;}' +
+    '.dr-card:hover{box-shadow:0 6px 20px rgba(37,99,235,0.10);transform:translateY(-2px);}' +
+    '.dr-chip{padding:6px 14px;border-radius:20px;background:#e2e8f0;color:#475569;font-size:13px;border:none;cursor:pointer;}' +
+    '.dr-chip.active{background:#2563eb;color:#fff;}' +
+    '.dr-tool{padding:8px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;color:#334155;background:#fff;outline:none;}' +
+    '.dr-tool:focus{border-color:#2563eb;}';
+  document.head.appendChild(st);
+})();
+
 function drEsc(s){ return window.rncEsc ? window.rncEsc(s) : (s==null?'':String(s)); }
+
+const drKeywords = ['heart failure','cardiovascular','mitochondria','myocardial','exercise','aerobic','vascular','hypertension','autonomic','vagal','eNOS','NLRP3','ischemia','reperfusion','exercise training','mitophagy','ferroptosis','macrophage'];
+function drScoreFromTitle(title){
+  let s = 70; const t = (title||'').toLowerCase();
+  drKeywords.forEach(k=>{ if(t.includes(k)) s += 2; });
+  return Math.min(98, s);
+}
+function drNormalize(p){
+  const title = (p.title||'').trim();
+  const journal = (p.journal||'').trim();
+  const doi = (p.doi||'').trim();
+  const url = p.url || (doi ? 'https://doi.org/'+doi : '');
+  const citations = Number(p.citations||0)||0;
+  const isReview = !!(p.isReview || p.type==='review' || /review|meta-analysis/i.test(title));
+  const isChinese = !!(p.isChinese || /[\u4e00-\u9fa5]/.test(title));
+  const type = p.type || (isReview ? 'review' : '');
+  const matchScore = (p.matchScore!=null && p.matchScore!=='') ? Math.max(0,Math.min(98,Number(p.matchScore)||0)) : drScoreFromTitle(title);
+  const nowYear = new Date().getFullYear();
+  const rawYear = p.year || (p.published ? String(p.published).slice(0,4) : '');
+  const yrNum = parseInt(rawYear, 10);
+  const yearValid = !isNaN(yrNum) && yrNum>=1990 && yrNum<=nowYear+2;
+  const year = yearValid ? String(yrNum) : '—';
+  const inPress = yearValid && yrNum>nowYear;
+  const published = p.published || '';
+  const topics = Array.isArray(p.topics) ? p.topics : [];
+  return {title, journal, doi, url, citations, isReview, isChinese, type, matchScore, year, inPress, published, topics};
+}
+function drDedupKey(p){
+  if(p.doi) return 'doi:'+p.doi.toLowerCase().replace(/\s/g,'');
+  return 'ti:'+p.title.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g,'');
+}
+function drIsClinical(p){
+  if(p.type==='clinical') return true;
+  return /clinical trial|randomi[sz]ed|\bRCT\b|patients|cohort/i.test(p.title);
+}
+function drScoreMeta(score){
+  if(score>=85) return {label:'高度相关', bg:'#dcfce7', color:'#16a34a'};
+  if(score>=70) return {label:'相关', bg:'#dbeafe', color:'#2563eb'};
+  if(score>=50) return {label:'弱相关', bg:'#fef3c7', color:'#d97706'};
+  return {label:'参考', bg:'#f1f5f9', color:'#64748b'};
+}
+function drSortFn(mode){
+  return (a,b)=>{
+    if(mode==='year') return String(b.published||b.year).localeCompare(String(a.published||a.year));
+    if(mode==='citations') return (b.citations-a.citations) || (b.matchScore-a.matchScore);
+    return (b.matchScore-a.matchScore) || (b.citations-a.citations);
+  };
+}
+function drHotSet(){
+  const sorted=[...(window.drFrontierCache||[])].sort(drSortFn('match'));
+  return new Set(sorted.slice(0,3).map(drDedupKey));
+}
 
 function drPaperCardHTML(p, idx){
   const title = drEsc(p.title||'');
@@ -249228,20 +249307,29 @@ function drPaperCardHTML(p, idx){
   const citations = Number(p.citations||0);
   const isReview = !!p.isReview;
   const score = Math.max(0, Math.min(98, Number(p.matchScore||0)));
+  const sm = drScoreMeta(score);
   const safeTitle = (p.title||'').replace(/'/g, "\\'");
-  const cite = `${p.title||''}. ${p.journal||''}, ${year}. DOI: https://doi.org/${doi}`.replace(/'/g, "\\'");
-  let tags = `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#dbeafe;color:#2563eb;font-weight:500">英文</span>`;
-  tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#dcfce7;color:#16a34a;font-weight:500">匹配度${score}%</span>`;
+  // 引用文本：无 DOI 时省略 DOI 段
+  let cite = `${p.title||''}. ${p.journal||''}, ${year}.`;
+  if(doi) cite += ` DOI: https://doi.org/${doi}`;
+  cite = cite.replace(/'/g, "\\'");
+  const isHot = drHotSet().has(drDedupKey(p));
+  const inPress = !!p.inPress;
+  let tags = `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:${p.isChinese?'#dcfce7':'#dbeafe'};color:${p.isChinese?'#16a34a':'#2563eb'};font-weight:500">${p.isChinese?'中文':'英文'}</span>`;
+  tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:${sm.bg};color:${sm.color};font-weight:500">${sm.label} ${score}%</span>`;
   if(isReview) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#d97706;font-weight:500">综述</span>`;
+  if(drIsClinical(p)) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#f0f9ff;color:#0284c7;font-weight:500">临床研究</span>`;
   if(citations > 20) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">高被引${citations}次</span>`;
-  if(idx < 3) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">热点</span>`;
+  if(isHot) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">热点</span>`;
+  if(inPress) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#f1f5f9;color:#64748b;font-weight:500">在线先发</span>`;
+  const dateLabel = p.published ? String(p.published).slice(0,10) : (year==='—' ? '日期待核' : `${year}年`);
   return `
-  <div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">
+  <div class="dr-card">
     <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">${tags}</div>
     <div style="font-size:15px;font-weight:600;color:#0f172a;line-height:1.6;margin-bottom:8px">${title}</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:#94a3b8">
       <span style="background:#eff6ff;color:#2563eb;padding:3px 8px;border-radius:6px;font-weight:500">${journal}</span>
-      <span>${year}年</span>
+      <span>${drEsc(dateLabel)}</span>
       <button onclick="aiPaperSummary(this, '${safeTitle}', '${doi}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dbeafe;color:#2563eb;cursor:pointer">🤖 AI总结</button>
       <button onclick="navigator.clipboard.writeText('${cite}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dcfce7;color:#16a34a;cursor:pointer">📋 复制引用</button>
       ${url ? `<a href="${drEsc(url)}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:6px;font-size:12px;background:#fef3c7;color:#d97706;text-decoration:none">查看原文 →</a>` : ''}
@@ -249249,19 +249337,39 @@ function drPaperCardHTML(p, idx){
   </div>`;
 }
 
-function drRenderAll(papers, meta){
-  const list = document.getElementById('drPaperList');
-  if(list){
-    list.innerHTML = papers.map((p,i)=>drPaperCardHTML(p,i)).join('');
-    list.dataset.loaded = '1';
+const drIssues = [
+  {journal:'Frontiers in Cardiovascular Medicine', topic:'运动与心血管健康专题', deadline:'2026-12-31', tag:'SCI二区'},
+  {journal:'中国运动医学杂志', topic:'运动心血管生物学新进展专题', deadline:'2026-11-30', tag:'中文核心'}
+];
+
+function drFilter(list){
+  const s = window.drState;
+  const kw = (s.kw||'').trim().toLowerCase();
+  return list.filter(p=>{
+    if(s.filter==='zh' && !p.isChinese) return false;
+    if(s.filter==='en' && p.isChinese) return false;
+    if(s.filter==='review' && !p.isReview) return false;
+    if(s.filter==='clinical' && !drIsClinical(p)) return false;
+    if(s.filter==='hot' && !drHotSet().has(drDedupKey(p))) return false;
+    if(kw){ const hay=(p.title+' '+p.journal+' '+p.doi).toLowerCase(); if(!hay.includes(kw)) return false; }
+    return true;
+  });
+}
+
+function drRenderList(list){
+  const el = document.getElementById('drPaperList');
+  if(!el) return;
+  if(!list.length){
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">当前筛选下暂无论文</div>';
+  } else {
+    el.innerHTML = list.map((p,i)=>drPaperCardHTML(p,i)).join('');
   }
-  const tc = document.getElementById('drTodayCount');
-  if(tc) tc.textContent = papers.length + '篇';
-  const hc = document.getElementById('drHotCount');
-  if(hc) hc.textContent = Math.min(3, papers.length) + '个';
-  const hot = [...papers]
-    .sort((a,b)=>Number(b.citations||0)-Number(a.citations||0) || Number(b.matchScore||0)-Number(a.matchScore||0))
-    .slice(0,3);
+  const cnt = document.getElementById('drListCount');
+  if(cnt) cnt.textContent = `当前 ${list.length} / 共 ${(window.drFrontierCache||[]).length} 篇`;
+}
+
+function drRenderHot(){
+  const hot = [...(window.drFrontierCache||[])].sort(drSortFn('match')).slice(0,3);
   const hotEl = document.getElementById('drHotTop3');
   if(hotEl){
     hotEl.innerHTML = hot.map((p,i)=>{
@@ -249269,17 +249377,104 @@ function drRenderAll(papers, meta){
       return `<div style="margin-bottom:8px">${i+1}. ${drEsc(p.title||'')}${c>0?`（被引${c}次）`:''}</div>`;
     }).join('') || '<div>暂无热点条目</div>';
   }
+  const hc = document.getElementById('drHotCount');
+  if(hc) hc.textContent = Math.min(3, hot.length) + '个';
+}
+
+function drRenderMeta(){
   const up = document.getElementById('drHotUpdated');
-  if(up && meta && meta.generatedAt){
-    const d = new Date(meta.generatedAt);
-    if(!isNaN(d)) up.textContent = '更新于 ' + d.toLocaleDateString('zh-CN');
+  const g = window.drMeta && window.drMeta.generatedAt;
+  if(up){
+    if(g){ const d=new Date(g); if(!isNaN(d)) up.textContent='更新于 '+d.toLocaleDateString('zh-CN'); else up.textContent=''; }
+    else up.textContent='';
+  }
+  const note = document.getElementById('drSourceNote');
+  if(note){
+    if(window.drSource==='fallback'){ note.style.display='block'; note.textContent='在线源暂不可用，以下为本地精选方向文献'; }
+    else if(window.drSource==='crossref'){ note.style.display='block'; note.textContent='来自 Crossref 在线检索结果'; }
+    else { note.style.display='none'; }
   }
 }
 
+function drRenderIssues(){
+  const box = document.getElementById('drIssueList');
+  if(!box) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const valid = drIssues.filter(it=>{ const d=new Date(it.deadline); return !isNaN(d) && d>=today; });
+  box.innerHTML = drIssues.map(it=>{
+    const d = new Date(it.deadline);
+    const expired = isNaN(d) || d<today;
+    const left = expired ? '已截稿' : ('截稿 '+it.deadline);
+    const color = expired ? '#94a3b8' : '#075985';
+    return `<div style="font-size:13px;color:${color};line-height:1.8;margin-bottom:10px;${expired?'opacity:.55':''}">
+      <b>${drEsc(it.journal)}：</b>${drEsc(it.topic)}<br>
+      <span style="font-size:12px;color:${expired?'#94a3b8':'#0369a1'}">${left} | ${drEsc(it.tag)}</span></div>`;
+  }).join('');
+  const ic = document.getElementById('drIssueCount');
+  if(ic) ic.textContent = valid.length + '个';
+}
+
+function drApply(){
+  const filtered = drFilter(window.drFrontierCache||[]).sort(drSortFn(window.drState.sort));
+  drRenderList(filtered);
+  drSyncChips();
+}
+
+function drIngest(rawPapers, meta, source){
+  const norm = (rawPapers||[]).map(drNormalize);
+  const seen = new Set(); const dedup = [];
+  norm.forEach(p=>{ const k=drDedupKey(p); if(!seen.has(k)){ seen.add(k); dedup.push(p); } });
+  window.drFrontierCache = dedup;
+  window.drMeta = meta||{};
+  window.drSource = source||'online';
+  const tc = document.getElementById('drTodayCount');
+  if(tc) tc.textContent = dedup.length + '篇';
+  drRenderHot();
+  drApply();
+  drRenderMeta();
+  drRenderIssues();
+}
+// 兼容旧调用名
+window.drRenderAll = drIngest;
+
+function drSyncChips(){
+  document.querySelectorAll('#drDrawer [data-filter]').forEach(b=>{
+    const on = b.dataset.filter === window.drState.filter;
+    b.className = 'dr-chip' + (on ? ' active' : '');
+  });
+}
+function drSetFilter(f){ window.drState.filter=f; drApply(); }
+function drSetSort(m){ window.drState.sort=m; drApply(); }
+function drSetKw(v){ window.drState.kw=v; clearTimeout(window._drKwT); window._drKwT=setTimeout(drApply,200); }
+function drRefresh(){
+  const list=document.getElementById('drPaperList');
+  if(list) delete list.dataset.loaded;
+  loadDrPapers(true);
+}
+
 // 自动加载最新论文
-async function loadDrPapers(){
+const drFallbackPapers = [
+  {title: "Molecular Mechanism of Aerobic Exercise Ameliorating Myocardial Mitochondrial Injury in Mice with Heart Failure", journal: "Int J Mol Sci", year: 2025, doi: "10.3390/ijms26052136", citations: 12, type: "review", isChinese: false},
+  {title: "Exercise training improves cardiac function and regulates myocardial mitophagy differently in ischaemic and pressure-overload heart failure mice", journal: "J Physiol", year: 2024, doi: "10.1113/JP284567", citations: 28, type: "clinical", isChinese: false},
+  {title: "Aerobic exercise inhibits NLRP3 inflammasome activation in myocardial infarction via AMPK/PGC-1α pathway", journal: "Front Cardiovasc Med", year: 2025, doi: "10.3389/fcvm.2025.123456", citations: 5, type: "clinical", isChinese: false},
+  {title: "运动通过Hippo-YAP通路改善心力衰竭的分子机制研究进展", journal: "生命科学", year: 2024, doi: "", citations: 8, type: "review", isChinese: true},
+  {title: "Vascular endothelial function and exercise: role of PI3K/Akt/eNOS signaling in hypertension", journal: "Hypertens Res", year: 2024, doi: "10.1038/s41440-024-01234-5", citations: 19, type: "clinical", isChinese: false},
+  {title: "Piezo1 mechanosensitive channel mediates exercise-induced vascular remodeling", journal: "Circ Res", year: 2025, doi: "10.1161/CIRCRESAHA.124.321567", citations: 3, type: "", isChinese: false},
+  {title: "迷走神经抗炎与运动心脏保护：胆碱能抗炎通路的研究进展", journal: "中国运动医学杂志", year: 2024, doi: "", citations: 6, type: "review", isChinese: true},
+  {title: "Mitochondrial dynamics and mitophagy in exercise-induced cardioprotection", journal: "J Mol Cell Cardiol", year: 2024, doi: "10.1016/j.yjmcc.2024.03.012", citations: 35, type: "review", isChinese: false},
+  {title: "有氧运动对心衰小鼠心肌线粒体质量控制的影响", journal: "体育科学", year: 2025, doi: "", citations: 2, type: "clinical", isChinese: true},
+  {title: "Vagal nerve stimulation and exercise therapy for heart failure: mechanisms and clinical implications", journal: "Eur J Heart Fail", year: 2025, doi: "10.1002/ejhf.12345", citations: 4, type: "review", isChinese: false},
+  {title: "Exercise preconditioning protects against myocardial ischemia-reperfusion injury via SIRT1/PGC-1α pathway", journal: "J Sport Health Sci", year: 2024, doi: "10.1016/j.jshs.2024.02.005", citations: 22, type: "", isChinese: false},
+  {title: "运动干预高血压的血管内皮机制：从eNOS到内皮祖细胞", journal: "中国病理生理杂志", year: 2025, doi: "", citations: 3, type: "review", isChinese: true},
+  {title: "Macrophage polarization and exercise: a new mechanism of cardiac repair after myocardial infarction", journal: "Basic Res Cardiol", year: 2025, doi: "10.1007/s00395-025-09876-5", citations: 1, type: "review", isChinese: false},
+  {title: "运动心脏保护的自主神经机制：从心率变异性到迷走神经张力", journal: "生理学报", year: 2024, doi: "", citations: 7, type: "review", isChinese: true},
+  {title: "Exercise dose-response in heart failure: how much exercise is enough for mitochondrial biogenesis?", journal: "Eur J Prev Cardiol", year: 2025, doi: "10.1093/eurjpc/zwad123", citations: 9, type: "clinical", isChinese: false}
+];
+
+async function loadDrPapers(force){
   const list = document.getElementById('drPaperList');
-  if(!list || list.dataset.loaded) return;
+  if(!list) return;
+  if(!force && list.dataset.loaded) return;
   list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">📡 正在加载今日科研前沿...</div>';
   // 优先：仓库内每日自动抓取的 daily-frontier.json（GitHub Actions 定时生成）
   try {
@@ -249287,101 +249482,29 @@ async function loadDrPapers(){
     if(r.ok){
       const j = await r.json();
       const ps = (j && j.items) || [];
-      if(ps.length){ window.drFrontierCache = ps; drRenderAll(ps, j.meta||{}); return; }
+      if(ps.length){ drIngest(ps, j.meta||{}, 'online'); list.dataset.loaded = '1'; return; }
     }
   } catch(e){ /* 自动源不可用时，落到在线 Crossref 与本地兜底 */ }
   list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">📡 正在从CrossRef拉取最新论文...</div>';
   try {
-    // 精准匹配运动心血管生物学方向（王友华教授方向）
     const res = await fetch('https://api.crossref.org/works?query=exercise+cardiovascular+heart+failure+mitochondria+myocardial+vagal+eNOS+NLRP3+vascular+exercise+training+ischemia+reperfusion&filter=from-pub-date:2025-01-01&rows=15&sort=issued&order=desc&mailto=research@example.com');
     const data = await res.json();
-    const papers = data.message.items;
-    let html = '';
-    papers.forEach((p, idx) => {
-      const title = p.title ? p.title[0] : '无标题';
-      const journal = p['container-title'] ? p['container-title'][0] : '未知期刊';
-      const year = p.issued && p.issued['date-parts'] ? p.issued['date-parts'][0][0] : '2026';
-      const doi = p.DOI || '';
-      const citations = p['is-referenced-by-count'] || 0;
-      const isReview = title.toLowerCase().includes('review') || title.toLowerCase().includes('meta-analysis');
-      const isChinese = /[\u4e00-\u9fa5]/.test(title);
-      const keywords = ['heart failure', 'cardiovascular', 'mitochondria', 'myocardial', 'exercise', 'aerobic', 'vascular', 'hypertension', 'autonomic', 'vagal', 'eNOS', 'NLRP3', 'ischemia', 'reperfusion', 'exercise training'];
-      let matchScore = 75;
-      keywords.forEach(k => { if(title.toLowerCase().includes(k.toLowerCase())) matchScore += 4; });
-      matchScore = Math.min(matchScore, 98);
-      let tags = `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:${isChinese ? '#dcfce7' : '#dbeafe'};color:${isChinese ? '#16a34a' : '#2563eb'};font-weight:500">${isChinese ? '中文' : '英文'}</span>`;
-      tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#dcfce7;color:#16a34a;font-weight:500">匹配度${matchScore}%</span>`;
-      if(isReview) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#d97706;font-weight:500">综述</span>`;
-      if(citations > 50) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">高被引${citations}次</span>`;
-      if(idx < 3) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">热点</span>`;
-      html += `
-      <div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">
-        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">${tags}</div>
-        <div style="font-size:15px;font-weight:600;color:#0f172a;line-height:1.6;margin-bottom:8px">${title}</div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:#94a3b8">
-          <span style="background:#eff6ff;color:#2563eb;padding:3px 8px;border-radius:6px;font-weight:500">${journal}</span>
-          <span>${year}年</span>
-          <button onclick="aiPaperSummary(this, '${title}', '${doi}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dbeafe;color:#2563eb;cursor:pointer">🤖 AI总结</button>
-          <button onclick="navigator.clipboard.writeText('${title}. ${journal}, ${year}. DOI: https://doi.org/${doi}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dcfce7;color:#16a34a;cursor:pointer">📋 复制引用</button>
-          <a href="https://doi.org/${doi}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:6px;font-size:12px;background:#fef3c7;color:#d97706;text-decoration:none">查看原文 →</a>
-        </div>
-      </div>`;
+    const papers = (data.message.items||[]).map(p=>{
+      const title = p.title ? p.title[0] : '';
+      return {
+        title: title,
+        journal: p['container-title'] ? p['container-title'][0] : '',
+        year: p.issued && p.issued['date-parts'] ? p.issued['date-parts'][0][0] : '',
+        doi: p.DOI || '',
+        citations: p['is-referenced-by-count'] || 0,
+        isReview: /review|meta-analysis/i.test(title),
+        isChinese: /[\u4e00-\u9fa5]/.test(title)
+      };
     });
-    list.innerHTML = html;
-    list.dataset.loaded = '1';
-  } catch(e) {
-    // API加载失败时，自动加载本地写死的运动心血管方向论文
-    const fallbackPapers = [
-      {title: "Molecular Mechanism of Aerobic Exercise Ameliorating Myocardial Mitochondrial Injury in Mice with Heart Failure", journal: "Int J Mol Sci", year: 2025, doi: "10.3390/ijms26052136", citations: 12, type: "review", isChinese: false},
-      {title: "Exercise training improves cardiac function and regulates myocardial mitophagy differently in ischaemic and pressure-overload heart failure mice", journal: "J Physiol", year: 2024, doi: "10.1113/JP284567", citations: 28, type: "clinical", isChinese: false},
-      {title: "Aerobic exercise inhibits NLRP3 inflammasome activation in myocardial infarction via AMPK/PGC-1α pathway", journal: "Front Cardiovasc Med", year: 2025, doi: "10.3389/fcvm.2025.123456", citations: 5, type: "clinical", isChinese: false},
-      {title: "运动通过Hippo-YAP通路改善心力衰竭的分子机制研究进展", journal: "生命科学", year: 2024, doi: "", citations: 8, type: "review", isChinese: true},
-      {title: "Vascular endothelial function and exercise: role of PI3K/Akt/eNOS signaling in hypertension", journal: "Hypertens Res", year: 2024, doi: "10.1038/s41440-024-01234-5", citations: 19, type: "clinical", isChinese: false},
-      {title: "Piezo1 mechanosensitive channel mediates exercise-induced vascular remodeling", journal: "Circ Res", year: 2025, doi: "10.1161/CIRCRESAHA.124.321567", citations: 3, type: "", isChinese: false},
-      {title: "迷走神经抗炎与运动心脏保护：胆碱能抗炎通路的研究进展", journal: "中国运动医学杂志", year: 2024, doi: "", citations: 6, type: "review", isChinese: true},
-      {title: "Mitochondrial dynamics and mitophagy in exercise-induced cardioprotection", journal: "J Mol Cell Cardiol", year: 2024, doi: "10.1016/j.yjmcc.2024.03.012", citations: 35, type: "review", isChinese: false},
-      {title: "有氧运动对心衰小鼠心肌线粒体质量控制的影响", journal: "体育科学", year: 2025, doi: "", citations: 2, type: "clinical", isChinese: true},
-      {title: "Vagal nerve stimulation and exercise therapy for heart failure: mechanisms and clinical implications", journal: "Eur J Heart Fail", year: 2025, doi: "10.1002/ejhf.12345", citations: 4, type: "review", isChinese: false},
-      {title: "Exercise preconditioning protects against myocardial ischemia-reperfusion injury via SIRT1/PGC-1α pathway", journal: "J Sport Health Sci", year: 2024, doi: "10.1016/j.jshs.2024.02.005", citations: 22, type: "", isChinese: false},
-      {title: "运动干预高血压的血管内皮机制：从eNOS到内皮祖细胞", journal: "中国病理生理杂志", year: 2025, doi: "", citations: 3, type: "review", isChinese: true},
-      {title: "Macrophage polarization and exercise: a new mechanism of cardiac repair after myocardial infarction", journal: "Basic Res Cardiol", year: 2025, doi: "10.1007/s00395-025-09876-5", citations: 1, type: "review", isChinese: false},
-      {title: "运动心脏保护的自主神经机制：从心率变异性到迷走神经张力", journal: "生理学报", year: 2024, doi: "", citations: 7, type: "review", isChinese: true},
-      {title: "Exercise dose-response in heart failure: how much exercise is enough for mitochondrial biogenesis?", journal: "Eur J Prev Cardiol", year: 2025, doi: "10.1093/eurjpc/zwad123", citations: 9, type: "clinical", isChinese: false}
-    ];
-    let html = '';
-    fallbackPapers.forEach((p, idx) => {
-      const title = p.title;
-      const journal = p.journal;
-      const year = p.year;
-      const doi = p.doi;
-      const citations = p.citations;
-      const isReview = p.type === 'review';
-      const isChinese = p.isChinese;
-      const keywords = ['heart failure', 'cardiovascular', 'mitochondria', 'myocardial', 'exercise', 'aerobic', 'vascular', 'hypertension', 'autonomic', 'vagal', 'eNOS', 'NLRP3', 'ischemia', 'reperfusion', 'exercise training'];
-      let matchScore = 85;
-      keywords.forEach(k => { if(title.toLowerCase().includes(k.toLowerCase())) matchScore += 1; });
-      matchScore = Math.min(matchScore, 98);
-      let tags = `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:${isChinese ? '#dcfce7' : '#dbeafe'};color:${isChinese ? '#16a34a' : '#2563eb'};font-weight:500">${isChinese ? '中文' : '英文'}</span>`;
-      tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#dcfce7;color:#16a34a;font-weight:500">匹配度${matchScore}%</span>`;
-      if(isReview) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#d97706;font-weight:500">综述</span>`;
-      if(citations > 20) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">高被引${citations}次</span>`;
-      if(idx < 3) tags += `<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#fef2f2;color:#dc2626;font-weight:500">热点</span>`;
-      html += `
-      <div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">
-        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">${tags}</div>
-        <div style="font-size:15px;font-weight:600;color:#0f172a;line-height:1.6;margin-bottom:8px">${title}</div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:#94a3b8">
-          <span style="background:#eff6ff;color:#2563eb;padding:3px 8px;border-radius:6px;font-weight:500">${journal}</span>
-          <span>${year}年</span>
-          <button onclick="aiPaperSummary(this, '${title.replace(/'/g, "\\'")}', '${doi}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dbeafe;color:#2563eb;cursor:pointer">🤖 AI总结</button>
-          <button onclick="navigator.clipboard.writeText('${title}. ${journal}, ${year}. DOI: https://doi.org/${doi}')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dcfce7;color:#16a34a;cursor:pointer">📋 复制引用</button>
-          ${doi ? `<a href="https://doi.org/${doi}" target="_blank" rel="noopener" style="padding:4px 10px;border-radius:6px;font-size:12px;background:#fef3c7;color:#d97706;text-decoration:none">查看原文 →</a>` : ''}
-        </div>
-      </div>`;
-    });
-    list.innerHTML = html;
-    list.dataset.loaded = '1';
-  }
+    if(papers.length){ drIngest(papers, {source:'Crossref'}, 'crossref'); list.dataset.loaded = '1'; return; }
+  } catch(e) { /* 在线源失败，落到本地精选兜底 */ }
+  drIngest(drFallbackPapers, {}, 'fallback');
+  list.dataset.loaded = '1';
 }
 
 
@@ -249479,7 +249602,17 @@ async function aiPaperSummary(btn, title, doi){
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
     const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
-    let finalResult = dsResult || glmResult || qwenResult;
+    let finalResult = dsResult || glmResult || kimiResult || qwenResult;
+    if(!finalResult || !String(finalResult).trim()){
+      const emptyDiv = document.createElement('div');
+      emptyDiv.style.cssText = 'margin-top:10px;padding:16px;background:#f8fafc;border-radius:8px;font-size:13px;color:#64748b;line-height:1.9';
+      emptyDiv.textContent = '暂未获取到模型解读，请稍后重试。';
+      btn.parentNode.parentNode.appendChild(emptyDiv);
+      btn.innerText = '🤖 AI总结';
+      btn.disabled = false;
+      return;
+    }
+    finalResult = String(finalResult).trim();
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
