@@ -11,7 +11,8 @@
   var ROUTE = {
     'api.deepseek.com': 'deepseek',
     'open.bigmodel.cn': 'glm',
-    'api.moonshot.cn': 'kimi'
+    'api.moonshot.cn': 'kimi',
+    'dashscope.aliyuncs.com': 'qwen'
   };
   if (!PROXY || PROXY.indexOf('YOUR_') === 0) { return; }
   var originalFetch = window.fetch.bind(window);
@@ -2960,12 +2961,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -3060,12 +3077,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -3466,12 +3499,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -17850,12 +17899,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -18048,12 +18113,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -18182,12 +18263,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -18282,12 +18379,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -18476,12 +18589,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -18728,12 +18857,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -18830,12 +18975,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -18930,12 +19091,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -19390,12 +19567,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -19684,12 +19877,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -19806,12 +20015,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -24598,12 +24823,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -24846,12 +25087,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -25094,12 +25351,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -25421,12 +25694,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -29651,12 +29940,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -188836,12 +189141,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -189174,12 +189495,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -190202,12 +190539,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -190360,12 +190713,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -190704,12 +191073,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -191262,12 +191647,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -191534,12 +191935,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -191668,12 +192085,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -191801,12 +192234,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -191934,12 +192383,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -192068,12 +192533,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -192202,12 +192683,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -192336,12 +192833,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -192469,12 +192982,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -192602,12 +193131,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -192736,12 +193281,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -192869,12 +193430,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -193002,12 +193579,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -193367,12 +193960,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -193601,12 +194210,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -193757,12 +194382,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -193929,12 +194570,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -194111,12 +194768,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -194275,12 +194948,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -194429,12 +195118,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -194585,12 +195290,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -194791,12 +195512,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -194977,12 +195714,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -195267,12 +196020,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -195425,12 +196194,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -197557,9 +198342,8 @@ function undResetUpload(){
 
 
 
-// ========== 阿里云百炼API（Qwen多模态）直接调用 ==========
-
-const QWEN_API_KEY = 'sk-ws-H.PDYXLXI.K3jv.MEUCIQDjP7RKLlok-AieT0PBMcJyRT_7ns7kFFwIHipq2GMATgIgdCgpITgBxKxsOVaLJfAKYoVlyFA9qjw1OQnfIUadpfA';
+// ========== 阿里云百炼（Qwen）经 llm-proxy 中转调用 ==========
+// Key 存放在云函数环境变量 QWEN_KEY，前端不下发；fetch dashscope 域名由包装器改道中转并剥离鉴权头。
 
 const QWEN_API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
 
@@ -197584,8 +198368,6 @@ async function callQwenChat(messages, model='qwen3.5-plus', temperature=0.3, max
     method: 'POST',
 
     headers: {
-
-      'Authorization': 'Bearer ' + QWEN_API_KEY,
 
       'Content-Type': 'application/json'
 
@@ -201013,12 +201795,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -205641,12 +206439,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -210671,12 +211485,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -212207,12 +213037,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -212797,12 +213643,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -215555,12 +216417,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -216183,12 +217061,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -224437,12 +225331,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -225217,12 +226127,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -226415,12 +227341,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -227915,12 +228857,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -229723,12 +230681,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -230009,12 +230983,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -230197,12 +231187,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -231647,12 +232653,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -233411,12 +234433,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -233547,12 +234585,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -235419,12 +236473,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -236769,12 +237839,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -238159,12 +239245,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -239121,12 +240223,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -239793,12 +240911,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -239935,12 +241069,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -240273,12 +241423,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -240665,12 +241831,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -240903,12 +242085,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -241085,12 +242283,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -241329,12 +242543,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -241501,12 +242731,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -241663,12 +242909,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -241817,12 +243079,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -242008,12 +243286,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -242180,12 +243474,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -242346,12 +243656,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -243224,12 +244550,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -243714,12 +245056,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -244127,12 +245485,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -244771,12 +246145,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -245230,12 +246620,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -245411,12 +246817,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -245548,12 +246970,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -246403,12 +247841,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -247954,12 +249408,28 @@ async function aiPaperSummary(btn, title, doi){
       return null;
     }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+            {role: 'system', content: '你是运动心血管生物学方向的科研助手，用中文详细总结论文，分4个部分，总共400字左右，重点内容用**加粗**标注：1.**研究目的**：为什么做这个研究，要解决什么问题 2.**核心结果**：主要发现了什么，用了什么模型/方法，关键数据 3.**临床/科研价值**：这个发现有什么用 4.**对你的启发**：对考运动心血管方向博士的学生有什么参考。'},
+            {role: 'user', content: '请总结这篇论文：' + title + '，DOI：' + doi}
+          ], max_tokens: 800})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return null; }
+  }
+
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const dsResult = results[0].status === 'fulfilled' ? results[0].value : null;
     const glmResult = results[1].status === 'fulfilled' ? results[1].value : null;
     const kimiResult = results[2].status === 'fulfilled' ? results[2].value : null;
-    let finalResult = dsResult || glmResult;
+    const qwenResult = results[3].status === 'fulfilled' ? results[3].value : null;
+    let finalResult = dsResult || glmResult || qwenResult;
     let html = finalResult.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#2563eb">$1</strong>').replace(/\n/g, '<br>');
     if(dsResult && glmResult) {
       html = '✅ <span style="font-size:12px;color:#16a34a">双模型交叉核对完成（DeepSeek+GLM）</span><br><br>' + html;
@@ -248049,7 +249519,7 @@ async function runThreeModelReview() {
   const text = document.getElementById('rtPaperInput').value.trim();
   if(!text) { alert('请先粘贴论文文本！'); return; }
   const resultDiv = document.getElementById('rtResult');
-  resultDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#64748b">🔄 三模型并行审稿中...<br><small>DeepSeek / GLM / Kimi</small></div>';
+  resultDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#64748b">🔄 四模型并行审稿中...<br><small>DeepSeek / GLM / Kimi / Qwen</small></div>';
   async function callDS() {
     const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
@@ -248084,18 +249554,31 @@ async function runThreeModelReview() {
       return data.choices[0].message.content;
     } catch(e) { return null; }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [{role:'system', content:'你是学术论文审稿专家，从格式规范、逻辑结构、学术表达、参考文献四个维度指出论文问题，按严重程度列出。'},{role:'user', content:'请审稿：' + text.slice(0,5000)}], max_tokens: 1000})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return 'Qwen不可用'; }
+  }
   try {
-    const results = await Promise.allSettled([callDS(), callGLM(), callKimi()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callKimi(), callQwen()]);
     const ds = results[0].status === 'fulfilled' ? results[0].value : 'DS不可用';
     const glm = results[1].status === 'fulfilled' ? results[1].value : 'GLM不可用';
     const kimi = results[2].status === 'fulfilled' ? results[2].value : 'Kimi不可用';
+    const qwen = results[3].status === 'fulfilled' ? results[3].value : 'Qwen不可用';
     resultDiv.innerHTML = `
       <div style="background:#f8fafc;border-radius:12px;padding:16px;line-height:1.8">
-        <h3 style="color:#1e40af;margin-bottom:10px">📋 审稿结果（三模型并行）</h3>
+        <h3 style="color:#1e40af;margin-bottom:10px">📋 审稿结果（四模型并行）</h3>
         <div style="margin-bottom:12px;padding:12px;background:#eff6ff;border-radius:8px"><b>DeepSeek审稿：</b><br>${ds.replace(/\n/g,'<br>')}</div>
         <div style="margin-bottom:12px;padding:12px;background:#faf5ff;border-radius:8px"><b>GLM审稿：</b><br>${glm.replace(/\n/g,'<br>')}</div>
-        <div style="padding:12px;background:#ecfdf5;border-radius:8px"><b>Kimi审稿：</b><br>${kimi.replace(/\n/g,'<br>')}</div>
-        <div style="margin-top:10px;font-size:12px;color:#64748b">✅ 三模型交叉审稿完成，共识问题建议优先修改</div>
+        <div style="margin-bottom:12px;padding:12px;background:#ecfdf5;border-radius:8px"><b>Kimi审稿：</b><br>${kimi.replace(/\n/g,'<br>')}</div>
+        <div style="padding:12px;background:#fffbeb;border-radius:8px"><b>Qwen审稿：</b><br>${(qwen||'').replace(/\n/g,'<br>')}</div>
+        <div style="margin-top:10px;font-size:12px;color:#64748b">✅ 四模型交叉审稿完成，共识问题建议优先修改</div>
       </div>
     `;
   } catch(e) {
@@ -248190,16 +249673,32 @@ async function runPolish() {
       return data.choices[0].message.content;
     } catch(e) { return null; }
   }
+  async function callQwen() {
+    try {
+      const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model: 'qwen3.5-plus', messages: [
+          {role:'system', content:'你是SCI论文润色专家，润色学术文本，优化语言流畅度、语法错误、逻辑连接，专业术语保持准确，直接输出润色后文本，不要解释。'},
+          {role:'user', content: '润色以下文本：' + text.slice(0,5000)}
+        ], max_tokens: 2000})
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch(e) { return 'Qwen不可用'; }
+  }
   try {
-    const results = await Promise.allSettled([callDS(), callGLM()]);
+    const results = await Promise.allSettled([callDS(), callGLM(), callQwen()]);
     const ds = results[0].status === 'fulfilled' ? results[0].value : 'DS不可用';
     const glm = results[1].status === 'fulfilled' ? results[1].value : 'GLM不可用';
+    const qwen = results[2].status === 'fulfilled' ? results[2].value : 'Qwen不可用';
     resultDiv.innerHTML = `
       <div style="background:#f8fafc;border-radius:12px;padding:16px;line-height:1.8">
         <h3 style="color:#1e40af;margin-bottom:10px">✨ 润色完成</h3>
         <div style="margin-bottom:12px;padding:12px;background:#eff6ff;border-radius:8px"><b>DeepSeek润色版：</b><br>${ds.replace(/\n/g,'<br>')}</div>
-        <div style="padding:12px;background:#faf5ff;border-radius:8px"><b>GLM专业校对版：</b><br>${glm.replace(/\n/g,'<br>')}</div>
-        <div style="margin-top:10px;font-size:12px;color:#64748b">✅ 双模型交叉润色完成，建议综合两个版本的修改点</div>
+        <div style="margin-bottom:12px;padding:12px;background:#faf5ff;border-radius:8px"><b>GLM专业校对版：</b><br>${glm.replace(/\n/g,'<br>')}</div>
+        <div style="padding:12px;background:#fffbeb;border-radius:8px"><b>Qwen润色版：</b><br>${(qwen||'').replace(/\n/g,'<br>')}</div>
+        <div style="margin-top:10px;font-size:12px;color:#64748b">✅ 三模型交叉润色完成，建议综合各版本的修改点</div>
       </div>
     `;
   } catch(e) {
