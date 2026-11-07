@@ -249026,15 +249026,21 @@ window.addEventListener('scroll',()=>{
 });
 
 // ========== 修复：AI生成结果不显示、按钮点不动的bug ==========
-// 1. 所有包含"结果""输出""生成"的div，生成完强制显示
+// 1. 结果块仅在所属面板可见时解除遮挡；不再搬到 body 末尾，避免隐藏结果泄露到页脚之后
 setInterval(()=>{
   document.querySelectorAll('div').forEach(d=>{
-    if(d.id && (d.id.includes('Result') || d.id.includes('Output') || d.id.includes('result'))){
-      if(d.innerHTML && d.innerHTML.trim().length>100 && d.style.display==='none'){
-        d.style.display = 'block';
-        // 移到body末尾避免被父元素transform挡住
-        document.body.appendChild(d);
-      }
+    if(!d.id || !(d.id.includes('Result') || d.id.includes('Output') || d.id.includes('result'))) return;
+    if(!(d.innerHTML && d.innerHTML.trim().length>100)) return;
+    // 祖先面板处于隐藏状态（标签页/抽屉关闭）时，结果块保持隐藏，不泄露到页脚之后
+    let anc = d.parentElement, ancestorHidden = false;
+    while(anc && anc !== document.body){
+      if(getComputedStyle(anc).display === 'none'){ ancestorHidden = true; break; }
+      anc = anc.parentElement;
+    }
+    if(ancestorHidden) return;
+    // 面板可见时，若结果块被内联隐藏，按原意图解除遮挡；节点仍留在原面板内，不搬移
+    if(d.style.display === 'none'){
+      d.style.display = 'block';
     }
   })
 },500);
