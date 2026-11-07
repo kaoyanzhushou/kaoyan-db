@@ -14,6 +14,11 @@
 - 标题/期刊关键词命中打分，低于 MIN_SCORE 剔除；DOI 去重；
 - 按匹配度 → 被引数 → 发表日期排序，取前 MAX_ITEMS。
 
+可用性保护（本轮加固）：
+- 接口失败自动重试 2 次（4xx 不重试）；
+- 本次抓取为空时不覆盖上一份有效 JSON；无历史文件时以非 0 退出让 CI 标红；
+- 避免一次限流/抖动把线上数据清空成空列表。
+
 本地自测：
   python scripts/fetch_daily.py --dry-run
   python scripts/fetch_daily.py --out daily-frontier.json
@@ -26,6 +31,7 @@ import pathlib
 import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -36,6 +42,8 @@ ROWS_PER_GROUP = 25
 MIN_SCORE = 4
 MAILTO = "research@example.com"
 USER_AGENT = "kaoyan-db-daily-fetch/1.0 (mailto:%s)" % MAILTO
+RETRY_MAX = 2
+RETRY_BACKOFF = (2, 5)  # 秒，按次退避
 
 # 主方向：运动心血管生物学（权重高）
 CARDIO_KW = {
@@ -73,15 +81,30 @@ STRONG_CARDIO = ["myocardial", "cardiac", "heart failure", "heart", "cardiomyocy
 OFFTOPIC_SITE = ["hepatic", "liver", "ovarian", "ovary", "testicular", "testis",
                  "cerebral", "brain", "hippocamp", "pancreatic", "knee arthroplasty",
                  "popliteal", "bone density", "skin", "gastric", "intestinal", "lung injury",
-                 "skeletal muscle", "tendon", "ligament"]
+                 "skeletal muscle", "tendon", "ligament",
+                 # 加强离靶：肿瘤表皮生长因子、吸入给药纳米囊等非心血管方向
+                 "epidermal growth factor", "nanovesicle", "inhalable", "dermatolog"]
 
 REVIEW_RE = re.compile(r"\b(review|meta-analysis|systematic review|scoping review)\b", re.I)
 
 
 def http_get_json(url, timeout=20):
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode("utf-8", "replace"))
+    """带退避重试的 GET JSON；4xx 不重试，5xx/网络/解析错误重试 RETRY_MAX 次。"""
+    last_err = None
+    for attempt in range(RETRY_MAX + 1):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read().decode("utf-8", "replace"))
+        except urllib.error.HTTPError as e:
+            last_err = e
+            if 400 <= e.code < 500:
+                raise  # 4xx 属参数/权限问题，重试无意义
+        except (urllib.error.URLError, ValueError) as e:
+            last_err = e
+        if attempt < RETRY_MAX:
+            time.sleep(RETRY_BACKOFF[attempt])
+    raise last_err
 
 
 def crossref_group(query, from_date):
@@ -226,6 +249,15 @@ def main():
         return
 
     out = pathlib.Path(args.out) if args.out else pathlib.Path(__file__).resolve().parent.parent / "daily-frontier.json"
+
+    # 可用性保护：本次抓取为空时，不覆盖上一份有效 JSON；无历史文件则非 0 退出让 CI 标红。
+    if not papers:
+        if out.exists():
+            print("WARN: 本次抓取为空，保留上一份 %s，不覆盖。" % out, file=sys.stderr)
+            return
+        print("ERROR: 本次抓取为空且无历史 JSON，终止以避免空数据上线。", file=sys.stderr)
+        sys.exit(1)
+
     out.parent.mkdir(parents=True, exist_ok=True)
     text = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     # 无 BOM、纯 LF
