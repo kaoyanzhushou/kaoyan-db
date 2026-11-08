@@ -52066,11 +52066,7 @@ function runPlagiarismCheck() {
 
 
 
-        var jsonMatch = response.match(/\{[\s\S]*\}/);
-
-
-
-        var result = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+        var result = (typeof window.parseAiResultJson === 'function') ? window.parseAiResultJson(response) : null;
 
 
 
@@ -52710,15 +52706,11 @@ function runFormatCheck() {
 
 
 
-      var jsonMatch = response.match(/\{[\s\S]*\}/);
+      var result = (typeof window.parseAiResultJson === 'function') ? window.parseAiResultJson(response) : null;
 
 
 
-      var result = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-
-
-
-      renderFormatCheckResult(result, response);
+      renderFormatCheckResultJson(result, response);
 
 
 
@@ -52762,7 +52754,7 @@ function runFormatCheck() {
 
 
 
-function renderFormatCheckResult(result, rawText) {
+function renderFormatCheckResultJson(result, rawText) {
 
 
 
@@ -57012,11 +57004,7 @@ function runAIReview() {
 
 
 
-      var jsonMatch = response.match(/\{[\s\S]*\}/);
-
-
-
-      var result = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+      var result = (typeof window.parseAiResultJson === 'function') ? window.parseAiResultJson(response) : null;
 
 
 
@@ -249044,6 +249032,38 @@ setInterval(()=>{
     }
   })
 },500);
+// 健壮解析模型返回的 JSON：剥离代码围栏 -> 直接解析 -> 括号配平提取最外层对象 -> 去尾逗号再解析
+function extractBalancedObject(text) {
+  var start = text.indexOf('{');
+  if (start < 0) return null;
+  var depth = 0, inStr = false, esc = false;
+  for (var i = start; i < text.length; i++) {
+    var ch = text[i];
+    if (inStr) {
+      if (esc) { esc = false; }
+      else if (ch === '\\') { esc = true; }
+      else if (ch === '"') { inStr = false; }
+    } else {
+      if (ch === '"') { inStr = true; }
+      else if (ch === '{') { depth++; }
+      else if (ch === '}') { depth--; if (depth === 0) return text.substring(start, i + 1); }
+    }
+  }
+  return null;
+}
+window.parseAiResultJson = function(raw) {
+  if (raw === null || raw === undefined) return null;
+  var text = String(raw).replace(/```json/gi, '').replace(/```/g, '').trim();
+  if (!text) return null;
+  try { return JSON.parse(text); } catch (e) {}
+  var extracted = extractBalancedObject(text);
+  if (extracted) {
+    try { return JSON.parse(extracted); } catch (e) {}
+    var noTrail = extracted.replace(/,\s*([}\]])/g, '$1');
+    try { return JSON.parse(noTrail); } catch (e) {}
+  }
+  return null;
+};
 // 2. 所有AI生成按钮点击之后，强制解除disabled
 document.addEventListener('click',(e)=>{
   const btn = e.target.closest('button');
