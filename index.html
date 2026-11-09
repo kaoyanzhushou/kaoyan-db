@@ -20081,19 +20081,19 @@ async function aiPaperSummary(btn, title, doi){
 
 </div>
 
-<div class="login-overlay" id="loginOverlay">
+<div class="login-overlay" id="loginOverlay" style="display:none">
 
  <div class="login-card">
 
- <h2>🎓 运动心血管生物学科研工作台</h2>
+ <h2>🔒 管理员入口</h2>
 
- <p class="subtitle">登录后解锁全部学习内容</p>
+ <p class="subtitle">验证身份后解锁管理后台，前台内容可直接浏览</p>
 
  <div class="login-tabs">
 
  <div class="login-tab active" id="tabLogin" onclick="switchLoginTab('login')">登录</div>
 
- <div class="login-tab" id="tabRegister" onclick="switchLoginTab('register')">注册</div>
+ <div class="login-tab" id="tabRegister" onclick="switchLoginTab('register')" style="display:none">注册</div>
 
  </div>
 
@@ -20121,7 +20121,11 @@ async function aiPaperSummary(btn, title, doi){
 
  <button class="login-btn" onclick="doLogin()">登 录</button>
 
- <button class="login-btn" style="margin-top:8px;background:linear-gradient(135deg,#10b981,#059669);font-size:13px;padding:10px" onclick="quickAdminLogin()">⚡ 一键默认登录 (admin)</button>
+ <button class="login-btn" style="margin-top:8px;background:linear-gradient(135deg,#10b981,#059669);font-size:13px;padding:10px" onclick="quickAdminLogin()">⚡ 一键登录（admin）</button>
+
+
+
+<button class="login-btn" style="margin-top:8px;background:#f1f5f9;color:#475569;font-size:13px;padding:10px" onclick="cancelAdminLogin()">返回浏览</button>
 
  </div>
 
@@ -20163,7 +20167,7 @@ async function aiPaperSummary(btn, title, doi){
 
  </div>
 
- <p class="login-hint">✨ 默认账号：admin / admin123（直接登录）<br>🎫 注册需邀请码，请联系管理员获取<br>数据保存在本地浏览器，无需联网</p>
+ <p class="login-hint">本入口仅用于解锁管理后台；前台学习内容可直接浏览，数据保存在本地浏览器。</p>
 
  </div>
 
@@ -20281,11 +20285,11 @@ async function aiPaperSummary(btn, title, doi){
 
  <div class="user-dropdown-item" onclick="openTargetModal()">🎯 目标设置</div>
 
- <div class="user-dropdown-item" onclick="showUserProfile()">👤 个人中心</div>
+ <div class="user-dropdown-item" id="userProfileItem" onclick="showUserProfile()" style="display:none">👤 个人中心</div>
 
- <div class="user-dropdown-item" onclick="changePassword()">🔑 修改密码</div>
+ <div class="user-dropdown-item" id="changePwdItem" onclick="changePassword()" style="display:none">🔑 修改密码</div>
 
- <div class="user-dropdown-item logout" onclick="doLogout()">🚪 退出登录</div>
+ <div class="user-dropdown-item logout" id="logoutItem" onclick="doLogout()" style="display:none">🚪 退出登录</div>
 
  </div>
 
@@ -77565,7 +77569,7 @@ unlockContent();
 
 
 
-updateUserUI();
+updateUserUI(); if(window.__pendingAdminAfterLogin){ window.__pendingAdminAfterLogin=false; setTimeout(()=>openAdminPanel(),150); }
 
 
 
@@ -77593,14 +77597,21 @@ document.getElementById('userDropdown').classList.remove('show');
 
 
 
-lockContent();
+if(typeof updateUserUI === 'function') updateUserUI();
 
 
 
-showLoginScreen();
+if(typeof updateAdminMenu === 'function') updateAdminMenu();
 
 
 
+}
+
+function cancelAdminLogin(){
+window.__pendingAdminAfterLogin = false;
+var overlay = document.getElementById('loginOverlay');
+if(overlay){ overlay.style.display='none'; overlay.classList.add('hidden'); }
+hideLoginMessages();
 }
 
 
@@ -77678,105 +77689,41 @@ hideLoginMessages();
 
 
 function updateUserUI(){
-
-
-
 const user = getCurrentUser();
-
-
-
 const userInfo = document.getElementById('userInfo');
-
-
-
+const profileItem = document.getElementById('userProfileItem');
+const pwdItem = document.getElementById('changePwdItem');
+const logoutItem = document.getElementById('logoutItem');
+const topbarGamify = document.getElementById('topbarGamify');
+const userName = document.getElementById('userName');
+const userAvatar = document.getElementById('userAvatar');
 if(user){
-
-
-
-userInfo.style.display = 'flex';
-
-
-
-document.getElementById('userName').textContent = user.username;
-
-
-
-document.getElementById('userAvatar').textContent = user.username.charAt(0).toUpperCase();
-
-
-
+if(userInfo) userInfo.style.display = 'flex';
+if(userName) userName.textContent = user.username;
+if(userAvatar) userAvatar.textContent = user.username.charAt(0).toUpperCase();
+if(profileItem) profileItem.style.display = 'block';
+if(pwdItem) pwdItem.style.display = 'block';
+if(logoutItem) logoutItem.style.display = 'block';
 const data = getGamifyData();
-
-
-
 const levelBadge = document.getElementById('topbarLevel');
-
-
-
 const streakBadge = document.getElementById('topbarStreak');
-
-
-
-const topbarGamify = document.getElementById('topbarGamify');
-
-
-
 if(levelBadge && streakBadge && topbarGamify){
-
-
-
 topbarGamify.style.display = 'flex';
-
-
-
 levelBadge.style.display = 'inline-flex';
-
-
-
 streakBadge.style.display = 'inline-flex';
-
-
-
 levelBadge.textContent = '⭐ Lv.' + data.level;
-
-
-
 streakBadge.textContent = '🔥 ' + data.streak + '天';
-
-
-
 }
-
-
-
-if(typeof updateAdminMenu === 'function') updateAdminMenu();
-
-
-
 } else {
-
-
-
-userInfo.style.display = 'none';
-
-
-
-const topbarGamify = document.getElementById('topbarGamify');
-
-
-
+if(userInfo) userInfo.style.display = 'flex';
+if(userName) userName.textContent = '访客';
+if(userAvatar) userAvatar.textContent = '访';
+if(profileItem) profileItem.style.display = 'none';
+if(pwdItem) pwdItem.style.display = 'none';
+if(logoutItem) logoutItem.style.display = 'none';
 if(topbarGamify) topbarGamify.style.display = 'none';
-
-
-
-if(typeof updateAdminMenu === 'function') updateAdminMenu();
-
-
-
 }
-
-
-
+if(typeof updateAdminMenu === 'function') updateAdminMenu();
 }
 
 
@@ -78001,11 +77948,11 @@ setTimeout(() => { if(typeof updateAdminMenu === 'function') updateAdminMenu(); 
 
 
 
-lockContent();
+unlockContent();
 
 
 
-showLoginScreen();
+updateUserUI();
 
 
 
@@ -78126,61 +78073,10 @@ return users[user.username] && users[user.username].role === 'admin';
 
 
 function updateAdminMenu(){
-
-
-
 const menuItem = document.getElementById('adminMenuItem');
-
-
-
-if(!menuItem) return;
-
-
-
-const user = getCurrentUser();
-
-
-
-if(!user){
-
-
-
-menuItem.style.display = 'none';
-
-
-
-return;
-
-
-
-}
-
-
-
-const users = getUsers();
-
-
-
-const userData = users[user.username];
-
-
-
-const isAdminUser = userData && (userData.role === 'admin' || user.username === 'admin');
-
-
-
-menuItem.style.display = isAdminUser ? 'block' : 'none';
-
-
-
+if(menuItem) menuItem.style.display = 'block';
 const targetItem = document.querySelector('[onclick="openTargetModal()"]');
-
-
-
-if(targetItem) targetItem.style.display = user ? 'block' : 'none';
-
-
-
+if(targetItem) targetItem.style.display = 'block';
 }
 
 
@@ -78190,17 +78086,9 @@ function openAdminPanel(){
 
 
 if(!isAdmin()){
-
-
-
-alert('⚠️ 只有管理员才能访问后台');
-
-
-
+window.__pendingAdminAfterLogin = true;
+showLoginScreen();
 return;
-
-
-
 }
 
 
@@ -190343,181 +190231,20 @@ async function aiPaperSummary(btn, title, doi){
 
 
 (function(){
-
-
-
-  function doAutoLogin(){
-
-
-
-    try {
-
-
-
-      var currentUser = null;
-
-
-
-      try {
-
-
-
-        currentUser = JSON.parse(localStorage.getItem('kaoyan_current_user'));
-
-
-
-      } catch(e) { currentUser = null; }
-
-
-
-
-
-
-
-      if(currentUser && currentUser.username){
-
-
-
-        var overlay = document.getElementById('loginOverlay');
-
-
-
-        if(overlay){
-
-
-
-          overlay.style.display = 'none';
-
-
-
-          overlay.classList.add('hidden');
-
-
-
-        }
-
-
-
-        var app = document.querySelector('.app');
-
-
-
-        if(app){
-
-
-
-          app.style.filter = '';
-
-
-
-          app.style.pointerEvents = '';
-
-
-
-        }
-
-
-
-        var userInfo = document.getElementById('userInfo');
-
-
-
-        if(userInfo) userInfo.style.display = 'flex';
-
-
-
-        var userName = document.getElementById('userName');
-
-
-
-        if(userName) userName.textContent = currentUser.username;
-
-
-
-        var userAvatar = document.getElementById('userAvatar');
-
-
-
-        if(userAvatar) userAvatar.textContent = currentUser.username.charAt(0).toUpperCase();
-
-
-
-        console.log('[directAutoLogin] 自动登录成功:', currentUser.username);
-
-
-
-        return true;
-
-
-
-      }
-
-
-
-    } catch(e) {
-
-
-
-      console.warn('[directAutoLogin] 失败:', e);
-
-
-
-    }
-
-
-
-    return false;
-
-
-
-  }
-
-
-
-  // 立即执行
-
-
-
-  if(!doAutoLogin()){
-
-
-
-    // 重试
-
-
-
-    var attempts = 0;
-
-
-
-    var interval = setInterval(function(){
-
-
-
-      attempts++;
-
-
-
-      if(doAutoLogin() || attempts >= 15){
-
-
-
-        clearInterval(interval);
-
-
-
-      }
-
-
-
-    }, 200);
-
-
-
-  }
-
-
-
+function applySession(){
+var user = null;
+try { user = JSON.parse(localStorage.getItem('kaoyan_current_user')); } catch(e){ user = null; }
+var overlay = document.getElementById('loginOverlay');
+var app = document.querySelector('.app');
+if(overlay){ overlay.style.display='none'; overlay.classList.add('hidden'); }
+if(app){ app.style.filter=''; app.style.pointerEvents=''; }
+if(typeof updateUserUI === 'function') updateUserUI();
+}
+if(document.readyState === 'loading'){
+document.addEventListener('DOMContentLoaded', applySession);
+} else {
+applySession();
+}
 })();
 
 
