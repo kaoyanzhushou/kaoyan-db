@@ -1,10 +1,10 @@
-﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 
 <html lang="zh-CN">
 
 <head>
 <script>
-/* llm-proxy 中转包装器 v1 */
+/* llm-proxy 中转包装器 v2：参数透传 + 统一超时 + 信号联动 */
 (function () {
   'use strict';
   var PROXY = 'https://1482867313-hcocqv4xwz.ap-guangzhou.tencentscf.com';
@@ -14,6 +14,7 @@
     'api.moonshot.cn': 'kimi',
     'dashscope.aliyuncs.com': 'qwen'
   };
+  var DEFAULT_TIMEOUT = 60000;
   if (!PROXY || PROXY.indexOf('YOUR_') === 0) { return; }
   var originalFetch = window.fetch.bind(window);
   window.fetch = function (input, init) {
@@ -23,21 +24,189 @@
     if (!provider || !init || init.method !== 'POST') { return originalFetch(input, init); }
     var payload = {};
     try { payload = JSON.parse(init.body || '{}'); } catch (e) { payload = {}; }
-    var proxyBody = JSON.stringify({
+    var proxyBody = {
       provider: provider,
       messages: payload.messages || [],
       model: payload.model || null,
       max_tokens: payload.max_tokens || 800
-    });
-    return originalFetch(PROXY, {
+    };
+    if (payload.temperature !== undefined) proxyBody.temperature = payload.temperature;
+    if (payload.top_p !== undefined) proxyBody.top_p = payload.top_p;
+    if (payload.response_format !== undefined) proxyBody.response_format = payload.response_format;
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = null;
+    if (ctrl) { timer = setTimeout(function () { ctrl.abort(); }, DEFAULT_TIMEOUT); }
+    var signal = ctrl ? ctrl.signal : (init.signal || null);
+    var req = originalFetch(PROXY, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: proxyBody
+      body: JSON.stringify(proxyBody),
+      signal: signal
     });
+    if (req && typeof req.finally === 'function') {
+      req.finally(function () { if (timer) clearTimeout(timer); });
+    }
+    return req;
   };
 })();
 // 清理旧版本遗留的前端写入 GLM key（鉴权统一由中转后端持有，前端不保存密钥）
 try { localStorage.removeItem('mock_glm_api_key'); } catch(e) {}
+</script>
+
+<script>
+/* LLM 适配层 v1：模型名→provider 映射、真实健康缓存、统一解析、错误归类、下拉置灰 */
+(function (global) {
+  'use strict';
+  var HEALTH_TTL = 10 * 60 * 1000;
+  var CACHE_KEY = 'llm_health_cache_v1';
+  var FALLBACK_BASE = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com';
+
+  var PROVIDER_BY_MODEL = {
+    'deepseek-chat': 'deepseek',
+    'deepseek-v4-pro': 'deepseek',
+    'deepseek-v4-flash': 'deepseek',
+    'deepseek-flash': 'deepseek',
+    'glm-5.3': 'glm',
+    'glm-4.5-air': 'glm',
+    'glm-4-flash': 'glm',
+    'kimi-k3': 'kimi',
+    'kimi-k2.6': 'kimi',
+    'qwen3.5-plus': 'qwen',
+    'qwen3.5-flash': 'qwen',
+    'qwen-flash': 'qwen',
+    'qwen-plus': 'qwen',
+    'qwen3-vl-plus': 'qwen',
+    'qwen-vl-ocr': 'qwen',
+    'hy3': 'hunyuan',
+    'hy4-preview': 'hunyuan',
+    'hunyuan-hy4': 'hunyuan',
+    'hunyuan-pro': 'hunyuan'
+  };
+
+  function baseUrl() {
+    return (typeof global.BACKEND_API_URL === 'string' && global.BACKEND_API_URL) || FALLBACK_BASE;
+  }
+
+  function modelToProvider(model) {
+    if (!model) return null;
+    var m = String(model).toLowerCase();
+    if (PROVIDER_BY_MODEL[m]) return PROVIDER_BY_MODEL[m];
+    if (m.indexOf('deepseek') >= 0) return 'deepseek';
+    if (m.indexOf('glm') >= 0) return 'glm';
+    if (m.indexOf('kimi') >= 0) return 'kimi';
+    if (m.indexOf('qwen') >= 0) return 'qwen';
+    if (m.indexOf('hy') === 0 || m.indexOf('hunyuan') >= 0) return 'hunyuan';
+    return null;
+  }
+
+  var cache = { ts: 0, data: {} };
+  try {
+    var raw = localStorage.getItem(CACHE_KEY);
+    if (raw) { var c = JSON.parse(raw); if (c && c.data) cache = c; }
+  } catch (e) {}
+
+  function saveCache() {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch (e) {}
+  }
+
+  function healthOf(provider) {
+    if (!provider) return null;
+    return cache.data[provider] || null;
+  }
+
+  function isProviderDown(provider) {
+    var h = healthOf(provider);
+    if (!h) return false; // 无探活数据时保守视为可用
+    return h.available === false;
+  }
+  function isModelDown(model) { return isProviderDown(modelToProvider(model)); }
+
+  function parseContent(data) {
+    if (!data) return '';
+    var msg = (data.choices && data.choices[0] && data.choices[0].message) || {};
+    return data.content || msg.content || data.reasoning_content || msg.reasoning_content || '';
+  }
+
+  function classifyError(status, bodyText, err) {
+    var code = 'unknown';
+    var msg = (err && err.message) || '';
+    if (err && err.name === 'AbortError') { code = 'timeout'; msg = msg || '请求超时'; }
+    else if (status === 401 || status === 403) { code = 'auth'; msg = msg || '渠道鉴权失效（密钥无效或过期）'; }
+    else if (status === 429) { code = 'rate_limit'; msg = msg || '渠道限流，请稍后再试'; }
+    else if (status >= 500) { code = 'server'; msg = msg || '渠道服务异常'; }
+    else if (status && status >= 400) { code = 'bad_request'; msg = msg || '请求被渠道拒绝'; }
+    return { code: code, message: msg, status: status || 0 };
+  }
+
+  function ingestHealth(list) {
+    var map = {};
+    (list || []).forEach(function (m) {
+      if (!m || !m.key) return;
+      map[m.key] = { available: !!m.available, reason: m.reason || '', name: m.name || m.key };
+    });
+    if (Object.keys(map).length) { cache = { ts: Date.now(), data: map }; saveCache(); }
+  }
+
+  function loadHealth(force) {
+    if (!force && cache.data && (Date.now() - cache.ts) < HEALTH_TTL && Object.keys(cache.data).length) {
+      return Promise.resolve(cache.data);
+    }
+    return fetch(baseUrl() + '/api/model-status', { method: 'GET' })
+      .then(function (r) { return r.json(); })
+      .then(function (raw) {
+        var list = (raw && Array.isArray(raw.data)) ? raw.data : [];
+        var map = {};
+        list.forEach(function (m) {
+          if (!m || !m.key) return;
+          map[m.key] = { available: !!m.available, reason: m.reason || '', name: m.name || m.key };
+        });
+        if (Object.keys(map).length) { cache = { ts: Date.now(), data: map }; saveCache(); }
+        return cache.data;
+      })
+      .catch(function () { return cache.data; });
+  }
+
+  function applyHealthToSelects() {
+    try {
+      var selects = document.querySelectorAll('select');
+      selects.forEach(function (sel) {
+        var opts = sel.querySelectorAll('option');
+        opts.forEach(function (opt) {
+          var val = opt.value;
+          if (!val || val === 'auto') return;
+          var down = isModelDown(val);
+          var orig = opt.getAttribute('data-orig-label');
+          if (orig === null || orig === undefined) orig = opt.textContent;
+          opt.setAttribute('data-orig-label', orig);
+          opt.disabled = down;
+          opt.style.color = down ? '#9ca3af' : '';
+          opt.textContent = down ? orig.replace(/（不可用）/g, '') + '（不可用）' : orig.replace(/（不可用）/g, '');
+        });
+        var cur = sel.options[sel.selectedIndex];
+        if (cur && isModelDown(cur.value)) {
+          var firstOk = null;
+          for (var i = 0; i < sel.options.length; i++) {
+            if (!isModelDown(sel.options[i].value)) { firstOk = sel.options[i]; break; }
+          }
+          if (firstOk) sel.value = firstOk.value;
+        }
+      });
+    } catch (e) {}
+  }
+
+  global.LLM = {
+    modelToProvider: modelToProvider,
+    isProviderDown: isProviderDown,
+    isModelDown: isModelDown,
+    healthOf: healthOf,
+    parseContent: parseContent,
+    classifyError: classifyError,
+    loadHealth: loadHealth,
+    ingestHealth: ingestHealth,
+    applyHealthToSelects: applyHealthToSelects,
+    baseUrl: baseUrl
+  };
+})(window);
 </script>
 
 
@@ -109556,6 +109725,7 @@ function pubModelStatusUI() {
       });
     }
     box.innerHTML = '🤖 大模型状态：' + ok + '/' + totalN + ' 可用 · <button onclick="pubModelStatusUI()" style="background:#0e7490;color:#fff;border:none;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;margin-left:6px">刷新</button><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + cells + '</div>';
+    if (window.LLM && list) { try { window.LLM.ingestHealth(list); window.LLM.applyHealthToSelects(); } catch(e){} }
   }).catch(function() {
     box.innerHTML = '🤖 大模型状态：暂无法连接（点击上方工具仍会走降级链自动切换可用模型）';
   });
@@ -198161,15 +198331,11 @@ async function callQwenChat(messages, model='qwen3.5-plus', temperature=0.3, max
 
   });
 
-  var data = await resp.json();
-
-  if(data.choices && data.choices[0] && data.choices[0].message){
-
-    return data.choices[0].message.content;
-
-  }
-
-  throw new Error(data.error ? data.error.message : 'Qwen API返回为空');
+  if (!resp.ok) { throw new Error('Qwen 渠道返回异常（HTTP ' + resp.status + '）'); }
+  var data = await resp.json().catch(function(){ return {}; });
+  var qc = (window.LLM && window.LLM.parseContent) ? window.LLM.parseContent(data) : ((data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '');
+  if (qc && qc.trim()) return qc;
+  throw new Error((data.error && data.error.message) || 'Qwen API返回为空');
 
 }
 
@@ -213005,6 +213171,7 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model) {
 
 
         model: useModel,
+        provider: (window.LLM && window.LLM.modelToProvider) ? window.LLM.modelToProvider(useModel) : null,
 
 
 
@@ -213078,8 +213245,7 @@ throw new Error('后端API调用失败: ' + errMsg);
 
     const data = await response.json();
 
-    const _mB = (data.choices && data.choices[0] && data.choices[0].message) || {};
-    const respContent = data.content || _mB.content || data.reasoning_content || _mB.reasoning_content || '';
+    const respContent = (window.LLM && window.LLM.parseContent) ? window.LLM.parseContent(data) : (function(){ var _mB = (data.choices && data.choices[0] && data.choices[0].message) || {}; return data.content || _mB.content || data.reasoning_content || _mB.reasoning_content || ''; })();
 
 
 
@@ -213297,11 +213463,12 @@ async function typewriterToElement(element, text, speed = 15) {
 
     // 多模型自动兜底，一个挂了自动试下一个
 
-    const fallbackModels = ['deepseek-v4-pro', 'glm-5.3', 'kimi-k3', 'qwen-flash', 'hy3'];
+    const fallbackModels = ['deepseek-v4-pro', 'glm-5.3', 'kimi-k3', 'qwen-flash'];
 
     for (const fm of fallbackModels) {
 
       if (fm === useModel) continue;
+      if (window.LLM && window.LLM.isModelDown && window.LLM.isModelDown(fm)) continue;
 
       try {
 
@@ -213327,7 +213494,7 @@ async function typewriterToElement(element, text, speed = 15) {
 
           const fbData = await fbRes.json();
 
-          var _fbM = (fbData.choices && fbData.choices[0] && fbData.choices[0].message) || {}; var fbC = fbData.content || _fbM.content || fbData.reasoning_content || _fbM.reasoning_content || ''; if (fbC && fbC.trim()) {
+          var fbC = (window.LLM && window.LLM.parseContent) ? window.LLM.parseContent(fbData) : (function(){ var _fbM = (fbData.choices && fbData.choices[0] && fbData.choices[0].message) || {}; return fbData.content || _fbM.content || fbData.reasoning_content || _fbM.reasoning_content || ''; })(); if (fbC && fbC.trim()) {
 
             console.log('✅ 自动切换到', fm);
 
@@ -225531,7 +225698,7 @@ var StabilityModelFailover = {
 
         var self = this;
 
-        return chain.filter(function(m) { var h = self.health[m]; return !h || h.status !== 'down'; });
+        return chain.filter(function(m) { var h = self.health[m]; if (h && h.status === 'down') return false; if (window.LLM && window.LLM.isModelDown(m)) return false; return true; });
 
     },
 
@@ -225766,6 +225933,7 @@ function initStabilityFramework() {
         StabilityPageLoader.init();
 
         StabilityModelFailover.init();
+        if (window.LLM) { window.LLM.loadHealth(false).then(function(){ try { window.LLM.applyHealthToSelects(); } catch(e){} }); }
 
 
 
