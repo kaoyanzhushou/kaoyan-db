@@ -213261,7 +213261,7 @@ throw new Error('后端API调用失败: ' + errMsg);
 
         headers: { 'Content-Type': 'application/json' },
 
-        body: JSON.stringify({ model: 'hy3', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: useTokens })
+        body: JSON.stringify({ model: 'hy3', provider: 'hunyuan3', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: useTokens })
 
       });
 
@@ -213333,7 +213333,7 @@ async function typewriterToElement(element, text, speed = 15) {
 
           headers: { 'Content-Type': 'application/json' },
 
-          body: JSON.stringify({ model: 'hy3', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: useTokens })
+          body: JSON.stringify({ model: 'hy3', provider: 'hunyuan3', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: useTokens })
 
         });
 
@@ -213483,6 +213483,7 @@ async function typewriterToElement(element, text, speed = 15) {
           body: JSON.stringify({
 
             model: fm,
+            provider: (window.LLM && window.LLM.modelToProvider) ? window.LLM.modelToProvider(fm) : null,
 
             messages: [{role:'system',content:systemPrompt},{role:'user',content:userPrompt}],
 
@@ -225664,7 +225665,7 @@ var StabilityModelFailover = {
 
     chains: {
 
-        'zh-writing': ['glm-5.3', 'deepseek-v4-pro', 'qwen3.5-plus', 'hunyuan-hy4', 'kimi-k3'],
+        'zh-writing': ['glm-5.3', 'deepseek-v4-pro', 'qwen3.5-plus', 'hy4-preview', 'hy3', 'kimi-k3'],
 
         'en-writing': ['deepseek-v4-pro', 'qwen3.5-plus', 'glm-5.3', 'kimi-k3'],
 
@@ -225674,13 +225675,13 @@ var StabilityModelFailover = {
 
         'research': ['deepseek-v4-pro', 'qwen3.5-plus', 'glm-5.3', 'kimi-k3'],
 
-        'fast': ['qwen-flash', 'deepseek-flash', 'qwen3.5-plus', 'glm-5.3'],
+        'fast': ['qwen-flash', 'deepseek-v4-flash', 'qwen3.5-plus', 'glm-5.3'],
 
-        'creative': ['hunyuan-hy4', 'glm-5.3', 'deepseek-v4-pro', 'qwen3.5-plus'],
+        'creative': ['hy4-preview', 'hy3', 'glm-5.3', 'deepseek-v4-pro', 'qwen3.5-plus'],
 
         'structured': ['qwen3.5-plus', 'glm-5.3', 'deepseek-v4-pro', 'kimi-k3'],
 
-        'default': ['deepseek-v4-pro', 'glm-5.3', 'qwen3.5-plus', 'kimi-k3', 'hunyuan-hy4']
+        'default': ['deepseek-v4-pro', 'glm-5.3', 'qwen3.5-plus', 'kimi-k3', 'hy4-preview', 'hy3']
 
     },
 
