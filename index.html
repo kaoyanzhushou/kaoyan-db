@@ -29669,6 +29669,8 @@ Wang Z. 某篇综述论文（无 DOI/PMID）" style="width:100%;border:1px solid
 
  <button onclick="saveAssistPaper()" style="background:#16a34a;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">💾 设为上下文</button>
 
+ <button onclick="clearAssistChat()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">清空对话</button>
+
  <span id="assistSaveStatus" style="font-size:12px;color:#6b7280"></span>
 
  </div>
@@ -193960,11 +193962,11 @@ async function aiPaperSummary(btn, title, doi){
 
 // ========== 反思链（生成→自检→修正，三模型轮换） ==========
 
-async function callModelWithTimeout(sysMsg, usrMsg, maxTok, mdl, timeoutMs){
+async function callModelWithTimeout(sysMsg, usrMsg, maxTok, mdl, timeoutMs, opts){
 
   return await Promise.race([
 
-    callDeepSeekAPI(sysMsg, usrMsg, maxTok, mdl),
+    callDeepSeekAPI(sysMsg, usrMsg, maxTok, mdl, opts),
 
     new Promise(function(res, rej){ setTimeout(function(){ rej(new Error('请求超时（' + mdl + '）')); }, timeoutMs || 50000); })
 
@@ -195514,6 +195516,39 @@ async function aiPaperSummary(btn, title, doi){
 
 const AI_ASSIST_HISTORY = [];
 
+(function(){
+  try{
+    var _saved = JSON.parse(localStorage.getItem('aiAssistHistory') || '[]');
+    if(Array.isArray(_saved)){
+      _saved.forEach(function(m){
+        if(m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'){
+          AI_ASSIST_HISTORY.push({ role: m.role, content: m.content });
+        }
+      });
+    }
+  }catch(e){}
+})();
+
+function persistAssistHistory(){
+  try{
+    if(AI_ASSIST_HISTORY.length > 20) AI_ASSIST_HISTORY.splice(0, AI_ASSIST_HISTORY.length - 20);
+    localStorage.setItem('aiAssistHistory', JSON.stringify(AI_ASSIST_HISTORY));
+  }catch(e){}
+}
+
+function clearAssistChat(){
+  AI_ASSIST_HISTORY.length = 0;
+  try{ localStorage.removeItem('aiAssistHistory'); }catch(e){}
+  var el = document.getElementById('assistChat');
+  if(el){ el.style.display = 'none'; el.innerHTML = ''; }
+  var st = document.getElementById('assistSaveStatus');
+  if(st){ st.textContent = ''; }
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  if(AI_ASSIST_HISTORY.length) renderAssistChat();
+});
+
 function saveAssistPaper(){
 
   const paper = (document.getElementById('assistPaper').value||'').trim();
@@ -195540,6 +195575,28 @@ function renderAssistChat(){
 
 }
 
+async function summarizeLongPaper(paper){
+  if(!paper) return '';
+  var LIMIT = 6000;
+  if(paper.length <= LIMIT) return paper;
+  var chunks = [];
+  var win = 4000, step = 3800, i = 0;
+  while(i < paper.length && chunks.length < 6){
+    chunks.push(paper.slice(i, i + win));
+    i += step;
+  }
+  var segSys = '你是论文内容提炼助手。从给定论文片段中提取与研究问题相关的要点：研究目的、方法、关键结果、结论，每条一句话，保留关键数据与术语，不展开评论。';
+  var notes = [];
+  for(var k = 0; k < chunks.length; k++){
+    try{
+      var seg = await callModelWithTimeout(segSys, '论文片段：\n' + chunks[k], 600, 'deepseek-chat', 45000);
+      if(seg && seg.trim()) notes.push('【片段' + (k + 1) + '】' + seg.trim());
+    }catch(e){ /* 跳过失败片段，不阻断主流程 */ }
+  }
+  if(!notes.length) return paper.slice(0, LIMIT);
+  return '（原文超长，以下为分段要点摘要）\n' + notes.join('\n\n');
+}
+
 async function askAssist(){
 
   const q = (document.getElementById('assistQ').value||'').trim();
@@ -195554,37 +195611,48 @@ async function askAssist(){
 
   AI_ASSIST_HISTORY.push({ role: 'user', content: q });
 
+  persistAssistHistory();
+
   renderAssistChat();
 
   statusEl.textContent = '🤖 助手思考中...';
 
   const sys = '你是学术论文写作助手。基于用户提供的论文上下文回答问题：1.只给建议、不改动原文 2.能精确定位到相关章节/段落并引用 3.建议具体、可操作（改写示例、结构建议）4.若问题超出论文范围或上下文不足，明确说明。语气专业、简洁。';
 
-  let histTxt = '';
+  statusEl.textContent = '🤖 正在梳理长文...';
+  const paperCtxText = await summarizeLongPaper(paper);
+  const paperCtx = '论文上下文：\n' + (paperCtxText || '（未提供，仅凭问题回答）');
 
-  if(AI_ASSIST_HISTORY.length > 2){
+  const recentHistory = AI_ASSIST_HISTORY.slice(0, -1).slice(-6);
 
-    histTxt = '\n\n（对话历史：' + AI_ASSIST_HISTORY.slice(-6, -1).map(function(m){ return (m.role==='user'?'用户问':'助手答') + '：' + m.content.slice(0,200); }).join(' | ') + '）';
+  const msgs = [
+    { role: 'system', content: sys },
+    { role: 'user', content: paperCtx }
+  ];
 
-  }
+  recentHistory.forEach(function(m){
+    msgs.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: (m.content || '').slice(0, 500) });
+  });
 
-  const usr = '论文上下文：\n' + (paper || '（未提供，仅凭问题回答）').slice(0,6000) + '\n\n用户问题：' + q + histTxt;
+  msgs.push({ role: 'user', content: '用户问题：' + q });
 
   let out = '';
 
-  try{ out = await callModelWithTimeout(sys, usr, 1500, 'deepseek-chat', 60000); }catch(e){ out = ''; }
+  try{ out = await callModelWithTimeout(sys, '', 1500, 'deepseek-chat', 60000, { messages: msgs }); }catch(e){ out = ''; }
 
   if(!out.trim()){
 
     statusEl.textContent = 'DeepSeek 超时，改用 V4-Pro...';
 
-    try{ out = await callModelWithTimeout(sys, usr, 1500, 'deepseek-v4-pro', 60000); }catch(e){ out = ''; }
+    try{ out = await callModelWithTimeout(sys, '', 1500, 'deepseek-v4-pro', 60000, { messages: msgs }); }catch(e){ out = ''; }
 
   }
 
   if(!out.trim()){ out = '（助手暂时无法回答，请重试）'; }
 
   AI_ASSIST_HISTORY.push({ role: 'assistant', content: out });
+
+  persistAssistHistory();
 
   renderAssistChat();
 
@@ -213059,6 +213127,7 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model, opts)
   let useModel = model || currentAiModel || 'deepseek-chat';
   var _opts = opts || {};
   var useTemperature = (typeof _opts.temperature === 'number') ? _opts.temperature : 0.7;
+  var _messages = (Array.isArray(_opts.messages) && _opts.messages.length) ? _opts.messages : null;
 
 
 
@@ -213108,7 +213177,7 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model, opts)
 
       return await callQwenChat(
 
-        [{role:'system', content: systemPrompt||''}, {role:'user', content: userPrompt||''}],
+        _messages || [{role:'system', content: systemPrompt||''}, {role:'user', content: userPrompt||''}],
 
         useModel, 0.7, maxTokens || 2000
 
@@ -213177,7 +213246,7 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model, opts)
 
 
 
-        messages: [
+        messages: _messages || [
 
 
 
@@ -213261,7 +213330,7 @@ throw new Error('后端API调用失败: ' + errMsg);
 
         headers: { 'Content-Type': 'application/json' },
 
-        body: JSON.stringify({ model: 'hy3', provider: 'hunyuan3', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: useTokens })
+        body: JSON.stringify({ model: 'hy3', provider: 'hunyuan3', messages: _messages || [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: useTokens })
 
       });
 
@@ -213333,7 +213402,7 @@ async function typewriterToElement(element, text, speed = 15) {
 
           headers: { 'Content-Type': 'application/json' },
 
-          body: JSON.stringify({ model: 'hy3', provider: 'hunyuan3', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: useTokens })
+          body: JSON.stringify({ model: 'hy3', provider: 'hunyuan3', messages: _messages || [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: useTokens })
 
         });
 
@@ -242603,7 +242672,7 @@ async function aiPaperSummary(btn, title, doi){
 
   // 包装成带重试的版本
 
-  window.callDeepSeekAPI = async function(systemPrompt, userPrompt, maxTokens, model) {
+  window.callDeepSeekAPI = async function(systemPrompt, userPrompt, maxTokens, model, opts) {
 
     var maxRetries = 2; // 失败重试2次，总共3次
 
@@ -242615,7 +242684,7 @@ async function aiPaperSummary(btn, title, doi){
 
       try {
 
-        var result = await originalCallDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model);
+        var result = await originalCallDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model, opts);
 
         return result; // 成功就返回
 
@@ -243366,13 +243435,13 @@ async function aiPaperSummary(btn, title, doi){
 
   if (originalCall) {
 
-    window.callDeepSeekAPI = async function(systemPrompt, userPrompt, maxTokens, model) {
+    window.callDeepSeekAPI = async function(systemPrompt, userPrompt, maxTokens, model, opts) {
 
       var startTime = Date.now();
 
       try {
 
-        var result = await originalCall(systemPrompt, userPrompt, maxTokens, model);
+        var result = await originalCall(systemPrompt, userPrompt, maxTokens, model, opts);
 
         var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
