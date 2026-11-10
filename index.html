@@ -213052,11 +213052,13 @@ function getMockApiKey() {
 
 
 
-async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model) {
+async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model, opts) {
 
 
 
   let useModel = model || currentAiModel || 'deepseek-chat';
+  var _opts = opts || {};
+  var useTemperature = (typeof _opts.temperature === 'number') ? _opts.temperature : 0.7;
 
 
 
@@ -213191,7 +213193,7 @@ async function callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model) {
 
 
 
-        temperature: 0.7,
+        temperature: useTemperature,
 
 
 
@@ -225622,6 +225624,42 @@ var StabilityButton = {
 
 // ==========================================
 
+// 任务类型 → 输出参数分级（tokens / temperature）；未显式指定时采用预设，显式值不被压低
+var AI_PARAM_PRESET = {
+  'fast':        { tokens: 800,  temperature: 0.5 },
+  'structured':  { tokens: 1500, temperature: 0.2 },
+  'reasoning':   { tokens: 2500, temperature: 0.4 },
+  'research':    { tokens: 2500, temperature: 0.4 },
+  'en-writing':  { tokens: 2500, temperature: 0.7 },
+  'zh-writing':  { tokens: 2500, temperature: 0.7 },
+  'creative':    { tokens: 2200, temperature: 0.9 },
+  'long-text':   { tokens: 4000, temperature: 0.6 },
+  'default':     { tokens: 2000, temperature: 0.7 }
+};
+function aiParamPreset(taskType) { return AI_PARAM_PRESET[taskType] || AI_PARAM_PRESET['default']; }
+
+// 提示词分层：公共口径常量（角色层 / 规范层 / 约束层），供稳定链路新调用经 buildSystemPrompt 复用；现有任务指令文案保持原样
+var AI_PERSONA = {
+  field: '运动心血管生物学方向，面向报考体育学博士的学生',
+  language: '使用简体中文',
+  style: '内容详实、有针对性，分点或分段清晰，关键结论可加粗；避免空话套话与泛泛而谈',
+  guard: '不编造文献、数据与引用；专业术语保持准确；除任务明确要求外，直接给出结果，不复述问题'
+};
+
+// 三段组装：角色层(role) + 任务层(instruction) + 规范层(opts.rule=false 可关闭；opts.extra 追加额外约束)
+function buildSystemPrompt(role, instruction, opts) {
+  opts = opts || {};
+  var parts = [];
+  if (role) parts.push('你是' + role + '。');
+  if (instruction) parts.push(instruction);
+  if (opts.rule !== false) {
+    var rule = [AI_PERSONA.language, AI_PERSONA.style, AI_PERSONA.guard].join('；');
+    parts.push('【输出规范】' + rule + '。');
+  }
+  if (opts.extra) parts.push(opts.extra);
+  return parts.join('\n');
+}
+
 var StabilityModelFailover = {
 
     chains: {
@@ -225633,6 +225671,8 @@ var StabilityModelFailover = {
         'long-text': ['kimi-k3', 'deepseek-v4-pro', 'glm-5.3', 'qwen3.5-plus'],
 
         'reasoning': ['deepseek-v4-pro', 'qwen3.5-plus', 'glm-5.3', 'kimi-k3'],
+
+        'research': ['deepseek-v4-pro', 'qwen3.5-plus', 'glm-5.3', 'kimi-k3'],
 
         'fast': ['qwen-flash', 'deepseek-flash', 'qwen3.5-plus', 'glm-5.3'],
 
@@ -225808,6 +225848,12 @@ async function callAIStable(taskType, systemPrompt, userPrompt, maxTokens, optio
 
     options = options || {};
 
+    var preset = aiParamPreset(taskType);
+
+    var effTokens = (maxTokens && maxTokens > 0) ? Math.max(maxTokens, preset.tokens) : preset.tokens;
+
+    var effTemp = (typeof options.temperature === 'number') ? options.temperature : preset.temperature;
+
     var timeoutMs = options.timeout || 90000;
 
     var loadingBtn = options.loadingBtn || null;
@@ -225824,7 +225870,7 @@ async function callAIStable(taskType, systemPrompt, userPrompt, maxTokens, optio
 
         var result = await StabilityRequestQueue.add({
 
-            execute: function() { return callAIWithFailoverInternal(taskType, systemPrompt, userPrompt, maxTokens, timeoutMs); }
+            execute: function() { return callAIWithFailoverInternal(taskType, systemPrompt, userPrompt, effTokens, timeoutMs, effTemp); }
 
         });
 
@@ -225848,7 +225894,7 @@ async function callAIStable(taskType, systemPrompt, userPrompt, maxTokens, optio
 
 
 
-async function callAIWithFailoverInternal(taskType, systemPrompt, userPrompt, maxTokens, timeoutMs) {
+async function callAIWithFailoverInternal(taskType, systemPrompt, userPrompt, maxTokens, timeoutMs, temperature) {
 
     var chain = StabilityModelFailover.getHealthyChain(taskType);
 
@@ -225872,7 +225918,7 @@ async function callAIWithFailoverInternal(taskType, systemPrompt, userPrompt, ma
 
             if (typeof callDeepSeekAPI === 'function') {
 
-                callPromise = callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model);
+                callPromise = callDeepSeekAPI(systemPrompt, userPrompt, maxTokens, model, { temperature: temperature });
 
             } else {
 
@@ -225952,6 +225998,9 @@ function initStabilityFramework() {
             RequestQueue: StabilityRequestQueue,
 
             callAIStable: callAIStable,
+            buildSystemPrompt: buildSystemPrompt,
+            aiParamPreset: aiParamPreset,
+            persona: AI_PERSONA,
 
             version: '1.0'
 
@@ -227367,7 +227416,7 @@ console.log('[论文增强] 开始加载论文工作台增强包...');
 
 function callAI(taskType, sysPrompt, userPrompt, maxTokens) {
 
-    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens || 2000);
+    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens);
 
 }
 
@@ -228877,7 +228926,7 @@ console.log('[论文写作] 开始加载论文写作审稿增强包...');
 
 function callAI(taskType, sysPrompt, userPrompt, maxTokens) {
 
-    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens || 2000);
+    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens);
 
 }
 
@@ -231207,7 +231256,7 @@ console.log('[教案增强] 开始加载教案助手增强包...');
 
 function callAI(taskType, sysPrompt, userPrompt, maxTokens) {
 
-    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens || 2000);
+    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens);
 
 }
 
@@ -232673,7 +232722,7 @@ console.log('[课题PPT增强] 开始加载课题申报+PPT课件增强包...');
 
 function callAI(taskType, sysPrompt, userPrompt, maxTokens) {
 
-    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens || 2000);
+    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens);
 
 }
 
@@ -234605,7 +234654,7 @@ console.log('[体育工具库] 开始加载体育科研专属工具库...');
 
 function callAI(taskType, sysPrompt, userPrompt, maxTokens) {
 
-    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens || 2000);
+    return SF.callAIStable(taskType, sysPrompt, userPrompt, maxTokens);
 
 }
 
@@ -248983,6 +249032,31 @@ setInterval(()=>{
     }
   })
 },500);
+// 清洗模型返回的 JSON 文本：去代码围栏/零宽字符，引号内裸换行/回车/制表符转为合法转义
+function sanitizeJsonText(text) {
+  if (text === null || text === undefined) return '';
+  var s = String(text);
+  s = s.replace(/```json/gi, '').replace(/```/g, '');
+  s = s.replace(/[\u200B-\u200D\uFEFF]/g, '');
+  var out = '', inStr = false, esc = false;
+  for (var i = 0; i < s.length; i++) {
+    var ch = s[i];
+    if (inStr) {
+      if (esc) { out += ch; esc = false; continue; }
+      if (ch === '\\') { out += ch; esc = true; continue; }
+      if (ch === '"') { inStr = false; out += ch; continue; }
+      if (ch === '\n') { out += '\\n'; continue; }
+      if (ch === '\r') { out += '\\r'; continue; }
+      if (ch === '\t') { out += '\\t'; continue; }
+      out += ch;
+    } else {
+      if (ch === '"') inStr = true;
+      out += ch;
+    }
+  }
+  return out.trim();
+}
+
 // 健壮解析模型返回的 JSON：剥离代码围栏 -> 直接解析 -> 括号配平提取最外层对象 -> 去尾逗号再解析
 function extractBalancedObject(text) {
   var start = text.indexOf('{');
@@ -249004,13 +249078,14 @@ function extractBalancedObject(text) {
 }
 window.parseAiResultJson = function(raw) {
   if (raw === null || raw === undefined) return null;
-  var text = String(raw).replace(/```json/gi, '').replace(/```/g, '').trim();
+  var text = sanitizeJsonText(raw);
   if (!text) return null;
   try { return JSON.parse(text); } catch (e) {}
   var extracted = extractBalancedObject(text);
   if (extracted) {
-    try { return JSON.parse(extracted); } catch (e) {}
-    var noTrail = extracted.replace(/,\s*([}\]])/g, '$1');
+    var sanExt = sanitizeJsonText(extracted);
+    try { return JSON.parse(sanExt); } catch (e) {}
+    var noTrail = sanExt.replace(/,\s*([}\]])/g, '$1');
     try { return JSON.parse(noTrail); } catch (e) {}
   }
   return null;
@@ -249035,13 +249110,14 @@ function extractBalancedArray(text) {
 }
 window.parseAiResultArray = function(raw) {
   if (raw === null || raw === undefined) return null;
-  var text = String(raw).replace(/```json/gi, '').replace(/```/g, '').trim();
+  var text = sanitizeJsonText(raw);
   if (!text) return null;
   try { var v = JSON.parse(text); return Array.isArray(v) ? v : null; } catch (e) {}
   var extracted = extractBalancedArray(text);
   if (extracted) {
-    try { var v2 = JSON.parse(extracted); return Array.isArray(v2) ? v2 : null; } catch (e) {}
-    var noTrail = extracted.replace(/,\s*([}\]])/g, '$1');
+    var sanExt = sanitizeJsonText(extracted);
+    try { var v2 = JSON.parse(sanExt); return Array.isArray(v2) ? v2 : null; } catch (e) {}
+    var noTrail = sanExt.replace(/,\s*([}\]])/g, '$1');
     try { var v3 = JSON.parse(noTrail); return Array.isArray(v3) ? v3 : null; } catch (e) {}
   }
   return null;
