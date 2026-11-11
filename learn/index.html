@@ -93708,7 +93708,7 @@ wrongList.forEach(i=>{
 
 
 
-const origIdx = quizBank[quizState.selectedSubject].indexOf(q);
+const origIdx = quizBank[quizState.selectedSubject].indexOf(quizState.questions[i]);
 
 
 
@@ -93993,6 +93993,65 @@ if(quizState.timer) clearInterval(quizState.timer);
 }
 
 
+
+function resetQuiz(){
+  restartQuiz();
+}
+
+function reviewQuiz(){
+  if(!quizState || !quizState.questions || !quizState.questions.length){
+    alert('暂无答题记录，请先完成一组测验。');
+    return;
+  }
+  var reviewEl = document.getElementById('quizReview');
+  if(!reviewEl){ return; }
+  var results = quizState.questions.map(function(q,i){
+    var userAns = quizState.answers[i];
+    var isMulti = q.type === 'multi' || Array.isArray(q.answer);
+    var isCorrect = false;
+    if(isMulti){
+      var ca = Array.isArray(q.answer) ? q.answer.slice().sort() : [q.answer];
+      var ua = Array.isArray(userAns) ? userAns.slice().sort() : [];
+      isCorrect = JSON.stringify(ca) === JSON.stringify(ua);
+    } else {
+      isCorrect = userAns === q.answer;
+    }
+    return {q:q, userAns:userAns, isCorrect:isCorrect};
+  });
+  var wrong = results.filter(function(r){ return !r.isCorrect; });
+  function letter(a){ return Array.isArray(a) ? a.map(function(x){ return String.fromCharCode(65+x); }).join(', ') : String.fromCharCode(65+a); }
+  if(wrong.length === 0){
+    reviewEl.innerHTML = '<div style="padding:16px;text-align:center;color:#16a34a">🎉 全部答对，暂无错题解析。</div>';
+  } else {
+    reviewEl.innerHTML = '<h4 style="margin:12px 0">📋 错题解析（' + wrong.length + ' 题）</h4>' + wrong.map(function(r){
+      var ua = (r.userAns === null || (Array.isArray(r.userAns) && !r.userAns.length)) ? '（未作答）' : letter(r.userAns);
+      var ca = letter(r.q.answer);
+      var exp = r.q.exp ? '<div style="font-size:12px;color:var(--text2);margin-top:4px">💡 ' + escapeHtml(r.q.exp) + '</div>' : '';
+      return '<div style="padding:12px;margin-bottom:10px;border-radius:8px;background:#fef2f2;border-left:4px solid #dc2626">'
+        + '<div style="font-weight:600;font-size:14px;margin-bottom:6px">' + escapeHtml(r.q.q) + '</div>'
+        + '<div style="font-size:13px;margin-bottom:4px">你的答案：' + escapeHtml(String(ua)) + ' ❌</div>'
+        + '<div style="font-size:13px;color:#166534;margin-bottom:4px">正确答案：' + escapeHtml(ca) + '</div>'
+        + exp + '</div>';
+    }).join('');
+  }
+  reviewEl.style.display = 'block';
+}
+
+function toggleUnknownOnly(){
+  if(!fcState){ return; }
+  fcState.unknownOnly = !fcState.unknownOnly;
+  if(fcState.unknownOnly){
+    fcState.cards = fcState.allCards.filter(function(c){ return fcState.unknown[c.term]; });
+  } else {
+    fcState.cards = fcState.allCards.slice();
+  }
+  fcState.current = 0;
+  if(fcState.cards.length === 0){
+    alert(fcState.unknownOnly ? '当前没有标记为未掌握的卡片。' : '暂无卡片。');
+  }
+  renderFlashcard();
+  updateFcStats();
+}
 
 function showQuizWrongBook(){
 
@@ -259487,7 +259546,7 @@ function rateAIOutput(modelId, rating) {
 
 
 
-if (typeof BACKEND_API_URL === 'undefined') { var BACKEND_API_URL = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com'; }
+if (typeof BACKEND_API_URL === 'undefined') { window.BACKEND_API_URL = 'https://1482867313-g9lx8vpy0v.ap-guangzhou.tencentscf.com'; }
 
 
 
