@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 <html lang="zh-CN">
 
@@ -215,6 +215,16 @@ try { localStorage.removeItem('mock_glm_api_key'); } catch(e) {}
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>运动心血管生物学科研工作台 | 陕师大</title><!-- ver:20260910-phdhome-fixed -->
+
+<meta name="description" content="运动心血管生物学科研工作台：考博备考、导师专属库、论文工作台、课题申报、文献解读与运动科学机制库等一体化工具，面向运动人体科学方向科研人员。">
+<meta name="keywords" content="运动人体科学,运动心血管生物学,考博,博士申请,课题申报,论文投稿,文献解读,运动科学,机制库,陕师大">
+<meta name="author" content="kaoyan-db">
+<meta property="og:type" content="website">
+<meta property="og:title" content="运动心血管生物学科研工作台 | 陕师大">
+<meta property="og:description" content="考博备考、导师专属库、论文工作台、课题申报、文献解读与机制库一体化科研工具。">
+<meta property="og:url" content="https://kaoyanzhushou.github.io/kaoyan-db/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22><rect%20width=%2224%22%20height=%2224%22%20rx=%225%22%20fill=%22%232563eb%22/><path%20d=%22M4%2013h3l2-5%203%208%202-5h6%22%20stroke=%22%23fff%22%20stroke-width=%221.8%22%20fill=%22none%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/></svg>">
 
 <style>:root{--bg:#f5f6f8;--card:#fff;--border:#e5e7eb;--text:#1f2937;--text2:#6b7280;--primary:#2563eb;--primary-light:#dbeafe;--green:#16a34a;--green-light:#dcfce7;--orange:#ea580c;--orange-light:#ffedd5;--purple:#7c3aed;--purple-light:#ede9fe;--red:#dc2626;--shadow:0 1px 3px rgba(0,0,0,.08);--radius:10px}*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6}.app{display:flex;min-height:100vh}.sidebar{width:240px;background:#1e293b;color:#cbd5e1;padding:20px 0;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:100}.sidebar h2{color:#fff;font-size:16px;padding:0 20px 16px;border-bottom:1px solid #334155;margin-bottom:12px}.sidebar h2 span{display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:4px}.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;font-size:14px;transition:all .2s;border-left:3px solid transparent}.nav-item:hover{background:#334155;color:#fff}.nav-item.active{background:#2563eb;color:#fff;border-left-color:#60a5fa}.nav-item .icon{width:20px;text-align:center;font-size:16px}.nav-sub{padding-left:30px;font-size:13px;color:#94a3b8}
 
@@ -3175,7 +3185,7 @@ async function aiPaperSummary(btn, title, doi){
 }
 </script>
 
-<script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js" onerror="(function(){var s=document.createElement('script');s.defer=true;s.src='https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js';document.head.appendChild(s);})()">
 // AI论文总结（双模型交叉：DeepSeek+GLM）
 async function aiPaperSummary(btn, title, doi){
   const apiKey = '';
@@ -247397,33 +247407,44 @@ setInterval(()=>{
 },500);
 
 // ========== 科研小助手提问函数 ==========
-function askAssistant(){
+async function askAssistant(){
   var input = document.getElementById('assistantInput');
   var answerDiv = document.getElementById('assistantAnswer');
   var question = input.value.trim();
-  
+
   if(!question){
-    alert('请输入你的问题！');
+    if (typeof StabilityToast !== 'undefined' && StabilityToast.show) { StabilityToast.show('请输入你的问题！', 'warn', 2500); }
     return;
   }
-  
+
   answerDiv.style.display = 'block';
   answerDiv.innerHTML = '⏳ 思考中...';
-  
-  // 简单回复（后面可以接大模型）
-  setTimeout(function(){
-    answerDiv.innerHTML = `
-      <div style="font-size:13px;font-weight:600;color:#1e40af;margin-bottom:8px">💡 小助手回答：</div>
-      <div style="font-size:13px;color:#475569;line-height:1.6">
-        关于"${question}"，建议你可以使用我们的论文工作台工具来解决哦！<br/><br/>
-        比如：<br/>
-        • 如果是写作问题，可以用「论文润色」<br/>
-        • 如果是格式问题，可以用「格式体检」<br/>
-        • 如果是投稿问题，可以用「投稿中心」<br/><br/>
-        💪 有问题随时问我！
-      </div>
-    `;
-  }, 1000);
+
+  var fallbackHtml =
+    '<div style="font-size:13px;font-weight:600;color:#1e40af;margin-bottom:8px">💡 小助手回答：</div>' +
+    '<div style="font-size:13px;color:#475569;line-height:1.6">' +
+    '关于“' + question.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '”，建议你可以使用我们的论文工作台工具来解决哦！<br/><br/>' +
+    '比如：<br/>' +
+    '• 如果是写作问题，可以用「论文润色」<br/>' +
+    '• 如果是格式问题，可以用「格式体检」<br/>' +
+    '• 如果是投稿问题，可以用「投稿中心」<br/><br/>' +
+    '💪 有问题随时问我！' +
+    '</div>';
+
+  try {
+    var systemPrompt = '你是运动人体科学（运动心血管生物学方向）科研工作台的智能助手。请结合本站论文工作台、课题申报、投稿中心、机制库等工具，针对用户提出的问题给出简洁、有针对性、可落地的中文解答；如不确定，明确说明并建议使用对应工具。';
+    var content = await callDeepSeekAPI(systemPrompt, question, 800, 'auto');
+    if(content && String(content).trim()){
+      var safe = String(content).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br/>');
+      answerDiv.innerHTML = '<div style="font-size:13px;font-weight:600;color:#1e40af;margin-bottom:8px">💡 小助手回答：</div>' +
+        '<div style="font-size:13px;color:#475569;line-height:1.6;white-space:pre-wrap">' + safe + '</div>';
+    } else {
+      answerDiv.innerHTML = fallbackHtml;
+    }
+  } catch(e) {
+    console.warn('[助手] AI 调用失败，使用兜底话术', e);
+    answerDiv.innerHTML = fallbackHtml;
+  }
 }
 
 // ========== 最新动态卡片（动态内容更新） ==========
@@ -249795,10 +249816,14 @@ window.addEventListener('load', function(){
           const tag = (el.tagName || '').toUpperCase();
           const fixed = getComputedStyle(el).position === 'fixed';
           if(tag !== 'SCRIPT' && !fixed){
-            el.style.display = 'none';
-            el.style.visibility = 'hidden';
-            el.style.height = '0';
-            el.style.overflow = 'hidden';
+            // 跳过主视图面板（tab-content）等被移到 footer 之后的功能容器，避免误伤正常视图
+            const isTabContent = el.classList && el.classList.contains('tab-content');
+            if(!isTabContent){
+              el.style.display = 'none';
+              el.style.visibility = 'hidden';
+              el.style.height = '0';
+              el.style.overflow = 'hidden';
+            }
           }
         }
         el = next;
