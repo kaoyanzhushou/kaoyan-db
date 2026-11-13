@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-每日科研前沿 · 英文论文自动抓取脚本（GitHub Actions 定时运行，纯 Python 标准库）
+每日科研前沿 · 论文自动抓取脚本（GitHub Actions 定时运行，纯 Python 标准库）
 
-数据源：Crossref REST API（开放元数据，无需 Key）。
+数据源：
+- 英文：Crossref REST API、PubMed E-utilities、Europe PMC REST（开放元数据，无需 Key）；
+- 中文：OpenAlex Works API（language=zh，标题保留中文原文，无需 Key）。
 产出：仓库根目录 daily-frontier.json，供前端「每日科研前沿」拉取。
 
 边界（与人工维护的 rnc-updates.json 区分）：
-- 本脚本只抓英文期刊论文元数据；
-- 中文核心、会议、课题、特刊征稿由人工核实后录入 rnc-updates.json，不在此自动抓取。
+- 本脚本抓期刊论文元数据；中文核心、会议、课题、特刊征稿仍由人工核实后录入 rnc-updates.json；
+- 中文开放源覆盖有限，仅收录 OpenAlex 可免登获取的中文期刊论文，缺 DOI/期刊/作者时按兜底字段入库。
 
 质量规则：
-- 近 RECENT_DAYS 天内发表；剔除空标题、过短标题、未来年份、过早年份；
+- 英文近 RECENT_DAYS 天、中文近 ZH_RECENT_DAYS 天内发表；剔除空标题、过短标题、未来年份、过早年份；
 - 标题/期刊关键词命中打分，低于 MIN_SCORE 剔除；DOI 去重；
-- 按匹配度 → 被引数 → 发表日期排序，取前 MAX_ITEMS。
+- 按匹配度 → 被引数 → 发表日期排序，取前 MAX_ITEMS，并为中文条目预留 ZH_MIN_ITEMS 名额。
 
 可用性保护（本轮加固）：
 - 接口失败自动重试 2 次（4xx 不重试）；
@@ -54,7 +56,7 @@ W_REL = 0.50                # 相关性权重
 W_TIME = 0.25               # 时间新鲜度权重
 W_CITE = 0.15               # 被引权重（对数压缩）
 W_JOURNAL = 0.10            # 对口期刊权重
-SCRIPT_VERSION = "stage2-1.0"
+SCRIPT_VERSION = "stage4-zh-1.0"
 HEALTH_FILE = "fetch-health.json"
 
 # ---------- 阶段2：多源拉取配置 ----------
@@ -62,6 +64,14 @@ PUBMED_RETMAX = 25        # PubMed 每组返回条数
 EPMC_PAGESIZE = 25        # Europe PMC 每组返回条数
 ABSTRACT_MAX = 300       # 摘要片段最大字符数
 MAX_AUTHORS = 5           # 入库作者数上限（前端仅渲染前两位）
+
+# ---------- 阶段4：OpenAlex 中文源配置 ----------
+ZH_SOURCE = "openalex-zh"
+ZH_RECENT_DAYS = 365      # 中文新文稀疏，窗口放宽到近一年
+ZH_PER_GROUP = 25          # 每组返回条数
+ZH_MIN_ITEMS = 4          # 混合结果中为中文预留的最少名额
+ZH_MIN_YEAR = 2020        # 中文条目最早年份
+OPENALEX_BASE = "https://api.openalex.org/works"
 
 # 主方向：运动心血管生物学（权重高）
 CARDIO_KW = {
@@ -114,6 +124,29 @@ OFFTOPIC_SITE = ["hepatic", "liver", "ovarian", "ovary", "testicular", "testis",
                  "epidermal growth factor", "nanovesicle", "inhalable", "dermatolog"]
 
 REVIEW_RE = re.compile(r"\b(review|meta-analysis|systematic review|scoping review)\b", re.I)
+
+# ---------- 阶段4：中文（OpenAlex）关键词词典 ----------
+# 靶部位 / 机制强词：命中加权
+ZH_CARDIO_KW = {
+    "心脏": 5, "心肌": 5, "心力衰竭": 5, "心衰": 5, "梗死": 5, "心室": 4,
+    "重构": 4, "线粒体": 5, "自噬": 4, "心血管": 4, "血管内皮": 4, "迷走": 4,
+    "自主神经": 3, "高血压": 3, "血压": 2, "血管": 2, "运动耐力": 3, "心脏康复": 4,
+    "心功能": 3, "冠脉": 3, "冠状动脉": 3, "射血分数": 3, "房颤": 2, "动脉粥样硬化": 3,
+    "内皮祖细胞": 3, "eNOS": 2, "nlrp3": 2,
+}
+# 运动 / 干预词：与心血管词双命中视为对口
+ZH_EXERCISE_KW = ["运动", "有氧", "训练", "康复", "锻炼", "体力活动", "运动处方"]
+# 心脏强词：命中即视为靶部位，保留
+ZH_STRONG = ["心脏", "心肌", "心力衰竭", "心衰", "心室", "梗死", "心梗"]
+# 中文离靶词：未命中强词时，命中这些视为偏离，剔除
+ZH_OFFTOPIC = [
+    "相对论", "量子", "物理框架", "统一场", "抑郁", "焦虑", "心理", "疼痛", "肌骨",
+    "韧带", "肌腱", "膝", "肩", "脑", "海马", "肝", "卵巢", "睾丸", "皮肤",
+    "胃", "肠", "肺损伤", "骨密度", "肿瘤", "癌", "妊娠", "胎儿", "胎", "八段锦",
+    "瑜伽", "太极", "舞蹈", "游泳", "排球", "篮球", "足球", "田径",
+]
+# 中文综述/进展判定标题词
+ZH_REVIEW_RE = re.compile(r"(综述|研究进展|进展|Meta分析|Meta 分析|系统评价|系统综述)")
 
 
 def http_get_json(url, timeout=20):
@@ -170,6 +203,25 @@ def epmc_group(query, pagesize=EPMC_PAGESIZE):
                                "pageSize": pagesize, "resultType": "core"})
     ep = http_get_json("https://www.ebi.ac.uk/europepmc/webservices/rest/search?" + q)
     return ep.get("resultList", {}).get("result", []) or []
+
+
+# 中文标题 AND 检索组：运动 × 心血管子类，多组拉取后跨组去重
+ZH_QUERY_GROUPS = [
+    "title.search:运动,title.search:心脏",
+    "title.search:运动,title.search:心肌",
+    "title.search:运动,title.search:心力衰竭",
+    "title.search:有氧,title.search:血管",
+    "title.search:运动,title.search:高血压",
+    "title.search:运动,title.search:线粒体",
+]
+
+
+def openalex_zh_group(expr, from_date, to_date, per_page=ZH_PER_GROUP):
+    """OpenAlex Works：language=zh 中文文献，标题保留原文；免 Key 开放元数据。"""
+    filt = "language:zh,from_publication_date:%s,to_publication_date:%s,%s" % (from_date, to_date, expr)
+    q = urllib.parse.urlencode({"filter": filt, "per-page": per_page, "mailto": MAILTO})
+    ox = http_get_json(OPENALEX_BASE + "?" + q)
+    return ox.get("results", []) or []
 
 
 def norm_title(t):
@@ -231,6 +283,54 @@ def parse_epmc(h):
         "year": year, "published": published, "citations": citations,
         "authors": authors[:MAX_AUTHORS], "abstractSnippet": abstract[:ABSTRACT_MAX],
         "oa": oa, "source": "epmc", "isReview": is_review,
+    }
+
+
+def _oa_abstract(inv):
+    """OpenAlex 摘要为倒排索引 {词:[位置]}，还原为纯文本。"""
+    if not inv:
+        return ""
+    pos = {}
+    for word, idxs in inv.items():
+        for i in idxs:
+            pos[i] = word
+    return " ".join(pos[i] for i in sorted(pos))
+
+
+def parse_openalex_zh(w):
+    """OpenAlex 中文文献 → 统一 schema；期刊/作者/摘要缺失时回落兜底。"""
+    # 仅保留期刊论文；剔除撤稿、数据集、学位论文等非论文类型
+    if w.get("type") != "article" or w.get("is_retracted"):
+        return None
+    title = html.unescape(w.get("title") or "").strip()
+    pl = w.get("primary_location") or {}
+    src = pl.get("source") or {}
+    journal = (src.get("title") or "").strip()
+    if not journal:
+        for loc in w.get("locations", []) or []:
+            ls = loc.get("source") or {}
+            if ls.get("title"):
+                journal = str(ls["title"]).strip()
+                break
+    doi = (w.get("doi") or "").replace("https://doi.org/", "").strip()
+    authors = [a.get("author", {}).get("display_name", "")
+               for a in (w.get("authorships") or [])]
+    authors = [a for a in authors if a][:MAX_AUTHORS]
+    year = w.get("publication_year")
+    try:
+        year = int(year) if year else None
+    except (TypeError, ValueError):
+        year = None
+    published = w.get("publication_date") or ""
+    citations = w.get("cited_by_count", 0) or 0
+    abstract = _oa_abstract(w.get("abstract_inverted_index"))[:ABSTRACT_MAX]
+    oa = bool((w.get("open_access") or {}).get("is_oa"))
+    is_review = bool(ZH_REVIEW_RE.search(title))
+    return {
+        "title": title, "journal": journal or "未知期刊", "doi": doi,
+        "pmid": "", "pmcid": "", "year": year, "published": published,
+        "citations": citations, "authors": authors, "abstractSnippet": abstract,
+        "oa": oa, "source": ZH_SOURCE, "isReview": is_review, "isChinese": True,
     }
 
 
@@ -321,6 +421,26 @@ def score_item(title, journal):
     return min(score, 100), topics, strong, offtopic, journal_hit
 
 
+def score_zh_item(title, journal):
+    """中文条目打分：心脏/线粒体等强词加权，运动词双命中视为对口；返回与 score_item 同构。"""
+    t = title or ""
+    score = 0
+    topics = []
+    strong = any(k in t for k in ZH_STRONG)
+    cardio_hit = strong
+    for kw, w in ZH_CARDIO_KW.items():
+        if kw in t:
+            score += w
+            cardio_hit = True
+    exercise_hit = any(k in t for k in ZH_EXERCISE_KW)
+    if cardio_hit:
+        topics.append("cardio")
+    if exercise_hit:
+        topics.append("med")
+    offtopic = (not strong) and any(s in t for s in ZH_OFFTOPIC)
+    return min(score, 100), topics, strong, offtopic, False, cardio_hit, exercise_hit
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=None, help="输出 JSON 路径，默认仓库根 daily-frontier.json")
@@ -329,8 +449,9 @@ def main():
 
     today = dt.date.today()
     from_date = (today - dt.timedelta(days=RECENT_DAYS)).isoformat()
+    zh_from_date = (today - dt.timedelta(days=ZH_RECENT_DAYS)).isoformat()
 
-    raw_by_source = {"crossref": [], "pubmed": [], "epmc": []}
+    raw_by_source = {"crossref": [], "pubmed": [], "epmc": [], ZH_SOURCE: []}
     groups = []
     t0 = time.time()
 
@@ -356,6 +477,8 @@ def main():
     run_group("pubmed", PUBMED_MED, lambda: pubmed_group(PUBMED_MED))
     run_group("epmc", EPMC_CARDIO, lambda: epmc_group(EPMC_CARDIO))
     run_group("epmc", EPMC_MED, lambda: epmc_group(EPMC_MED))
+    for expr in ZH_QUERY_GROUPS:
+        run_group(ZH_SOURCE, expr, lambda e=expr: openalex_zh_group(e, zh_from_date, today.isoformat()))
 
     now_iso = dt.datetime.now().astimezone().isoformat(timespec="seconds")
 
@@ -400,16 +523,41 @@ def main():
         c["ageDays"] = (today - pub_date).days if pub_date else None
         return c
 
+    def accept_zh(c):
+        """中文条目过滤：离靶剔除；强词保留，或心血管×运动双命中，或达打分门槛。"""
+        score, topics, strong, offtopic, journal_hit, cardio_hit, exercise_hit = score_zh_item(
+            c["title"], c["journal"])
+        if offtopic:
+            return None
+        if not (strong or (cardio_hit and exercise_hit) or score >= MIN_SCORE):
+            return None
+        c["matchScore"] = score
+        c["topics"] = topics
+        c["journalHit"] = journal_hit
+        pub_date = None
+        if c["published"]:
+            try:
+                pub_date = dt.date.fromisoformat(c["published"])
+            except ValueError:
+                pub_date = None
+        c["ageDays"] = (today - pub_date).days if pub_date else None
+        return c
+
     candidates = []
-    parsers = (("crossref", parse_crossref), ("pubmed", parse_pubmed), ("epmc", parse_epmc))
+    parsers = (("crossref", parse_crossref), ("pubmed", parse_pubmed),
+               ("epmc", parse_epmc), (ZH_SOURCE, parse_openalex_zh))
     for src, parser in parsers:
         for it in raw_by_source[src]:
             c = parser(it)
-            if not c or not c["title"] or len(c["title"]) < 15:
+            if not c or not c["title"]:
                 continue
-            if c["year"] is None or c["year"] > today.year + 1 or c["year"] < 2015:
+            min_len = 8 if src == ZH_SOURCE else 15
+            if len(c["title"]) < min_len:
                 continue
-            c = accept(c)
+            min_year = ZH_MIN_YEAR if src == ZH_SOURCE else 2015
+            if c["year"] is None or c["year"] > today.year + 1 or c["year"] < min_year:
+                continue
+            c = accept_zh(c) if src == ZH_SOURCE else accept(c)
             if c:
                 candidates.append(c)
 
@@ -427,6 +575,7 @@ def main():
             p["id"] = "title-" + str(idx)
             p["url"] = ""
         p["version"] = "published"
+        p["isChinese"] = bool(p.get("isChinese"))
 
     # 批次内被引归一化（对数压缩），再计算复合分与新文置顶标记
     max_cites = max((p["citations"] for p in papers), default=0)
@@ -445,19 +594,33 @@ def main():
 
     # 排序：近 7 天置顶桶优先，桶内按复合分降序
     papers.sort(key=lambda p: (1 if p["isRecent"] else 0, p["compositeScore"]), reverse=True)
-    papers = papers[:MAX_ITEMS]
 
+    # 中文名额预留：先保底 ZH_MIN_ITEMS 篇达标中文，剩余名额给英文；中文超出保底再按复合分补入
+    zh_all = [p for p in papers if p.get("isChinese")]
+    en_all = [p for p in papers if not p.get("isChinese")]
+    zh_keep = zh_all[:ZH_MIN_ITEMS]
+    remain = MAX_ITEMS - len(zh_keep)
+    en_keep = en_all[:max(remain, 0)]
+    slot = MAX_ITEMS - len(zh_keep) - len(en_keep)
+    if slot > 0:
+        zh_keep += zh_all[ZH_MIN_ITEMS:ZH_MIN_ITEMS + slot]
+    papers = zh_keep + en_keep
+    papers.sort(key=lambda p: (1 if p["isRecent"] else 0, p["compositeScore"]), reverse=True)
+
+    zh_count = len([p for p in papers if p.get("isChinese")])
     payload = {
         "version": today.isoformat(),
         "meta": {
             "generatedAt": now_iso,
-            "source": "Crossref + PubMed + Europe PMC",
+            "source": "Crossref + PubMed + Europe PMC + OpenAlex(中文)",
             "count": len(papers),
+            "zhCount": zh_count,
             "windowDays": RECENT_DAYS,
+            "zhWindowDays": ZH_RECENT_DAYS,
             "scriptVersion": SCRIPT_VERSION,
             "recentBucketDays": RECENT_BUCKET_DAYS,
             "weights": {"rel": W_REL, "time": W_TIME, "cite": W_CITE, "journal": W_JOURNAL},
-            "note": "英文期刊论文由 GitHub Actions 每日自动抓取；中文核心、会议、课题、特刊征稿见 rnc-updates.json（人工核实）。",
+            "note": "英文论文来自 Crossref/PubMed/Europe PMC；中文论文来自 OpenAlex 开放中文源；会议、课题、特刊征稿见 rnc-updates.json（人工核实）。",
         },
         "items": papers,
     }
@@ -477,11 +640,13 @@ def main():
         "version": today.isoformat(),
         "scriptVersion": SCRIPT_VERSION,
         "runAt": now_iso,
-        "source": "Crossref + PubMed + Europe PMC",
+        "source": "Crossref + PubMed + Europe PMC + OpenAlex(中文)",
         "windowDays": RECENT_DAYS,
+        "zhWindowDays": ZH_RECENT_DAYS,
         "groups": groups,
         "rawCount": sum(len(v) for v in raw_by_source.values()),
         "selectedCount": len(papers),
+        "zhCount": zh_count,
         "isEmpty": len(papers) == 0,
         "elapsedSec": round(time.time() - t0, 2),
         "note": "每日抓取健康记录；selectedCount=0 表示本次无达标新文献，daily-frontier.json 保留上一版。",
