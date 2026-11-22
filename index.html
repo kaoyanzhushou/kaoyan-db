@@ -238920,7 +238920,8 @@ window.addEventListener('load', function(){
         </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
-        <input id="drSearch" class="dr-tool" type="text" placeholder="搜索标题 / 期刊 / DOI" oninput="drSetKw(this.value)" style="flex:1;min-width:180px">
+        <input id="drSearch" class="dr-tool" type="text" placeholder="标题 / 期刊 / DOI / 作者 / 摘要 / 方向" oninput="drSetKw(this.value)" style="flex:1;min-width:180px">
+        <button type="button" id="drKwClear" onclick="drClearKw()" title="清空搜索" style="display:none;width:36px;height:36px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:14px;cursor:pointer;flex:none">✕</button>
         <select class="dr-tool" onchange="drSetSort(this.value)">
           <option value="match">按匹配度</option>
           <option value="year">按最新发表</option>
@@ -238936,6 +238937,10 @@ window.addEventListener('load', function(){
         <button class="dr-chip" data-filter="hot" onclick="drSetFilter('hot')">🔥 只看热点</button>
         <button class="dr-chip" data-filter="want" onclick="drSetFilter('want')">☆ 想读</button>
         <button class="dr-chip" data-filter="read" onclick="drSetFilter('read')">✓ 已读</button>
+        <button class="dr-chip" data-filter="abstract" onclick="drSetFilter('abstract')">有摘要</button>
+        <button class="dr-chip" data-filter="oa" onclick="drSetFilter('oa')">开放获取</button>
+        <button class="dr-chip" data-filter="doi" onclick="drSetFilter('doi')">有 DOI</button>
+        <button class="dr-chip" data-filter="recent" onclick="drSetFilter('recent')">本周新文</button>
       </div>
       <div id="drSubRow" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px"></div>
       <div id="drSourceNote" style="display:none;font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:16px"></div>
@@ -238982,6 +238987,20 @@ const DR_PAGE_SIZE = 12;
 })();
 
 function drEsc(s){ return window.rncEsc ? window.rncEsc(s) : (s==null?'':String(s)); }
+// 搜索命中高亮：先转义再包裹 mark，避免 XSS；按空格分词，短词不高亮
+function drHighlight(text, kw){
+  const safe = drEsc(text);
+  const q = (kw||'').trim().toLowerCase();
+  if(!q) return safe;
+  const tokens = q.split(/\s+/).filter(t=>t.length>=2);
+  if(!tokens.length) return safe;
+  let out = safe;
+  tokens.forEach(t=>{
+    const escRe = t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    out = out.replace(new RegExp('('+escRe+')','gi'), '<mark style="background:#fef08a;color:#1f2937;border-radius:3px;padding:0 1px">$1</mark>');
+  });
+  return out;
+}
 // FNV-1a 32bit 哈希：用于稳定、短长度的本地缓存键（DOI 优先，回落规范化标题）
 function drFNV1a(str){ let h=0x811c9dc5; const s=String(str||''); for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); } return (h>>>0).toString(36); }
 function drCacheKey(title, doi){ const raw = doi ? ('doi:'+String(doi).toLowerCase()) : ('ti:'+String(title||'').toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g,'')); return 'paper_cache_'+drFNV1a(raw); }
@@ -239306,7 +239325,7 @@ function drHotSet(){
 }
 
 function drPaperCardHTML(p, idx){
-  const title = drEsc(p.title||'');
+  const title = drHighlight(p.title||'', window.drState.kw);
   const journal = drEsc(p.journal||'');
   const year = p.year||'—';
   const doi = p.doi||'';
@@ -239349,7 +239368,7 @@ function drPaperCardHTML(p, idx){
     <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">${tags}</div>
     <div style="font-size:15px;font-weight:600;color:#0f172a;line-height:1.6;margin-bottom:8px">${title}</div>
     ${authorLabel?`<div style="font-size:12px;color:#64748b;margin-bottom:6px">${drEsc(authorLabel)}</div>`:''}
-    ${snippet?`<div style="font-size:12px;color:#64748b;line-height:1.6;margin-bottom:8px">${drEsc(snippetShort)}</div>`:`<div style="font-size:12px;color:#cbd5e1;margin-bottom:8px">暂无摘要片段</div>`}
+    ${snippet?`<div style="font-size:12px;color:#64748b;line-height:1.6;margin-bottom:8px">${drHighlight(snippetShort, window.drState.kw)}</div>`:`<div style="font-size:12px;color:#cbd5e1;margin-bottom:8px">暂无摘要片段</div>`}
     ${reasonParts.length?`<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">收录依据：${reasonParts.map(drEsc).join(' · ')}</div>`:''}
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:#94a3b8">
       <span style="background:#eff6ff;color:#2563eb;padding:3px 8px;border-radius:6px;font-weight:500">${journal}</span>
@@ -239418,6 +239437,10 @@ function drFilter(list){
     if(s.filter==='hot' && !drHotSet().has(drDedupKey(p))) return false;
     if(s.filter==='want' && drGetMark(drDedupKey(p))!=='want') return false;
     if(s.filter==='read' && drGetMark(drDedupKey(p))!=='read') return false;
+    if(s.filter==='abstract' && !(p.abstractSnippet||'').trim()) return false;
+    if(s.filter==='oa' && !p.oa) return false;
+    if(s.filter==='doi' && !p.doi) return false;
+    if(s.filter==='recent' && !(p.isRecent || (p.ageDays!=null && p.ageDays<=7))) return false;
     if(kw && !drKwMatch(p, kw)) return false;
     return true;
   });
@@ -239427,7 +239450,18 @@ function drRenderList(list){
   const el = document.getElementById('drPaperList');
   if(!el) return;
   if(!list.length){
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">当前筛选下暂无论文</div>';
+    const cache = window.drFrontierCache || [];
+    if(!cache.length){
+      el.innerHTML = `<div style="text-align:center;padding:40px;color:#94a3b8">
+        <div style="margin-bottom:12px">暂未获取到论文数据，在线源可能暂时不可用</div>
+        <button onclick="drRefresh()" class="dr-chip" style="padding:8px 22px;background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe">重新加载</button>
+      </div>`;
+    } else {
+      el.innerHTML = `<div style="text-align:center;padding:40px;color:#94a3b8">
+        <div style="margin-bottom:12px">当前筛选或搜索条件下没有匹配论文，可放宽条件后重试</div>
+        <button onclick="drResetFilters()" class="dr-chip" style="padding:8px 22px;background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe">清空筛选与搜索</button>
+      </div>`;
+    }
   } else {
     const pageSize = DR_PAGE_SIZE;
     const page = Math.max(1, window.drState.page || 1);
@@ -239476,6 +239510,22 @@ function drLedgerCopy(btn, key, fmt){
 function drLedgerBibtex(btn, key){
   const p = drLedgerPaper(key); if(!p) return;
   drCopyText(drBibTeX(drLedgerFake(p)), '已复制 BibTeX');
+}
+// 整组批量导出：按当前台账过滤态汇总 GB/APA/BibTeX
+function drExportLedger(fmt){
+  const marks=drLoadMarks(), led=drLoadLedger();
+  const f=window.drLedgerFilter||'all';
+  let items=Object.keys(led).map(k=>({k,p:led[k],mark:marks[k]||''}));
+  if(f==='want') items=items.filter(x=>x.mark==='want');
+  else if(f==='read') items=items.filter(x=>x.mark==='read');
+  if(!items.length){ drCopyText('', '当前台账无文献可导出'); return; }
+  const fakes=items.map(x=>drLedgerFake(x.p));
+  const label={gb:'GB/T 7714',apa:'APA',bibtex:'BibTeX'}[fmt]||'引用';
+  let text='';
+  if(fmt==='apa') text=fakes.map((p,i)=>`[${i+1}] ${drCiteAPA(p)}`).join('\n\n');
+  else if(fmt==='bibtex') text=fakes.map(p=>drBibTeX(p)).join('\n\n');
+  else text=fakes.map((p,i)=>`[${i+1}] ${drCiteGB(p)}`).join('\n\n');
+  drCopyText(text, '已导出 '+items.length+' 篇 '+label);
 }
 function drLedgerRemoveMark(key){
   const m=drLoadMarks(); delete m[key]; drSaveMarks(m);
@@ -239527,7 +239577,12 @@ function drRenderLedger(){
     <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <div style="font-size:15px;font-weight:700;color:#1e293b">📚 我的文献台账</div>
-        <div style="font-size:12px;color:#64748b">想读 ${wantN} · 已读 ${readN} · 共 ${keys.length}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div style="font-size:12px;color:#64748b">想读 ${wantN} · 已读 ${readN} · 共 ${keys.length}</div>
+          <button onclick="drExportLedger('gb')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dcfce7;color:#16a34a;cursor:pointer">导出 GB</button>
+          <button onclick="drExportLedger('apa')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#dbeafe;color:#2563eb;cursor:pointer">导出 APA</button>
+          <button onclick="drExportLedger('bibtex')" style="padding:4px 10px;border-radius:6px;font-size:12px;border:none;background:#f1f5f9;color:#475569;cursor:pointer">导出 BibTeX</button>
+        </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${chips}</div>
       <div style="display:grid;gap:10px">${rows || '<div style="font-size:12px;color:#94a3b8">该状态下暂无文献</div>'}</div>
@@ -239653,7 +239708,9 @@ function drSyncChips(){
 }
 function drSetFilter(f){ window.drState.filter=f; drApply(); }
 function drSetSort(m){ window.drState.sort=m; drApply(); }
-function drSetKw(v){ window.drState.kw=v; clearTimeout(window._drKwT); window._drKwT=setTimeout(drApply,200); }
+function drSetKw(v){ window.drState.kw=v; const cl=document.getElementById('drKwClear'); if(cl) cl.style.display=v?'':'none'; clearTimeout(window._drKwT); window._drKwT=setTimeout(drApply,200); }
+function drClearKw(){ const i=document.getElementById('drSearch'); if(i) i.value=''; window.drState.kw=''; const cl=document.getElementById('drKwClear'); if(cl) cl.style.display='none'; drApply(); }
+function drResetFilters(){ window.drState.filter='all'; window.drState.kw=''; const i=document.getElementById('drSearch'); if(i) i.value=''; const cl=document.getElementById('drKwClear'); if(cl) cl.style.display='none'; drApply(); }
 function drRefresh(){
   const list=document.getElementById('drPaperList');
   if(list) delete list.dataset.loaded;
