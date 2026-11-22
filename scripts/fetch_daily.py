@@ -43,7 +43,7 @@ import urllib.request
 # ---------- 可调配置 ----------
 RECENT_DAYS = 120
 MAX_ITEMS = 40
-ROWS_PER_GROUP = 25
+ROWS_PER_GROUP = 40
 MIN_SCORE = 4
 MAILTO = "research@example.com"
 USER_AGENT = "kaoyan-db-daily-fetch/1.0 (mailto:%s)" % MAILTO
@@ -63,15 +63,15 @@ SCRIPT_VERSION = "stage4-zh-1.0"
 HEALTH_FILE = "fetch-health.json"
 
 # ---------- 阶段2：多源拉取配置 ----------
-PUBMED_RETMAX = 25        # PubMed 每组返回条数
-EPMC_PAGESIZE = 25        # Europe PMC 每组返回条数
+PUBMED_RETMAX = 40        # PubMed 每组返回条数
+EPMC_PAGESIZE = 40        # Europe PMC 每组返回条数
 ABSTRACT_MAX = 300       # 摘要片段最大字符数
 MAX_AUTHORS = 5           # 入库作者数上限（前端仅渲染前两位）
 
 # ---------- 阶段4：OpenAlex 中文源配置 ----------
 ZH_SOURCE = "openalex-zh"
 ZH_RECENT_DAYS = 365      # 中文新文稀疏，窗口放宽到近一年
-ZH_PER_GROUP = 25          # 每组返回条数
+ZH_PER_GROUP = 30          # 每组返回条数
 ZH_MIN_ITEMS = 8          # 混合结果中为中文预留的最少名额
 ZH_MIN_YEAR = 2020        # 中文条目最早年份
 OPENALEX_BASE = "https://api.openalex.org/works"
@@ -131,6 +131,20 @@ EPMC_CARDIO = ('(TITLE_ABS:"heart failure" OR TITLE_ABS:myocardial OR TITLE_ABS:
 EPMC_MED = ('(TITLE_ABS:"sports medicine" OR TITLE_ABS:rehabilitation OR TITLE_ABS:"return to sport") '
             'AND (TITLE_ABS:exercise OR TITLE_ABS:injury)')
 
+# 子方向补充查询组：线粒体自噬/铁死亡、血管内皮/高血压、自主神经/迷走、缺血再灌注/巨噬细胞
+CARDIO_MITO_QUERY = ("mitophagy autophagy ferroptosis mitochondria myocardial apoptosis oxidative stress exercise")
+CARDIO_VASC_QUERY = ("endothelial function eNOS atherosclerosis vascular hypertension blood pressure exercise training")
+CARDIO_NEURO_QUERY = ("vagal heart rate variability autonomic nervous baroreflex exercise")
+CARDIO_ISCH_QUERY = ("ischemia reperfusion macrophage NLRP3 inflammation myocardial exercise")
+
+EPMC_MITO = ('(TITLE_ABS:mitophagy OR TITLE_ABS:autophagy OR TITLE_ABS:ferroptosis OR TITLE_ABS:mitochondria) '
+             'AND (TITLE_ABS:myocardial OR TITLE_ABS:exercise)')
+EPMC_VASC = ('(TITLE_ABS:endothelial OR TITLE_ABS:eNOS OR TITLE_ABS:atherosclerosis OR TITLE_ABS:hypertension) '
+             'AND (TITLE_ABS:vascular OR TITLE_ABS:exercise)')
+EPMC_NEURO = ('(TITLE_ABS:vagal OR TITLE_ABS:"heart rate variability" OR TITLE_ABS:autonomic) AND TITLE_ABS:exercise')
+EPMC_ISCH = ('(TITLE_ABS:ischemia OR TITLE_ABS:reperfusion OR TITLE_ABS:macrophage OR TITLE_ABS:NLRP3) '
+             'AND TITLE_ABS:myocardial')
+
 # 心脏强词：命中即视为靶部位，保留
 STRONG_CARDIO = ["myocardial", "cardiac", "heart failure", "heart", "cardiomyocyte",
                  "ventricular", "myocardium", "cardioprotect", "cardiomyopathy", "coronary"]
@@ -150,7 +164,7 @@ REVIEW_RE = re.compile(r"\b(review|meta-analysis|systematic review|scoping revie
 # 靶部位 / 机制强词：命中加权
 ZH_CARDIO_KW = {
     "心脏": 5, "心肌": 5, "心肌梗死": 5, "心力衰竭": 5, "心衰": 5, "梗死": 5, "心室": 4,
-    "重构": 4, "心室重构": 4, "线粒体": 5, "自噬": 4, "心血管": 4, "血管内皮": 4,
+    "心室重构": 4, "线粒体": 5, "自噬": 4, "心血管": 4, "血管内皮": 4,
     "血管内皮功能": 4, "迷走": 4, "迷走神经张力": 4,
     "自主神经": 3, "自主神经功能": 3, "高血压": 3, "血压": 2, "血管": 2, "运动耐力": 3,
     "心脏康复": 4, "心功能": 3, "心源性": 3, "冠脉": 3, "冠状动脉": 3, "射血分数": 3,
@@ -164,8 +178,8 @@ ZH_CARDIO_KW = {
 }
 # 运动 / 干预词：与心血管词双命中视为对口
 ZH_EXERCISE_KW = ["运动", "有氧", "有氧运动", "训练", "康复", "锻炼", "体力活动", "运动处方",
-                  "运动干预", "活动量", "康复训练", "运动康复", "抗阻训练", "力量训练",
-                  "步行", "有氧训练", "干预", "活动"]
+                  "运动干预", "康复训练", "运动康复", "抗阻训练", "力量训练",
+                  "步行", "有氧训练"]
 # 心脏强词：命中即视为靶部位，保留
 ZH_STRONG = ["心脏", "心肌", "心肌梗死", "心力衰竭", "心衰", "心室", "梗死", "心梗"]
 # 中文硬离靶：非心血管/非运动方向，命中即剔除（不被心脏强词豁免）
@@ -174,9 +188,29 @@ ZH_OFFTOPIC_HARD = [
     "脑", "海马", "肝", "卵巢", "睾丸", "皮肤",
     "胃", "肠", "肺损伤", "骨密度", "肿瘤", "癌", "妊娠", "胎儿", "胎", "八段锦",
     "瑜伽", "太极", "舞蹈", "游泳", "排球", "篮球", "足球", "田径",
+    # 工程/工业/游戏/他科明确离靶（标题命中即剔，不被心脏强词豁免）
+    "液压", "离心机", "机械装置", "发动机", "电网", "集控站", "方舱", "安防",
+    "废气", "二氧化硫", "电竞", "电子竞技", "跳绳", "卧鱼", "警校", "装置改良",
+    "数字化转型", "房地产", "地铁", "注意缺陷", "ADHD", "执行功能",
 ]
-# 中文软离靶：运动医学部位，仅在未命中心脏强词时剔除
-ZH_OFFTOPIC_SOFT = ["韧带", "肌腱", "膝", "肩"]
+# 中文软离靶：运动医学部位 / 泛教育泛转型，仅在未命中心脏强词时剔除
+ZH_OFFTOPIC_SOFT = ["韧带", "肌腱", "膝", "肩",
+                    "课程", "教学", "教材", "文化传播", "转型", "模式重构", "麻醉"]
+# 明确运动/康复干预词（标题级）：命中视为有干预主体，豁免纯护理/技术/中医剔除
+ZH_INTERVENE = ["运动", "训练", "锻炼", "运动处方", "运动干预", "抗阻", "力量训练",
+                "步行", "有氧训练", "康复训练", "运动康复", "心脏康复", "康复", "有氧"]
+# 纯护理管理 / 健康教育 / 防护类：标题命中且无运动康复干预词时，判为非干预偏弱条目
+ZH_NONINTERVENE_CARE = ["护理", "健康教育", "健康宣教", "宣教", "职业暴露", "防护策略",
+                        "分级管控", "家庭医生", "服药", "用药指导", "血压监测",
+                        "管理要点", "管理策略"]
+# AI / 技术诊断 / 建模类
+ZH_NONINTERVENE_TECH = ["机器学习", "人工智能", "3D扫描", "影像组学", "分类模型", "诊断模型",
+                       "体检", "心电图", "心脏超声", "磁共振", "方案生成系统",
+                       "追踪分析工具", "分析工具", "数据整合", "二元应对"]
+# 中医 / 中药非运动类
+ZH_NONINTERVENE_TCM = ["中药", "穴位", "敷贴", "刮痧", "药线", "针灸", "推拿", "拔罐",
+                       "体质辨识", "入心经", "中成药", "方剂"]
+ZH_NONINTERVENE = ZH_NONINTERVENE_CARE + ZH_NONINTERVENE_TECH + ZH_NONINTERVENE_TCM
 # 中文综述/进展判定标题词
 ZH_REVIEW_RE = re.compile(r"(综述|研究进展|进展|Meta分析|Meta 分析|系统评价|系统综述)")
 
@@ -185,6 +219,7 @@ def http_get_json(url, timeout=20):
     """带退避重试的 GET JSON；4xx 不重试，5xx/网络/解析错误重试 RETRY_MAX 次。"""
     last_err = None
     for attempt in range(RETRY_MAX + 1):
+        bo = RETRY_BACKOFF[min(attempt, len(RETRY_BACKOFF) - 1)]
         try:
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
             with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -193,19 +228,28 @@ def http_get_json(url, timeout=20):
             last_err = e
             if e.code != 429 and 400 <= e.code < 500:
                 raise  # 4xx 属参数/权限问题，重试无意义；429 限流可恢复，走退避重试
+            if e.code == 429:
+                ra = e.headers.get("Retry-After") if e.headers else None
+                try:
+                    wait = min(max(float(ra), 5), 30) if ra else bo
+                except (TypeError, ValueError):
+                    wait = bo
+            else:
+                wait = bo
         except (urllib.error.URLError, ValueError) as e:
             last_err = e
+            wait = bo
         if attempt < RETRY_MAX:
-            time.sleep(RETRY_BACKOFF[attempt])
+            time.sleep(wait)
     raise last_err
 
 
-def crossref_group(query, from_date):
+def crossref_group(query, from_date, sort="issued"):
     params = urllib.parse.urlencode({
         "query.bibliographic": query,
         "filter": "from-pub-date:%s,type:journal-article" % from_date,
         "rows": ROWS_PER_GROUP,
-        "sort": "issued",
+        "sort": sort,
         "order": "desc",
         "select": "title,container-title,issued,DOI,is-referenced-by-count,type,author",
         "mailto": MAILTO,
@@ -255,25 +299,35 @@ def epmc_abstract_by_doi(doi):
 
 
 # 中文标题 AND 检索组：运动/康复 × 心血管子类，多组拉取后跨组去重
+# 中文检索词组对：顶层 search 跨标题/摘要/关键词全字段召回，词间 AND；相关性由后端打分与离靶门槛兜底。
 ZH_QUERY_GROUPS = [
-    "title.search:运动,title.search:心脏",
-    "title.search:运动,title.search:心肌",
-    "title.search:运动,title.search:心力衰竭",
-    "title.search:有氧,title.search:血管",
-    "title.search:运动,title.search:高血压",
-    "title.search:运动,title.search:线粒体",
-    "title.search:康复,title.search:心脏",
-    "title.search:康复,title.search:心力衰竭",
-    "title.search:运动,title.search:心功能",
-    "title.search:训练,title.search:心力衰竭",
-    "title.search:运动,title.search:血压",
+    ("运动", "心脏"),
+    ("运动", "心肌"),
+    ("运动", "心力衰竭"),
+    ("有氧", "血管"),
+    ("运动", "高血压"),
+    ("运动", "线粒体"),
+    ("康复", "心脏"),
+    ("康复", "心力衰竭"),
+    ("运动", "心功能"),
+    ("训练", "心力衰竭"),
+    ("运动", "血压"),
+    ("康复", "射血分数"),
+    ("运动", "心肌重构"),
+    ("运动", "动脉粥样硬化"),
+    ("运动", "内皮"),
+    ("训练", "高血压"),
 ]
 
 
-def openalex_zh_group(expr, from_date, to_date, per_page=ZH_PER_GROUP):
-    """OpenAlex Works：language=zh 中文文献，标题保留原文；免 Key 开放元数据。"""
-    filt = "language:zh,from_publication_date:%s,to_publication_date:%s,%s" % (from_date, to_date, expr)
-    q = urllib.parse.urlencode({"filter": filt, "per-page": per_page, "mailto": MAILTO})
+def openalex_zh_group(words, from_date, to_date, per_page=ZH_PER_GROUP):
+    """OpenAlex Works：language=zh 中文文献，标题保留原文；免 Key 开放元数据。
+
+    检索走顶层 search（标题/摘要/关键词全字段，词间 AND），filter 仅约束语言与日期窗口。
+    """
+    filt = "language:zh,from_publication_date:%s,to_publication_date:%s" % (from_date, to_date)
+    q = urllib.parse.urlencode({"filter": filt, "search": " ".join(words),
+                               "per-page": per_page, "mailto": MAILTO})
     ox = http_get_json(OPENALEX_BASE + "?" + q)
     return ox.get("results", []) or []
 
@@ -366,6 +420,9 @@ def parse_openalex_zh(w):
     if w.get("type") != "article" or w.get("is_retracted"):
         return None
     title = html.unescape(w.get("title") or "").strip()
+    # 语言兜底：OpenAlex 会把中文期刊的英文综述/双语条目标为 zh，标题无汉字即归英文通道，不占中文名额
+    if not re.search(r"[一-鿿]", title):
+        return None
     pl = w.get("primary_location") or {}
     src = pl.get("source") or {}
     journal = (src.get("title") or "").strip()
@@ -656,6 +713,7 @@ def main():
     today = dt.date.today()
     from_date = (today - dt.timedelta(days=RECENT_DAYS)).isoformat()
     zh_from_date = (today - dt.timedelta(days=ZH_RECENT_DAYS)).isoformat()
+    classic_from_date = (today - dt.timedelta(days=1095)).isoformat()  # 高被引经典桶：近三年
 
     raw_by_source = {"crossref": [], "pubmed": [], "epmc": [], ZH_SOURCE: []}
     groups = []
@@ -675,7 +733,8 @@ def main():
             print("WARN: %s fetch failed: %r" % (source, e), file=sys.stderr)
         g["elapsedSec"] = round(time.time() - t, 2)
         groups.append(g)
-        time.sleep(1)  # 礼貌间隔，避免触发源限流
+        # OpenAlex 匿名额度易触发 429，中文组间隔放慢；其余源保持 1s 礼貌间隔
+        time.sleep(2.5 if source == ZH_SOURCE else 1)
 
     run_group("crossref", CARDIO_QUERY, lambda: crossref_group(CARDIO_QUERY, from_date))
     run_group("crossref", MED_QUERY, lambda: crossref_group(MED_QUERY, from_date))
@@ -683,8 +742,21 @@ def main():
     run_group("pubmed", PUBMED_MED, lambda: pubmed_group(PUBMED_MED))
     run_group("epmc", EPMC_CARDIO, lambda: epmc_group(EPMC_CARDIO))
     run_group("epmc", EPMC_MED, lambda: epmc_group(EPMC_MED))
-    for expr in ZH_QUERY_GROUPS:
-        run_group(ZH_SOURCE, expr, lambda e=expr: openalex_zh_group(e, zh_from_date, today.isoformat()))
+    # 子方向补充组
+    run_group("crossref", CARDIO_MITO_QUERY, lambda: crossref_group(CARDIO_MITO_QUERY, from_date))
+    run_group("crossref", CARDIO_VASC_QUERY, lambda: crossref_group(CARDIO_VASC_QUERY, from_date))
+    run_group("crossref", CARDIO_NEURO_QUERY, lambda: crossref_group(CARDIO_NEURO_QUERY, from_date))
+    run_group("crossref", CARDIO_ISCH_QUERY, lambda: crossref_group(CARDIO_ISCH_QUERY, from_date))
+    run_group("epmc", EPMC_MITO, lambda: epmc_group(EPMC_MITO))
+    run_group("epmc", EPMC_VASC, lambda: epmc_group(EPMC_VASC))
+    run_group("epmc", EPMC_NEURO, lambda: epmc_group(EPMC_NEURO))
+    run_group("epmc", EPMC_ISCH, lambda: epmc_group(EPMC_ISCH))
+    # 高被引经典桶：近三年、按被引排序，让高被引旧文可进入主池
+    run_group("crossref", CARDIO_QUERY+" highly-cited",
+              lambda: crossref_group(CARDIO_QUERY, classic_from_date, sort="is-referenced-by-count"))
+    for words in ZH_QUERY_GROUPS:
+        run_group(ZH_SOURCE, " ".join(words),
+                  lambda w=words: openalex_zh_group(w, zh_from_date, today.isoformat()))
 
     now_iso = dt.datetime.now().astimezone().isoformat(timespec="seconds")
 
@@ -708,15 +780,15 @@ def main():
         }
 
     def accept(c):
-        """统一相关性 / 离靶 / 低分过滤，并补打分、话题、期刊命中、年龄天数。"""
+        """统一相关性 / 离靶 / 低分过滤，并补打分、话题、期刊命中、年龄天数。返回 (条目, 拒绝原因)。"""
         score, topics, strong, offtopic, journal_hit = score_item(c["title"], c["journal"], c.get("abstractSnippet", ""))
         if offtopic:
-            return None
+            return None, "offtopic"
         med_hit = "med" in topics
         if score < 6 and not strong and not med_hit:
-            return None
+            return None, "low_score"
         if score < MIN_SCORE and not strong:
-            return None
+            return None, "low_score"
         c["matchScore"] = score
         c["topics"] = topics
         c["journalHit"] = journal_hit
@@ -727,16 +799,27 @@ def main():
             except ValueError:
                 pub_date = None
         c["ageDays"] = (today - pub_date).days if pub_date else None
-        return c
+        return c, None
 
     def accept_zh(c):
-        """中文条目过滤：离靶剔除；强词保留，或心血管×运动双命中，或达打分门槛。"""
+        """中文条目过滤：离靶剔除；强词保留，或标题级心血管×运动双命中，或标题含心血管词且达打分门槛。返回 (条目, 拒绝原因)。"""
         score, topics, strong, offtopic, journal_hit, cardio_hit, exercise_hit = score_zh_item(
             c["title"], c["journal"], c.get("abstractSnippet", ""))
         if offtopic:
-            return None
-        if not (strong or (cardio_hit and exercise_hit) or score >= MIN_SCORE):
-            return None
+            return None, "offtopic"
+        title_t = c["title"] or ""
+        # 非干预偏弱条目：纯护理 / AI 技术诊断 / 中医中药，标题无明确运动康复干预主体时剔除
+        has_interv = any(k in title_t for k in ZH_INTERVENE)
+        if any(k in title_t for k in ZH_NONINTERVENE) and not has_interv:
+            return None, "low_score"
+        title_cardio = strong or any(k in title_t for k in ZH_CARDIO_KW)
+        title_exercise = any(k in title_t for k in ZH_EXERCISE_KW)
+        # 双命中须标题显式出现心血管词（运动/康复词可来自摘要），避免仅摘要弱词凑出 cardio×exercise；
+        # 分数门槛同样要求标题含心血管词
+        dual = cardio_hit and exercise_hit and title_cardio
+        score_pass = score >= MIN_SCORE and title_cardio
+        if not (strong or dual or score_pass):
+            return None, "low_score"
         c["matchScore"] = score
         c["topics"] = topics
         c["journalHit"] = journal_hit
@@ -747,27 +830,38 @@ def main():
             except ValueError:
                 pub_date = None
         c["ageDays"] = (today - pub_date).days if pub_date else None
-        return c
+        return c, None
 
     candidates = []
     parsers = (("crossref", parse_crossref), ("pubmed", parse_pubmed),
                ("epmc", parse_epmc), (ZH_SOURCE, parse_openalex_zh))
+    funnel = {src: {"raw": len(raw_by_source[src]), "parsed": 0, "accepted": 0}
+              for src in raw_by_source}
+    reject = {"no_title": 0, "short_title": 0, "bad_year": 0, "offtopic": 0, "low_score": 0}
     for src, parser in parsers:
         for it in raw_by_source[src]:
             c = parser(it)
             if not c or not c["title"]:
+                reject["no_title"] += 1
                 continue
             min_len = 8 if src == ZH_SOURCE else 15
             if len(c["title"]) < min_len:
+                reject["short_title"] += 1
                 continue
             min_year = ZH_MIN_YEAR if src == ZH_SOURCE else 2015
             if c["year"] is None or c["year"] > today.year + 1 or c["year"] < min_year:
+                reject["bad_year"] += 1
                 continue
-            c = accept_zh(c) if src == ZH_SOURCE else accept(c)
+            funnel[src]["parsed"] += 1
+            c, reason = (accept_zh(c) if src == ZH_SOURCE else accept(c))
             if c:
                 candidates.append(c)
+                funnel[src]["accepted"] += 1
+            else:
+                reject[reason or "low_score"] += 1
 
     papers = dedup_merge(candidates)
+    dedup_total = len(papers)
 
     # 摘要回填：Crossref / PubMed 等源摘要为空时，按 DOI 向 Europe PMC 补摘要；不重算打分
     for p in papers:
@@ -855,6 +949,10 @@ def main():
         for p in papers:
             print("  [rel=%d|comp=%.3f|recent=%s|cites=%s|%s] %s" % (
                 p["matchScore"], p["compositeScore"], p["isRecent"], p["citations"], p["year"], p["title"][:60]))
+        print("\n=== 漏斗 dedup=%d  reject=%s ===" % (
+            dedup_total, json.dumps(reject, ensure_ascii=False)))
+        for src, f in funnel.items():
+            print("  %s: raw=%d parsed=%d accepted=%d" % (src, f["raw"], f["parsed"], f["accepted"]))
         return
 
     out = pathlib.Path(args.out) if args.out else pathlib.Path(__file__).resolve().parent.parent / "daily-frontier.json"
@@ -870,6 +968,9 @@ def main():
         "groups": groups,
         "rawCount": sum(len(v) for v in raw_by_source.values()),
         "selectedCount": len(papers),
+        "dedupCount": dedup_total,
+        "funnel": funnel,
+        "rejectReasons": reject,
         "zhCount": zh_count,
         "isEmpty": len(papers) == 0,
         "elapsedSec": round(time.time() - t0, 2),
